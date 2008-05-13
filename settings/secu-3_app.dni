@@ -1,0 +1,33 @@
+[DisAssemblyWindow]
+NumStates=_ 1
+State 1=_ 1
+[Watch]
+Watch 1=
+Watch 2=
+Watch 3=
+[CodeCoverage]
+State=_ 0
+[Profiling]
+State=_ 0
+[TermIOSettings]
+Filename=_ ""
+InputMode=_ 1
+[Desktop-Debug]
+Wnd0=_ "Log" "open" 44 0 1 -1 -1 -4 -34 697 704 1275 891
+Wnd1=_ "Disassembly" "open" 44 0 1 -1 -1 -1 -1 545 0 910 685
+Wnd2=_ "CallStack" "closed" 44 0 1 -1 -1 -1 -1 0 586 198 867 1
+Wnd3=_ "Editor-DebugSource" "closed" 44 0 1 -1 -1 -1 -1 198 0 696 867
+Wnd4=_ "Locals" "closed" 44 0 1 -1 -1 -1 -1 911 0 1275 229 100 100 100 100
+Wnd5=_ "Terminal I/O" "closed" 44 0 1 -1 -1 -1 -1 910 433 1275 685
+Wnd6=_ "Watch" "closed" 44 0 1 -1 -1 -1 -1 911 229 1275 435 100 100 100 100 100 100 100 100 100 100 100 100
+Maximized=_ 0
+Count=_ 7
+[Log file]
+LoggingEnabled=_ 0
+LogFile=_ ""
+Category=_ 0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
+[Breakpoints]
+Count=0

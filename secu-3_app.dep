@@ -5,16 +5,6 @@
   <configuration>
     <name>Debug</name>
     <file>
-      <name>$PROJ_DIR$\crc_lib.c</name>
-      <outputs>
-        <name>$PROJ_DIR$\Debug\Obj\crc_lib.r90</name>
-        <name>$PROJ_DIR$\Debug\List\crc_lib.lst</name>
-      </outputs>
-      <inputs>
-        <name>$PROJ_DIR$\crc_lib.h</name>
-      </inputs>
-    </file>
-    <file>
       <name>$PROJ_DIR$\Debug\Exe\secu-3_app.d90</name>
       <inputs>
         <name>$TOOLKIT_DIR$\config\lnkm16s.xcl</name>
@@ -23,6 +13,16 @@
         <name>$PROJ_DIR$\Debug\Obj\main.r90</name>
         <name>$PROJ_DIR$\Debug\Obj\uart.r90</name>
         <name>$TOOLKIT_DIR$\lib\clib\cl3s-ec-sf.r90</name>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\crc_lib.c</name>
+      <outputs>
+        <name>$PROJ_DIR$\Debug\Obj\crc_lib.r90</name>
+        <name>$PROJ_DIR$\Debug\List\crc_lib.lst</name>
+      </outputs>
+      <inputs>
+        <name>$PROJ_DIR$\crc_lib.h</name>
       </inputs>
     </file>
     <file>
@@ -86,15 +86,6 @@
   <configuration>
     <name>Release</name>
     <file>
-      <name>$PROJ_DIR$\crc_lib.c</name>
-      <outputs>
-        <name>$PROJ_DIR$\Release\Obj\crc_lib.r90</name>
-      </outputs>
-      <inputs>
-        <name>$PROJ_DIR$\crc_lib.h</name>
-      </inputs>
-    </file>
-    <file>
       <name>$PROJ_DIR$\Release\Exe\secu-3_app.a90</name>
       <inputs>
         <name>$TOOLKIT_DIR$\config\lnkm16s.xcl</name>
@@ -103,6 +94,15 @@
         <name>$PROJ_DIR$\Release\Obj\main.r90</name>
         <name>$PROJ_DIR$\Release\Obj\uart.r90</name>
         <name>$TOOLKIT_DIR$\lib\clib\cl3s-ec-sf.r90</name>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\crc_lib.c</name>
+      <outputs>
+        <name>$PROJ_DIR$\Release\Obj\crc_lib.r90</name>
+      </outputs>
+      <inputs>
+        <name>$PROJ_DIR$\crc_lib.h</name>
       </inputs>
     </file>
     <file>

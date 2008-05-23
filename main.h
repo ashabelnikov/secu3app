@@ -150,7 +150,7 @@ typedef struct
   unsigned char idl_regul;                                  
   signed   int  ifac1;                                      
   signed   int  ifac2;                                      
-  signed   int  MINEFR;                                    
+  signed   int  MINEFR;      //зачем signed??? (возможно надо сделать unsigned)                              
   unsigned int  idl_turns;                                  
 }ud_r;
 
@@ -169,7 +169,7 @@ typedef struct
   unsigned char fn_benzin;                
   unsigned char fn_gas;            
   unsigned char map_grad;         
-  signed   int  press_swing;   
+  signed   int  press_swing;   //зачем signed??? (возможно надо сделать unsigned)
 }ud_m;
 
 //для деcкриптора 'p' (действительна только в домене UART-a)

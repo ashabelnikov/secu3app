@@ -30,15 +30,10 @@ signed   int  ignition_dwell_angle = 0;                   //требуемый УОЗ * ANGL
 unsigned char send_packet_interval_counter = 0;
 unsigned char force_measure_timeout_counter = 0;
 unsigned char save_param_timeout_counter = 0;
+unsigned char engine_stop_timeout_counter = 0;
 
 unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
 unsigned char eeprom_parameters_cache[64];
-
-
-#pragma vector=TIMER0_OVF_vect
-__interrupt void timer0_ovf_isr(void)
-{
-}
 
 
 //прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
@@ -51,6 +46,8 @@ __interrupt void timer1_capt_isr(void)
   static unsigned int period_prev; 
   static unsigned char cog;
   static unsigned int measure_start_value;
+  //static unsigned int current_angle;
+ 
 
   period_curr = ICR1 - icr_prev;
   
@@ -61,32 +58,74 @@ __interrupt void timer1_capt_isr(void)
     if (period_curr > period_prev)
     {
     force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;  
+    engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;
     cog = 1;
     sm_state = 1;
+    
+    /*//----------------начинаем отсчет угла опережения---------------------------
+    current_angle = (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * (TEETH_BEFORE_UP - 1);
+    //--------------------------------------------------------------------------*/
+
     }
     break;
 
    case 1:   //диаметральный зуб измерения периода вращения для 2-3
+ 
+    /*//--------------------------------------------------------------------------
+    //прошел зуб - угол до в.м.т. уменьшился на 6 град.
+    current_angle-= ANGLE_MULTIPLAYER * DEGREES_PER_TEETH;
+    //----------------------------------------------------------------------------
+
+    unsigned int diff = current_angle - ignition_dwell_angle
+    if (diff <= ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2) )
+    {//до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+
+      OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2)    
+    }
+    //-------------------------------------------------------------------------- */
+
+
     if (cog == 2)
     {
     //если было переполнение то устанавливаем максимально возможное время
-    half_turn_period = (f1.timer1_overflow_happen) ? 0xFFFF : (ICR1 - measure_start_value);             
+    half_turn_period = (period_curr > 1250) ? 0xFFFF : (ICR1 - measure_start_value);             
     measure_start_value = ICR1;
     sm_state = 2;
-    f1.timer1_overflow_happen = 0;       //сбрасываем флаг переполнения перед новым замером
     f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
     adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
     }
     break;
 
    case 2: //реализация УОЗ для 1-4
+
+    /*//--------------------------------------------------------------------------
+    //прошел зуб - угол до в.м.т. уменьшился на 6 град.
+    current_angle-= ANGLE_MULTIPLAYER * DEGREES_PER_TEETH;
+    //----------------------------------------------------------------------------
+
+    unsigned int diff = current_angle - ignition_dwell_angle
+    if (diff <= ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2) )
+    {
+      //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+      OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2)    
+    }
+    //-------------------------------------------------------------------------- 
+
+
+    //----------------начинаем отсчет угла опережения---------------------------
+    if (cog == 30)
+    {
+    current_angle = (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * (TEETH_BEFORE_UP - 1);
+    }
+    //-------------------------------------------------------------------------- */
+
+
     if (cog == 32) //диаметральный зуб измерения периода вращения для 2-3
     {
     //если было переполнение то устанавливаем максимально возможное время
-    half_turn_period = (f1.timer1_overflow_happen) ? 0xFFFF : (ICR1 - measure_start_value);             
+    half_turn_period = (period_curr > 1250) ? 0xFFFF : (ICR1 - measure_start_value);             
     measure_start_value = ICR1;
     sm_state = 3;
-    f1.timer1_overflow_happen = 0;       //сбрасываем флаг переполнения перед новым замером
     f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
     adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
     } 
@@ -105,18 +144,8 @@ __interrupt void timer1_capt_isr(void)
 }
 
 
-//прерывание по переполнению Т/С 1. Используется в случаях очень небольшой частоты вращения коленвала
-//для фиксирования факта переполнения. Переполнение необходимо учитывать при измерении частоты вращения,
-//иначе при медленной прокрутке двигателя возможно неправильное измерение, и проскакивание на дисплее БК
-//больших частот.
-#pragma vector=TIMER1_OVF_vect
-__interrupt void timer1_ovf_isr(void)
-{ 
- f1.timer1_overflow_happen = 1;
- half_turn_period = 0xFFFF;
-}
-   
-//прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе. Вызывается каждые 10мс
+//прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
+//Вызывается каждые 10мс
 #pragma vector=TIMER2_OVF_vect
 __interrupt void timer2_ovf_isr(void)
 { 
@@ -136,7 +165,11 @@ __interrupt void timer2_ovf_isr(void)
 
   if (send_packet_interval_counter > 0)
     send_packet_interval_counter--;
+
+  if (engine_stop_timeout_counter > 0)
+    engine_stop_timeout_counter--;
 }
+
   
 //Высчитывание мгновенной частоты вращения коленвала по измеренному времени прохождения 30 зубьев шкива.
 //time_nt - время в дискретах таймера (одна дискрета = 4мкс), в одной минуте 60 сек, диск содержит 60 зубьев,
@@ -147,7 +180,12 @@ void calculate_instant_freq(ecudata* d)
   __disable_interrupt();
    period = half_turn_period;           //обеспечиваем атомарный доступ к переменной
   __enable_interrupt();                           
-  d->sens.inst_frq=(7500000L)/(period);
+
+  //если самый минимум, значит двигатель остановился 
+  if (period!=0xFFFF)  
+    d->sens.inst_frq = (7500000L)/(period);
+  else
+    d->sens.inst_frq = 0;
 }
 
 //обновление буфера усреднения для частоты вращения
@@ -155,13 +193,14 @@ void update_buffer_freq(ecudata* d)
 {
   static unsigned char frq_ai = FRQ_AVERAGING-1;
 
-  if ((f1.timer1_overflow_happen)||(f1.new_engine_cycle_happen))
+  if ((engine_stop_timeout_counter == 0)||(f1.new_engine_cycle_happen))
   {
     //обновляем содержимое буфера усреднения  и значение его индекса
     freq_average_buf[frq_ai] = d->sens.inst_frq;      
     (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--; 
 
-    f1.new_engine_cycle_happen = 0;   
+    f1.new_engine_cycle_happen = 0;
+    engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;   
   }
 }
 
@@ -329,9 +368,9 @@ completed:
        uart_send_buf.starter_off = d->param.starter_off;
        uart_send_buf.smap_abandon = d->param.smap_abandon;
        break;
-    case FNNAME_DAT:
+    case FNNAME_DAT: //TODO: use memcpy_P() - this will spare flash memory
        for(i = 0; i < F_NAME_SIZE; i++ )
-          uart_send_buf.name[i]=tables[index].name[i];
+          uart_send_buf.name[i]=tables[index].name[i]; 
        uart_send_buf.tables_num = TABLES_NUMBER;
        uart_send_buf.index      = index++;       
        if (index>=TABLES_NUMBER) index=0;              
@@ -447,7 +486,7 @@ __C_task void main(void)
   TCCR0  = (1<<CS01)|(1<<CS00);                             //clock = 250kHz
   TCCR2  = (1<<CS22)|(1<<CS21)|(1<<CS20);                   //clock = 15.625kHz
   TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       //подавление шума, передний фронт захвата, clock = 250kHz
-  TIMSK  = (1<<TICIE1)/*|(1<<TOIE0)*/|(1<<TOIE1)|(1<<TOIE2);//разрешаем прерывание по захвату и переполнению Т/C 1, переполнению T/C 0, переполнению T/C 2
+  TIMSK  = (1<<TICIE1)/*|(1<<TOIE0)*//*|(1<<TOIE1)*/|(1<<TOIE2);//разрешаем прерывание по захвату и переполнению Т/C 1, переполнению T/C 0, переполнению T/C 2
     
   //инициализируем UART
    uart_init(CBR_9600);

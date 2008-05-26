@@ -17,6 +17,7 @@
 #define PAR_SAVE_COUNTER        254
 
 #define FORCE_MEASURE_TIMEOUT_VALUE 8
+#define ENGINE_STOP_TIMEOUT_VALUE 25
 
 
 //Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке поршня первого цилиндра, то 
@@ -73,7 +74,6 @@ typedef struct
 
 typedef struct
 {
- unsigned char  timer1_overflow_happen:1;                     //флаг переполнения таймера 1
  unsigned char  new_engine_cycle_happen:1;                    //флаг синхронизации с вращением
  unsigned char  uart_send_busy:1;                             //флаг озабоченности передатчика (занят)
  unsigned char  uart_recv_busy:1;                             //флаг озабоченности приемника (занят)

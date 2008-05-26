@@ -1,12 +1,85 @@
+ /****************************************************************
+ *       SECU-3  - An open source, free engine control unit
+ *    Designed by Alexey A. Shabelnikov. Ukraine, Gorlovka 2007.
+ *       Microprocessors systems - design & programming.
+ *    contacts:
+ *              http://secu-3.narod.ru
+ *              ICQ: 405-791-931
+ ****************************************************************/
 
-#include "boot.h"
+/* Структура распределения памяти программ блока управления SECU-3
+ *        ________________________
+ *       |                        |
+ *       |       код              |   
+ *       |                        |
+ *       |------------------------|
+ *       | свободное пространство | 
+ *       |------------------------| <--- новые данные и структуры добавлять с этого адреса
+ *       |  резервные  параметры  |
+ *       |------------------------|
+ *       |   массив таблиц        |
+ *       |                        |
+ *       |------------------------|
+ *       |     CRC16              |  - контрольная сумма прошивки без учета байт этой  
+ *       |________________________|    контрольной суммы и байтов бутлоадера
+ *       |                        |
+ *       |  boot loader           |
+ *        ------------------------
+ */
 
-#define CODE_CRC_ADDR (BOOT_START-sizeof(unsigned short))
+
+
+#ifndef _TABLES_H_
+#define _TABLES_H_
+
+#include "bootldr.h"   //для того чтобы знать значение SECONDBOOTSTART, и только
+
+//определяем количество узлов интерполяции для каждой функции
+#define F_WRK_POINTS_F         16
+#define F_WRK_POINTS_L         16
+#define F_TMP_POINTS_T         12
+#define F_TMP_POINTS_L         8
+#define F_STR_POINTS           16                            
+#define F_IDL_POINTS           16     
+
+#define F_NAME_SIZE            16
+
+
+//Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град 
+typedef struct 
+{
+  signed   char f_str[F_STR_POINTS];                       // функция УОЗ на старте
+  signed   char f_idl[F_IDL_POINTS];                       // функция УОЗ для ХХ
+  signed   char f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     // основная функция УОЗ
+  signed   char f_tmp[F_TMP_POINTS_L][F_TMP_POINTS_T];     // функция коррект. УОЗ по температуре
+  unsigned char name[F_NAME_SIZE];                         // ассоциированное имя (имя семейства)
+}F_data;
+
+
+//================================================================================
+//определяем адреса таблиц в прошивке отталкиваясь от бутлоадера
+
+//размер переменной контрольной суммы параметров в байтах
+#define PAR_CRC_SIZE   sizeof(unsigned short) 
+
+//размер переменной контрольной суммы прошивки в байтах
+#define CODE_CRC_SIZE   sizeof(unsigned short) 
+
+//размер кода программы без учета контрольной суммы
+#define CODE_SIZE (SECONDBOOTSTART-CODE_CRC_SIZE)
+
+//количество наборов характеристик хранимых в памяти программ
+#define TABLES_NUMBER          8   
+
+//адрес контрольной суммы в прошивке
+#define CODE_CRC_ADDR (SECONDBOOTSTART-CODE_CRC_SIZE)
+
+//адрес массива таблиц - семейств характеристик
 #define TABLES_START (CODE_CRC_ADDR-(sizeof(F_data)*TABLES_NUMBER))
-#define DEFPARAM_START (TABLES_START-sizeof(params))
 
-#pragma object_attribute=__root
-const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;
+//адрес структуры дефаултных параметров (параметров EEPROM по умолчанию)
+#define DEFPARAM_START (TABLES_START-sizeof(params))
+//================================================================================
 
 //данные в таблицах по умолчанию
 #pragma object_attribute=__root
@@ -234,11 +307,42 @@ const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 0x2F,0x27,0x1A,0x02,0x07,0x0C,0x0B,0x09,0x00,0x00,0xF8,0xF4,0x28,0x23,0x16,0xFF,
 0x02,0x0B,0x09,0x07,0x00,0x00,0xFC,0xF7,0x27,0x1E,0x13,0xFC,0xFF,0x07,0x05,0x02,
 0x00,0x00,0x00,0xFC,0x26,0x1D,0x12,0xFB,0xFE,0x05,0x04,0x01,0xFF,0xFF,0xFF,0xFB,
-'“','‡','Ђ','Њ','3','3','1','7',' ',' ',' ',' ',' ',' ',' ',' ',
+'“','‡','Ђ','Њ','3','3','1','7',' ',' ',' ',' ',' ',' ',' ',' '
 };
+
+//описывает параметры системы
+typedef struct
+{
+  unsigned char tmp_use;                        //признак комплектации ДТОЖ-ом
+  unsigned char carb_invers;                    //инверсия концевика на карбюраторе
+  unsigned char idl_regul;                      //поддерживать заданные обороты ХХ регулмрованием УОЗ
+  unsigned char fn_benzin;                      //номер набора характеристик используемый для бензина
+  unsigned char fn_gas;                         //номер набора характеристик используемый для газа
+  unsigned char map_grad;                       //наклон шкалы расхода воздуха
+  unsigned int  ephh_lot;                       //нижний порог ЭПХХ
+  unsigned int  ephh_hit;                       //верхний порог ЭПХХ
+  unsigned int  starter_off;                    //порог выключения стартера (обороты)
+  signed   int  press_swing;                    //перепад давления при полностью открытом дросселе   
+  unsigned int  smap_abandon;                   //обороты перехода с пусковой карты на рабочую   
+  signed   int  max_angle;                      //ограничение максимального УОЗ
+  signed   int  min_angle;                      //ограничение минимального УОЗ
+  signed   int  angle_corr;                     //октан-коррекция УОЗ    
+  unsigned int  idl_turns;                      //заданные обороты ХХ для поддержания регулмрованием УОЗ   
+  signed   int  ifac1;                          //коэффициенты П-регулятора оборотов ХХ, для положительной и
+  signed   int  ifac2;                          //отрицательной ошибке соответственно, 1...100 
+  signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
+  signed   int  vent_on;                        //температура включения вентилятора
+  signed   int  vent_off;                       //температура выключения вентилятора  
+  unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
+}params;
 
 
 //резервные параметры
+#pragma object_attribute=__root
 const params __flash def_param@DEFPARAM_START = 
-{1,0,0,6,6,75,1250,1500,600,110,650,2400,-600,0,800,40,40,10,T_TO_DADC(98),T_TO_DADC(96),0};                                         
+{1,0,0,6,6,75,1250,1500,600,110,650,2400,-600,0,800,40,40,10,1484,1476,0};                                         
 
+#pragma object_attribute=__root
+const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;
+
+#endif //_TABLES_H_

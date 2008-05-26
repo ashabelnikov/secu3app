@@ -932,7 +932,7 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state></state>
+          <state>LOW_ENDIAN_DATA_FORMAT</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -948,11 +948,11 @@
         </option>
         <option>
           <name>CCListCFile</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCListCMnemonics</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCListCMessages</name>
@@ -1018,7 +1018,7 @@
         <option>
           <name>CCOptimization</name>
           <version>1</version>
-          <state>2</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCAllowList</name>
@@ -1028,7 +1028,7 @@
         <option>
           <name>CCCrossCallPassesList</name>
           <version>8</version>
-          <state>1</state>
+          <state>3</state>
         </option>
         <option>
           <name>CCMakeLibraryModule</name>
@@ -1529,7 +1529,19 @@
     </settings>
   </configuration>
   <file>
-    <name>$PROJ_DIR$\crc_lib.c</name>
+    <name>$PROJ_DIR$\adc.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\adc.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\crc16.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\eeprom.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\eeprom.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\funconv.c</name>

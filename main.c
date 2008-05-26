@@ -11,194 +11,97 @@
 
 #include <inavr.h>
 #include <iom16.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <pgmspace.h>
+
 #include "funconv.h"
 #include "main.h"
 #include "uart.h"
 #include "tables.h"
-#include "boot.h"
+#include "bootldr.h"
 #include "ufcodes.h"
-#include "crc_lib.h"
-
-
-#define BEGIN_MEASURE() { f1.sens_ready=0; ADMUX = ADCI_MAP|ADC_VREF_TYPE; SETBIT(ADCSRA,ADSC);} //запускает измерение значений с датчиков
-#define RESET_TCNT0()     TCNT0 = TCNT0_H = 0                           //сброс счетчика
-#define GET_TCNT0()      (((TCNT0_H<<8)&0xFF00)|TCNT0)                  //получение значения счетчика
-#define SET_TCNT0(v)     {TCNT0_H = v >> 8,TCNT0 = 255-(v & 0xFF);}     //инициализация таймера указанным значением
-#define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}     //инициирует процесс записи байта в EEPROM
-#define EE_START_WR_DATA(e_a,r_a,cnt)  {eewd.eews=0,eewd.ee_addr=e_a,eewd.sram_addr=r_a,eewd.count=cnt;EECR|=0x08;}//запускает процесс записи в EEPROM указанного блока данных 
-
+#include "crc16.h"
+#include "eeprom.h"
+#include "bitmask.h"
+#include "adc.h"
    
 //--глобальные переменные     
-unsigned int  time_nt;                                                  //хранит последнее измерение времени прохождения n зубьев  
-signed   int  goal_angle;                                               //требуемый УОЗ * ANGLE_MULTIPLAYER
-unsigned char ignmask;                                                  //текущая маска для запуска текущего канала зажигания
-unsigned char ign_teeth;                                                //для отсчета длительности импульса запуска зажигания по зубьям
-unsigned char stop_counter=0;
-unsigned char pars_counter=0;
+unsigned int  half_turn_period = 0xFFFF;                  //хранит последнее измерение времени прохождения n зубьев  
+signed   int  ignition_dwell_angle = 0;                   //требуемый УОЗ * ANGLE_MULTIPLAYER
+unsigned char send_packet_interval_counter = 0;
+unsigned char force_measure_timeout_counter = 0;
+unsigned char save_param_timeout_counter = 0;
 
-unsigned int map_abuf[MAP_AVERAGING];                                   //буфер усреднения абсолютного давления
-unsigned int bat_abuf[BAT_AVERAGING];                                   //буфер усреднения напряжения бортовой сети
-unsigned int tmp_abuf[TMP_AVERAGING];                                   //буфер усреднения температуры охлаждающей жидкости
-unsigned int frq_abuf[FRQ_AVERAGING];                                   //буфер усреднения частоты вращения коленвала
-
-unsigned char eeprom_buf[64];
-
-//Описывает информацию необходимую для сохранения данных в EEPROM
-typedef struct 
-{
-  unsigned int ee_addr;                                                  //адрес для записи в EEPROM
-  unsigned char* sram_addr;                                              //адрес данных в ОЗУ 
-  unsigned char count;                                                   //количество байтов
-  unsigned char eews;                                                    //состояние процесса записи
-}ee_wrdesc;
-
-ee_wrdesc eewd;
+unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
+unsigned char eeprom_parameters_cache[64];
 
 
-//Обработчик прерывания от EEPROM
-//при завершении работы автомата всегда заносим в регистр адреса адрес нулевой ячейки
-#pragma vector=EE_RDY_vect
-__interrupt void ee_ready_isr(void)
-{ 
-  switch(eewd.eews)
-  {
-    case 0:
-      EEAR = eewd.ee_addr;       
-      EEDR = *eewd.sram_addr;
-      EE_START_WR_BYTE();                          
-      eewd.sram_addr++;
-      eewd.ee_addr++;
-      if (--eewd.count==0)
-       eewd.eews = 1;   //последний байт запущен на запись.
-      else      
-       eewd.eews = 0;   
-      break;    
-    case 1:
-      EEAR=0x000;      
-      CLEARBIT(EECR,EERIE); //запрещаем прерывание от EEPROM        
-      break;      
-  }//switch  
-}
-
-
-
-//прерывание по переполнению Т/C 0. Т/С 0 дополняем до 16-ти разрядов и используем для измерения
-//временных интервалов между зубьями (режим счетчика), а также для отсчета остаточного времени при реализации УОЗ(режим таймера)
 #pragma vector=TIMER0_OVF_vect
 __interrupt void timer0_ovf_isr(void)
 {
-  if (f1.t0mode==0)  
-  {//режим 16-битного счетчика
-   if (TCNT0_H < 255) TCNT0_H++;
-  }
-  else
-  {//режим 16-битного таймера        
-      if (TCNT0_H!=0)  //старший байт не исчерпан ?
-      {
-        TCNT0 = 0;
-        TCNT0_H--;         
-      }  
-      else  
-      {//запуск зажигания на очередную пару цилиндров    
-       f1.t0mode=0;
-       PORTD|=ignmask;  
-       ign_teeth=0;
-      }
-  }
 }
 
 
 //прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
-//измерение частоты вращения коленвала начинается после прохождения синхрометки(для 1-4) и
-//после 30-го зуба (для 2-3) и происходит независимо от реализации УОЗ. 
 #pragma vector=TIMER1_CAPT_vect
 __interrupt void timer1_capt_isr(void)
 {  
-  unsigned int t0; int diff;
-  static unsigned char teeth=0;                                        //номер текущего зуба (1 оборот коленвала)
-  static signed int  curr_angle;                                       //текущий УОЗ * ANGLE_MULTIPLAYER
-  static unsigned int pptm=0x7FFF;                                     //хранит значение предыдущего замера времени между зубьями
-  static unsigned char measure_state=0;                                //текущее состояние конечного автомата (КА) 
-          
-  //считываем измеренное время между зубьями и сбрасываем счетчик если мы находимся в режиме счетчика  
-  t0 = GET_TCNT0();    
-  if (f1.t0mode==0) {  RESET_TCNT0();  }
-                      
+  static unsigned char sm_state=0;                                //текущее состояние конечного автомата (КА) 
+  static unsigned int icr_prev;
+  static unsigned int period_curr;  
+  static unsigned int period_prev; 
+  static unsigned char cog;
+  static unsigned int measure_start_value;
+
+  period_curr = ICR1 - icr_prev;
+  
   //конечный автомат для синхронизации, измерения скорости вращения коленвала, запуска зажигания в нужное время  
-  switch(measure_state)
+  switch(sm_state)
   {
    case 0:              //состояние синхронизации (поиск синхрометки)
-       TCNT1 = 0;
-       if (pptm < t0)
-       {                //синхрометка найдена
-        teeth = 0;                                                      //начинаем отсчет зубьев
-        curr_angle = ANGLE_MULTIPLAYER * DEGREES_PER_TEETH * (TEETH_BEFORE_UP-1);
-        f1.released=0;                                                  //в начале ноаого цикла зажигания необходимо сбросить флаг реализации зажигания
-        ignmask=IGNITION_PULSE_14;                                      //будем запускать зажигание на 1-4 цилиндрах
-        ign_teeth+=2;                                                   //учитываем два пропущеных зуба        
-        f1.t1ovf=0;                                                     //сбрасываем флаг переполнения перед новым замером
-        f1.rotsync = 1;                                                 //устанавливаем событие цикловой синхронизации 
-        BEGIN_MEASURE();                                                //запуск процесса измерения значений аналоговых входов
-        measure_state = 1;
-       }    
-      goto inxt;
-   case 1:               //измерение скорости 1-4 (измеряем время прохождения зубьев)
-      if (teeth==SPEED_MEASURE_TEETH)
-      {                      
-        time_nt=(f1.t1ovf)?0xFFFF:ICR1;                                 //если было переполнение то устанавливаем максимально возможное время      
-        measure_state = 2;   
-      } 
-      goto crel;
-   case 2:              //ожидаем зуба с которого начнем измерять скорость 2-3 
-      if (teeth==30)
-      {
-       TCNT1 = 0;
-       f1.t0mode=0;                                                     //опять будем измерять время между зубьями    
-       curr_angle = ANGLE_MULTIPLAYER * DEGREES_PER_TEETH * (TEETH_BEFORE_UP-1);
-       f1.released=0;
-       ignmask=IGNITION_PULSE_23;                     
-       f1.t1ovf=0;
-       f1.rotsync = 1;
-       BEGIN_MEASURE();                                                //запуск процесса измерения значений аналоговых входов       
-       measure_state = 3;   
-      }
-      goto crel;
-   case 3:              //измерение скорости 2-3 (измеряем время прохождения зубьев)
-      if (teeth==(30+SPEED_MEASURE_TEETH))
-      {
-        time_nt=(f1.t1ovf)?0xFFFF:ICR1;                                 //если было переполнение то устанавливаем максимально возможное время                         
-        measure_state = 4;                                              //на ожидание момента перехода в начальное состояние (поиск синхрометки)
-      }           
-      goto crel;
-   case 4:              //ожидаем зуба с которого КА перейдет в состояние поиска синхрометки   
-      if (teeth!=TEETH_BACK_SYNC)
-          goto crel;
-      f1.t0mode=0;    
-      measure_state=0;                                                  //опять переходим в состояние синхронизации        
-      goto inxt;          
-  }
-crel:                   //нужно быть готовым отсчитывать УОЗ
-   if (!f1.released)    //только один раз
-   {
-     diff = curr_angle-goal_angle;
-     if (diff <= (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH))
-     { //осталось отсчитать меньше одного зуба. Необходимо отсчитать время соответствующее оставшемуся углу
-      f1.t0mode = 1;
-      f1.released=1;
-      t0 = ((long)diff * t0)/(ANGLE_MULTIPLAYER * DEGREES_PER_TEETH);      
-      SET_TCNT0(t0);                 
+    if (period_curr > period_prev)
+    {
+    force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;  
+    cog = 1;
+    sm_state = 1;
     }
-   } 
-inxt:                   //проверка длительности импульса запуска зажигания и обновление счетчиков зубьев и текущего угла
-  if (ign_teeth >= (IGNITION_TEETH-1))
-     PORTD&=IGNITION_PULSE_OFF;
+    break;
 
-   teeth++;  ign_teeth++;                                          
-   curr_angle=curr_angle-(ANGLE_MULTIPLAYER * DEGREES_PER_TEETH);        //прошел зуб - угол до в.м.т. уменьшился на 6 град.        
-   pptm = t0*2;                                                          //двухкратный барьер для селекции синхрометки 
+   case 1:   //диаметральный зуб измерения периода вращения для 2-3
+    if (cog == 2)
+    {
+    //если было переполнение то устанавливаем максимально возможное время
+    half_turn_period = (f1.timer1_overflow_happen) ? 0xFFFF : (ICR1 - measure_start_value);             
+    measure_start_value = ICR1;
+    sm_state = 2;
+    f1.timer1_overflow_happen = 0;       //сбрасываем флаг переполнения перед новым замером
+    f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
+    adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
+    }
+    break;
+
+   case 2: //реализация УОЗ для 1-4
+    if (cog == 32) //диаметральный зуб измерения периода вращения для 2-3
+    {
+    //если было переполнение то устанавливаем максимально возможное время
+    half_turn_period = (f1.timer1_overflow_happen) ? 0xFFFF : (ICR1 - measure_start_value);             
+    measure_start_value = ICR1;
+    sm_state = 3;
+    f1.timer1_overflow_happen = 0;       //сбрасываем флаг переполнения перед новым замером
+    f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
+    adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
+    } 
+    break;
+
+   case 3: //реализация УОЗ для 2-3
+    if (cog > 55) //переход в режим поиска синхрометки
+    {
+    sm_state = 0; 
+    }
+    break;
+  }
+  icr_prev = ICR1;
+  period_prev = period_curr * 2;  //двухкратный барьер для селекции синхрометки
+  cog++;  
 }
 
 
@@ -209,91 +112,62 @@ inxt:                   //проверка длительности импульса запуска зажигания и обн
 #pragma vector=TIMER1_OVF_vect
 __interrupt void timer1_ovf_isr(void)
 { 
- f1.t1ovf=1;
+ f1.timer1_overflow_happen = 1;
+ half_turn_period = 0xFFFF;
 }
- 
-  
-//прерывание по завершению преобразования АЦП. Измерение значений всех аналоговых датчиков. После запуска
-//измерения это прерывание будет вызыватся для каждого входа, до тех пор пока все входы не будут обработаны.
-#pragma vector=ADC_vect
-__interrupt void ADC_isr(void)
-{
- static unsigned char  map_ai=MAP_AVERAGING-1;
- static unsigned char  bat_ai=BAT_AVERAGING-1;
- static unsigned char  tmp_ai=TMP_AVERAGING-1;;      
- __enable_interrupt(); 
-
- switch(ADMUX&0x07)
- {
-   case ADCI_MAP: //закончено измерение абсолютного давления
-      map_abuf[map_ai] = ADC;      
-      //обновляем значение индекса буфера усреднения
-      (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;            
-      ADMUX = ADCI_UBAT|ADC_VREF_TYPE;   
-      SETBIT(ADCSRA,ADSC);
-      break;
-   case ADCI_UBAT://закончено измерение напряжения бортовой сети
-      bat_abuf[bat_ai] = ADC;      
-      //обновляем значение индекса буфера усреднения
-      (bat_ai==0) ? (bat_ai = BAT_AVERAGING - 1): bat_ai--;            
-      ADMUX = ADCI_TEMP|ADC_VREF_TYPE;   
-      SETBIT(ADCSRA,ADSC);
-      break;
-   case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
-      tmp_abuf[tmp_ai] = ADC;      
-      //обновляем  значение индекса буфера усреднения
-      (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;               
-      ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
-      f1.sens_ready = 1;                
-      break; 
- } 
-}
-
-
+   
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе. Вызывается каждые 10мс
 #pragma vector=TIMER2_OVF_vect
 __interrupt void timer2_ovf_isr(void)
 { 
- TCNT2=T2_RELOAD_VALUE; 
- if (stop_counter > 12)
-  {//периодически устанавливаем признак цикловой синхронизации и запускаем измерение
-    f1.rotsync=1;
-    BEGIN_MEASURE();
-    stop_counter=0;
-  }
-   else
-    stop_counter++;
+  TCNT2 = T2_RELOAD_VALUE; 
+
+  if (force_measure_timeout_counter > 0)
+    force_measure_timeout_counter--;
+  else
+  {
+    force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;
+    adc_begin_measure();
+  }      
+  __enable_interrupt();     
     
-  __enable_interrupt();       
-  if (pars_counter < PAR_SAVE_COUNTER)
-    pars_counter++; 
+  if (save_param_timeout_counter > 0)
+    save_param_timeout_counter--; 
+
+  if (send_packet_interval_counter > 0)
+    send_packet_interval_counter--;
 }
   
-//высчитывание частоты вращения коленвала по измеренному времени прохождения SPEED_MEASURE_TEETH зубьев шкива.
+//Высчитывание мгновенной частоты вращения коленвала по измеренному времени прохождения 30 зубьев шкива.
 //time_nt - время в дискретах таймера (одна дискрета = 4мкс), в одной минуте 60 сек, диск содержит 60 зубьев,
 //в одной секунде 1000000 мкс, значит:
-//   N(min-1) = 60/((time*(60/SPEED_MEASURE_TEETH)*4)/1000000)
-void rotation_frq(ecudata* d)
+void calculate_instant_freq(ecudata* d)
 {
-  unsigned int time;
+  unsigned int period;
   __disable_interrupt();
-   time=time_nt;           //обеспечиваем атомарный доступ к переменной
-  __enable_interrupt();      
-  d->sens.inst_frq=((15000000L*SPEED_MEASURE_TEETH)/60)/(time);
+   period = half_turn_period;           //обеспечиваем атомарный доступ к переменной
+  __enable_interrupt();                           
+  d->sens.inst_frq=(7500000L)/(period);
 }
 
 //обновление буфера усреднения для частоты вращения
-void fillfrq(ecudata* d)
+void update_buffer_freq(ecudata* d)
 {
-  static unsigned char frq_ai=FRQ_AVERAGING-1;
-  //обновляем содержимое буфера усреднения  и значение его индекса
-  frq_abuf[frq_ai] = d->sens.inst_frq;      
-  (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;     
+  static unsigned char frq_ai = FRQ_AVERAGING-1;
+
+  if ((f1.timer1_overflow_happen)||(f1.new_engine_cycle_happen))
+  {
+    //обновляем содержимое буфера усреднения  и значение его индекса
+    freq_average_buf[frq_ai] = d->sens.inst_frq;      
+    (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--; 
+
+    f1.new_engine_cycle_happen = 0;   
+  }
 }
 
 //управление отдельными узлами двигателя и обновление данных о состоянии 
 //концевика карбюратора, газового клапана, клапана ЭПХХ
-void units_control(ecudata *d)
+void control_engine_units(ecudata *d)
 {
   //реализация функции ЭПХХ. Если заслонка карбюратора закрыта и frq > [верх.порог] или
   //заслонка карбюратора закрыта и frq > [ниж.порог] но клапан уже закрыт, то производится
@@ -322,204 +196,193 @@ void units_control(ecudata *d)
 
 
 //усреднение измеряемых величин используя текущие значения буферов усреднения
-void average_values(ecudata* d)
+void average_measured_values(ecudata* d)
 {     
-      unsigned char i;unsigned long sum;unsigned long s;       
-      ADCSRA&=0xE7;                                //запрещаем прерывание от АЦП
+  unsigned char i;unsigned long sum;unsigned long s;       
+  ADCSRA&=0xE7;                                //запрещаем прерывание от АЦП
             
-      for (sum=0,i = 0; i < MAP_AVERAGING; i++)
-       sum+=map_abuf[i];      
-      d->sens.map=(sum/MAP_AVERAGING)*2; 
+  for (sum=0,i = 0; i < MAP_AVERAGING; i++)
+   sum+=adc_get_map_value(i);      
+  d->sens.map=(sum/MAP_AVERAGING)*2; 
           
-      for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
-       sum+=bat_abuf[i];      
-      d->sens.voltage=(sum/BAT_AVERAGING)*6; 
+  for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
+   sum+=adc_get_ubat_value(i);      
+  d->sens.voltage=(sum/BAT_AVERAGING)*6; 
        
-      if (d->param.tmp_use) 
-      {       
-       for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
-        sum+=tmp_abuf[i];      
-       d->sens.temperat=((sum/TMP_AVERAGING)*5)/3; 
-      }  
-      else             //ДТОЖ не используется
-       d->sens.temperat=0;
+  if (d->param.tmp_use) 
+  {       
+   for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
+    sum+=adc_get_temp_value(i);      
+   d->sens.temperat=((sum/TMP_AVERAGING)*5)/3; 
+  }  
+  else             //ДТОЖ не используется
+   d->sens.temperat=0;
     
-      ADCSRA=(ADCSRA&0xEF)|(1<<ADIE);            //разрешаем прерывание от АЦП не сбрасывая флаг прерывания
+  ADCSRA=(ADCSRA&0xEF)|(1<<ADIE);            //разрешаем прерывание от АЦП не сбрасывая флаг прерывания
            
-      for (s=0,i = 0; i < FRQ_AVERAGING; i++)    //усредняем частоту вращения коленвала
-       s+=frq_abuf[i];      
-      d->sens.frequen=(s/FRQ_AVERAGING);           
+  for (s=0,i = 0; i < FRQ_AVERAGING; i++)    //усредняем частоту вращения коленвала
+   s+=freq_average_buf[i];      
+  d->sens.frequen=(s/FRQ_AVERAGING);           
 }
 
 
 //перекачивает данные между системным доменом и доменом UART-a
-void swap_domains(ecudata* edat)
+void process_uart_interface(ecudata* d)
 { 
- static unsigned char uscount=0;
  static unsigned char index=0;
  unsigned char i;
 
- if (f1.rcv_busy)//приняли новый фрейм ?
+ if (uart_is_packet_received())//приняли новый фрейм ?
  { 
-  switch(rcv_mode)  //интерпретируем данные принятого фрейма в зависимости от дескриптора
+  switch(uart_get_recv_mode())  //интерпретируем данные принятого фрейма в зависимости от дескриптора
   {
     case CHANGEMODE:       
-        if (f1.snd_busy)    //передатчик занят. необходимо подождать его освобождения и только потом менять дескриптор потока 
-            goto remitted;  //применение команды откладывается
-        snd_mode = ((ud_n*)rcv_data)->snd_mode;
+        if (uart_is_sender_busy())    //передатчик занят. необходимо подождать его освобождения и только потом менять дескриптор потока 
+            return; //применение команды откладывается
+        uart_set_send_mode(uart_recv_buf.snd_mode);
         goto completed;     
     case BOOTLOADER:
-        if (f1.snd_busy)    //передатчик занят. необходимо подождать его освобождения и только потом запускать бутлоадер
-            goto remitted;  //применение команды откладывается
+        if (uart_is_sender_busy())    //передатчик занят. необходимо подождать его освобождения и только потом запускать бутлоадер
+            return;  //применение команды откладывается
         __disable_interrupt(); //если в бутлоадере есть команда "cli", то эту строчку можно убрать
-        BOOT_JMP();         //прыгаем на бутлоадер минуя проверку перемычки            
+        boot_loader_start();         //прыгаем на бутлоадер минуя проверку перемычки            
         goto completed;     
     case TEMPER_PAR:            
-       edat->param.tmp_use   = ((ud_t*)rcv_data)->tmp_use;
-       edat->param.vent_on   = ((ud_t*)rcv_data)->vent_on;
-       edat->param.vent_off  = ((ud_t*)rcv_data)->vent_off; 
+       d->param.tmp_use   = uart_recv_buf.tmp_use;
+       d->param.vent_on   = uart_recv_buf.vent_on;
+       d->param.vent_off  = uart_recv_buf.vent_off; 
        goto param_changed;     
     case CARBUR_PAR:   
-       edat->param.ephh_lot  = ((ud_c*)rcv_data)->ephh_lot;
-       edat->param.ephh_hit  = ((ud_c*)rcv_data)->ephh_hit;
-       edat->param.carb_invers=((ud_c*)rcv_data)->carb_invers;
+       d->param.ephh_lot  = uart_recv_buf.ephh_lot;
+       d->param.ephh_hit  = uart_recv_buf.ephh_hit;
+       d->param.carb_invers=uart_recv_buf.carb_invers;
        goto param_changed;     
     case IDLREG_PAR:   
-       edat->param.idl_regul = ((ud_r*)rcv_data)->idl_regul;
-       edat->param.ifac1     = ((ud_r*)rcv_data)->ifac1;        
-       edat->param.ifac2     = ((ud_r*)rcv_data)->ifac2;       
-       edat->param.MINEFR    = ((ud_r*)rcv_data)->MINEFR;       
-       edat->param.idl_turns = ((ud_r*)rcv_data)->idl_turns;    
+       d->param.idl_regul = uart_recv_buf.idl_regul;
+       d->param.ifac1     = uart_recv_buf.ifac1;        
+       d->param.ifac2     = uart_recv_buf.ifac2;       
+       d->param.MINEFR    = uart_recv_buf.MINEFR;       
+       d->param.idl_turns = uart_recv_buf.idl_turns;    
        goto param_changed;     
     case ANGLES_PAR:   
-       edat->param.max_angle = ((ud_a*)rcv_data)->max_angle;    
-       edat->param.min_angle = ((ud_a*)rcv_data)->min_angle;    
-       edat->param.angle_corr= ((ud_a*)rcv_data)->angle_corr;   
+       d->param.max_angle = uart_recv_buf.max_angle;    
+       d->param.min_angle = uart_recv_buf.min_angle;    
+       d->param.angle_corr= uart_recv_buf.angle_corr;   
        goto param_changed;     
     case FUNSET_PAR:   
-       if (((ud_m*)rcv_data)->fn_benzin < TABLES_NUMBER)
-          edat->param.fn_benzin = ((ud_m*)rcv_data)->fn_benzin;    
-       if (((ud_m*)rcv_data)->fn_gas < TABLES_NUMBER)    
-          edat->param.fn_gas    = ((ud_m*)rcv_data)->fn_gas;              
-       edat->param.map_grad  = ((ud_m*)rcv_data)->map_grad;     
-       edat->param.press_swing=((ud_m*)rcv_data)->press_swing;  
+       if (uart_recv_buf.fn_benzin < TABLES_NUMBER)
+          d->param.fn_benzin = uart_recv_buf.fn_benzin;    
+       if (uart_recv_buf.fn_gas < TABLES_NUMBER)    
+          d->param.fn_gas = uart_recv_buf.fn_gas;              
+       d->param.map_grad  = uart_recv_buf.map_grad;     
+       d->param.press_swing=uart_recv_buf.press_swing;  
        goto param_changed;     
     case STARTR_PAR:   
-       edat->param.starter_off=((ud_p*)rcv_data)->starter_off;  
-       edat->param.smap_abandon=((ud_p*)rcv_data)->smap_abandon;
+       d->param.starter_off=uart_recv_buf.starter_off;  
+       d->param.smap_abandon=uart_recv_buf.smap_abandon;
        goto param_changed;     
   }//switch     
 param_changed:                   //если были изменены параметры то сбрасываем счетчик времени
-  pars_counter=0;
+  save_param_timeout_counter = PAR_SAVE_COUNTER;
 completed:    
-  f1.rcv_busy=0;   //мы сохранили принятые данные - приемник ничем теперь не озабочен       
+  uart_notify_processed();  //мы сохранили принятые данные - приемник ничем теперь не озабочен       
  }
 
  //периодически передаем фреймы с данными
- if (uscount >= SND_TIMECONST)
+ if (send_packet_interval_counter==0)
  {
-  if (!f1.snd_busy)
+  if (!uart_is_sender_busy())
   {                
   //передатчик ничем не озабочен - теперь можно перекачать данные 
   //в зависимости от текущего дескриптора посылаемых фреймов перекачиваем соответствующие данные
-  switch(snd_mode)
+  switch(uart_get_send_mode())
   {
     case TEMPER_PAR:   
-       ((ud_t*)snd_data)->tmp_use     = edat->param.tmp_use;
-       ((ud_t*)snd_data)->vent_on     = edat->param.vent_on;
-       ((ud_t*)snd_data)->vent_off    = edat->param.vent_off;
+       uart_send_buf.tmp_use     = d->param.tmp_use;
+       uart_send_buf.vent_on     = d->param.vent_on;
+       uart_send_buf.vent_off    = d->param.vent_off;
        break;
     case CARBUR_PAR:   
-       ((ud_c*)snd_data)->ephh_lot    = edat->param.ephh_lot;
-       ((ud_c*)snd_data)->ephh_hit    = edat->param.ephh_hit;
-       ((ud_c*)snd_data)->carb_invers = edat->param.carb_invers;
+       uart_send_buf.ephh_lot    = d->param.ephh_lot;
+       uart_send_buf.ephh_hit    = d->param.ephh_hit;
+       uart_send_buf.carb_invers = d->param.carb_invers;
        break;
     case IDLREG_PAR:   
-       ((ud_r*)snd_data)->idl_regul   = edat->param.idl_regul;
-       ((ud_r*)snd_data)->ifac1       = edat->param.ifac1;
-       ((ud_r*)snd_data)->ifac2       = edat->param.ifac2;
-       ((ud_r*)snd_data)->MINEFR      = edat->param.MINEFR;
-       ((ud_r*)snd_data)->idl_turns   = edat->param.idl_turns;
+       uart_send_buf.idl_regul   = d->param.idl_regul;
+       uart_send_buf.ifac1       = d->param.ifac1;
+       uart_send_buf.ifac2       = d->param.ifac2;
+       uart_send_buf.MINEFR      = d->param.MINEFR;
+       uart_send_buf.idl_turns   = d->param.idl_turns;
        break;
     case ANGLES_PAR:   
-       ((ud_a*)snd_data)->max_angle   = edat->param.max_angle;
-       ((ud_a*)snd_data)->min_angle   = edat->param.min_angle;
-       ((ud_a*)snd_data)->angle_corr  = edat->param.angle_corr;
+       uart_send_buf.max_angle   = d->param.max_angle;
+       uart_send_buf.min_angle   = d->param.min_angle;
+       uart_send_buf.angle_corr  = d->param.angle_corr;
        break;
    case FUNSET_PAR:   
-       ((ud_m*)snd_data)->fn_benzin   = edat->param.fn_benzin;
-       ((ud_m*)snd_data)->fn_gas      = edat->param.fn_gas;
-       ((ud_m*)snd_data)->map_grad    = edat->param.map_grad;
-       ((ud_m*)snd_data)->press_swing = edat->param.press_swing;
+       uart_send_buf.fn_benzin   = d->param.fn_benzin;
+       uart_send_buf.fn_gas      = d->param.fn_gas;
+       uart_send_buf.map_grad    = d->param.map_grad;
+       uart_send_buf.press_swing = d->param.press_swing;
        break;
    case STARTR_PAR:   
-       ((ud_p*)snd_data)->starter_off = edat->param.starter_off;
-       ((ud_p*)snd_data)->smap_abandon = edat->param.smap_abandon;
+       uart_send_buf.starter_off = d->param.starter_off;
+       uart_send_buf.smap_abandon = d->param.smap_abandon;
        break;
     case FNNAME_DAT:
        for(i = 0; i < F_NAME_SIZE; i++ )
-          ((ud_f*)snd_data)->name[i]=tables[index].name[i];
-       ((ud_f*)snd_data)->tables_num = TABLES_NUMBER;
-       ((ud_f*)snd_data)->index      = index++;       
+          uart_send_buf.name[i]=tables[index].name[i];
+       uart_send_buf.tables_num = TABLES_NUMBER;
+       uart_send_buf.index      = index++;       
        if (index>=TABLES_NUMBER) index=0;              
        break;
     case SENSOR_DAT:
-       memcpy(&((ud_s*)snd_data)->sens,&edat->sens,sizeof(sensors));
-       ((ud_s*)snd_data)->ephh_valve  = edat->ephh_valve;
-       ((ud_s*)snd_data)->airflow     = edat->airflow;
-       ((ud_s*)snd_data)->curr_angle  = edat->curr_angle;       
+       memcpy(&uart_send_buf.sens,&d->sens,sizeof(sensors));
+       uart_send_buf.ephh_valve  = d->ephh_valve;
+       uart_send_buf.airflow     = d->airflow;
+       uart_send_buf.curr_angle  = d->curr_angle;       
        break;
   }//switch
-  UDR='@';                       //начинаем передачу новой посылки только если закончена передача предыдущей
-  f1.snd_busy=1;                 //теперь передатчик озабочен передачей данных
-  uscount=0;
+  uart_send_packet();    //теперь передатчик озабочен передачей данных
+  send_packet_interval_counter = SND_TIMECONST;
   }
  }
-remitted: 
-  if (uscount < SND_TIMECONST) uscount++; 
 }
 
 
 //Предварительное измерение перед пуском двигателя
-void InitialMeasure(ecudata* e)
+void InitialMeasure(ecudata* d)
 { 
   unsigned char i=16;
   __enable_interrupt();
   do
   {
-      BEGIN_MEASURE();                                                     
-      while(!f1.sens_ready); 
+    adc_begin_measure();                                                     
+    while(!adc_is_measure_ready()); 
   }while(--i);  
   __disable_interrupt();
-  average_values(e);  
-  e->atmos_press = e->sens.map;      //сохраняем атмосферное давление
+  average_measured_values(d);  
+  d->atmos_press = d->sens.map;      //сохраняем атмосферное давление
 }
-
-//копирует указанный блок данных из flash в SRAM
-void memcpy_f(unsigned char* sram,unsigned char* fl,int size)
-{
-   int count;
-   for(count = 0; count < size; count++)
-    sram[count] = ((__flash unsigned char*)fl)[count];
-}
-
 
 //Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы,
 //а для обеспечения атомарности копируем данные в отдельный буфер и из него их потом пишем в EEPROM.
 //Сохранение данных в EEPROM произойдет только если за заданное время не произошло ни одной операции приема параметров
 //из UART-a и сохраненные параметры отличаются от текущих.        
-void save_param_if_need(ecudata* pd)
+void save_param_if_need(ecudata* d)
 {
-  if (pars_counter==PAR_SAVE_COUNTER) //параметры не изменились за заданное время
- {
-  if (memcmp(eeprom_buf,&pd->param,sizeof(params)-PAR_CRC_SIZE)) //текущие и сохраненные параметры отличаются?
+  //параметры не изменились за заданное время
+  if (save_param_timeout_counter==0) 
   {
-    memcpy(eeprom_buf,&pd->param,sizeof(params));  
-    ((params*)eeprom_buf)->crc=crc16(eeprom_buf,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
-    EE_START_WR_DATA(EEPROM_PARAM_START,eeprom_buf,sizeof(params));
+    //текущие и сохраненные параметры отличаются?
+    if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE)) 
+    {
+     memcpy(eeprom_parameters_cache,&d->param,sizeof(params));  
+     ((params*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
+     eeprom_start_wr_data(EEPROM_PARAM_START,eeprom_parameters_cache,sizeof(params));
+    }
+   save_param_timeout_counter = PAR_SAVE_COUNTER;
   }
-   pars_counter=0;
- }
 }
 
 
@@ -544,8 +407,12 @@ void load_eeprom_params(ecudata* d)
  //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
  if (crc16((unsigned char*)&d->param,(sizeof(params)-PAR_CRC_SIZE))!=d->param.crc)
  {
-  memcpy_f((unsigned char*)&d->param,(unsigned char*)&def_param,sizeof(params));
- }    
+  memcpy_P(&d->param,&def_param,sizeof(params));
+ }
+
+ //инициализируем кеш параметров, иначе после страта программы произойдет ненужное 
+ //их сохранение. 
+ memcpy(eeprom_parameters_cache,&d->param,sizeof(params));       
 } 
    
       
@@ -563,14 +430,11 @@ __C_task void main(void)
   DDRC   = 0;  
   PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3);
-
   
   if (crc16f(0,CODE_SIZE)!=code_crc)
      SETBIT(PORTB,PB2);                                    //код программы испорчен - зажигаем СЕ
 
-  //инициализация АЦП, параметры: f = 125.000 kHz, внутренний источник опорного напряжения - 2.56V, прерывание разрешено 
-  ADMUX=ADC_VREF_TYPE;
-  ADCSRA=(1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);     
+  adc_init();
 
   //запрещаем компаратор - он нам не нужен  
   ACSR=(1<ACD);             
@@ -583,16 +447,11 @@ __C_task void main(void)
   TCCR0  = (1<<CS01)|(1<<CS00);                             //clock = 250kHz
   TCCR2  = (1<<CS22)|(1<<CS21)|(1<<CS20);                   //clock = 15.625kHz
   TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       //подавление шума, передний фронт захвата, clock = 250kHz
-  TIMSK  = (1<<TICIE1)|(1<<TOIE0)|(1<<TOIE1)|(1<<TOIE2);    //разрешаем прерывание по захвату и переполнению Т/C 1, переполнению T/C 0, переполнению T/C 2
+  TIMSK  = (1<<TICIE1)/*|(1<<TOIE0)*/|(1<<TOIE1)|(1<<TOIE2);//разрешаем прерывание по захвату и переполнению Т/C 1, переполнению T/C 0, переполнению T/C 2
     
   //инициализируем UART
-   USART_Init(CBR_9600);
-
-  //устанавливаем режим поиска синхрометки и инициализируем переменные                                       
-  f1.t0mode=0;   
-  time_nt=0xFFFF;           
-  goal_angle=0;       
-    
+   uart_init(CBR_9600);
+               
   //читаем параметры
   load_eeprom_params(&edat);
   
@@ -601,16 +460,13 @@ __C_task void main(void)
      
   while(1)
   {
-    rotation_frq(&edat);                      
-    if (f1.rotsync)
-    {//пришло время выполнить синхронизированные операции 
-      fillfrq(&edat);    
-      f1.rotsync=0;
-      stop_counter=0;
-    }    
-      
-    average_values(&edat);        
-    units_control(&edat);
+    calculate_instant_freq(&edat);                           
+
+    update_buffer_freq(&edat);
+
+    average_measured_values(&edat);        
+
+    control_engine_units(&edat);
     
     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
     if (edat.sens.gas)
@@ -664,11 +520,11 @@ __C_task void main(void)
     
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания        
     __disable_interrupt();
-     goal_angle = edat.curr_angle;
+     ignition_dwell_angle = edat.curr_angle;
     __enable_interrupt();                
   
-   swap_domains(&edat);  //обмен данными между доменами  
+    process_uart_interface(&edat);  //обработка приходящих/уходящих данных последовательного порта
    
-   save_param_if_need(&edat);    //управление сохранением настроек                    
+    save_param_if_need(&edat);    //управление сохранением настроек                    
   }
 }

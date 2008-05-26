@@ -11,22 +11,62 @@
 #include <iom16.h>
 #include "uart.h"
 #include "ufcodes.h"
+#include "bitmask.h"
+
+//Дополнительно этот модуль использует глобальные переменные-флажки:
+//  f1.uart_send_busy и f1.uart_recv_busy
+
 
 char snd_mode = SENSOR_DAT;
 char rcv_mode = 0;
 
-unsigned char r_data[64];                                                 //домен UART-a - данные принимаемых фреймов
-unsigned char s_data[64];                                                 //домен UART-a - данные передаваемых фреймов
-unsigned char *rcv_data=r_data;
-unsigned char *snd_data=s_data;
+UART_recv_buf uart_recv_buf;
+UART_send_buf uart_send_buf;
+
+
 const __flash char hdig[] = "0123456789ABCDEF";
 
 
 #define HTOD(h) ((h<0x3A)?h-'0':h-'A'+10)
 
 
+void uart_send_packet(void)
+{
+  UDR = '@';                       
+  f1.uart_send_busy = 1;
+}
 
-void USART_Init(unsigned int baud)
+void uart_notify_processed(void)
+{
+  f1.uart_recv_busy = 0;
+}
+
+unsigned char uart_is_sender_busy(void)
+{
+  return f1.uart_send_busy;
+}
+
+unsigned char uart_is_packet_received(void)
+{
+  return f1.uart_recv_busy;
+}
+
+char uart_get_send_mode(void)
+{
+ return snd_mode;
+}
+
+char uart_get_recv_mode(void)
+{
+ return rcv_mode;
+}
+
+char uart_set_send_mode(char send_mode)
+{
+ return snd_mode = send_mode;
+}
+
+void uart_init(unsigned int baud)
 {
   // Set baud rate 
   UBRRH = (unsigned char)(baud>>8);
@@ -34,8 +74,8 @@ void USART_Init(unsigned int baud)
   UCSRA = 0;                                                  //удвоение не используем 
   UCSRB=(1<<RXCIE)|(1<<TXCIE)|(1<<RXEN)|(1<<TXEN);            //приемник,передатчик и их прерывания разрешены
   UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контроля четности
-  f1.snd_busy = 0;                                            //передатчик ни чем не озабочен
-  f1.rcv_busy = 0;
+  f1.uart_send_busy = 0;                                      //передатчик ни чем не озабочен
+  f1.uart_recv_busy = 0;
 }
 
 
@@ -153,15 +193,15 @@ static unsigned char i;
         state++;
         break;
       case 1:
-        UDR = ((ud_t*)snd_data)->tmp_use+0x30;        
+        UDR = uart_send_buf.tmp_use+0x30;        
           state++;
         break;  
       case 2:
-        if (!send_i16h(((ud_t*)snd_data)->vent_on))       
+        if (!send_i16h(uart_send_buf.vent_on))       
           state++;
         break;  
       case 3:
-        if (!send_i16h(((ud_t*)snd_data)->vent_off))       
+        if (!send_i16h(uart_send_buf.vent_off))       
           state++;
         break;  
       case 4: 
@@ -170,7 +210,7 @@ static unsigned char i;
         break;
       case 5: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }
      break; 
@@ -183,15 +223,15 @@ static unsigned char i;
         state++;
         break;
       case 1:
-        if (!send_i16h(((ud_c*)snd_data)->ephh_lot))       
+        if (!send_i16h(uart_send_buf.ephh_lot))       
           state++;
         break;  
       case 2:
-        if (!send_i16h(((ud_c*)snd_data)->ephh_hit))       
+        if (!send_i16h(uart_send_buf.ephh_hit))       
           state++;
         break;  
       case 3:
-        UDR = ((ud_c*)snd_data)->carb_invers+0x30;        
+        UDR = uart_send_buf.carb_invers+0x30;        
           state++;
         break;  
       case 4: 
@@ -200,7 +240,7 @@ static unsigned char i;
         break;
       case 5: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }
      break;      
@@ -213,23 +253,23 @@ static unsigned char i;
         state++;
         break;
       case 1:
-        UDR = ((ud_r*)snd_data)->idl_regul+0x30;         
+        UDR = uart_send_buf.idl_regul+0x30;         
         state++;
         break;  
       case 2:
-        if (!send_i16h(((ud_r*)snd_data)->ifac1))       
+        if (!send_i16h(uart_send_buf.ifac1))       
           state++;
         break;  
       case 3:
-        if (!send_i16h(((ud_r*)snd_data)->ifac2))       
+        if (!send_i16h(uart_send_buf.ifac2))       
           state++;
         break;  
       case 4:
-        if (!send_i16h(((ud_r*)snd_data)->MINEFR))       
+        if (!send_i16h(uart_send_buf.MINEFR))       
           state++;
         break;  
       case 5:
-        if (!send_i16h(((ud_r*)snd_data)->idl_turns))       
+        if (!send_i16h(uart_send_buf.idl_turns))       
           state++;
         break;  
       case 6: 
@@ -238,7 +278,7 @@ static unsigned char i;
         break;
       case 7: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }
      break;      
@@ -251,15 +291,15 @@ static unsigned char i;
         state++;
         break;
       case 1:
-        if (!send_i16h(((ud_a*)snd_data)->max_angle))       
+        if (!send_i16h(uart_send_buf.max_angle))       
           state++;
         break;  
       case 2:
-        if (!send_i16h(((ud_a*)snd_data)->min_angle))       
+        if (!send_i16h(uart_send_buf.min_angle))       
           state++;
         break;  
       case 3:
-        if (!send_i16h(((ud_a*)snd_data)->angle_corr))       
+        if (!send_i16h(uart_send_buf.angle_corr))       
           state++;
         break;  
       case 4: 
@@ -268,7 +308,7 @@ static unsigned char i;
         break;
       case 5: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }
      break;      
@@ -280,20 +320,20 @@ static unsigned char i;
         UDR = snd_mode;   //передаем дескриптор посылки
         state++;
         break;
-      case 1:
-        if (!send_i8h(((ud_m*)snd_data)->fn_benzin))       
+      case 1:        
+        if (!send_i8h(uart_send_buf.fn_benzin))       
           state++;
         break;  
       case 2:
-        if (!send_i8h(((ud_m*)snd_data)->fn_gas))       
+        if (!send_i8h(uart_send_buf.fn_gas))       
           state++;
         break;  
       case 3:
-        if (!send_i8h(((ud_m*)snd_data)->map_grad))       
+        if (!send_i8h(uart_send_buf.map_grad))       
           state++;
         break;  
       case 4:
-        if (!send_i16h(((ud_m*)snd_data)->press_swing))       
+        if (!send_i16h(uart_send_buf.press_swing))       
           state++;
         break;  
       case 5: 
@@ -302,7 +342,7 @@ static unsigned char i;
         break;
       case 6: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }
      break;      
@@ -316,11 +356,11 @@ static unsigned char i;
         state++;
         break;
       case 1:
-        if (!send_i16h(((ud_p*)snd_data)->starter_off))       
+        if (!send_i16h(uart_send_buf.starter_off))       
           state++;
         break;  
       case 2:
-        if (!send_i16h(((ud_p*)snd_data)->smap_abandon))       
+        if (!send_i16h(uart_send_buf.smap_abandon))       
           state++;
         break;  
       case 3: 
@@ -329,7 +369,7 @@ static unsigned char i;
         break;
       case 4: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }
      break;         
@@ -343,16 +383,16 @@ static unsigned char i;
         state++;
         break;
       case 1:
-        if (!send_i8h(((ud_f*)snd_data)->tables_num))       
+        if (!send_i8h(uart_send_buf.tables_num))       
           state++;
         break;  
       case 2:
-        if (!send_i8h(((ud_f*)snd_data)->index))       
+        if (!send_i8h(uart_send_buf.index))       
           state++;
         i=0;  
         break;  
       case 3: //передаем символы имени семейства
-          UDR=((ud_f*)snd_data)->name[i++];
+          UDR=uart_send_buf.name[i++];
           if (i>=F_NAME_SIZE)
              state++;             
         break;          
@@ -362,7 +402,7 @@ static unsigned char i;
         break;
       case 5: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;            
      }     
      break;     
@@ -376,39 +416,39 @@ static unsigned char i;
         state++;
         break;
       case 1:  
-        if (!send_i16h(((ud_s*)snd_data)->sens.frequen))   //частота вращения коленвала
+        if (!send_i16h(uart_send_buf.sens.frequen))   //частота вращения коленвала
           state++;
         break;    
       case 2:  
-        if (!send_i16h(((ud_s*)snd_data)->sens.map))       //абсолютное давление во впускном коллекторе
+        if (!send_i16h(uart_send_buf.sens.map))       //абсолютное давление во впускном коллекторе
           state++;
         break;    
       case 3:  
-        if (!send_i16h(((ud_s*)snd_data)->sens.voltage))   //напряжение в бортовой сети
+        if (!send_i16h(uart_send_buf.sens.voltage))   //напряжение в бортовой сети
           state++;
         break;    
       case 4:  
-        if (!send_i16h(((ud_s*)snd_data)->sens.temperat)) //температура охлаждающей жидкости
+        if (!send_i16h(uart_send_buf.sens.temperat)) //температура охлаждающей жидкости
           state++;
         break;    
       case 5:  
-        if (!send_i16h(((ud_s*)snd_data)->curr_angle))   //текущий УОЗ
+        if (!send_i16h(uart_send_buf.curr_angle))   //текущий УОЗ
           state++;
         break;            
       case 6:  
-        if (!send_i8h(((ud_s*)snd_data)->airflow))       //два символа - расход воздуха
+        if (!send_i8h(uart_send_buf.airflow))       //два символа - расход воздуха
           state++;
         break;            
       case 7:  
-        UDR = ((ud_s*)snd_data)->ephh_valve+0x30;       //один символ - состояние клапана ЭПХХ
+        UDR = uart_send_buf.ephh_valve+0x30;       //один символ - состояние клапана ЭПХХ
         state++;
         break;            
       case 8:  
-        UDR = ((ud_s*)snd_data)->sens.carb+0x30;        //один символ - состояние дроссельной заслонки
+        UDR = uart_send_buf.sens.carb+0x30;        //один символ - состояние дроссельной заслонки
         state++;
         break;    
       case 9:  
-        UDR = ((ud_s*)snd_data)->sens.gas+0x30;         //состояние газового клапана
+        UDR = uart_send_buf.sens.gas+0x30;         //состояние газового клапана
         state++;
         break;                        
       case 10: 
@@ -417,7 +457,7 @@ static unsigned char i;
         break;
       case 11: 
         state=0;          //возвращаем КА в исходное состояние 
-        f1.snd_busy=0;   //передатчик готов к передаче новых данных
+        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
         break;    
      }       
      break;      
@@ -451,7 +491,7 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
            case 0:     //приняли значение нового дескриптора
-             ((ud_n*)rcv_data)->snd_mode = UDR;
+             uart_recv_buf.snd_mode = UDR;
              cstate=3;
              break;         
          }       
@@ -474,14 +514,14 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
            case 0:
-             ((ud_t*)rcv_data)->tmp_use = UDR - 0x30;                
+             uart_recv_buf.tmp_use = UDR - 0x30;                
              state++;
              break;      
            case 1:  
-             ((ud_t*)rcv_data)->vent_on=recv_i16h(&state);                
+             uart_recv_buf.vent_on=recv_i16h(&state);                
              break;     
            case 2:  
-             ((ud_t*)rcv_data)->vent_off=recv_i16h(&cstate);  
+             uart_recv_buf.vent_off=recv_i16h(&cstate);  
              break;                                                                                                
          }       
          break;   
@@ -491,13 +531,13 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
            case 0:  
-             ((ud_c*)rcv_data)->ephh_lot=recv_i16h(&state);                
+             uart_recv_buf.ephh_lot=recv_i16h(&state);                
              break;     
            case 1:  
-             ((ud_c*)rcv_data)->ephh_hit=recv_i16h(&state);  
+             uart_recv_buf.ephh_hit=recv_i16h(&state);  
              break;                                                                                                
            case 2:
-             ((ud_c*)rcv_data)->carb_invers = UDR - 0x30;                
+             uart_recv_buf.carb_invers = UDR - 0x30;                
              cstate=3;              
              break;      
          }            
@@ -508,20 +548,20 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
            case 0:
-             ((ud_r*)rcv_data)->idl_regul = UDR - 0x30;                
+             uart_recv_buf.idl_regul = UDR - 0x30;                
              state++;
              break;      
            case 1:  
-             ((ud_r*)rcv_data)->ifac1=recv_i16h(&state);                
+             uart_recv_buf.ifac1=recv_i16h(&state);                
              break;     
            case 2:  
-             ((ud_r*)rcv_data)->ifac2=recv_i16h(&state);  
+             uart_recv_buf.ifac2=recv_i16h(&state);  
              break;                                                                                                
            case 3:  
-             ((ud_r*)rcv_data)->MINEFR=recv_i16h(&state);  
+             uart_recv_buf.MINEFR=recv_i16h(&state);  
              break;                                                                                                
            case 4:  
-             ((ud_r*)rcv_data)->idl_turns=recv_i16h(&cstate);  
+             uart_recv_buf.idl_turns=recv_i16h(&cstate);  
              break;                                                                                                
          }         
          break;               
@@ -531,13 +571,13 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
             case 0:  
-             ((ud_a*)rcv_data)->max_angle=recv_i16h(&state);                
+             uart_recv_buf.max_angle=recv_i16h(&state);                
              break;     
            case 1:  
-             ((ud_a*)rcv_data)->min_angle=recv_i16h(&state);  
+             uart_recv_buf.min_angle=recv_i16h(&state);  
              break;                                                                                                
            case 2:  
-             ((ud_a*)rcv_data)->angle_corr=recv_i16h(&cstate);  
+             uart_recv_buf.angle_corr=recv_i16h(&cstate);  
              break;                                                                                                
          }        
          break;               
@@ -547,17 +587,16 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
            case 0:
-             ((ud_m*)rcv_data)->fn_benzin=recv_i8h(&state);                
-             state++;
+             uart_recv_buf.fn_benzin=recv_i8h(&state);                             
              break;      
            case 1:  
-             ((ud_m*)rcv_data)->fn_gas=recv_i8h(&state);                
+             uart_recv_buf.fn_gas=recv_i8h(&state);                
              break;     
            case 2:  
-             ((ud_m*)rcv_data)->map_grad=recv_i8h(&state);  
+             uart_recv_buf.map_grad=recv_i8h(&state);  
              break;                                                                                                
            case 3:  
-             ((ud_m*)rcv_data)->press_swing=recv_i16h(&cstate);  
+             uart_recv_buf.press_swing=recv_i16h(&cstate);  
              break;                                                                                                
          }         
          break;               
@@ -567,10 +606,10 @@ __interrupt void usart_rx_isr()
          switch(state)
          {
            case 0:  
-             ((ud_p*)rcv_data)->starter_off=recv_i16h(&state);                
+             uart_recv_buf.starter_off=recv_i16h(&state);                
              break;     
            case 1:  
-             ((ud_p*)rcv_data)->smap_abandon=recv_i16h(&cstate);  
+             uart_recv_buf.smap_abandon=recv_i16h(&cstate);  
              break;                                                                                                
          }               
          break;                        
@@ -582,10 +621,9 @@ __interrupt void usart_rx_isr()
        if (UDR=='\r')
        {             
          cstate=0;       //КА в исходное состояние      
-         f1.rcv_busy=1;  //установили признак готовности данных
+         f1.uart_recv_busy=1;  //установили признак готовности данных
        }    
       break;                   
   }
-  
-  
+    
 }

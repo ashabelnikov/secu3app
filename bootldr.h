@@ -7,16 +7,21 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
-#define BOOT_START 0x3E00
-#define BOOT_SIZE  512
+#ifndef _BOOTLDR_H_
+#define _BOOTLDR_H_
+
+//размер секции бутлоадера
+#define BOOT_LOADER_SIZE  512
+
+//стартовый адрес бутлоадера в прошивке (в байтах)
+#define SECONDBOOTSTART (0x1f00 * 2)
+
 //точка входа в бутлоадер из программы (мину€ проверку перемычки)
-#define BOOT_JMP() asm("jmp 0x3E0A")
+#define boot_loader_start() asm("jmp 0x3E0A")
 
-#ifndef _BOOT_
-#define _BOOT_
-
-#pragma object_attribute=__root
-__flash const unsigned char BootLoader[BOOT_SIZE]@BOOT_START =
+//этот объект будет в пам€ти программи независимо от того используетс€ он или нет
+#pragma object_attribute=__root 
+__flash const unsigned char BootLoader[BOOT_LOADER_SIZE]@SECONDBOOTSTART =
 {
 0xF8,0x94,0x00,0x24,0x04,0xBA,0x9B,0x99,0xFB,0xC0,0xF8,0x94,0x8F,0xE5,0x94,0xE0,
 0x8D,0xBF,0x9E,0xBF,0x87,0xE6,0x89,0xB9,0x88,0xE1,0x8A,0xB9,0x70,0xD0,0x01,0x32,
@@ -52,4 +57,5 @@ __flash const unsigned char BootLoader[BOOT_SIZE]@BOOT_START =
 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 };
 
-#endif
+
+#endif //_BOOTLDR_H_

@@ -1,7 +1,7 @@
 
-         SECU-3 Manager open source software
+      SECU-3 Application open source software
 
-Created using IAR Embedded Workbench for Atmel AVR V3.20C
+Created using IAR Embedded Workbench for Atmel AVR
 
-(C) Shabelnikov Technology 2007. Ukraine, Gorlovka. 
+Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka. 
 http://secu-3.narod.ru e-mail: secu-3@narod.ru

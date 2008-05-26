@@ -7,15 +7,15 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
-#define CHANGEMODE 'h'
-#define BOOTLOADER 'i'
+#define   CHANGEMODE   'h'
+#define   BOOTLOADER   'i'
 
-#define TEMPER_PAR 'j'
-#define CARBUR_PAR 'k'
-#define IDLREG_PAR 'l'
-#define ANGLES_PAR 'm'
-#define FUNSET_PAR 'n'
-#define STARTR_PAR 'o'
+#define   TEMPER_PAR   'j'
+#define   CARBUR_PAR   'k'
+#define   IDLREG_PAR   'l'
+#define   ANGLES_PAR   'm'
+#define   FUNSET_PAR   'n'
+#define   STARTR_PAR   'o'
 
-#define FNNAME_DAT 'p'
-#define SENSOR_DAT 'q'
+#define   FNNAME_DAT   'p'
+#define   SENSOR_DAT   'q'

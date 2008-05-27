@@ -1018,12 +1018,12 @@
         <option>
           <name>CCOptimization</name>
           <version>1</version>
-          <state>1</state>
+          <state>4</state>
         </option>
         <option>
           <name>CCAllowList</name>
           <version>3</version>
-          <state>00000</state>
+          <state>01010</state>
         </option>
         <option>
           <name>CCCrossCallPassesList</name>
@@ -1068,7 +1068,7 @@
         </option>
         <option>
           <name>CCOptForceCrossCall</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCCharIs</name>

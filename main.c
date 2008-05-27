@@ -31,9 +31,29 @@ unsigned char send_packet_interval_counter = 0;
 unsigned char force_measure_timeout_counter = 0;
 unsigned char save_param_timeout_counter = 0;
 unsigned char engine_stop_timeout_counter = 0;
+unsigned char ignition_pulse_teeth;
 
 unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
 unsigned char eeprom_parameters_cache[64];
+
+
+#pragma vector=TIMER1_COMPA_vect
+__interrupt void timer1_compa_isr(void)
+{
+  PORTD_Bit5 = 1;
+  TCCR1B&=~((1<<COM1A1)|(1<<COM1A0)); 
+  TIMSK&=~(1<<OCIE1A); 
+  ignition_pulse_teeth = 0;
+}
+
+#pragma vector=TIMER1_COMPB_vect
+__interrupt void timer1_compb_isr(void)
+{
+  PORTD_Bit4 = 1;
+  TCCR1B&=~((1<<COM1B1)|(1<<COM1B0)); 
+  TIMSK&=~(1<<OCIE1B); 
+  ignition_pulse_teeth = 0;
+}
 
 
 //прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
@@ -46,7 +66,8 @@ __interrupt void timer1_capt_isr(void)
   static unsigned int period_prev; 
   static unsigned char cog;
   static unsigned int measure_start_value;
-  //static unsigned int current_angle;
+  static unsigned int current_angle;
+  unsigned int diff;
  
 
   period_curr = ICR1 - icr_prev;
@@ -61,29 +82,35 @@ __interrupt void timer1_capt_isr(void)
     engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;
     cog = 1;
     sm_state = 1;
+    ignition_pulse_teeth+=2;
     
-    /*//----------------начинаем отсчет угла опережения---------------------------
+    //----------------начинаем отсчет угла опережения---------------------------
     current_angle = (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * (TEETH_BEFORE_UP - 1);
-    //--------------------------------------------------------------------------*/
+    //--------------------------------------------------------------------------
 
     }
     break;
 
    case 1:   //диаметральный зуб измерения периода вращения для 2-3
  
-    /*//--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     //прошел зуб - угол до в.м.т. уменьшился на 6 град.
     current_angle-= ANGLE_MULTIPLAYER * DEGREES_PER_TEETH;
     //----------------------------------------------------------------------------
 
-    unsigned int diff = current_angle - ignition_dwell_angle
+    diff = current_angle - ignition_dwell_angle;
     if (diff <= ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2) )
     {//до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
 
-      OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2)    
-    }
-    //-------------------------------------------------------------------------- */
+      OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2);  
 
+      PORTD_Bit4 = 0;
+      TIFR|=OCF1B;
+      //разрешаем установку линии в высокий уровень
+      TCCR1B|=(1<<COM1B1)|(1<<COM1B0); 
+      TIMSK|=(1<<OCIE1B); 
+    }
+    //-------------------------------------------------------------------------- 
 
     if (cog == 2)
     {
@@ -98,16 +125,22 @@ __interrupt void timer1_capt_isr(void)
 
    case 2: //реализация УОЗ для 1-4
 
-    /*//--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     //прошел зуб - угол до в.м.т. уменьшился на 6 град.
     current_angle-= ANGLE_MULTIPLAYER * DEGREES_PER_TEETH;
     //----------------------------------------------------------------------------
 
-    unsigned int diff = current_angle - ignition_dwell_angle
+    diff = current_angle - ignition_dwell_angle;
     if (diff <= ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2) )
     {
       //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-      OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2)    
+      OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2);    
+
+      PORTD_Bit5 = 0;
+      TIFR|=OCF1A;
+      //разрешаем установку линии в высокий уровень
+      TCCR1B|=(1<<COM1A1)|(1<<COM1A0); 
+      TIMSK|=(1<<OCIE1A); 
     }
     //-------------------------------------------------------------------------- 
 
@@ -117,7 +150,7 @@ __interrupt void timer1_capt_isr(void)
     {
     current_angle = (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * (TEETH_BEFORE_UP - 1);
     }
-    //-------------------------------------------------------------------------- */
+    //-------------------------------------------------------------------------- 
 
 
     if (cog == 32) //диаметральный зуб измерения периода вращения для 2-3
@@ -138,9 +171,13 @@ __interrupt void timer1_capt_isr(void)
     }
     break;
   }
+    
+  if (ignition_pulse_teeth >= (IGNITION_TEETH-1))
+    PORTD&=0xCF; //конец импульса запуска зажигания 
+  
   icr_prev = ICR1;
   period_prev = period_curr * 2;  //двухкратный барьер для селекции синхрометки
-  cog++;  
+  cog++; ignition_pulse_teeth++; 
 }
 
 
@@ -269,7 +306,6 @@ void average_measured_values(ecudata* d)
 void process_uart_interface(ecudata* d)
 { 
  static unsigned char index=0;
- unsigned char i;
 
  if (uart_is_packet_received())//приняли новый фрейм ?
  { 
@@ -368,9 +404,8 @@ completed:
        uart_send_buf.starter_off = d->param.starter_off;
        uart_send_buf.smap_abandon = d->param.smap_abandon;
        break;
-    case FNNAME_DAT: //TODO: use memcpy_P() - this will spare flash memory
-       for(i = 0; i < F_NAME_SIZE; i++ )
-          uart_send_buf.name[i]=tables[index].name[i]; 
+    case FNNAME_DAT: 
+       memcpy_P(uart_send_buf.name,tables[index].name,F_NAME_SIZE);
        uart_send_buf.tables_num = TABLES_NUMBER;
        uart_send_buf.index      = index++;       
        if (index>=TABLES_NUMBER) index=0;              

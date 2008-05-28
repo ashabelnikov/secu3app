@@ -1,4 +1,15 @@
 
+#ifndef _ADC_H_
+#define _ADC_H_
+
+#define ADC_DISCRETE            0.0025       //одна дискрета АЦП в вольтах
+
+#define TSENS_SLOPP             0.01        //наклон прямой датчика температуры вольт/градус
+#define TSENS_ZERO_POINT        2.73        //напряжение на выходе датчика температуры при 0 градусов цельсия
+
+//переводит температуру из градусов Цельсия в дискреты АЦП
+#define T_TO_DADC(Tc) ((unsigned int)((TSENS_ZERO_POINT + (Tc*TSENS_SLOPP))/ADC_DISCRETE)) 
+
 #define ADC_VREF_TYPE           0xC0
 
 //номера используемых каналов АЦП
@@ -26,3 +37,5 @@ char adc_is_measure_ready(void);
 
 //инициализация АЦП и его переменных состояния
 void adc_init(void);
+
+#endif //_ADC_H_

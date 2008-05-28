@@ -169,7 +169,7 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state></state>
+          <state>LOW_ENDIAN_DATA_FORMAT</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -246,21 +246,21 @@
         <option>
           <name>CCLockRegs</name>
           <version>0</version>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>CCOptSizeSpeed</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCOptimization</name>
           <version>1</version>
-          <state>4</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCAllowList</name>
           <version>3</version>
-          <state>11111</state>
+          <state>00000</state>
         </option>
         <option>
           <name>CCCrossCallPassesList</name>
@@ -1009,7 +1009,7 @@
         <option>
           <name>CCLockRegs</name>
           <version>0</version>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>CCOptSizeSpeed</name>
@@ -1018,12 +1018,12 @@
         <option>
           <name>CCOptimization</name>
           <version>1</version>
-          <state>4</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCAllowList</name>
           <version>3</version>
-          <state>01010</state>
+          <state>00000</state>
         </option>
         <option>
           <name>CCCrossCallPassesList</name>
@@ -1068,7 +1068,7 @@
         </option>
         <option>
           <name>CCOptForceCrossCall</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>CCCharIs</name>

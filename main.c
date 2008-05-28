@@ -40,18 +40,18 @@ unsigned char eeprom_parameters_cache[64];
 #pragma vector=TIMER1_COMPA_vect
 __interrupt void timer1_compa_isr(void)
 {
-  PORTD_Bit5 = 1;
-  TCCR1B&=~((1<<COM1A1)|(1<<COM1A0)); 
-  TIMSK&=~(1<<OCIE1A); 
+ //линия в высоком уровне, теперь настраиваем обе линии на переход в низкий уровень по следующему событию.
+ //Начинаем отсчет длительности импульса по зубъям  
+  TCCR1A = (1<<COM1A1)|(1<<COM1B1);   
   ignition_pulse_teeth = 0;
 }
 
 #pragma vector=TIMER1_COMPB_vect
 __interrupt void timer1_compb_isr(void)
 {
-  PORTD_Bit4 = 1;
-  TCCR1B&=~((1<<COM1B1)|(1<<COM1B0)); 
-  TIMSK&=~(1<<OCIE1B); 
+ //линия в высоком уровне, теперь настраиваем обе линии на переход в низкий уровень по следующему событию.  
+ //Начинаем отсчет длительности импульса по зубъям
+  TCCR1A = (1<<COM1A1)|(1<<COM1B1); 
   ignition_pulse_teeth = 0;
 }
 
@@ -85,7 +85,7 @@ __interrupt void timer1_capt_isr(void)
     ignition_pulse_teeth+=2;
     
     //----------------начинаем отсчет угла опережения---------------------------
-    current_angle = (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * (TEETH_BEFORE_UP - 1);
+    current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
     //--------------------------------------------------------------------------
 
     }
@@ -95,20 +95,18 @@ __interrupt void timer1_capt_isr(void)
  
     //--------------------------------------------------------------------------
     //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-    current_angle-= ANGLE_MULTIPLAYER * DEGREES_PER_TEETH;
+    current_angle-= ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG;
     //----------------------------------------------------------------------------
 
     diff = current_angle - ignition_dwell_angle;
-    if (diff <= ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2) )
+    if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
     {//до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
 
-      OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2);  
-
-      PORTD_Bit4 = 0;
-      TIFR|=OCF1B;
-      //разрешаем установку линии в высокий уровень
-      TCCR1B|=(1<<COM1B1)|(1<<COM1B0); 
-      TIMSK|=(1<<OCIE1B); 
+      OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);  
+     
+      //сбрасываем флаг прерывания, разрешаем установку линии B в высокий уровень и разрешаем прерывание 
+      SETBIT(TIFR,OCF1B);
+      TCCR1A = (1<<COM1B1)|(1<<COM1B0)|(1<<COM1A1);        
     }
     //-------------------------------------------------------------------------- 
 
@@ -127,20 +125,18 @@ __interrupt void timer1_capt_isr(void)
 
     //--------------------------------------------------------------------------
     //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-    current_angle-= ANGLE_MULTIPLAYER * DEGREES_PER_TEETH;
+    current_angle-= ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG;
     //----------------------------------------------------------------------------
 
     diff = current_angle - ignition_dwell_angle;
-    if (diff <= ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2) )
+    if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
     {
       //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-      OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * 2);    
+      OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);    
 
-      PORTD_Bit5 = 0;
-      TIFR|=OCF1A;
-      //разрешаем установку линии в высокий уровень
-      TCCR1B|=(1<<COM1A1)|(1<<COM1A0); 
-      TIMSK|=(1<<OCIE1A); 
+      //сбрасываем флаг прерывания, разрешаем установку линии А в высокий уровень и разрешаем прерывание 
+      SETBIT(TIFR,OCF1A);
+      TCCR1A = (1<<COM1A1)|(1<<COM1A0)|(1<<COM1B1);      
     }
     //-------------------------------------------------------------------------- 
 
@@ -148,7 +144,7 @@ __interrupt void timer1_capt_isr(void)
     //----------------начинаем отсчет угла опережения---------------------------
     if (cog == 30)
     {
-    current_angle = (ANGLE_MULTIPLAYER * DEGREES_PER_TEETH) * (TEETH_BEFORE_UP - 1);
+    current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
     }
     //-------------------------------------------------------------------------- 
 
@@ -172,8 +168,8 @@ __interrupt void timer1_capt_isr(void)
     break;
   }
     
-  if (ignition_pulse_teeth >= (IGNITION_TEETH-1))
-    PORTD&=0xCF; //конец импульса запуска зажигания 
+  if (ignition_pulse_teeth >= (DPKV_IGNITION_PULSE_COGS-1))
+    TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<FOC1A)|(1<<FOC1B); //конец импульса запуска зажигания 
   
   icr_prev = ICR1;
   period_prev = period_curr * 2;  //двухкратный барьер для селекции синхрометки
@@ -186,7 +182,7 @@ __interrupt void timer1_capt_isr(void)
 #pragma vector=TIMER2_OVF_vect
 __interrupt void timer2_ovf_isr(void)
 { 
-  TCNT2 = T2_RELOAD_VALUE; 
+  TCNT2 = TIMER2_RELOAD_VALUE; 
 
   if (force_measure_timeout_counter > 0)
     force_measure_timeout_counter--;
@@ -521,7 +517,8 @@ __C_task void main(void)
   TCCR0  = (1<<CS01)|(1<<CS00);                             //clock = 250kHz
   TCCR2  = (1<<CS22)|(1<<CS21)|(1<<CS20);                   //clock = 15.625kHz
   TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       //подавление шума, передний фронт захвата, clock = 250kHz
-  TIMSK  = (1<<TICIE1)/*|(1<<TOIE0)*//*|(1<<TOIE1)*/|(1<<TOIE2);//разрешаем прерывание по захвату и переполнению Т/C 1, переполнению T/C 0, переполнению T/C 2
+  TIMSK  = (1<<TICIE1)|(1<<TOIE2)|(1<<OCIE1A)|(1<<OCIE1B);//разрешаем прерывание по захвату и сравнению А и В Т/C 1, переполнению T/C 2,
+  TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<FOC1A)|(1<<FOC1B); //при совпадении будет устанавливатся низкий уровень и заставляем его установиться прямо сейчас
     
   //инициализируем UART
    uart_init(CBR_9600);
@@ -593,8 +590,8 @@ __C_task void main(void)
                edat.curr_angle = edat.param.min_angle; 
     
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания        
-    __disable_interrupt();
-     ignition_dwell_angle = edat.curr_angle;
+    __disable_interrupt();    
+     ignition_dwell_angle = 0;  //edat.curr_angle;
     __enable_interrupt();                
   
     process_uart_interface(&edat);  //обработка приходящих/уходящих данных последовательного порта

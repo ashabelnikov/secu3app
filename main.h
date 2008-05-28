@@ -2,45 +2,31 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-
 #include "tables.h"
-#include "bootldr.h"
 
-#define ADC_DISCRETE            0.0025       //одна дискрета АЦП в вольтах
+#define EEPROM_PARAM_START           0x002                      //адрес структуры параметров в EEPROM 
 
-#define TSENS_SLOPP             0.01        //наклон прямой датчика температуры вольт/градус
-#define TSENS_ZERO_POINT        2.73        //напряжение на выходе датчика температуры при 0 градусов цельсия
+#define SND_TIMECONST                4
+#define PAR_SAVE_COUNTER             254
 
-#define EEPROM_PARAM_START      0x002       //адрес структуры параметров в EEPROM 
-
-#define SND_TIMECONST           4
-#define PAR_SAVE_COUNTER        254
-
-#define FORCE_MEASURE_TIMEOUT_VALUE 8
-#define ENGINE_STOP_TIMEOUT_VALUE 25
+#define FORCE_MEASURE_TIMEOUT_VALUE  8
+#define ENGINE_STOP_TIMEOUT_VALUE    25
 
 
-//Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке поршня первого цилиндра, то 
+//Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке(t.d.c.) поршня первого цилиндра, то 
 //напротив середины сердечника ДПКВ должен находиться зуб диска синхронизации определенный ниже (считаем против 
 //направления вращения от места выреза).
-#define TEETH_BEFORE_UP         20                                      //количество зубьев после вызеза до в.м.т (18...22)
-#define ANGLE_MULTIPLAYER       40                                      //коэффициент масштабирования углов поворота коленвала  
-#define DEGREES_PER_TEETH       6                                       //количество градусов приходящееся на один зуб диска
-
+#define DPKV_COGS_BEFORE_TDC         20                          //количество зубьев после вызеза до в.м.т (18...22)
+#define DPKV_DEGREES_PER_COG         6                           //количество градусов приходящееся на один зуб диска
 //для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в большую сторону 
 //возможен выход коммутатора из строя. 
-#define IGNITION_TEETH          10                                      //длительность импульса зажигания (в зубьях шкива)
+#define DPKV_IGNITION_PULSE_COGS     10                          //длительность импульса зажигания (в зубьях шкива)
 
-//кол-во значений для усреднения измеряемых величин 
-#define FRQ_AVERAGING           16                                          
-#define T2_RELOAD_VALUE         100
+#define ANGLE_MULTIPLAYER            40                          //коэффициент масштабирования углов поворота коленвала  
 
-//переводит температуру из градусов Цельсия в дискреты АЦП
-#define T_TO_DADC(Tc) ((unsigned int)((TSENS_ZERO_POINT + (Tc*TSENS_SLOPP))/ADC_DISCRETE)) 
-
-
-#define TSCALE_LO_VALUE     T_TO_DADC(-16)                      //-16 градусов самая нижняя точка шкалы температуры (в градусах цельсия)
-#define TSCALE_STEP      ((unsigned int)((11.0*TSENS_SLOPP)/ADC_DISCRETE)) // 11 градусов между узлами интерполяции по горизонтальной оси (в дискретах АЦП)
+#define FRQ_AVERAGING                16                          //кол-во значений для усреднения частоты вращения к.в.
+                                      
+#define TIMER2_RELOAD_VALUE          100
 
 //описывает все входы системы - их производные и интегральные величины
 typedef struct

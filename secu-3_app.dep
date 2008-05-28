@@ -8,7 +8,9 @@
       <name>$PROJ_DIR$\Debug\Exe\secu-3_app.d90</name>
       <inputs>
         <name>$TOOLKIT_DIR$\config\lnkm16s.xcl</name>
-        <name>$PROJ_DIR$\Debug\Obj\crc_lib.r90</name>
+        <name>$PROJ_DIR$\Debug\Obj\adc.r90</name>
+        <name>$PROJ_DIR$\Debug\Obj\crc16.r90</name>
+        <name>$PROJ_DIR$\Debug\Obj\eeprom.r90</name>
         <name>$PROJ_DIR$\Debug\Obj\funconv.r90</name>
         <name>$PROJ_DIR$\Debug\Obj\main.r90</name>
         <name>$PROJ_DIR$\Debug\Obj\uart.r90</name>
@@ -16,13 +18,43 @@
       </inputs>
     </file>
     <file>
-      <name>$PROJ_DIR$\crc_lib.c</name>
+      <name>$PROJ_DIR$\adc.c</name>
       <outputs>
-        <name>$PROJ_DIR$\Debug\Obj\crc_lib.r90</name>
-        <name>$PROJ_DIR$\Debug\List\crc_lib.lst</name>
+        <name>$PROJ_DIR$\Debug\Obj\adc.r90</name>
+        <name>$PROJ_DIR$\Debug\List\adc.lst</name>
       </outputs>
       <inputs>
-        <name>$PROJ_DIR$\crc_lib.h</name>
+        <name>$TOOLKIT_DIR$\INC\inavr.h</name>
+        <name>$TOOLKIT_DIR$\INC\iom16.h</name>
+        <name>$TOOLKIT_DIR$\INC\iomacro.h</name>
+        <name>$PROJ_DIR$\bitmask.h</name>
+        <name>$PROJ_DIR$\adc.h</name>
+        <name>$PROJ_DIR$\main.h</name>
+        <name>$PROJ_DIR$\tables.h</name>
+        <name>$PROJ_DIR$\bootldr.h</name>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\crc16.c</name>
+      <outputs>
+        <name>$PROJ_DIR$\Debug\Obj\crc16.r90</name>
+        <name>$PROJ_DIR$\Debug\List\crc16.lst</name>
+      </outputs>
+      <inputs>
+        <name>$PROJ_DIR$\crc16.h</name>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\eeprom.c</name>
+      <outputs>
+        <name>$PROJ_DIR$\Debug\Obj\eeprom.r90</name>
+        <name>$PROJ_DIR$\Debug\List\eeprom.lst</name>
+      </outputs>
+      <inputs>
+        <name>$PROJ_DIR$\eeprom.h</name>
+        <name>$PROJ_DIR$\bitmask.h</name>
+        <name>$TOOLKIT_DIR$\INC\iom16.h</name>
+        <name>$TOOLKIT_DIR$\INC\iomacro.h</name>
       </inputs>
     </file>
     <file>
@@ -34,6 +66,8 @@
       <inputs>
         <name>$PROJ_DIR$\funconv.h</name>
         <name>$PROJ_DIR$\main.h</name>
+        <name>$PROJ_DIR$\tables.h</name>
+        <name>$PROJ_DIR$\bootldr.h</name>
         <name>$TOOLKIT_DIR$\INC\CLIB\stdlib.h</name>
         <name>$TOOLKIT_DIR$\INC\CLIB\sysmac.h</name>
       </inputs>
@@ -48,18 +82,19 @@
         <name>$TOOLKIT_DIR$\INC\inavr.h</name>
         <name>$TOOLKIT_DIR$\INC\iom16.h</name>
         <name>$TOOLKIT_DIR$\INC\iomacro.h</name>
-        <name>$TOOLKIT_DIR$\INC\CLIB\stdio.h</name>
-        <name>$TOOLKIT_DIR$\INC\CLIB\stdarg.h</name>
-        <name>$TOOLKIT_DIR$\INC\CLIB\sysmac.h</name>
-        <name>$TOOLKIT_DIR$\INC\CLIB\stdlib.h</name>
+        <name>$TOOLKIT_DIR$\INC\CLIB\pgmspace.h</name>
         <name>$TOOLKIT_DIR$\INC\CLIB\string.h</name>
+        <name>$TOOLKIT_DIR$\INC\CLIB\sysmac.h</name>
         <name>$PROJ_DIR$\funconv.h</name>
         <name>$PROJ_DIR$\main.h</name>
-        <name>$PROJ_DIR$\uart.h</name>
         <name>$PROJ_DIR$\tables.h</name>
-        <name>$PROJ_DIR$\boot.h</name>
+        <name>$PROJ_DIR$\bootldr.h</name>
+        <name>$PROJ_DIR$\uart.h</name>
         <name>$PROJ_DIR$\ufcodes.h</name>
-        <name>$PROJ_DIR$\crc_lib.h</name>
+        <name>$PROJ_DIR$\crc16.h</name>
+        <name>$PROJ_DIR$\eeprom.h</name>
+        <name>$PROJ_DIR$\bitmask.h</name>
+        <name>$PROJ_DIR$\adc.h</name>
       </inputs>
     </file>
     <file>
@@ -76,7 +111,10 @@
         <name>$TOOLKIT_DIR$\INC\iomacro.h</name>
         <name>$PROJ_DIR$\uart.h</name>
         <name>$PROJ_DIR$\main.h</name>
+        <name>$PROJ_DIR$\tables.h</name>
+        <name>$PROJ_DIR$\bootldr.h</name>
         <name>$PROJ_DIR$\ufcodes.h</name>
+        <name>$PROJ_DIR$\bitmask.h</name>
       </inputs>
     </file>
     <forcedrebuild>
@@ -85,6 +123,19 @@
   </configuration>
   <configuration>
     <name>Release</name>
+    <file>
+      <name>$PROJ_DIR$\Release\Exe\secu-3_app.a90</name>
+      <inputs>
+        <name>$TOOLKIT_DIR$\config\lnkm16s.xcl</name>
+        <name>$PROJ_DIR$\Release\Obj\adc.r90</name>
+        <name>$PROJ_DIR$\Release\Obj\crc16.r90</name>
+        <name>$PROJ_DIR$\Release\Obj\eeprom.r90</name>
+        <name>$PROJ_DIR$\Release\Obj\funconv.r90</name>
+        <name>$PROJ_DIR$\Release\Obj\main.r90</name>
+        <name>$PROJ_DIR$\Release\Obj\uart.r90</name>
+        <name>$TOOLKIT_DIR$\lib\clib\cl3s-ec-sf.r90</name>
+      </inputs>
+    </file>
     <file>
       <name>$PROJ_DIR$\adc.c</name>
       <outputs>
@@ -132,12 +183,13 @@
         <name>$PROJ_DIR$\Release\List\funconv.lst</name>
       </outputs>
       <inputs>
+        <name>$TOOLKIT_DIR$\INC\CLIB\stdlib.h</name>
+        <name>$TOOLKIT_DIR$\INC\CLIB\sysmac.h</name>
         <name>$PROJ_DIR$\funconv.h</name>
         <name>$PROJ_DIR$\main.h</name>
         <name>$PROJ_DIR$\tables.h</name>
         <name>$PROJ_DIR$\bootldr.h</name>
-        <name>$TOOLKIT_DIR$\INC\CLIB\stdlib.h</name>
-        <name>$TOOLKIT_DIR$\INC\CLIB\sysmac.h</name>
+        <name>$PROJ_DIR$\adc.h</name>
       </inputs>
     </file>
     <file>
@@ -183,19 +235,6 @@
         <name>$PROJ_DIR$\bootldr.h</name>
         <name>$PROJ_DIR$\ufcodes.h</name>
         <name>$PROJ_DIR$\bitmask.h</name>
-      </inputs>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\Release\Exe\secu-3_app.a90</name>
-      <inputs>
-        <name>$TOOLKIT_DIR$\config\lnkm16s.xcl</name>
-        <name>$PROJ_DIR$\Release\Obj\adc.r90</name>
-        <name>$PROJ_DIR$\Release\Obj\crc16.r90</name>
-        <name>$PROJ_DIR$\Release\Obj\eeprom.r90</name>
-        <name>$PROJ_DIR$\Release\Obj\funconv.r90</name>
-        <name>$PROJ_DIR$\Release\Obj\main.r90</name>
-        <name>$PROJ_DIR$\Release\Obj\uart.r90</name>
-        <name>$TOOLKIT_DIR$\lib\clib\cl3s-ec-sf.r90</name>
       </inputs>
     </file>
   </configuration>

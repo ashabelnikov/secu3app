@@ -60,7 +60,7 @@ __interrupt void timer1_compb_isr(void)
 #pragma vector=TIMER1_CAPT_vect
 __interrupt void timer1_capt_isr(void)
 {  
-  static unsigned char sm_state=0;                                //текущее состояние конечного автомата (КА) 
+  static unsigned char sm_state=0;    //текущее состояние конечного автомата (КА) 
   static unsigned int icr_prev;
   static unsigned int period_curr;  
   static unsigned int period_prev; 
@@ -69,103 +69,86 @@ __interrupt void timer1_capt_isr(void)
   static unsigned int current_angle;
   unsigned int diff;
  
-
   period_curr = ICR1 - icr_prev;
   
   //конечный автомат для синхронизации, измерения скорости вращения коленвала, запуска зажигания в нужное время  
   switch(sm_state)
   {
-   case 0:              //состояние синхронизации (поиск синхрометки)
-    if (period_curr > period_prev)
-    {
-    force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;  
-    engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;
-    cog = 1;
-    sm_state = 1;
-    ignition_pulse_teeth+=2;
+   case 0://-----------------поиск синхрометки--------------------------------------------
+     if (period_curr > period_prev)
+     {
+     force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;  
+     engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;
+     cog = 1;
+     sm_state = 1;
+     ignition_pulse_teeth+=2;
     
-    //----------------начинаем отсчет угла опережения---------------------------
-    current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
-    //--------------------------------------------------------------------------
+     //начинаем отсчет угла опережения
+     current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
+     }
+     break;
 
-    }
-    break;
+   case 1: //--------------реализация УОЗ для 1-4-----------------------------------------
+     //прошел зуб - угол до в.м.т. уменьшился на 6 град.
+     current_angle-= ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG;
 
-   case 1:   //диаметральный зуб измерения периода вращения для 2-3
- 
-    //--------------------------------------------------------------------------
-    //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-    current_angle-= ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG;
-    //----------------------------------------------------------------------------
+     diff = current_angle - ignition_dwell_angle;
+     if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
+     {
+     //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+     OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);    
 
-    diff = current_angle - ignition_dwell_angle;
-    if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
-    {//до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+     //сбрасываем флаг прерывания, разрешаем установку линии А в высокий уровень и разрешаем прерывание 
+     SETBIT(TIFR,OCF1A);
+     TCCR1A = (1<<COM1A1)|(1<<COM1A0)|(1<<COM1B1);      
+     }
 
-      OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);  
+     if (cog==2) //диаметральный зуб измерения периода вращения для 2-3
+     {
+     //если было переполнение то устанавливаем максимально возможное время
+     half_turn_period = (period_curr > 1250) ? 0xFFFF : (ICR1 - measure_start_value);             
+     measure_start_value = ICR1;
+     f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
+     adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов        
+     }
+
+     if (cog == 30) //переход в режим реализации УОЗ для 2-3
+     {
+     //начинаем отсчет угла опережения
+     current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
+     sm_state = 2;
+     }
+     break;
+
+   case 2: //--------------реализация УОЗ для 2-3-----------------------------------------
+     //прошел зуб - угол до в.м.т. уменьшился на 6 град.
+     current_angle-= ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG;
+
+     diff = current_angle - ignition_dwell_angle;
+     if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
+     {
+     //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+     OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);  
      
-      //сбрасываем флаг прерывания, разрешаем установку линии B в высокий уровень и разрешаем прерывание 
-      SETBIT(TIFR,OCF1B);
-      TCCR1A = (1<<COM1B1)|(1<<COM1B0)|(1<<COM1A1);        
-    }
-    //-------------------------------------------------------------------------- 
+     //сбрасываем флаг прерывания, разрешаем установку линии B в высокий уровень и разрешаем прерывание 
+     SETBIT(TIFR,OCF1B);
+     TCCR1A = (1<<COM1B1)|(1<<COM1B0)|(1<<COM1A1);        
+     }
 
-    if (cog == 2)
-    {
-    //если было переполнение то устанавливаем максимально возможное время
-    half_turn_period = (period_curr > 1250) ? 0xFFFF : (ICR1 - measure_start_value);             
-    measure_start_value = ICR1;
-    sm_state = 2;
-    f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
-    adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
-    }
-    break;
+     if (cog == 32) //диаметральный зуб измерения периода вращения для 1-4
+     {
+     //если было переполнение то устанавливаем максимально возможное время
+     half_turn_period = (period_curr > 1250) ? 0xFFFF : (ICR1 - measure_start_value);             
+     measure_start_value = ICR1;    
+     f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
+     adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
+     } 
 
-   case 2: //реализация УОЗ для 1-4
-
-    //--------------------------------------------------------------------------
-    //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-    current_angle-= ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG;
-    //----------------------------------------------------------------------------
-
-    diff = current_angle - ignition_dwell_angle;
-    if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
-    {
-      //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-      OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);    
-
-      //сбрасываем флаг прерывания, разрешаем установку линии А в высокий уровень и разрешаем прерывание 
-      SETBIT(TIFR,OCF1A);
-      TCCR1A = (1<<COM1A1)|(1<<COM1A0)|(1<<COM1B1);      
-    }
-    //-------------------------------------------------------------------------- 
-
-
-    //----------------начинаем отсчет угла опережения---------------------------
-    if (cog == 30)
-    {
-    current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
-    }
-    //-------------------------------------------------------------------------- 
-
-
-    if (cog == 32) //диаметральный зуб измерения периода вращения для 2-3
-    {
-    //если было переполнение то устанавливаем максимально возможное время
-    half_turn_period = (period_curr > 1250) ? 0xFFFF : (ICR1 - measure_start_value);             
-    measure_start_value = ICR1;
-    sm_state = 3;
-    f1.new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
-    adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
-    } 
-    break;
-
-   case 3: //реализация УОЗ для 2-3
-    if (cog > 55) //переход в режим поиска синхрометки
-    {
-    sm_state = 0; 
-    }
-    break;
+     if (cog > 55) //переход в режим поиска синхрометки
+     {
+     sm_state = 0; 
+     }
+     break;
   }
     
   if (ignition_pulse_teeth >= (DPKV_IGNITION_PULSE_COGS-1))
@@ -173,7 +156,8 @@ __interrupt void timer1_capt_isr(void)
   
   icr_prev = ICR1;
   period_prev = period_curr * 2;  //двухкратный барьер для селекции синхрометки
-  cog++; ignition_pulse_teeth++; 
+  cog++; 
+  ignition_pulse_teeth++; 
 }
 
 
@@ -531,6 +515,12 @@ __C_task void main(void)
      
   while(1)
   {
+    //обработка приходящих/уходящих данных последовательного порта
+    process_uart_interface(&edat);  
+   
+    //управление сохранением настроек
+    save_param_if_need(&edat);                        
+    
     calculate_instant_freq(&edat);                           
 
     update_buffer_freq(&edat);
@@ -538,14 +528,14 @@ __C_task void main(void)
     average_measured_values(&edat);        
 
     control_engine_units(&edat);
-    
+       
     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
     if (edat.sens.gas)
       edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_gas];    //на газе
     else  
       edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине
     
-    
+    /*
     //КА состояний системы
     switch(mode)
     {
@@ -588,14 +578,13 @@ __C_task void main(void)
                edat.curr_angle = edat.param.max_angle;  
     if (edat.curr_angle < edat.param.min_angle)
                edat.curr_angle = edat.param.min_angle; 
-    
-    //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания        
+    */
+    edat.curr_angle = 0; //TEST!!!
+
+    //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     __disable_interrupt();    
-     ignition_dwell_angle = 0;  //edat.curr_angle;
+     ignition_dwell_angle = edat.curr_angle;
     __enable_interrupt();                
   
-    process_uart_interface(&edat);  //обработка приходящих/уходящих данных последовательного порта
-   
-    save_param_if_need(&edat);    //управление сохранением настроек                    
   }
 }

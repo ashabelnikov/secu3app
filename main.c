@@ -469,6 +469,26 @@ void load_eeprom_params(ecudata* d)
  memcpy(eeprom_parameters_cache,&d->param,sizeof(params));       
 } 
    
+
+//---------------[TEST]------------------------
+const float  K1=0.008654,       K2=0.004688,   K3=0.0;
+const float  B1=-5.19,          B2=7.49,       B3=30;
+const int    N1=600,  N2=3200,  N3=4800;
+
+float func(int it,float tkorr)
+{
+    if (it < N1)   
+        return 0.0;  
+    if (it < N2)
+        return (K1 * it + B1) + tkorr;
+    if (it < N3)
+        return (K2 * it + B2) + tkorr;
+    else
+        return (K3 * it + B3) + tkorr;
+}
+//--------------[/TEST]-------------------------
+
+
       
 __C_task void main(void)
 {
@@ -579,7 +599,10 @@ __C_task void main(void)
     if (edat.curr_angle < edat.param.min_angle)
                edat.curr_angle = edat.param.min_angle; 
     */
-    edat.curr_angle = 0; //TEST!!!
+    
+    //--------------[TEST]-----------------------
+    edat.curr_angle = func(edat.sens.inst_frq, 4.0 ) * ANGLE_MULTIPLAYER;    
+    //--------------[/TEST]----------------------
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     __disable_interrupt();    

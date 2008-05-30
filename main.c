@@ -96,11 +96,11 @@ __interrupt void timer1_capt_isr(void)
      if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
      {
      //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-     OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);    
-
-     //сбрасываем флаг прерывания, разрешаем установку линии А в высокий уровень и разрешаем прерывание 
-     SETBIT(TIFR,OCF1A);
-     TCCR1A = (1<<COM1A1)|(1<<COM1A0)|(1<<COM1B1);      
+     OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);  
+     
+     //сбрасываем флаг прерывания, разрешаем установку линии B в высокий уровень и разрешаем прерывание 
+     SETBIT(TIFR,OCF1B);
+     TCCR1A = (1<<COM1B1)|(1<<COM1B0)|(1<<COM1A1);        
      }
 
      if (cog==2) //диаметральный зуб измерения периода вращения для 2-3
@@ -128,11 +128,11 @@ __interrupt void timer1_capt_isr(void)
      if (diff <= ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2) )
      {
      //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-     OCR1B = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);  
-     
-     //сбрасываем флаг прерывания, разрешаем установку линии B в высокий уровень и разрешаем прерывание 
-     SETBIT(TIFR,OCF1B);
-     TCCR1A = (1<<COM1B1)|(1<<COM1B0)|(1<<COM1A1);        
+     OCR1A = ICR1 + ((unsigned long)diff * (period_curr * 2)) / ((ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * 2);    
+
+     //сбрасываем флаг прерывания, разрешаем установку линии А в высокий уровень и разрешаем прерывание 
+     SETBIT(TIFR,OCF1A);
+     TCCR1A = (1<<COM1A1)|(1<<COM1A0)|(1<<COM1B1);      
      }
 
      if (cog == 32) //диаметральный зуб измерения периода вращения для 1-4
@@ -233,9 +233,15 @@ void control_engine_units(ecudata *d)
   d->ephh_valve=PORTB_Bit0 = ((!d->sens.carb)&&(((d->sens.frequen > d->param.ephh_lot)&&(!d->ephh_valve))||
                              (d->sens.frequen > d->param.ephh_hit)))?0:1;
  
+#ifndef VPSEM_STARTER_BLOCKING
   //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов)
   if (d->sens.inst_frq > d->param.starter_off)
     SETBIT(PORTD,PD7);
+#else
+  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов)
+  //и управление индикацией состояния клапана ЭПХХ (используется выход блокировки стартера) 
+  PORTD_Bit7 = (d->sens.inst_frq > d->param.starter_off)&&(d->ephh_valve)?1:0;
+#endif
  
   if (d->param.tmp_use)
   {

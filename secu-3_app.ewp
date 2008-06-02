@@ -1536,7 +1536,19 @@
     <name>$PROJ_DIR$\adc.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\bootldr.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\crc16.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\crc16.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\dpkv.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\dpkv.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\eeprom.c</name>
@@ -1548,10 +1560,25 @@
     <name>$PROJ_DIR$\funconv.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\main.c</name>
+    <name>$PROJ_DIR$\funconv.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\secu3.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\secu3.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\tables.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\uart.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\uart.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\ufcodes.h</name>
   </file>
 </project>
 

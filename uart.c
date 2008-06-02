@@ -9,61 +9,266 @@
 
 #include <ina90.h>
 #include <iom16.h>
+#include <pgmspace.h>
 #include "uart.h"
 #include "ufcodes.h"
 #include "bitmask.h"
 
-//Дополнительно этот модуль использует глобальные переменные-флажки:
-//  f1.uart_send_busy и f1.uart_recv_busy
+typedef struct
+{
+ char send_mode;
+ unsigned char recv_buf[UART_RECV_BUFF_SIZE];
+ unsigned char send_buf[UART_SEND_BUFF_SIZE];
+ unsigned char send_size;
+ unsigned char send_index;
+ unsigned char recv_size;
+ unsigned char recv_index;
+}UARTSTATE;
 
-
-char snd_mode = SENSOR_DAT;
-char rcv_mode = 0;
-
-UART_recv_buf uart_recv_buf;
-UART_send_buf uart_send_buf;
-
+UARTSTATE uart;
 
 const __flash char hdig[] = "0123456789ABCDEF";
 
 
-#define HTOD(h) ((h<0x3A)?h-'0':h-'A'+10)
+#define HTOD(h) (((h)<0x3A) ? ((h)-'0') : ((h)-'A'+10))
 
-
-void uart_send_packet(void)
-{
-  UDR = '@';                       
-  f1.uart_send_busy = 1;
+//--------вспомогательные функции для построения пакетов-------------
+#define build_fb(src, size) \
+{ \
+ memcpy_P(&uart.send_buf[uart.send_size],(src),(size)); \
+ uart.send_size+=(size); \
 }
+
+#define build_i4h(i) {uart.send_buf[uart.send_size++] = ((i)+0x30);}
+
+void build_i8h(unsigned char i)
+{
+ uart.send_buf[uart.send_size++] = hdig[i/16];    //старший байт HEX числа
+ uart.send_buf[uart.send_size++] = hdig[i%16];    //младший байт HEX числа
+}
+
+void build_i16h(unsigned int i)
+{
+ uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)/16];    //старший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)%16];    //младший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,0)/16];    //старший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,0)%16];    //младший байт HEX числа (младший байт)
+}
+
+//----------вспомагательные функции для распознавания пакетов---------
+#define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
+
+unsigned char recept_i8h(void)
+{
+ unsigned char i8;    
+ i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
+ uart.recv_index++;
+ i8|= HTOD(uart.recv_buf[uart.recv_index]);
+ uart.recv_index++;
+ return i8;
+}
+
+unsigned int recept_i16h(void)
+{
+ unsigned int i16;    
+ SETBYTE(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;          
+ uart.recv_index++;
+ SETBYTE(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));          
+ uart.recv_index++;
+ SETBYTE(i16,0) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;    
+ uart.recv_index++;
+ SETBYTE(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));          
+ uart.recv_index++;
+ return i16;
+}
+
+//--------------------------------------------------------------------
+
+
+void uart_begin_send(void)
+{
+ uart.send_index = 0;
+ UCSRB |= (1<<UDRIE); /* enable UDRE interrupt */ 
+}
+
+
+//строит пакет взависимости от текущего дескриптора и запускает его на передачу. Функция не проверяет
+//занят передатчик или нет, это должно быть сделано до вызова функции
+void uart_send_packet(ecudata* d)  
+{
+ static unsigned char index = 0;
+
+ //служит индексом во время сборки пакетов, а после сборки будет содержать размер пакета
+ uart.send_size = 0; 
+ 
+ //общая часть для всех пакетов
+ uart.send_buf[uart.send_size++] = '@';
+ uart.send_buf[uart.send_size++] = uart.send_mode; 
+   
+  switch(uart.send_mode)
+  {
+    case TEMPER_PAR:   
+       build_i4h(d->param.tmp_use);
+       build_i16h(d->param.vent_on);
+       build_i16h(d->param.vent_off);
+       break;
+    case CARBUR_PAR:   
+       build_i16h(d->param.ephh_lot);
+       build_i16h(d->param.ephh_hit);
+       build_i4h(d->param.carb_invers);
+       break;
+    case IDLREG_PAR:   
+       build_i4h(d->param.idl_regul);
+       build_i16h(d->param.ifac1);
+       build_i16h(d->param.ifac2);
+       build_i16h(d->param.MINEFR);
+       build_i16h(d->param.idl_turns);
+       break;
+    case ANGLES_PAR:   
+       build_i16h(d->param.max_angle);
+       build_i16h(d->param.min_angle);
+       build_i16h(d->param.angle_corr);
+       break;
+   case FUNSET_PAR:   
+       build_i8h(d->param.fn_benzin);
+       build_i8h(d->param.fn_gas);
+       build_i8h(d->param.map_grad);
+       build_i16h(d->param.press_swing);
+       break;
+   case STARTR_PAR:   
+       build_i16h(d->param.starter_off);
+       build_i16h(d->param.smap_abandon);
+       break;
+    case FNNAME_DAT: 
+       build_i8h(TABLES_NUMBER);
+       build_i8h(index);     
+       build_fb(tables[index].name,F_NAME_SIZE);  
+       index++;
+       if (index>=TABLES_NUMBER) index=0;              
+       break;
+    case SENSOR_DAT:
+       build_i16h(d->sens.frequen);   
+       build_i16h(d->sens.map);       
+       build_i16h(d->sens.voltage);   
+       build_i16h(d->sens.temperat);  
+       build_i16h(d->curr_angle);     
+       build_i8h(d->airflow);         
+       build_i4h(d->ephh_valve);     
+       build_i4h(d->sens.carb);      
+       build_i4h(d->sens.gas);       
+       break;
+  }//switch
+
+  //общая часть для всех пакетов
+  uart.send_buf[uart.send_size++] = '\r';
+
+  //буфер передатчика содержит полностью готовый пакет - начинаем передачу
+  uart_begin_send();
+}
+
+//эта функция не проверяет, был или не был принят фрейм, проверка должна быть произведена до вызова функции.
+//Возвращает дескриптор обработанного фрейма
+unsigned char uart_recept_packet(ecudata* d)
+{
+ //буфер приемника содержит дескриптор пакета и данные
+ unsigned char temp; 
+ unsigned char descriptor; 
+   
+ uart.recv_index = 0;
+   
+ descriptor = uart.recv_buf[uart.recv_index++];
+
+// TODO: сделать проверку uart_recv_size для каждого типа пакета.
+// Проверять байты пакетов на принадлежность к шестнадцатерчным символам     
+
+ //интерпретируем данные принятого фрейма в зависимости от дескриптора
+  switch(descriptor)  
+  {
+    case CHANGEMODE:       
+       uart_set_send_mode(uart.recv_buf[uart.recv_index++]);
+       break;     
+
+    case BOOTLOADER:       
+       //передатчик занят. необходимо подождать его освобождения и только потом запускать бутлоадер
+       while (uart_is_sender_busy());                             
+       //если в бутлоадере есть команда "cli", то эту строчку можно убрать
+       __disable_interrupt();              
+       //прыгаем на бутлоадер минуя проверку перемычки
+       boot_loader_start();                     
+       break;
+
+    case TEMPER_PAR:                   
+       d->param.tmp_use   = recept_i4h();
+       d->param.vent_on   = recept_i16h();
+       d->param.vent_off  = recept_i16h();
+       break;
+
+    case CARBUR_PAR:   
+       d->param.ephh_lot  = recept_i16h();
+       d->param.ephh_hit  = recept_i16h();
+       d->param.carb_invers= recept_i4h();
+       break;
+
+    case IDLREG_PAR:   
+       d->param.idl_regul = recept_i4h();
+       d->param.ifac1     = recept_i16h();        
+       d->param.ifac2     = recept_i16h();       
+       d->param.MINEFR    = recept_i16h();       
+       d->param.idl_turns = recept_i16h();    
+       break;
+
+    case ANGLES_PAR:   
+       d->param.max_angle = recept_i16h();    
+       d->param.min_angle = recept_i16h();    
+       d->param.angle_corr= recept_i16h();   
+       break;
+
+    case FUNSET_PAR:   
+       temp = recept_i8h();
+       if (temp < TABLES_NUMBER)
+          d->param.fn_benzin = temp;    
+
+       temp = recept_i8h();
+       if (temp < TABLES_NUMBER)    
+          d->param.fn_gas = temp;
+              
+       d->param.map_grad   = recept_i8h();     
+       d->param.press_swing= recept_i16h();  
+       break;
+
+    case STARTR_PAR:   
+       d->param.starter_off = recept_i16h();  
+       d->param.smap_abandon= recept_i16h();
+       break;
+  }//switch     
+
+ return descriptor;
+}
+
 
 void uart_notify_processed(void)
 {
-  f1.uart_recv_busy = 0;
+  uart.recv_size = 0;
 }
 
 unsigned char uart_is_sender_busy(void)
 {
-  return f1.uart_send_busy;
+  return (uart.send_size > 0);
 }
 
 unsigned char uart_is_packet_received(void)
 {
-  return f1.uart_recv_busy;
+  return (uart.recv_size > 0);
 }
 
 char uart_get_send_mode(void)
 {
- return snd_mode;
+ return uart.send_mode;
 }
 
-char uart_get_recv_mode(void)
+char uart_set_send_mode(char descriptor)
 {
- return rcv_mode;
-}
-
-char uart_set_send_mode(char send_mode)
-{
- return snd_mode = send_mode;
+ return uart.send_mode = descriptor;
 }
 
 void uart_init(unsigned int baud)
@@ -72,558 +277,70 @@ void uart_init(unsigned int baud)
   UBRRH = (unsigned char)(baud>>8);
   UBRRL = (unsigned char)baud;
   UCSRA = 0;                                                  //удвоение не используем 
-  UCSRB=(1<<RXCIE)|(1<<TXCIE)|(1<<RXEN)|(1<<TXEN);            //приемник,передатчик и их прерывания разрешены
-  UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контроля четности
-  f1.uart_send_busy = 0;                                      //передатчик ни чем не озабочен
-  f1.uart_recv_busy = 0;
+  UCSRB=(1<<RXCIE)|(1<<RXEN)|(1<<TXEN);                       //приемник,прерывание по приему и передатчик разрешены
+  UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контроля четности                                      
+  uart.send_size = 0;                                         //передатчик ни чем не озабочен
+  uart.recv_size = 0;                                         //нет принятых данных
+  uart.send_mode = SENSOR_DAT;
 }
 
 
-unsigned char send_i8h(unsigned char i)
-{
-  static unsigned char state=0;
-  static unsigned char ii;    
-  switch(state)
-  {
-    case 0:
-      ii=i;
-      UDR = hdig[ii/16];    //передаем старший байт HEX числа
-      state=1;
-      return state;
-    case 1:  
-      UDR = hdig[ii%16];    //передаем младший байт HEX числа
-      state=0;              //КА в исходное состояние
-      return state;      
-  }
-  return 0;
-}
-
-unsigned char send_i16h(unsigned int i)
-{
-  static unsigned char state=0;
-  static unsigned char il,ih;  
-  switch(state)
-  {
-    case 0:
-      il=GETBYTE(i,0);
-      ih=GETBYTE(i,1);
-      UDR = hdig[ih/16];    //передаем старший байт HEX числа (старший байт)
-      state=1;
-      return state;
-    case 1:  
-      UDR = hdig[ih%16];    //передаем младший байт HEX числа (старший байт)
-      state=2;
-      return state;      
-    case 2:  
-      UDR = hdig[il/16];    //передаем старший байт HEX числа (младший байт)
-      state=3;
-      return state;      
-    case 3:  
-      UDR = hdig[il%16];    //передаем младший байт HEX числа (младший байт)
-      state=0;              //КА в исходное состояние
-      return state;      
-  }
-  return 0;
-}
-
-unsigned char recv_i8h(unsigned char *s)
-{
-  static unsigned char state=0;
-  static unsigned char ii;    
-  unsigned char u=UDR;             //из UDR можно прочитать только один раз
-  switch(state)
-  {
-    case 0:       
-      ii=HTOD(u)<<4;    
-      state++;
-      return 0;
-    case 1:  
-      ii|=HTOD(u);          
-      state=0;              //КА в исходное состояние
-      (*s)++;
-      return ii;      
-  }
-  return 0;
-}
-
-unsigned int recv_i16h(unsigned char *s)
-{
-  static unsigned char state=0;
-  static unsigned int ii;    
-  unsigned char u=UDR;
-  switch(state)
-  {
-    case 0:      
-      SETBYTE(ii,1) = (HTOD(u))<<4;          
-      state++;
-      return 0;
-    case 1:  
-      SETBYTE(ii,1)|=(HTOD(u));          
-      state++;              
-      return 0;      
-    case 2:   
-      SETBYTE(ii,0)=(HTOD(u))<<4;    
-      state++;
-      return 0;
-    case 3:  
-      SETBYTE(ii,0)|=(HTOD(u));          
-      state=0;              //КА в исходное состояние
-      (*s)++;
-      return ii;      
-  }
-  return 0;
-}
-
-
-
-//Обработчик прерывания по передаче байтов через UART
-#pragma vector=USART_TXC_vect
-__interrupt void usart_tx_isr(void)
+//Обработчик прерывания по передаче байтов через UART (регистр данных передатчика пуст)
+#pragma vector=USART_UDRE_vect
+__interrupt void usart_udre_isr(void)
 {       
-static unsigned char state=0;
-static unsigned char i;
- __enable_interrupt();
- switch(snd_mode)
- {     
-   case TEMPER_PAR:  
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:
-        UDR = uart_send_buf.tmp_use+0x30;        
-          state++;
-        break;  
-      case 2:
-        if (!send_i16h(uart_send_buf.vent_on))       
-          state++;
-        break;  
-      case 3:
-        if (!send_i16h(uart_send_buf.vent_off))       
-          state++;
-        break;  
-      case 4: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 5: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }
-     break; 
-     
-  case CARBUR_PAR:  
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:
-        if (!send_i16h(uart_send_buf.ephh_lot))       
-          state++;
-        break;  
-      case 2:
-        if (!send_i16h(uart_send_buf.ephh_hit))       
-          state++;
-        break;  
-      case 3:
-        UDR = uart_send_buf.carb_invers+0x30;        
-          state++;
-        break;  
-      case 4: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 5: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }
-     break;      
-     
-  case IDLREG_PAR:  
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:
-        UDR = uart_send_buf.idl_regul+0x30;         
-        state++;
-        break;  
-      case 2:
-        if (!send_i16h(uart_send_buf.ifac1))       
-          state++;
-        break;  
-      case 3:
-        if (!send_i16h(uart_send_buf.ifac2))       
-          state++;
-        break;  
-      case 4:
-        if (!send_i16h(uart_send_buf.MINEFR))       
-          state++;
-        break;  
-      case 5:
-        if (!send_i16h(uart_send_buf.idl_turns))       
-          state++;
-        break;  
-      case 6: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 7: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }
-     break;      
+ //__enable_interrupt();
 
-    case ANGLES_PAR:  
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:
-        if (!send_i16h(uart_send_buf.max_angle))       
-          state++;
-        break;  
-      case 2:
-        if (!send_i16h(uart_send_buf.min_angle))       
-          state++;
-        break;  
-      case 3:
-        if (!send_i16h(uart_send_buf.angle_corr))       
-          state++;
-        break;  
-      case 4: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 5: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }
-     break;      
-
-   case FUNSET_PAR:  
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:        
-        if (!send_i8h(uart_send_buf.fn_benzin))       
-          state++;
-        break;  
-      case 2:
-        if (!send_i8h(uart_send_buf.fn_gas))       
-          state++;
-        break;  
-      case 3:
-        if (!send_i8h(uart_send_buf.map_grad))       
-          state++;
-        break;  
-      case 4:
-        if (!send_i16h(uart_send_buf.press_swing))       
-          state++;
-        break;  
-      case 5: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 6: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }
-     break;      
-     
-     
-  case STARTR_PAR:  
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:
-        if (!send_i16h(uart_send_buf.starter_off))       
-          state++;
-        break;  
-      case 2:
-        if (!send_i16h(uart_send_buf.smap_abandon))       
-          state++;
-        break;  
-      case 3: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 4: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }
-     break;         
-     
-     
-  case FNNAME_DAT:
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:
-        if (!send_i8h(uart_send_buf.tables_num))       
-          state++;
-        break;  
-      case 2:
-        if (!send_i8h(uart_send_buf.index))       
-          state++;
-        i=0;  
-        break;  
-      case 3: //передаем символы имени семейства
-          UDR=uart_send_buf.name[i++];
-          if (i>=F_NAME_SIZE)
-             state++;             
-        break;          
-      case 4: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 5: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;            
-     }     
-     break;     
-     
-     
-  case SENSOR_DAT:
-     switch(state)
-     {
-      case 0:
-        UDR = snd_mode;   //передаем дескриптор посылки
-        state++;
-        break;
-      case 1:  
-        if (!send_i16h(uart_send_buf.sens.frequen))   //частота вращения коленвала
-          state++;
-        break;    
-      case 2:  
-        if (!send_i16h(uart_send_buf.sens.map))       //абсолютное давление во впускном коллекторе
-          state++;
-        break;    
-      case 3:  
-        if (!send_i16h(uart_send_buf.sens.voltage))   //напряжение в бортовой сети
-          state++;
-        break;    
-      case 4:  
-        if (!send_i16h(uart_send_buf.sens.temperat)) //температура охлаждающей жидкости
-          state++;
-        break;    
-      case 5:  
-        if (!send_i16h(uart_send_buf.curr_angle))   //текущий УОЗ
-          state++;
-        break;            
-      case 6:  
-        if (!send_i8h(uart_send_buf.airflow))       //два символа - расход воздуха
-          state++;
-        break;            
-      case 7:  
-        UDR = uart_send_buf.ephh_valve+0x30;       //один символ - состояние клапана ЭПХХ
-        state++;
-        break;            
-      case 8:  
-        UDR = uart_send_buf.sens.carb+0x30;        //один символ - состояние дроссельной заслонки
-        state++;
-        break;    
-      case 9:  
-        UDR = uart_send_buf.sens.gas+0x30;         //состояние газового клапана
-        state++;
-        break;                        
-      case 10: 
-        UDR = '\r';         //передаем символ - признак конца данных
-        state++;
-        break;
-      case 11: 
-        state=0;          //возвращаем КА в исходное состояние 
-        f1.uart_send_busy=0;   //передатчик готов к передаче новых данных
-        break;    
-     }       
-     break;      
+ if (uart.send_size > 0)
+ {
+  UDR = uart.send_buf[uart.send_index];
+  uart.send_size--;
+  uart.send_index++;
+ }
+ else
+ {//все данные переданы
+  UCSRB &= ~(1<<UDRIE); // disable UDRE interrupt 
  }
 }
 
 
-//Обраюотчик прерывания по приему байтов через UART
 #pragma vector=USART_RXC_vect
 __interrupt void usart_rx_isr()
 {
-  static unsigned char cstate=0,state=0;  
+  static unsigned char state=0;
+  unsigned char chr;
 
-  switch(cstate)
+  //__enable_interrupt();
+  chr = UDR; 
+  switch(state)
   {
     case 0:            //принимаем (ожидаем символ начала посылки)
-      if (UDR=='!')      
-      {
-         cstate++;               
+      if (uart.recv_size!=0) //предыдущий принятый фрейм еще не обработан, а нам уже прислали новый.
+       break;       
+
+      if (chr=='!')   //начало пакета?   
+      {        
+       state = 1;
+       uart.recv_index = 0;               
       }
       break;
-    case 1:           //принимаем дескриптор посылки
-      rcv_mode=UDR;
-      cstate++;
-      state=0;      
-      break;  
-    case 2:           //прием данных посылки
-      switch(rcv_mode)
+
+    case 1:           //прием данных посылки               
+      if (chr=='\r')
+      {             
+       state = 0;       //КА в исходное состояние      
+       uart.recv_size = uart.recv_index; //данные готовы, сохраняем их размер
+      }
+      else
       {
-       case CHANGEMODE:
-         switch(state)
-         {
-           case 0:     //приняли значение нового дескриптора
-             uart_recv_buf.snd_mode = UDR;
-             cstate=3;
-             break;         
-         }       
-         break;   
-      
-      
-       case BOOTLOADER:     //запуск бутлоадера
-         switch(state)
-         {
-           case 0:     
-             if (UDR=='l')             
-               cstate=3;
-             else
-               cstate=0;    //ошибка                                        
-             break;         
-         }       
-         break;   
-                          
-       case TEMPER_PAR:
-         switch(state)
-         {
-           case 0:
-             uart_recv_buf.tmp_use = UDR - 0x30;                
-             state++;
-             break;      
-           case 1:  
-             uart_recv_buf.vent_on=recv_i16h(&state);                
-             break;     
-           case 2:  
-             uart_recv_buf.vent_off=recv_i16h(&cstate);  
-             break;                                                                                                
-         }       
-         break;   
-                  
-                  
-       case CARBUR_PAR:  
-         switch(state)
-         {
-           case 0:  
-             uart_recv_buf.ephh_lot=recv_i16h(&state);                
-             break;     
-           case 1:  
-             uart_recv_buf.ephh_hit=recv_i16h(&state);  
-             break;                                                                                                
-           case 2:
-             uart_recv_buf.carb_invers = UDR - 0x30;                
-             cstate=3;              
-             break;      
-         }            
-         break;               
-
-
-       case IDLREG_PAR:  
-         switch(state)
-         {
-           case 0:
-             uart_recv_buf.idl_regul = UDR - 0x30;                
-             state++;
-             break;      
-           case 1:  
-             uart_recv_buf.ifac1=recv_i16h(&state);                
-             break;     
-           case 2:  
-             uart_recv_buf.ifac2=recv_i16h(&state);  
-             break;                                                                                                
-           case 3:  
-             uart_recv_buf.MINEFR=recv_i16h(&state);  
-             break;                                                                                                
-           case 4:  
-             uart_recv_buf.idl_turns=recv_i16h(&cstate);  
-             break;                                                                                                
-         }         
-         break;               
-
-
-       case ANGLES_PAR: 
-         switch(state)
-         {
-            case 0:  
-             uart_recv_buf.max_angle=recv_i16h(&state);                
-             break;     
-           case 1:  
-             uart_recv_buf.min_angle=recv_i16h(&state);  
-             break;                                                                                                
-           case 2:  
-             uart_recv_buf.angle_corr=recv_i16h(&cstate);  
-             break;                                                                                                
-         }        
-         break;               
-
-         
-       case FUNSET_PAR:  
-         switch(state)
-         {
-           case 0:
-             uart_recv_buf.fn_benzin=recv_i8h(&state);                             
-             break;      
-           case 1:  
-             uart_recv_buf.fn_gas=recv_i8h(&state);                
-             break;     
-           case 2:  
-             uart_recv_buf.map_grad=recv_i8h(&state);  
-             break;                                                                                                
-           case 3:  
-             uart_recv_buf.press_swing=recv_i16h(&cstate);  
-             break;                                                                                                
-         }         
-         break;               
-
-
-       case STARTR_PAR:  
-         switch(state)
-         {
-           case 0:  
-             uart_recv_buf.starter_off=recv_i16h(&state);                
-             break;     
-           case 1:  
-             uart_recv_buf.smap_abandon=recv_i16h(&cstate);  
-             break;                                                                                                
-         }               
-         break;                        
-         
-      }   
-      break;   
-      
-    case 3:  
-       if (UDR=='\r')
-       {             
-         cstate=0;       //КА в исходное состояние      
-         f1.uart_recv_busy=1;  //установили признак готовности данных
-       }    
+       if (uart.recv_index >= UART_RECV_BUFF_SIZE)
+       {
+       //Ошибка: переполнение! - КА в исходное состояние, фрейм нельзя считать принятым!
+       state = 0;                    
+       }
+       else
+        uart.recv_buf[uart.recv_index++] = chr;
+      }    
       break;                   
-  }
-    
+  }  
 }

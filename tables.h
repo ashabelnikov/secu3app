@@ -340,7 +340,7 @@ typedef struct
 //резервные параметры
 #pragma object_attribute=__root
 const params __flash def_param@DEFPARAM_START = 
-{1,0,0,6,6,75,1250,1500,600,110,650,2400,-600,0,800,40,40,10,1484,1476,0};                                         
+{1,0,0,6,6,75,1250,1500,600,110,650,1920,-480,0,800,40,40,10,1484,1476,0};                                         
 
 #pragma object_attribute=__root
 const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;

@@ -11,7 +11,7 @@
 #include <iom16.h>
 #include "bitmask.h"
 #include "adc.h"
-#include "main.h"
+#include "secu3.h"
 
 
 //Дополнительно этот модуль использует глобальные переменные-флажки:
@@ -119,4 +119,15 @@ __interrupt void ADC_isr(void)
       f1.adc_sensors_ready = 1;                
       break; 
  } 
+}
+
+
+//Компенсирует погрешности АЦП (погрешность смещения и передаточная погрешность)
+// adcvalue - значене АЦП для компенсации
+// factor = 2^14 * gainfactor, 
+// correction = 2^14 * (0.5 - offset * gainfactor),
+// 2^16 * realvalue = 2^2 * (adcvalue * factor + correction)
+signed int adc_compensate(signed int adcvalue, signed int factor, signed long correction)
+{
+  return (((((signed long)adcvalue*factor)+correction)<<2)>>16);
 }

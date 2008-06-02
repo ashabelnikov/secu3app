@@ -7,6 +7,9 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
+#ifndef _UFCODES_H_
+#define _UFCODES_H_
+
 #define   CHANGEMODE   'h'
 #define   BOOTLOADER   'i'
 
@@ -19,3 +22,5 @@
 
 #define   FNNAME_DAT   'p'
 #define   SENSOR_DAT   'q'
+
+#endif //_UFCODES_H_

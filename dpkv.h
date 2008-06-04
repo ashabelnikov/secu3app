@@ -12,7 +12,7 @@
 #define DPKV_IGNITION_PULSE_COGS     10                          //длительность импульса зажигания (в зубьях шкива)
 
 //количество зубов которое будет пропускатся при старте перед синхронизацией
-#define DPKV_ON_START_SKIP_COGS      5
+#define DPKV_ON_START_SKIP_COGS      30
 
 //коэффициент масштабирования углов поворота коленвала, фигурирует в вычислениях и операциях деления
 //поэтому он должен быть кратен степени 2
@@ -22,5 +22,9 @@
 void dpkv_init_state(void);
 void dpkv_set_dwell_angle(signed int angle);
 unsigned int dpkv_calculate_instant_freq(void);
+unsigned char dpkv_is_error(void);
+unsigned char dpkv_is_cycle_cutover_r(void);
+void dpkv_reset_error(void);
+void dpkv_set_edge_type(unsigned char edge_type);
 
 #endif //_DPKV_H_

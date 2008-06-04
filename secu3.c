@@ -26,6 +26,8 @@
 #include "dpkv.h"
 
 #define FRQ_AVERAGING                16                          //кол-во значений для усреднения частоты вращения к.в.
+#define FRQ4_AVERAGING               4
+
 #define TIMER2_RELOAD_VALUE          100                         //для 10 мс
 #define EEPROM_PARAM_START           0x002                       //адрес структуры параметров в EEPROM 
 
@@ -49,6 +51,8 @@
 
 #define GET_DEFEEPROM_JUMPER_STATE() (PINC_Bit2)
 
+#define disable_comparator() {ACSR=(1<<ACD);}
+
  
 //--глобальные переменные     
 unsigned char send_packet_interval_counter = 0;
@@ -58,6 +62,8 @@ unsigned char save_param_timeout_counter = 0;
 unsigned char ce_control_time_counter = 0;
 
 unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
+unsigned int freq4_average_buf[FRQ4_AVERAGING];
+
 unsigned char eeprom_parameters_cache[64];
 
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
@@ -86,11 +92,11 @@ __interrupt void timer2_ovf_isr(void)
     engine_stop_timeout_counter--;
 
   //-----------------Check engine---------------------------
-  if (f1.dpkv_error_flag)
+  if (dpkv_is_error())
   {
     ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
-    SET_CE_STATE(1);      
-    f1.dpkv_error_flag = 0;
+    SET_CE_STATE(1);  
+    dpkv_reset_error();        
   }
 
   if (ce_control_time_counter > 0) 
@@ -104,14 +110,17 @@ __interrupt void timer2_ovf_isr(void)
 void update_buffer_freq(ecudata* d)
 {
   static unsigned char frq_ai = FRQ_AVERAGING-1;
+  static unsigned char frq4_ai = FRQ4_AVERAGING-1;
 
-  if ((engine_stop_timeout_counter == 0)||(f1.dpkv_new_engine_cycle_happen))
+  if ((engine_stop_timeout_counter == 0)||(dpkv_is_cycle_cutover_r()))
   {
     //обновляем содержимое буфера усреднения  и значение его индекса
     freq_average_buf[frq_ai] = d->sens.inst_frq;      
     (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--; 
+        
+    freq4_average_buf[frq4_ai] = d->sens.inst_frq;      
+    (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--; 
 
-    f1.dpkv_new_engine_cycle_happen = 0;
     engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;   
   }
 }
@@ -131,12 +140,12 @@ void control_engine_units(ecudata *d)
  
 #ifndef VPSEM_STARTER_BLOCKING
   //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов)
-  if (d->sens.inst_frq > d->param.starter_off)
+  if (d->sens.frequen4 > d->param.starter_off)
     SET_STARTER_BLOCKING_STATE(1);
 #else
   //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов)
   //и управление индикацией состояния клапана ЭПХХ (используется выход блокировки стартера) 
-  SET_STARTER_BLOCKING_STATE( (d->sens.inst_frq > d->param.starter_off)&&(d->ephh_valve) ? 1 : 0);
+  SET_STARTER_BLOCKING_STATE( (d->sens.frequen4 > d->param.starter_off)&&(d->ephh_valve) ? 1 : 0);
 #endif
  
   if (d->param.tmp_use)
@@ -181,6 +190,11 @@ void average_measured_values(ecudata* d)
   for (sum=0,i = 0; i < FRQ_AVERAGING; i++)    //усредняем частоту вращения коленвала
    sum+=freq_average_buf[i];      
   d->sens.frequen=(sum/FRQ_AVERAGING);           
+
+  for (sum=0,i = 0; i < FRQ4_AVERAGING; i++)    //усредняем частоту вращения коленвала
+   sum+=freq4_average_buf[i];      
+  d->sens.frequen4=(sum/FRQ4_AVERAGING);           
+
 }
 
 
@@ -295,6 +309,26 @@ void load_eeprom_params(ecudata* d)
 } 
    
 
+void init_system_timer(void)
+{
+  TCCR2 = (1<<CS22)|(1<<CS21)|(1<<CS20);      //clock = 15.625kHz  
+  TIMSK|= (1<<TOIE2); //разрешаем прерывание по переполнению таймера 2                          
+}
+
+void init_io_ports(void)
+{
+  //конфигурируем порты ввода/вывода
+  PORTA  = 0;   
+  DDRA   = 0;       
+  PORTB  = (1<<PB4)|(1<<PB3)|(1<<PB0);                      //клапан ЭПХХ включен, интерфейс с HIP выключен (CS=1, TEST=1)
+  DDRB   = (1<<DDB4)|(1<<DDB3)|(1<<DDB2)|(1<<DDB1)|(1<<DDB0);   
+  PORTC  = (1<<PC3)|(1<<PC2);
+  DDRC   = 0;  
+  PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
+  DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3);
+}
+
+
 //---------------[TEST]------------------------
 const float  K1=0.008654,       K2=0.004688,   K3=0.0;
 const float  B1=-5.19,          B2=7.49,       B3=30;
@@ -319,43 +353,33 @@ __C_task void main(void)
 {
   unsigned char mode=0;
   ecudata edat; 
-  
-  //конфигурируем порты ввода/вывода
-  PORTA  = 0;   
-  DDRA   = 0;       
-  PORTB  = (1<<PB4)|(1<<PB3)|(1<<PB0);                      //клапан ЭПХХ включен, интерфейс с HIP выключен (CS=1, TEST=1)
-  DDRB   = (1<<DDB4)|(1<<DDB3)|(1<<DDB2)|(1<<DDB1)|(1<<DDB0);   
-  PORTC  = (1<<PC3)|(1<<PC2);
-  DDRC   = 0;  
-  PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
-  DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3);
-  
+    
+  init_io_ports();
+
   if (crc16f(0,CODE_SIZE)!=code_crc)
      SET_CE_STATE(1);                                       //код программы испорчен - зажигаем СЕ
 
   adc_init();
 
   //запрещаем компаратор - он нам не нужен  
-  ACSR=(1<ACD);             
+  disable_comparator();             
 
-  InitialMeasure(&edat);   //проводим несколько циклов измерения датчиков для инициализации данных
+  //проводим несколько циклов измерения датчиков для инициализации данных
+  InitialMeasure(&edat);   
    
-  SET_STARTER_BLOCKING_STATE(0); //снимаем блокировку стартера
-  
-  //конфигурируем таймеры T0 и T1
-  TCCR0  = (1<<CS01)|(1<<CS00);                             //clock = 250kHz
-  TCCR2  = (1<<CS22)|(1<<CS21)|(1<<CS20);                   //clock = 15.625kHz
-  TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       //подавление шума, передний фронт захвата, clock = 250kHz
-  TIMSK  = (1<<TICIE1)|(1<<TOIE2)|(1<<OCIE1A)|(1<<OCIE1B);//разрешаем прерывание по захвату и сравнению А и В Т/C 1, переполнению T/C 2,
-  TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<FOC1A)|(1<<FOC1B); //при совпадении будет устанавливатся низкий уровень и заставляем его установиться прямо сейчас
-    
-  //инициализируем UART
-  uart_init(CBR_9600);
-               
+  //снимаем блокировку стартера
+  SET_STARTER_BLOCKING_STATE(0); 
+     
   //читаем параметры
   load_eeprom_params(&edat);
 
-  dpkv_init_state();
+  init_system_timer();
+  
+  //инициализируем UART
+  uart_init(CBR_9600);
+               
+  dpkv_init_state();  
+  dpkv_set_edge_type(0);
   
   //разрешаем глобально прерывания            
   __enable_interrupt();    

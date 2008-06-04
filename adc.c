@@ -13,10 +13,6 @@
 #include "adc.h"
 #include "secu3.h"
 
-
-//Дополнительно этот модуль использует глобальные переменные-флажки:
-// f1.adc_sensors_ready
-
 typedef struct
 {
  unsigned int map_abuf[MAP_AVERAGING];           //буфер усреднения абсолютного давления
@@ -26,6 +22,7 @@ typedef struct
  unsigned char  map_ai;
  unsigned char  bat_ai;
  unsigned char  tmp_ai;      
+ unsigned char  sensors_ready;                  //датчики обработаны и значения готовы к считыванию
 }adc_state;
 
 adc_state adc;  //переменные состояния АЦП
@@ -51,17 +48,17 @@ void adc_begin_measure(void)
 { 
   //мы не можем запускать новое измерение, если еще не завершилось
   //предыдущее измерение
-  if (!f1.adc_sensors_ready)  
+  if (!adc.sensors_ready)  
     return;
 
-  f1.adc_sensors_ready = 0; 
+  adc.sensors_ready = 0; 
   ADMUX = ADCI_MAP|ADC_VREF_TYPE; 
   SETBIT(ADCSRA,ADSC);
 }  
 
 char adc_is_measure_ready(void)
 {
-  return f1.adc_sensors_ready; 
+  return adc.sensors_ready; 
 }
 
 //инициализация АЦП и его переменных состояния
@@ -77,7 +74,7 @@ void adc_init(void)
  ADCSRA=(1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);     
 
  //модуль АЦП готов к новому измерению
- f1.adc_sensors_ready = 1;
+ adc.sensors_ready = 1;
 }
 
 //прерывание по завершению преобразования АЦП. Измерение значений всех аналоговых датчиков. После запуска
@@ -116,7 +113,7 @@ __interrupt void ADC_isr(void)
       (adc.tmp_ai==0) ? (adc.tmp_ai = TMP_AVERAGING - 1): adc.tmp_ai--;               
 
       ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
-      f1.adc_sensors_ready = 1;                
+      adc.sensors_ready = 1;                
       break; 
  } 
 }

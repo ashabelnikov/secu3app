@@ -933,7 +933,6 @@
         <option>
           <name>CCDefines</name>
           <state>LOW_ENDIAN_DATA_FORMAT</state>
-          <state>VPSEM_STARTER_BLOCKING</state>
         </option>
         <option>
           <name>CCPreprocFile</name>

@@ -13,11 +13,19 @@
 #include "bitmask.h"
 #include "adc.h"
 
-#include "secu3.h"  //только для флагов!
+#include "secu3.h"  
 
 extern unsigned char force_measure_timeout_counter;
 extern unsigned char engine_stop_timeout_counter;
 
+
+typedef struct
+{
+ unsigned char  dpkv_new_engine_cycle_happen:1;      //флаг синхронизации с вращением
+ unsigned char  dpkv_returned_to_gap_search:1;       //признак того что были отсчитаны все зубья и КА вновь был переведен в режим поиска синхрометки
+ unsigned char  dpkv_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
+ unsigned char  dpkv_is_initialized_half_turn_period23:1;
+}dpkv_flags;
 
 typedef struct
 {
@@ -35,7 +43,10 @@ typedef struct
  
 DPKVSTATE dpkv;
 
-//инициализирет структуру данных/состояния ДПКВ 
+//размещаем в свободных регистрах ввода/вывода
+__no_init volatile dpkv_flags f1@0x22;
+
+//инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится 
 void dpkv_init_state(void)
 {
   dpkv.sm_state = 0;
@@ -43,6 +54,18 @@ void dpkv_init_state(void)
   dpkv.ignition_pulse_teeth = DPKV_IGNITION_PULSE_COGS;
   dpkv.half_turn_period = 0xFFFF;                 
   dpkv.ignition_dwell_angle = 0;
+
+  //OC1А(PD5) и OC1В(PD4) должны быть сконфигурированы как выходы
+  DDRD|= (1<<DDD5)|(1<<DDD4); 
+
+  //при совпадении будет устанавливатся низкий уровень и заставляем его установиться прямо сейчас 
+  TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<FOC1A)|(1<<FOC1B); 
+  
+  //подавление шума, передний фронт захвата, clock = 250kHz
+  TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       
+
+  //разрешаем прерывание по захвату и сравнению А и В таймера 1
+  TIMSK|= (1<<TICIE1)|(1<<OCIE1A)|(1<<OCIE1B);
 }
 
 //устанавливает УОЗ для реализации в алгоритме
@@ -67,6 +90,34 @@ unsigned int dpkv_calculate_instant_freq(void)
     return (7500000L)/(period);
   else
     return 0;
+}
+
+//устанавливает тип фронта ДПКВ (0 - отрицательный, 1 - положительный)
+void dpkv_set_edge_type(unsigned char edge_type)
+{
+  if (edge_type)
+    TCCR1B|= (1<<ICES1);
+  else
+    TCCR1B&=~(1<<ICES1);
+}
+
+
+unsigned char dpkv_is_error(void)
+{
+ return f1.dpkv_error_flag;
+}
+
+void dpkv_reset_error(void)
+{
+ f1.dpkv_error_flag = 0;
+}
+
+//эта функция возвращает 1 если был новый цикл зажигания и сразу сбрасывает событие!
+unsigned char dpkv_is_cycle_cutover_r()
+{
+ unsigned char result = f1.dpkv_new_engine_cycle_happen;
+ f1.dpkv_new_engine_cycle_happen = 0;
+ return result;
 }
 
 #pragma vector=TIMER1_COMPA_vect
@@ -103,6 +154,7 @@ __interrupt void timer1_capt_isr(void)
       {
        dpkv.sm_state = 1;
        f1.dpkv_returned_to_gap_search = 0;
+       f1.dpkv_is_initialized_half_turn_period23 = 0;
       }
      break;
 
@@ -118,7 +170,7 @@ __interrupt void timer1_capt_isr(void)
       f1.dpkv_returned_to_gap_search = 0;
      }
 
-     dpkv.cog = 1;
+     dpkv.cog = 0;
      dpkv.sm_state = 2;
      dpkv.ignition_pulse_teeth+=2;
     
@@ -142,10 +194,11 @@ __interrupt void timer1_capt_isr(void)
      TCCR1A = (1<<COM1B1)|(1<<COM1B0)|(1<<COM1A1);        
      }
 
-     if (dpkv.cog==2) //диаметральный зуб измерения периода вращения для 2-3
+     if (dpkv.cog==2) //диаметральный зуб завершения измерения периода вращения для 2-3
      {
      //если было переполнение то устанавливаем максимально возможное время
-     dpkv.half_turn_period = (dpkv.period_curr > 1250) ? 0xFFFF : (ICR1 - dpkv.measure_start_value);             
+     dpkv.half_turn_period = ((dpkv.period_curr > 1250) || !f1.dpkv_is_initialized_half_turn_period23) 
+                             ? 0xFFFF : (ICR1 - dpkv.measure_start_value);             
      dpkv.measure_start_value = ICR1;
      f1.dpkv_new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
      adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов        
@@ -157,6 +210,10 @@ __interrupt void timer1_capt_isr(void)
      dpkv.current_angle = (ANGLE_MULTIPLAYER * DPKV_DEGREES_PER_COG) * (DPKV_COGS_BEFORE_TDC - 1);
      dpkv.sm_state = 3;
      }
+
+     if (dpkv.period_curr > 12500) //обороты опустилисть ниже нижнего порога - двигатель остановился
+       dpkv.sm_state = 0;
+
      break;
 
    case 3: //--------------реализация УОЗ для 2-3-----------------------------------------
@@ -174,12 +231,13 @@ __interrupt void timer1_capt_isr(void)
      TCCR1A = (1<<COM1A1)|(1<<COM1A0)|(1<<COM1B1);      
      }
 
-     if (dpkv.cog == 32) //диаметральный зуб измерения периода вращения для 1-4
+     if (dpkv.cog == 32) //диаметральный зуб завершения измерения периода вращения для 1-4
      {
      //если было переполнение то устанавливаем максимально возможное время
      dpkv.half_turn_period = (dpkv.period_curr > 1250) ? 0xFFFF : (ICR1 - dpkv.measure_start_value);             
      dpkv.measure_start_value = ICR1;    
      f1.dpkv_new_engine_cycle_happen = 1;      //устанавливаем событие цикловой синхронизации 
+     f1.dpkv_is_initialized_half_turn_period23 = 1;
      adc_begin_measure();                 //запуск процесса измерения значений аналоговых входов
      } 
 
@@ -188,9 +246,13 @@ __interrupt void timer1_capt_isr(void)
      dpkv.sm_state = 1;
      f1.dpkv_returned_to_gap_search = 1; 
      }
+
+     if (dpkv.period_curr > 12500) //обороты опустилисть ниже нижнего порога - двигатель остановился
+       dpkv.sm_state = 0;
+
      break;
   }
-    
+   
   if (dpkv.ignition_pulse_teeth >= (DPKV_IGNITION_PULSE_COGS-1))
     TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<FOC1A)|(1<<FOC1B); //конец импульса запуска зажигания 
   

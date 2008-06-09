@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include "funconv.h"
 #include "adc.h"
-#include "dpkv.h"
+#include "ckps.h"
 
 #define TSCALE_LO_VALUE     T_TO_DADC(-16)                      //-16 градусов сама€ нижн€€ точка шкалы температуры (в градусах цельси€)
 #define TSCALE_STEP      ((unsigned int)((11.0*TSENS_SLOPP)/ADC_DISCRETE)) // 11 градусов между узлами интерпол€ции по горизонтальной оси (в дискретах ј÷ѕ)

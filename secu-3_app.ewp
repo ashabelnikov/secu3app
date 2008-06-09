@@ -1538,16 +1538,16 @@
     <name>$PROJ_DIR$\bootldr.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\ckps.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\ckps.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\crc16.c</name>
   </file>
   <file>
     <name>$PROJ_DIR$\crc16.h</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\dpkv.c</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\dpkv.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\eeprom.c</name>

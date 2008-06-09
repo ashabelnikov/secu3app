@@ -23,7 +23,7 @@
 #include "eeprom.h"
 #include "bitmask.h"
 #include "adc.h"
-#include "dpkv.h"
+#include "ckps.h"
 
 #define FRQ_AVERAGING                16                          //кол-во значений для усреднения частоты вращения к.в.
 #define FRQ4_AVERAGING               4

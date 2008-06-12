@@ -92,11 +92,11 @@ __interrupt void timer2_ovf_isr(void)
     engine_stop_timeout_counter--;
 
   //-----------------Check engine---------------------------
-  if (dpkv_is_error())
+  if (ckps_is_error())
   {
     ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
     SET_CE_STATE(1);  
-    dpkv_reset_error();        
+    ckps_reset_error();        
   }
 
   if (ce_control_time_counter > 0) 
@@ -112,7 +112,7 @@ void update_buffer_freq(ecudata* d)
   static unsigned char frq_ai = FRQ_AVERAGING-1;
   static unsigned char frq4_ai = FRQ4_AVERAGING-1;
 
-  if ((engine_stop_timeout_counter == 0)||(dpkv_is_cycle_cutover_r()))
+  if ((engine_stop_timeout_counter == 0)||(ckps_is_cycle_cutover_r()))
   {
     //обновляем содержимое буфера усреднения  и значение его индекса
     freq_average_buf[frq_ai] = d->sens.inst_frq;      
@@ -378,8 +378,9 @@ __C_task void main(void)
   //инициализируем UART
   uart_init(CBR_9600);
                
-  dpkv_init_state();  
-  dpkv_set_edge_type(0);
+  ckps_init_state();  
+  ckps_set_edge_type(0);
+  ckps_set_ignition_cogs(10);
   
   //разрешаем глобально прерывания            
   __enable_interrupt();    
@@ -392,7 +393,7 @@ __C_task void main(void)
     //управление сохранением настроек
     save_param_if_need(&edat);                        
     
-    edat.sens.inst_frq = dpkv_calculate_instant_freq();                           
+    edat.sens.inst_frq = ckps_calculate_instant_freq();                           
 
     update_buffer_freq(&edat);
 
@@ -456,6 +457,6 @@ __C_task void main(void)
     //--------------[/TEST]----------------------
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
-    dpkv_set_dwell_angle(edat.curr_angle);  
+    ckps_set_dwell_angle(edat.curr_angle);  
   }
 }

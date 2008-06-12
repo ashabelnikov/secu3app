@@ -6,9 +6,9 @@
 //направления вращения от места выреза).
 #define CKPS_COGS_BEFORE_TDC         20                          //количество зубьев после вызеза до в.м.т (18...22)
 #define CKPS_DEGREES_PER_COG         6                           //количество градусов приходящееся на один зуб диска
-//для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в большую сторону 
+//для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в меньшую сторону 
 //возможен выход коммутатора из строя.  Если соединять два выхода вместе для одного коммутатора, то необходимо ставить
-//значение 10, если двухканальный режим то 20.
+//значение 10, если двухканальный режим то 40.
 #define CKPS_IGNITION_PULSE_COGS     10                          //длительность импульса зажигания (в зубьях шкива)
 
 //количество зубов которое будет пропускатся при старте перед синхронизацией
@@ -19,12 +19,13 @@
 #define ANGLE_MULTIPLAYER            32                           
 
 
-void dpkv_init_state(void);
-void dpkv_set_dwell_angle(signed int angle);
-unsigned int dpkv_calculate_instant_freq(void);
-unsigned char dpkv_is_error(void);
-unsigned char dpkv_is_cycle_cutover_r(void);
-void dpkv_reset_error(void);
-void dpkv_set_edge_type(unsigned char edge_type);
+void ckps_init_state(void);
+void ckps_set_dwell_angle(signed int angle);
+unsigned int ckps_calculate_instant_freq(void);
+unsigned char ckps_is_error(void);
+unsigned char ckps_is_cycle_cutover_r(void);
+void ckps_reset_error(void);
+void ckps_set_edge_type(unsigned char edge_type);
+void ckps_set_ignition_cogs(unsigned char cogs);
 
 #endif //_CKPS_H_

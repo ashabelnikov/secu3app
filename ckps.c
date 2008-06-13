@@ -38,6 +38,7 @@ typedef struct
  unsigned char  ckps_returned_to_gap_search:1;       //признак того что были отсчитаны все зубья и КА вновь был переведен в режим поиска синхрометки
  unsigned char  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
  unsigned char  ckps_is_initialized_half_turn_period23:1;
+ unsigned char  ckps_delay_prepared:1;
 }ckps_flags;
 
 typedef struct
@@ -198,6 +199,7 @@ __interrupt void timer1_capt_isr(void)
       ckps.sm_state = 2;
       ckps.ignition_pulse_cogs_14+=2;
       ckps.ignition_pulse_cogs_23+=2;
+      f1.ckps_delay_prepared = 0;
     
       //начинаем отсчет угла опережения
       ckps.current_angle = (ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * (CKPS_COGS_BEFORE_TDC - 1);
@@ -208,16 +210,20 @@ __interrupt void timer1_capt_isr(void)
      //прошел зуб - угол до в.м.т. уменьшился на 6 град.
      ckps.current_angle-= ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG;
 
-     diff = ckps.current_angle - ckps.ignition_dwell_angle;
-     if (diff <= ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * 2) )
+     if (!f1.ckps_delay_prepared)
      {
-      //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-      OCR1B = GetICR() + ((unsigned long)diff * (ckps.period_curr/* * 2*/)) / ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG)/* * 2*/);  
+      diff = ckps.current_angle - ckps.ignition_dwell_angle;
+      if (diff <= ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * 2) )
+      {
+       //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+       OCR1B = GetICR() + ((unsigned long)diff * (ckps.period_curr/* * 2*/)) / ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG)/* * 2*/);  
      
-      //сбрасываем флаг прерывания, включаем режим установки линии B в высокий уровень при совпадении
-      SETBIT(TIFR,OCF1B);
-      TCCR1A|= (1<<COM1B1)|(1<<COM1B0);     
-      ckps.ignition_pulse_cogs_14 = 0;   
+       //сбрасываем флаг прерывания, включаем режим установки линии B в высокий уровень при совпадении
+       SETBIT(TIFR,OCF1B);
+       TCCR1A|= (1<<COM1B1)|(1<<COM1B0);     
+       ckps.ignition_pulse_cogs_14 = 0;   
+      }
+     f1.ckps_delay_prepared = 1;
      }
 
      if (ckps.cog==2) //диаметральный зуб завершения измерения периода вращения для 2-3
@@ -235,6 +241,7 @@ __interrupt void timer1_capt_isr(void)
       //начинаем отсчет угла опережения
       ckps.current_angle = (ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * (CKPS_COGS_BEFORE_TDC - 1);
       ckps.sm_state = 3;
+      f1.ckps_delay_prepared = 0;
      }
 
      if (ckps.period_curr > 12500) //обороты опустилисть ниже нижнего порога - двигатель остановился
@@ -246,16 +253,20 @@ __interrupt void timer1_capt_isr(void)
      //прошел зуб - угол до в.м.т. уменьшился на 6 град.
      ckps.current_angle-= ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG;
 
-     diff = ckps.current_angle - ckps.ignition_dwell_angle;
-     if (diff <= ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * 2) )
+     if (!f1.ckps_delay_prepared)
      {
-      //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-      OCR1A = GetICR() + ((unsigned long)diff * (ckps.period_curr/* * 2*/)) / ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) /** 2*/);    
+      diff = ckps.current_angle - ckps.ignition_dwell_angle;
+      if (diff <= ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * 2) )
+      {
+       //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+       OCR1A = GetICR() + ((unsigned long)diff * (ckps.period_curr/* * 2*/)) / ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) /** 2*/);    
 
-      //сбрасываем флаг прерывания, включаем режим установки линии А в высокий уровень при совпадении
-      SETBIT(TIFR,OCF1A);
-      TCCR1A|= (1<<COM1A1)|(1<<COM1A0);      
-      ckps.ignition_pulse_cogs_23 = 0;   
+       //сбрасываем флаг прерывания, включаем режим установки линии А в высокий уровень при совпадении
+       SETBIT(TIFR,OCF1A);
+       TCCR1A|= (1<<COM1A1)|(1<<COM1A0);      
+       ckps.ignition_pulse_cogs_23 = 0;   
+      }
+     f1.ckps_delay_prepared = 1;
      }
 
      if (ckps.cog == 32) //диаметральный зуб завершения измерения периода вращения для 1-4
@@ -272,6 +283,7 @@ __interrupt void timer1_capt_isr(void)
      {
       ckps.sm_state = 1;
       f1.ckps_returned_to_gap_search = 1; 
+      f1.ckps_delay_prepared = 0;
      }
 
      if (ckps.period_curr > 12500) //обороты опустилисть ниже нижнего порога - двигатель остановился

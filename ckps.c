@@ -15,30 +15,26 @@
 
 #include "secu3.h"  
 
-// (c < p*2.5)&&(c > p*1.5)
+/* (c < p*2.5)&&(c > p*1.5) */
 //#define CKPS_CHECK_FOR_BAD_GAP(c,p) (((c) < (((p) << 1) + ((p) >> 1))) && ((c) > ((p) + ((p) >> 1))))
 
-// p * 2, двухкратный барьер для селекции синхрометки
+/* p * 2, двухкратный барьер для селекции синхрометки*/
 //#define CKPS_GAP_BARRIER(p) ((p) * 2)               
 
-// p * 2.5
+/* p * 2.5,  барьер для селекции синхрометки = 2.5 */
 #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p)>>1))  
 
 #define GetICR() (ICR1)
 //#define GetICR() ((ICR1 >> 8)||(ICR1 << 8))
 
-
-extern unsigned char force_measure_timeout_counter;
-extern unsigned char engine_stop_timeout_counter;
-
-
 typedef struct
 {
- unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением
- unsigned char  ckps_returned_to_gap_search:1;       //признак того что были отсчитаны все зубья и КА вновь был переведен в режим поиска синхрометки
- unsigned char  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
- unsigned char  ckps_is_initialized_half_turn_period23:1;
- unsigned char  ckps_delay_prepared:1;
+  unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением
+  unsigned char  ckps_returned_to_gap_search:1;       //признак того что были отсчитаны все зубья и КА вновь был переведен в режим поиска синхрометки
+  unsigned char  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
+  unsigned char  ckps_is_initialized_half_turn_period23:1;
+  unsigned char  ckps_delay_prepared:1;
+  unsigned char  ckps_gap_occured:1;
 }ckps_flags;
 
 typedef struct
@@ -138,8 +134,22 @@ void ckps_reset_error(void)
 //эта функция возвращает 1 если был новый цикл зажигания и сразу сбрасывает событие!
 unsigned char ckps_is_cycle_cutover_r()
 {
- unsigned char result = f1.ckps_new_engine_cycle_happen;
+ unsigned char result;
+  __disable_interrupt();
+ result = f1.ckps_new_engine_cycle_happen;
  f1.ckps_new_engine_cycle_happen = 0;
+  __enable_interrupt();                
+ return result;
+}
+
+//эта функция возвращает 1 если произошло изменение положения коленвала на один оборот и сразу сбрасывает событие
+unsigned char ckps_is_rotation_cutover_r(void)
+{
+ unsigned char result;
+  __disable_interrupt();
+ result = f1.ckps_gap_occured;
+ f1.ckps_gap_occured = 0;
+  __enable_interrupt();                
  return result;
 }
 
@@ -175,6 +185,7 @@ __interrupt void timer1_capt_isr(void)
   switch(ckps.sm_state)
   {
    case 0://----------------пусковой режим (пропускаем несколько зубов)------------------- 
+     f1.ckps_gap_occured = 0;
      if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
       {
        ckps.sm_state = 1;
@@ -186,8 +197,8 @@ __interrupt void timer1_capt_isr(void)
    case 1://-----------------поиск синхрометки--------------------------------------------
      if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
      {
-      force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;  
-      engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;
+      f1.ckps_gap_occured = 1; //устанавливаем событие нахождения синхрометки
+
       if (f1.ckps_returned_to_gap_search)
       {
        if ((ckps.cog != 58)/*||CKPS_CHECK_FOR_BAD_GAP(ckps.period_curr,ckps.period_prev)*/)

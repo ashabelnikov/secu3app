@@ -10,6 +10,7 @@
 #include "eeprom.h"
 #include "bitmask.h"
 #include <iom16.h>
+#include <inavr.h>
 
 
 //Описывает информацию необходимую для сохранения данных в EEPROM
@@ -74,4 +75,23 @@ __interrupt void ee_ready_isr(void)
       eewd.eews = 0;
       break;      
   }//switch  
+}
+
+
+void eeprom_read(void* sram_dest, int eeaddr, unsigned int size)
+{
+  unsigned char _t;
+  unsigned char *dest = (unsigned char*)sram_dest;  
+   do
+   {
+     _t=__save_interrupt();
+     __disable_interrupt();
+     __EEGET(*dest,eeaddr);
+     __restore_interrupt(_t);
+
+     eeaddr++;
+     dest++;
+   }while(--size); 
+
+   EEAR=0x000;      
 }

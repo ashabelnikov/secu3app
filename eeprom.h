@@ -9,6 +9,10 @@ void eeprom_start_wr_data(unsigned int eeprom_addr, unsigned char* sram_addr, un
 
 //возвращает не 0 если в текущий момент никакая операция не выполняется
 unsigned char eeprom_is_idle(void);
+
+//читает указанный блок данных из EEPROM
+void eeprom_read(void* sram_dest, int eeaddr, unsigned int size);
+
 //=================================================================
 
 

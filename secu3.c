@@ -30,6 +30,7 @@
 
 #define TIMER2_RELOAD_VALUE          100                         //для 10 мс
 #define EEPROM_PARAM_START           0x002                       //адрес структуры параметров в EEPROM 
+#define EEPROM_ECUERRORS_START       (EEPROM_PARAM_START+(sizeof(params)))
 
 //включает/выключает лампу Check Engine  
 #define SET_CE_STATE(s)  {PORTB_Bit2 = s;}
@@ -66,6 +67,73 @@ unsigned int freq4_average_buf[FRQ4_AVERAGING];
 
 unsigned char eeprom_parameters_cache[64];
 
+//-------------------------------------------------------------
+unsigned int ecuerrors;
+
+//определяем биты ошибок
+#define ECUERROR_CKPS_MALFUNCTION     0
+#define ECUERROR_EEPROM_PARAM_BROKEN  1
+#define ECUERROR_PROGRAM_CODE_BROKEN  2
+
+//операции над ошибками
+#define SET_ECUERROR(error)   SETBIT(ecuerrors,error)
+#define CLEAR_ECUERROR(error) CLEARBIT(ecuerrors,error)
+//-------------------------------------------------------------
+
+
+//При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
+//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности. 
+void check_engine(void)
+{
+  unsigned int temp_errors;
+  static unsigned int merged_errors = 0; //кеширует ошибки для сбережения ресурса EEPROM
+  static unsigned int write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс!
+  static unsigned char need_to_save = 0; 
+
+  //если была ошибка ДПКВ то устанавливаем бит соответствующей ошибки
+  if (ckps_is_error())
+  {
+    SET_ECUERROR(ECUERROR_CKPS_MALFUNCTION);
+    ckps_reset_error();        
+  }
+  else
+  {
+    CLEAR_ECUERROR(ECUERROR_CKPS_MALFUNCTION);  
+  }
+
+  //если есть хотя бы одна ошибка - зажигаем СЕ
+  if (ecuerrors!=0)
+  {
+   ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
+   SET_CE_STATE(1);  
+  }
+
+  temp_errors = (merged_errors | ecuerrors);
+  if (temp_errors!=merged_errors) //появилась ли ошибка которой нет в merged_errors?
+  {
+   //так как на момент возникновения новой ошибки EEPROM может быть занято (например сохранением параметров),
+   //то необходимо установить только признак, который будет оставаться установленным до тех пор пака EEPROM
+   //не освободится и ошибки не будут сохранены. 
+   need_to_save = 1;
+  }
+
+  merged_errors = temp_errors;
+
+  //Если EEPROM не занято и есть новая ошибка. То необходимо сохранить новую ошибку.
+  //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если 
+  //она еще не была сохранена. Для этого производится чтение и сравнение.  
+  if (eeprom_is_idle() && need_to_save)
+  {
+   eeprom_read(&temp_errors,EEPROM_ECUERRORS_START,sizeof(unsigned int));
+   write_errors = temp_errors | merged_errors; 
+   if (write_errors!=temp_errors)    
+    eeprom_start_wr_data(EEPROM_ECUERRORS_START,(unsigned char*)&write_errors,sizeof(unsigned int));      
+   need_to_save = 0;
+  }
+}
+
+
+
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
 //Вызывается каждые 10мс
 #pragma vector=TIMER2_OVF_vect
@@ -91,14 +159,17 @@ __interrupt void timer2_ovf_isr(void)
   if (engine_stop_timeout_counter > 0)
     engine_stop_timeout_counter--;
 
-  //-----------------Check engine---------------------------
-  if (ckps_is_error())
+  if (ckps_is_rotation_cutover_r())
   {
-    ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
-    SET_CE_STATE(1);  
-    ckps_reset_error();        
+    engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;   
+    force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;
+
+    // индицирование этих ошибок можно прекращать при начале вращения двигателя или N-оборотов...
+    //CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
+    //CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
   }
 
+  //-----------------Check engine---------------------------
   if (ce_control_time_counter > 0) 
     ce_control_time_counter--;
   else 
@@ -112,9 +183,9 @@ void update_buffer_freq(ecudata* d)
   static unsigned char frq_ai = FRQ_AVERAGING-1;
   static unsigned char frq4_ai = FRQ4_AVERAGING-1;
 
+    //обновляем содержимое буфера усреднения  и значение его индекса
   if ((engine_stop_timeout_counter == 0)||(ckps_is_cycle_cutover_r()))
   {
-    //обновляем содержимое буфера усреднения  и значение его индекса
     freq_average_buf[frq_ai] = d->sens.inst_frq;      
     (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--; 
         
@@ -262,50 +333,48 @@ void save_param_if_need(ecudata* d)
     //текущие и сохраненные параметры отличаются?
     if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE)) 
     {
+    //мы не можем начать сохранение параметров, так как EEPROM на данный момент занято - сохранение 
+    //откладывается и будет осуществлено когда EEPROM освободится и будет вновь вызвана эта функция.
+    if (!eeprom_is_idle())
+      return;
+
      memcpy(eeprom_parameters_cache,&d->param,sizeof(params));  
      ((params*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
      eeprom_start_wr_data(EEPROM_PARAM_START,eeprom_parameters_cache,sizeof(params));
+     
+     //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
+     //записаны новые параметры с корректной контрольной суммой 
+     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN); 
     }
-   save_param_timeout_counter = SAVE_PARAM_TIMEOUT_VALUE;
+    save_param_timeout_counter = SAVE_PARAM_TIMEOUT_VALUE;
   }
 }
-
 
 //загружает параметры из EEPROM, проверяет целостность данных и если они испорчены то
 //берет резервную копию из FLASH.
 void load_eeprom_params(ecudata* d)
 {
- unsigned char* e = (unsigned char*)&d->param;
- int count=sizeof(params);
- int adr=EEPROM_PARAM_START;
- 
  if (GET_DEFEEPROM_JUMPER_STATE())
  { 
-   //загружаем параметры из EEPROM, а затем проверяем целостность
-   do
-   {
-     __EEGET(*e,adr);
-     adr++;
-     e++;
-   }while(--count); 
- 
-   EEAR=0x000;      
- 
-   //при подсчете контрольной суммы не учитываем байты самой контрольной суммы
+   //Загружаем параметры из EEPROM, а затем проверяем целостность.
+   //При подсчете контрольной суммы не учитываем байты самой контрольной суммы
    //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
+   eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params));  
+   
    if (crc16((unsigned char*)&d->param,(sizeof(params)-PAR_CRC_SIZE))!=d->param.crc)
    {
      memcpy_P(&d->param,&def_param,sizeof(params));
+     SET_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
    }
+   
+   //инициализируем кеш параметров, иначе после старта программы произойдет ненужное 
+   //их сохранение. 
+   memcpy(eeprom_parameters_cache,&d->param,sizeof(params));         
  }
  else
- { //перемычка закрыта - загружаем дефаултные параметры
+ { //перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены    
    memcpy_P(&d->param,&def_param,sizeof(params)); 
  }
-
- //инициализируем кеш параметров, иначе после страта программы произойдет ненужное 
- //их сохранение. 
- memcpy(eeprom_parameters_cache,&d->param,sizeof(params));       
 } 
    
 
@@ -320,7 +389,7 @@ void init_io_ports(void)
   //конфигурируем порты ввода/вывода
   PORTA  = 0;   
   DDRA   = 0;       
-  PORTB  = (1<<PB4)|(1<<PB3)|(1<<PB0);                      //клапан ЭПХХ включен, интерфейс с HIP выключен (CS=1, TEST=1)
+  PORTB  = (1<<PB2)|(1<<PB4)|(1<<PB3)|(1<<PB0);             //CE горит(для проверки), клапан ЭПХХ включен, интерфейс с HIP выключен (CS=1, TEST=1)
   DDRB   = (1<<DDB4)|(1<<DDB3)|(1<<DDB2)|(1<<DDB1)|(1<<DDB0);   
   PORTC  = (1<<PC3)|(1<<PC2);
   DDRC   = 0;  
@@ -357,7 +426,9 @@ __C_task void main(void)
   init_io_ports();
 
   if (crc16f(0,CODE_SIZE)!=code_crc)
-     SET_CE_STATE(1);                                       //код программы испорчен - зажигаем СЕ
+  { //код программы испорчен - зажигаем СЕ
+    SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 
+  }
 
   adc_init();
 
@@ -377,16 +448,21 @@ __C_task void main(void)
   
   //инициализируем UART
   uart_init(CBR_9600);
-               
+  
+  //инициализируем модуль ДПКВ             
   ckps_init_state();  
   ckps_set_edge_type(0);
   ckps_set_ignition_cogs(10);
   
   //разрешаем глобально прерывания            
   __enable_interrupt();    
-     
+
+  //------------------------------------------------------------------------     
   while(1)
   {
+    //управление фиксированием и индицированием возникающих ошибок
+    check_engine();
+
     //обработка приходящих/уходящих данных последовательного порта
     process_uart_interface(&edat);  
    
@@ -459,4 +535,5 @@ __C_task void main(void)
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  
   }
+  //------------------------------------------------------------------------     
 }

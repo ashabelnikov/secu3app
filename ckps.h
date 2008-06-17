@@ -20,12 +20,15 @@
 
 
 void ckps_init_state(void);
-void ckps_set_dwell_angle(signed int angle);
-unsigned int ckps_calculate_instant_freq(void);
-unsigned char ckps_is_error(void);
-unsigned char ckps_is_cycle_cutover_r(void);
-void ckps_reset_error(void);
 void ckps_set_edge_type(unsigned char edge_type);
 void ckps_set_ignition_cogs(unsigned char cogs);
+
+void ckps_set_dwell_angle(signed int angle);
+unsigned int ckps_calculate_instant_freq(void);
+
+unsigned char ckps_is_error(void);
+void ckps_reset_error(void);
+unsigned char ckps_is_cycle_cutover_r(void);
+unsigned char ckps_is_rotation_cutover_r(void);
 
 #endif //_CKPS_H_

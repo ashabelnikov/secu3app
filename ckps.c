@@ -233,8 +233,8 @@ __interrupt void timer1_capt_isr(void)
        SETBIT(TIFR,OCF1B);
        TCCR1A|= (1<<COM1B1)|(1<<COM1B0);     
        ckps.ignition_pulse_cogs_14 = 0;   
+       f1.ckps_delay_prepared = 1;
       }
-     f1.ckps_delay_prepared = 1;
      }
 
      if (ckps.cog==2) //диаметральный зуб завершения измерения периода вращения для 2-3
@@ -276,8 +276,8 @@ __interrupt void timer1_capt_isr(void)
        SETBIT(TIFR,OCF1A);
        TCCR1A|= (1<<COM1A1)|(1<<COM1A0);      
        ckps.ignition_pulse_cogs_23 = 0;   
+       f1.ckps_delay_prepared = 1;
       }
-     f1.ckps_delay_prepared = 1;
      }
 
      if (ckps.cog == 32) //диаметральный зуб завершения измерения периода вращения для 1-4

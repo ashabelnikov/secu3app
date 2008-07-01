@@ -1,5 +1,5 @@
 
-      SECU-3 Application open source software
+      SECU-3 Application software
 
 Created using IAR Embedded Workbench for Atmel AVR
 

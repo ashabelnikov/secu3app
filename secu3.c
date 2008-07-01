@@ -233,25 +233,28 @@ void control_engine_units(ecudata *d)
 }
 
 
-//усреднение измеряемых величин используя текущие значения буферов усреднения
+//усреднение измеряемых величин используя текущие значения буферов усреднения, компенсация погрешностей
 void average_measured_values(ecudata* d)
 {     
   unsigned char i;unsigned long sum;       
   ADCSRA&=~((1<<ADIF)|(1<<ADIE));             //запрещаем прерывание от АЦП не сбрасывая флаг прерывания
             
   for (sum=0,i = 0; i < MAP_AVERAGING; i++)
-   sum+=adc_get_map_value(i);      
-  d->sens.map=(sum/MAP_AVERAGING)*2; 
+   sum+=adc_get_map_value(i);       
+  d->sens.map_raw = adc_compensate((sum/MAP_AVERAGING)*2,d->param.map_adc_factor,d->param.map_adc_correction); 
+  d->sens.map = map_adc_to_kpa(d->sens.map_raw);
           
   for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
    sum+=adc_get_ubat_value(i);      
-  d->sens.voltage=(sum/BAT_AVERAGING)*6; 
-       
+  d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING)*6,d->param.ubat_adc_factor,d->param.ubat_adc_correction);; 
+  d->sens.voltage = ubat_adc_to_v(d->sens.voltage_raw);  
+     
   if (d->param.tmp_use) 
   {       
    for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
     sum+=adc_get_temp_value(i);      
-   d->sens.temperat=((sum/TMP_AVERAGING)*5)/3; 
+   d->sens.temperat_raw = adc_compensate((5*(sum/TMP_AVERAGING))/3,d->param.temp_adc_factor,d->param.temp_adc_correction); 
+   d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
   }  
   else             //ДТОЖ не используется
    d->sens.temperat=0;

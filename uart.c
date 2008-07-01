@@ -55,6 +55,13 @@ void build_i16h(unsigned int i)
  uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,0)%16];    //младший байт HEX числа (младший байт)
 }
 
+
+void build_i32h(unsigned long i)
+{
+ build_i16h(i>>16);
+ build_i16h(i);
+}
+
 //----------вспомагательные функции для распознавания пакетов---------
 #define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
 
@@ -80,6 +87,16 @@ unsigned int recept_i16h(void)
  SETBYTE(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));          
  uart.recv_index++;
  return i16;
+}
+
+
+unsigned long recept_i32h(void)
+{
+ unsigned long i = 0;
+ i = recept_i16h();
+ i = i << 16;
+ i|=recept_i16h();
+ return i;
 }
 
 //--------------------------------------------------------------------
@@ -157,6 +174,20 @@ void uart_send_packet(ecudata* d)
        build_i4h(d->sens.carb);      
        build_i4h(d->sens.gas);       
        break;
+   case ADCCOR_PAR:   
+       build_i16h(d->param.map_adc_factor);
+       build_i32h(d->param.map_adc_correction);
+       build_i16h(d->param.ubat_adc_factor);
+       build_i32h(d->param.ubat_adc_correction);
+       build_i16h(d->param.temp_adc_factor);
+       build_i32h(d->param.temp_adc_correction);
+       break;
+   case ADCRAW_DAT:
+       build_i16h(d->sens.map_raw);       
+       build_i16h(d->sens.voltage_raw);   
+       build_i16h(d->sens.temperat_raw);  
+       break;
+   
   }//switch
 
   //общая часть для всех пакетов
@@ -239,6 +270,15 @@ unsigned char uart_recept_packet(ecudata* d)
     case STARTR_PAR:   
        d->param.starter_off = recept_i16h();  
        d->param.smap_abandon= recept_i16h();
+       break;
+
+    case ADCCOR_PAR:
+       d->param.map_adc_factor     = recept_i16h();
+       d->param.map_adc_correction = recept_i32h();
+       d->param.ubat_adc_factor    = recept_i16h();
+       d->param.ubat_adc_correction= recept_i32h();
+       d->param.temp_adc_factor    = recept_i16h();
+       d->param.temp_adc_correction= recept_i32h();     
        break;
   }//switch     
 

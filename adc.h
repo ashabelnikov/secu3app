@@ -22,6 +22,7 @@
 #define BAT_AVERAGING           4   
 #define TMP_AVERAGING           8  
 
+#define PHYSICAL_MAGNITUDE_MULTIPLAYER 32
 
 //эти функции возвращают текущие значения из буферов усреднения
 unsigned int adc_get_map_value(unsigned char index);
@@ -37,5 +38,20 @@ char adc_is_measure_ready(void);
 
 //инициализация АЦП и его переменных состояния
 void adc_init(void);
+
+signed int adc_compensate(signed int adcvalue, signed int factor, signed long correction);
+
+//переводит значение АЦП в физическую величину - давление
+//физическая величина * PHYSICAL_MAGNITUDE_MULTIPLAYER
+unsigned int map_adc_to_kpa(signed int adcvalue);
+
+//переводит значение АЦП в физическую величину - напряжение
+//физическая величина * PHYSICAL_MAGNITUDE_MULTIPLAYER
+unsigned int ubat_adc_to_v(signed int adcvalue);
+
+//переводит значение АЦП в физическую величину - температура
+//физическая величина * PHYSICAL_MAGNITUDE_MULTIPLAYER
+signed int temp_adc_to_c(signed int adcvalue);
+
 
 #endif //_ADC_H_

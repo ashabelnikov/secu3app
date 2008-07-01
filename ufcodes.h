@@ -23,4 +23,7 @@
 #define   FNNAME_DAT   'p'
 #define   SENSOR_DAT   'q'
 
+#define   ADCCOR_PAR   'r'
+#define   ADCRAW_DAT   's'
+
 #endif //_UFCODES_H_

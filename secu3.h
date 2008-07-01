@@ -21,6 +21,12 @@ typedef struct
  unsigned char carb;                                        //состояние концевика карбюратора 
  unsigned char gas;                                         //состояние газового клапана 
  unsigned int frequen4;                                     //частота усредненная всего по 4-м выборкам 
+
+ //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
+ signed int map_raw;
+ signed int voltage_raw;
+ signed int temperat_raw;
+
 }sensors;
 
 

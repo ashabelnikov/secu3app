@@ -333,6 +333,14 @@ typedef struct
   signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
   signed   int  vent_on;                        //температура включения вентилятора
   signed   int  vent_off;                       //температура выключения вентилятора  
+
+  signed int  map_adc_factor;
+  signed long map_adc_correction;
+  signed int  ubat_adc_factor;
+  signed long ubat_adc_correction;
+  signed int  temp_adc_factor;
+  signed long temp_adc_correction;
+  
   unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
 }params;
 
@@ -340,7 +348,7 @@ typedef struct
 //резервные параметры
 #pragma object_attribute=__root
 const params __flash def_param@DEFPARAM_START = 
-{1,0,0,6,6,75,1250,1500,600,110,650,1920,-480,0,800,40,40,10,1484,1476,0};                                         
+{1,0,0,6,6,75,1250,1500,600,110,650,1920,-480,0,800,40,40,10,1484,1476,16384,8192,16384,8192,16384,8192,0};                                         
 
 #pragma object_attribute=__root
 const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;

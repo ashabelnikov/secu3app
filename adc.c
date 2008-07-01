@@ -128,3 +128,20 @@ signed int adc_compensate(signed int adcvalue, signed int factor, signed long co
 {
   return (((((signed long)adcvalue*factor)+correction)<<2)>>16);
 }
+
+//SIGNED/UNSIGNED missmatch if result < 0 !!!
+
+unsigned int map_adc_to_kpa(signed int adcvalue)
+{
+ return adcvalue;
+}
+
+unsigned int ubat_adc_to_v(signed int adcvalue)
+{
+ return adcvalue;
+}
+
+signed int temp_adc_to_c(signed int adcvalue)
+{
+ return adcvalue;
+}

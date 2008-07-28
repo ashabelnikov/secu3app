@@ -15,17 +15,10 @@
 
 #include "secu3.h"  
 
-/* (c < p*2.5)&&(c > p*1.5) */
-//#define CKPS_CHECK_FOR_BAD_GAP(c,p) (((c) < (((p) << 1) + ((p) >> 1))) && ((c) > ((p) + ((p) >> 1))))
-
-/* p * 2, двухкратный барьер для селекции синхрометки*/
-//#define CKPS_GAP_BARRIER(p) ((p) * 2)               
-
 /* p * 2.5,  барьер для селекции синхрометки = 2.5 */
 #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p)>>1))  
 
 #define GetICR() (ICR1)
-//#define GetICR() ((ICR1 >> 8)||(ICR1 << 8))
 
 typedef struct
 {

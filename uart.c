@@ -149,7 +149,7 @@ void uart_send_packet(ecudata* d)
    case FUNSET_PAR:   
        build_i8h(d->param.fn_benzin);
        build_i8h(d->param.fn_gas);
-       build_i8h(d->param.map_grad);
+       build_i16h(d->param.map_grad);
        build_i16h(d->param.press_swing);
        break;
    case STARTR_PAR:   
@@ -263,7 +263,7 @@ unsigned char uart_recept_packet(ecudata* d)
        if (temp < TABLES_NUMBER)    
           d->param.fn_gas = temp;
               
-       d->param.map_grad   = recept_i8h();     
+       d->param.map_grad   = recept_i16h();     
        d->param.press_swing= recept_i16h();  
        break;
 

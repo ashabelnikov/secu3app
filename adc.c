@@ -129,19 +129,33 @@ signed int adc_compensate(signed int adcvalue, signed int factor, signed long co
   return (((((signed long)adcvalue*factor)+correction)<<2)>>16);
 }
 
-//SIGNED/UNSIGNED missmatch if result < 0 !!!
+
 
 unsigned int map_adc_to_kpa(signed int adcvalue)
 {
- return adcvalue;
+ //АЦП не измеряет отрицательных напряжений, однако отрицательное значение может появится после компенсации погрешностей.
+ //Такой ход событий необходимо предотвращать.
+ if (adcvalue < 0)
+   adcvalue = 0;
+   
+ //Этот код состоит преимущественно из констант и реально выглядит так: ((adcvalue + K) * K ) / 128,
+ //где K - константа.   
+ return ( ((unsigned long)(adcvalue + ((unsigned int)((MAP_CURVE_OFFSET_V / ADC_DISCRETE)+0.5)))) * 
+          ((unsigned long)((128.0 * MAP_CURVE_GRADIENT_KPA * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE)+0.5)) 
+        ) >> 7; 
 }
 
 unsigned int ubat_adc_to_v(signed int adcvalue)
 {
+ if (adcvalue < 0)
+   adcvalue = 0;
  return adcvalue;
 }
 
 signed int temp_adc_to_c(signed int adcvalue)
-{
- return adcvalue;
+{   
+ if (adcvalue < 0)
+   adcvalue = 0;
+ return (adcvalue - ((signed int)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
+

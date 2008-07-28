@@ -7,9 +7,6 @@
 #define TSENS_SLOPP             0.01        //наклон прямой датчика температуры вольт/градус
 #define TSENS_ZERO_POINT        2.73        //напряжение на выходе датчика температуры при 0 градусов цельсия
 
-//переводит температуру из градусов Цельсия в дискреты АЦП
-#define T_TO_DADC(Tc) ((unsigned int)((TSENS_ZERO_POINT + (Tc*TSENS_SLOPP))/ADC_DISCRETE)) 
-
 #define ADC_VREF_TYPE           0xC0
 
 //номера используемых каналов АЦП
@@ -22,7 +19,12 @@
 #define BAT_AVERAGING           4   
 #define TMP_AVERAGING           8  
 
-#define PHYSICAL_MAGNITUDE_MULTIPLAYER 32
+#define MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER  64
+#define UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER (1.0/ADC_DISCRETE) //=400
+#define TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER (TSENS_SLOPP / ADC_DISCRETE) //=4
+
+#define MAP_CURVE_OFFSET_V      0.547  //Вольт
+#define MAP_CURVE_GRADIENT_KPA  20.9   //кПа
 
 //эти функции возвращают текущие значения из буферов усреднения
 unsigned int adc_get_map_value(unsigned char index);
@@ -42,15 +44,15 @@ void adc_init(void);
 signed int adc_compensate(signed int adcvalue, signed int factor, signed long correction);
 
 //переводит значение АЦП в физическую величину - давление
-//физическая величина * PHYSICAL_MAGNITUDE_MULTIPLAYER
+//физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
 unsigned int map_adc_to_kpa(signed int adcvalue);
 
 //переводит значение АЦП в физическую величину - напряжение
-//физическая величина * PHYSICAL_MAGNITUDE_MULTIPLAYER
+//физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER
 unsigned int ubat_adc_to_v(signed int adcvalue);
 
 //переводит значение АЦП в физическую величину - температура
-//физическая величина * PHYSICAL_MAGNITUDE_MULTIPLAYER
+//физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
 signed int temp_adc_to_c(signed int adcvalue);
 
 

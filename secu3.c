@@ -321,7 +321,7 @@ void InitialMeasure(ecudata* d)
   }while(--i);  
   __disable_interrupt();
   average_measured_values(d);  
-  d->atmos_press = d->sens.map;      //сохраняем атмосферное давление
+  d->atmos_press = d->sens.map;      //сохраняем атмосферное давление в кПа!
 }
 
 //Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы,

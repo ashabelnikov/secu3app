@@ -12,8 +12,8 @@
 #include "adc.h"
 #include "ckps.h"
 
-#define TSCALE_LO_VALUE     T_TO_DADC(-16)                      //-16 градусов самая нижняя точка шкалы температуры (в градусах цельсия)
-#define TSCALE_STEP      ((unsigned int)((11.0*TSENS_SLOPP)/ADC_DISCRETE)) // 11 градусов между узлами интерполяции по горизонтальной оси (в дискретах АЦП)
+//#define TSCALE_LO_VALUE     T_TO_DADC(-16)                      //-16 градусов самая нижняя точка шкалы температуры (в градусах цельсия)
+//#define TSCALE_STEP      ((unsigned int)((11.0*TSENS_SLOPP)/ADC_DISCRETE)) // 11 градусов между узлами интерполяции по горизонтальной оси (в дискретах АЦП)
 
 __flash const int F_SlotsRanges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500}; 
 __flash const int F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140}; 
@@ -85,28 +85,39 @@ int str_func(ecudata* d)
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
 int wrk_func(ecudata* d)
 {    
-/*   int  j,i1,j1,prel,n=d->sens.inst_frq;
-   signed char i;               
-   for(i = 14; i >= 0; i--)   
-     if (n >= F_SlotsRanges[i]) break;                           
-   if (i<0)  {i = 0; n = 600;}
-   prel = ((int)(d->atmos_press - d->param.press_swing))- d->sens.map;                  
-   if (prel < 0) prel = 0;         
-   j = (prel/d->param.map_grad);
-   i1 = i+1;   j1 = j+1;
-   if (j>=(F_WRK_POINTS_F-1))
-   { j1 = j = F_WRK_POINTS_F-1;}
-   d->airflow = 16-j;
-   return func_i3d(n,prel,
-	   d->fn_dat->f_wrk[j][i],
-	   d->fn_dat->f_wrk[j1][i],
-	   d->fn_dat->f_wrk[j1][i1],
-	   d->fn_dat->f_wrk[j][i1],
-	   F_SlotsRanges[i],
-	   (d->param.map_grad*(int)j),
-	   F_SlotsLength[i],
-	   d->param.map_grad)*2;*/
- return 0;
+   int  p, n = d->sens.inst_frq;
+   signed char f,fp1,l,lp1;   
+
+   //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы            
+   for(f = 14; f >= 0; f--)   
+     if (n >= F_SlotsRanges[f]) break; 
+                            
+   //рабочая карта работает на 600-х оборотах и выше                                                        
+   if (f < 0)  {f = 0; n = 600;}
+   fp1 = f + 1;   
+   
+   //вычисляем значение относительного разряжения (вычитаем из атмосферного давления смещение и текущее давление)
+   p = ((int)(d->atmos_press - d->param.press_swing))- d->sens.map;                     
+   if (p < 0) p = 0;         
+   
+   l = (p / d->param.map_grad);
+   lp1 = l + 1;      
+   if (l >= (F_WRK_POINTS_F - 1))
+   { 
+     lp1 = l = F_WRK_POINTS_F - 1;
+   }
+   //обновляем переменную расхода воздуха
+   d->airflow = 16 - l;
+   
+   return func_i3d(n, p,
+	   d->fn_dat->f_wrk[l][f],
+	   d->fn_dat->f_wrk[lp1][f],
+	   d->fn_dat->f_wrk[lp1][fp1],
+	   d->fn_dat->f_wrk[l][fp1],
+	   F_SlotsRanges[f],
+	   (d->param.map_grad * l),
+	   F_SlotsLength[f],
+	   d->param.map_grad);
 }
 
 /*
@@ -144,7 +155,7 @@ int tmp_func(ecudata* d)
 }
 */
 
-//Пропорциональный регулятор для регулирования оборотов ХХ 
+/*//Пропорциональный регулятор для регулирования оборотов ХХ 
 //улом опережения зажигания     
 //  возвращает УОЗ * 40;
 int idl_pregul(ecudata* d)
@@ -171,3 +182,4 @@ int idl_pregul(ecudata* d)
   else
       return uoz;  
 }
+*/

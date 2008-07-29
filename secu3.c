@@ -521,19 +521,21 @@ __C_task void main(void)
         break;     
     }
       
-    //добавляем к УОЗ октан-коррекцию
-    edat.curr_angle+=edat.param.angle_corr;
-      
-    //ограничиваем получившийся УОЗ установленными пределами
-    if (edat.curr_angle > edat.param.max_angle)
-               edat.curr_angle = edat.param.max_angle;  
-    if (edat.curr_angle < edat.param.min_angle)
-               edat.curr_angle = edat.param.min_angle; 
     */
     
     //--------------[TEST]-----------------------
-    edat.curr_angle = func(edat.sens.inst_frq, 4.0 ) * ANGLE_MULTIPLAYER;    
+    edat.curr_angle = func(edat.sens.inst_frq, 0.0 ) * ANGLE_MULTIPLAYER;    
     //--------------[/TEST]----------------------
+
+    //добавляем к УОЗ октан-коррекцию
+    edat.curr_angle+=edat.param.angle_corr;
+      
+/*    //ограничиваем получившийся УОЗ установленными пределами
+    if (edat.curr_angle > edat.param.max_angle)
+               edat.curr_angle = edat.param.max_angle;  
+    if (edat.curr_angle < edat.param.min_angle)
+               edat.curr_angle = edat.param.min_angle; */
+
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  

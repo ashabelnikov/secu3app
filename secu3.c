@@ -455,7 +455,7 @@ __C_task void main(void)
   //инициализируем модуль ДПКВ             
   ckps_init_state();  
   ckps_set_edge_type(0);
-  ckps_set_ignition_cogs(10);
+  ckps_set_ignition_cogs(CKPS_IGNITION_PULSE_COGS);
   
   //разрешаем глобально прерывания            
   __enable_interrupt();    

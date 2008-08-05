@@ -5,11 +5,13 @@
 #include "secu3.h"
 #include "tables.h"
 
+#define  CBR_2400                0x01A0
 #define  CBR_4800                0x00CF
 #define  CBR_9600                0x0067
 #define  CBR_14400               0x0044
 #define  CBR_19200               0x0033
 #define  CBR_38400               0x0019
+#define  CBR_57600               0x0010
 
 #define  UART_RECV_BUFF_SIZE     64
 #define  UART_SEND_BUFF_SIZE     64

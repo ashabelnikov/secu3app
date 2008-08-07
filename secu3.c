@@ -397,7 +397,7 @@ void init_io_ports(void)
   PORTC  = (1<<PC3)|(1<<PC2);
   DDRC   = 0;  
   PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
-  DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3);
+  DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
 
 
@@ -450,7 +450,7 @@ __C_task void main(void)
   init_system_timer();
   
   //инициализируем UART
-  uart_init(CBR_9600);
+  uart_init(CBR_57600);
   
   //инициализируем модуль ДПКВ             
   ckps_init_state();  

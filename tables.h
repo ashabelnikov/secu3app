@@ -45,7 +45,7 @@
 #define F_NAME_SIZE            16
 
 
-//Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град 
+//Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град, для температуры = 0.25 град. 
 typedef struct 
 {
   signed   char f_str[F_STR_POINTS];                       // функция УОЗ на старте
@@ -54,6 +54,47 @@ typedef struct
   signed   char f_tmp[F_TMP_POINTS];                       // функция коррект. УОЗ по температуре
   unsigned char name[F_NAME_SIZE];                         // ассоциированное имя (имя семейства)
 }F_data;
+
+
+//описывает дополнительные данные хранимые в прошивке
+typedef struct
+{
+  char fw_signature_info[48];
+}FirmwareData;
+
+//описывает параметры системы
+typedef struct
+{
+  unsigned char tmp_use;                        //признак комплектации ДТОЖ-ом
+  unsigned char carb_invers;                    //инверсия концевика на карбюраторе
+  unsigned char idl_regul;                      //поддерживать заданные обороты ХХ регулмрованием УОЗ
+  unsigned char fn_benzin;                      //номер набора характеристик используемый для бензина
+  unsigned char fn_gas;                         //номер набора характеристик используемый для газа
+  unsigned int  map_grad;                       //наклон шкалы расхода воздуха (кПа)
+  unsigned int  ephh_lot;                       //нижний порог ЭПХХ (мин-1)
+  unsigned int  ephh_hit;                       //верхний порог ЭПХХ (мин-1)
+  unsigned int  starter_off;                    //порог выключения стартера (мин-1)
+  signed   int  press_swing;                    //перепад давления при полностью открытом дросселе   (кПа)
+  unsigned int  smap_abandon;                   //обороты перехода с пусковой карты на рабочую  (мин-1) 
+  signed   int  max_angle;                      //ограничение максимального УОЗ
+  signed   int  min_angle;                      //ограничение минимального УОЗ
+  signed   int  angle_corr;                     //октан-коррекция УОЗ    
+  unsigned int  idl_turns;                      //заданные обороты ХХ для поддержания регулмрованием УОЗ   
+  signed   int  ifac1;                          //коэффициенты П-регулятора оборотов ХХ, для положительной и
+  signed   int  ifac2;                          //отрицательной ошибке соответственно, 1...100 
+  signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
+  signed   int  vent_on;                        //температура включения вентилятора
+  signed   int  vent_off;                       //температура выключения вентилятора  
+
+  signed int  map_adc_factor;
+  signed long map_adc_correction;
+  signed int  ubat_adc_factor;
+  signed long ubat_adc_correction;
+  signed int  temp_adc_factor;
+  signed long temp_adc_correction;
+  
+  unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
+}params;
 
 
 //================================================================================
@@ -79,7 +120,20 @@ typedef struct
 
 //адрес структуры дефаултных параметров (параметров EEPROM по умолчанию)
 #define DEFPARAM_START (TABLES_START-sizeof(params))
+
+//адрес дополнительных параметров
+#define FIRMWARE_DATA_START (DEFPARAM_START-sizeof(FirmwareData))
+
 //================================================================================
+
+
+
+//данные в таблицах по умолчанию
+#pragma object_attribute=__root
+const FirmwareData __flash fwdata@FIRMWARE_DATA_START=
+{
+  "SECU-3 firmware. Build ["__DATE__"]"
+};
 
 //данные в таблицах по умолчанию
 #pragma object_attribute=__root
@@ -269,41 +323,6 @@ const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 0x3F,0x36,0x2B,0x13,0x16,0x16,0x0F,0x0F,0x00,0x00,0xE7,0xE1,0x3B,0x32,0x27,0x0F,
 '“','‡','Ђ','Њ','3','3','1','7',' ',' ',' ',' ',' ',' ',' ',' '
 };
-
-//описывает параметры системы
-typedef struct
-{
-  unsigned char tmp_use;                        //признак комплектации ДТОЖ-ом
-  unsigned char carb_invers;                    //инверсия концевика на карбюраторе
-  unsigned char idl_regul;                      //поддерживать заданные обороты ХХ регулмрованием УОЗ
-  unsigned char fn_benzin;                      //номер набора характеристик используемый для бензина
-  unsigned char fn_gas;                         //номер набора характеристик используемый для газа
-  unsigned int  map_grad;                       //наклон шкалы расхода воздуха (кПа)
-  unsigned int  ephh_lot;                       //нижний порог ЭПХХ (мин-1)
-  unsigned int  ephh_hit;                       //верхний порог ЭПХХ (мин-1)
-  unsigned int  starter_off;                    //порог выключения стартера (мин-1)
-  signed   int  press_swing;                    //перепад давления при полностью открытом дросселе   (кПа)
-  unsigned int  smap_abandon;                   //обороты перехода с пусковой карты на рабочую  (мин-1) 
-  signed   int  max_angle;                      //ограничение максимального УОЗ
-  signed   int  min_angle;                      //ограничение минимального УОЗ
-  signed   int  angle_corr;                     //октан-коррекция УОЗ    
-  unsigned int  idl_turns;                      //заданные обороты ХХ для поддержания регулмрованием УОЗ   
-  signed   int  ifac1;                          //коэффициенты П-регулятора оборотов ХХ, для положительной и
-  signed   int  ifac2;                          //отрицательной ошибке соответственно, 1...100 
-  signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
-  signed   int  vent_on;                        //температура включения вентилятора
-  signed   int  vent_off;                       //температура выключения вентилятора  
-
-  signed int  map_adc_factor;
-  signed long map_adc_correction;
-  signed int  ubat_adc_factor;
-  signed long ubat_adc_correction;
-  signed int  temp_adc_factor;
-  signed long temp_adc_correction;
-  
-  unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
-}params;
-
 
 //резервные параметры
 #pragma object_attribute=__root

@@ -194,7 +194,7 @@ __interrupt void timer1_capt_isr(void)
 
       if (f1.ckps_returned_to_gap_search)
       {
-       if ((ckps.cog != 58)/*||CKPS_CHECK_FOR_BAD_GAP(ckps.period_curr,ckps.period_prev)*/)
+       if ((ckps.cog != 58))
          f1.ckps_error_flag = 1; //ERROR             
        f1.ckps_returned_to_gap_search = 0;
       }

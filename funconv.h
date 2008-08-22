@@ -4,15 +4,15 @@
 
 #include "secu3.h"
 
-int func_i2d(int n,int a1,int a2,int n_s,int n_l);
-int func_i3d(int n,int p,int a1,int a2,int a3,int a4,int n_s,int p_s,int n_l,int p_l);
+int simple_interpolation(int x,int a1,int a2,int x_s,int x_l);
+int bilinear_interpolation(int x,int y,int a1,int a2,int a3,int a4,int x_s,int y_s,int x_l,int y_l);
 
 
-int str_func(ecudata* d);
-int idl_func(ecudata* d);
-int wrk_func(ecudata* d);
-int tmp_func(ecudata* d);
-int idl_pregul(ecudata* d);
+int start_function(ecudata* d);
+int idling_function(ecudata* d);
+int work_function(ecudata* d);
+int coolant_function(ecudata* d);
+int idling_pregulator(ecudata* d);
 
 #endif //_FUNCONV_H_
 

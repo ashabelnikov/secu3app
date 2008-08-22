@@ -138,8 +138,8 @@ unsigned int map_adc_to_kpa(signed int adcvalue)
  if (adcvalue < 0)
    adcvalue = 0;
    
- //Этот код состоит преимущественно из констант и реально выглядит так: ((adcvalue + K) * K ) / 128,
- //где K - константа.   
+ //Этот код состоит преимущественно из констант и реально выглядит так: ((adcvalue + K1) * K2 ) / 128,
+ //где K1,K2 - константы.   
  return ( ((unsigned long)(adcvalue + ((unsigned int)((MAP_CURVE_OFFSET_V / ADC_DISCRETE)+0.5)))) * 
           ((unsigned long)((128.0 * MAP_CURVE_GRADIENT_KPA * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE)+0.5)) 
         ) >> 7; 

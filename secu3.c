@@ -399,31 +399,10 @@ void init_io_ports(void)
   PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
-
-
-//---------------[TEST]------------------------
-const float  K1=0.008654,       K2=0.004688,   K3=0.0;
-const float  B1=-5.19,          B2=7.49,       B3=30;
-const int    N1=600,  N2=3200,  N3=4800;
-
-float func(int it,float tkorr)
-{
-    if (it < N1)   
-        return 0.0;  
-    if (it < N2)
-        return (K1 * it + B1) + tkorr;
-    if (it < N3)
-        return (K2 * it + B2) + tkorr;
-    else
-        return (K3 * it + B3) + tkorr;
-}
-//--------------[/TEST]-------------------------
-
-
       
 __C_task void main(void)
 {
-  unsigned char mode=0;
+  unsigned char mode = 0;
   ecudata edat; 
     
   init_io_ports();
@@ -486,55 +465,49 @@ __C_task void main(void)
     else  
       edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине
     
-    /*
+    
     //КА состояний системы
     switch(mode)
     {
       case 0: //режим пуска
-        if (edat.sens.inst_frq > edat.param.smap_abandon)
-        {                   
-         mode=1;        
-        }      
-        edat.curr_angle=str_func(&edat);                //базовый УОЗ - функция для пуска
-        edat.airflow=0;
-        break;            
+       if (edat.sens.inst_frq > edat.param.smap_abandon)
+       {                   
+        mode = 1;        
+       }      
+       edat.curr_angle=start_function(&edat);         //базовый УОЗ - функция для пуска
+       edat.airflow = 0;
+       break;            
       case 1: //режим холостого хода
        if (edat.sens.carb)//педаль газа нажали - в рабочий режим
        {
-        mode=2;
+        mode = 2;
        }      
-        edat.curr_angle=idl_func(&edat);               //базовый УОЗ - функция для ХХ 
-        edat.curr_angle+=tmp_func(&edat);              //добавляем к УОЗ температурную коррекцию
-        edat.curr_angle+=idl_pregul(&edat);            //добавляем регулировку
-        edat.airflow=0;
-        break;            
+       edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
+       edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию
+       edat.curr_angle+=idling_pregulator(&edat);     //добавляем регулировку
+       edat.airflow = 0;
+       break;            
       case 2: //рабочий режим 
        if (edat.sens.carb)//педаль газа отпустили - в режим ХХ
        {
-        mode=1;
+        mode = 1;
        }
-       edat.curr_angle=wrk_func(&edat);                //базовый УОЗ - функция рабочего режима
-       edat.curr_angle+=tmp_func(&edat);               //добавляем к УОЗ температурную коррекцию
-        break;     
+       edat.curr_angle=work_function(&edat);           //базовый УОЗ - функция рабочего режима
+       edat.curr_angle+=coolant_function(&edat);       //добавляем к УОЗ температурную коррекцию
+       break;     
       default:  //непонятная ситуация - угол в ноль       
-        edat.curr_angle=0;
-        break;     
+       edat.curr_angle = 0;
+       break;     
     }
-      
-    */
-    
-    //--------------[TEST]-----------------------
-    edat.curr_angle = func(edat.sens.inst_frq, 0.0 ) * ANGLE_MULTIPLAYER;    
-    //--------------[/TEST]----------------------
-
+             
     //добавляем к УОЗ октан-коррекцию
     edat.curr_angle+=edat.param.angle_corr;
       
-/*    //ограничиваем получившийся УОЗ установленными пределами
+    //ограничиваем получившийся УОЗ установленными пределами
     if (edat.curr_angle > edat.param.max_angle)
                edat.curr_angle = edat.param.max_angle;  
     if (edat.curr_angle < edat.param.min_angle)
-               edat.curr_angle = edat.param.min_angle; */
+               edat.curr_angle = edat.param.min_angle; 
 
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       

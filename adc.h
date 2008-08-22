@@ -56,4 +56,8 @@ unsigned int ubat_adc_to_v(signed int adcvalue);
 signed int temp_adc_to_c(signed int adcvalue);
 
 
+#define TEMPERATURE_MAGNITUDE(t) ((t) * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+#define VOLTAGE_MAGNITUDE(t) ((t) * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+#define PRESSURE_MAGNITUDE(t) ((t) * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+
 #endif //_ADC_H_

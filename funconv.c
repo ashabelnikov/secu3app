@@ -11,54 +11,52 @@
 #include "funconv.h"
 #include "adc.h"
 #include "ckps.h"
+#include "secu3.h"
 
-//#define TSCALE_LO_VALUE     T_TO_DADC(-16)                      //-16 градусов самая нижняя точка шкалы температуры (в градусах цельсия)
-//#define TSCALE_STEP      ((unsigned int)((11.0*TSENS_SLOPP)/ADC_DISCRETE)) // 11 градусов между узлами интерполяции по горизонтальной оси (в дискретах АЦП)
-
+//данные массивы констант задают сетку по оси оборотов, для рабочей карты и карты ХХ.
 __flash const int F_SlotsRanges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500}; 
 __flash const int F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140}; 
 
-
 // Функция билинейной интерполяции (поверхность)
-// n,p - аргументы функционального преобразователя (обороты и нагрузка)
-// a1,a2,a3,a4 - значение функции (УОЗ) в узлах интерполяции (углы четырехугольника)
-// n_s,p_s - координаты угла клетки (по оборотам и нагрузке соответственно)
-// n_l,p_l - текущие размеры клетки (по оборотам и нагрузке соответственно)
+// x, y - значения аргументов интерполируемой функции
+// a1,a2,a3,a4 - значение функции в узлах интерполяции (углы четырехугольника)
+// x_s,y_s - значения аргументов функции соответствующие началу прямоугольной области
+// x_l,y_l - размеры прямоугольной области (по x и y соответственно)
 // возвращает интерполированное значение функции * 16         
-int func_i3d(int n,int p,int a1,int a2,int a3,int a4,int n_s,int p_s,int n_l,int p_l)
+int bilinear_interpolation(int x,int y,int a1,int a2,int a3,int a4,int x_s,int y_s,int x_l,int y_l)
 {
    int a23,a14;  
-   a23 = ((a2*16)+(((long)(a3-a2)*16)*(n-n_s))/n_l);
-   a14 = (a1*16)+(((long)(a4-a1)*16)*(n-n_s))/n_l;
-   return (a14+((((long)(a23-a14))*(p-p_s))/p_l));
+   a23 = ((a2 * 16) + (((long)(a3 - a2) * 16) * (x - x_s)) / x_l);
+   a14 = (a1 * 16) + (((long)(a4 - a1) * 16) * (x - x_s)) / x_l;
+   return (a14 + ((((long)(a23 - a14)) * (y - y_s)) / y_l));
 } 
 
 // Функция линейной интерполяции
-// n - частота вращения коленвала (мин-1)
-// a1,a2 - значение функции (УОЗ) в узлах интерполяции
-// n_s - значение оборотов в начальной точке
-// n_l - длина отрезка между точками
+// x - значение аргумента интерполируемой функции
+// a1,a2 - значения функции в узлах интерполяции
+// x_s - значение аргумента функции в начальной точке
+// x_l - длина отрезка между точками
 // возвращает интерполированное значение функции * 16                   
-int func_i2d(int n,int a1,int a2,int n_s,int n_l)
+int simple_interpolation(int x,int a1,int a2,int x_s,int x_l)
 {
-  return ((a1*16)+(((long)(a2-a1)*16)*(n-n_s))/n_l);
+  return ((a1 * 16) + (((long)(a2 - a1) * 16) * (x - x_s)) / x_l);
 }
 
 
 // Реализует функцию УОЗ от оборотов для холостого хода
 // Возвращает значение угла опережения в целом виде * 32. 2 * 16 = 32.
-int idl_func(ecudata* d)
+int idling_function(ecudata* d)
 {
   signed char i;
-  int n = d->sens.inst_frq;
+  int rpm = d->sens.inst_frq;
 
   //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы
   for(i = 14; i >= 0; i--)
     if (d->sens.inst_frq >= F_SlotsRanges[i]) break;                        
 
-  if (i < 0)  {i = 0; n = 600;}
+  if (i < 0)  {i = 0; rpm = 600;}
 
-  return func_i2d(n,
+  return simple_interpolation(rpm,
               d->fn_dat->f_idl[i],d->fn_dat->f_idl[i+1],
               F_SlotsRanges[i],F_SlotsLength[i]);
 }
@@ -66,41 +64,44 @@ int idl_func(ecudata* d)
 
 // Реализует функцию УОЗ от оборотов для пуска двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int str_func(ecudata* d)
+int start_function(ecudata* d)
 {
-  int i,i1,n = d->sens.inst_frq;                                           
+  int i,i1,rpm = d->sens.inst_frq;                                           
 
-  if (n < 200) n = 200; //200 - минимальное значение оборотов
+  if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов
 
-  i = (n - 200) / 40;   //40 - шаг по оборотам
+  i = (rpm - 200) / 40;   //40 - шаг по оборотам
 
-  if (i>=15) i = i1 = 15; 
-  else i1 = i+1;
+  if (i >= 15) i = i1 = 15; 
+  else i1 = i + 1;
 
-  return func_i2d(n,d->fn_dat->f_str[i],d->fn_dat->f_str[i1], (i * 40) + 200, 40);
+  return simple_interpolation(rpm,d->fn_dat->f_str[i],d->fn_dat->f_str[i1], (i * 40) + 200, 40);
 }
 
 
 // Реализует функцию УОЗ от оборотов(мин-1) и нагрузки(кПа) для рабочего режима двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int wrk_func(ecudata* d)
+int work_function(ecudata* d)
 {    
-   int  p, n = d->sens.inst_frq;
-   signed char f,fp1,l,lp1;   
+   int  gradient, discharge, rpm = d->sens.inst_frq;
+   signed char f,l,fp1,lp1;   
 
    //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы            
    for(f = 14; f >= 0; f--)   
-     if (n >= F_SlotsRanges[f]) break; 
+     if (rpm >= F_SlotsRanges[f]) break; 
                             
    //рабочая карта работает на 600-х оборотах и выше                                                        
-   if (f < 0)  {f = 0; n = 600;}
+   if (f < 0)  {f = 0; rpm = 600;}
    fp1 = f + 1;   
    
-   //вычисляем значение относительного разряжения (вычитаем из атмосферного давления смещение и текущее давление)
-   p = ((int)(d->atmos_press - d->param.press_swing))- d->sens.map;                     
-   if (p < 0) p = 0;         
+   discharge = (d->param.press_swing - d->sens.map);
+   if (discharge < 0) discharge = 0;         
    
-   l = (p / d->param.map_grad);
+   //d->param.press_swing - верхнее значение давления
+   //d->param.map_grad - нижнее значение давления
+   gradient = (d->param.press_swing - d->param.map_grad) / 16; //делим на количество узлов интерполяции по оси давления
+   l = (discharge / gradient);
+   
    lp1 = l + 1;      
    if (l >= (F_WRK_POINTS_F - 1))
    { 
@@ -109,77 +110,73 @@ int wrk_func(ecudata* d)
    //обновляем переменную расхода воздуха
    d->airflow = 16 - l;
    
-   return func_i3d(n, p,
+   return bilinear_interpolation(rpm, discharge,
 	   d->fn_dat->f_wrk[l][f],
 	   d->fn_dat->f_wrk[lp1][f],
 	   d->fn_dat->f_wrk[lp1][fp1],
 	   d->fn_dat->f_wrk[l][fp1],
 	   F_SlotsRanges[f],
-	   (d->param.map_grad * l),
+	   (gradient * l),
 	   F_SlotsLength[f],
-	   d->param.map_grad);
+	   gradient);
 }
 
-/*
-//Функциональное преобразование нагрузки и температуры в УОЗ
-// t - температура охлаждающей жидкости
-// p - давление во впускном коллекторе
-// Возвращает значение угла опережения в целом виде * 40
-int tmp_func(ecudata* d)
-{  
-   int i,j,i1,j1,prel,mg2,tm,t=d->sens.temperat;      
-   if (!d->param.tmp_use) return 0;   //нет коррекции, если блок не укомплектован ДТОЖ-ом
-   mg2 = ((int)d->param.map_grad)*2;
-   prel = ((int)(d->atmos_press - d->param.press_swing))- d->sens.map;                  
-   if (prel < 0) prel = 0;   
-   if (t < TSCALE_LO_VALUE) t = TSCALE_LO_VALUE;
-   tm = t-TSCALE_LO_VALUE;
-   i  = tm/TSCALE_STEP;   j  = prel/mg2;
-   if (i>=(F_TMP_POINTS_T-1))
-   {  i1 = i = F_TMP_POINTS_T-1; }
-   else   
-      i1 = i+1;      
-   if (j>=(F_TMP_POINTS_L-1))
-   {  j1 = j = F_TMP_POINTS_L-1; }
-   else   
-      j1 = j+1;
-   return func_i3d(tm,prel,
-	   d->fn_dat->f_tmp[j][i],
-	   d->fn_dat->f_tmp[j1][i],
-	   d->fn_dat->f_tmp[j1][i1],
-	   d->fn_dat->f_tmp[j][i1],
-	   (TSCALE_STEP*((int)i)),
-	   mg2*((int)j),
-	   TSCALE_STEP,
-	   mg2);
-}
-*/
 
-/*//Пропорциональный регулятор для регулирования оборотов ХХ 
-//улом опережения зажигания     
-//  возвращает УОЗ * 40;
-int idl_pregul(ecudata* d)
+//Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
+// Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
+int coolant_function(ecudata* d)
+{ 
+  int i,i1,t = d->sens.temperat;                                           
+
+  if (!d->param.tmp_use) 
+    return 0;   //нет коррекции, если блок неукомплектован ДТОЖ-ом
+    
+  //-30 - минимальное значение температуры
+  if (t < TEMPERATURE_MAGNITUDE(-30)) 
+    t = TEMPERATURE_MAGNITUDE(-30);   
+
+  //10 - шаг между узлами интерполяции по температуре
+  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);   
+
+  if (i >= 15) i = i1 = 15; 
+  else i1 = i + 1;
+
+  return simple_interpolation(t,d->fn_dat->f_tmp[i],d->fn_dat->f_tmp[i1], 
+  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10));   
+}
+
+
+//Пропорциональный регулятор для регулирования оборотов ХХ углом опережения зажигания     
+// Возвращает значение угла опережения в целом виде * 32.
+int idling_pregulator(ecudata* d)
 {
-  int uoz,error,factor;      
-  //если запрешено автоматическое регулирование оборотов ХХ или обороты
+  int correction,error,factor;      
+  //если запрещено автоматическое регулирование оборотов ХХ или обороты
   //далеки от холостых, то выходим  с нулевой корректировкой        
-  if ((!d->param.idl_regul)||(d->sens.inst_frq>1100))
-      return 0;  
+  if (!d->param.idl_regul)
+    return 0;  
   error = d->param.idl_turns - d->sens.inst_frq;  
-  //если в зоне нечувствительности, то нет регулирования
-  if (error>500)  error = 500;
-  if (error<-500) error = -500;
-  if (abs(error)<d->param.MINEFR) 
-     return 0;
-  //выбираем необходимый коэффициент и расчитываем коррекцию
-  if (error>0)
+  
+  //ограничиваем ошибку, а также если мы в зоне нечувствительности, то нет регулирования
+  if (error > 500) error = 500;
+  if (error <-500) error = -500;
+  if (abs(error) < d->param.MINEFR) 
+    return 0;
+    
+  //выбираем необходимый коэффициент, в зависимости от знака ошибки
+  if (error > 0)
      factor = d->param.ifac1;
   else    
      factor = d->param.ifac2;                         
-  uoz = (factor*error)/10;
-  if (uoz > (35*ANGLE_MULTIPLAYER))  //35 град.
-      return (35*ANGLE_MULTIPLAYER);
-  else
-      return uoz;  
+     
+  //при коэффициенте равном 1.0, скорость изменения УОЗ равна скорости изменения ошибки,
+  //дискретность коэффициента равна дискретности УОЗ!   
+  correction = (factor * error);
+  if (correction > ((35)*ANGLE_MULTIPLAYER))  //верхний предел регулирования
+      return ((35)*ANGLE_MULTIPLAYER);
+  if (correction < ((-35)*ANGLE_MULTIPLAYER))  //нижний предел регулирования
+      return ((-35)*ANGLE_MULTIPLAYER);
+      
+  return correction;    
 }
-*/
+

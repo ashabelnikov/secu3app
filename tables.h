@@ -71,18 +71,18 @@ typedef struct
   unsigned char idl_regul;                      //поддерживать заданные обороты ХХ регулмрованием УОЗ
   unsigned char fn_benzin;                      //номер набора характеристик используемый для бензина
   unsigned char fn_gas;                         //номер набора характеристик используемый для газа
-  unsigned int  map_grad;                       //наклон шкалы расхода воздуха (кПа)
+  unsigned int  map_lower_pressure;             //нижнее значене ДАД по оси таблицы (кПа)
   unsigned int  ephh_lot;                       //нижний порог ЭПХХ (мин-1)
   unsigned int  ephh_hit;                       //верхний порог ЭПХХ (мин-1)
   unsigned int  starter_off;                    //порог выключения стартера (мин-1)
-  signed   int  press_swing;                    //перепад давления при полностью открытом дросселе   (кПа)
+  signed   int  map_upper_pressure;             //верхнее значение ДАД по оси таблицы (кПа)
   unsigned int  smap_abandon;                   //обороты перехода с пусковой карты на рабочую  (мин-1) 
   signed   int  max_angle;                      //ограничение максимального УОЗ
   signed   int  min_angle;                      //ограничение минимального УОЗ
   signed   int  angle_corr;                     //октан-коррекция УОЗ    
-  unsigned int  idl_turns;                      //заданные обороты ХХ для поддержания регулмрованием УОЗ   
+  unsigned int  idling_rpm;                     //заданные обороты ХХ для поддержания регулмрованием УОЗ   
   signed   int  ifac1;                          //коэффициенты П-регулятора оборотов ХХ, для положительной и
-  signed   int  ifac2;                          //отрицательной ошибке соответственно, 1...100 
+  signed   int  ifac2;                          //отрицательной ошибке соответственно.
   signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
   signed   int  vent_on;                        //температура включения вентилятора
   signed   int  vent_off;                       //температура выключения вентилятора  
@@ -93,6 +93,10 @@ typedef struct
   signed long ubat_adc_correction;
   signed int  temp_adc_factor;
   signed long temp_adc_correction;
+  
+  unsigned char ckps_edge_type;                
+  unsigned char ckps_cogs_btdc;
+  unsigned char ckps_ignit_cogs;
   
   unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
 }params;
@@ -328,7 +332,7 @@ const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 //резервные параметры
 #pragma object_attribute=__root
 const params __flash def_param@DEFPARAM_START = 
-{1,0,0,6,6,75,1250,1500,600,110,650,1920,-480,0,800,40,40,10,392,384,16384,8192,16384,8192,16384,8192,0};                                         
+{1,0,0,6,6,75,1250,1500,600,110,650,1920,-480,0,800,40,40,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,0};                                         
 
 #pragma object_attribute=__root
 const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;

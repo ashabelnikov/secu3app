@@ -287,10 +287,20 @@ void process_uart_interface(ecudata* d)
     case IDLREG_PAR:   
     case ANGLES_PAR:   
     case FUNSET_PAR:   
-    case STARTR_PAR:   
+    case STARTR_PAR:
+    case ADCCOR_PAR: 
+    case CKPS_PAR:        
       //если были изменены параметры то сбрасываем счетчик времени
       save_param_timeout_counter = SAVE_PARAM_TIMEOUT_VALUE;
       break;  
+  }
+  
+  //если были изменены параметры ДПКВ, то немедленно применяем их на работающем двигателе
+  if (descriptor == CKPS_PAR)
+  {
+    ckps_set_edge_type(d->param.ckps_edge_type);
+    ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
+    ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
   }
 
   //мы обработали принятые данные - приемник ничем теперь не озабочен
@@ -433,8 +443,9 @@ __C_task void main(void)
   
   //инициализируем модуль ДПКВ             
   ckps_init_state();  
-  ckps_set_edge_type(0);
-  ckps_set_ignition_cogs(CKPS_IGNITION_PULSE_COGS);
+  ckps_set_edge_type(edat.param.ckps_edge_type);
+  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc);
+  ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
   
   //разрешаем глобально прерывания            
   __enable_interrupt();    
@@ -488,7 +499,7 @@ __C_task void main(void)
        edat.airflow = 0;
        break;            
       case 2: //рабочий режим 
-       if (edat.sens.carb)//педаль газа отпустили - в режим ХХ
+       if (!edat.sens.carb)//педаль газа отпустили - в режим ХХ
        {
         mode = 1;
        }

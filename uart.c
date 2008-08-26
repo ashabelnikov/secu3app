@@ -139,7 +139,7 @@ void uart_send_packet(ecudata* d)
        build_i16h(d->param.ifac1);
        build_i16h(d->param.ifac2);
        build_i16h(d->param.MINEFR);
-       build_i16h(d->param.idl_turns);
+       build_i16h(d->param.idling_rpm);
        break;
     case ANGLES_PAR:   
        build_i16h(d->param.max_angle);
@@ -149,8 +149,8 @@ void uart_send_packet(ecudata* d)
    case FUNSET_PAR:   
        build_i8h(d->param.fn_benzin);
        build_i8h(d->param.fn_gas);
-       build_i16h(d->param.map_grad);
-       build_i16h(d->param.press_swing);
+       build_i16h(d->param.map_lower_pressure);
+       build_i16h(d->param.map_upper_pressure);
        break;
    case STARTR_PAR:   
        build_i16h(d->param.starter_off);
@@ -186,6 +186,11 @@ void uart_send_packet(ecudata* d)
        build_i16h(d->sens.map_raw);       
        build_i16h(d->sens.voltage_raw);   
        build_i16h(d->sens.temperat_raw);  
+       break;
+   case CKPS_PAR:
+       build_i4h(d->param.ckps_edge_type);       
+       build_i8h(d->param.ckps_cogs_btdc);   
+       build_i8h(d->param.ckps_ignit_cogs);  
        break;
    
   }//switch
@@ -245,7 +250,7 @@ unsigned char uart_recept_packet(ecudata* d)
        d->param.ifac1     = recept_i16h();        
        d->param.ifac2     = recept_i16h();       
        d->param.MINEFR    = recept_i16h();       
-       d->param.idl_turns = recept_i16h();    
+       d->param.idling_rpm = recept_i16h();    
        break;
 
     case ANGLES_PAR:   
@@ -263,8 +268,8 @@ unsigned char uart_recept_packet(ecudata* d)
        if (temp < TABLES_NUMBER)    
           d->param.fn_gas = temp;
               
-       d->param.map_grad   = recept_i16h();     
-       d->param.press_swing= recept_i16h();  
+       d->param.map_lower_pressure = recept_i16h();     
+       d->param.map_upper_pressure = recept_i16h();  
        break;
 
     case STARTR_PAR:   
@@ -280,6 +285,12 @@ unsigned char uart_recept_packet(ecudata* d)
        d->param.temp_adc_factor    = recept_i16h();
        d->param.temp_adc_correction= recept_i32h();     
        break;
+       
+    case CKPS_PAR:
+       d->param.ckps_edge_type = recept_i4h();       
+       d->param.ckps_cogs_btdc  = recept_i8h();  
+       d->param.ckps_ignit_cogs = recept_i8h();  
+       break;       
   }//switch     
 
  return descriptor;

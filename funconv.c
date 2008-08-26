@@ -94,12 +94,12 @@ int work_function(ecudata* d)
    if (f < 0)  {f = 0; rpm = 600;}
    fp1 = f + 1;   
    
-   discharge = (d->param.press_swing - d->sens.map);
+   discharge = (d->param.map_upper_pressure - d->sens.map);
    if (discharge < 0) discharge = 0;         
    
-   //d->param.press_swing - верхнее значение давления
-   //d->param.map_grad - нижнее значение давления
-   gradient = (d->param.press_swing - d->param.map_grad) / 16; //делим на количество узлов интерполяции по оси давления
+   //map_upper_pressure - верхнее значение давления
+   //map_lower_pressure - нижнее значение давления
+   gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / 16; //делим на количество узлов интерполяции по оси давления
    l = (discharge / gradient);
    
    lp1 = l + 1;      
@@ -155,7 +155,7 @@ int idling_pregulator(ecudata* d)
   //далеки от холостых, то выходим  с нулевой корректировкой        
   if (!d->param.idl_regul)
     return 0;  
-  error = d->param.idl_turns - d->sens.inst_frq;  
+  error = d->param.idling_rpm - d->sens.inst_frq;  
   
   //ограничиваем ошибку, а также если мы в зоне нечувствительности, то нет регулирования
   if (error > 500) error = 500;
@@ -172,10 +172,10 @@ int idling_pregulator(ecudata* d)
   //при коэффициенте равном 1.0, скорость изменения УОЗ равна скорости изменения ошибки,
   //дискретность коэффициента равна дискретности УОЗ!   
   correction = (factor * error);
-  if (correction > ((35)*ANGLE_MULTIPLAYER))  //верхний предел регулирования
-      return ((35)*ANGLE_MULTIPLAYER);
-  if (correction < ((-35)*ANGLE_MULTIPLAYER))  //нижний предел регулирования
-      return ((-35)*ANGLE_MULTIPLAYER);
+  if (correction > ANGLE_MAGNITUDE(35))  //верхний предел регулирования
+      return ANGLE_MAGNITUDE(35);
+  if (correction < ANGLE_MAGNITUDE(-35))  //нижний предел регулирования
+      return ANGLE_MAGNITUDE(-35);
       
   return correction;    
 }

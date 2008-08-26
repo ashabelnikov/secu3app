@@ -15,7 +15,7 @@
 
 #include "secu3.h"  
 
-/* p * 2.5,  барьер для селекции синхрометки = 2.5 */
+// p * 2.5,  барьер для селекции синхрометки = 2.5 
 #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p)>>1))  
 
 #define GetICR() (ICR1)
@@ -43,10 +43,12 @@ typedef struct
   unsigned char ignition_pulse_cogs_23;     //отсчитывает зубья импульса зажигания для цилиндров 2-3
   unsigned int  half_turn_period;           //хранит последнее измерение времени прохождения n зубьев  
   signed   int  ignition_dwell_angle;       //требуемый УОЗ * ANGLE_MULTIPLAYER
+  signed   int  ignition_dwell_angle_buffered;
   unsigned char ignition_cogs;
-}DPKVSTATE;
+  unsigned int  angle_btdc;
+}CKPSSTATE;
  
-DPKVSTATE ckps;
+CKPSSTATE ckps;
 
 //размещаем в свободных регистрах ввода/вывода
 __no_init volatile ckps_flags f1@0x22;
@@ -56,11 +58,12 @@ void ckps_init_state(void)
 {
   ckps.sm_state = 0;
   ckps.cog = 0;
-  ckps.ignition_pulse_cogs_14 = CKPS_IGNITION_PULSE_COGS;
-  ckps.ignition_pulse_cogs_23 = CKPS_IGNITION_PULSE_COGS;
+  //при первом же прерывании будет сгенерирован конец импульса запуска зажигания для цилиндров 1-4
+  ckps.ignition_pulse_cogs_14 = 128; 
+  ckps.ignition_pulse_cogs_23 = 128; 
   ckps.half_turn_period = 0xFFFF;                 
   ckps.ignition_dwell_angle = 0;
-  ckps.ignition_cogs = CKPS_IGNITION_PULSE_COGS-1;
+  ckps.ignition_dwell_angle_buffered = 0;
 
   //OC1А(PD5) и OC1В(PD4) должны быть сконфигурированы как выходы
   DDRD|= (1<<DDD5)|(1<<DDD4); 
@@ -79,7 +82,7 @@ void ckps_init_state(void)
 void ckps_set_dwell_angle(signed int angle)
 {
   __disable_interrupt();    
-  ckps.ignition_dwell_angle = angle;
+  ckps.ignition_dwell_angle_buffered = angle;
   __enable_interrupt();                
 }
 
@@ -102,16 +105,33 @@ unsigned int ckps_calculate_instant_freq(void)
 //устанавливает тип фронта ДПКВ (0 - отрицательный, 1 - положительный)
 void ckps_set_edge_type(unsigned char edge_type)
 {
+  unsigned char _t;
+  _t=__save_interrupt();
+  __disable_interrupt();
   if (edge_type)
     TCCR1B|= (1<<ICES1);
   else
     TCCR1B&=~(1<<ICES1);
+   __restore_interrupt(_t);
+}
+
+void ckps_set_cogs_btdc(unsigned char cogs_btdc)
+{
+  unsigned char _t;
+  _t=__save_interrupt();
+  __disable_interrupt();
+  ckps.angle_btdc = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * (cogs_btdc - 1); 
+   __restore_interrupt(_t);
 }
 
 //устанавливает длительность импульса зажигания в зубьях
 void ckps_set_ignition_cogs(unsigned char cogs)
 {
- ckps.ignition_cogs = cogs - 1;
+  unsigned char _t;
+  _t=__save_interrupt();
+  __disable_interrupt();
+  ckps.ignition_cogs = cogs - 1;
+  __restore_interrupt(_t);
 }
 
 unsigned char ckps_is_error(void)
@@ -206,21 +226,22 @@ __interrupt void timer1_capt_isr(void)
       f1.ckps_delay_prepared = 0;
     
       //начинаем отсчет угла опережения
-      ckps.current_angle = (ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * (CKPS_COGS_BEFORE_TDC - 1);
+      ckps.current_angle = ckps.angle_btdc;
+      ckps.ignition_dwell_angle = ckps.ignition_dwell_angle_buffered;
      }
      break;
 
    case 2: //--------------реализация УОЗ для 1-4-----------------------------------------
      //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-     ckps.current_angle-= ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG;
+     ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
 
      if (!f1.ckps_delay_prepared)
      {
       diff = ckps.current_angle - ckps.ignition_dwell_angle;
-      if (diff <= ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * 2) )
+      if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
       {
        //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-       OCR1B = GetICR() + ((unsigned long)diff * (ckps.period_curr/* * 2*/)) / ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG)/* * 2*/);  
+       OCR1B = GetICR() + ((unsigned long)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);  
      
        //сбрасываем флаг прерывания, включаем режим установки линии B в высокий уровень при совпадении
        SETBIT(TIFR,OCF1B);
@@ -243,9 +264,10 @@ __interrupt void timer1_capt_isr(void)
      if (ckps.cog == 30) //переход в режим реализации УОЗ для 2-3
      {
       //начинаем отсчет угла опережения
-      ckps.current_angle = (ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * (CKPS_COGS_BEFORE_TDC - 1);
       ckps.sm_state = 3;
       f1.ckps_delay_prepared = 0;
+      ckps.current_angle = ckps.angle_btdc;      
+      ckps.ignition_dwell_angle = ckps.ignition_dwell_angle_buffered;
      }
 
      if (ckps.period_curr > 12500) //обороты опустилисть ниже нижнего порога - двигатель остановился
@@ -255,15 +277,15 @@ __interrupt void timer1_capt_isr(void)
 
    case 3: //--------------реализация УОЗ для 2-3-----------------------------------------
      //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-     ckps.current_angle-= ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG;
+     ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
 
      if (!f1.ckps_delay_prepared)
      {
       diff = ckps.current_angle - ckps.ignition_dwell_angle;
-      if (diff <= ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) * 2) )
+      if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
       {
        //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-       OCR1A = GetICR() + ((unsigned long)diff * (ckps.period_curr/* * 2*/)) / ((ANGLE_MULTIPLAYER * CKPS_DEGREES_PER_COG) /** 2*/);    
+       OCR1A = GetICR() + ((unsigned long)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);    
 
        //сбрасываем флаг прерывания, включаем режим установки линии А в высокий уровень при совпадении
        SETBIT(TIFR,OCF1A);

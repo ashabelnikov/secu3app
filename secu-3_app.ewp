@@ -1562,6 +1562,12 @@
     <name>$PROJ_DIR$\funconv.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\knock.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\knock.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\secu3.c</name>
   </file>
   <file>

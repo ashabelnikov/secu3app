@@ -180,3 +180,29 @@ int idling_pregulator(ecudata* d)
   return correction;    
 }
 
+
+//Интегратор для корректировки УОЗ на переходных режимах двигателя
+//new_advance_angle - новое значение УОЗ
+//intstep - значение шага интегрирования, положительное число
+//is_enabled - если равен 1, то корректировка разрешена, 0 - запрещена
+//Возвращает скорректированный УОЗ
+int transient_state_integrator(int new_advance_angle, unsigned int intstep, char is_enabled)
+{
+ static signed int old_advance_angle = 0;
+ signed int difference;
+ if (is_enabled)
+ {
+  difference = new_advance_angle - old_advance_angle;  
+  if (abs(difference) > intstep)
+  {
+   if (difference > 0)
+     old_advance_angle+=intstep;
+   else    
+     old_advance_angle-=intstep;
+   return old_advance_angle;
+  }
+ }
+ //текущий УОЗ будет предыдущим в следующий раз
+ old_advance_angle = new_advance_angle;
+ return old_advance_angle;
+}

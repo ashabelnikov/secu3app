@@ -65,7 +65,7 @@ unsigned char ce_control_time_counter = 0;
 unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
 unsigned int freq4_average_buf[FRQ4_AVERAGING];
 
-unsigned char eeprom_parameters_cache[64];
+unsigned char eeprom_parameters_cache[96];
 
 //-------------------------------------------------------------
 unsigned int ecuerrors;
@@ -439,7 +439,7 @@ __C_task void main(void)
   init_system_timer();
   
   //инициализируем UART
-  uart_init(CBR_57600);
+  uart_init(CBR_9600);
   
   //инициализируем модуль ДПКВ             
   ckps_init_state();  
@@ -520,6 +520,9 @@ __C_task void main(void)
     if (edat.curr_angle < edat.param.min_angle)
                edat.curr_angle = edat.param.min_angle; 
 
+    //Интегрируем быстрые изменения УОЗ. В режиме пуска интегратор запрещен, это в частности
+    //необходимо для иницализации внутренней памяти интегратора.
+    //edat.curr_angle = transient_state_integrator(edat.curr_angle,ANGLE_MAGNITUDE(3),mode != 0);
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  

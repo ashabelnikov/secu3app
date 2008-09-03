@@ -315,9 +315,9 @@ synchronized_enter:
    else
     {     
      ckps.half_turn_period = (GetICR() - ckps.measure_start_value);
-     flags.ckps_is_valid_half_turn_period = 1;
     }
    ckps.measure_start_value = GetICR();
+   flags.ckps_is_valid_half_turn_period = 1;
    /////////////////////////////////////////
    flags.ckps_new_engine_cycle_happen = 1; //устанавливаем событие цикловой синхронизации 
    adc_begin_measure();                    //запуск процесса измерения значений аналоговых входов
@@ -358,5 +358,7 @@ synchronized_enter:
   ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
   ckps.icr_prev = GetICR();
   ckps.period_prev = ckps.period_curr;  
-  ckps.cog++; 
+  ckps.cog++;
+  ckps.ignition_pulse_cogs_14++;
+  ckps.ignition_pulse_cogs_23++; 
 }

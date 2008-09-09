@@ -20,23 +20,34 @@ typedef struct
   unsigned char* sram_addr;           //адрес данных в ОЗУ 
   unsigned char count;                //количество байтов
   unsigned char eews;                 //состояние процесса записи
+  char opcode;
+  char completed_opcode;
 }eeprom_wr_desc;
 
 
-eeprom_wr_desc eewd;
-
+eeprom_wr_desc eewd = {0,0,0,0,0,0};
 
 //инициирует процесс записи байта в EEPROM
 #define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}     
 
+char eeprom_take_completed_opcode(void)  
+{
+ char result;
+ __disable_interrupt();
+ result = eewd.completed_opcode;
+ eewd.completed_opcode = 0; 
+ __enable_interrupt();
+ return result;
+}
 
 //запускает процесс записи в EEPROM указанного блока данных
-void eeprom_start_wr_data(unsigned int eeprom_addr, unsigned char* sram_addr, unsigned char count)  
+void eeprom_start_wr_data(char opcode, unsigned int eeprom_addr, unsigned char* sram_addr, unsigned char count)  
 {
   eewd.eews = 1;
   eewd.ee_addr = eeprom_addr;
   eewd.sram_addr = sram_addr;
   eewd.count = count;
+  eewd.opcode = opcode;
   SETBIT(EECR,EERIE);
 }
 
@@ -73,6 +84,7 @@ __interrupt void ee_ready_isr(void)
       EEAR=0x000;      
       CLEARBIT(EECR,EERIE); //запрещаем прерывание от EEPROM        
       eewd.eews = 0;
+      eewd.completed_opcode = eewd.opcode;
       break;      
   }//switch  
 }

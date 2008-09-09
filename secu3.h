@@ -5,7 +5,7 @@
 #include "tables.h"
 
 #define SEND_PACKET_INTERVAL_VALUE   8
-#define SAVE_PARAM_TIMEOUT_VALUE     254
+#define SAVE_PARAM_TIMEOUT_VALUE     3000
 #define FORCE_MEASURE_TIMEOUT_VALUE  8
 #define ENGINE_STOP_TIMEOUT_VALUE    25
 #define CE_CONTROL_STATE_TIME_VALUE  50
@@ -40,6 +40,8 @@ typedef struct
  unsigned char    airflow;                                    //расход воздуха
  signed int       curr_angle;                                 //текущий угол опережения
  __flash F_data*  fn_dat;                                     //указатель на набор характеристик
+ char             op_comp_code;   
+ char             op_actn_code;                              
 }ecudata;                                     
 
 

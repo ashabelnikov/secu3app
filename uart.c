@@ -108,21 +108,23 @@ void uart_begin_send(void)
  UCSRB |= (1<<UDRIE); /* enable UDRE interrupt */ 
 }
 
-
 //строит пакет взависимости от текущего дескриптора и запускает его на передачу. Функция не проверяет
 //занят передатчик или нет, это должно быть сделано до вызова функции
-void uart_send_packet(ecudata* d)  
+void uart_send_packet(ecudata* d, char send_mode)  
 {
  static unsigned char index = 0;
 
  //служит индексом во время сборки пакетов, а после сборки будет содержать размер пакета
  uart.send_size = 0; 
  
+ if (send_mode==0) //используем текущий дескриптор
+   send_mode = uart.send_mode;
+ 
  //общая часть для всех пакетов
  uart.send_buf[uart.send_size++] = '@';
- uart.send_buf[uart.send_size++] = uart.send_mode; 
+ uart.send_buf[uart.send_size++] = send_mode; 
    
-  switch(uart.send_mode)
+  switch(send_mode)
   {
     case TEMPER_PAR:   
        build_i4h(d->param.tmp_use);
@@ -192,7 +194,9 @@ void uart_send_packet(ecudata* d)
        build_i8h(d->param.ckps_cogs_btdc);   
        build_i8h(d->param.ckps_ignit_cogs);  
        break;
-   
+   case OP_COMP_NC:    
+       build_i4h(d->op_comp_code);              
+       break;   
   }//switch
 
   //общая часть для всех пакетов
@@ -291,6 +295,11 @@ unsigned char uart_recept_packet(ecudata* d)
        d->param.ckps_cogs_btdc  = recept_i8h();  
        d->param.ckps_ignit_cogs = recept_i8h();  
        break;       
+       
+    case OP_COMP_NC: 
+       d->op_actn_code = recept_i4h(); 
+       break;       
+       
   }//switch     
 
  return descriptor;

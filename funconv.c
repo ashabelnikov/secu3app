@@ -83,8 +83,8 @@ int start_function(ecudata* d)
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
 int work_function(ecudata* d)
 {    
-   int  gradient, discharge, rpm = d->sens.inst_frq;
-   signed char f,l,fp1,lp1;   
+   int  gradient, discharge, rpm = d->sens.inst_frq, l;
+   signed char f,fp1,lp1;   
 
    //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы            
    for(f = 14; f >= 0; f--)   
@@ -100,13 +100,15 @@ int work_function(ecudata* d)
    //map_upper_pressure - верхнее значение давления
    //map_lower_pressure - нижнее значение давления
    gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / 16; //делим на количество узлов интерполяции по оси давления
+   if (gradient < 1)
+     gradient = 1;  //исключаем деление на ноль и отрицательное значение если верхнее давление меньше нижнего
    l = (discharge / gradient);
    
-   lp1 = l + 1;      
    if (l >= (F_WRK_POINTS_F - 1))
-   { 
      lp1 = l = F_WRK_POINTS_F - 1;
-   }
+   else
+     lp1 = l + 1;      
+
    //обновляем переменную расхода воздуха
    d->airflow = 16 - l;
    

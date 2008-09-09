@@ -20,12 +20,14 @@
 
 #define GetICR() (ICR1)
 
+#define CKPS_CHANNEL_MODE14  0
+#define CKPS_CHANNEL_MODE23  1
+#define CKPS_CHANNEL_MODENA  2
+
 typedef struct
 {
   unsigned char  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
   unsigned char  ckps_is_valid_half_turn_period:1;
-  unsigned char  ckps_delay_prepared14:1;
-  unsigned char  ckps_delay_prepared23:1;
   unsigned char  ckps_is_synchronized:1;
   unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением
   unsigned char  ckps_gap_occured:1;
@@ -50,6 +52,7 @@ typedef struct
   unsigned char cogs_btdc14;
   unsigned char cogs_btdc23;
   unsigned char starting_mode;
+  unsigned char channel_mode;
 }CKPSSTATE;
  
 CKPSSTATE ckps;
@@ -68,6 +71,7 @@ void ckps_init_state(void)
   ckps.advance_angle = 0;
   ckps.advance_angle_buffered = 0;
   ckps.starting_mode = 0;
+  ckps.channel_mode = CKPS_CHANNEL_MODENA;
   
   flags.ckps_error_flag = 0;
   flags.ckps_new_engine_cycle_happen = 0;
@@ -289,7 +293,7 @@ synchronized_enter:
    //начинаем отсчет угла опережения
    ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 11;
    ckps.advance_angle = ckps.advance_angle_buffered;
-   flags.ckps_delay_prepared14 = 0;
+   ckps.channel_mode = CKPS_CHANNEL_MODE14;
    //knock_start_settings_latching();    nearest future!!!
    //adc_begin_measure();                nearest future!!!   
   }
@@ -298,7 +302,7 @@ synchronized_enter:
    //начинаем отсчет угла опережения
    ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 11;
    ckps.advance_angle = ckps.advance_angle_buffered;
-   flags.ckps_delay_prepared23 = 0;
+   ckps.channel_mode = CKPS_CHANNEL_MODE23;
    //knock_start_settings_latching();    nearest future!!!
    //adc_begin_measure();                nearest future!!!   
   }
@@ -325,27 +329,29 @@ synchronized_enter:
   }
 
   //подготовка к запуску зажигания для текущего канала
-  if (!flags.ckps_delay_prepared14)
+ switch(ckps.channel_mode)
   {
+  case CKPS_CHANNEL_MODE14:
    diff = ckps.current_angle - ckps.advance_angle;
    if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
    {
    //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
    prepare_channel14(GetICR() + ((unsigned long)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG));       
    ckps.ignition_pulse_cogs_14 = 0;   
-   flags.ckps_delay_prepared14 = 1;
+   ckps.channel_mode = CKPS_CHANNEL_MODENA;
    }
-  }
-  if (!flags.ckps_delay_prepared23)
-  {
+   break;
+   
+  case CKPS_CHANNEL_MODE23:
    diff = ckps.current_angle - ckps.advance_angle;
    if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
    {
     //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
     prepare_channel23(GetICR() + ((unsigned long)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG));    
     ckps.ignition_pulse_cogs_23 = 0;   
-    flags.ckps_delay_prepared23 = 1;
+   ckps.channel_mode = CKPS_CHANNEL_MODENA;
    }
+   break;
   }
 
   if (ckps.ignition_pulse_cogs_14 >= ckps.ignition_cogs)

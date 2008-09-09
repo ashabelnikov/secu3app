@@ -17,7 +17,7 @@
 #define  UART_SEND_BUFF_SIZE     64
 
 //==============интерфейс модуля=======================
- void uart_send_packet(ecudata* d);
+ void uart_send_packet(ecudata* d, char send_mode);
  unsigned char uart_recept_packet(ecudata* d);
  void uart_notify_processed(void);
  unsigned char uart_is_sender_busy(void);

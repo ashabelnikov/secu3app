@@ -25,6 +25,9 @@
 #include "adc.h"
 #include "ckps.h"
 
+#define OPCODE_EEPROM_PARAM_SAVE 1
+
+
 #define FRQ_AVERAGING                16                          //кол-во значений для усреднения частоты вращения к.в.
 #define FRQ4_AVERAGING               4
 
@@ -59,13 +62,13 @@
 unsigned char send_packet_interval_counter = 0;
 unsigned char force_measure_timeout_counter = 0;
 unsigned char engine_stop_timeout_counter = 0;
-unsigned char save_param_timeout_counter = 0;
+unsigned int save_param_timeout_counter = 0;
 unsigned char ce_control_time_counter = 0;
 
 unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
 unsigned int freq4_average_buf[FRQ4_AVERAGING];
 
-unsigned char eeprom_parameters_cache[96];
+unsigned char eeprom_parameters_cache[sizeof(params) + 1];
 
 //-------------------------------------------------------------
 unsigned int ecuerrors;
@@ -127,7 +130,7 @@ void check_engine(void)
    eeprom_read(&temp_errors,EEPROM_ECUERRORS_START,sizeof(unsigned int));
    write_errors = temp_errors | merged_errors; 
    if (write_errors!=temp_errors)    
-    eeprom_start_wr_data(EEPROM_ECUERRORS_START,(unsigned char*)&write_errors,sizeof(unsigned int));      
+    eeprom_start_wr_data(0,EEPROM_ECUERRORS_START,(unsigned char*)&write_errors,sizeof(unsigned int));      
    need_to_save = 0;
   }
 }
@@ -312,10 +315,18 @@ void process_uart_interface(ecudata* d)
  {
   if (!uart_is_sender_busy())
   {                
-   uart_send_packet(d);    //теперь передатчик озабочен передачей данных
+   uart_send_packet(d,0);    //теперь передатчик озабочен передачей данных
    send_packet_interval_counter = SEND_PACKET_INTERVAL_VALUE;
   }
  }
+
+ //передаем нотификационный код завершения последней операции 
+ if ((0!=d->op_comp_code)&&(!uart_is_sender_busy()))
+  {                
+   uart_send_packet(d,OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   d->op_comp_code = 0;
+  } 
+ 
 }
 
 
@@ -340,12 +351,18 @@ void InitialMeasure(ecudata* d)
 //из UART-a и сохраненные параметры отличаются от текущих.        
 void save_param_if_need(ecudata* d)
 {
-  //параметры не изменились за заданное время
+  char opcode;
+  
+  if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE)
+    goto force_parameters_save; //goto - это зло.
+  
+  //параметры не изменились за заданное время?
   if (save_param_timeout_counter==0) 
   {
     //текущие и сохраненные параметры отличаются?
     if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE)) 
     {
+force_parameters_save:    
     //мы не можем начать сохранение параметров, так как EEPROM на данный момент занято - сохранение 
     //откладывается и будет осуществлено когда EEPROM освободится и будет вновь вызвана эта функция.
     if (!eeprom_is_idle())
@@ -353,14 +370,20 @@ void save_param_if_need(ecudata* d)
 
      memcpy(eeprom_parameters_cache,&d->param,sizeof(params));  
      ((params*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
-     eeprom_start_wr_data(EEPROM_PARAM_START,eeprom_parameters_cache,sizeof(params));
+     eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE,EEPROM_PARAM_START,eeprom_parameters_cache,sizeof(params));
      
      //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
      //записаны новые параметры с корректной контрольной суммой 
-     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN); 
+     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
+     d->op_actn_code = 0; //обработали       
     }
     save_param_timeout_counter = SAVE_PARAM_TIMEOUT_VALUE;
   }
+  
+  //если есть завершенная операция то сохраняем ее код для отправки нотификации
+  opcode = eeprom_take_completed_opcode();
+  if (opcode)
+   d->op_comp_code = opcode;   
 }
 
 //загружает параметры из EEPROM, проверяет целостность данных и если они испорчены то
@@ -414,6 +437,9 @@ __C_task void main(void)
 {
   unsigned char mode = 0;
   ecudata edat; 
+  
+  edat.op_comp_code = 0;
+  edat.op_actn_code = 0;
     
   init_io_ports();
 

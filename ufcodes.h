@@ -27,5 +27,6 @@
 #define   ADCRAW_DAT   's'
 
 #define   CKPS_PAR     't'
+#define   OP_COMP_NC   'u'
 
 #endif //_UFCODES_H_

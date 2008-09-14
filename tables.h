@@ -147,7 +147,7 @@ typedef struct
 #pragma object_attribute=__root
 const FirmwareData __flash fwdata@FIRMWARE_DATA_START=
 {
-  "SECU-3 firmware. Build ["__DATE__"]"
+  "SECU-3 firmware v1.0. Build ["__DATE__"]"
 };
 
 //данные в таблицах по умолчанию

@@ -13,11 +13,7 @@
 #define ADCI_MAP                2
 #define ADCI_UBAT               1         
 #define ADCI_TEMP               0
-
-//размер буферов усреднени€ по каждому датчику
-#define MAP_AVERAGING           4   
-#define BAT_AVERAGING           4   
-#define TMP_AVERAGING           8  
+#define ADCI_KNOCK              3
 
 #define MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER  64
 #define UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER (1.0/ADC_DISCRETE) //=400
@@ -27,9 +23,9 @@
 #define MAP_CURVE_GRADIENT_KPA  20.9   //кѕа
 
 //эти функции возвращают текущие значени€ из буферов усреднени€
-unsigned int adc_get_map_value(unsigned char index);
-unsigned int adc_get_ubat_value(unsigned char index);
-unsigned int adc_get_temp_value(unsigned char index);
+unsigned int adc_get_map_value(void);
+unsigned int adc_get_ubat_value(void);
+unsigned int adc_get_temp_value(void);
 
 //запускает измерение значений с датчиков, но только если предыдущее  
 //измерение завершено.

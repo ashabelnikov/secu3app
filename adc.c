@@ -15,32 +15,31 @@
 
 typedef struct
 {
- unsigned int map_abuf[MAP_AVERAGING];           //буфер усреднения абсолютного давления
- unsigned int bat_abuf[BAT_AVERAGING];           //буфер усреднения напряжения бортовой сети
- unsigned int tmp_abuf[TMP_AVERAGING];           //буфер усреднения температуры охлаждающей жидкости
+ unsigned int map_value;           //последнее измеренное значение абсолютного давления
+ unsigned int ubat_value;          //последнее измеренное значение напряжения бортовой сети
+ unsigned int temp_value;          //последнее измеренное значение температуры охлаждающей жидкости
 
- unsigned char  map_ai;
- unsigned char  bat_ai;
- unsigned char  tmp_ai;      
- unsigned char  sensors_ready;                  //датчики обработаны и значения готовы к считыванию
+ unsigned char  sensors_ready;     //датчики обработаны и значения готовы к считыванию
 }adc_state;
 
 adc_state adc;  //переменные состояния АЦП
 
-
-unsigned int adc_get_map_value(unsigned char index)
+__monitor
+unsigned int adc_get_map_value(void)
 {
-  return adc.map_abuf[index];
+  return adc.map_value;
 }
 
-unsigned int adc_get_ubat_value(unsigned char index)
+__monitor
+unsigned int adc_get_ubat_value(void)
 {
-  return adc.bat_abuf[index];
+  return adc.ubat_value;
 }
 
-unsigned int adc_get_temp_value(unsigned char index)
+__monitor
+unsigned int adc_get_temp_value(void)
 {
-  return adc.tmp_abuf[index];
+  return adc.temp_value;
 }
 
 
@@ -63,11 +62,7 @@ char adc_is_measure_ready(void)
 
 //инициализация АЦП и его переменных состояния
 void adc_init(void)
-{
- adc.map_ai = MAP_AVERAGING-1;
- adc.bat_ai = BAT_AVERAGING-1;
- adc.tmp_ai = TMP_AVERAGING-1;      
- 
+{ 
  //инициализация АЦП, параметры: f = 125.000 kHz, 
  //внутренний источник опорного напряжения - 2.56V, прерывание разрешено 
  ADMUX=ADC_VREF_TYPE;
@@ -87,34 +82,29 @@ __interrupt void ADC_isr(void)
  switch(ADMUX&0x07)
  {
    case ADCI_MAP: //закончено измерение абсолютного давления
-      adc.map_abuf[adc.map_ai] = ADC;      
-
-      //обновляем значение индекса буфера усреднения
-      (adc.map_ai==0) ? (adc.map_ai = MAP_AVERAGING - 1): adc.map_ai--;            
-
+      adc.map_value = ADC;      
       ADMUX = ADCI_UBAT|ADC_VREF_TYPE;   
       SETBIT(ADCSRA,ADSC);
       break;
 
    case ADCI_UBAT://закончено измерение напряжения бортовой сети
-      adc.bat_abuf[adc.bat_ai] = ADC;      
-
-      //обновляем значение индекса буфера усреднения
-      (adc.bat_ai==0) ? (adc.bat_ai = BAT_AVERAGING - 1): adc.bat_ai--;            
-
+      adc.ubat_value = ADC;      
       ADMUX = ADCI_TEMP|ADC_VREF_TYPE;   
       SETBIT(ADCSRA,ADSC);
       break;
 
    case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
-      adc.tmp_abuf[adc.tmp_ai] = ADC;      
-
-      //обновляем  значение индекса буфера усреднения
-      (adc.tmp_ai==0) ? (adc.tmp_ai = TMP_AVERAGING - 1): adc.tmp_ai--;               
-
+      adc.temp_value = ADC;      
       ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
       adc.sensors_ready = 1;                
       break; 
+      
+/*    nearest future!!!
+   case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
+      adc.knock_value = ADC;      
+      ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
+      adc.sensors_ready = 1;                
+      break; */
  } 
 }
 

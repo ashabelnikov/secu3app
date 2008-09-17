@@ -29,8 +29,7 @@ typedef struct
   unsigned char  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
   unsigned char  ckps_is_valid_half_turn_period:1;
   unsigned char  ckps_is_synchronized:1;
-  unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением
-  unsigned char  ckps_gap_occured:1;
+  unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением  
 }CKPSFLAGS;
 
 typedef struct
@@ -60,8 +59,9 @@ CKPSSTATE ckps;
 //размещаем в свободных регистрах ввода/вывода
 __no_init volatile CKPSFLAGS flags@0x22;
 
-//инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится 
-void ckps_init_state(void)
+//Инициализирует переменные состояния ДПКВ
+__monitor
+void ckps_init_state_variables(void)
 {
   ckps.cog = 0;
   //при первом же прерывании будет сгенерирован конец импульса запуска зажигания для цилиндров 1-4
@@ -75,8 +75,15 @@ void ckps_init_state(void)
   
   flags.ckps_error_flag = 0;
   flags.ckps_new_engine_cycle_happen = 0;
-  flags.ckps_gap_occured = 0;
   flags.ckps_is_synchronized = 0;
+}
+
+
+//инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится 
+__monitor
+void ckps_init_state(void)
+{
+  ckps_init_state_variables(); 
   
   //OC1А(PD5) и OC1В(PD4) должны быть сконфигурированы как выходы
   DDRD|= (1<<DDD5)|(1<<DDD4); 
@@ -92,11 +99,10 @@ void ckps_init_state(void)
 }
 
 //устанавливает УОЗ для реализации в алгоритме
+__monitor
 void ckps_set_dwell_angle(signed int angle)
 {
-  __disable_interrupt();    
   ckps.advance_angle_buffered = angle;
-  __enable_interrupt();                
 }
 
 //Высчитывание мгновенной частоты вращения коленвала по измеренному времени прохождения 30 зубьев шкива.
@@ -116,39 +122,30 @@ unsigned int ckps_calculate_instant_freq(void)
 }
 
 //устанавливает тип фронта ДПКВ (0 - отрицательный, 1 - положительный)
+__monitor
 void ckps_set_edge_type(unsigned char edge_type)
 {
-  unsigned char _t;
-  _t=__save_interrupt();
-  __disable_interrupt();
   if (edge_type)
     TCCR1B|= (1<<ICES1);
   else
     TCCR1B&=~(1<<ICES1);
-   __restore_interrupt(_t);
 }
 
+__monitor
 void ckps_set_cogs_btdc(unsigned char cogs_btdc)
 {
-  unsigned char _t;
-  _t=__save_interrupt();
-  __disable_interrupt();
   //11 зубьев = 66 град. до в.м.т. 
   ckps.cogs_latch14 = cogs_btdc - 11;
   ckps.cogs_latch23 = cogs_btdc + 19;
   ckps.cogs_btdc14  = cogs_btdc;
   ckps.cogs_btdc23  = cogs_btdc + 30;
-  __restore_interrupt(_t);
 }
 
 //устанавливает длительность импульса зажигания в зубьях
+__monitor
 void ckps_set_ignition_cogs(unsigned char cogs)
 {
-  unsigned char _t;
-  _t=__save_interrupt();
-  __disable_interrupt();
   ckps.ignition_cogs = cogs;
-  __restore_interrupt(_t);
 }
 
 unsigned char ckps_is_error(void)
@@ -162,25 +159,31 @@ void ckps_reset_error(void)
 }
 
 //эта функция возвращает 1 если был новый цикл зажигания и сразу сбрасывает событие!
+__monitor
 unsigned char ckps_is_cycle_cutover_r()
 {
  unsigned char result;
- __disable_interrupt();
  result = flags.ckps_new_engine_cycle_happen;
  flags.ckps_new_engine_cycle_happen = 0;
- __enable_interrupt();                
  return result;
 }
 
-//эта функция возвращает 1 если произошло изменение положения коленвала на один оборот и сразу сбрасывает событие
-unsigned char ckps_is_rotation_cutover_r(void)
+__monitor
+unsigned char ckps_get_current_cog(void)
 {
- unsigned char result;
- __disable_interrupt();
- result = flags.ckps_gap_occured;
- flags.ckps_gap_occured = 0;
- __enable_interrupt();                
- return result;
+ return ckps.cog;
+}
+
+__monitor
+unsigned char ckps_is_cog_changed(void)
+{
+ static unsigned char prev_cog = 0;
+ if (prev_cog!=ckps.cog)
+  {
+  prev_cog = ckps.cog; 
+  return 1;
+  }
+ return 0;
 }
 
 #pragma vector=TIMER1_COMPA_vect
@@ -236,7 +239,6 @@ __interrupt void timer1_capt_isr(void)
    {
    case 0:
     /////////////////////////////////////////
-    flags.ckps_gap_occured = 0;
     flags.ckps_is_valid_half_turn_period = 0;
     /////////////////////////////////////////
     if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
@@ -261,9 +263,6 @@ __interrupt void timer1_capt_isr(void)
   //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки.
   if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
   {
-   /////////////////////////////////////////
-   flags.ckps_gap_occured = 1; //устанавливаем событие нахождения синхрометки
-   /////////////////////////////////////////
    if ((ckps.cog != 59))
      flags.ckps_error_flag = 1; //ERROR             
   
@@ -271,19 +270,7 @@ __interrupt void timer1_capt_isr(void)
    ckps.ignition_pulse_cogs_14+=2;
    ckps.ignition_pulse_cogs_23+=2;
   }
-  else
-  {
-   //Если это не синхрометка и обороты опустилисть ниже определенного порога - двигатель остановился,
-   //то переходим в режим запуска и синхронизации
-   if (ckps.period_curr > 12500) 
-   {
-    ckps.cog = 0; //мы начнем просто пропускать зубья
-    ckps.starting_mode = 0;
-    flags.ckps_is_synchronized = 0;       
-    return;
-   }
-  }
-
+  
 synchronized_enter:     
 
   //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
@@ -295,7 +282,7 @@ synchronized_enter:
    ckps.advance_angle = ckps.advance_angle_buffered;
    ckps.channel_mode = CKPS_CHANNEL_MODE14;
    //knock_start_settings_latching();    nearest future!!!
-   //adc_begin_measure();                nearest future!!!   
+   adc_begin_measure();            //запуск процесса измерения значений аналоговых входов   
   }
   if (ckps.cog == ckps.cogs_latch23)
   {
@@ -304,7 +291,7 @@ synchronized_enter:
    ckps.advance_angle = ckps.advance_angle_buffered;
    ckps.channel_mode = CKPS_CHANNEL_MODE23;
    //knock_start_settings_latching();    nearest future!!!
-   //adc_begin_measure();                nearest future!!!   
+   adc_begin_measure();            //запуск процесса измерения значений аналоговых входов
   }
 
   
@@ -324,7 +311,6 @@ synchronized_enter:
    flags.ckps_is_valid_half_turn_period = 1;
    /////////////////////////////////////////
    flags.ckps_new_engine_cycle_happen = 1; //устанавливаем событие цикловой синхронизации 
-   adc_begin_measure();                    //запуск процесса измерения значений аналоговых входов
    /////////////////////////////////////////
   }
 

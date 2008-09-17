@@ -35,6 +35,13 @@ unsigned int ckps_calculate_instant_freq(void);
 unsigned char ckps_is_error(void);
 void ckps_reset_error(void);
 unsigned char ckps_is_cycle_cutover_r(void);
-unsigned char ckps_is_rotation_cutover_r(void);
+void ckps_init_state_variables(void);
+
+//возвращает номер текущего зуба
+unsigned char ckps_get_current_cog(void);
+
+//возвращает 1, если номер текущего зуба изменился.
+unsigned char ckps_is_cog_changed(void);
+
 
 #endif //_CKPS_H_

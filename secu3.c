@@ -28,8 +28,14 @@
 #define OPCODE_EEPROM_PARAM_SAVE 1
 
 
-#define FRQ_AVERAGING                16                          //кол-во значений для усреднения частоты вращения к.в.
-#define FRQ4_AVERAGING               4
+//кол-во значений для усреднения частоты вращения к.в.
+#define FRQ_AVERAGING           16                          
+#define FRQ4_AVERAGING          4
+
+//размер буферов усреднения по каждому аналоговому датчику
+#define MAP_AVERAGING           4   
+#define BAT_AVERAGING           4   
+#define TMP_AVERAGING           8  
 
 #define TIMER2_RELOAD_VALUE          100                         //для 10 мс
 #define EEPROM_PARAM_START           0x002                       //адрес структуры параметров в EEPROM 
@@ -57,21 +63,44 @@
 
 #define disable_comparator() {ACSR=(1<<ACD);}
 
- 
-//--глобальные переменные     
-unsigned char send_packet_interval_counter = 0;
-unsigned char force_measure_timeout_counter = 0;
-unsigned char engine_stop_timeout_counter = 0;
-unsigned int save_param_timeout_counter = 0;
-unsigned char ce_control_time_counter = 0;
+//---------функции для виртуальных таймеров---------------
+typedef unsigned char s_timer8;
+typedef unsigned int s_timer16;
+#define s_timer_update(T)    { if ((T) > 0) (T)--; }
+#define s_timer_set(T, V)    { (T) = (V); }
+#define s_timer_is_action(T) ((T)==0)
 
-unsigned int freq_average_buf[FRQ_AVERAGING];                     //буфер усреднения частоты вращения коленвала
-unsigned int freq4_average_buf[FRQ4_AVERAGING];
+#define s_timer16_set(T, V)  \
+{                            \
+ __disable_interrupt();      \
+ (T) = (V);                  \
+ __enable_interrupt();       \
+}
+ 
+__monitor
+unsigned char s_timer16_is_action(s_timer16 i_timer) 
+{
+ return (i_timer==0);
+}
+ 
+//-----------глобальные переменные----------------------------
+s_timer8  send_packet_interval_counter = 0;
+s_timer8  force_measure_timeout_counter = 0;
+s_timer8  engine_stop_timeout_counter = 0;
+s_timer16 save_param_timeout_counter = 0;
+s_timer8  ce_control_time_counter = 0;
+s_timer8  engine_rotation_timeout_counter = 0;
+
+unsigned int freq_circular_buffer[FRQ_AVERAGING];     //буфер усреднения частоты вращения коленвала
+unsigned int freq4_circular_buffer[FRQ4_AVERAGING];
+unsigned int map_circular_buffer[MAP_AVERAGING];      //буфер усреднения абсолютного давления
+unsigned int ubat_circular_buffer[BAT_AVERAGING];     //буфер усреднения напряжения бортовой сети
+unsigned int temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения температуры охлаждающей жидкости
 
 unsigned char eeprom_parameters_cache[sizeof(params) + 1];
 
 //-------------------------------------------------------------
-unsigned int ecuerrors;
+unsigned int ecuerrors;    //максимум 16 кодов ошибок
 
 //определяем биты ошибок
 #define ECUERROR_CKPS_MALFUNCTION     0
@@ -104,10 +133,14 @@ void check_engine(void)
     CLEAR_ECUERROR(ECUERROR_CKPS_MALFUNCTION);  
   }
 
-  //если есть хотя бы одна ошибка - зажигаем СЕ
+  //если таймер отсчитал время, то гасим СЕ
+  if (s_timer_is_action(ce_control_time_counter))
+    SET_CE_STATE(0);       
+
+  //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер 
   if (ecuerrors!=0)
   {
-   ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
+   s_timer_set(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
    SET_CE_STATE(1);  
   }
 
@@ -135,68 +168,20 @@ void check_engine(void)
   }
 }
 
-
-
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
 //Вызывается каждые 10мс
 #pragma vector=TIMER2_OVF_vect
 __interrupt void timer2_ovf_isr(void)
 { 
   TCNT2 = TIMER2_RELOAD_VALUE; 
-
-  if (force_measure_timeout_counter > 0)
-    force_measure_timeout_counter--;
-  else
-  {
-    force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;
-    adc_begin_measure();
-  }      
   __enable_interrupt();     
     
-  if (save_param_timeout_counter > 0)
-    save_param_timeout_counter--; 
-
-  if (send_packet_interval_counter > 0)
-    send_packet_interval_counter--;
-
-  if (engine_stop_timeout_counter > 0)
-    engine_stop_timeout_counter--;
-
-  if (ckps_is_rotation_cutover_r())
-  {
-    engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;   
-    force_measure_timeout_counter = FORCE_MEASURE_TIMEOUT_VALUE;
-
-    // индицирование этих ошибок можно прекращать при начале вращения двигателя или N-оборотов...
-    //CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
-    //CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
-  }
-
-  //-----------------Check engine---------------------------
-  if (ce_control_time_counter > 0) 
-    ce_control_time_counter--;
-  else 
-    SET_CE_STATE(0);       
- //--------------------------------------------------------
-}
-
-//обновление буфера усреднения для частоты вращения
-void update_buffer_freq(ecudata* d)
-{
-  static unsigned char frq_ai = FRQ_AVERAGING-1;
-  static unsigned char frq4_ai = FRQ4_AVERAGING-1;
-
-    //обновляем содержимое буфера усреднения  и значение его индекса
-  if ((engine_stop_timeout_counter == 0)||(ckps_is_cycle_cutover_r()))
-  {
-    freq_average_buf[frq_ai] = d->sens.inst_frq;      
-    (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--; 
-        
-    freq4_average_buf[frq4_ai] = d->sens.inst_frq;      
-    (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--; 
-
-    engine_stop_timeout_counter = ENGINE_STOP_TIMEOUT_VALUE;   
-  }
+  s_timer_update(force_measure_timeout_counter);
+  s_timer_update(save_param_timeout_counter);
+  s_timer_update(send_packet_interval_counter);
+  s_timer_update(engine_stop_timeout_counter);
+  s_timer_update(ce_control_time_counter);
+  s_timer_update(engine_rotation_timeout_counter);
 }
 
 //управление отдельными узлами двигателя и обновление данных о состоянии 
@@ -232,44 +217,68 @@ void control_engine_units(ecudata *d)
   }  
   
   //считываем и сохраняем состояние газового клапана
-  d->sens.gas = GET_GAS_VALVE_STATE();    
+  d->sens.gas = GET_GAS_VALVE_STATE();      
 }
 
 
-//усреднение измеряемых величин используя текущие значения буферов усреднения, компенсация погрешностей
+//обновление буферов усреднения (частота вращения, датчики...)
+void update_values_buffers(ecudata* d)
+{
+  static unsigned char  map_ai  = MAP_AVERAGING-1;
+  static unsigned char  bat_ai  = BAT_AVERAGING-1;
+  static unsigned char  tmp_ai  = TMP_AVERAGING-1;      
+  static unsigned char  frq_ai  = FRQ_AVERAGING-1;
+  static unsigned char  frq4_ai = FRQ4_AVERAGING-1;  
+
+  map_circular_buffer[map_ai] = adc_get_map_value();      
+  (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;            
+
+  ubat_circular_buffer[bat_ai] = adc_get_ubat_value();      
+  (bat_ai==0) ? (bat_ai = BAT_AVERAGING - 1): bat_ai--;            
+
+  temp_circular_buffer[tmp_ai] = adc_get_temp_value();      
+  (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;               
+
+  freq_circular_buffer[frq_ai] = d->sens.inst_frq;      
+  (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--; 
+        
+  freq4_circular_buffer[frq4_ai] = d->sens.inst_frq;      
+  (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--;   
+}
+
+
+//усреднение измеряемых величин используя текущие значения кольцевых буферов усреднения, компенсация 
+//погрешностей АЦП, перевод измеренных значений в физические величины.
 void average_measured_values(ecudata* d)
 {     
-  unsigned char i;unsigned long sum;       
-  ADCSRA&=~((1<<ADIF)|(1<<ADIE));             //запрещаем прерывание от АЦП не сбрасывая флаг прерывания
+  unsigned char i;  unsigned long sum;       
             
-  for (sum=0,i = 0; i < MAP_AVERAGING; i++)
-   sum+=adc_get_map_value(i);       
+  for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
+   sum+=map_circular_buffer[i];       
   d->sens.map_raw = adc_compensate((sum/MAP_AVERAGING)*2,d->param.map_adc_factor,d->param.map_adc_correction); 
   d->sens.map = map_adc_to_kpa(d->sens.map_raw);
           
   for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
-   sum+=adc_get_ubat_value(i);      
+   sum+=ubat_circular_buffer[i];      
   d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING)*6,d->param.ubat_adc_factor,d->param.ubat_adc_correction);; 
   d->sens.voltage = ubat_adc_to_v(d->sens.voltage_raw);  
      
   if (d->param.tmp_use) 
   {       
    for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
-    sum+=adc_get_temp_value(i);      
+    sum+=temp_circular_buffer[i];      
    d->sens.temperat_raw = adc_compensate((5*(sum/TMP_AVERAGING))/3,d->param.temp_adc_factor,d->param.temp_adc_correction); 
    d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
   }  
-  else             //ДТОЖ не используется
+  else                                       //ДТОЖ не используется
    d->sens.temperat=0;
-    
-  ADCSRA=(ADCSRA&(~(1<<ADIF)))|(1<<ADIE);    //разрешаем прерывание от АЦП не сбрасывая флаг прерывания
-           
-  for (sum=0,i = 0; i < FRQ_AVERAGING; i++)    //усредняем частоту вращения коленвала
-   sum+=freq_average_buf[i];      
+               
+  for (sum=0,i = 0; i < FRQ_AVERAGING; i++)  //усредняем частоту вращения коленвала
+   sum+=freq_circular_buffer[i];      
   d->sens.frequen=(sum/FRQ_AVERAGING);           
 
-  for (sum=0,i = 0; i < FRQ4_AVERAGING; i++)    //усредняем частоту вращения коленвала
-   sum+=freq4_average_buf[i];      
+  for (sum=0,i = 0; i < FRQ4_AVERAGING; i++) //усредняем частоту вращения коленвала
+   sum+=freq4_circular_buffer[i];      
   d->sens.frequen4=(sum/FRQ4_AVERAGING);           
 
 }
@@ -294,7 +303,7 @@ void process_uart_interface(ecudata* d)
     case ADCCOR_PAR: 
     case CKPS_PAR:        
       //если были изменены параметры то сбрасываем счетчик времени
-      save_param_timeout_counter = SAVE_PARAM_TIMEOUT_VALUE;
+      s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
       break;  
   }
   
@@ -311,12 +320,12 @@ void process_uart_interface(ecudata* d)
  }
 
  //периодически передаем фреймы с данными
- if (send_packet_interval_counter==0)
+ if (s_timer_is_action(send_packet_interval_counter))
  {
   if (!uart_is_sender_busy())
   {                
    uart_send_packet(d,0);    //теперь передатчик озабочен передачей данных
-   send_packet_interval_counter = SEND_PACKET_INTERVAL_VALUE;
+   s_timer_set(send_packet_interval_counter,SEND_PACKET_INTERVAL_VALUE);
   }
  }
 
@@ -333,12 +342,13 @@ void process_uart_interface(ecudata* d)
 //Предварительное измерение перед пуском двигателя
 void InitialMeasure(ecudata* d)
 { 
-  unsigned char i=16;
+  unsigned char i = 16;
   __enable_interrupt();
   do
   {
     adc_begin_measure();                                                     
     while(!adc_is_measure_ready()); 
+    update_values_buffers(d);
   }while(--i);  
   __disable_interrupt();
   average_measured_values(d);  
@@ -355,9 +365,9 @@ void save_param_if_need(ecudata* d)
   
   if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE)
     goto force_parameters_save; //goto - это зло.
-  
+    
   //параметры не изменились за заданное время?
-  if (save_param_timeout_counter==0) 
+  if (s_timer16_is_action(save_param_timeout_counter)) 
   {
     //текущие и сохраненные параметры отличаются?
     if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE)) 
@@ -377,7 +387,7 @@ force_parameters_save:
      CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
      d->op_actn_code = 0; //обработали       
     }
-    save_param_timeout_counter = SAVE_PARAM_TIMEOUT_VALUE;
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
   }
   
   //если есть завершенная операция то сохраняем ее код для отправки нотификации
@@ -435,11 +445,12 @@ void init_io_ports(void)
       
 __C_task void main(void)
 {
-  unsigned char mode = 0;
+  unsigned char mode = 0; 
   ecudata edat; 
   
   edat.op_comp_code = 0;
   edat.op_actn_code = 0;
+  edat.sens.inst_frq = 0;
     
   init_io_ports();
 
@@ -478,7 +489,28 @@ __C_task void main(void)
 
   //------------------------------------------------------------------------     
   while(1)
-  {
+  {    
+    if (ckps_is_cog_changed())
+    {
+     s_timer_set(engine_rotation_timeout_counter,ENGINE_ROTATION_TIMEOUT_VALUE);    
+    }
+     
+    if (s_timer_is_action(engine_rotation_timeout_counter))
+    {
+     ckps_init_state_variables();
+    }
+      
+    //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
+    //цикла этот таймер переинициализируется. Таким образом, когда частота вращения двигателя превысит
+    //определенную величину, это условие выполнятся перестанет.
+    if (s_timer_is_action(force_measure_timeout_counter))
+    {
+     s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+     __disable_interrupt();
+     adc_begin_measure();
+     __enable_interrupt();
+    }      
+  
     //управление фиксированием и индицированием возникающих ошибок
     check_engine();
 
@@ -487,10 +519,24 @@ __C_task void main(void)
    
     //управление сохранением настроек
     save_param_if_need(&edat);                        
-    
+   
     edat.sens.inst_frq = ckps_calculate_instant_freq();                           
 
-    update_buffer_freq(&edat);
+   //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла. Если частота
+   //вращения двигателя меньше определенной величины или двигатель вообще остановлен, то это условие будет
+   //выполнятся принудительно по таймеру.     
+   if (s_timer_is_action(engine_stop_timeout_counter) || ckps_is_cycle_cutover_r())
+   {
+    update_values_buffers(&edat);
+
+    s_timer_set(engine_stop_timeout_counter, ENGINE_STOP_TIMEOUT_VALUE);   
+    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+
+    /*
+    // индицирование этих ошибок можно прекращать при начале вращения двигателя или прошествии N-оборотов...
+    CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
+    CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  */
+   }
 
     average_measured_values(&edat);        
 

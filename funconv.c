@@ -148,22 +148,38 @@ int coolant_function(ecudata* d)
 }
 
 
+//-------------------------------------------------------------------------------------------
+//       Регулятор холостого хода
+typedef struct
+{
+ int output_state;    //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
+}IDLREGULSTATE;
+
+IDLREGULSTATE idl_prstate;
+
+//сброс состояния РХХ
+void idling_regulator_init(void)
+{
+ idl_prstate.output_state = 0;
+}
+
 //Пропорциональный регулятор для регулирования оборотов ХХ углом опережения зажигания     
 // Возвращает значение угла опережения в целом виде * 32.
 int idling_pregulator(ecudata* d)
 {
-  int correction,error,factor;      
-  //если запрещено автоматическое регулирование оборотов ХХ или обороты
-  //далеки от холостых, то выходим  с нулевой корректировкой        
+  int error,factor;  
+    
+  //если запрещено автоматическое регулирование оборотов ХХ то выходим  с нулевой корректировкой        
   if (!d->param.idl_regul)
     return 0;  
-  error = d->param.idling_rpm - d->sens.frequen4;  
-  
-  //ограничиваем ошибку, а также если мы в зоне нечувствительности, то нет регулирования
-  if (error > 500) error = 500;
-  if (error <-500) error = -500;
+    
+  //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также если мы в зоне 
+  //нечувствительности, то нет регулирования.     
+  error = d->param.idling_rpm - d->sens.frequen4;   
+  if (error > 350) error = 350;
+  if (error <-350) error = -350;
   if (abs(error) < d->param.MINEFR) 
-    return 0;
+    return idl_prstate.output_state;
     
   //выбираем необходимый коэффициент, в зависимости от знака ошибки
   if (error > 0)
@@ -173,17 +189,21 @@ int idling_pregulator(ecudata* d)
      
   //при коэффициенте равном 1.0, скорость изменения УОЗ равна скорости изменения ошибки,
   //дискретность коэффициента равна дискретности УОЗ!   
-  correction = (factor * error);
-  if (correction > ANGLE_MAGNITUDE(35))  //верхний предел регулирования
-      return ANGLE_MAGNITUDE(35);
-  if (correction < ANGLE_MAGNITUDE(-35))  //нижний предел регулирования
-      return ANGLE_MAGNITUDE(-35);
+  idl_prstate.output_state = (factor * error);
+  
+  //ограничиваем коррекцию нижним и верхним пределами регулирования
+  if (idl_prstate.output_state > ANGLE_MAGNITUDE(35))  
+   idl_prstate.output_state = ANGLE_MAGNITUDE(35);
+  if (idl_prstate.output_state < ANGLE_MAGNITUDE(-35))  
+   idl_prstate.output_state = ANGLE_MAGNITUDE(-35);
       
-  return correction;    
+  return idl_prstate.output_state;    
 }
 
+//-------------------------------------------------------------------------------------------
 
-//Интегратор для корректировки УОЗ на переходных режимах двигателя
+
+//Нелинейный фильтр ограничивающий скорость изменения УОЗ на переходных режимах двигателя
 //new_advance_angle - новое значение УОЗ
 //intstep - значение шага интегрирования, положительное число
 //is_enabled - если равен 1, то корректировка разрешена, 0 - запрещена

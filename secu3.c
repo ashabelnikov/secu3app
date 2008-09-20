@@ -27,6 +27,13 @@
 
 #define OPCODE_EEPROM_PARAM_SAVE 1
 
+//режимы двигателя
+#define EM_START 0   
+#define EM_IDLE  1
+#define EM_LDOWN 2   //WORK -> IDLE
+#define EM_LUP   3   //IDLE -> WORK
+#define EM_WORK  4
+
 
 //кол-во значений для усреднения частоты вращения к.в.
 #define FRQ_AVERAGING           16                          
@@ -445,7 +452,7 @@ void init_io_ports(void)
       
 __C_task void main(void)
 {
-  unsigned char mode = 0; 
+  unsigned char mode = EM_START; 
   ecudata edat; 
   
   edat.op_comp_code = 0;
@@ -549,39 +556,63 @@ __C_task void main(void)
       edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине
     
     
-    //КА состояний системы
+    //----------КА состояний системы (диспетчер режимов)--------------
     switch(mode)
     {
-      case 0: //режим пуска
+      case EM_START: //режим пуска
        if (edat.sens.inst_frq > edat.param.smap_abandon)
        {                   
-        mode = 1;        
+        mode = EM_IDLE;    
+        idling_regulator_init();    
        }      
        edat.curr_angle=start_function(&edat);         //базовый УОЗ - функция для пуска
        edat.airflow = 0;
-       break;            
-      case 1: //режим холостого хода
+       break;     
+              
+      case EM_IDLE: //режим холостого хода
        if (edat.sens.carb)//педаль газа нажали - в рабочий режим
        {
-        mode = 2;
+        mode = EM_LUP;
        }      
        edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
        edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию
        edat.curr_angle+=idling_pregulator(&edat);     //добавляем регулировку
        edat.airflow = 0;
        break;            
-      case 2: //рабочий режим 
-       if (!edat.sens.carb)//педаль газа отпустили - в режим ХХ
+              
+      case EM_LDOWN:  //переходной режим к ХХ
+       if (edat.sens.carb)//педаль газа нажали - в рабочий режим
        {
-        mode = 1;
+        mode = EM_WORK;
+       }                   
+       else if (edat.sens.frequen4 < (edat.param.idling_rpm + 200))
+       {
+        //мы попали в зону захвата регулятора ХХ - переходной режим окончен      
+        mode = EM_IDLE;
+       }
+       edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
+       edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию       
+       edat.airflow = 0;       
+       break;                   
+       
+      case EM_LUP:    //переходной режим к нагрузке (reserved for future)
+       mode = EM_WORK;
+       
+      case EM_WORK: //рабочий режим 
+       if (!edat.sens.carb)//педаль газа отпустили - в переходной режим ХХ
+       {
+        mode = EM_LDOWN;
+        idling_regulator_init();    
        }
        edat.curr_angle=work_function(&edat);           //базовый УОЗ - функция рабочего режима
        edat.curr_angle+=coolant_function(&edat);       //добавляем к УОЗ температурную коррекцию
        break;     
+       
       default:  //непонятная ситуация - угол в ноль       
        edat.curr_angle = 0;
        break;     
     }
+    //-----------------------------------------------------------------------
              
     //добавляем к УОЗ октан-коррекцию
     edat.curr_angle+=edat.param.angle_corr;

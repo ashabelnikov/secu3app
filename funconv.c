@@ -157,7 +157,7 @@ int idling_pregulator(ecudata* d)
   //далеки от холостых, то выходим  с нулевой корректировкой        
   if (!d->param.idl_regul)
     return 0;  
-  error = d->param.idling_rpm - d->sens.inst_frq;  
+  error = d->param.idling_rpm - d->sens.frequen4;  
   
   //ограничиваем ошибку, а также если мы в зоне нечувствительности, то нет регулирования
   if (error > 500) error = 500;

@@ -167,7 +167,7 @@ void idling_regulator_init(void)
 // Возвращает значение угла опережения в целом виде * 32.
 int idling_pregulator(ecudata* d)
 {
-  int error,factor;
+  int error,factor,diff;
   //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
   unsigned int capture_range = 200; 
     
@@ -178,27 +178,33 @@ int idling_pregulator(ecudata* d)
     
   //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также если мы в зоне 
   //нечувствительности, то нет регулирования.     
-  error = d->param.idling_rpm - d->sens.frequen4;   
-  if (error > 350) error = 350;
-  if (error <-350) error = -350;
-  if (abs(error) < d->param.MINEFR) 
+  diff = d->param.idling_rpm - d->sens.frequen4;   
+  if (diff > 350) diff = 350;
+  if (diff <-350) diff = -350;
+  if (abs(diff) < d->param.MINEFR) 
     return idl_prstate.output_state;
     
-  //выбираем необходимый коэффициент, в зависимости от знака ошибки
-  if (error > 0)
-     factor = d->param.ifac1;
-  else    
-     factor = d->param.ifac2;                         
+  //выбираем необходимый коэффициент и знач. ошибки для регулятора, в зависимости от знака ошибки
+  if (diff > d->param.MINEFR)
+  {
+    error = diff - d->param.MINEFR;
+    factor = d->param.ifac1;
+  }
+  if (diff < -d->param.MINEFR)    
+  {
+    error = diff + d->param.MINEFR;
+    factor = d->param.ifac2;                         
+  }
      
   //при коэффициенте равном 1.0, скорость изменения УОЗ равна скорости изменения ошибки,
   //дискретность коэффициента равна дискретности УОЗ!   
   idl_prstate.output_state = (factor * error);
   
   //ограничиваем коррекцию нижним и верхним пределами регулирования
-  if (idl_prstate.output_state > ANGLE_MAGNITUDE(35))  
-   idl_prstate.output_state = ANGLE_MAGNITUDE(35);
-  if (idl_prstate.output_state < ANGLE_MAGNITUDE(-35))  
-   idl_prstate.output_state = ANGLE_MAGNITUDE(-35);
+  if (idl_prstate.output_state > ANGLE_MAGNITUDE(30))  
+   idl_prstate.output_state = ANGLE_MAGNITUDE(30);
+  if (idl_prstate.output_state < ANGLE_MAGNITUDE(-30))  
+   idl_prstate.output_state = ANGLE_MAGNITUDE(-30);
       
   return idl_prstate.output_state;    
 }

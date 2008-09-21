@@ -30,9 +30,7 @@
 //режимы двигателя
 #define EM_START 0   
 #define EM_IDLE  1
-#define EM_LDOWN 2   //WORK -> IDLE
-#define EM_LUP   3   //IDLE -> WORK
-#define EM_WORK  4
+#define EM_WORK  2
 
 
 //кол-во значений для усреднения частоты вращения к.в.
@@ -572,36 +570,18 @@ __C_task void main(void)
       case EM_IDLE: //режим холостого хода
        if (edat.sens.carb)//педаль газа нажали - в рабочий режим
        {
-        mode = EM_LUP;
+        mode = EM_WORK;
        }      
        edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
        edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию
        edat.curr_angle+=idling_pregulator(&edat);     //добавляем регулировку
        edat.airflow = 0;
        break;            
-              
-      case EM_LDOWN:  //переходной режим к ХХ
-       if (edat.sens.carb)//педаль газа нажали - в рабочий режим
-       {
-        mode = EM_WORK;
-       }                   
-       else if (edat.sens.frequen4 < (edat.param.idling_rpm + 200))
-       {
-        //мы попали в зону захвата регулятора ХХ - переходной режим окончен      
-        mode = EM_IDLE;
-       }
-       edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
-       edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию       
-       edat.airflow = 0;       
-       break;                   
-       
-      case EM_LUP:    //переходной режим к нагрузке (reserved for future)
-       mode = EM_WORK;
-       
+                                             
       case EM_WORK: //рабочий режим 
        if (!edat.sens.carb)//педаль газа отпустили - в переходной режим ХХ
        {
-        mode = EM_LDOWN;
+        mode = EM_IDLE;
         idling_regulator_init();    
        }
        edat.curr_angle=work_function(&edat);           //базовый УОЗ - функция рабочего режима
@@ -623,7 +603,7 @@ __C_task void main(void)
     if (edat.curr_angle < edat.param.min_angle)
                edat.curr_angle = edat.param.min_angle; 
 
-    //Интегрируем быстрые изменения УОЗ. В режиме пуска интегратор запрещен, это в частности
+    //Ограничиваем быстрые изменения УОЗ. В режиме пуска интегратор запрещен, это в частности
     //необходимо для иницализации внутренней памяти интегратора.
     //edat.curr_angle = transient_state_integrator(edat.curr_angle,ANGLE_MAGNITUDE(3),mode != 0);
 

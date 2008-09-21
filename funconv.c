@@ -181,7 +181,7 @@ int idling_pregulator(ecudata* d)
   diff = d->param.idling_rpm - d->sens.frequen4;   
   if (diff > 350) diff = 350;
   if (diff <-350) diff = -350;
-  if (abs(diff) < d->param.MINEFR) 
+  if (abs(diff) <= d->param.MINEFR) 
     return idl_prstate.output_state;
     
   //выбираем необходимый коэффициент и знач. ошибки для регулятора, в зависимости от знака ошибки

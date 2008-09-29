@@ -16,7 +16,7 @@ typedef struct
 {
  unsigned int map;                                          //давление во впускном коллекторе (усредненное)
  unsigned int voltage;                                      //напряжение бортовой сети (усредненное)
- unsigned int temperat;                                     //температура охлаждающей жидкости (усредненная)
+ signed int temperat;                                       //температура охлаждающей жидкости (усредненная)
  unsigned int frequen;                                      //частота вращения коленвала (усредненная)
  unsigned int inst_frq;                                     //мгновенная частота вращения
  unsigned char carb;                                        //состояние концевика карбюратора 

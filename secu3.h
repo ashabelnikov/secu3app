@@ -10,6 +10,7 @@
 #define ENGINE_STOP_TIMEOUT_VALUE    15
 #define CE_CONTROL_STATE_TIME_VALUE  50
 #define ENGINE_ROTATION_TIMEOUT_VALUE 15
+#define EPXX_DELAY_TIME_VALUE        80
 
 //описывает все входы системы - их производные и интегральные величины
 typedef struct

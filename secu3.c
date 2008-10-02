@@ -93,8 +93,9 @@ s_timer8  send_packet_interval_counter = 0;
 s_timer8  force_measure_timeout_counter = 0;
 s_timer8  engine_stop_timeout_counter = 0;
 s_timer16 save_param_timeout_counter = 0;
-s_timer8  ce_control_time_counter = 0;
+s_timer8  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
 s_timer8  engine_rotation_timeout_counter = 0;
+s_timer8  epxx_delay_time_counter = 0;
 
 unsigned int freq_circular_buffer[FRQ_AVERAGING];     //буфер усреднения частоты вращения коленвала
 unsigned int freq4_circular_buffer[FRQ4_AVERAGING];
@@ -186,43 +187,59 @@ __interrupt void timer2_ovf_isr(void)
   s_timer_update(send_packet_interval_counter);
   s_timer_update(engine_stop_timeout_counter);
   s_timer_update(ce_control_time_counter);
-  s_timer_update(engine_rotation_timeout_counter);
+  s_timer_update(engine_rotation_timeout_counter);   
+  s_timer_update(epxx_delay_time_counter);  
 }
 
 //управление отдельными узлами двигателя и обновление данных о состоянии 
 //концевика карбюратора, газового клапана, клапана ЭПХХ
 void control_engine_units(ecudata *d)
 {
+  //--инверсия концевика карбюратора если необходимо, включение/выключение клапана ЭПХХ
+  d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
+
+  //считываем и сохраняем состояние газового клапана
+  d->sens.gas = GET_GAS_VALVE_STATE();      
+
+#ifndef VPSEM /* простой алгоритм ЭПХХ без использования таймера и индикации */
   //реализация функции ЭПХХ. Если заслонка карбюратора закрыта и frq > [верх.порог] или
   //заслонка карбюратора закрыта и frq > [ниж.порог] но клапан уже закрыт, то производится
   //выключение подачи топлива путем прекращения подачи напряжения на обмотку эл.клапана. Иначе - подача топлива.
-  //--инверсия концевика карбюратора если необходимо, включение/выключение клапана ЭПХХ
-  d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
   d->ephh_valve = ((!d->sens.carb)&&(((d->sens.frequen > d->param.ephh_lot)&&(!d->ephh_valve))||
                              (d->sens.frequen > d->param.ephh_hit)))?0:1;
   SET_EPHH_VALVE_STATE(d->ephh_valve);
- 
-#ifndef VPSEM_STARTER_BLOCKING
-  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов)
+  
+  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)
   if (d->sens.frequen4 > d->param.starter_off)
     SET_STARTER_BLOCKING_STATE(1);
-#else
-  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов)
-  //и управление индикацией состояния клапана ЭПХХ (используется выход блокировки стартера) 
+  
+#else /* сложный алгоритм ЭПХХ с использованием таймера на отключение, с индикацией состояния ЭПХХ и с учетом вида топлива.
+    использование параметров пороговых значений ЭПХХ: d->param.ephh_lot - верхний порог для газа
+    d->param.ephh_hit - верхний порог для бензина. Нижние пороги на 50 единиц меньше сответственно. */
+  if (d->sens.carb) //если дроссель открыт, то открываем клапан, заряжаем таймер и выходим из условия.
+  {d->ephh_valve = 1; s_timer_set(epxx_delay_time_counter, EPXX_DELAY_TIME_VALUE);}
+  else //если дроссель закрыт, то состояние клапана зависит от оборотов, предыдущего состояния клапана, таймера и вида топлива.
+    if (d->sens.gas) // если газовое топливо, то используем параметры d->param.ephh_lot и d->param.ephh_lot-50
+      d->ephh_valve = ((s_timer_is_action(epxx_delay_time_counter))
+      &&(((d->sens.frequen > d->param.ephh_lot-50)&&(!d->ephh_valve))||(d->sens.frequen > d->param.ephh_lot)))?0:1;
+    else // если бензин, то используем параметры d->param.ephh_hit и  d->param.ephh_hit-50
+      d->ephh_valve = ((s_timer_is_action(epxx_delay_time_counter))
+      &&(((d->sens.frequen > d->param.ephh_hit-50)&&(!d->ephh_valve))||(d->sens.frequen > d->param.ephh_hit)))?0:1;     
+  SET_EPHH_VALVE_STATE(d->ephh_valve);
+  //управление блокировкой стартера (стартер блокируется при оборотах больше пороговых)
+  //и индикация состояния клапана ЭПХХ (используется выход блокировки стартера) 
   SET_STARTER_BLOCKING_STATE( (d->sens.frequen4 > d->param.starter_off)&&(d->ephh_valve) ? 1 : 0);
 #endif
- 
+
+  //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе 
   if (d->param.tmp_use)
   {
-    //управление электро вентилятором охлаждения двигателя
     if (d->sens.temperat >= d->param.vent_on)
        SET_VENTILATOR_STATE(1);
     if (d->sens.temperat <= d->param.vent_off)   
        SET_VENTILATOR_STATE(0); 
   }  
   
-  //считываем и сохраняем состояние газового клапана
-  d->sens.gas = GET_GAS_VALVE_STATE();      
 }
 
 

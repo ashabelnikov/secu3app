@@ -467,7 +467,8 @@ void init_io_ports(void)
       
 __C_task void main(void)
 {
-  unsigned char mode = EM_START; 
+  unsigned char mode = EM_START;   
+  unsigned char turnout_low_priority_errors_counter = 100;
   ecudata edat; 
   
   edat.op_comp_code = 0;
@@ -553,11 +554,18 @@ __C_task void main(void)
 
     s_timer_set(engine_stop_timeout_counter, ENGINE_STOP_TIMEOUT_VALUE);   
     s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-
-    /*
-    // индицирование этих ошибок можно прекращать при начале вращения двигателя или прошествии N-оборотов...
-    CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
-    CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  */
+        
+    // индицирование этих ошибок прекращаем при начале вращения двигателя 
+    //(при прошествии N-го количества циклов)
+    if (turnout_low_priority_errors_counter == 1)
+    {    
+     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
+     CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
+    }
+    if (turnout_low_priority_errors_counter > 0)
+     turnout_low_priority_errors_counter--;
+    /////////////////////////////////////////////////////////////////////
+        
    }
 
     average_measured_values(&edat);        
@@ -620,9 +628,9 @@ __C_task void main(void)
     if (edat.curr_angle < edat.param.min_angle)
                edat.curr_angle = edat.param.min_angle; 
 
-    //Ограничиваем быстрые изменения УОЗ. В режиме пуска интегратор запрещен, это в частности
+    //Ограничиваем быстрые изменения УОЗ. В режиме пуска фильтр запрещен, это в частности
     //необходимо для иницализации внутренней памяти интегратора.
-    //edat.curr_angle = transient_state_integrator(edat.curr_angle,ANGLE_MAGNITUDE(3),mode != 0);
+    //edat.curr_angle = transient_state_integrator(edat.curr_angle,ANGLE_MAGNITUDE(3),ANGLE_MAGNITUDE(3),(mode != EM_START) && new_cycle_action);
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  

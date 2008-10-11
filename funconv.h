@@ -14,7 +14,7 @@ int work_function(ecudata* d);
 int coolant_function(ecudata* d);
 void idling_regulator_init(void);
 int idling_pregulator(ecudata* d);
-int transient_state_integrator(int new_advance_angle, unsigned int intstep, char is_enabled);
+int transient_state_integrator(int new_advance_angle, unsigned int intstep_p, unsigned int intstep_m, char is_enabled);
 
 #endif //_FUNCONV_H_
 

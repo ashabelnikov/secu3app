@@ -4,13 +4,13 @@
 
 #include "tables.h"
 
-#define SEND_PACKET_INTERVAL_VALUE   8
-#define SAVE_PARAM_TIMEOUT_VALUE     3000
-#define FORCE_MEASURE_TIMEOUT_VALUE  8
-#define ENGINE_STOP_TIMEOUT_VALUE    15
-#define CE_CONTROL_STATE_TIME_VALUE  50
+#define SEND_PACKET_INTERVAL_VALUE    8
+#define SAVE_PARAM_TIMEOUT_VALUE      3000
+#define FORCE_MEASURE_TIMEOUT_VALUE   50
+#define CE_CONTROL_STATE_TIME_VALUE   50
 #define ENGINE_ROTATION_TIMEOUT_VALUE 15
-#define EPXX_DELAY_TIME_VALUE        80
+#define EPXX_DELAY_TIME_VALUE         80
+#define IDLE_PERIOD_TIME_VALUE        50
 
 //описывает все входы системы - их производные и интегральные величины
 typedef struct

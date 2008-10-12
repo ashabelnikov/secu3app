@@ -24,6 +24,7 @@
 #include "bitmask.h"
 #include "adc.h"
 #include "ckps.h"
+#include "vstimer.h"
 
 #define OPCODE_EEPROM_PARAM_SAVE 1
 
@@ -67,35 +68,15 @@
 #define GET_DEFEEPROM_JUMPER_STATE() (PINC_Bit2)
 
 #define disable_comparator() {ACSR=(1<<ACD);}
-
-//---------функции для виртуальных таймеров---------------
-typedef unsigned char s_timer8;
-typedef unsigned int s_timer16;
-#define s_timer_update(T)    { if ((T) > 0) (T)--; }
-#define s_timer_set(T, V)    { (T) = (V); }
-#define s_timer_is_action(T) ((T)==0)
-
-#define s_timer16_set(T, V)  \
-{                            \
- __disable_interrupt();      \
- (T) = (V);                  \
- __enable_interrupt();       \
-}
- 
-__monitor
-unsigned char s_timer16_is_action(s_timer16 i_timer) 
-{
- return (i_timer==0);
-}
  
 //-----------глобальные переменные----------------------------
 s_timer8  send_packet_interval_counter = 0;
 s_timer8  force_measure_timeout_counter = 0;
-s_timer8  engine_stop_timeout_counter = 0;
 s_timer16 save_param_timeout_counter = 0;
 s_timer8  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
 s_timer8  engine_rotation_timeout_counter = 0;
 s_timer8  epxx_delay_time_counter = 0;
+s_timer8  idle_period_time_counter = 0;
 
 unsigned int freq_circular_buffer[FRQ_AVERAGING];     //буфер усреднения частоты вращения коленвала
 unsigned int freq4_circular_buffer[FRQ4_AVERAGING];
@@ -184,11 +165,11 @@ __interrupt void timer2_ovf_isr(void)
     
   s_timer_update(force_measure_timeout_counter);
   s_timer_update(save_param_timeout_counter);
-  s_timer_update(send_packet_interval_counter);
-  s_timer_update(engine_stop_timeout_counter);
+  s_timer_update(send_packet_interval_counter);  
   s_timer_update(ce_control_time_counter);
   s_timer_update(engine_rotation_timeout_counter);   
-  s_timer_update(epxx_delay_time_counter);  
+  s_timer_update(epxx_delay_time_counter);
+  s_timer_update(idle_period_time_counter);  
 }
 
 //управление отдельными узлами двигателя и обновление данных о состоянии 
@@ -528,12 +509,31 @@ __C_task void main(void)
     //определенную величину, это условие выполнятся перестанет.
     if (s_timer_is_action(force_measure_timeout_counter))
     {
-     s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
      __disable_interrupt();
      adc_begin_measure();
      __enable_interrupt();
+     
+     s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+     update_values_buffers(&edat);
     }      
   
+    //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.      
+    if (ckps_is_cycle_cutover_r())
+    {
+     update_values_buffers(&edat);       
+     s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+        
+     // индицирование этих ошибок прекращаем при начале вращения двигателя 
+     //(при прошествии N-го количества циклов)
+     if (turnout_low_priority_errors_counter == 1)
+     {    
+      CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
+      CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
+     }
+     if (turnout_low_priority_errors_counter > 0)
+      turnout_low_priority_errors_counter--; 
+    }
+   
     //управление фиксированием и индицированием возникающих ошибок
     check_engine();
 
@@ -543,33 +543,13 @@ __C_task void main(void)
     //управление сохранением настроек
     save_param_if_need(&edat);                        
    
+    //расчет мгновенной частоты вращения коленвала
     edat.sens.inst_frq = ckps_calculate_instant_freq();                           
-
-   //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла. Если частота
-   //вращения двигателя меньше определенной величины или двигатель вообще остановлен, то это условие будет
-   //выполнятся принудительно по таймеру.     
-   if (s_timer_is_action(engine_stop_timeout_counter) || ckps_is_cycle_cutover_r())
-   {
-    update_values_buffers(&edat);
-
-    s_timer_set(engine_stop_timeout_counter, ENGINE_STOP_TIMEOUT_VALUE);   
-    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-        
-    // индицирование этих ошибок прекращаем при начале вращения двигателя 
-    //(при прошествии N-го количества циклов)
-    if (turnout_low_priority_errors_counter == 1)
-    {    
-     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
-     CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
-    }
-    if (turnout_low_priority_errors_counter > 0)
-     turnout_low_priority_errors_counter--;
-    /////////////////////////////////////////////////////////////////////
-        
-   }
-
+    
+    //усреднение физических величин хранящихся в кольцевых буферах
     average_measured_values(&edat);        
 
+    //управление периферией
     control_engine_units(&edat);
        
     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
@@ -599,8 +579,8 @@ __C_task void main(void)
        }      
        edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
        edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию
-       edat.curr_angle+=idling_pregulator(&edat);     //добавляем регулировку
-       edat.airflow = 0;
+       edat.curr_angle+=idling_pregulator(&edat,&idle_period_time_counter);//добавляем регулировку
+       /*edat.airflow = 0;*/
        break;            
                                              
       case EM_WORK: //рабочий режим 
@@ -623,11 +603,8 @@ __C_task void main(void)
     edat.curr_angle+=edat.param.angle_corr;
       
     //ограничиваем получившийся УОЗ установленными пределами
-    if (edat.curr_angle > edat.param.max_angle)
-               edat.curr_angle = edat.param.max_angle;  
-    if (edat.curr_angle < edat.param.min_angle)
-               edat.curr_angle = edat.param.min_angle; 
-
+    restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
+        
     //Ограничиваем быстрые изменения УОЗ. В режиме пуска фильтр запрещен, это в частности
     //необходимо для иницализации внутренней памяти интегратора.
     //edat.curr_angle = transient_state_integrator(edat.curr_angle,ANGLE_MAGNITUDE(3),ANGLE_MAGNITUDE(3),(mode != EM_START) && new_cycle_action);

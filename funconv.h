@@ -3,6 +3,7 @@
 #define _FUNCONV_H_
 
 #include "secu3.h"
+#include "vstimer.h"
 
 int simple_interpolation(int x,int a1,int a2,int x_s,int x_l);
 int bilinear_interpolation(int x,int y,int a1,int a2,int a3,int a4,int x_s,int y_s,int x_l,int y_l);
@@ -13,8 +14,9 @@ int idling_function(ecudata* d);
 int work_function(ecudata* d);
 int coolant_function(ecudata* d);
 void idling_regulator_init(void);
-int idling_pregulator(ecudata* d);
+int idling_pregulator(ecudata* d, s_timer8* io_timer);
 int transient_state_integrator(int new_advance_angle, unsigned int intstep_p, unsigned int intstep_m, char is_enabled);
+void restrict_value_to(int *io_value, int i_bottom_limit, int i_top_limit);
 
 #endif //_FUNCONV_H_
 

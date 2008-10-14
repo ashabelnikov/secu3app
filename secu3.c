@@ -450,6 +450,7 @@ __C_task void main(void)
 {
   unsigned char mode = EM_START;   
   unsigned char turnout_low_priority_errors_counter = 100;
+  signed int advance_angle_inhibitor_state = 0;
   ecudata edat; 
   
   edat.op_comp_code = 0;
@@ -500,8 +501,9 @@ __C_task void main(void)
     }
      
     if (s_timer_is_action(engine_rotation_timeout_counter))
-    {
+    { //двигатель остановился (его обороты ниже критических)
      ckps_init_state_variables();
+     advance_angle_inhibitor_state = 0;
     }
       
     //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -605,9 +607,8 @@ __C_task void main(void)
     //ограничиваем получившийся УОЗ установленными пределами
     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
         
-    //Ограничиваем быстрые изменения УОЗ. В режиме пуска фильтр запрещен, это в частности
-    //необходимо для иницализации внутренней памяти интегратора.
-    //edat.curr_angle = transient_state_integrator(edat.curr_angle,ANGLE_MAGNITUDE(3),ANGLE_MAGNITUDE(3),(mode != EM_START) && new_cycle_action);
+    //Ограничиваем быстрые изменения УОЗ. 
+    edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, ANGLE_MAGNITUDE(3), ANGLE_MAGNITUDE(3));
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  

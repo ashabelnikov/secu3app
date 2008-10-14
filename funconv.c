@@ -204,32 +204,31 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
 
 //Нелинейный фильтр ограничивающий скорость изменения УОЗ на переходных режимах двигателя
 //new_advance_angle - новое значение УОЗ
+//ip_prev_state - значение УОЗ в предыдущем цикле
 //intstep_p,intstep_m - значения положительного и отрицательного шагов интегрирования, положительные числа
 //is_enabled - если равен 1, то корректировка разрешена, 0 - запрещена
 //Возвращает скорректированный УОЗ
-int transient_state_integrator(int new_advance_angle, unsigned int intstep_p, unsigned int intstep_m, char is_enabled)
+int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, unsigned int intstep_p, unsigned int intstep_m)
 {
- static signed int old_advance_angle = 0;
  signed int difference;
- if (is_enabled)
- {  
-  difference = new_advance_angle - old_advance_angle;  
   
-  if ((difference > 0) && (difference > intstep_p))
-  {
-    old_advance_angle+=intstep_p;
-    return old_advance_angle;
-  }
+ difference = new_advance_angle - *ip_prev_state;  
   
-  if ((difference < 0) && (difference < -intstep_m))
-  {
-    old_advance_angle-=intstep_m;
-    return old_advance_angle;
-  }
+ if ((difference > 0) && (difference > intstep_p))
+ {
+  *ip_prev_state+=intstep_p;
+  return *ip_prev_state;
  }
+  
+ if ((difference < 0) && (difference < -intstep_m))
+ {
+  *ip_prev_state-=intstep_m;
+  return *ip_prev_state;
+ }
+  
  //текущий УОЗ будет предыдущим в следующий раз
- old_advance_angle = new_advance_angle;
- return old_advance_angle;
+ *ip_prev_state = new_advance_angle;
+ return *ip_prev_state;
 }
 
 //ограничивает указанное значение указанными пределами

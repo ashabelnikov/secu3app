@@ -206,7 +206,6 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
 //new_advance_angle - новое значение УОЗ
 //ip_prev_state - значение УОЗ в предыдущем цикле
 //intstep_p,intstep_m - значения положительного и отрицательного шагов интегрирования, положительные числа
-//is_enabled - если равен 1, то корректировка разрешена, 0 - запрещена
 //Возвращает скорректированный УОЗ
 int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, unsigned int intstep_p, unsigned int intstep_m)
 {

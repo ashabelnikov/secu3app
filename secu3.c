@@ -451,6 +451,7 @@ __C_task void main(void)
   unsigned char mode = EM_START;   
   unsigned char turnout_low_priority_errors_counter = 100;
   signed int advance_angle_inhibitor_state = 0;
+  char engine_cycle_occured = 0;
   ecudata edat; 
   
   edat.op_comp_code = 0;
@@ -534,6 +535,8 @@ __C_task void main(void)
      }
      if (turnout_low_priority_errors_counter > 0)
       turnout_low_priority_errors_counter--; 
+      
+      engine_cycle_occured = 1;
     }
    
     //управление фиксированием и индицированием возникающих ошибок
@@ -607,8 +610,12 @@ __C_task void main(void)
     //ограничиваем получившийся УОЗ установленными пределами
     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
         
-    //Ограничиваем быстрые изменения УОЗ. 
-    edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, ANGLE_MAGNITUDE(3), ANGLE_MAGNITUDE(3));
+    //Ограничиваем быстрые изменения УОЗ. Проверка срабатывает один раз за одон рабочий чикл. 
+    if (engine_cycle_occured)
+    {
+     edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, ANGLE_MAGNITUDE(3), ANGLE_MAGNITUDE(3));
+     engine_cycle_occured = 0;
+    } 
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  

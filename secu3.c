@@ -610,12 +610,16 @@ __C_task void main(void)
     //ограничиваем получившийся УОЗ установленными пределами
     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
         
-    //Ограничиваем быстрые изменения УОЗ. Проверка срабатывает один раз за одон рабочий чикл. 
+    //Ограничиваем быстрые изменения УОЗ. Проверка срабатывает один раз за один рабочий чикл. 
     if (engine_cycle_occured)
     {
      edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, ANGLE_MAGNITUDE(3), ANGLE_MAGNITUDE(3));
      engine_cycle_occured = 0;
     } 
+    else
+    {
+     edat.curr_angle = advance_angle_inhibitor_state;
+    }
 
     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
     ckps_set_dwell_angle(edat.curr_angle);  

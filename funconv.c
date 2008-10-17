@@ -174,7 +174,7 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
   //если PXX отключен или обороты значительно выше от нормальных холостых оборотов  
   // или двигатель не прогрет то выходим  с нулевой корректировкой        
   if (!d->param.idl_regul || (d->sens.frequen >(d->param.idling_rpm + capture_range))
-       || d->sens.temperat < TEMPERATURE_MAGNITUDE(70))
+       || (d->sens.temperat < TEMPERATURE_MAGNITUDE(70) && d->param.tmp_use))
     return 0;  
     
   //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне 
@@ -207,19 +207,19 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
 //ip_prev_state - значение УОЗ в предыдущем цикле
 //intstep_p,intstep_m - значения положительного и отрицательного шагов интегрирования, положительные числа
 //Возвращает скорректированный УОЗ
-int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, unsigned int intstep_p, unsigned int intstep_m)
+int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, signed int intstep_p, signed int intstep_m)
 {
  signed int difference;
   
  difference = new_advance_angle - *ip_prev_state;  
   
- if ((difference > 0) && (difference > intstep_p))
+ if (difference > intstep_p)
  {
   *ip_prev_state+=intstep_p;
   return *ip_prev_state;
  }
   
- if ((difference < 0) && (difference < -intstep_m))
+ if (difference < -intstep_m)
  {
   *ip_prev_state-=intstep_m;
   return *ip_prev_state;

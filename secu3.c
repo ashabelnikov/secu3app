@@ -263,7 +263,7 @@ void average_measured_values(ecudata* d)
           
   for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
    sum+=ubat_circular_buffer[i];      
-  d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING)*6,d->param.ubat_adc_factor,d->param.ubat_adc_correction);; 
+  d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING)*6,d->param.ubat_adc_factor,d->param.ubat_adc_correction);
   d->sens.voltage = ubat_adc_to_v(d->sens.voltage_raw);  
      
   if (d->param.tmp_use) 
@@ -274,7 +274,7 @@ void average_measured_values(ecudata* d)
    d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
   }  
   else                                       //ДТОЖ не используется
-   d->sens.temperat=0;
+   d->sens.temperat = 0;
                
   for (sum=0,i = 0; i < FRQ_AVERAGING; i++)  //усредняем частоту вращения коленвала
    sum+=freq_circular_buffer[i];      

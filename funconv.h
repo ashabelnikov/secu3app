@@ -15,7 +15,7 @@ int work_function(ecudata* d);
 int coolant_function(ecudata* d);
 void idling_regulator_init(void);
 int idling_pregulator(ecudata* d, s_timer8* io_timer);
-int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, unsigned int intstep_p, unsigned int intstep_m);
+int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, signed int intstep_p, signed int intstep_m);
 void restrict_value_to(int *io_value, int i_bottom_limit, int i_top_limit);
 
 #endif //_FUNCONV_H_

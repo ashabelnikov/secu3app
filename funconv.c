@@ -194,7 +194,7 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
   if (s_timer_is_action(*io_timer))
   { 
     s_timer_set(*io_timer,IDLE_PERIOD_TIME_VALUE);
-    idl_prstate.output_state = idl_prstate.output_state + (error * factor) / 2;
+    idl_prstate.output_state = idl_prstate.output_state + (error * factor) / 4;
   }
   //ограничиваем коррекцию нижним и верхним пределами регулирования      
   restrict_value_to(&idl_prstate.output_state, ANGLE_MAGNITUDE(-12), ANGLE_MAGNITUDE(12));    

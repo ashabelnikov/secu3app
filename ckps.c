@@ -12,6 +12,7 @@
 #include "ckps.h"
 #include "bitmask.h"
 #include "adc.h"
+#include "magnitude.h"
 
 #include "secu3.h"  
 

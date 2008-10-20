@@ -1568,6 +1568,9 @@
     <name>$PROJ_DIR$\knock.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\magnitude.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\secu3.c</name>
   </file>
   <file>

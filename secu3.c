@@ -25,6 +25,7 @@
 #include "adc.h"
 #include "ckps.h"
 #include "vstimer.h"
+#include "magnitude.h"
 
 #define OPCODE_EEPROM_PARAM_SAVE 1
 
@@ -459,7 +460,7 @@ __C_task void main(void)
   edat.sens.inst_frq = 0;
     
   init_io_ports();
-
+  
   if (crc16f(0,CODE_SIZE)!=code_crc)
   { //код программы испорчен - зажигаем СЕ
     SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 

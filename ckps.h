@@ -11,8 +11,6 @@
 //поэтому он должен быть кратен степени 2
 #define ANGLE_MULTIPLAYER            32                           
 
-#define ANGLE_MAGNITUDE(a) ((a) * ANGLE_MULTIPLAYER)
-
 void ckps_init_state(void);
 
 //Тип фронта ДПКВ

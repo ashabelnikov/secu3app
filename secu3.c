@@ -582,11 +582,11 @@ __C_task void main(void)
        if (edat.sens.carb)//педаль газа нажали - в рабочий режим
        {
         mode = EM_WORK;
-       }      
+       }             
+       work_function(&edat, 1);                       //обновляем значение расхода воздуха 
        edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
        edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию
        edat.curr_angle+=idling_pregulator(&edat,&idle_period_time_counter);//добавляем регулировку
-       /*edat.airflow = 0;*/
        break;            
                                              
       case EM_WORK: //рабочий режим 
@@ -595,7 +595,7 @@ __C_task void main(void)
         mode = EM_IDLE;
         idling_regulator_init();    
        }
-       edat.curr_angle=work_function(&edat);           //базовый УОЗ - функция рабочего режима
+       edat.curr_angle=work_function(&edat, 0);        //базовый УОЗ - функция рабочего режима
        edat.curr_angle+=coolant_function(&edat);       //добавляем к УОЗ температурную коррекцию
        break;     
        

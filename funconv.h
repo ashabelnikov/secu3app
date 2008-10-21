@@ -11,7 +11,7 @@ int bilinear_interpolation(int x,int y,int a1,int a2,int a3,int a4,int x_s,int y
 
 int start_function(ecudata* d);
 int idling_function(ecudata* d);
-int work_function(ecudata* d);
+int work_function(ecudata* d, char i_update_airflow_only);
 int coolant_function(ecudata* d);
 void idling_regulator_init(void);
 int idling_pregulator(ecudata* d, s_timer8* io_timer);

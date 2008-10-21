@@ -84,19 +84,11 @@ int start_function(ecudata* d)
 
 // –еализует функцию ”ќ« от оборотов(мин-1) и нагрузки(кѕа) дл€ рабочего режима двигател€
 // ¬озвращает значение угла опережени€ в целом виде * 32, 2 * 16 = 32.
-int work_function(ecudata* d)
+int work_function(ecudata* d, char i_update_airflow_only)
 {    
    int  gradient, discharge, rpm = d->sens.inst_frq, l;
    signed char f,fp1,lp1;   
 
-   //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы            
-   for(f = 14; f >= 0; f--)   
-     if (rpm >= F_SlotsRanges[f]) break; 
-                            
-   //рабоча€ карта работает на 600-х оборотах и выше                                                        
-   if (f < 0)  {f = 0; rpm = 600;}
-   fp1 = f + 1;   
-   
    discharge = (d->param.map_upper_pressure - d->sens.map);
    if (discharge < 0) discharge = 0;         
    
@@ -115,6 +107,17 @@ int work_function(ecudata* d)
    //обновл€ем переменную расхода воздуха
    d->airflow = 16 - l;
    
+   if (i_update_airflow_only)
+     return 0; //выходим если вызвавший указал что мы должны обновить только расход воздуха
+
+   //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы            
+   for(f = 14; f >= 0; f--)   
+     if (rpm >= F_SlotsRanges[f]) break; 
+                            
+   //рабоча€ карта работает на 600-х оборотах и выше                                                        
+   if (f < 0)  {f = 0; rpm = 600;}
+   fp1 = f + 1;   
+      
    return bilinear_interpolation(rpm, discharge,
 	   d->fn_dat->f_wrk[l][f],
 	   d->fn_dat->f_wrk[lp1][f],

@@ -505,6 +505,7 @@ __C_task void main(void)
     if (s_timer_is_action(engine_rotation_timeout_counter))
     { //двигатель остановился (его обороты ниже критических)
      ckps_init_state_variables();
+     mode = EM_START; //режим пуска 
      advance_angle_inhibitor_state = 0;
     }
       

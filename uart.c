@@ -142,17 +142,23 @@ void uart_send_packet(ecudata* d, char send_mode)
        build_i16h(d->param.ifac2);
        build_i16h(d->param.MINEFR);
        build_i16h(d->param.idling_rpm);
+       build_i16h(d->param.idlreg_min_angle);
+       build_i16h(d->param.idlreg_max_angle);
        break;
     case ANGLES_PAR:   
        build_i16h(d->param.max_angle);
        build_i16h(d->param.min_angle);
        build_i16h(d->param.angle_corr);
+       build_i16h(d->param.angle_dec_spead);
+       build_i16h(d->param.angle_inc_spead);
        break;
    case FUNSET_PAR:   
        build_i8h(d->param.fn_benzin);
        build_i8h(d->param.fn_gas);
        build_i16h(d->param.map_lower_pressure);
        build_i16h(d->param.map_upper_pressure);
+       build_i16h(d->param.map_curve_offset);
+       build_i16h(d->param.map_curve_gradient);       
        break;
    case STARTR_PAR:   
        build_i16h(d->param.starter_off);
@@ -254,13 +260,17 @@ unsigned char uart_recept_packet(ecudata* d)
        d->param.ifac1     = recept_i16h();        
        d->param.ifac2     = recept_i16h();       
        d->param.MINEFR    = recept_i16h();       
-       d->param.idling_rpm = recept_i16h();    
+       d->param.idling_rpm = recept_i16h(); 
+       d->param.idlreg_min_angle = recept_i16h();
+       d->param.idlreg_max_angle = recept_i16h();   
        break;
 
     case ANGLES_PAR:   
        d->param.max_angle = recept_i16h();    
        d->param.min_angle = recept_i16h();    
        d->param.angle_corr= recept_i16h();   
+       d->param.angle_dec_spead = recept_i16h();
+       d->param.angle_inc_spead = recept_i16h();
        break;
 
     case FUNSET_PAR:   
@@ -274,6 +284,8 @@ unsigned char uart_recept_packet(ecudata* d)
               
        d->param.map_lower_pressure = recept_i16h();     
        d->param.map_upper_pressure = recept_i16h();  
+       d->param.map_curve_offset = recept_i16h();
+       d->param.map_curve_gradient = recept_i16h();
        break;
 
     case STARTR_PAR:   

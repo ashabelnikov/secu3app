@@ -119,20 +119,18 @@ signed int adc_compensate(signed int adcvalue, signed int factor, signed long co
   return (((((signed long)adcvalue*factor)+correction)<<2)>>16);
 }
 
-
-
-unsigned int map_adc_to_kpa(signed int adcvalue)
+//adcvalue - значение напряжения в дискретах АЦП
+//offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
+//gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
+unsigned int map_adc_to_kpa(signed int adcvalue, unsigned int offset, unsigned int gradient)
 {
  //АЦП не измеряет отрицательных напряжений, однако отрицательное значение может появится после компенсации погрешностей.
  //Такой ход событий необходимо предотвращать.
  if (adcvalue < 0)
    adcvalue = 0;
    
- //Этот код состоит преимущественно из констант и реально выглядит так: ((adcvalue + K1) * K2 ) / 128,
- //где K1,K2 - константы.   
- return ( ((unsigned long)(adcvalue + ((unsigned int)((MAP_CURVE_OFFSET_V / ADC_DISCRETE)+0.5)))) * 
-          ((unsigned long)((128.0 * MAP_CURVE_GRADIENT_KPA * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE)+0.5)) 
-        ) >> 7; 
+ //выпажение выглядит так: ((adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.   
+ return ( ((unsigned long)(adcvalue + offset)) * ((unsigned long)gradient) ) >> 7; 
 }
 
 unsigned int ubat_adc_to_v(signed int adcvalue)

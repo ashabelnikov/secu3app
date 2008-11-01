@@ -19,9 +19,6 @@
 #define UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER (1.0/ADC_DISCRETE) //=400
 #define TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER (TSENS_SLOPP / ADC_DISCRETE) //=4
 
-#define MAP_CURVE_OFFSET_V      0.547  //Вольт
-#define MAP_CURVE_GRADIENT_KPA  20.9   //кПа
-
 //эти функции возвращают текущие значения из буферов усреднения
 unsigned int adc_get_map_value(void);
 unsigned int adc_get_ubat_value(void);
@@ -41,7 +38,7 @@ signed int adc_compensate(signed int adcvalue, signed int factor, signed long co
 
 //переводит значение АЦП в физическую величину - давление
 //физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
-unsigned int map_adc_to_kpa(signed int adcvalue);
+unsigned int map_adc_to_kpa(signed int adcvalue, unsigned int offset, unsigned int gradient);
 
 //переводит значение АЦП в физическую величину - напряжение
 //физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER

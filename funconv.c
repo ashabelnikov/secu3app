@@ -202,7 +202,7 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
     idl_prstate.output_state = idl_prstate.output_state + (error * factor) / 4;
   }
   //ограничиваем коррекцию нижним и верхним пределами регулирования      
-  restrict_value_to(&idl_prstate.output_state, ANGLE_MAGNITUDE(-12), ANGLE_MAGNITUDE(12));    
+  restrict_value_to(&idl_prstate.output_state, d->param.idlreg_min_angle, d->param.idlreg_max_angle);    
       
   return idl_prstate.output_state;    
 }

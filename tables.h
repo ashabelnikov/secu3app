@@ -86,8 +86,8 @@ typedef struct
   signed   int  min_angle;                      //ограничение минимального УОЗ
   signed   int  angle_corr;                     //октан-коррекция УОЗ    
   unsigned int  idling_rpm;                     //заданные обороты ХХ для поддержания регулмрованием УОЗ   
-  signed   int  ifac1;                          //коэффициенты П-регулятора оборотов ХХ, для положительной и
-  signed   int  ifac2;                          //отрицательной ошибке соответственно.
+  signed   int  ifac1;                          //коэффициенты регулятора оборотов ХХ, для положительной и
+  signed   int  ifac2;                          //отрицательной ошибок соответственно.
   signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
   signed   int  vent_on;                        //температура включения вентилятора
   signed   int  vent_off;                       //температура выключения вентилятора  
@@ -103,10 +103,17 @@ typedef struct
   unsigned char ckps_cogs_btdc;
   unsigned char ckps_ignit_cogs;
   
+  signed int angle_dec_spead;
+  signed int angle_inc_spead;  
+  signed int idlreg_min_angle;
+  signed int idlreg_max_angle;
+  unsigned int map_curve_offset;
+  unsigned int map_curve_gradient;
+  
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
-  unsigned char reserved[24];
+  unsigned char reserved[12];
   
   unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
 }params;
@@ -343,7 +350,7 @@ const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 #pragma object_attribute=__root
 const params __flash def_param@DEFPARAM_START = 
 {1,0,0,6,6,1920,1250,1500,600,6400,650,1600,-320,0,800,4,4,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,
- 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
+ 96,96,-320,320,219,428,0,0,0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
 
 #pragma object_attribute=__root
 const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;

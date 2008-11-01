@@ -260,7 +260,7 @@ void average_measured_values(ecudata* d)
   for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
    sum+=map_circular_buffer[i];       
   d->sens.map_raw = adc_compensate((sum/MAP_AVERAGING)*2,d->param.map_adc_factor,d->param.map_adc_correction); 
-  d->sens.map = map_adc_to_kpa(d->sens.map_raw);
+  d->sens.map = map_adc_to_kpa(d->sens.map_raw, d->param.map_curve_offset, d->param.map_curve_gradient);
           
   for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
    sum+=ubat_circular_buffer[i];      
@@ -615,7 +615,7 @@ __C_task void main(void)
     //Ограничиваем быстрые изменения УОЗ. Проверка срабатывает один раз за один рабочий чикл. 
     if (engine_cycle_occured)
     {
-     edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, ANGLE_MAGNITUDE(3), ANGLE_MAGNITUDE(3));
+     edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
      engine_cycle_occured = 0;
     } 
     else

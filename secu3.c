@@ -446,13 +446,53 @@ void init_io_ports(void)
   PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
+
+void advanve_angle_state_machine(unsigned char* pmode, ecudata* d)
+{
+ switch(*pmode)
+ {
+  case EM_START: //режим пуска
+   if (d->sens.inst_frq > d->param.smap_abandon)
+   {                   
+    *pmode = EM_IDLE;    
+    idling_regulator_init();    
+   }      
+   d->curr_angle=start_function(d);               //базовый УОЗ - функция для пуска
+   d->airflow = 0;
+   break;     
+              
+  case EM_IDLE: //режим холостого хода
+   if (d->sens.carb)//педаль газа нажали - в рабочий режим
+   {
+    *pmode = EM_WORK;
+   }             
+   work_function(d, 1);                           //обновляем значение расхода воздуха 
+   d->curr_angle = idling_function(d);            //базовый УОЗ - функция для ХХ 
+   d->curr_angle+=coolant_function(d);            //добавляем к УОЗ температурную коррекцию
+   d->curr_angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+   break;            
+                                             
+  case EM_WORK: //рабочий режим 
+   if (!d->sens.carb)//педаль газа отпустили - в переходной режим ХХ
+   {
+    *pmode = EM_IDLE;
+    idling_regulator_init();    
+   }
+   d->curr_angle=work_function(d, 0);           //базовый УОЗ - функция рабочего режима
+   d->curr_angle+=coolant_function(d);          //добавляем к УОЗ температурную коррекцию
+   break;     
+       
+  default:  //непонятная ситуация - угол в ноль       
+   d->curr_angle = 0;
+   break;     
+ }
+}
       
 __C_task void main(void)
 {
   unsigned char mode = EM_START;   
   unsigned char turnout_low_priority_errors_counter = 100;
-  signed int advance_angle_inhibitor_state = 0;
-  char engine_cycle_occured = 0;
+  signed int advance_angle_inhibitor_state = 0;  
   ecudata edat; 
   
   edat.op_comp_code = 0;
@@ -496,7 +536,7 @@ __C_task void main(void)
 
   //------------------------------------------------------------------------     
   while(1)
-  {    
+  {                          
     if (ckps_is_cog_changed())
     {
      s_timer_set(engine_rotation_timeout_counter,ENGINE_ROTATION_TIMEOUT_VALUE);    
@@ -520,14 +560,52 @@ __C_task void main(void)
      
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
      update_values_buffers(&edat);
+     
+     //чтобы УОЗ на эккране прибора не "застывал" при остановке мотора, если будет рабочий цикл
+     //даже с меньшей частотой вращения, то в этом случае УОЗ будет перерасчитан.
+     edat.curr_angle = 0;
     }      
   
+   //----------непрерывное выполнение-----------------------------------------
+    //управление фиксированием и индицированием возникающих ошибок
+    check_engine();
+    //обработка приходящих/уходящих данных последовательного порта
+    process_uart_interface(&edat);  
+    //управление сохранением настроек
+    save_param_if_need(&edat);    
+    //расчет мгновенной частоты вращения коленвала
+    edat.sens.inst_frq = ckps_calculate_instant_freq();                           
+    //усреднение физических величин хранящихся в кольцевых буферах
+    average_measured_values(&edat);        
+    //управление периферией
+    control_engine_units(&edat);
+  
+    //------------------------------------------------------------------------
     //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.      
     if (ckps_is_cycle_cutover_r())
     {
      update_values_buffers(&edat);       
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+                              
+     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
+     if (edat.sens.gas)
+      edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_gas];    //на газе
+     else  
+      edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине
         
+     //КА состояний системы (диспетчер режимов - сердце основного цикла)
+     advanve_angle_state_machine(&mode,&edat);
+                 
+     //добавляем к УОЗ октан-коррекцию
+     edat.curr_angle+=edat.param.angle_corr;      
+     //ограничиваем получившийся УОЗ установленными пределами
+     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);        
+     //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
+     //за один рабочий цикл. 
+     edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);         
+     //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
+     ckps_set_dwell_angle(edat.curr_angle);        
+    
      // индицирование этих ошибок прекращаем при начале вращения двигателя 
      //(при прошествии N-го количества циклов)
      if (turnout_low_priority_errors_counter == 1)
@@ -536,95 +614,9 @@ __C_task void main(void)
       CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
      }
      if (turnout_low_priority_errors_counter > 0)
-      turnout_low_priority_errors_counter--; 
-      
-      engine_cycle_occured = 1;
-    }
-   
-    //управление фиксированием и индицированием возникающих ошибок
-    check_engine();
-
-    //обработка приходящих/уходящих данных последовательного порта
-    process_uart_interface(&edat);  
-   
-    //управление сохранением настроек
-    save_param_if_need(&edat);                        
-   
-    //расчет мгновенной частоты вращения коленвала
-    edat.sens.inst_frq = ckps_calculate_instant_freq();                           
-    
-    //усреднение физических величин хранящихся в кольцевых буферах
-    average_measured_values(&edat);        
-
-    //управление периферией
-    control_engine_units(&edat);
-       
-    //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
-    if (edat.sens.gas)
-      edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_gas];    //на газе
-    else  
-      edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине
-    
-    
-    //----------КА состояний системы (диспетчер режимов)--------------
-    switch(mode)
-    {
-      case EM_START: //режим пуска
-       if (edat.sens.inst_frq > edat.param.smap_abandon)
-       {                   
-        mode = EM_IDLE;    
-        idling_regulator_init();    
-       }      
-       edat.curr_angle=start_function(&edat);         //базовый УОЗ - функция для пуска
-       edat.airflow = 0;
-       break;     
-              
-      case EM_IDLE: //режим холостого хода
-       if (edat.sens.carb)//педаль газа нажали - в рабочий режим
-       {
-        mode = EM_WORK;
-       }             
-       work_function(&edat, 1);                       //обновляем значение расхода воздуха 
-       edat.curr_angle = idling_function(&edat);      //базовый УОЗ - функция для ХХ 
-       edat.curr_angle+=coolant_function(&edat);      //добавляем к УОЗ температурную коррекцию
-       edat.curr_angle+=idling_pregulator(&edat,&idle_period_time_counter);//добавляем регулировку
-       break;            
-                                             
-      case EM_WORK: //рабочий режим 
-       if (!edat.sens.carb)//педаль газа отпустили - в переходной режим ХХ
-       {
-        mode = EM_IDLE;
-        idling_regulator_init();    
-       }
-       edat.curr_angle=work_function(&edat, 0);        //базовый УОЗ - функция рабочего режима
-       edat.curr_angle+=coolant_function(&edat);       //добавляем к УОЗ температурную коррекцию
-       break;     
-       
-      default:  //непонятная ситуация - угол в ноль       
-       edat.curr_angle = 0;
-       break;     
-    }
-    //-----------------------------------------------------------------------
-             
-    //добавляем к УОЗ октан-коррекцию
-    edat.curr_angle+=edat.param.angle_corr;
-      
-    //ограничиваем получившийся УОЗ установленными пределами
-    restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
-        
-    //Ограничиваем быстрые изменения УОЗ. Проверка срабатывает один раз за один рабочий чикл. 
-    if (engine_cycle_occured)
-    {
-     edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
-     engine_cycle_occured = 0;
-    } 
-    else
-    {
-     edat.curr_angle = advance_angle_inhibitor_state;
-    }
-
-    //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
-    ckps_set_dwell_angle(edat.curr_angle);  
-  }
+      turnout_low_priority_errors_counter--;      
+    }   
+     
+   }//main loop
   //------------------------------------------------------------------------     
 }

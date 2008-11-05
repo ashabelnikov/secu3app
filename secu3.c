@@ -563,7 +563,7 @@ __C_task void main(void)
      
      //чтобы УОЗ на эккране прибора не "застывал" при остановке мотора, если будет рабочий цикл
      //даже с меньшей частотой вращения, то в этом случае УОЗ будет перерасчитан.
-     edat.curr_angle = 0;
+     //edat.curr_angle = 0;
     }      
   
    //----------непрерывное выполнение-----------------------------------------
@@ -578,21 +578,20 @@ __C_task void main(void)
     //усреднение физических величин хранящихся в кольцевых буферах
     average_measured_values(&edat);        
     //управление периферией
-    control_engine_units(&edat);
-  
+    control_engine_units(&edat);  
+    //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
+    if (edat.sens.gas)
+     edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_gas];    //на газе
+    else  
+     edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине  
+      
     //------------------------------------------------------------------------
     //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.      
     if (ckps_is_cycle_cutover_r())
     {
      update_values_buffers(&edat);       
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-                              
-     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
-     if (edat.sens.gas)
-      edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_gas];    //на газе
-     else  
-      edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине
-        
+                                           
      //КА состояний системы (диспетчер режимов - сердце основного цикла)
      advanve_angle_state_machine(&mode,&edat);
                  

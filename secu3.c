@@ -487,6 +487,16 @@ void advanve_angle_state_machine(unsigned char* pmode, ecudata* d)
    break;     
  }
 }
+
+void switch_fuel_type(ecudata* d)
+{
+ //считываем и сохраняем состояние газового клапана
+ d->sens.gas = GET_GAS_VALVE_STATE();  
+ if (d->sens.gas)
+  d->fn_dat = (__flash F_data*)&tables[d->param.fn_gas];    //на газе
+ else  
+  d->fn_dat = (__flash F_data*)&tables[d->param.fn_benzin];//на бензине  
+}   
       
 __C_task void main(void)
 {
@@ -498,6 +508,7 @@ __C_task void main(void)
   edat.op_comp_code = 0;
   edat.op_actn_code = 0;
   edat.sens.inst_frq = 0;
+  edat.curr_angle = 0;
     
   init_io_ports();
   
@@ -544,9 +555,7 @@ __C_task void main(void)
      
     if (s_timer_is_action(engine_rotation_timeout_counter))
     { //двигатель остановился (его обороты ниже критических)
-     ckps_init_state_variables();
-     mode = EM_START; //режим пуска 
-     advance_angle_inhibitor_state = 0;
+     ckps_init_state_variables();    
     }
       
     //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -560,10 +569,14 @@ __C_task void main(void)
      
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
      update_values_buffers(&edat);
-     
-     //чтобы УОЗ на эккране прибора не "застывал" при остановке мотора, если будет рабочий цикл
-     //даже с меньшей частотой вращения, то в этом случае УОЗ будет перерасчитан.
-     //edat.curr_angle = 0;
+          
+     //переводим систему в режим пуска и обновляем при этом текущий УОЗ. Фильтр УОЗ 
+     //инициализируется минимальным УОЗ, который может быть в режиме пуска.           
+     mode = EM_START;     
+     switch_fuel_type(&edat);
+     advanve_angle_state_machine(&mode,&edat);                 
+     edat.curr_angle+=edat.param.angle_corr;                
+     advance_angle_inhibitor_state = edat.curr_angle;     
     }      
   
    //----------непрерывное выполнение-----------------------------------------
@@ -580,10 +593,7 @@ __C_task void main(void)
     //управление периферией
     control_engine_units(&edat);  
     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
-    if (edat.sens.gas)
-     edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_gas];    //на газе
-    else  
-     edat.fn_dat = (__flash F_data*)&tables[edat.param.fn_benzin];//на бензине  
+    switch_fuel_type(&edat);
       
     //------------------------------------------------------------------------
     //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.      

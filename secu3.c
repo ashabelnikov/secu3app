@@ -211,6 +211,12 @@ void control_engine_units(ecudata *d)
   //управление блокировкой стартера (стартер блокируется при оборотах больше пороговых)
   //и индикация состояния клапана ЭПХХ (используется выход блокировки стартера) 
   SET_STARTER_BLOCKING_STATE( (d->sens.frequen4 > d->param.starter_off)&&(d->ephh_valve) ? 1 : 0);
+  //если расход воздуха максимальный - зажигаем СЕ и запускаем таймер 
+    if (d->airflow > 15)
+     {
+      s_timer_set(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
+      SET_CE_STATE(1);  
+     }
 #endif
 
   //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе 
@@ -447,7 +453,7 @@ void init_io_ports(void)
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
 
-void advanve_angle_state_machine(unsigned char* pmode, ecudata* d)
+void advanve_angle_state_machine(unsigned char* pmode, signed int* padvance_angle_inhibitor_state, ecudata* d)
 {
  switch(*pmode)
  {
@@ -458,7 +464,8 @@ void advanve_angle_state_machine(unsigned char* pmode, ecudata* d)
     idling_regulator_init();    
    }      
    d->curr_angle=start_function(d);               //базовый УОЗ - функция для пуска
-   d->airflow = 0;
+   d->airflow = 0;                                //в режиме пуска нет расхода
+   *padvance_angle_inhibitor_state = d->curr_angle;//в режиме пуска фильтр отключен
    break;     
               
   case EM_IDLE: //режим холостого хода
@@ -555,7 +562,8 @@ __C_task void main(void)
      
     if (s_timer_is_action(engine_rotation_timeout_counter))
     { //двигатель остановился (его обороты ниже критических)
-     ckps_init_state_variables();    
+     ckps_init_state_variables();
+     mode = EM_START; //режим пуска 	 
     }
       
     //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -568,15 +576,7 @@ __C_task void main(void)
      __enable_interrupt();
      
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-     update_values_buffers(&edat);
-          
-     //переводим систему в режим пуска и обновляем при этом текущий УОЗ. Фильтр УОЗ 
-     //инициализируется минимальным УОЗ, который может быть в режиме пуска.           
-     mode = EM_START;     
-     switch_fuel_type(&edat);
-     advanve_angle_state_machine(&mode,&edat);                 
-     edat.curr_angle+=edat.param.angle_corr;                
-     advance_angle_inhibitor_state = edat.curr_angle;     
+     update_values_buffers(&edat);     
     }      
   
    //----------непрерывное выполнение-----------------------------------------
@@ -590,25 +590,24 @@ __C_task void main(void)
     edat.sens.inst_frq = ckps_calculate_instant_freq();                           
     //усреднение физических величин хранящихся в кольцевых буферах
     average_measured_values(&edat);        
-    //управление периферией
-    control_engine_units(&edat);  
     //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
     switch_fuel_type(&edat);
-      
+     //управление периферией
+    control_engine_units(&edat);      
+     //КА состояний системы (диспетчер режимов - сердце основного цикла)
+    advanve_angle_state_machine(&mode,&advance_angle_inhibitor_state,&edat);
+     //добавляем к УОЗ октан-коррекцию
+    edat.curr_angle+=edat.param.angle_corr;       
+     //ограничиваем получившийся УОЗ установленными пределами
+    restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);  
     //------------------------------------------------------------------------
+    
     //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.      
     if (ckps_is_cycle_cutover_r())
     {
      update_values_buffers(&edat);       
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-                                           
-     //КА состояний системы (диспетчер режимов - сердце основного цикла)
-     advanve_angle_state_machine(&mode,&edat);
-                 
-     //добавляем к УОЗ октан-коррекцию
-     edat.curr_angle+=edat.param.angle_corr;      
-     //ограничиваем получившийся УОЗ установленными пределами
-     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);        
+    
      //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
      //за один рабочий цикл. 
      edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);         

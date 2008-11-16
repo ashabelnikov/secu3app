@@ -110,10 +110,12 @@ typedef struct
   unsigned int map_curve_offset;
   unsigned int map_curve_gradient;
   
+  signed int epm_on_threshold; 
+  
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
-  unsigned char reserved[12];
+  unsigned char reserved[10];
   
   unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
 }params;
@@ -350,7 +352,7 @@ const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 #pragma object_attribute=__root
 const params __flash def_param@DEFPARAM_START = 
 {1,0,0,6,6,1920,1250,1500,600,6400,650,1600,-320,0,800,4,4,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,
- 96,96,-320,320,240,410,0,0,0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
+ 96,96,-320,320,240,410,392,0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
 
 #pragma object_attribute=__root
 const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;

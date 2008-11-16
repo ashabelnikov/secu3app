@@ -60,6 +60,9 @@
 //открывает/закрывает клапан Ёѕ’’
 #define SET_EPHH_VALVE_STATE(s) {PORTB_Bit0 = s;}
 
+//открывает/закрывает клапан Ёћ–
+#define SET_EPM_VALVE_STATE(s) {PORTC_Bit7 = s;}
+
 //считывает состо€ние газового клапана
 #define GET_GAS_VALVE_STATE(s) (PINC_Bit6)
 
@@ -177,6 +180,7 @@ __interrupt void timer2_ovf_isr(void)
 //концевика карбюратора, газового клапана, клапана Ёѕ’’
 void control_engine_units(ecudata *d)
 {
+  int discharge;
   //--инверси€ концевика карбюратора если необходимо, включение/выключение клапана Ёѕ’’
   d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
 
@@ -228,6 +232,10 @@ void control_engine_units(ecudata *d)
        SET_VENTILATOR_STATE(0); 
   }  
   
+  //”правление Ёћ– (экономайзер мощностных режимов)
+  discharge = (d->param.map_upper_pressure - d->sens.map);
+  if (discharge < 0) discharge = 0;         
+  SET_EPM_VALVE_STATE(discharge < d->param.epm_on_threshold);
 }
 
 
@@ -447,8 +455,8 @@ void init_io_ports(void)
   DDRA   = 0;       
   PORTB  = (1<<PB2)|(1<<PB4)|(1<<PB3)|(1<<PB0);             //CE горит(дл€ проверки), клапан Ёѕ’’ включен, интерфейс с HIP выключен (CS=1, TEST=1)
   DDRB   = (1<<DDB4)|(1<<DDB3)|(1<<DDB2)|(1<<DDB1)|(1<<DDB0);   
-  PORTC  = (1<<PC3)|(1<<PC2);
-  DDRC   = 0;  
+  PORTC  = (1<<PC3)|(1<<PC2)|(1<<PC7); //Ёћ– включен
+  DDRC   = (1<<DDC7);  
   PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрировани€ дл€ HIP
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }

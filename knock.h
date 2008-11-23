@@ -1,3 +1,7 @@
+
+#ifndef _KNOCK_H_
+#define _KNOCK_H_
+
 //Параметры функций принимают данные в соответствии с форматом регистров 
 //HIP9011. Перестройка параметров разрешена только в режиме HOLD!
 
@@ -26,3 +30,5 @@ void knock_module_initialize(void);
 #define KNOCK_INTMODE_INT  1
 #define KNOCK_INTMODE_HOLD 0
 void knock_set_integration_mode(char mode); 
+
+#endif //_KNOCK_H_

@@ -1,4 +1,6 @@
 
+#ifndef _MAGNITUDE_H_
+#define _MAGNITUDE_H_
 
 //необходим для округления при преобразовании из числа с плавающей запятой
 //в целое число 
@@ -11,3 +13,4 @@
 #define VOLTAGE_MAGNITUDE(t) ROUND ((t) * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER)
 #define PRESSURE_MAGNITUDE(t) ROUND ((t) * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
 
+#endif //_MAGNITUDE_H_

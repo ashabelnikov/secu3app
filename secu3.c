@@ -26,6 +26,7 @@
 #include "ckps.h"
 #include "vstimer.h"
 #include "magnitude.h"
+#include "ce_errors.h"
 
 #define OPCODE_EEPROM_PARAM_SAVE 1
 
@@ -93,11 +94,6 @@ unsigned char eeprom_parameters_cache[sizeof(params) + 1];
 //-------------------------------------------------------------
 unsigned int ecuerrors;    //максимум 16 кодов ошибок
 
-//определ€ем биты ошибок
-#define ECUERROR_CKPS_MALFUNCTION     0
-#define ECUERROR_EEPROM_PARAM_BROKEN  1
-#define ECUERROR_PROGRAM_CODE_BROKEN  2
-
 //операции над ошибками
 #define SET_ECUERROR(error)   SETBIT(ecuerrors,error)
 #define CLEAR_ECUERROR(error) CLEARBIT(ecuerrors,error)
@@ -106,7 +102,7 @@ unsigned int ecuerrors;    //максимум 16 кодов ошибок
 
 //ѕри возникновении любой ошибки, —≈ загораетс€ на фиксированное врем€. ≈сли ошибка не исчезает (например испорчен код программы),
 //то CE будет гореть непрерывно. ѕри запуске программы —≈ загораетс€ на 0.5 сек. дл€ индицировани€ работоспособности. 
-void check_engine(void)
+void check_engine(ecudata* d)
 {
   unsigned int temp_errors;
   static unsigned int merged_errors = 0; //кеширует ошибки дл€ сбережени€ ресурса EEPROM
@@ -157,6 +153,9 @@ void check_engine(void)
     eeprom_start_wr_data(0,EEPROM_ECUERRORS_START,(unsigned char*)&write_errors,sizeof(unsigned int));      
    need_to_save = 0;
   }
+  
+  //переносим биты ошибок в кеш дл€ передачи.
+  d->ecuerrors_for_transfer|= ecuerrors;
 }
 
 //прерывание по переполению “/— 2 - дл€ отсчета временных интервалов в системе (дл€ общего использовани€). 
@@ -344,6 +343,9 @@ void process_uart_interface(ecudata* d)
   {                
    uart_send_packet(d,0);    //теперь передатчик озабочен передачей данных
    s_timer_set(send_packet_interval_counter,SEND_PACKET_INTERVAL_VALUE);
+   
+   //после передачи очищаем кеш ошибок
+   d->ecuerrors_for_transfer = 0;
   }
  }
 
@@ -524,6 +526,7 @@ __C_task void main(void)
   edat.op_actn_code = 0;
   edat.sens.inst_frq = 0;
   edat.curr_angle = 0;
+  edat.ecuerrors_for_transfer = 0;
     
   init_io_ports();
   
@@ -589,7 +592,7 @@ __C_task void main(void)
   
    //----------непрерывное выполнение-----------------------------------------
     //управление фиксированием и индицированием возникающих ошибок
-    check_engine();
+    check_engine(&edat);
     //обработка приход€щих/уход€щих данных последовательного порта
     process_uart_interface(&edat);  
     //управление сохранением настроек

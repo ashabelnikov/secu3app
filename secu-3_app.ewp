@@ -1538,6 +1538,9 @@
     <name>$PROJ_DIR$\bootldr.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\ce_errors.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\ckps.c</name>
   </file>
   <file>

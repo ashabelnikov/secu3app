@@ -204,6 +204,9 @@ void uart_send_packet(ecudata* d, char send_mode)
    case OP_COMP_NC:    
        build_i4h(d->op_comp_code);              
        break;   
+   case CE_ERR_CODES:
+       build_i16h(d->ecuerrors_for_transfer);
+       break;     
   }//switch
 
   //общая часть для всех пакетов

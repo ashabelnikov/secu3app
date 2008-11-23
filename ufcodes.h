@@ -29,4 +29,6 @@
 #define   CKPS_PAR     't'
 #define   OP_COMP_NC   'u'
 
+#define   CE_ERR_CODES 'v'
+
 #endif //_UFCODES_H_

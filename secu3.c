@@ -518,7 +518,7 @@ void switch_fuel_type(ecudata* d)
 __C_task void main(void)
 {
   unsigned char mode = EM_START;   
-  unsigned char turnout_low_priority_errors_counter = 100;
+  unsigned char turnout_low_priority_errors_counter = 255;
   signed int advance_angle_inhibitor_state = 0;  
   ecudata edat; 
   

@@ -574,7 +574,8 @@ __C_task void main(void)
     if (s_timer_is_action(engine_rotation_timeout_counter))
     { //двигатель остановилс€ (его обороты ниже критических)
      ckps_init_state_variables();
-     mode = EM_START; //режим пуска 	 
+     mode = EM_START; //режим пуска 	      
+     SET_STARTER_BLOCKING_STATE(0); //снимаем блокировку стартера
     }
       
     //запускаем измерени€ ј÷ѕ, через равные промежутки времени. ѕри обнаружении каждого рабочего

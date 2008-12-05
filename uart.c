@@ -136,6 +136,9 @@ void uart_send_packet(ecudata* d, char send_mode)
        build_i16h(d->param.ephh_hit);
        build_i4h(d->param.carb_invers);
        build_i16h(d->param.epm_on_threshold);
+       build_i16h(d->param.ephh_lot_g);
+       build_i16h(d->param.ephh_hit_g);
+       build_i8h(d->param.shutoff_delay);
        break;
     case IDLREG_PAR:   
        build_i4h(d->param.idl_regul);
@@ -258,6 +261,9 @@ unsigned char uart_recept_packet(ecudata* d)
        d->param.ephh_hit  = recept_i16h();
        d->param.carb_invers= recept_i4h();
        d->param.epm_on_threshold= recept_i16h();
+       d->param.ephh_lot_g = recept_i16h();
+       d->param.ephh_hit_g = recept_i16h();
+       d->param.shutoff_delay = recept_i8h();
        break;
 
     case IDLREG_PAR:   

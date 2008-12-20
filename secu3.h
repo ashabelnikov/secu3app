@@ -35,6 +35,7 @@ typedef struct
 typedef struct
 {
  params           param;                                      //--параметры
+ kc_params        kc_param;                                   //--параметры канала детонации
  sensors          sens;                                       //--сенсоры
  unsigned char    ephh_valve;                                 //состо€ние клапана Ёѕ’’
  int              atmos_press;                                //атмосферное давление

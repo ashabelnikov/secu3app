@@ -46,8 +46,14 @@
 #define TMP_AVERAGING           8  
 
 #define TIMER2_RELOAD_VALUE          100                         //для 10 мс
+
 #define EEPROM_PARAM_START           0x002                       //адрес структуры параметров в EEPROM 
+
+//адрес массива ошибок (Check Engine) в EEPROM
 #define EEPROM_ECUERRORS_START       (EEPROM_PARAM_START+(sizeof(params)))
+
+//ажрес структуры параметров канала детонации в EEPROM
+#define EEPROM_KC_PARAMS_START       (EEPROM_ECUERRORS_START + 8)
 
 //включает/выключает лампу Check Engine  
 #define SET_CE_STATE(s)  {PORTB_Bit2 = s;}
@@ -438,6 +444,17 @@ void load_eeprom_params(ecudata* d)
  { //перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены    
    memcpy_P(&d->param,&def_param,sizeof(params)); 
  }
+ 
+ //-----------------------------------------------------------------------
+ //Загружаем параметры канала детонации из EEPROM.
+ eeprom_read(&d->kc_param, EEPROM_KC_PARAMS_START, sizeof(kc_params));  
+   
+ if (crc16((unsigned char*)&d->kc_param,(sizeof(kc_params)-PAR_CRC_SIZE))!=d->kc_param.crc)
+ {
+   SET_ECUERROR(ECUERROR_EEPROM_KC_PARAM_BROKEN);
+ }
+ //-----------------------------------------------------------------------
+  
 } 
    
 
@@ -629,6 +646,7 @@ __C_task void main(void)
      {    
       CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
       CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
+      CLEAR_ECUERROR(ECUERROR_EEPROM_KC_PARAM_BROKEN);
      }
      if (turnout_low_priority_errors_counter > 0)
       turnout_low_priority_errors_counter--;      

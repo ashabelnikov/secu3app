@@ -60,6 +60,9 @@ CKPSSTATE ckps;
 //размещаем в свободных регистрах ввода/вывода
 __no_init volatile CKPSFLAGS flags@0x22;
 
+//для дополнения таймера/счетчика 0 до 16 разрядов, используем R15
+__no_init __regvar unsigned char TCNT0_H@15;
+
 //Инициализирует переменные состояния ДПКВ
 __monitor
 void ckps_init_state_variables(void)
@@ -77,6 +80,7 @@ void ckps_init_state_variables(void)
   flags.ckps_error_flag = 0;
   flags.ckps_new_engine_cycle_happen = 0;
   flags.ckps_is_synchronized = 0;
+  TCCR0 = 0; //останавливаем таймер0  
 }
 
 
@@ -95,8 +99,8 @@ void ckps_init_state(void)
   //подавление шума, передний фронт захвата, clock = 250kHz
   TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       
 
-  //разрешаем прерывание по захвату и сравнению А и В таймера 1
-  TIMSK|= (1<<TICIE1)|(1<<OCIE1A)|(1<<OCIE1B);
+  //разрешаем прерывание по захвату и сравнению А и В таймера 1, а также по переполнению таймера 0
+  TIMSK|= (1<<TICIE1)|(1<<OCIE1A)|(1<<OCIE1B)|(1<<TOIE0);
 }
 
 //устанавливает УОЗ для реализации в алгоритме
@@ -222,58 +226,50 @@ __interrupt void timer1_compb_isr(void)
    SETBIT(TIFR,OCF1A);               \
    TCCR1A|= (1<<COM1A1)|(1<<COM1A0); \
   }
+  
+//Инициализация таймера 0 указанным значением и запуск, clock = 250kHz.
+//Предполагается что вызов этой функции будет происходить при запрещенных прерываниях.
+#pragma inline
+void set_timer0(unsigned int value)
+ {                            
+  TCNT0_H = GETBYTE(value, 1);            
+  TCNT0 = 255 - GETBYTE(value, 0);      
+  TCCR0  = (1<<CS01)|(1<<CS00);
+ }    
 
-
-//прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
-#pragma vector=TIMER1_CAPT_vect
-__interrupt void timer1_capt_isr(void)
-{  
-  unsigned int diff;
- 
-  ckps.period_curr = GetICR() - ckps.icr_prev;
-
-  //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации 
-  //памяти предыдущих периодов. Затем ищем синхрометку.
-  if (!flags.ckps_is_synchronized)
-  {
-   switch(ckps.starting_mode)
+//Вспомогательная функция, используется во время пуска
+//возвращает 1 когда синхронизация окончена, иначе 0.
+unsigned char sync_at_startup(void) 
+{
+ switch(ckps.starting_mode)
    {
-   case 0:
+   case 0: //пропуск определенного кол-ва зубьев
     /////////////////////////////////////////
     flags.ckps_is_valid_half_turn_period = 0;
     /////////////////////////////////////////
     if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
      ckps.starting_mode = 1;
-    break;
-   case 1:
+    break;    
+   case 1: //поиск синхрометки
     if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
     {
      flags.ckps_is_synchronized = 1;
      ckps.cog = 1; //1-й зуб
-     goto synchronized_enter;
+     return 1; //конец процесса синхронизации
     }
     break;
    }
-   ckps.icr_prev = GetICR();
-   ckps.period_prev = ckps.period_curr;  
-   ckps.cog++; 
-   return;
-  }
+ ckps.icr_prev = GetICR();
+ ckps.period_prev = ckps.period_curr;  
+ ckps.cog++; 
+ return 0; //продолжение процесса синхронизации
+} 
 
-  //каждый период проверяем на синхрометку, и если после обнаружения синхрометки
-  //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки.
-  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
-  {
-   if ((ckps.cog != 59))
-     flags.ckps_error_flag = 1; //ERROR             
+//Процедура. Вызывается для зубьев шкива 1-60, включительно (58 + 2 восстановленных)
+void process_ckps_cogs(void)
+{
+  unsigned int diff;
   
-   ckps.cog = 1; //1-й зуб         
-   ckps.ignition_pulse_cogs_14+=2;
-   ckps.ignition_pulse_cogs_23+=2;
-  }
-  
-synchronized_enter:     
-
   //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
   //до этого хранился во временном буфере.
   if (ckps.cog == ckps.cogs_latch14)
@@ -348,10 +344,73 @@ synchronized_enter:
     TCCR1A|= (1<<FOC1A); //конец импульса запуска зажигания для цилиндров 2-3
 
   //прошел зуб - угол до в.м.т. уменьшился на 6 град.
-  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
-  ckps.icr_prev = GetICR();
-  ckps.period_prev = ckps.period_curr;  
+  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);  
   ckps.cog++;
   ckps.ignition_pulse_cogs_14++;
-  ckps.ignition_pulse_cogs_23++; 
+  ckps.ignition_pulse_cogs_23++;
 }
+
+
+
+//прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
+#pragma vector=TIMER1_CAPT_vect
+__interrupt void timer1_capt_isr(void)
+{    
+  ckps.period_curr = GetICR() - ckps.icr_prev;
+
+  //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации 
+  //памяти предыдущих периодов. Затем ищем синхрометку.
+  if (!flags.ckps_is_synchronized)
+  {
+   if (sync_at_startup())
+     goto synchronized_enter;   
+   return;
+  }
+
+  //каждый период проверяем на синхрометку, и если после обнаружения синхрометки
+  //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки.
+  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
+  {
+   if ((ckps.cog != 61)) //учитываем 2 виртуальных зуба
+     flags.ckps_error_flag = 1; //ERROR               
+   ckps.cog = 1; //1-й зуб           
+  }
+  
+synchronized_enter:   
+  //Если последний зуб перед синхрометкой, то начинаем отсчет времени для 
+  //восстановления отсутствующих зубов, в качестве исходных данных используем 
+  //последнее значение межзубного периода.
+  if (ckps.cog == 58)
+    set_timer0(ckps.period_curr); 
+    
+  //для 1-58 зубъев 
+  process_ckps_cogs(); 
+  
+  ckps.icr_prev = GetICR();
+  ckps.period_prev = ckps.period_curr;  
+}
+
+
+//Задача этого обработчика дополнять таймер до 16-ти разрядов и вызывать процедуру
+//обработки зубьев по истечении установленного 16-ти разряюного таймера.                  
+#pragma vector=TIMER0_OVF_vect
+__interrupt void timer0_ovf_isr(void)
+{
+ if (TCNT0_H!=0)  //старший байт не исчерпан ?
+ {
+  TCNT0 = 0;
+  TCNT0_H--;         
+ }  
+ else  
+ {//отсчет времени закончился    
+ TCCR0 = 0; //останавливаем таймер
+ 
+ //запускаем таймер чтобы восстановить 60-й зуб
+ if (ckps.cog == 59)
+   set_timer0(ckps.period_curr);
+ 
+ //59,60
+ process_ckps_cogs();
+ }
+}
+

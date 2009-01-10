@@ -14,6 +14,7 @@
 #define ADCI_UBAT               1         
 #define ADCI_TEMP               0
 #define ADCI_KNOCK              3
+#define ADCI_STUB               4  //заглушка, используется для ADCI_KNOCK
 
 #define MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER  64
 #define UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER (1.0/ADC_DISCRETE) //=400
@@ -23,10 +24,16 @@
 unsigned int adc_get_map_value(void);
 unsigned int adc_get_ubat_value(void);
 unsigned int adc_get_temp_value(void);
+unsigned int adc_get_knock_value(void);
 
 //запускает измерение значений с датчиков, но только если предыдущее  
 //измерение завершено.
 void adc_begin_measure(void);
+//запускает измерение значения с интегратора канала детонации. Так как после установки
+//сигнала INT/HOLD в 0 выход INTOUT перейдет в полностью корректное состояние только через
+//20мкс (приблизительно), а запуск измерения может быть произведен сразу, то делаем первое
+//измерение холостым.
+void adc_begin_measure_knock(void);
 
 //возвращает не 0 если измерение готово (АЦП не занято)
 char adc_is_measure_ready(void); 

@@ -18,6 +18,7 @@ typedef struct
  unsigned int map_value;           //последнее измеренное значение абсолютного давления
  unsigned int ubat_value;          //последнее измеренное значение напряжения бортовой сети
  unsigned int temp_value;          //последнее измеренное значение температуры охлаждающей жидкости
+ unsigned int knock_value;         //последнее измеренное значение сигнала детонации
 
  unsigned char  sensors_ready;     //датчики обработаны и значения готовы к считыванию
 }adc_state;
@@ -42,6 +43,11 @@ unsigned int adc_get_temp_value(void)
   return adc.temp_value;
 }
 
+__monitor
+unsigned int adc_get_knock_value(void)
+{
+  return adc.knock_value;
+}
 
 void adc_begin_measure(void) 
 { 
@@ -52,6 +58,18 @@ void adc_begin_measure(void)
 
   adc.sensors_ready = 0; 
   ADMUX = ADCI_MAP|ADC_VREF_TYPE; 
+  SETBIT(ADCSRA,ADSC);
+}  
+
+void adc_begin_measure_knock(void) 
+{ 
+  //мы не можем запускать новое измерение, если еще не завершилось
+  //предыдущее измерение
+  if (!adc.sensors_ready)  
+    return;
+
+  adc.sensors_ready = 0; 
+  ADMUX = ADCI_STUB|ADC_VREF_TYPE; 
   SETBIT(ADCSRA,ADSC);
 }  
 
@@ -98,13 +116,16 @@ __interrupt void ADC_isr(void)
       ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
       adc.sensors_ready = 1;                
       break; 
-      
-/*    nearest future!!!
+         
+   case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации
+      ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
+      SETBIT(ADCSRA,ADSC);         
+      break; 
+            
    case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
       adc.knock_value = ADC;      
-      ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
       adc.sensors_ready = 1;                
-      break; */
+      break; 
  } 
 }
 

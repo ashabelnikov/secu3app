@@ -15,6 +15,7 @@
 #include "magnitude.h"
 
 #include "secu3.h"  
+#include "knock.h"
 
 // p * 2.5,  барьер для селекции синхрометки = 2.5 
 #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p)>>1))  
@@ -31,6 +32,7 @@ typedef struct
   unsigned char  ckps_is_valid_half_turn_period:1;
   unsigned char  ckps_is_synchronized:1;
   unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением  
+  unsigned char  ckps_use_knock_channel:1;            //признак использования канала детонации     
 }CKPSFLAGS;
 
 typedef struct
@@ -53,6 +55,11 @@ typedef struct
   unsigned char cogs_btdc23;
   unsigned char starting_mode;
   unsigned char channel_mode;
+  unsigned char cogs_btdc;    
+  signed char   knock_wnd_begin_abs;        // начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т 
+  signed char   knock_wnd_end_abs;          // конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т  
+  unsigned char knock_wnd_begin;             
+  unsigned char knock_wnd_end;               
 }CKPSSTATE;
  
 CKPSSTATE ckps;
@@ -79,7 +86,7 @@ void ckps_init_state_variables(void)
   
   flags.ckps_error_flag = 0;
   flags.ckps_new_engine_cycle_happen = 0;
-  flags.ckps_is_synchronized = 0;
+  flags.ckps_is_synchronized = 0;  
   TCCR0 = 0; //останавливаем таймер0  
 }
 
@@ -143,7 +150,10 @@ void ckps_set_cogs_btdc(unsigned char cogs_btdc)
   ckps.cogs_latch14 = cogs_btdc - 11;
   ckps.cogs_latch23 = cogs_btdc + 19;
   ckps.cogs_btdc14  = cogs_btdc;
-  ckps.cogs_btdc23  = cogs_btdc + 30;
+  ckps.cogs_btdc23  = cogs_btdc + 30;  
+  ckps.knock_wnd_begin = cogs_btdc + ckps.knock_wnd_begin_abs;
+  ckps.knock_wnd_end = cogs_btdc + ckps.knock_wnd_end_abs;
+  ckps.cogs_btdc = cogs_btdc;
 }
 
 //устанавливает длительность импульса зажигания в зубьях
@@ -161,6 +171,11 @@ unsigned char ckps_is_error(void)
 void ckps_reset_error(void)
 {
  flags.ckps_error_flag = 0;
+}
+
+void ckps_use_knock_channel(unsigned char use_knock_channel)
+{
+ flags.ckps_use_knock_channel = use_knock_channel;
 }
 
 //эта функция возвращает 1 если был новый цикл зажигания и сразу сбрасывает событие!
@@ -189,6 +204,19 @@ unsigned char ckps_is_cog_changed(void)
   return 1;
   }
  return 0;
+}
+
+void ckps_set_knock_window(signed int begin, signed int end)
+{
+ unsigned char _t;
+ //переводим из градусов в зубья
+ ckps.knock_wnd_begin_abs = begin / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
+ ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
+ _t=__save_interrupt();
+ __disable_interrupt();
+ ckps.knock_wnd_begin = ckps.cogs_btdc + ckps.knock_wnd_begin_abs;
+ ckps.knock_wnd_end = ckps.cogs_btdc + ckps.knock_wnd_end_abs;
+ __restore_interrupt(_t);
 }
 
 #pragma vector=TIMER1_COMPA_vect
@@ -270,6 +298,22 @@ void process_ckps_cogs(void)
 {
   unsigned int diff;
   
+  if (flags.ckps_use_knock_channel)
+  {
+   //начинаем слушать детонацию (открытие окна)
+   if (ckps.cog == ckps.knock_wnd_begin)
+   {
+    knock_set_integration_mode(KNOCK_INTMODE_INT);
+   }
+  
+   //заканчиваем слушать детонацию (закрытие окна) и запускаем процесс измерения 
+   if (ckps.cog == ckps.knock_wnd_end)
+   {
+    knock_set_integration_mode(KNOCK_INTMODE_HOLD); 
+    adc_begin_measure_knock(); 
+   }
+  }
+  
   //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
   //до этого хранился во временном буфере.
   if (ckps.cog == ckps.cogs_latch14)
@@ -278,7 +322,7 @@ void process_ckps_cogs(void)
    ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 11;
    ckps.advance_angle = ckps.advance_angle_buffered;
    ckps.channel_mode = CKPS_CHANNEL_MODE14;
-   //knock_start_settings_latching();    nearest future!!!
+   knock_start_settings_latching();//запускаем процесс загрузки настроек в HIP  
    adc_begin_measure();            //запуск процесса измерения значений аналоговых входов   
   }
   if (ckps.cog == ckps.cogs_latch23)
@@ -287,7 +331,7 @@ void process_ckps_cogs(void)
    ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 11;
    ckps.advance_angle = ckps.advance_angle_buffered;
    ckps.channel_mode = CKPS_CHANNEL_MODE23;
-   //knock_start_settings_latching();    nearest future!!!
+   knock_start_settings_latching();//запускаем процесс загрузки настроек в HIP   
    adc_begin_measure();            //запуск процесса измерения значений аналоговых входов
   }
 

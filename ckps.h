@@ -31,6 +31,12 @@ void ckps_set_ignition_cogs(unsigned char cogs);
 void ckps_set_dwell_angle(signed int angle);
 unsigned int ckps_calculate_instant_freq(void);
 
+//установка окна фазовой селекции детонации. Параметры begin, end в градусах относительно в.м.т.  
+void ckps_set_knock_window(signed int begin, signed int end);
+
+//устанавливает обслуживать или необслуживать канал детонации
+void ckps_use_knock_channel(unsigned char use_knock_channel);
+
 unsigned char ckps_is_error(void);
 void ckps_reset_error(void);
 unsigned char ckps_is_cycle_cutover_r(void);

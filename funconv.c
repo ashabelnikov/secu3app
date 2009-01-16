@@ -243,3 +243,22 @@ void restrict_value_to(int *io_value, int i_bottom_limit, int i_top_limit)
  if (*io_value < i_bottom_limit)
   *io_value = i_bottom_limit;  
 }
+
+// Реализует функцию коэффициента усиления аттенюатора от оборотов
+// Возвращает код 0...63 соответсутвующий определенному коэфф. усиления 
+//(см. HIP9011 datasheet).
+unsigned char knock_attenuator_function(ecudata* d)
+{
+ int i,i1,rpm = d->sens.inst_frq;                                           
+
+ if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов по оси
+
+ i = (rpm - 200) / 60;   //60 - шаг по оборотам
+
+ if (i >= (KC_ATTENUATOR_LOOKUP_TABLE_SIZE-1)) 
+  i = i1 = (KC_ATTENUATOR_LOOKUP_TABLE_SIZE-1); 
+ else 
+  i1 = i + 1;
+
+ return simple_interpolation(rpm,fwdata.attenuator_table[i],fwdata.attenuator_table[i1], (i * 60) + 200, 60) >> 4;
+}

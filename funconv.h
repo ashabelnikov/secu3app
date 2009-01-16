@@ -13,6 +13,7 @@ int start_function(ecudata* d);
 int idling_function(ecudata* d);
 int work_function(ecudata* d, char i_update_airflow_only);
 int coolant_function(ecudata* d);
+unsigned char knock_attenuator_function(ecudata* d);
 void idling_regulator_init(void);
 int idling_pregulator(ecudata* d, s_timer8* io_timer);
 int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, signed int intstep_p, signed int intstep_m);

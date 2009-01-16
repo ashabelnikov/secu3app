@@ -210,6 +210,12 @@ void uart_send_packet(ecudata* d, char send_mode)
    case CE_ERR_CODES:
        build_i16h(d->ecuerrors_for_transfer);
        break;     
+   case KNOCK_PAR:    
+       build_i8h(d->param.knock_use_knock_channel);   
+       build_i8h(d->param.knock_bpf_frequency);  
+       build_i16h(d->param.knock_k_wnd_begin_angle);
+       build_i16h(d->param.knock_k_wnd_end_angle);
+       break;            
   }//switch
 
   //общая часть для всех пакетов
@@ -321,7 +327,14 @@ unsigned char uart_recept_packet(ecudata* d)
        
     case OP_COMP_NC: 
        d->op_actn_code = recept_i4h(); 
-       break;       
+       break;   
+       
+    case KNOCK_PAR:  
+       d->param.knock_use_knock_channel = recept_i8h();
+       d->param.knock_bpf_frequency   = recept_i8h();
+       d->param.knock_k_wnd_begin_angle = recept_i16h();
+       d->param.knock_k_wnd_end_angle = recept_i16h();     
+       break;   
        
   }//switch     
 

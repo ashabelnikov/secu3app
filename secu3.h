@@ -22,6 +22,7 @@ typedef struct
  unsigned char carb;                                        //состояние концевика карбюратора 
  unsigned char gas;                                         //состояние газового клапана 
  unsigned int frequen4;                                     //частота усредненная всего по 4-м выборкам 
+ unsigned int knock_k;                                      //уровень сигнала детонации 
 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  signed int map_raw;
@@ -35,7 +36,6 @@ typedef struct
 typedef struct
 {
  params           param;                                      //--параметры
- kc_params        kc_param;                                   //--параметры канала детонации
  sensors          sens;                                       //--сенсоры
  unsigned char    ephh_valve;                                 //состояние клапана ЭПХХ
  int              atmos_press;                                //атмосферное давление

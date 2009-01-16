@@ -27,6 +27,7 @@
 #include "vstimer.h"
 #include "magnitude.h"
 #include "ce_errors.h"
+#include "knock.h"
 
 #define OPCODE_EEPROM_PARAM_SAVE 1
 
@@ -51,9 +52,6 @@
 
 //адрес массива ошибок (Check Engine) в EEPROM
 #define EEPROM_ECUERRORS_START       (EEPROM_PARAM_START+(sizeof(params)))
-
-//ажрес структуры параметров канала детонации в EEPROM
-#define EEPROM_KC_PARAMS_START       (EEPROM_ECUERRORS_START + 8)
 
 //включает/выключает лампу Check Engine  
 #define SET_CE_STATE(s)  {PORTB_Bit2 = s;}
@@ -105,6 +103,8 @@ unsigned int ecuerrors;    //максимум 16 кодов ошибок
 #define CLEAR_ECUERROR(error) CLEARBIT(ecuerrors,error)
 //-------------------------------------------------------------
 
+ecudata edat;
+
 
 //При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
 //то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности. 
@@ -126,9 +126,20 @@ void check_engine(ecudata* d)
     CLEAR_ECUERROR(ECUERROR_CKPS_MALFUNCTION);  
   }
 
+  //если была ошибка канала детонации
+  if (knock_is_error())
+  {
+    SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);
+    knock_reset_error();        
+  }
+  else
+  {
+    CLEAR_ECUERROR(ECUERROR_KSP_CHIP_FAILED);  
+  }
+
   //если таймер отсчитал время, то гасим СЕ
   if (s_timer_is_action(ce_control_time_counter))
-    SET_CE_STATE(0);       
+   SET_CE_STATE(0);       
 
   //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер 
   if (ecuerrors!=0)
@@ -264,6 +275,8 @@ void update_values_buffers(ecudata* d)
         
   freq4_circular_buffer[frq4_ai] = d->sens.inst_frq;      
   (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--;   
+  
+  d->sens.knock_k = adc_get_knock_value() * 2;
 }
 
 
@@ -321,7 +334,8 @@ void process_uart_interface(ecudata* d)
     case FUNSET_PAR:   
     case STARTR_PAR:
     case ADCCOR_PAR: 
-    case CKPS_PAR:        
+    case CKPS_PAR: 
+    case KNOCK_PAR:       
       //если были изменены параметры то сбрасываем счетчик времени
       s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
       break;  
@@ -333,6 +347,13 @@ void process_uart_interface(ecudata* d)
     ckps_set_edge_type(d->param.ckps_edge_type);
     ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
     ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
+  }
+  
+  //аналогично для контороля детонации, обязательно после CKPS_PAR!
+  if (descriptor == KNOCK_PAR)
+  {
+    ckps_use_knock_channel(d->param.knock_use_knock_channel);
+    ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);  
   }
 
   //мы обработали принятые данные - приемник ничем теперь не озабочен
@@ -371,8 +392,12 @@ void InitialMeasure(ecudata* d)
   {
     adc_begin_measure();                                                     
     while(!adc_is_measure_ready()); 
+    
+    adc_begin_measure_knock();                                                     
+    while(!adc_is_measure_ready());    
+    
     update_values_buffers(d);
-  }while(--i);  
+  }while(--i);            
   __disable_interrupt();
   average_measured_values(d);  
   d->atmos_press = d->sens.map;      //сохраняем атмосферное давление в кПа!
@@ -443,18 +468,7 @@ void load_eeprom_params(ecudata* d)
  else
  { //перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены    
    memcpy_P(&d->param,&def_param,sizeof(params)); 
- }
- 
- //-----------------------------------------------------------------------
- //Загружаем параметры канала детонации из EEPROM.
- eeprom_read(&d->kc_param, EEPROM_KC_PARAMS_START, sizeof(kc_params));  
-   
- if (crc16((unsigned char*)&d->kc_param,(sizeof(kc_params)-PAR_CRC_SIZE))!=d->kc_param.crc)
- {
-   SET_ECUERROR(ECUERROR_EEPROM_KC_PARAM_BROKEN);
- }
- //-----------------------------------------------------------------------
-  
+ }  
 } 
    
 
@@ -533,8 +547,7 @@ __C_task void main(void)
 {
   unsigned char mode = EM_START;   
   unsigned char turnout_low_priority_errors_counter = 255;
-  signed int advance_angle_inhibitor_state = 0;  
-  ecudata edat; 
+  signed int advance_angle_inhibitor_state = 0;     
   
   edat.op_comp_code = 0;
   edat.op_actn_code = 0;
@@ -546,8 +559,14 @@ __C_task void main(void)
   
   if (crc16f(0,CODE_SIZE)!=code_crc)
   { //код программы испорчен - зажигаем СЕ
-    SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 
+   SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 
   }
+
+  if (edat.kc_param.use_knock_channel)
+   if (!knock_module_initialize())
+   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+    SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   
+   }
 
   adc_init();
 
@@ -573,13 +592,20 @@ __C_task void main(void)
   ckps_set_edge_type(edat.param.ckps_edge_type);
   ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc);
   ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
-  
+  ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);  
+  ckps_use_knock_channel(edat.param.knock_use_knock_channel);
+    
   //разрешаем глобально прерывания            
   __enable_interrupt();    
 
+  //предварительная инициализация параметров сигнального процессора детонации
+  knock_set_band_pass(edat.param.knock_bpf_frequency);
+  knock_set_gain(fwdata.attenuator_table[0]);
+  knock_set_int_time_constant(23); //300 мкс - это временно!
+
   //------------------------------------------------------------------------     
   while(1)
-  {                          
+  {                        
     if (ckps_is_cog_changed())
     {
      s_timer_set(engine_rotation_timeout_counter,ENGINE_ROTATION_TIMEOUT_VALUE);    
@@ -590,6 +616,9 @@ __C_task void main(void)
      ckps_init_state_variables();
      mode = EM_START; //режим пуска 	      
      SET_STARTER_BLOCKING_STATE(0); //снимаем блокировку стартера
+     
+     if (edat.param.knock_use_knock_channel)
+      knock_start_settings_latching();     
     }
       
     //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -598,7 +627,7 @@ __C_task void main(void)
     if (s_timer_is_action(force_measure_timeout_counter))
     {
      __disable_interrupt();
-     adc_begin_measure();
+     adc_begin_measure();            
      __enable_interrupt();
      
      s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
@@ -640,13 +669,16 @@ __C_task void main(void)
      //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
      ckps_set_dwell_angle(edat.curr_angle);        
     
+     //управляем усилением аттенюатора в зависимости от оборотов
+     if (edat.param.knock_use_knock_channel)
+      knock_set_gain(knock_attenuator_function(&edat));
+    
      // индицирование этих ошибок прекращаем при начале вращения двигателя 
      //(при прошествии N-го количества циклов)
      if (turnout_low_priority_errors_counter == 1)
      {    
       CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
-      CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);  
-      CLEAR_ECUERROR(ECUERROR_EEPROM_KC_PARAM_BROKEN);
+      CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);        
      }
      if (turnout_low_priority_errors_counter > 0)
       turnout_low_priority_errors_counter--;      

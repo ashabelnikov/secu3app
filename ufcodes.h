@@ -31,4 +31,6 @@
 
 #define   CE_ERR_CODES 'v'
 
+#define   KNOCK_PAR    'w'
+
 #endif //_UFCODES_H_

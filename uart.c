@@ -211,7 +211,7 @@ void uart_send_packet(ecudata* d, char send_mode)
        build_i16h(d->ecuerrors_for_transfer);
        break;     
    case KNOCK_PAR:    
-       build_i8h(d->param.knock_use_knock_channel);   
+       build_i4h(d->param.knock_use_knock_channel);   
        build_i8h(d->param.knock_bpf_frequency);  
        build_i16h(d->param.knock_k_wnd_begin_angle);
        build_i16h(d->param.knock_k_wnd_end_angle);
@@ -330,7 +330,7 @@ unsigned char uart_recept_packet(ecudata* d)
        break;   
        
     case KNOCK_PAR:  
-       d->param.knock_use_knock_channel = recept_i8h();
+       d->param.knock_use_knock_channel = recept_i4h();
        d->param.knock_bpf_frequency   = recept_i8h();
        d->param.knock_k_wnd_begin_angle = recept_i16h();
        d->param.knock_k_wnd_end_angle = recept_i16h();     

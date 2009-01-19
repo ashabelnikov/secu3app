@@ -562,7 +562,7 @@ __C_task void main(void)
    SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 
   }
 
-  if (edat.kc_param.use_knock_channel)
+  if (edat.param.knock_use_knock_channel)
    if (!knock_module_initialize())
    {//чип сигнального процессора детонации неисправен - зажигаем СЕ
     SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   

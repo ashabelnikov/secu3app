@@ -198,6 +198,7 @@ void uart_send_packet(ecudata* d, char send_mode)
        build_i16h(d->sens.map_raw);       
        build_i16h(d->sens.voltage_raw);   
        build_i16h(d->sens.temperat_raw);  
+       build_i16h(d->sens.knock_k);   //<-- knock signal level
        break;
    case CKPS_PAR:
        build_i4h(d->param.ckps_edge_type);       

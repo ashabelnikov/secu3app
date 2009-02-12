@@ -169,7 +169,7 @@ typedef struct
 
 //дополнительные данные по умолчанию
 #pragma object_attribute=__root
-const FirmwareData __flash fwdata@FIRMWARE_DATA_START=
+FirmwareData __flash fwdata@FIRMWARE_DATA_START=
 {
   "SECU-3 firmware v1.0. Build ["__DATE__"]",
   
@@ -186,7 +186,7 @@ const FirmwareData __flash fwdata@FIRMWARE_DATA_START=
 
 //данные в таблицах по умолчанию
 #pragma object_attribute=__root
-const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
+F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 {
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x0C,0x10,0x14,0x14,0x14,  //пусковая карта
 0x0A,0x0A,0x0A,0x00,0x00,0x00,0x00,0x0A,0x19,0x28,0x37,0x37,0x37,0x37,0x37,0x37,  //ХХ карта
@@ -375,11 +375,11 @@ const F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 
 //резервные параметры
 #pragma object_attribute=__root
-const params __flash def_param@DEFPARAM_START = 
+params __flash def_param@DEFPARAM_START = 
 {1,0,0,6,6,1920,1250,1500,600,6400,650,1600,-320,0,800,4,4,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,
  96,96,-320,320,240,410,392,1250,1500,0, 0,35,0,800,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
 
 #pragma object_attribute=__root
-const unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;
+unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;
 
 #endif //_TABLES_H_

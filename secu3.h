@@ -44,7 +44,8 @@ typedef struct
  __flash F_data*  fn_dat;                                     //указатель на набор характеристик
  char             op_comp_code;   
  char             op_actn_code;                              
- unsigned int     ecuerrors_for_transfer;    
+ unsigned int     ecuerrors_for_transfer;  
+ unsigned int     ecuerrors_saved_transfer;  
 }ecudata;                                     
 
 

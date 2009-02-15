@@ -33,4 +33,6 @@
 
 #define   KNOCK_PAR    'w'
 
+#define   CE_SAVED_ERR 'x'
+
 #endif //_UFCODES_H_

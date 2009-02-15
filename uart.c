@@ -217,7 +217,10 @@ void uart_send_packet(ecudata* d, char send_mode)
        build_i8h(d->param.knock_bpf_frequency);  
        build_i16h(d->param.knock_k_wnd_begin_angle);
        build_i16h(d->param.knock_k_wnd_end_angle);
-       break;            
+       break;     
+   case CE_SAVED_ERR:
+       build_i16h(d->ecuerrors_saved_transfer);
+       break;                
   }//switch
 
   //общая часть для всех пакетов
@@ -336,6 +339,10 @@ unsigned char uart_recept_packet(ecudata* d)
        d->param.knock_bpf_frequency   = recept_i8h();
        d->param.knock_k_wnd_begin_angle = recept_i16h();
        d->param.knock_k_wnd_end_angle = recept_i16h();     
+       break;   
+       
+    case CE_SAVED_ERR:
+       d->ecuerrors_saved_transfer = recept_i16h();
        break;   
        
   }//switch     

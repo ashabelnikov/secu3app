@@ -29,7 +29,9 @@
 #include "ce_errors.h"
 #include "knock.h"
 
+//Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE 1
+#define OPCODE_CE_SAVE_ERRORS    2
 
 //режимы двигателя
 #define EM_START 0   
@@ -96,14 +98,156 @@ unsigned int temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения темпера
 unsigned char eeprom_parameters_cache[sizeof(params) + 1];
 
 //-------------------------------------------------------------
-unsigned int ecuerrors;    //максимум 16 кодов ошибок
+typedef struct
+{
+ unsigned int ecuerrors;         //максимум 16 кодов ошибок
+ unsigned int merged_errors;     //кеширует ошибки для сбережения ресурса EEPROM
+ unsigned int write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс! 
+}ce_state_t;
+
+ce_state_t ce_state = {0,0,0};
 
 //операции над ошибками
-#define SET_ECUERROR(error)   SETBIT(ecuerrors,error)
-#define CLEAR_ECUERROR(error) CLEARBIT(ecuerrors,error)
+#define SET_ECUERROR(error)   SETBIT(ce_state.ecuerrors,error)
+#define CLEAR_ECUERROR(error) CLEARBIT(ce_state.ecuerrors,error)
 //-------------------------------------------------------------
 
 ecudata edat;
+
+
+#define SUSPENDED_OPERATIONS_SIZE 16
+unsigned char suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
+#define set_suspended_operation(opcode) suspended_opcodes[(opcode)] = (opcode)
+#define is_suspended_operation_active(opcode) (suspended_opcodes[(opcode)] == (opcode))
+#define init_suspended_operations() memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE)
+
+#define SOP_NA                       255
+#define SOP_SAVE_PARAMETERS          0 
+#define SOP_SAVE_CE_MERGED_ERRORS    1 
+#define SOP_SEND_NC_PARAMETERS_SAVED 2
+
+#define SOP_SAVE_CE_ERRORS           3
+#define SOP_SEND_NC_CE_ERRORS_SAVED  4
+
+#define SOP_READ_CE_ERRORS           5
+#define SOP_TRANSMIT_CE_ERRORS       6 
+
+
+
+
+//Обработка операций которые могут требовать или требуют оложенного выполнения.
+void execute_suspended_operations(ecudata* d)
+{
+ unsigned char temp_errors;
+ 
+  if (is_suspended_operation_active(SOP_SAVE_PARAMETERS))
+  {
+    //мы не можем начать сохранение параметров, так как EEPROM на данный момент занято - сохранение 
+    //откладывается и будет осуществлено когда EEPROM освободится и будет вновь вызвана эта функция.
+    if (eeprom_is_idle())
+    {     
+     //для обеспечения атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
+     memcpy(eeprom_parameters_cache,&d->param,sizeof(params));  
+     ((params*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
+     eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, eeprom_parameters_cache, sizeof(params));   
+    
+     //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
+     //записаны новые параметры с корректной контрольной суммой 
+     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
+              
+     //"удаляем" эту операцию из списка так как она уже выполнилась.
+     suspended_opcodes[SOP_SAVE_PARAMETERS] = SOP_NA;
+    }
+  }
+    
+  if (is_suspended_operation_active(SOP_SAVE_CE_MERGED_ERRORS))
+  {
+    //Если EEPROM не занято, то необходимо сохранить массив с кодами ошибок Cehck Engine.
+    //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если 
+    //она еще не была сохранена. Для этого производится чтение и сравнение.  
+    if (eeprom_is_idle())
+    {      
+     eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(unsigned int));
+     ce_state.write_errors = temp_errors | ce_state.merged_errors; 
+     if (ce_state.write_errors!=temp_errors)    
+      eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (unsigned char*)&ce_state.write_errors, sizeof(unsigned int));      
+        
+     //"удаляем" эту операцию из списка так как она уже выполнилась.
+     suspended_opcodes[SOP_SAVE_CE_MERGED_ERRORS] = SOP_NA;
+    }
+  }
+    
+  if (is_suspended_operation_active(SOP_SEND_NC_PARAMETERS_SAVED))   
+  {
+    //передатчик занят?
+    if (!uart_is_sender_busy())
+    {
+     d->op_comp_code = OPCODE_EEPROM_PARAM_SAVE;                
+     uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+    
+     //"удаляем" эту операцию из списка так как она уже выполнилась.
+     suspended_opcodes[SOP_SEND_NC_PARAMETERS_SAVED] = SOP_NA;
+    }    
+  }
+  
+  if (is_suspended_operation_active(SOP_SAVE_CE_ERRORS))
+  {
+   if (eeprom_is_idle())
+    {    
+     eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (unsigned char*)&d->ecuerrors_saved_transfer, sizeof(unsigned int));      
+        
+     //"удаляем" эту операцию из списка так как она уже выполнилась.
+     suspended_opcodes[SOP_SAVE_CE_ERRORS] = SOP_NA;    
+    }
+  }
+ 
+  if (is_suspended_operation_active(SOP_SEND_NC_CE_ERRORS_SAVED))
+  {
+    //передатчик занят?
+    if (!uart_is_sender_busy())
+    {
+     d->op_comp_code = OPCODE_CE_SAVE_ERRORS;                
+     uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+    
+     //"удаляем" эту операцию из списка так как она уже выполнилась.
+     suspended_opcodes[SOP_SEND_NC_CE_ERRORS_SAVED] = SOP_NA;
+    }      
+  }
+  
+  if (is_suspended_operation_active(SOP_READ_CE_ERRORS))
+  {
+   if (eeprom_is_idle())
+    {    
+     eeprom_read(&d->ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(unsigned int));     
+     set_suspended_operation(SOP_TRANSMIT_CE_ERRORS);          
+     //"удаляем" эту операцию из списка так как она уже выполнилась.
+     suspended_opcodes[SOP_READ_CE_ERRORS] = SOP_NA;    
+    }  
+  }
+  
+  if (is_suspended_operation_active(SOP_TRANSMIT_CE_ERRORS))
+  {
+   //передатчик занят?
+   if (!uart_is_sender_busy())
+   {    
+    uart_send_packet(d, CE_SAVED_ERR);    //теперь передатчик озабочен передачей данных    
+    //"удаляем" эту операцию из списка так как она уже выполнилась.
+    suspended_opcodes[SOP_TRANSMIT_CE_ERRORS] = SOP_NA;
+   }      
+  }
+
+ //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
+ switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take! 
+ {
+ case OPCODE_EEPROM_PARAM_SAVE:
+  set_suspended_operation(SOP_SEND_NC_PARAMETERS_SAVED);
+  break;
+  
+ case OPCODE_CE_SAVE_ERRORS:
+  set_suspended_operation(SOP_SEND_NC_CE_ERRORS_SAVED);
+  break;  
+ } 
+}
 
 
 //При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
@@ -111,10 +255,7 @@ ecudata edat;
 void check_engine(ecudata* d)
 {
   unsigned int temp_errors;
-  static unsigned int merged_errors = 0; //кеширует ошибки для сбережения ресурса EEPROM
-  static unsigned int write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс!
-  static unsigned char need_to_save = 0; 
-
+  
   //если была ошибка ДПКВ то устанавливаем бит соответствующей ошибки
   if (ckps_is_error())
   {
@@ -127,52 +268,41 @@ void check_engine(ecudata* d)
   }
 
   //если была ошибка канала детонации
-  if (knock_is_error())
-  {
+  if (d->param.knock_use_knock_channel)
+   if (knock_is_error())
+   {
     SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);
     knock_reset_error();        
-  }
-  else
-  {
+   }
+   else
+   {
     CLEAR_ECUERROR(ECUERROR_KSP_CHIP_FAILED);  
-  }
+   }
 
   //если таймер отсчитал время, то гасим СЕ
   if (s_timer_is_action(ce_control_time_counter))
    SET_CE_STATE(0);       
 
   //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер 
-  if (ecuerrors!=0)
+  if (ce_state.ecuerrors!=0)
   {
    s_timer_set(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
    SET_CE_STATE(1);  
   }
 
-  temp_errors = (merged_errors | ecuerrors);
-  if (temp_errors!=merged_errors) //появилась ли ошибка которой нет в merged_errors?
+  temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
+  if (temp_errors!=ce_state.merged_errors) //появилась ли ошибка которой нет в merged_errors?
   {
    //так как на момент возникновения новой ошибки EEPROM может быть занято (например сохранением параметров),
    //то необходимо установить только признак, который будет оставаться установленным до тех пор пака EEPROM
    //не освободится и ошибки не будут сохранены. 
-   need_to_save = 1;
+   set_suspended_operation(SOP_SAVE_CE_MERGED_ERRORS);
   }
 
-  merged_errors = temp_errors;
+  ce_state.merged_errors = temp_errors;
 
-  //Если EEPROM не занято и есть новая ошибка. То необходимо сохранить новую ошибку.
-  //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если 
-  //она еще не была сохранена. Для этого производится чтение и сравнение.  
-  if (eeprom_is_idle() && need_to_save)
-  {
-   eeprom_read(&temp_errors,EEPROM_ECUERRORS_START,sizeof(unsigned int));
-   write_errors = temp_errors | merged_errors; 
-   if (write_errors!=temp_errors)    
-    eeprom_start_wr_data(0,EEPROM_ECUERRORS_START,(unsigned char*)&write_errors,sizeof(unsigned int));      
-   need_to_save = 0;
-  }
-  
   //переносим биты ошибок в кеш для передачи.
-  d->ecuerrors_for_transfer|= ecuerrors;
+  d->ecuerrors_for_transfer|= ce_state.ecuerrors;
 }
 
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
@@ -338,7 +468,23 @@ void process_uart_interface(ecudata* d)
     case KNOCK_PAR:       
       //если были изменены параметры то сбрасываем счетчик времени
       s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
-      break;  
+      break;        
+    case OP_COMP_NC: 
+      if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE) //приняли команду сохранения параметров
+      {
+       set_suspended_operation(SOP_SAVE_PARAMETERS);     
+       d->op_actn_code = 0; //обработали 
+      }
+      if (d->op_actn_code == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок  
+      {
+       set_suspended_operation(SOP_READ_CE_ERRORS);     
+       d->op_actn_code = 0; //обработали 
+      }
+      break;    
+      
+    case CE_SAVED_ERR:
+      set_suspended_operation(SOP_SAVE_CE_ERRORS);
+      break;       
   }
   
   //если были изменены параметры ДПКВ, то немедленно применяем их на работающем двигателе
@@ -372,14 +518,6 @@ void process_uart_interface(ecudata* d)
    d->ecuerrors_for_transfer = 0;
   }
  }
-
- //передаем нотификационный код завершения последней операции 
- if ((0!=d->op_comp_code)&&(!uart_is_sender_busy()))
-  {                
-   uart_send_packet(d,OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-   d->op_comp_code = 0;
-  } 
- 
 }
 
 
@@ -403,45 +541,19 @@ void InitialMeasure(ecudata* d)
   d->atmos_press = d->sens.map;      //сохраняем атмосферное давление в кПа!
 }
 
-//Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы,
-//а для обеспечения атомарности копируем данные в отдельный буфер и из него их потом пишем в EEPROM.
+//Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы.
 //Сохранение данных в EEPROM произойдет только если за заданное время не произошло ни одной операции приема параметров
 //из UART-a и сохраненные параметры отличаются от текущих.        
 void save_param_if_need(ecudata* d)
-{
-  char opcode;
-  
-  if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE)
-    goto force_parameters_save; //goto - это зло.
-    
-  //параметры не изменились за заданное время?
-  if (s_timer16_is_action(save_param_timeout_counter)) 
-  {
-    //текущие и сохраненные параметры отличаются?
-    if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE)) 
-    {
-force_parameters_save:    
-    //мы не можем начать сохранение параметров, так как EEPROM на данный момент занято - сохранение 
-    //откладывается и будет осуществлено когда EEPROM освободится и будет вновь вызвана эта функция.
-    if (!eeprom_is_idle())
-      return;
-
-     memcpy(eeprom_parameters_cache,&d->param,sizeof(params));  
-     ((params*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
-     eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE,EEPROM_PARAM_START,eeprom_parameters_cache,sizeof(params));
-     
-     //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
-     //записаны новые параметры с корректной контрольной суммой 
-     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
-     d->op_actn_code = 0; //обработали       
-    }
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
-  }
-  
-  //если есть завершенная операция то сохраняем ее код для отправки нотификации
-  opcode = eeprom_take_completed_opcode();
-  if (opcode)
-   d->op_comp_code = opcode;   
+{   
+ //параметры не изменились за заданное время?
+ if (s_timer16_is_action(save_param_timeout_counter)) 
+ {
+  //текущие и сохраненные параметры отличаются?
+  if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE))   
+   set_suspended_operation(SOP_SAVE_PARAMETERS);       
+  s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+ }   
 }
 
 //загружает параметры из EEPROM, проверяет целостность данных и если они испорчены то
@@ -603,6 +715,7 @@ __C_task void main(void)
   knock_set_gain(fwdata.attenuator_table[0]);
   knock_set_int_time_constant(23); //300 мкс - это временно!
 
+  init_suspended_operations();
   //------------------------------------------------------------------------     
   while(1)
   {                        
@@ -635,6 +748,8 @@ __C_task void main(void)
     }      
   
    //----------непрерывное выполнение-----------------------------------------
+    //выполнение отложенных операций
+    execute_suspended_operations(&edat);
     //управление фиксированием и индицированием возникающих ошибок
     check_engine(&edat);
     //обработка приходящих/уходящих данных последовательного порта

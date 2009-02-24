@@ -498,8 +498,20 @@ void process_uart_interface(ecudata* d)
   //аналогично для контороля детонации, обязательно после CKPS_PAR!
   if (descriptor == KNOCK_PAR)
   {
-    ckps_use_knock_channel(d->param.knock_use_knock_channel);
+    //инициализируем процессор детонации в случае если он не использовался, а теперь поступила коменда его использовать.
+    if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
+     if (!knock_module_initialize())
+     {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+      SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   
+     }    
+
     ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);  
+    knock_set_band_pass(edat.param.knock_bpf_frequency);
+    ckps_use_knock_channel(d->param.knock_use_knock_channel);   
+    
+    //запоминаем состояние флага для того чтобы потом можно было опрежелить нужно инициализировать
+    //процессор детонации или нет.   
+    d->use_knock_channel_prev = d->param.knock_use_knock_channel;  
   }
 
   //мы обработали принятые данные - приемник ничем теперь не озабочен
@@ -674,12 +686,6 @@ __C_task void main(void)
    SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 
   }
 
-  if (edat.param.knock_use_knock_channel)
-   if (!knock_module_initialize())
-   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-    SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   
-   }
-
   adc_init();
 
   //запрещаем компаратор - он нам не нужен  
@@ -693,7 +699,14 @@ __C_task void main(void)
      
   //читаем параметры
   load_eeprom_params(&edat);
-
+  
+  if (edat.param.knock_use_knock_channel)
+   if (!knock_module_initialize())
+   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+    SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   
+   }
+  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;  
+ 
   init_system_timer();
   
   //инициализируем UART

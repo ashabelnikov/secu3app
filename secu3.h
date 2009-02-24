@@ -14,15 +14,15 @@
 //описывает все входы системы - их производные и интегральные величины
 typedef struct
 {
- unsigned int map;                                          //давление во впускном коллекторе (усредненное)
- unsigned int voltage;                                      //напряжение бортовой сети (усредненное)
- signed int temperat;                                       //температура охлаждающей жидкости (усредненная)
- unsigned int frequen;                                      //частота вращения коленвала (усредненная)
- unsigned int inst_frq;                                     //мгновенная частота вращения
- unsigned char carb;                                        //состояние концевика карбюратора 
- unsigned char gas;                                         //состояние газового клапана 
- unsigned int frequen4;                                     //частота усредненная всего по 4-м выборкам 
- unsigned int knock_k;                                      //уровень сигнала детонации 
+ unsigned int map;                             //давление во впускном коллекторе (усредненное)
+ unsigned int voltage;                         //напряжение бортовой сети (усредненное)
+ signed int temperat;                          //температура охлаждающей жидкости (усредненная)
+ unsigned int frequen;                         //частота вращения коленвала (усредненная)
+ unsigned int inst_frq;                        //мгновенная частота вращения
+ unsigned char carb;                           //состояние концевика карбюратора 
+ unsigned char gas;                            //состояние газового клапана 
+ unsigned int frequen4;                        //частота усредненная всего по 4-м выборкам 
+ unsigned int knock_k;                         //уровень сигнала детонации 
 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  signed int map_raw;
@@ -35,17 +35,21 @@ typedef struct
 //описывает данные системы, обеспечивает единый интерфейс данных
 typedef struct
 {
- params           param;                                      //--параметры
- sensors          sens;                                       //--сенсоры
- unsigned char    ephh_valve;                                 //состояние клапана ЭПХХ
- int              atmos_press;                                //атмосферное давление
- unsigned char    airflow;                                    //расход воздуха
- signed int       curr_angle;                                 //текущий угол опережения
- __flash F_data*  fn_dat;                                     //указатель на набор характеристик
- char             op_comp_code;   
- char             op_actn_code;                              
- unsigned int     ecuerrors_for_transfer;  
- unsigned int     ecuerrors_saved_transfer;  
+ params           param;                        //--параметры
+ sensors          sens;                         //--сенсоры
+ 
+ unsigned char    ephh_valve;                   //состояние клапана ЭПХХ
+ int              atmos_press;                  //атмосферное давление
+ unsigned char    airflow;                      //расход воздуха
+ signed int       curr_angle;                   //текущий угол опережения
+ 
+ __flash F_data*  fn_dat;                       //указатель на набор характеристик
+
+ char             op_comp_code;                 //содержит код который посылается через UART (пакет OP_COMP_NC)
+ char             op_actn_code;                 //содержит код который принимается через UART (пакет OP_COMP_NC)
+ unsigned int     ecuerrors_for_transfer;       //буферизирует коды ошибок передаваемые через UART в реальном времени.
+ unsigned int     ecuerrors_saved_transfer;     //буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART.  
+ unsigned char    use_knock_channel_prev;       //предыдущее состояние признака использования канала детонации
 }ecudata;                                     
 
 

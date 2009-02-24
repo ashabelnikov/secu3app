@@ -65,6 +65,7 @@ void knock_set_integration_mode(char mode)
  KSP_INTHOLD = mode;
 }
 
+__monitor //все прерывания должны быть запрещены!
 unsigned char knock_module_initialize(void)
 {
  unsigned char i, response;

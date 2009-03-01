@@ -34,5 +34,6 @@
 #define   KNOCK_PAR    'w'
 
 #define   CE_SAVED_ERR 'x'
+#define   FWINFO_DAT   'y'
 
 #endif //_UFCODES_H_

@@ -46,6 +46,7 @@
 #define F_NAME_SIZE            16
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128
+#define FW_SIGNATURE_INFO_SIZE 48
 
 //Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
 typedef struct 
@@ -61,7 +62,7 @@ typedef struct
 //описывает дополнительные данные хранимые в прошивке
 typedef struct
 {
-  char fw_signature_info[48];
+  char fw_signature_info[FW_SIGNATURE_INFO_SIZE];
   
   //таблица усиления аттенюатора (зависимость от оборотов).
   unsigned char attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE]; 
@@ -171,8 +172,10 @@ typedef struct
 #pragma object_attribute=__root
 FirmwareData __flash fwdata@FIRMWARE_DATA_START=
 {
-  "SECU-3 firmware v1.0. Build ["__DATE__"]",
-  
+  //Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.  
+  //Дата в формате Mmm dd yyyy.
+  "SECU-3 firmware v1.0. Build ["__DATE__"]       ",
+   
   //таблица аттенюатора
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,  
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,

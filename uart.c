@@ -220,7 +220,15 @@ void uart_send_packet(ecudata* d, char send_mode)
        break;     
    case CE_SAVED_ERR:
        build_i16h(d->ecuerrors_saved_transfer);
-       break;                
+       break;   
+       
+   case FWINFO_DAT:
+       //проверка на то, чтобы мы не вылезли за пределы буфера. 3 символа - заголовок и конец пакета.
+#if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE)
+ #error "Out of buffer!"
+#endif       
+       build_fb(fwdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
+       break;                 
   }//switch
 
   //общая часть для всех пакетов

@@ -32,6 +32,7 @@
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE 1
 #define OPCODE_CE_SAVE_ERRORS    2
+#define OPCODE_READ_FW_SIG_INFO  3 
 
 //режимы двигателя
 #define EM_START 0   
@@ -130,7 +131,9 @@ unsigned char suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 #define SOP_SEND_NC_CE_ERRORS_SAVED  4
 
 #define SOP_READ_CE_ERRORS           5
-#define SOP_TRANSMIT_CE_ERRORS       6 
+#define SOP_TRANSMIT_CE_ERRORS       6
+
+#define SOP_SEND_FW_SIG_INFO         7 
 
 
 
@@ -234,6 +237,17 @@ void execute_suspended_operations(ecudata* d)
     //"удаляем" эту операцию из списка так как она уже выполнилась.
     suspended_opcodes[SOP_TRANSMIT_CE_ERRORS] = SOP_NA;
    }      
+  }
+  
+  if (is_suspended_operation_active(SOP_SEND_FW_SIG_INFO))
+  {
+   //передатчик занят?
+   if (!uart_is_sender_busy())
+   {        
+    uart_send_packet(d, FWINFO_DAT);    //теперь передатчик озабочен передачей данных    
+    //"удаляем" эту операцию из списка так как она уже выполнилась.
+    suspended_opcodes[SOP_SEND_FW_SIG_INFO] = SOP_NA;
+   }        
   }
 
  //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
@@ -479,6 +493,11 @@ void process_uart_interface(ecudata* d)
       {
        set_suspended_operation(SOP_READ_CE_ERRORS);     
        d->op_actn_code = 0; //обработали 
+      }
+      if (d->op_actn_code == OPCODE_READ_FW_SIG_INFO) //приняли команду чтения и передачи информации о прошивке
+      {
+       set_suspended_operation(SOP_SEND_FW_SIG_INFO);
+       d->op_actn_code = 0; //обработали        
       }
       break;    
       

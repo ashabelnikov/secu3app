@@ -228,7 +228,12 @@ void uart_send_packet(ecudata* d, char send_mode)
  #error "Out of buffer!"
 #endif       
        build_fb(fwdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
-       break;                 
+       break;     
+       
+   case MISCEL_PAR:
+       build_i16h(d->param.uart_divisor);
+       build_i8h(d->param.uart_period_t_ms); 
+       break;                          
   }//switch
 
   //общая часть для всех пакетов
@@ -351,6 +356,11 @@ unsigned char uart_recept_packet(ecudata* d)
        
     case CE_SAVED_ERR:
        d->ecuerrors_saved_transfer = recept_i16h();
+       break;   
+       
+    case MISCEL_PAR: 
+       d->param.uart_divisor = recept_i16h();
+       d->param.uart_period_t_ms = recept_i8h();  
        break;   
        
   }//switch     

@@ -452,8 +452,8 @@ void average_measured_values(ecudata* d)
                
   for (sum=0,i = 0; i < FRQ_AVERAGING; i++)  //усредняем частоту вращения коленвала
    sum+=freq_circular_buffer[i];      
-  d->sens.frequen=(sum/FRQ_AVERAGING);           
-
+  d->sens.frequen=(sum/FRQ_AVERAGING);    
+  
   for (sum=0,i = 0; i < FRQ4_AVERAGING; i++) //усредняем частоту вращения коленвала
    sum+=freq4_circular_buffer[i];      
   d->sens.frequen4=(sum/FRQ4_AVERAGING);           
@@ -479,7 +479,8 @@ void process_uart_interface(ecudata* d)
     case STARTR_PAR:
     case ADCCOR_PAR: 
     case CKPS_PAR: 
-    case KNOCK_PAR:       
+    case KNOCK_PAR:  
+    case MISCEL_PAR:     
       //если были изменены параметры то сбрасываем счетчик времени
       s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
       break;        
@@ -543,7 +544,7 @@ void process_uart_interface(ecudata* d)
   if (!uart_is_sender_busy())
   {                
    uart_send_packet(d,0);    //теперь передатчик озабочен передачей данных
-   s_timer_set(send_packet_interval_counter,SEND_PACKET_INTERVAL_VALUE);
+   s_timer_set(send_packet_interval_counter, d->param.uart_period_t_ms);
    
    //после передачи очищаем кеш ошибок
    d->ecuerrors_for_transfer = 0;
@@ -729,7 +730,7 @@ __C_task void main(void)
   init_system_timer();
   
   //инициализируем UART
-  uart_init(CBR_9600);
+  uart_init(edat.param.uart_divisor);
   
   //инициализируем модуль ДПКВ             
   ckps_init_state();  

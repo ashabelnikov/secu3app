@@ -4,7 +4,6 @@
 
 #include "tables.h"
 
-#define SEND_PACKET_INTERVAL_VALUE    8
 #define SAVE_PARAM_TIMEOUT_VALUE      3000
 #define FORCE_MEASURE_TIMEOUT_VALUE   50
 #define CE_CONTROL_STATE_TIME_VALUE   50

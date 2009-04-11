@@ -83,8 +83,7 @@ void ckps_init_state_variables(void)
   ckps.advance_angle_buffered = 0;
   ckps.starting_mode = 0;
   ckps.channel_mode = CKPS_CHANNEL_MODENA;
-  
-  flags.ckps_error_flag = 0;
+    
   flags.ckps_new_engine_cycle_happen = 0;
   flags.ckps_is_synchronized = 0;  
   TCCR0 = 0; //останавливаем таймер0  
@@ -95,7 +94,8 @@ void ckps_init_state_variables(void)
 __monitor
 void ckps_init_state(void)
 {
-  ckps_init_state_variables(); 
+  ckps_init_state_variables();
+  flags.ckps_error_flag = 0; 
   
   //OC1А(PD5) и OC1В(PD4) должны быть сконфигурированы как выходы
   DDRD|= (1<<DDD5)|(1<<DDD4); 

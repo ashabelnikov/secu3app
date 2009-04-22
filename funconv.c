@@ -220,13 +220,13 @@ int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, signed in
   
  if (difference > intstep_p)
  {
-  *ip_prev_state+=intstep_p;
+  (*ip_prev_state)+=intstep_p;
   return *ip_prev_state;
  }
   
  if (difference < -intstep_m)
  {
-  *ip_prev_state-=intstep_m;
+  (*ip_prev_state)-=intstep_m;
   return *ip_prev_state;
  }
   

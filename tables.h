@@ -34,6 +34,7 @@
 #ifndef _TABLES_H_
 #define _TABLES_H_
 
+#include <stdint.h>
 #include "bootldr.h"   //для того чтобы знать значение SECONDBOOTSTART, и только
 
 //определяем количество узлов интерполяции для каждой функции
@@ -51,102 +52,102 @@
 //Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
 typedef struct 
 {
-  signed   char f_str[F_STR_POINTS];                       // функция УОЗ на старте
-  signed   char f_idl[F_IDL_POINTS];                       // функция УОЗ для ХХ
-  signed   char f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     // основная функция УОЗ (3D)
-  signed   char f_tmp[F_TMP_POINTS];                       // функция коррект. УОЗ по температуре
-  unsigned char name[F_NAME_SIZE];                         // ассоциированное имя (имя семейства)
+  int8_t f_str[F_STR_POINTS];                       // функция УОЗ на старте
+  int8_t f_idl[F_IDL_POINTS];                       // функция УОЗ для ХХ
+  int8_t f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     // основная функция УОЗ (3D)
+  int8_t f_tmp[F_TMP_POINTS];                       // функция коррект. УОЗ по температуре
+  uint8_t name[F_NAME_SIZE];                        // ассоциированное имя (имя семейства)
 }F_data;
 
 
 //описывает дополнительные данные хранимые в прошивке
 typedef struct
 {
-  char fw_signature_info[FW_SIGNATURE_INFO_SIZE];
+  uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];
   
   //таблица усиления аттенюатора (зависимость от оборотов).
-  unsigned char attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE]; 
+  uint8_t attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE]; 
   
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
-  unsigned char reserved[128];  
+  uint8_t reserved[128];  
 }FirmwareData;
 
 //описывает параметры системы
 typedef struct
 {
-  unsigned char tmp_use;                        //признак комплектации ДТОЖ-ом
-  unsigned char carb_invers;                    //инверсия концевика на карбюраторе
-  unsigned char idl_regul;                      //поддерживать заданные обороты ХХ регулмрованием УОЗ
-  unsigned char fn_benzin;                      //номер набора характеристик используемый для бензина
-  unsigned char fn_gas;                         //номер набора характеристик используемый для газа
-  unsigned int  map_lower_pressure;             //нижнее значене ДАД по оси таблицы (кПа)
-  unsigned int  ephh_lot;                       //нижний порог ЭПХХ (мин-1)
-  unsigned int  ephh_hit;                       //верхний порог ЭПХХ (мин-1)
-  unsigned int  starter_off;                    //порог выключения стартера (мин-1)
-  signed   int  map_upper_pressure;             //верхнее значение ДАД по оси таблицы (кПа)
-  unsigned int  smap_abandon;                   //обороты перехода с пусковой карты на рабочую  (мин-1) 
-  signed   int  max_angle;                      //ограничение максимального УОЗ
-  signed   int  min_angle;                      //ограничение минимального УОЗ
-  signed   int  angle_corr;                     //октан-коррекция УОЗ    
-  unsigned int  idling_rpm;                     //заданные обороты ХХ для поддержания регулмрованием УОЗ   
-  signed   int  ifac1;                          //коэффициенты регулятора оборотов ХХ, для положительной и
-  signed   int  ifac2;                          //отрицательной ошибок соответственно.
-  signed   int  MINEFR;                         //зона нечувствительности регулятора (обороты)
-  signed   int  vent_on;                        //температура включения вентилятора
-  signed   int  vent_off;                       //температура выключения вентилятора  
+  uint8_t  tmp_use;                      //признак комплектации ДТОЖ-ом
+  uint8_t  carb_invers;                  //инверсия концевика на карбюраторе
+  uint8_t  idl_regul;                    //поддерживать заданные обороты ХХ регулмрованием УОЗ
+  uint8_t  fn_benzin;                    //номер набора характеристик используемый для бензина
+  uint8_t  fn_gas;                       //номер набора характеристик используемый для газа
+  uint16_t map_lower_pressure;           //нижнее значене ДАД по оси таблицы (кПа)
+  uint16_t ephh_lot;                     //нижний порог ЭПХХ (мин-1)
+  uint16_t ephh_hit;                     //верхний порог ЭПХХ (мин-1)
+  uint16_t starter_off;                  //порог выключения стартера (мин-1)
+  int16_t  map_upper_pressure;           //верхнее значение ДАД по оси таблицы (кПа)
+  uint16_t smap_abandon;                 //обороты перехода с пусковой карты на рабочую  (мин-1) 
+  int16_t  max_angle;                    //ограничение максимального УОЗ
+  int16_t  min_angle;                    //ограничение минимального УОЗ
+  int16_t  angle_corr;                   //октан-коррекция УОЗ    
+  uint16_t idling_rpm;                   //заданные обороты ХХ для поддержания регулмрованием УОЗ   
+  int16_t  ifac1;                        //коэффициенты регулятора оборотов ХХ, для положительной и
+  int16_t  ifac2;                        //отрицательной ошибок соответственно.
+  int16_t  MINEFR;                       //зона нечувствительности регулятора (обороты)
+  int16_t  vent_on;                      //температура включения вентилятора
+  int16_t  vent_off;                     //температура выключения вентилятора  
 
-  signed int  map_adc_factor;
-  signed long map_adc_correction;
-  signed int  ubat_adc_factor;
-  signed long ubat_adc_correction;
-  signed int  temp_adc_factor;
-  signed long temp_adc_correction;
+  int16_t  map_adc_factor;
+  int32_t  map_adc_correction;
+  int16_t  ubat_adc_factor;
+  int32_t  ubat_adc_correction;
+  int16_t  temp_adc_factor;
+  int32_t  temp_adc_correction;
   
-  unsigned char ckps_edge_type;                
-  unsigned char ckps_cogs_btdc;
-  unsigned char ckps_ignit_cogs;
+  uint8_t  ckps_edge_type;                
+  uint8_t  ckps_cogs_btdc;
+  uint8_t  ckps_ignit_cogs;
   
-  signed int angle_dec_spead;
-  signed int angle_inc_spead;  
-  signed int idlreg_min_angle;
-  signed int idlreg_max_angle;
-  unsigned int map_curve_offset;
-  unsigned int map_curve_gradient;
+  int16_t  angle_dec_spead;
+  int16_t  angle_inc_spead;  
+  int16_t  idlreg_min_angle;
+  int16_t  idlreg_max_angle;
+  uint16_t map_curve_offset;
+  uint16_t map_curve_gradient;
   
-  signed int epm_on_threshold; 
+  int16_t  epm_on_threshold; 
   
-  unsigned int ephh_lot_g;               //нижний порог ЭПХХ (газ)
-  unsigned int ephh_hit_g;               //верхний порог ЭПХХ (газ)
-  unsigned char shutoff_delay;           //задержка выключения клапана
+  uint16_t ephh_lot_g;                   //нижний порог ЭПХХ (газ)
+  uint16_t ephh_hit_g;                   //верхний порог ЭПХХ (газ)
+  uint8_t  shutoff_delay;                //задержка выключения клапана
  
   //--knock 
-  unsigned char knock_use_knock_channel;     //признак использования канала детенации
-  unsigned char knock_bpf_frequency;         //центральная частота полосового фильтра
-  signed int knock_k_wnd_begin_angle;        //начало детонационного окна (градусы)
-  signed int knock_k_wnd_end_angle;          //конец детонационного окна (градусы)
+  uint8_t  knock_use_knock_channel;      //признак использования канала детенации
+  uint8_t  knock_bpf_frequency;          //центральная частота полосового фильтра
+  int16_t  knock_k_wnd_begin_angle;      //начало детонационного окна (градусы)
+  int16_t  knock_k_wnd_end_angle;        //конец детонационного окна (градусы)
   //--/knock
  
-  unsigned int uart_divisor;                //делитель для соответствующей скорости UART-a
-  unsigned char uart_period_t_ms;           //период посылки пакетов в десятках миллисекунд
+  uint16_t uart_divisor;                 //делитель для соответствующей скорости UART-a
+  uint8_t  uart_period_t_ms;             //период посылки пакетов в десятках миллисекунд
   
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
-  unsigned char reserved[21];
+  uint8_t  reserved[21];
   
-  unsigned short crc;                           //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
+  uint16_t crc;                         //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
 }params;
 
 //================================================================================
 //определяем адреса таблиц в прошивке отталкиваясь от бутлоадера
 
 //размер переменной контрольной суммы параметров в байтах
-#define PAR_CRC_SIZE   sizeof(unsigned short) 
+#define PAR_CRC_SIZE   sizeof(uint16_t) 
 
 //размер переменной контрольной суммы прошивки в байтах
-#define CODE_CRC_SIZE   sizeof(unsigned short) 
+#define CODE_CRC_SIZE   sizeof(uint16_t) 
 
 //размер кода программы без учета контрольной суммы
 #define CODE_SIZE (SECONDBOOTSTART-CODE_CRC_SIZE)
@@ -385,6 +386,6 @@ params __flash def_param@DEFPARAM_START =
  96,96,-320,320,240,410,392,1250,1500,0, 0,35,0,800,0x0067,8,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
 
 #pragma object_attribute=__root
-unsigned short __flash code_crc@CODE_CRC_ADDR = 0x0000;
+uint16_t __flash code_crc@CODE_CRC_ADDR = 0x0000;
 
 #endif //_TABLES_H_

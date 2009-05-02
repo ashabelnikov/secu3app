@@ -15,67 +15,67 @@
 
 typedef struct
 {
- unsigned int map_value;           //последнее измеренное значение абсолютного давления
- unsigned int ubat_value;          //последнее измеренное значение напряжения бортовой сети
- unsigned int temp_value;          //последнее измеренное значение температуры охлаждающей жидкости
- unsigned int knock_value;         //последнее измеренное значение сигнала детонации
+ uint16_t map_value;           //последнее измеренное значение абсолютного давления
+ uint16_t ubat_value;          //последнее измеренное значение напряжения бортовой сети
+ uint16_t temp_value;          //последнее измеренное значение температуры охлаждающей жидкости
+ uint16_t knock_value;         //последнее измеренное значение сигнала детонации
 
- unsigned char  sensors_ready;     //датчики обработаны и значения готовы к считыванию
+ uint8_t  sensors_ready;       //датчики обработаны и значения готовы к считыванию
 }adc_state;
 
 adc_state adc;  //переменные состояния АЦП
 
 __monitor
-unsigned int adc_get_map_value(void)
+uint16_t adc_get_map_value(void)
 {
-  return adc.map_value;
+ return adc.map_value;
 }
 
 __monitor
-unsigned int adc_get_ubat_value(void)
+uint16_t adc_get_ubat_value(void)
 {
-  return adc.ubat_value;
+ return adc.ubat_value;
 }
 
 __monitor
-unsigned int adc_get_temp_value(void)
+uint16_t adc_get_temp_value(void)
 {
-  return adc.temp_value;
+ return adc.temp_value;
 }
 
 __monitor
-unsigned int adc_get_knock_value(void)
+uint16_t adc_get_knock_value(void)
 {
-  return adc.knock_value;
+ return adc.knock_value;
 }
 
 void adc_begin_measure(void) 
 { 
-  //мы не можем запускать новое измерение, если еще не завершилось
-  //предыдущее измерение
-  if (!adc.sensors_ready)  
-    return;
+ //мы не можем запускать новое измерение, если еще не завершилось
+ //предыдущее измерение
+ if (!adc.sensors_ready)  
+  return;
 
-  adc.sensors_ready = 0; 
-  ADMUX = ADCI_MAP|ADC_VREF_TYPE; 
-  SETBIT(ADCSRA,ADSC);
+ adc.sensors_ready = 0; 
+ ADMUX = ADCI_MAP|ADC_VREF_TYPE; 
+ SETBIT(ADCSRA,ADSC);
 }  
 
 void adc_begin_measure_knock(void) 
 { 
-  //мы не можем запускать новое измерение, если еще не завершилось
-  //предыдущее измерение
-  if (!adc.sensors_ready)  
-    return;
+ //мы не можем запускать новое измерение, если еще не завершилось
+ //предыдущее измерение
+ if (!adc.sensors_ready)  
+  return;
 
-  adc.sensors_ready = 0; 
-  ADMUX = ADCI_STUB|ADC_VREF_TYPE; 
-  SETBIT(ADCSRA,ADSC);
+ adc.sensors_ready = 0; 
+ ADMUX = ADCI_STUB|ADC_VREF_TYPE; 
+ SETBIT(ADCSRA,ADSC);
 }  
 
-char adc_is_measure_ready(void)
+uint8_t adc_is_measure_ready(void)
 {
-  return adc.sensors_ready; 
+ return adc.sensors_ready; 
 }
 
 //инициализация АЦП и его переменных состояния
@@ -99,33 +99,33 @@ __interrupt void ADC_isr(void)
 
  switch(ADMUX&0x07)
  {
-   case ADCI_MAP: //закончено измерение абсолютного давления
-      adc.map_value = ADC;      
-      ADMUX = ADCI_UBAT|ADC_VREF_TYPE;   
-      SETBIT(ADCSRA,ADSC);
-      break;
+  case ADCI_MAP: //закончено измерение абсолютного давления
+   adc.map_value = ADC;      
+   ADMUX = ADCI_UBAT|ADC_VREF_TYPE;   
+   SETBIT(ADCSRA,ADSC);
+   break;
 
-   case ADCI_UBAT://закончено измерение напряжения бортовой сети
-      adc.ubat_value = ADC;      
-      ADMUX = ADCI_TEMP|ADC_VREF_TYPE;   
-      SETBIT(ADCSRA,ADSC);
-      break;
+  case ADCI_UBAT://закончено измерение напряжения бортовой сети
+   adc.ubat_value = ADC;      
+   ADMUX = ADCI_TEMP|ADC_VREF_TYPE;   
+   SETBIT(ADCSRA,ADSC);
+   break;
 
-   case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
-      adc.temp_value = ADC;      
-      ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
-      adc.sensors_ready = 1;                
-      break; 
+  case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
+   adc.temp_value = ADC;      
+   ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
+   adc.sensors_ready = 1;                
+   break; 
          
-   case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации
-      ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
-      SETBIT(ADCSRA,ADSC);         
-      break; 
+  case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации
+   ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
+   SETBIT(ADCSRA,ADSC);         
+   break; 
             
-   case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
-      adc.knock_value = ADC;      
-      adc.sensors_ready = 1;                
-      break; 
+  case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
+   adc.knock_value = ADC;      
+   adc.sensors_ready = 1;                
+   break; 
  } 
 }
 
@@ -135,36 +135,35 @@ __interrupt void ADC_isr(void)
 // factor = 2^14 * gainfactor, 
 // correction = 2^14 * (0.5 - offset * gainfactor),
 // 2^16 * realvalue = 2^2 * (adcvalue * factor + correction)
-signed int adc_compensate(signed int adcvalue, signed int factor, signed long correction)
+int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction)
 {
-  return (((((signed long)adcvalue*factor)+correction)<<2)>>16);
+ return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
 }
 
 //adcvalue - значение напряжения в дискретах АЦП
 //offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
 //gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
-unsigned int map_adc_to_kpa(signed int adcvalue, unsigned int offset, unsigned int gradient)
+uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, uint16_t gradient)
 {
  //АЦП не измеряет отрицательных напряжений, однако отрицательное значение может появится после компенсации погрешностей.
  //Такой ход событий необходимо предотвращать.
  if (adcvalue < 0)
-   adcvalue = 0;
+  adcvalue = 0;
    
  //выпажение выглядит так: ((adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.   
- return ( ((unsigned long)(adcvalue + offset)) * ((unsigned long)gradient) ) >> 7; 
+ return ( ((uint32_t)(adcvalue + offset)) * ((uint32_t)gradient) ) >> 7; 
 }
 
-unsigned int ubat_adc_to_v(signed int adcvalue)
+uint16_t ubat_adc_to_v(int16_t adcvalue)
 {
  if (adcvalue < 0)
-   adcvalue = 0;
+  adcvalue = 0;
  return adcvalue;
 }
 
-signed int temp_adc_to_c(signed int adcvalue)
+int16_t temp_adc_to_c(int16_t adcvalue)
 {   
  if (adcvalue < 0)
-   adcvalue = 0;
- return (adcvalue - ((signed int)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
+  adcvalue = 0;
+ return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
-

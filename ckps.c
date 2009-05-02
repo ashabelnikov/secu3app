@@ -17,8 +17,29 @@
 #include "secu3.h"  
 #include "knock.h"
 
-// p * 2.5,  барьер для селекции синхрометки = 2.5 
-#define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p)>>1))  
+#ifndef WHEEL_36_1 //60-2
+ #define WHEEL_COGS_NUM   60  //количество зубьев (включая отсутствующие)
+ #define WHEEL_COGS_LACK  2   //количество отсутствующих зубьев
+ #define WHEEL_LATCH_BTDC 11  //кол-во зубьев до в.м.т определяющие момент загрузки УОЗ, старт измерения датчиков, загрузку настроек в HIP  
+ #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p)>>1))  // p * 2.5,  барьер для селекции синхрометки = 2.5
+#else //36-1
+ #define WHEEL_COGS_NUM   36  
+ #define WHEEL_COGS_LACK  1   
+ #define WHEEL_LATCH_BTDC 7   //70 градусов  
+ #define CKPS_GAP_BARRIER(p) ((p) + ((p)>>1))  // p * 1.5
+#endif
+  
+//количество градусов приходящееся на один зуб диска
+#define CKPS_DEGREES_PER_COG (360 / WHEEL_COGS_NUM)                           
+    
+//Кол-во зубьев шкива приходящееся на один рабочий такт двигателя (4-х цилиндрового)
+#define WHEEL_COGS_PER_CYCLE (WHEEL_COGS_NUM / 2)
+
+//номер последнего (существующего) зуба, нумерация ничинается с 1! 
+#define WHEEL_LAST_COG (WHEEL_COGS_NUM - WHEEL_COGS_LACK)
+
+//количество зубов которое будет пропускатся при старте перед синхронизацией
+#define CKPS_ON_START_SKIP_COGS      30
 
 #define GetICR() (ICR1)
 
@@ -28,38 +49,38 @@
 
 typedef struct
 {
-  unsigned char  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
-  unsigned char  ckps_is_valid_half_turn_period:1;
-  unsigned char  ckps_is_synchronized:1;
-  unsigned char  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением  
-  unsigned char  ckps_use_knock_channel:1;            //признак использования канала детонации     
+  uint8_t  ckps_error_flag:1;                   //признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки
+  uint8_t  ckps_is_valid_half_turn_period:1;
+  uint8_t  ckps_is_synchronized:1;
+  uint8_t  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением  
+  uint8_t  ckps_use_knock_channel:1;            //признак использования канала детонации     
 }CKPSFLAGS;
 
 typedef struct
 {
-  unsigned int  icr_prev;                   //предыдущее значение регистра захвата
-  unsigned int  period_curr;                //последнй измеренный межзубный период
-  unsigned int  period_prev;                //предыдущее значение межзубного периода
-  unsigned char cog;                        //считает зубья после выреза, начинает считать с 1
-  unsigned int  measure_start_value;        //запоминает значение регистра захвата для измерения периода полуоборота
-  unsigned int  current_angle;              //отсчитывает заданный УОЗ при прохождении каждого зуба
-  unsigned char ignition_pulse_cogs_14;     //отсчитывает зубья импульса зажигания для цилиндров 1-4
-  unsigned char ignition_pulse_cogs_23;     //отсчитывает зубья импульса зажигания для цилиндров 2-3
-  unsigned int  half_turn_period;           //хранит последнее измерение времени прохождения n зубьев  
-  signed   int  advance_angle;              //требуемый УОЗ * ANGLE_MULTIPLAYER
-  signed   int  advance_angle_buffered;
-  unsigned char ignition_cogs;              //кол-во зубьев определяющее длительность импульсов запуска коммутаторов
-  unsigned char cogs_latch14;
-  unsigned char cogs_latch23;
-  unsigned char cogs_btdc14;
-  unsigned char cogs_btdc23;
-  unsigned char starting_mode;
-  unsigned char channel_mode;
-  unsigned char cogs_btdc;    
-  signed char   knock_wnd_begin_abs;        // начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т 
-  signed char   knock_wnd_end_abs;          // конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т  
-  unsigned char knock_wnd_begin;             
-  unsigned char knock_wnd_end;               
+  uint16_t icr_prev;                   //предыдущее значение регистра захвата
+  uint16_t period_curr;                //последнй измеренный межзубный период
+  uint16_t period_prev;                //предыдущее значение межзубного периода
+  uint8_t  cog;                        //считает зубья после выреза, начинает считать с 1
+  uint16_t measure_start_value;        //запоминает значение регистра захвата для измерения периода полуоборота
+  uint16_t current_angle;              //отсчитывает заданный УОЗ при прохождении каждого зуба
+  uint8_t  ignition_pulse_cogs_14;     //отсчитывает зубья импульса зажигания для цилиндров 1-4
+  uint8_t  ignition_pulse_cogs_23;     //отсчитывает зубья импульса зажигания для цилиндров 2-3
+  uint16_t half_turn_period;           //хранит последнее измерение времени прохождения n зубьев  
+  int16_t  advance_angle;              //требуемый УОЗ * ANGLE_MULTIPLAYER
+  int16_t  advance_angle_buffered;
+  uint8_t  ignition_cogs;              //кол-во зубьев определяющее длительность импульсов запуска коммутаторов
+  uint8_t  cogs_latch14;
+  uint8_t  cogs_latch23;
+  uint8_t  cogs_btdc14;
+  uint8_t  cogs_btdc23;
+  uint8_t  starting_mode;
+  uint8_t  channel_mode;
+  uint8_t  cogs_btdc;    
+  int8_t   knock_wnd_begin_abs;         // начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т 
+  int8_t   knock_wnd_end_abs;           // конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т  
+  uint8_t  knock_wnd_begin;             
+  uint8_t  knock_wnd_end;               
 }CKPSSTATE;
  
 CKPSSTATE ckps;
@@ -68,7 +89,7 @@ CKPSSTATE ckps;
 __no_init volatile CKPSFLAGS flags@0x22;
 
 //для дополнения таймера/счетчика 0 до 16 разрядов, используем R15
-__no_init __regvar unsigned char TCNT0_H@15;
+__no_init __regvar uint8_t TCNT0_H@15;
 
 //Инициализирует переменные состояния ДПКВ
 __monitor
@@ -88,7 +109,6 @@ void ckps_init_state_variables(void)
   flags.ckps_is_synchronized = 0;  
   TCCR0 = 0; //останавливаем таймер0  
 }
-
 
 //инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится 
 __monitor
@@ -112,16 +132,16 @@ void ckps_init_state(void)
 
 //устанавливает УОЗ для реализации в алгоритме
 __monitor
-void ckps_set_dwell_angle(signed int angle)
+void ckps_set_dwell_angle(int16_t angle)
 {
   ckps.advance_angle_buffered = angle;
 }
 
 //Высчитывание мгновенной частоты вращения коленвала по измеренному времени прохождения 30 зубьев шкива.
 //Период в дискретах таймера (одна дискрета = 4мкс), в одной минуте 60 сек, в одной секунде 1000000 мкс, значит:
-unsigned int ckps_calculate_instant_freq(void)
+uint16_t ckps_calculate_instant_freq(void)
 {
-  unsigned int period;
+  uint16_t period;
   __disable_interrupt();
    period = ckps.half_turn_period;           //обеспечиваем атомарный доступ к переменной  
   __enable_interrupt();                           
@@ -135,7 +155,7 @@ unsigned int ckps_calculate_instant_freq(void)
 
 //устанавливает тип фронта ДПКВ (0 - отрицательный, 1 - положительный)
 __monitor
-void ckps_set_edge_type(unsigned char edge_type)
+void ckps_set_edge_type(uint8_t edge_type)
 {
   if (edge_type)
     TCCR1B|= (1<<ICES1);
@@ -144,13 +164,13 @@ void ckps_set_edge_type(unsigned char edge_type)
 }
 
 __monitor
-void ckps_set_cogs_btdc(unsigned char cogs_btdc)
+void ckps_set_cogs_btdc(uint8_t cogs_btdc)
 {
-  //11 зубьев = 66 град. до в.м.т. 
-  ckps.cogs_latch14 = cogs_btdc - 11;
-  ckps.cogs_latch23 = cogs_btdc + 19;
+  //заранее вычисляем и сохраняем опорные точки (зубья) 
+  ckps.cogs_latch14 = cogs_btdc - WHEEL_LATCH_BTDC;
+  ckps.cogs_latch23 = cogs_btdc + (WHEEL_COGS_PER_CYCLE - WHEEL_LATCH_BTDC);
   ckps.cogs_btdc14  = cogs_btdc;
-  ckps.cogs_btdc23  = cogs_btdc + 30;  
+  ckps.cogs_btdc23  = cogs_btdc + WHEEL_COGS_PER_CYCLE;  
   ckps.knock_wnd_begin = cogs_btdc + ckps.knock_wnd_begin_abs;
   ckps.knock_wnd_end = cogs_btdc + ckps.knock_wnd_end_abs;
   ckps.cogs_btdc = cogs_btdc;
@@ -158,12 +178,12 @@ void ckps_set_cogs_btdc(unsigned char cogs_btdc)
 
 //устанавливает длительность импульса зажигания в зубьях
 __monitor
-void ckps_set_ignition_cogs(unsigned char cogs)
+void ckps_set_ignition_cogs(uint8_t cogs)
 {
   ckps.ignition_cogs = cogs;
 }
 
-unsigned char ckps_is_error(void)
+uint8_t ckps_is_error(void)
 {
  return flags.ckps_error_flag;
 }
@@ -173,31 +193,31 @@ void ckps_reset_error(void)
  flags.ckps_error_flag = 0;
 }
 
-void ckps_use_knock_channel(unsigned char use_knock_channel)
+void ckps_use_knock_channel(uint8_t use_knock_channel)
 {
  flags.ckps_use_knock_channel = use_knock_channel;
 }
 
 //эта функция возвращает 1 если был новый цикл зажигания и сразу сбрасывает событие!
 __monitor
-unsigned char ckps_is_cycle_cutover_r()
+uint8_t ckps_is_cycle_cutover_r()
 {
- unsigned char result;
+ uint8_t result;
  result = flags.ckps_new_engine_cycle_happen;
  flags.ckps_new_engine_cycle_happen = 0;
  return result;
 }
 
 __monitor
-unsigned char ckps_get_current_cog(void)
+uint8_t ckps_get_current_cog(void)
 {
  return ckps.cog;
 }
 
 __monitor
-unsigned char ckps_is_cog_changed(void)
+uint8_t ckps_is_cog_changed(void)
 {
- static unsigned char prev_cog = 0;
+ static uint8_t prev_cog = 0;
  if (prev_cog!=ckps.cog)
   {
   prev_cog = ckps.cog; 
@@ -206,9 +226,9 @@ unsigned char ckps_is_cog_changed(void)
  return 0;
 }
 
-void ckps_set_knock_window(signed int begin, signed int end)
+void ckps_set_knock_window(int16_t begin, int16_t end)
 {
- unsigned char _t;
+ uint8_t _t;
  //переводим из градусов в зубья
  ckps.knock_wnd_begin_abs = begin / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
  ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
@@ -258,7 +278,7 @@ __interrupt void timer1_compb_isr(void)
 //Инициализация таймера 0 указанным значением и запуск, clock = 250kHz.
 //Предполагается что вызов этой функции будет происходить при запрещенных прерываниях.
 #pragma inline
-void set_timer0(unsigned int value)
+void set_timer0(uint16_t value)
  {                            
   TCNT0_H = GETBYTE(value, 1);            
   TCNT0 = 255 - GETBYTE(value, 0);      
@@ -267,7 +287,7 @@ void set_timer0(unsigned int value)
 
 //Вспомогательная функция, используется во время пуска
 //возвращает 1 когда синхронизация окончена, иначе 0.
-unsigned char sync_at_startup(void) 
+uint8_t sync_at_startup(void) 
 {
  switch(ckps.starting_mode)
    {
@@ -293,10 +313,10 @@ unsigned char sync_at_startup(void)
  return 0; //продолжение процесса синхронизации
 } 
 
-//Процедура. Вызывается для зубьев шкива 1-60, включительно (58 + 2 восстановленных)
+//Процедура. Вызывается для всех зубьев шкива (включительно с восстановленными)
 void process_ckps_cogs(void)
 {
-  unsigned int diff;
+  uint16_t diff;
   
   if (flags.ckps_use_knock_channel)
   {
@@ -319,7 +339,7 @@ void process_ckps_cogs(void)
   if (ckps.cog == ckps.cogs_latch14)
   {
    //начинаем отсчет угла опережения
-   ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 11;
+   ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * WHEEL_LATCH_BTDC;
    ckps.advance_angle = ckps.advance_angle_buffered;
    ckps.channel_mode = CKPS_CHANNEL_MODE14;
    knock_start_settings_latching();//запускаем процесс загрузки настроек в HIP  
@@ -328,7 +348,7 @@ void process_ckps_cogs(void)
   if (ckps.cog == ckps.cogs_latch23)
   {
    //начинаем отсчет угла опережения
-   ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 11;
+   ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * WHEEL_LATCH_BTDC;
    ckps.advance_angle = ckps.advance_angle_buffered;
    ckps.channel_mode = CKPS_CHANNEL_MODE23;
    knock_start_settings_latching();//запускаем процесс загрузки настроек в HIP   
@@ -363,7 +383,7 @@ void process_ckps_cogs(void)
    if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
    {
    //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-   prepare_channel14(GetICR() + ((unsigned long)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG));       
+   prepare_channel14(GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG));       
    ckps.ignition_pulse_cogs_14 = 0;   
    ckps.channel_mode = CKPS_CHANNEL_MODENA;
    }
@@ -374,7 +394,7 @@ void process_ckps_cogs(void)
    if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
    {
     //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
-    prepare_channel23(GetICR() + ((unsigned long)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG));    
+    prepare_channel23(GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG));    
     ckps.ignition_pulse_cogs_23 = 0;   
    ckps.channel_mode = CKPS_CHANNEL_MODENA;
    }
@@ -415,7 +435,7 @@ __interrupt void timer1_capt_isr(void)
   //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки.
   if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
   {
-   if ((ckps.cog != 61)) //учитываем 2 виртуальных зуба
+   if ((ckps.cog != (WHEEL_COGS_NUM + 1))) //учитываем также восстановленные зубья
      flags.ckps_error_flag = 1; //ERROR               
    ckps.cog = 1; //1-й зуб           
   }
@@ -424,10 +444,10 @@ synchronized_enter:
   //Если последний зуб перед синхрометкой, то начинаем отсчет времени для 
   //восстановления отсутствующих зубов, в качестве исходных данных используем 
   //последнее значение межзубного периода.
-  if (ckps.cog == 58)
+  if (ckps.cog == WHEEL_LAST_COG)
     set_timer0(ckps.period_curr); 
     
-  //для 1-58 зубъев 
+  //вызываем обработчик для нормальных зубьев
   process_ckps_cogs(); 
   
   ckps.icr_prev = GetICR();
@@ -449,11 +469,13 @@ __interrupt void timer0_ovf_isr(void)
  {//отсчет времени закончился    
  TCCR0 = 0; //останавливаем таймер
  
+#ifndef WHEEL_36_1 //60-2
  //запускаем таймер чтобы восстановить 60-й зуб
  if (ckps.cog == 59)
    set_timer0(ckps.period_curr);
+#endif
  
- //59,60
+ //вызываем обработчик для отсутствующих зубьев
  process_ckps_cogs();
  }
 }

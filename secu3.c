@@ -90,20 +90,20 @@ s_timer8  engine_rotation_timeout_counter = 0;
 s_timer8  epxx_delay_time_counter = 0;
 s_timer8  idle_period_time_counter = 0;
 
-unsigned int freq_circular_buffer[FRQ_AVERAGING];     //буфер усреднения частоты вращения коленвала
-unsigned int freq4_circular_buffer[FRQ4_AVERAGING];
-unsigned int map_circular_buffer[MAP_AVERAGING];      //буфер усреднения абсолютного давления
-unsigned int ubat_circular_buffer[BAT_AVERAGING];     //буфер усреднения напряжения бортовой сети
-unsigned int temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения температуры охлаждающей жидкости
+uint16_t freq_circular_buffer[FRQ_AVERAGING];     //буфер усреднения частоты вращения коленвала
+uint16_t freq4_circular_buffer[FRQ4_AVERAGING];
+uint16_t map_circular_buffer[MAP_AVERAGING];      //буфер усреднения абсолютного давления
+uint16_t ubat_circular_buffer[BAT_AVERAGING];     //буфер усреднения напряжения бортовой сети
+uint16_t temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения температуры охлаждающей жидкости
 
-unsigned char eeprom_parameters_cache[sizeof(params) + 1];
+uint8_t eeprom_parameters_cache[sizeof(params) + 1];
 
 //-------------------------------------------------------------
 typedef struct
 {
- unsigned int ecuerrors;         //максимум 16 кодов ошибок
- unsigned int merged_errors;     //кеширует ошибки для сбережения ресурса EEPROM
- unsigned int write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс! 
+ uint16_t ecuerrors;         //максимум 16 кодов ошибок
+ uint16_t merged_errors;     //кеширует ошибки для сбережения ресурса EEPROM
+ uint16_t write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс! 
 }ce_state_t;
 
 ce_state_t ce_state = {0,0,0};
@@ -117,7 +117,7 @@ ecudata edat;
 
 
 #define SUSPENDED_OPERATIONS_SIZE 16
-unsigned char suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
+uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 #define set_suspended_operation(opcode) suspended_opcodes[(opcode)] = (opcode)
 #define is_suspended_operation_active(opcode) (suspended_opcodes[(opcode)] == (opcode))
 #define init_suspended_operations() memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE)
@@ -141,7 +141,7 @@ unsigned char suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 //Обработка операций которые могут требовать или требуют оложенного выполнения.
 void execute_suspended_operations(ecudata* d)
 {
- unsigned char temp_errors;
+ uint8_t temp_errors;
  
   if (is_suspended_operation_active(SOP_SAVE_PARAMETERS))
   {
@@ -170,10 +170,10 @@ void execute_suspended_operations(ecudata* d)
     //она еще не была сохранена. Для этого производится чтение и сравнение.  
     if (eeprom_is_idle())
     {      
-     eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(unsigned int));
+     eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
      ce_state.write_errors = temp_errors | ce_state.merged_errors; 
      if (ce_state.write_errors!=temp_errors)    
-      eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (unsigned char*)&ce_state.write_errors, sizeof(unsigned int));      
+      eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t));      
         
      //"удаляем" эту операцию из списка так как она уже выполнилась.
      suspended_opcodes[SOP_SAVE_CE_MERGED_ERRORS] = SOP_NA;
@@ -197,7 +197,7 @@ void execute_suspended_operations(ecudata* d)
   {
    if (eeprom_is_idle())
     {    
-     eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (unsigned char*)&d->ecuerrors_saved_transfer, sizeof(unsigned int));      
+     eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&d->ecuerrors_saved_transfer, sizeof(uint16_t));      
         
      //"удаляем" эту операцию из списка так как она уже выполнилась.
      suspended_opcodes[SOP_SAVE_CE_ERRORS] = SOP_NA;    
@@ -221,7 +221,7 @@ void execute_suspended_operations(ecudata* d)
   {
    if (eeprom_is_idle())
     {    
-     eeprom_read(&d->ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(unsigned int));     
+     eeprom_read(&d->ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint16_t));     
      set_suspended_operation(SOP_TRANSMIT_CE_ERRORS);          
      //"удаляем" эту операцию из списка так как она уже выполнилась.
      suspended_opcodes[SOP_READ_CE_ERRORS] = SOP_NA;    
@@ -399,11 +399,11 @@ void control_engine_units(ecudata *d)
 //обновление буферов усреднения (частота вращения, датчики...)
 void update_values_buffers(ecudata* d)
 {
-  static unsigned char  map_ai  = MAP_AVERAGING-1;
-  static unsigned char  bat_ai  = BAT_AVERAGING-1;
-  static unsigned char  tmp_ai  = TMP_AVERAGING-1;      
-  static unsigned char  frq_ai  = FRQ_AVERAGING-1;
-  static unsigned char  frq4_ai = FRQ4_AVERAGING-1;  
+  static uint8_t  map_ai  = MAP_AVERAGING-1;
+  static uint8_t  bat_ai  = BAT_AVERAGING-1;
+  static uint8_t  tmp_ai  = TMP_AVERAGING-1;      
+  static uint8_t  frq_ai  = FRQ_AVERAGING-1;
+  static uint8_t  frq4_ai = FRQ4_AVERAGING-1;  
 
   map_circular_buffer[map_ai] = adc_get_map_value();      
   (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;            
@@ -428,7 +428,7 @@ void update_values_buffers(ecudata* d)
 //погрешностей АЦП, перевод измеренных значений в физические величины.
 void average_measured_values(ecudata* d)
 {     
-  unsigned char i;  unsigned long sum;       
+  uint8_t i;  uint32_t sum;       
             
   for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
    sum+=map_circular_buffer[i];       
@@ -464,7 +464,7 @@ void average_measured_values(ecudata* d)
 //обрабатывает передаваемые/принимаемые фреймы UART-a
 void process_uart_interface(ecudata* d)
 { 
- unsigned char descriptor;
+ uint8_t descriptor;
 
  if (uart_is_packet_received())//приняли новый фрейм ?
  { 
@@ -556,7 +556,7 @@ void process_uart_interface(ecudata* d)
 //Предварительное измерение перед пуском двигателя
 void InitialMeasure(ecudata* d)
 { 
-  unsigned char i = 16;
+  uint8_t i = 16;
   __enable_interrupt();
   do
   {
@@ -599,7 +599,7 @@ void load_eeprom_params(ecudata* d)
    //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
    eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params));  
    
-   if (crc16((unsigned char*)&d->param,(sizeof(params)-PAR_CRC_SIZE))!=d->param.crc)
+   if (crc16((uint8_t*)&d->param,(sizeof(params)-PAR_CRC_SIZE))!=d->param.crc)
    {
      memcpy_P(&d->param,&def_param,sizeof(params));
      SET_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
@@ -635,7 +635,7 @@ void init_io_ports(void)
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
 
-void advanve_angle_state_machine(unsigned char* pmode, signed int* padvance_angle_inhibitor_state, ecudata* d)
+void advanve_angle_state_machine(uint8_t* pmode, int16_t* padvance_angle_inhibitor_state, ecudata* d)
 {
  switch(*pmode)
  {
@@ -689,9 +689,9 @@ void switch_fuel_type(ecudata* d)
       
 __C_task void main(void)
 {
-  unsigned char mode = EM_START;   
-  unsigned char turnout_low_priority_errors_counter = 255;
-  signed int advance_angle_inhibitor_state = 0;     
+  uint8_t mode = EM_START;   
+  uint8_t turnout_low_priority_errors_counter = 255;
+  int16_t advance_angle_inhibitor_state = 0;     
   
   edat.op_comp_code = 0;
   edat.op_actn_code = 0;

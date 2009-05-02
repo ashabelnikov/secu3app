@@ -822,7 +822,7 @@
         </option>
         <option>
           <name>LCLibType</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>LCHeapSize</name>
@@ -1113,7 +1113,7 @@
         <option>
           <name>CCStdIncludePaths</name>
           <state>$TOOLKIT_DIR$\INC\</state>
-          <state>$TOOLKIT_DIR$\INC\CLIB\</state>
+          <state>$TOOLKIT_DIR$\INC\DLIB\</state>
         </option>
         <option>
           <name>CCEepromSize</name>
@@ -1474,7 +1474,7 @@
         </option>
         <option>
           <name>xcLibFile</name>
-          <state>$TOOLKIT_DIR$\lib\clib\cl3s-ec-sf.r90</state>
+          <state>$TOOLKIT_DIR$\lib\dlib\dl3s-ec-sf.r90</state>
         </option>
         <option>
           <name>xcLibIgnore</name>

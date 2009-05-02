@@ -2,15 +2,9 @@
 #ifndef _CRC16_H_
 #define _CRC16_H_
 
-#if !defined( BYTE )
-  #define BYTE          unsigned char
-#endif
+#include <stdint.h>
 
-#if !defined( WORD )
-  #define WORD          unsigned short
-#endif
-
-WORD crc16( BYTE *buf, WORD num);
-WORD crc16f(BYTE __flash *buf, WORD num);
+uint16_t crc16(uint8_t *buf, uint16_t num);
+uint16_t crc16f(uint8_t __flash *buf, uint16_t num);
 
 #endif //_CRC16_H_

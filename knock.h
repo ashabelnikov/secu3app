@@ -2,6 +2,8 @@
 #ifndef _KNOCK_H_
 #define _KNOCK_H_
 
+#include <stdint.h>
+
 //Параметры функций принимают данные в соответствии с форматом регистров 
 //HIP9011. Перестройка параметров разрешена только в режиме HOLD!
 
@@ -9,11 +11,11 @@
 //поворота коленвала. Однако применение устанавливаемого значения начнет происходить
 //только после вызова knock_start_settings_latching()
 //Установка центральной цастоты полосового фильтра
-void knock_set_band_pass(unsigned char freq);
+void knock_set_band_pass(uint8_t freq);
 //установка усиления программируемого усилителя
-void knock_set_gain(unsigned char gain);
+void knock_set_gain(uint8_t gain);
 //установка постоянной времени интегратора
-void knock_set_int_time_constant(unsigned char inttime);
+void knock_set_int_time_constant(uint8_t inttime);
 
 //Запускает процесс передачи настроек в сигнальный процессор. Должна вызываться 
 //при определенных углах поворота коленвала, при которых сигнальный процессор
@@ -22,22 +24,22 @@ void knock_set_int_time_constant(unsigned char inttime);
 //будет установлен признак ошибки.
 void knock_start_settings_latching(void);
 //возвращает не 0 если в текущий момент операция загрузки не выполняется
-unsigned char knock_is_latching_idle(void);
+uint8_t knock_is_latching_idle(void);
 
 //Возвращает 1 если была ошибка (микросхема неотвечала или было обнаружено нарушение данных)
-unsigned char knock_is_error(void);
+uint8_t knock_is_error(void);
 
 //сброс ошибки
 void knock_reset_error(void);
 
 //Подготовка канала детонации и его тестирование.
 //Возвращает 1 - если тестирование прошло успешно, иначе 0. 
-unsigned char knock_module_initialize(void);
+uint8_t knock_module_initialize(void);
 
 //воздействует на вход INT/HOLD HIP-a, устанавливая таким образом  
 //либо режим интегрирования, либо режим удерживания.
 #define KNOCK_INTMODE_INT  1
 #define KNOCK_INTMODE_HOLD 0
-void knock_set_integration_mode(char mode); 
+void knock_set_integration_mode(uint8_t mode); 
 
 #endif //_KNOCK_H_

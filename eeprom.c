@@ -16,12 +16,12 @@
 //Описывает информацию необходимую для сохранения данных в EEPROM
 typedef struct 
 {
-  unsigned int ee_addr;               //адрес для записи в EEPROM
-  unsigned char* sram_addr;           //адрес данных в ОЗУ 
-  unsigned char count;                //количество байтов
-  unsigned char eews;                 //состояние процесса записи
-  char opcode;
-  char completed_opcode;
+  uint16_t ee_addr;             //адрес для записи в EEPROM
+  uint8_t* sram_addr;           //адрес данных в ОЗУ 
+  uint8_t count;                //количество байтов
+  uint8_t eews;                 //состояние процесса записи
+  uint8_t opcode;
+  uint8_t completed_opcode;
 }eeprom_wr_desc;
 
 
@@ -30,9 +30,9 @@ eeprom_wr_desc eewd = {0,0,0,0,0,0};
 //инициирует процесс записи байта в EEPROM
 #define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}     
 
-char eeprom_take_completed_opcode(void)  
+uint8_t eeprom_take_completed_opcode(void)  
 {
- char result;
+ uint8_t result;
  __disable_interrupt();
  result = eewd.completed_opcode;
  eewd.completed_opcode = 0; 
@@ -41,7 +41,7 @@ char eeprom_take_completed_opcode(void)
 }
 
 //запускает процесс записи в EEPROM указанного блока данных
-void eeprom_start_wr_data(char opcode, unsigned int eeprom_addr, unsigned char* sram_addr, unsigned char count)  
+void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count)  
 {
   eewd.eews = 1;
   eewd.ee_addr = eeprom_addr;
@@ -52,7 +52,7 @@ void eeprom_start_wr_data(char opcode, unsigned int eeprom_addr, unsigned char* 
 }
 
 //возвращает не 0 если в текущий момент никакая операция не выполняется
-unsigned char eeprom_is_idle(void)
+uint8_t eeprom_is_idle(void)
 {
  return (eewd.eews) ? 0 : 1;
 }
@@ -90,10 +90,10 @@ __interrupt void ee_ready_isr(void)
 }
 
 
-void eeprom_read(void* sram_dest, int eeaddr, unsigned int size)
+void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
 {
-  unsigned char _t;
-  unsigned char *dest = (unsigned char*)sram_dest;  
+  uint8_t _t;
+  uint8_t *dest = (uint8_t*)sram_dest;  
    do
    {
      _t=__save_interrupt();

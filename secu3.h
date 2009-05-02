@@ -13,20 +13,20 @@
 //описывает все входы системы - их производные и интегральные величины
 typedef struct
 {
- unsigned int map;                             //давление во впускном коллекторе (усредненное)
- unsigned int voltage;                         //напряжение бортовой сети (усредненное)
- signed int temperat;                          //температура охлаждающей жидкости (усредненная)
- unsigned int frequen;                         //частота вращения коленвала (усредненная)
- unsigned int inst_frq;                        //мгновенная частота вращения
- unsigned char carb;                           //состояние концевика карбюратора 
- unsigned char gas;                            //состояние газового клапана 
- unsigned int frequen4;                        //частота усредненная всего по 4-м выборкам 
- unsigned int knock_k;                         //уровень сигнала детонации 
+ uint16_t map;                           //давление во впускном коллекторе (усредненное)
+ uint16_t voltage;                       //напряжение бортовой сети (усредненное)
+ int16_t  temperat;                      //температура охлаждающей жидкости (усредненная)
+ uint16_t frequen;                       //частота вращения коленвала (усредненная)
+ uint16_t inst_frq;                      //мгновенная частота вращения
+ uint8_t  carb;                          //состояние концевика карбюратора 
+ uint8_t  gas;                           //состояние газового клапана 
+ uint16_t frequen4;                      //частота усредненная всего по 4-м выборкам 
+ uint16_t knock_k;                       //уровень сигнала детонации 
 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
- signed int map_raw;
- signed int voltage_raw;
- signed int temperat_raw;
+ int16_t  map_raw;
+ int16_t  voltage_raw;
+ int16_t  temperat_raw;
 
 }sensors;
 
@@ -34,23 +34,22 @@ typedef struct
 //описывает данные системы, обеспечивает единый интерфейс данных
 typedef struct
 {
- params           param;                        //--параметры
- sensors          sens;                         //--сенсоры
+ params   param;                        //--параметры
+ sensors  sens;                         //--сенсоры
  
- unsigned char    ephh_valve;                   //состояние клапана ЭПХХ
- int              atmos_press;                  //атмосферное давление
- unsigned char    airflow;                      //расход воздуха
- signed int       curr_angle;                   //текущий угол опережения
+ uint8_t  ephh_valve;                   //состояние клапана ЭПХХ
+ int16_t  atmos_press;                  //атмосферное давление
+ uint8_t  airflow;                      //расход воздуха
+ int16_t  curr_angle;                   //текущий угол опережения
  
- __flash F_data*  fn_dat;                       //указатель на набор характеристик
+ __flash F_data*  fn_dat;               //указатель на набор характеристик
 
- char             op_comp_code;                 //содержит код который посылается через UART (пакет OP_COMP_NC)
- char             op_actn_code;                 //содержит код который принимается через UART (пакет OP_COMP_NC)
- unsigned int     ecuerrors_for_transfer;       //буферизирует коды ошибок передаваемые через UART в реальном времени.
- unsigned int     ecuerrors_saved_transfer;     //буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART.  
- unsigned char    use_knock_channel_prev;       //предыдущее состояние признака использования канала детонации
+ uint8_t  op_comp_code;                 //содержит код который посылается через UART (пакет OP_COMP_NC)
+ uint8_t  op_actn_code;                 //содержит код который принимается через UART (пакет OP_COMP_NC)
+ uint16_t ecuerrors_for_transfer;       //буферизирует коды ошибок передаваемые через UART в реальном времени.
+ uint16_t ecuerrors_saved_transfer;     //буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART.  
+ uint8_t  use_knock_channel_prev;       //предыдущее состояние признака использования канала детонации
 }ecudata;                                     
 
 
 #endif  //_SECU3_H_
-

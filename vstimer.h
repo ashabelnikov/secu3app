@@ -13,8 +13,8 @@
 
 //Типы объектов таймеров. 8-ми разрядный тамйер может отсчитывать периоды
 //до 2.56 сек. 16-ти разрядный таймер может отсчитывать периоды до 655 сек.
-typedef unsigned char s_timer8;
-typedef unsigned int  s_timer16;
+typedef uint8_t   s_timer8;
+typedef uint16_t  s_timer16;
 
 //обновление состояния указанного таймера
 #define s_timer_update(T)    { if ((T) > 0) (T)--; }
@@ -37,7 +37,7 @@ typedef unsigned int  s_timer16;
 }
  
 #pragma inline  //а в обычном "С" такого нет ;-), спасибо разработчикам компилятора.
-__monitor unsigned char s_timer16_is_action(s_timer16 i_timer) 
+__monitor uint8_t s_timer16_is_action(s_timer16 i_timer) 
 {
  return (i_timer==0);
 }

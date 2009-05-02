@@ -2,6 +2,8 @@
 #ifndef _ADC_H_
 #define _ADC_H_
 
+#include <stdint.h>
+
 #define ADC_DISCRETE            0.0025       //одна дискрета АЦП в вольтах
 
 #define TSENS_SLOPP             0.01        //наклон прямой датчика температуры вольт/градус
@@ -21,10 +23,10 @@
 #define TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER (TSENS_SLOPP / ADC_DISCRETE) //=4
 
 //эти функции возвращают текущие значения из буферов усреднения
-unsigned int adc_get_map_value(void);
-unsigned int adc_get_ubat_value(void);
-unsigned int adc_get_temp_value(void);
-unsigned int adc_get_knock_value(void);
+uint16_t adc_get_map_value(void);
+uint16_t adc_get_ubat_value(void);
+uint16_t adc_get_temp_value(void);
+uint16_t adc_get_knock_value(void);
 
 //запускает измерение значений с датчиков, но только если предыдущее  
 //измерение завершено.
@@ -36,23 +38,23 @@ void adc_begin_measure(void);
 void adc_begin_measure_knock(void);
 
 //возвращает не 0 если измерение готово (АЦП не занято)
-char adc_is_measure_ready(void); 
+uint8_t adc_is_measure_ready(void); 
 
 //инициализация АЦП и его переменных состояния
 void adc_init(void);
 
-signed int adc_compensate(signed int adcvalue, signed int factor, signed long correction);
+int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
 
 //переводит значение АЦП в физическую величину - давление
 //физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
-unsigned int map_adc_to_kpa(signed int adcvalue, unsigned int offset, unsigned int gradient);
+uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, uint16_t gradient);
 
 //переводит значение АЦП в физическую величину - напряжение
 //физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER
-unsigned int ubat_adc_to_v(signed int adcvalue);
+uint16_t ubat_adc_to_v(int16_t adcvalue);
 
 //переводит значение АЦП в физическую величину - температура
 //физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
-signed int temp_adc_to_c(signed int adcvalue);
+int16_t temp_adc_to_c(int16_t adcvalue);
 
 #endif //_ADC_H_

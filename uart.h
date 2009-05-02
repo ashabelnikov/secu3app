@@ -2,6 +2,7 @@
 #ifndef  _UART_H_
 #define  _UART_H_
 
+#include <stdint.h>
 #include "secu3.h"
 #include "tables.h"
 
@@ -17,14 +18,14 @@
 #define  UART_SEND_BUFF_SIZE     64
 
 //==============интерфейс модуля=======================
- void uart_send_packet(ecudata* d, char send_mode);
- unsigned char uart_recept_packet(ecudata* d);
+ void uart_send_packet(ecudata* d, uint8_t send_mode);
+ uint8_t uart_recept_packet(ecudata* d);
  void uart_notify_processed(void);
- unsigned char uart_is_sender_busy(void);
- unsigned char uart_is_packet_received(void);
- char uart_get_send_mode(void);
- char uart_set_send_mode(char descriptor);
- void uart_init(unsigned int baud);
+ uint8_t uart_is_sender_busy(void);
+ uint8_t uart_is_packet_received(void);
+ uint8_t uart_get_send_mode(void);
+ uint8_t uart_set_send_mode(uint8_t descriptor);
+ void uart_init(uint16_t baud);
 
 //=====================================================
 

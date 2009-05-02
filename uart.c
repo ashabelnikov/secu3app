@@ -16,18 +16,18 @@
 
 typedef struct
 {
- char send_mode;
- unsigned char recv_buf[UART_RECV_BUFF_SIZE];
- unsigned char send_buf[UART_SEND_BUFF_SIZE];
- unsigned char send_size;
- unsigned char send_index;
- unsigned char recv_size;
- unsigned char recv_index;
+ uint8_t send_mode;
+ uint8_t recv_buf[UART_RECV_BUFF_SIZE];
+ uint8_t send_buf[UART_SEND_BUFF_SIZE];
+ uint8_t send_size;
+ uint8_t send_index;
+ uint8_t recv_size;
+ uint8_t recv_index;
 }UARTSTATE;
 
 UARTSTATE uart;
 
-const __flash char hdig[] = "0123456789ABCDEF";
+const __flash uint8_t hdig[] = "0123456789ABCDEF";
 
 
 #define HTOD(h) (((h)<0x3A) ? ((h)-'0') : ((h)-'A'+10))
@@ -41,13 +41,13 @@ const __flash char hdig[] = "0123456789ABCDEF";
 
 #define build_i4h(i) {uart.send_buf[uart.send_size++] = ((i)+0x30);}
 
-void build_i8h(unsigned char i)
+void build_i8h(uint8_t i)
 {
  uart.send_buf[uart.send_size++] = hdig[i/16];    //старший байт HEX числа
  uart.send_buf[uart.send_size++] = hdig[i%16];    //младший байт HEX числа
 }
 
-void build_i16h(unsigned int i)
+void build_i16h(uint16_t i)
 {
  uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)/16];    //старший байт HEX числа (старший байт)
  uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)%16];    //младший байт HEX числа (старший байт)
@@ -56,7 +56,7 @@ void build_i16h(unsigned int i)
 }
 
 
-void build_i32h(unsigned long i)
+void build_i32h(uint32_t i)
 {
  build_i16h(i>>16);
  build_i16h(i);
@@ -65,9 +65,9 @@ void build_i32h(unsigned long i)
 //----------вспомагательные функции для распознавания пакетов---------
 #define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
 
-unsigned char recept_i8h(void)
+uint8_t recept_i8h(void)
 {
- unsigned char i8;    
+ uint8_t i8;    
  i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
  uart.recv_index++;
  i8|= HTOD(uart.recv_buf[uart.recv_index]);
@@ -75,9 +75,9 @@ unsigned char recept_i8h(void)
  return i8;
 }
 
-unsigned int recept_i16h(void)
+uint16_t recept_i16h(void)
 {
- unsigned int i16;    
+ uint16_t i16;    
  SETBYTE(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;          
  uart.recv_index++;
  SETBYTE(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));          
@@ -90,9 +90,9 @@ unsigned int recept_i16h(void)
 }
 
 
-unsigned long recept_i32h(void)
+uint32_t recept_i32h(void)
 {
- unsigned long i = 0;
+ uint32_t i = 0;
  i = recept_i16h();
  i = i << 16;
  i|=recept_i16h();
@@ -110,9 +110,9 @@ void uart_begin_send(void)
 
 //строит пакет взависимости от текущего дескриптора и запускает его на передачу. Функция не проверяет
 //занят передатчик или нет, это должно быть сделано до вызова функции
-void uart_send_packet(ecudata* d, char send_mode)  
+void uart_send_packet(ecudata* d, uint8_t send_mode)  
 {
- static unsigned char index = 0;
+ static uint8_t index = 0;
 
  //служит индексом во время сборки пакетов, а после сборки будет содержать размер пакета
  uart.send_size = 0; 
@@ -245,11 +245,11 @@ void uart_send_packet(ecudata* d, char send_mode)
 
 //эта функция не проверяет, был или не был принят фрейм, проверка должна быть произведена до вызова функции.
 //Возвращает дескриптор обработанного фрейма
-unsigned char uart_recept_packet(ecudata* d)
+uint8_t uart_recept_packet(ecudata* d)
 {
  //буфер приемника содержит дескриптор пакета и данные
- unsigned char temp; 
- unsigned char descriptor; 
+ uint8_t temp; 
+ uint8_t descriptor; 
    
  uart.recv_index = 0;
    
@@ -371,40 +371,40 @@ unsigned char uart_recept_packet(ecudata* d)
 
 void uart_notify_processed(void)
 {
-  uart.recv_size = 0;
+ uart.recv_size = 0;
 }
 
-unsigned char uart_is_sender_busy(void)
+uint8_t uart_is_sender_busy(void)
 {
-  return (uart.send_size > 0);
+ return (uart.send_size > 0);
 }
 
-unsigned char uart_is_packet_received(void)
+uint8_t uart_is_packet_received(void)
 {
-  return (uart.recv_size > 0);
+ return (uart.recv_size > 0);
 }
 
-char uart_get_send_mode(void)
+uint8_t uart_get_send_mode(void)
 {
  return uart.send_mode;
 }
 
-char uart_set_send_mode(char descriptor)
+uint8_t uart_set_send_mode(uint8_t descriptor)
 {
  return uart.send_mode = descriptor;
 }
 
-void uart_init(unsigned int baud)
+void uart_init(uint16_t baud)
 {
-  // Set baud rate 
-  UBRRH = (unsigned char)(baud>>8);
-  UBRRL = (unsigned char)baud;
-  UCSRA = 0;                                                  //удвоение не используем 
-  UCSRB=(1<<RXCIE)|(1<<RXEN)|(1<<TXEN);                       //приемник,прерывание по приему и передатчик разрешены
-  UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контроля четности                                      
-  uart.send_size = 0;                                         //передатчик ни чем не озабочен
-  uart.recv_size = 0;                                         //нет принятых данных
-  uart.send_mode = SENSOR_DAT;
+ // Set baud rate 
+ UBRRH = (uint8_t)(baud>>8);
+ UBRRL = (uint8_t)baud;
+ UCSRA = 0;                                                  //удвоение не используем 
+ UCSRB=(1<<RXCIE)|(1<<RXEN)|(1<<TXEN);                       //приемник,прерывание по приему и передатчик разрешены
+ UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контроля четности                                      
+ uart.send_size = 0;                                         //передатчик ни чем не озабочен
+ uart.recv_size = 0;                                         //нет принятых данных
+ uart.send_mode = SENSOR_DAT;
 }
 
 
@@ -430,8 +430,8 @@ __interrupt void usart_udre_isr(void)
 #pragma vector=USART_RXC_vect
 __interrupt void usart_rx_isr()
 {
-  static unsigned char state=0;
-  unsigned char chr;
+  static uint8_t state=0;
+  uint8_t chr;
 
   //__enable_interrupt();
   chr = UDR; 

@@ -46,30 +46,30 @@
 //состояния сигнального процессора.
 typedef struct
 {
- unsigned char ksp_bpf; 
- unsigned char ksp_gain;
- unsigned char ksp_inttime;
- unsigned char ksp_interrupt_state;  
- unsigned char ksp_error;
- unsigned char ksp_last_word;
+ uint8_t ksp_bpf; 
+ uint8_t ksp_gain;
+ uint8_t ksp_inttime;
+ uint8_t ksp_interrupt_state;  
+ uint8_t ksp_error;
+ uint8_t ksp_last_word;
 }KSPSTATE;
 
 KSPSTATE ksp;
 
 //Для работы с аппаратной частью SPI
 void spi_master_init(void);
-void spi_master_transmit(unsigned char i_byte);
+void spi_master_transmit(uint8_t i_byte);
 
-void knock_set_integration_mode(char mode) 
+void knock_set_integration_mode(uint8_t mode) 
 {
  KSP_INTHOLD = mode;
 }
 
 __monitor //все прерывания должны быть запрещены!
-unsigned char knock_module_initialize(void)
+uint8_t knock_module_initialize(void)
 {
- unsigned char i, response;
- unsigned char init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
+ uint8_t i, response;
+ uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
                                KSP_SET_CHANNEL | KSP_CHANNEL_0};  
  spi_master_init();
  ksp.ksp_interrupt_state = 0; //KA готов
@@ -107,7 +107,7 @@ void spi_master_init(void)
 
 //Передает один байт через SPI
 //i_byte - байт для передачи
-void spi_master_transmit(unsigned char i_byte)
+void spi_master_transmit(uint8_t i_byte)
 {
  KSP_CS = 0;
  __no_operation();
@@ -131,30 +131,30 @@ void knock_start_settings_latching(void)
  SPCR|= (1 << SPIE); 
 }
 
-unsigned char knock_is_latching_idle(void)
+uint8_t knock_is_latching_idle(void)
 {
  return (ksp.ksp_interrupt_state) ? 0 : 1;
 }
 
 __monitor
-void knock_set_band_pass(unsigned char freq)
+void knock_set_band_pass(uint8_t freq)
 { 
  ksp.ksp_bpf = KSP_SET_BANDPASS | (freq & 0x3F);
 }
 
 __monitor
-void knock_set_gain(unsigned char gain)
+void knock_set_gain(uint8_t gain)
 {
  ksp.ksp_gain = KSP_SET_GAIN | (gain & 0x3F);
 }
 
 __monitor
-void knock_set_int_time_constant(unsigned char inttime)
+void knock_set_int_time_constant(uint8_t inttime)
 {
  ksp.ksp_inttime = KSP_SET_INTEGRATOR | (inttime & 0x1F);
 }
 
-unsigned char knock_is_error(void)
+uint8_t knock_is_error(void)
 {
  return ksp.ksp_error;
 }
@@ -168,7 +168,7 @@ void knock_reset_error(void)
 #pragma vector=SPI_STC_vect
 __interrupt void spi_dataready_isr(void)
 { 
- unsigned char t; 
+ uint8_t t; 
   //Сигнальный процессор требует перехода CS в высокий уровень после каждого байта,
   //не менее чем на 200ns
   KSP_CS = 1; 

@@ -19,10 +19,10 @@
 *  Возвращает
 *    unsigned short crc16 буфера
 */
-WORD crc16( BYTE *buf, WORD num )
+uint16_t crc16( uint8_t *buf, uint16_t num )
 {
-unsigned int i;
-unsigned short crc = 0xffff;
+uint16_t i;
+uint16_t crc = 0xffff;
 
   while ( num-- )
   { 
@@ -40,10 +40,10 @@ unsigned short crc = 0xffff;
 }
 
 //вариант для данных во flash
-WORD crc16f(BYTE __flash *buf, WORD num )
+uint16_t crc16f(uint8_t __flash *buf, uint16_t num )
 {
-unsigned int i;
-unsigned short crc = 0xffff;
+uint16_t i;
+uint16_t crc = 0xffff;
 
   while ( num-- )
   { 

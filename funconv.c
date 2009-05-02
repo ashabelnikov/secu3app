@@ -17,8 +17,8 @@
 
 
 //данные массивы констант задают сетку по оси оборотов, для рабочей карты и карты ХХ.
-__flash int F_SlotsRanges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500}; 
-__flash int F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140}; 
+__flash int16_t F_SlotsRanges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500}; 
+__flash int16_t F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140}; 
 
 // Функция билинейной интерполяции (поверхность)
 // x, y - значения аргументов интерполируемой функции
@@ -26,12 +26,12 @@ __flash int F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 
 // x_s,y_s - значения аргументов функции соответствующие началу прямоугольной области
 // x_l,y_l - размеры прямоугольной области (по x и y соответственно)
 // возвращает интерполированное значение функции * 16         
-int bilinear_interpolation(int x,int y,int a1,int a2,int a3,int a4,int x_s,int y_s,int x_l,int y_l)
+int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t a3,int16_t a4,int16_t x_s,int16_t y_s,int16_t x_l,int16_t y_l)
 {
-   int a23,a14;  
-   a23 = ((a2 * 16) + (((long)(a3 - a2) * 16) * (x - x_s)) / x_l);
-   a14 = (a1 * 16) + (((long)(a4 - a1) * 16) * (x - x_s)) / x_l;
-   return (a14 + ((((long)(a23 - a14)) * (y - y_s)) / y_l));
+   int16_t a23,a14;  
+   a23 = ((a2 * 16) + (((int32_t)(a3 - a2) * 16) * (x - x_s)) / x_l);
+   a14 = (a1 * 16) + (((int32_t)(a4 - a1) * 16) * (x - x_s)) / x_l;
+   return (a14 + ((((int32_t)(a23 - a14)) * (y - y_s)) / y_l));
 } 
 
 // Функция линейной интерполяции
@@ -40,18 +40,18 @@ int bilinear_interpolation(int x,int y,int a1,int a2,int a3,int a4,int x_s,int y
 // x_s - значение аргумента функции в начальной точке
 // x_l - длина отрезка между точками
 // возвращает интерполированное значение функции * 16                   
-int simple_interpolation(int x,int a1,int a2,int x_s,int x_l)
+int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l)
 {
-  return ((a1 * 16) + (((long)(a2 - a1) * 16) * (x - x_s)) / x_l);
+  return ((a1 * 16) + (((int32_t)(a2 - a1) * 16) * (x - x_s)) / x_l);
 }
 
 
 // Реализует функцию УОЗ от оборотов для холостого хода
 // Возвращает значение угла опережения в целом виде * 32. 2 * 16 = 32.
-int idling_function(ecudata* d)
+int16_t idling_function(ecudata* d)
 {
-  signed char i;
-  int rpm = d->sens.inst_frq;
+  int8_t i;
+  int16_t rpm = d->sens.inst_frq;
 
   //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы
   for(i = 14; i >= 0; i--)
@@ -67,9 +67,9 @@ int idling_function(ecudata* d)
 
 // Реализует функцию УОЗ от оборотов для пуска двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int start_function(ecudata* d)
+int16_t start_function(ecudata* d)
 {
-  int i,i1,rpm = d->sens.inst_frq;                                           
+  int16_t i,i1,rpm = d->sens.inst_frq;                                           
 
   if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов
 
@@ -84,10 +84,10 @@ int start_function(ecudata* d)
 
 // Реализует функцию УОЗ от оборотов(мин-1) и нагрузки(кПа) для рабочего режима двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int work_function(ecudata* d, char i_update_airflow_only)
+int16_t work_function(ecudata* d, uint8_t i_update_airflow_only)
 {    
-   int  gradient, discharge, rpm = d->sens.inst_frq, l;
-   signed char f,fp1,lp1;   
+   int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
+   int8_t f,fp1,lp1;   
 
    discharge = (d->param.map_upper_pressure - d->sens.map);
    if (discharge < 0) discharge = 0;         
@@ -132,9 +132,9 @@ int work_function(ecudata* d, char i_update_airflow_only)
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int coolant_function(ecudata* d)
+int16_t coolant_function(ecudata* d)
 { 
-  int i,i1,t = d->sens.temperat;                                           
+  int16_t i,i1,t = d->sens.temperat;                                           
 
   if (!d->param.tmp_use) 
     return 0;   //нет коррекции, если блок неукомплектован ДТОЖ-ом
@@ -157,7 +157,7 @@ int coolant_function(ecudata* d)
 typedef struct
 {
   //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
-  int output_state;
+  int16_t output_state;
 }IDLREGULSTATE;
 
 IDLREGULSTATE idl_prstate;
@@ -170,11 +170,11 @@ void idling_regulator_init(void)
 
 //Пропорциональный регулятор для регулирования оборотов ХХ углом опережения зажигания     
 // Возвращает значение угла опережения в целом виде * 32.
-int idling_pregulator(ecudata* d, s_timer8* io_timer)
+int16_t idling_pregulator(ecudata* d, s_timer8* io_timer)
 {
-  int error,factor;
+  int16_t error,factor;
   //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
-  unsigned int capture_range = 200; 
+  uint16_t capture_range = 200; 
     
   //если PXX отключен или обороты значительно выше от нормальных холостых оборотов  
   // или двигатель не прогрет то выходим  с нулевой корректировкой        
@@ -212,9 +212,9 @@ int idling_pregulator(ecudata* d, s_timer8* io_timer)
 //ip_prev_state - значение УОЗ в предыдущем цикле
 //intstep_p,intstep_m - значения положительного и отрицательного шагов интегрирования, положительные числа
 //Возвращает скорректированный УОЗ
-int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, signed int intstep_p, signed int intstep_m)
+int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m)
 {
- signed int difference;
+ int16_t difference;
   
  difference = new_advance_angle - *ip_prev_state;  
   
@@ -236,7 +236,7 @@ int advance_angle_inhibitor(int new_advance_angle, int* ip_prev_state, signed in
 }
 
 //ограничивает указанное значение указанными пределами
-void restrict_value_to(int *io_value, int i_bottom_limit, int i_top_limit)
+void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit)
 {
  if (*io_value > i_top_limit)
   *io_value = i_top_limit;  
@@ -247,9 +247,9 @@ void restrict_value_to(int *io_value, int i_bottom_limit, int i_top_limit)
 // Реализует функцию коэффициента усиления аттенюатора от оборотов
 // Возвращает код 0...63 соответсутвующий определенному коэфф. усиления 
 //(см. HIP9011 datasheet).
-unsigned char knock_attenuator_function(ecudata* d)
+uint8_t knock_attenuator_function(ecudata* d)
 {
- int i,i1,rpm = d->sens.inst_frq;                                           
+ int16_t i,i1,rpm = d->sens.inst_frq;                                           
 
  if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов по оси
 

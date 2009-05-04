@@ -115,7 +115,7 @@ void spi_master_transmit(uint8_t i_byte)
  SPDR = i_byte;
  //∆дем завершени€ передачи
  while(!(SPSR & (1 << SPIF)));
-  __no_operation();
+ __no_operation();
  KSP_CS = 1;
 }
 
@@ -164,45 +164,44 @@ void knock_reset_error(void)
  ksp.ksp_error = 0;
 }
 
-
 #pragma vector=SPI_STC_vect
 __interrupt void spi_dataready_isr(void)
 { 
  uint8_t t; 
-  //—игнальный процессор требует перехода CS в высокий уровень после каждого байта,
-  //не менее чем на 200ns
-  KSP_CS = 1; 
+ //—игнальный процессор требует перехода CS в высокий уровень после каждого байта,
+ //не менее чем на 200ns
+ KSP_CS = 1; 
   
-  t = SPDR;
+ t = SPDR;
   
-  switch(ksp.ksp_interrupt_state)
-  {
-   case 0:   // ј остановлен
-    break;  
+ switch(ksp.ksp_interrupt_state)
+ {
+  case 0:   // ј остановлен
+   break;  
           
-   case 1: //BPF загружена   
-    KSP_CS = 0;    
-    ksp.ksp_interrupt_state = 2;
-    if (t!=ksp.ksp_last_word)  
-     ksp.ksp_error = 1;
-    SPDR = ksp.ksp_last_word = ksp.ksp_gain;
-    break;     
+  case 1: //BPF загружена   
+   KSP_CS = 0;    
+   ksp.ksp_interrupt_state = 2;
+   if (t!=ksp.ksp_last_word)  
+    ksp.ksp_error = 1;
+   SPDR = ksp.ksp_last_word = ksp.ksp_gain;
+   break;     
     
-   case 2: //Gain загружена
-    KSP_CS = 0;
-    ksp.ksp_interrupt_state = 3;
-    if (t!=ksp.ksp_last_word)  
-     ksp.ksp_error = 1;    
-    SPDR = ksp.ksp_last_word = ksp.ksp_inttime;
-    break; 
+  case 2: //Gain загружена
+   KSP_CS = 0;
+   ksp.ksp_interrupt_state = 3;
+   if (t!=ksp.ksp_last_word)  
+    ksp.ksp_error = 1;    
+   SPDR = ksp.ksp_last_word = ksp.ksp_inttime;
+   break; 
         
-   case 3: //Int.Time загружено
-    if (t!=ksp.ksp_last_word)  
-     ksp.ksp_error = 1;
-    //запрещаем прерывание и устанавливаем конечный автомат в состо€ние
-    //готовности к новой загрузке. “акже выключаем сигнал выборки кристалла
-    SPCR&= ~(1 << SPIE); 
-    ksp.ksp_interrupt_state = 0;   
-    break;    
-  }      
+  case 3: //Int.Time загружено
+   if (t!=ksp.ksp_last_word)  
+    ksp.ksp_error = 1;
+   //запрещаем прерывание и устанавливаем конечный автомат в состо€ние
+   //готовности к новой загрузке. “акже выключаем сигнал выборки кристалла
+   SPCR&= ~(1 << SPIE); 
+   ksp.ksp_interrupt_state = 0;   
+   break;    
+ }      
 }

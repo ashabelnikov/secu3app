@@ -49,6 +49,8 @@ typedef struct
  uint16_t ecuerrors_for_transfer;       //буферизирует коды ошибок передаваемые через UART в реальном времени.
  uint16_t ecuerrors_saved_transfer;     //буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART.  
  uint8_t  use_knock_channel_prev;       //предыдущее состояние признака использования канала детонации
+ 
+ uint8_t* eeprom_parameters_cache;
 }ecudata;                                     
 
 

@@ -28,17 +28,12 @@
 #include "magnitude.h"
 #include "ce_errors.h"
 #include "knock.h"
-
-//Эти константы не должны быть равны 0
-#define OPCODE_EEPROM_PARAM_SAVE 1
-#define OPCODE_CE_SAVE_ERRORS    2
-#define OPCODE_READ_FW_SIG_INFO  3 
+#include "suspendop.h"
 
 //режимы двигателя
 #define EM_START 0   
 #define EM_IDLE  1
 #define EM_WORK  2
-
 
 //кол-во значений для усреднения частоты вращения к.в.
 #define FRQ_AVERAGING           16                          
@@ -50,14 +45,6 @@
 #define TMP_AVERAGING           8  
 
 #define TIMER2_RELOAD_VALUE          100                         //для 10 мс
-
-#define EEPROM_PARAM_START           0x002                       //адрес структуры параметров в EEPROM 
-
-//адрес массива ошибок (Check Engine) в EEPROM
-#define EEPROM_ECUERRORS_START       (EEPROM_PARAM_START+(sizeof(params)))
-
-//включает/выключает лампу Check Engine  
-#define SET_CE_STATE(s)  {PORTB_Bit2 = s;}
 
 //включает/выключает вентилятор
 #define SET_VENTILATOR_STATE(s) {PORTB_Bit1 = s;}
@@ -98,226 +85,7 @@ uint16_t temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения температуры
 
 uint8_t eeprom_parameters_cache[sizeof(params) + 1];
 
-//-------------------------------------------------------------
-typedef struct
-{
- uint16_t ecuerrors;         //максимум 16 кодов ошибок
- uint16_t merged_errors;     //кеширует ошибки для сбережения ресурса EEPROM
- uint16_t write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс! 
-}ce_state_t;
-
-ce_state_t ce_state = {0,0,0};
-
-//операции над ошибками
-#define SET_ECUERROR(error)   SETBIT(ce_state.ecuerrors,error)
-#define CLEAR_ECUERROR(error) CLEARBIT(ce_state.ecuerrors,error)
-//-------------------------------------------------------------
-
 ecudata edat;
-
-
-#define SUSPENDED_OPERATIONS_SIZE 16
-uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
-#define set_suspended_operation(opcode) suspended_opcodes[(opcode)] = (opcode)
-#define is_suspended_operation_active(opcode) (suspended_opcodes[(opcode)] == (opcode))
-#define init_suspended_operations() memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE)
-
-#define SOP_NA                       255
-#define SOP_SAVE_PARAMETERS          0 
-#define SOP_SAVE_CE_MERGED_ERRORS    1 
-#define SOP_SEND_NC_PARAMETERS_SAVED 2
-
-#define SOP_SAVE_CE_ERRORS           3
-#define SOP_SEND_NC_CE_ERRORS_SAVED  4
-
-#define SOP_READ_CE_ERRORS           5
-#define SOP_TRANSMIT_CE_ERRORS       6
-
-#define SOP_SEND_FW_SIG_INFO         7 
-
-
-
-
-//Обработка операций которые могут требовать или требуют оложенного выполнения.
-void execute_suspended_operations(ecudata* d)
-{
- uint8_t temp_errors;
- 
-  if (is_suspended_operation_active(SOP_SAVE_PARAMETERS))
-  {
-    //мы не можем начать сохранение параметров, так как EEPROM на данный момент занято - сохранение 
-    //откладывается и будет осуществлено когда EEPROM освободится и будет вновь вызвана эта функция.
-    if (eeprom_is_idle())
-    {     
-     //для обеспечения атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
-     memcpy(eeprom_parameters_cache,&d->param,sizeof(params));  
-     ((params*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
-     eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, eeprom_parameters_cache, sizeof(params));   
-    
-     //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
-     //записаны новые параметры с корректной контрольной суммой 
-     CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
-              
-     //"удаляем" эту операцию из списка так как она уже выполнилась.
-     suspended_opcodes[SOP_SAVE_PARAMETERS] = SOP_NA;
-    }
-  }
-    
-  if (is_suspended_operation_active(SOP_SAVE_CE_MERGED_ERRORS))
-  {
-    //Если EEPROM не занято, то необходимо сохранить массив с кодами ошибок Cehck Engine.
-    //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если 
-    //она еще не была сохранена. Для этого производится чтение и сравнение.  
-    if (eeprom_is_idle())
-    {      
-     eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
-     ce_state.write_errors = temp_errors | ce_state.merged_errors; 
-     if (ce_state.write_errors!=temp_errors)    
-      eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t));      
-        
-     //"удаляем" эту операцию из списка так как она уже выполнилась.
-     suspended_opcodes[SOP_SAVE_CE_MERGED_ERRORS] = SOP_NA;
-    }
-  }
-    
-  if (is_suspended_operation_active(SOP_SEND_NC_PARAMETERS_SAVED))   
-  {
-    //передатчик занят?
-    if (!uart_is_sender_busy())
-    {
-     d->op_comp_code = OPCODE_EEPROM_PARAM_SAVE;                
-     uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-    
-     //"удаляем" эту операцию из списка так как она уже выполнилась.
-     suspended_opcodes[SOP_SEND_NC_PARAMETERS_SAVED] = SOP_NA;
-    }    
-  }
-  
-  if (is_suspended_operation_active(SOP_SAVE_CE_ERRORS))
-  {
-   if (eeprom_is_idle())
-    {    
-     eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&d->ecuerrors_saved_transfer, sizeof(uint16_t));      
-        
-     //"удаляем" эту операцию из списка так как она уже выполнилась.
-     suspended_opcodes[SOP_SAVE_CE_ERRORS] = SOP_NA;    
-    }
-  }
- 
-  if (is_suspended_operation_active(SOP_SEND_NC_CE_ERRORS_SAVED))
-  {
-    //передатчик занят?
-    if (!uart_is_sender_busy())
-    {
-     d->op_comp_code = OPCODE_CE_SAVE_ERRORS;                
-     uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-    
-     //"удаляем" эту операцию из списка так как она уже выполнилась.
-     suspended_opcodes[SOP_SEND_NC_CE_ERRORS_SAVED] = SOP_NA;
-    }      
-  }
-  
-  if (is_suspended_operation_active(SOP_READ_CE_ERRORS))
-  {
-   if (eeprom_is_idle())
-    {    
-     eeprom_read(&d->ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint16_t));     
-     set_suspended_operation(SOP_TRANSMIT_CE_ERRORS);          
-     //"удаляем" эту операцию из списка так как она уже выполнилась.
-     suspended_opcodes[SOP_READ_CE_ERRORS] = SOP_NA;    
-    }  
-  }
-  
-  if (is_suspended_operation_active(SOP_TRANSMIT_CE_ERRORS))
-  {
-   //передатчик занят?
-   if (!uart_is_sender_busy())
-   {    
-    uart_send_packet(d, CE_SAVED_ERR);    //теперь передатчик озабочен передачей данных    
-    //"удаляем" эту операцию из списка так как она уже выполнилась.
-    suspended_opcodes[SOP_TRANSMIT_CE_ERRORS] = SOP_NA;
-   }      
-  }
-  
-  if (is_suspended_operation_active(SOP_SEND_FW_SIG_INFO))
-  {
-   //передатчик занят?
-   if (!uart_is_sender_busy())
-   {        
-    uart_send_packet(d, FWINFO_DAT);    //теперь передатчик озабочен передачей данных    
-    //"удаляем" эту операцию из списка так как она уже выполнилась.
-    suspended_opcodes[SOP_SEND_FW_SIG_INFO] = SOP_NA;
-   }        
-  }
-
- //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
- switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take! 
- {
- case OPCODE_EEPROM_PARAM_SAVE:
-  set_suspended_operation(SOP_SEND_NC_PARAMETERS_SAVED);
-  break;
-  
- case OPCODE_CE_SAVE_ERRORS:
-  set_suspended_operation(SOP_SEND_NC_CE_ERRORS_SAVED);
-  break;  
- } 
-}
-
-
-//При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
-//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности. 
-void check_engine(ecudata* d)
-{
-  unsigned int temp_errors;
-  
-  //если была ошибка ДПКВ то устанавливаем бит соответствующей ошибки
-  if (ckps_is_error())
-  {
-    SET_ECUERROR(ECUERROR_CKPS_MALFUNCTION);
-    ckps_reset_error();        
-  }
-  else
-  {
-    CLEAR_ECUERROR(ECUERROR_CKPS_MALFUNCTION);  
-  }
-
-  //если была ошибка канала детонации
-  if (d->param.knock_use_knock_channel)
-   if (knock_is_error())
-   {
-    SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);
-    knock_reset_error();        
-   }
-   else
-   {
-    CLEAR_ECUERROR(ECUERROR_KSP_CHIP_FAILED);  
-   }
-
-  //если таймер отсчитал время, то гасим СЕ
-  if (s_timer_is_action(ce_control_time_counter))
-   SET_CE_STATE(0);       
-
-  //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер 
-  if (ce_state.ecuerrors!=0)
-  {
-   s_timer_set(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
-   SET_CE_STATE(1);  
-  }
-
-  temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
-  if (temp_errors!=ce_state.merged_errors) //появилась ли ошибка которой нет в merged_errors?
-  {
-   //так как на момент возникновения новой ошибки EEPROM может быть занято (например сохранением параметров),
-   //то необходимо установить только признак, который будет оставаться установленным до тех пор пака EEPROM
-   //не освободится и ошибки не будут сохранены. 
-   set_suspended_operation(SOP_SAVE_CE_MERGED_ERRORS);
-  }
-
-  ce_state.merged_errors = temp_errors;
-
-  //переносим биты ошибок в кеш для передачи.
-  d->ecuerrors_for_transfer|= ce_state.ecuerrors;
-}
 
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
 //Вызывается каждые 10мс
@@ -487,23 +255,23 @@ void process_uart_interface(ecudata* d)
     case OP_COMP_NC: 
       if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE) //приняли команду сохранения параметров
       {
-       set_suspended_operation(SOP_SAVE_PARAMETERS);     
+       sop_set_operation(SOP_SAVE_PARAMETERS);     
        d->op_actn_code = 0; //обработали 
       }
       if (d->op_actn_code == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок  
       {
-       set_suspended_operation(SOP_READ_CE_ERRORS);     
+       sop_set_operation(SOP_READ_CE_ERRORS);     
        d->op_actn_code = 0; //обработали 
       }
       if (d->op_actn_code == OPCODE_READ_FW_SIG_INFO) //приняли команду чтения и передачи информации о прошивке
       {
-       set_suspended_operation(SOP_SEND_FW_SIG_INFO);
+       sop_set_operation(SOP_SEND_FW_SIG_INFO);
        d->op_actn_code = 0; //обработали        
       }
       break;    
       
     case CE_SAVED_ERR:
-      set_suspended_operation(SOP_SAVE_CE_ERRORS);
+      sop_set_operation(SOP_SAVE_CE_ERRORS);
       break;       
   }
   
@@ -522,7 +290,7 @@ void process_uart_interface(ecudata* d)
     if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
      if (!knock_module_initialize())
      {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-      SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   
+      ce_set_error(ECUERROR_KSP_CHIP_FAILED);   
      }    
 
     ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);  
@@ -583,7 +351,7 @@ void save_param_if_need(ecudata* d)
  {
   //текущие и сохраненные параметры отличаются?
   if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE))   
-   set_suspended_operation(SOP_SAVE_PARAMETERS);       
+   sop_set_operation(SOP_SAVE_PARAMETERS);       
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }   
 }
@@ -602,7 +370,7 @@ void load_eeprom_params(ecudata* d)
    if (crc16((uint8_t*)&d->param,(sizeof(params)-PAR_CRC_SIZE))!=d->param.crc)
    {
      memcpy_P(&d->param,&def_param,sizeof(params));
-     SET_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);
+     ce_set_error(ECUERROR_EEPROM_PARAM_BROKEN);
    }
    
    //инициализируем кеш параметров, иначе после старта программы произойдет ненужное 
@@ -698,12 +466,13 @@ __C_task void main(void)
   edat.sens.inst_frq = 0;
   edat.curr_angle = 0;
   edat.ecuerrors_for_transfer = 0;
+  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
     
   init_io_ports();
   
   if (crc16f(0,CODE_SIZE)!=code_crc)
   { //код программы испорчен - зажигаем СЕ
-   SET_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN); 
+   ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN); 
   }
 
   adc_init();
@@ -723,7 +492,7 @@ __C_task void main(void)
   if (edat.param.knock_use_knock_channel)
    if (!knock_module_initialize())
    {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-    SET_ECUERROR(ECUERROR_KSP_CHIP_FAILED);   
+    ce_set_error(ECUERROR_KSP_CHIP_FAILED);   
    }
   edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;  
  
@@ -748,7 +517,7 @@ __C_task void main(void)
   knock_set_gain(fwdata.attenuator_table[0]);
   knock_set_int_time_constant(23); //300 мкс - это временно!
 
-  init_suspended_operations();
+  sop_init_operations();
   //------------------------------------------------------------------------     
   while(1)
   {                        
@@ -782,9 +551,9 @@ __C_task void main(void)
   
    //----------непрерывное выполнение-----------------------------------------
     //выполнение отложенных операций
-    execute_suspended_operations(&edat);
+    sop_execute_operations(&edat);
     //управление фиксированием и индицированием возникающих ошибок
-    check_engine(&edat);
+    ce_check_engine(&edat, &ce_control_time_counter);
     //обработка приходящих/уходящих данных последовательного порта
     process_uart_interface(&edat);  
     //управление сохранением настроек
@@ -825,8 +594,8 @@ __C_task void main(void)
      //(при прошествии N-го количества циклов)
      if (turnout_low_priority_errors_counter == 1)
      {    
-      CLEAR_ECUERROR(ECUERROR_EEPROM_PARAM_BROKEN);  
-      CLEAR_ECUERROR(ECUERROR_PROGRAM_CODE_BROKEN);        
+      ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);  
+      ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);        
      }
      if (turnout_low_priority_errors_counter > 0)
       turnout_low_priority_errors_counter--;      

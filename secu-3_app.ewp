@@ -1538,6 +1538,9 @@
     <name>$PROJ_DIR$\bootldr.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\ce_errors.c</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\ce_errors.h</name>
   </file>
   <file>
@@ -1578,6 +1581,12 @@
   </file>
   <file>
     <name>$PROJ_DIR$\secu3.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\suspendop.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\suspendop.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\tables.h</name>

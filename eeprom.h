@@ -3,6 +3,14 @@
 #define _EEPROM_H_
 
 #include <stdint.h>
+#include "secu3.h"
+
+//адрес структуры параметров в EEPROM
+#define EEPROM_PARAM_START     0x002
+
+//адрес массива ошибок (Check Engine) в EEPROM
+#define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params)))
+
 
 //==================интерфейс модуля===============================
 //запускает процесс записи в EEPROM указанного блока данных
@@ -14,6 +22,7 @@ uint8_t eeprom_is_idle(void);
 //читает указанный блок данных из EEPROM
 void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size);
 
+//возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())
 uint8_t eeprom_take_completed_opcode(void);  
 //=================================================================
 

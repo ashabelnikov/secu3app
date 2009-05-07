@@ -51,6 +51,8 @@ typedef struct
  uint8_t  use_knock_channel_prev;       //предыдущее состо€ние признака использовани€ канала детонации
  
  uint8_t* eeprom_parameters_cache;
+ 
+ uint8_t engine_mode;                  //текущий режим двигател€ (пуск, ’’, нагрузка) 
 }ecudata;                                     
 
 

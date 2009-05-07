@@ -403,14 +403,14 @@ void init_io_ports(void)
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
 
-void advanve_angle_state_machine(uint8_t* pmode, int16_t* padvance_angle_inhibitor_state, ecudata* d)
+void advanve_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudata* d)
 {
- switch(*pmode)
+ switch(d->engine_mode)
  {
   case EM_START: //режим пуска
    if (d->sens.inst_frq > d->param.smap_abandon)
    {                   
-    *pmode = EM_IDLE;    
+    d->engine_mode = EM_IDLE;    
     idling_regulator_init();    
    }      
    d->curr_angle=start_function(d);               //базовый УОЗ - функция для пуска
@@ -421,7 +421,7 @@ void advanve_angle_state_machine(uint8_t* pmode, int16_t* padvance_angle_inhibit
   case EM_IDLE: //режим холостого хода
    if (d->sens.carb)//педаль газа нажали - в рабочий режим
    {
-    *pmode = EM_WORK;
+    d->engine_mode = EM_WORK;
    }             
    work_function(d, 1);                           //обновляем значение расхода воздуха 
    d->curr_angle = idling_function(d);            //базовый УОЗ - функция для ХХ 
@@ -432,7 +432,7 @@ void advanve_angle_state_machine(uint8_t* pmode, int16_t* padvance_angle_inhibit
   case EM_WORK: //рабочий режим 
    if (!d->sens.carb)//педаль газа отпустили - в переходной режим ХХ
    {
-    *pmode = EM_IDLE;
+    d->engine_mode = EM_IDLE;
     idling_regulator_init();    
    }
    d->curr_angle=work_function(d, 0);           //базовый УОЗ - функция рабочего режима
@@ -455,25 +455,30 @@ void switch_fuel_type(ecudata* d)
   d->fn_dat = (__flash F_data*)&tables[d->param.fn_benzin];//на бензине  
 }   
       
+void init_ecu_data(ecudata* d)
+{
+ edat.op_comp_code = 0;
+ edat.op_actn_code = 0;
+ edat.sens.inst_frq = 0;
+ edat.curr_angle = 0;
+ edat.ecuerrors_for_transfer = 0;
+ edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
+ edat.engine_mode = EM_START;   
+}      
+            
 __C_task void main(void)
 {
-  uint8_t mode = EM_START;   
   uint8_t turnout_low_priority_errors_counter = 255;
   int16_t advance_angle_inhibitor_state = 0;     
   
-  edat.op_comp_code = 0;
-  edat.op_actn_code = 0;
-  edat.sens.inst_frq = 0;
-  edat.curr_angle = 0;
-  edat.ecuerrors_for_transfer = 0;
-  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
+  //подготовка структуры данных переменных состояния системы
+  init_ecu_data(&edat);
     
   init_io_ports();
   
+  //если код программы испорчен - зажигаем СЕ
   if (crc16f(0,CODE_SIZE)!=code_crc)
-  { //код программы испорчен - зажигаем СЕ
    ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN); 
-  }
 
   adc_init();
 
@@ -529,7 +534,7 @@ __C_task void main(void)
     if (s_timer_is_action(engine_rotation_timeout_counter))
     { //двигатель остановился (его обороты ниже критических)
      ckps_init_state_variables();
-     mode = EM_START; //режим пуска 	      
+     edat.engine_mode = EM_START; //режим пуска 	      
      SET_STARTER_BLOCKING_STATE(0); //снимаем блокировку стартера
      
      if (edat.param.knock_use_knock_channel)
@@ -567,7 +572,7 @@ __C_task void main(void)
      //управление периферией
     control_engine_units(&edat);      
      //КА состояний системы (диспетчер режимов - сердце основного цикла)
-    advanve_angle_state_machine(&mode,&advance_angle_inhibitor_state,&edat);
+    advanve_angle_state_machine(&advance_angle_inhibitor_state,&edat);
      //добавляем к УОЗ октан-коррекцию
     edat.curr_angle+=edat.param.angle_corr;       
      //ограничиваем получившийся УОЗ установленными пределами

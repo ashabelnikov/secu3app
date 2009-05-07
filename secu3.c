@@ -488,14 +488,7 @@ __C_task void main(void)
      
   //читаем параметры
   load_eeprom_params(&edat);
-  
-  if (edat.param.knock_use_knock_channel)
-   if (!knock_module_initialize())
-   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-    ce_set_error(ECUERROR_KSP_CHIP_FAILED);   
-   }
-  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;  
- 
+   
   init_system_timer();
   
   //инициализируем UART
@@ -516,6 +509,13 @@ __C_task void main(void)
   knock_set_band_pass(edat.param.knock_bpf_frequency);
   knock_set_gain(fwdata.attenuator_table[0]);
   knock_set_int_time_constant(23); //300 мкс - это временно!
+
+  if (edat.param.knock_use_knock_channel)
+   if (!knock_module_initialize())
+   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+    ce_set_error(ECUERROR_KSP_CHIP_FAILED);   
+   }
+  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;  
 
   sop_init_operations();
   //------------------------------------------------------------------------     

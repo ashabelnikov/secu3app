@@ -1607,6 +1607,9 @@
     <name>$PROJ_DIR$\ufcodes.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\vstimer.c</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\vstimer.h</name>
   </file>
 </project>

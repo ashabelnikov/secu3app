@@ -36,8 +36,6 @@
 #define EM_IDLE  1
 #define EM_WORK  2
 
-#define TIMER2_RELOAD_VALUE          100                         //для 10 мс
-
 //включает/выключает вентилятор
 #define SET_VENTILATOR_STATE(s) {PORTB_Bit1 = s;}
 
@@ -60,35 +58,10 @@
 
 #define disable_comparator() {ACSR=(1<<ACD);}
  
-//-----------глобальные переменные----------------------------
-s_timer8  send_packet_interval_counter = 0;
-s_timer8  force_measure_timeout_counter = 0;
-s_timer16 save_param_timeout_counter = 0;
-s_timer8  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
-s_timer8  engine_rotation_timeout_counter = 0;
-s_timer8  epxx_delay_time_counter = 0;
-s_timer8  idle_period_time_counter = 0;
-
+ 
 uint8_t eeprom_parameters_cache[sizeof(params) + 1];
 
 ecudata edat;
-
-//прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
-//Вызывается каждые 10мс
-#pragma vector=TIMER2_OVF_vect
-__interrupt void timer2_ovf_isr(void)
-{ 
-  TCNT2 = TIMER2_RELOAD_VALUE; 
-  __enable_interrupt();     
-    
-  s_timer_update(force_measure_timeout_counter);
-  s_timer_update(save_param_timeout_counter);
-  s_timer_update(send_packet_interval_counter);  
-  s_timer_update(ce_control_time_counter);
-  s_timer_update(engine_rotation_timeout_counter);   
-  s_timer_update(epxx_delay_time_counter);
-  s_timer_update(idle_period_time_counter);  
-}
 
 //управление отдельными узлами двигателя и обновление данных о состоянии 
 //концевика карбюратора, газового клапана, клапана ЭПХХ
@@ -282,13 +255,6 @@ void load_eeprom_params(ecudata* d)
  }  
 } 
    
-
-void init_system_timer(void)
-{
-  TCCR2 = (1<<CS22)|(1<<CS21)|(1<<CS20);      //clock = 15.625kHz  
-  TIMSK|= (1<<TOIE2); //разрешаем прерывание по переполнению таймера 2                          
-}
-
 void init_io_ports(void)
 {
   //конфигурируем порты ввода/вывода
@@ -302,7 +268,7 @@ void init_io_ports(void)
   DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
 }
 
-void advanve_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudata* d)
+void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudata* d)
 {
  switch(d->engine_mode)
  {
@@ -393,7 +359,7 @@ __C_task void main(void)
   //читаем параметры
   load_eeprom_params(&edat);
    
-  init_system_timer();
+  s_timer_init();
   
   //инициализируем UART
   uart_init(edat.param.uart_divisor);
@@ -471,7 +437,7 @@ __C_task void main(void)
      //управление периферией
     control_engine_units(&edat);      
      //КА состояний системы (диспетчер режимов - сердце основного цикла)
-    advanve_angle_state_machine(&advance_angle_inhibitor_state,&edat);
+    advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
      //добавляем к УОЗ октан-коррекцию
     edat.curr_angle+=edat.param.angle_corr;       
      //ограничиваем получившийся УОЗ установленными пределами

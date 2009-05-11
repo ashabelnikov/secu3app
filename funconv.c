@@ -26,7 +26,8 @@ __flash int16_t F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 4
 // x_s,y_s - значения аргументов функции соответствующие началу прямоугольной области
 // x_l,y_l - размеры прямоугольной области (по x и y соответственно)
 // возвращает интерполированное значение функции * 16         
-int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t a3,int16_t a4,int16_t x_s,int16_t y_s,int16_t x_l,int16_t y_l)
+int16_t bilinear_interpolation(int16_t x, int16_t y, int16_t a1, int16_t a2, int16_t a3, int16_t a4,
+                               int16_t x_s, int16_t y_s, int16_t x_l, int16_t y_l)
 {
  int16_t a23,a14;  
  a23 = ((a2 * 16) + (((int32_t)(a3 - a2) * 16) * (x - x_s)) / x_l);
@@ -40,7 +41,7 @@ int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t
 // x_s - значение аргумента функции в начальной точке
 // x_l - длина отрезка между точками
 // возвращает интерполированное значение функции * 16                   
-int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l)
+int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int16_t x_l)
 {
  return ((a1 * 16) + (((int32_t)(a2 - a1) * 16) * (x - x_s)) / x_l);
 }

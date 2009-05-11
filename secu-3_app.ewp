@@ -1577,6 +1577,12 @@
     <name>$PROJ_DIR$\magnitude.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\measure.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\measure.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\secu3.c</name>
   </file>
   <file>

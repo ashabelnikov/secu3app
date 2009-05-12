@@ -8,8 +8,15 @@
  ****************************************************************/
 
 #include <inavr.h>
+#include <iom16.h>
 #include "measure.h"
 #include "adc.h"
+
+//считывает состояние газового клапана
+#define GET_GAS_VALVE_STATE(s) (PINC_Bit6)
+
+//считывает состояние дроссельной заслонки (только значение, без инверсии)
+#define GET_THROTTLE_GATE_STATE(s) (PINC_Bit5)
 
 //кол-во значений для усреднения частоты вращения к.в.
 #define FRQ_AVERAGING           16                          
@@ -108,3 +115,19 @@ void meas_initial_measure(ecudata* d)
  __restore_interrupt(_t);
  meas_average_measured_values(d);  
 }
+
+void meas_take_discrete_inputs(ecudata *d)
+{
+ //--инверсия концевика карбюратора если необходимо, включение/выключение клапана ЭПХХ
+ d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
+
+ //считываем и сохраняем состояние газового клапана
+ d->sens.gas = GET_GAS_VALVE_STATE();   
+
+ //переключаем тип топлива в зависимости от состояния газового клапана
+ if (d->sens.gas)
+  d->fn_dat = (__flash F_data*)&tables[d->param.fn_gas];    //на газе
+ else  
+  d->fn_dat = (__flash F_data*)&tables[d->param.fn_benzin];//на бензине     
+}
+

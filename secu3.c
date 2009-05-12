@@ -48,12 +48,6 @@
 //открывает/закрывает клапан ЭМР
 #define SET_EPM_VALVE_STATE(s) {PORTC_Bit7 = s;}
 
-//считывает состояние газового клапана
-#define GET_GAS_VALVE_STATE(s) (PINC_Bit6)
-
-//считывает состояние дроссельной заслонки (только значение, без инверсии)
-#define GET_THROTTLE_GATE_STATE(s) (PINC_Bit5)
-
 #define GET_DEFEEPROM_JUMPER_STATE() (PINC_Bit2)
 
 #define disable_comparator() {ACSR=(1<<ACD);}
@@ -68,11 +62,6 @@ ecudata edat;
 void control_engine_units(ecudata *d)
 {
   int16_t discharge;
-  //--инверсия концевика карбюратора если необходимо, включение/выключение клапана ЭПХХ
-  d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
-
-  //считываем и сохраняем состояние газового клапана
-  d->sens.gas = GET_GAS_VALVE_STATE();      
 
   //реализация функции ЭПХХ. Если заслонка карбюратора закрыта и frq > [верх.порог] или
   //заслонка карбюратора закрыта и frq > [ниж.порог] но клапан уже закрыт, то производится
@@ -309,16 +298,6 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudat
    break;     
  }
 }
-
-void switch_fuel_type(ecudata* d)
-{
- //считываем и сохраняем состояние газового клапана
- d->sens.gas = GET_GAS_VALVE_STATE();  
- if (d->sens.gas)
-  d->fn_dat = (__flash F_data*)&tables[d->param.fn_gas];    //на газе
- else  
-  d->fn_dat = (__flash F_data*)&tables[d->param.fn_benzin];//на бензине  
-}   
       
 void init_ecu_data(ecudata* d)
 {
@@ -432,15 +411,15 @@ __C_task void main(void)
     edat.sens.inst_frq = ckps_calculate_instant_freq();                           
     //усреднение физических величин хранящихся в кольцевых буферах
     meas_average_measured_values(&edat);        
-    //в зависимости от текущего типа топлива выбираем соответствующий набор таблиц             
-    switch_fuel_type(&edat);
-     //управление периферией
+    //cчитываем дискретные входы системы и переключаем тип топлива
+    meas_take_discrete_inputs(&edat);
+    //управление периферией
     control_engine_units(&edat);      
-     //КА состояний системы (диспетчер режимов - сердце основного цикла)
+    //КА состояний системы (диспетчер режимов - сердце основного цикла)
     advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
-     //добавляем к УОЗ октан-коррекцию
+    //добавляем к УОЗ октан-коррекцию
     edat.curr_angle+=edat.param.angle_corr;       
-     //ограничиваем получившийся УОЗ установленными пределами
+    //ограничиваем получившийся УОЗ установленными пределами
     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);  
     //------------------------------------------------------------------------
     

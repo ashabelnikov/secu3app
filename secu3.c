@@ -108,7 +108,8 @@ void control_engine_units(ecudata *d)
   //”правление Ёћ– (экономайзер мощностных режимов)
   discharge = (d->param.map_upper_pressure - d->sens.map);
   if (discharge < 0) discharge = 0;    
-  SET_EPM_VALVE_STATE(discharge < d->param.epm_on_threshold);
+  d->epm_valve = discharge < d->param.epm_on_threshold;
+  SET_EPM_VALVE_STATE(d->epm_valve);
 }
 
 //обрабатывает передаваемые/принимаемые фреймы UART-a

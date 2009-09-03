@@ -185,7 +185,8 @@ void uart_send_packet(ecudata* d, uint8_t send_mode)
        build_i4h(d->ephh_valve);     
        build_i4h(d->sens.carb);      
        build_i4h(d->sens.gas); 
-       build_i16h(d->sens.knock_k);  // <-- knock value      
+       build_i16h(d->sens.knock_k);  // <-- knock value
+       build_i4h(d->epm_valve);      // <-- EPM valve       
        break;
    case ADCCOR_PAR:   
        build_i16h(d->param.map_adc_factor);

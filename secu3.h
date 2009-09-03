@@ -38,6 +38,7 @@ typedef struct
  sensors  sens;                         //--сенсоры
  
  uint8_t  ephh_valve;                   //состо€ние клапана Ёѕ’’
+ uint8_t  epm_valve;                    //состо€ние клапана Ёћ–
  uint8_t  airflow;                      //расход воздуха
  int16_t  curr_angle;                   //текущий угол опережени€
  

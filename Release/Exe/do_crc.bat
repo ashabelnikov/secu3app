@@ -29,6 +29,8 @@ IF NOT EXIST %CODECRC% (
 echo ERROR: Can not find file "%CODECRC%" >> %LOGFILE%
 goto error
 )
+%CODECRC% secu-3_app.bin secu-3_app.hex  0  15870  3DFE -h >> %LOGFILE%
+IF ERRORLEVEL 1 GOTO error
 %CODECRC% secu-3_app.bin secu-3_app.bin  0  15870  3DFE -b >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 

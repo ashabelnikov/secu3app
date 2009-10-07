@@ -23,13 +23,14 @@ IF ERRORLEVEL 1 GOTO error
 
 rem Делаем копию файла без контрольной суммы
 copy secu-3_app.bin secu-3_app0000.bin
+copy secu-3_app.a90 secu-3_app0000.a90
 
 rem Считаем и записываем контрольную сумму в бинарный файл
 IF NOT EXIST %CODECRC% (
 echo ERROR: Can not find file "%CODECRC%" >> %LOGFILE%
 goto error
 )
-%CODECRC% secu-3_app.bin secu-3_app.hex  0  15870  3DFE -h >> %LOGFILE%
+%CODECRC% secu-3_app.bin secu-3_app.a90  0  15870  3DFE -h >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 %CODECRC% secu-3_app.bin secu-3_app.bin  0  15870  3DFE -b >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error

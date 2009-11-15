@@ -177,7 +177,7 @@ FirmwareData __flash fwdata@FIRMWARE_DATA_START=
 {
   //Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.  
   //Дата в формате Mmm dd yyyy.
-  "SECU-3 firmware v2.0. Build ["__DATE__"]       ",
+  "SECU-3 firmware v2.1. Build ["__DATE__"]       ",
    
   //таблица аттенюатора
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,  

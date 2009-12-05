@@ -218,6 +218,7 @@ void uart_send_packet(ecudata* d, uint8_t send_mode)
        build_i8h(d->param.knock_bpf_frequency);  
        build_i16h(d->param.knock_k_wnd_begin_angle);
        build_i16h(d->param.knock_k_wnd_end_angle);
+       build_i8h(d->param.knock_int_time_const);
        break;     
    case CE_SAVED_ERR:
        build_i16h(d->ecuerrors_saved_transfer);
@@ -352,7 +353,8 @@ uint8_t uart_recept_packet(ecudata* d)
        d->param.knock_use_knock_channel = recept_i4h();
        d->param.knock_bpf_frequency   = recept_i8h();
        d->param.knock_k_wnd_begin_angle = recept_i16h();
-       d->param.knock_k_wnd_end_angle = recept_i16h();     
+       d->param.knock_k_wnd_end_angle = recept_i16h(); 
+       d->param.knock_int_time_const = recept_i8h();    
        break;   
        
     case CE_SAVED_ERR:

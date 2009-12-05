@@ -358,7 +358,7 @@ __C_task void main(void)
   //предварительная инициализация параметров сигнального процессора детонации
   knock_set_band_pass(edat.param.knock_bpf_frequency);
   knock_set_gain(fwdata.attenuator_table[0]);
-  knock_set_int_time_constant(23); //300 мкс - это временно!
+  knock_set_int_time_constant(edat.param.knock_int_time_const);
 
   if (edat.param.knock_use_knock_channel)
    if (!knock_module_initialize())

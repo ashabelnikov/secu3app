@@ -219,6 +219,12 @@ void uart_send_packet(ecudata* d, uint8_t send_mode)
        build_i16h(d->param.knock_k_wnd_begin_angle);
        build_i16h(d->param.knock_k_wnd_end_angle);
        build_i8h(d->param.knock_int_time_const);
+              
+       build_i16h(d->param.knock_retard_step);
+       build_i16h(d->param.knock_advance_step);
+       build_i16h(d->param.knock_max_retard);
+       build_i16h(d->param.knock_threshold);
+       build_i8h(d->param.knock_recovery_delay);      
        break;     
    case CE_SAVED_ERR:
        build_i16h(d->ecuerrors_saved_transfer);
@@ -355,6 +361,12 @@ uint8_t uart_recept_packet(ecudata* d)
        d->param.knock_k_wnd_begin_angle = recept_i16h();
        d->param.knock_k_wnd_end_angle = recept_i16h(); 
        d->param.knock_int_time_const = recept_i8h();    
+       
+       d->param.knock_retard_step = recept_i16h();
+       d->param.knock_advance_step = recept_i16h();
+       d->param.knock_max_retard = recept_i16h();
+       d->param.knock_threshold = recept_i16h();
+       d->param.knock_recovery_delay = recept_i8h();             
        break;   
        
     case CE_SAVED_ERR:

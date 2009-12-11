@@ -1568,6 +1568,12 @@
     <name>$PROJ_DIR$\funconv.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\knklogic.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\knklogic.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\knock.c</name>
   </file>
   <file>

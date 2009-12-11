@@ -11,6 +11,7 @@
 #include <iom16.h>
 #include "measure.h"
 #include "adc.h"
+#include "secu3.h"
 
 //считывает состояние газового клапана
 #define GET_GAS_VALVE_STATE(s) (PINC_Bit6)

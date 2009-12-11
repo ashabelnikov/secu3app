@@ -50,7 +50,7 @@
 #define FW_SIGNATURE_INFO_SIZE 48
 
 //Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
-typedef struct 
+typedef struct F_data
 {
   int8_t f_str[F_STR_POINTS];                       // функция УОЗ на старте
   int8_t f_idl[F_IDL_POINTS];                       // функция УОЗ для ХХ
@@ -61,7 +61,7 @@ typedef struct
 
 
 //описывает дополнительные данные хранимые в прошивке
-typedef struct
+typedef struct FirmwareData
 {
   uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];
   
@@ -75,7 +75,7 @@ typedef struct
 }FirmwareData;
 
 //описывает параметры системы
-typedef struct
+typedef struct params
 {
   uint8_t  tmp_use;                      //признак комплектации ДТОЖ-ом
   uint8_t  carb_invers;                  //инверсия концевика на карбюраторе

@@ -30,6 +30,7 @@
 #include "knock.h"
 #include "suspendop.h"
 #include "measure.h"
+#include "knklogic.h"
 
 //режимы двигателя
 #define EM_START 0   
@@ -306,6 +307,7 @@ void init_ecu_data(ecudata* d)
  edat.op_actn_code = 0;
  edat.sens.inst_frq = 0;
  edat.curr_angle = 0;
+ edat.knock_retard = 0;
  edat.ecuerrors_for_transfer = 0;
  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
  edat.engine_mode = EM_START;   
@@ -314,10 +316,12 @@ void init_ecu_data(ecudata* d)
 __C_task void main(void)
 {
   uint8_t turnout_low_priority_errors_counter = 255;
-  int16_t advance_angle_inhibitor_state = 0;     
+  int16_t advance_angle_inhibitor_state = 0;
+  retard_state_t retard_state;     
   
   //подготовка структуры данных переменных состояния системы
   init_ecu_data(&edat);
+  knklogic_init(&retard_state);
     
   init_io_ports();
   
@@ -420,6 +424,12 @@ __C_task void main(void)
     advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
     //добавляем к УОЗ октан-коррекцию
     edat.curr_angle+=edat.param.angle_corr;       
+    
+    //---------------------------------------------- 
+    //отнимаем поправку регулятора по детонации
+    edat.curr_angle-=edat.knock_retard; 
+    //---------------------------------------------- 
+    
     //ограничиваем получившийся УОЗ установленными пределами
     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);  
     //------------------------------------------------------------------------
@@ -433,6 +443,12 @@ __C_task void main(void)
      //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
      //за один рабочий цикл. 
      edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);         
+         
+     //---------------------------------------------- 
+     knklogic_detect(&edat, &retard_state);
+     knklogic_retard(&edat, &retard_state);
+     //----------------------------------------------  
+     
      //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
      ckps_set_dwell_angle(edat.curr_angle);        
     

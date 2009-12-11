@@ -11,7 +11,7 @@
 #define IDLE_PERIOD_TIME_VALUE        50
 
 //описывает все входы системы - их производные и интегральные величины
-typedef struct
+typedef struct sensors
 {
  uint16_t map;                           //давление во впускном коллекторе (усредненное)
  uint16_t voltage;                       //напряжение бортовой сети (усредненное)
@@ -30,17 +30,17 @@ typedef struct
 
 }sensors;
 
-
 //описывает данные системы, обеспечивает единый интерфейс данных
-typedef struct
+typedef struct ecudata
 {
- params   param;                        //--параметры
- sensors  sens;                         //--сенсоры
+ struct params   param;                        //--параметры
+ struct sensors  sens;                         //--сенсоры
  
  uint8_t  ephh_valve;                   //состояние клапана ЭПХХ
  uint8_t  epm_valve;                    //состояние клапана ЭМР
  uint8_t  airflow;                      //расход воздуха
  int16_t  curr_angle;                   //текущий угол опережения
+ int16_t  knock_retard;                 //поправка УОЗ от регулятора по детонации
  
  __flash F_data*  fn_dat;               //указатель на набор характеристик
 

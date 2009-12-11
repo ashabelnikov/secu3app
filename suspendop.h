@@ -3,7 +3,6 @@
 #define _SUSPOP_H_
 
 #include <stdint.h>
-#include "secu3.h"
 
 #define SOP_NA                       255
 #define SOP_SAVE_PARAMETERS          0 
@@ -20,6 +19,8 @@
 #define OPCODE_CE_SAVE_ERRORS        2
 #define OPCODE_READ_FW_SIG_INFO      3 
 
+struct ecudata;
+
 //установка указанной рперации в очередь на выполнение
 void sop_set_operation(uint8_t opcode); 
 
@@ -30,7 +31,6 @@ uint8_t sop_is_operation_active(uint8_t opcode);
 void sop_init_operations(void);
 
 //обработка очереди отложенных операций
-void sop_execute_operations(ecudata* d);
-
+void sop_execute_operations(struct ecudata* d);
 
 #endif //#define _SUSPOP_H_

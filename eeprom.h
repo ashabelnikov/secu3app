@@ -3,7 +3,6 @@
 #define _EEPROM_H_
 
 #include <stdint.h>
-#include "secu3.h"
 
 //адрес структуры параметров в EEPROM
 #define EEPROM_PARAM_START     0x002

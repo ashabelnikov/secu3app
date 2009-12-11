@@ -3,7 +3,6 @@
 #define _CE_ERRORS_H_
 
 #include <stdint.h>
-#include "secu3.h"
 #include "vstimer.h"
 
 //определяем биты (номера битов) ошибок (Check Engine)
@@ -15,8 +14,10 @@
 //включает/выключает лампу Check Engine  
 #define SET_CE_STATE(s)  {PORTB_Bit2 = s;}
 
+struct ecudata;
+
 //производит проверку наличия ошибок и управляет лампой CE.
-void ce_check_engine(ecudata* d, s_timer8* ce_control_time_counter);
+void ce_check_engine(struct ecudata* d, s_timer8* ce_control_time_counter);
 
 //Установка/всброс указанной ошибки (номер бита)
 void ce_set_error(uint8_t error);  

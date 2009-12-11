@@ -15,6 +15,7 @@
 #include "vstimer.h"
 #include "suspendop.h"
 #include "eeprom.h"
+#include "secu3.h"
 
 typedef struct
 {

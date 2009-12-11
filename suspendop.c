@@ -15,6 +15,7 @@
 #include "uart.h"
 #include "ufcodes.h"
 #include "ce_errors.h"
+#include "secu3.h"
 
 #define SUSPENDED_OPERATIONS_SIZE 16
 

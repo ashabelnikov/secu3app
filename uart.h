@@ -3,8 +3,6 @@
 #define  _UART_H_
 
 #include <stdint.h>
-#include "secu3.h"
-#include "tables.h"
 
 #define  CBR_2400                0x01A0
 #define  CBR_4800                0x00CF
@@ -18,8 +16,9 @@
 #define  UART_SEND_BUFF_SIZE     64
 
 //==============интерфейс модуля=======================
- void uart_send_packet(ecudata* d, uint8_t send_mode);
- uint8_t uart_recept_packet(ecudata* d);
+ struct ecudata;
+ void uart_send_packet(struct ecudata* d, uint8_t send_mode);
+ uint8_t uart_recept_packet(struct ecudata* d);
  void uart_notify_processed(void);
  uint8_t uart_is_sender_busy(void);
  uint8_t uart_is_packet_received(void);

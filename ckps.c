@@ -79,8 +79,10 @@ typedef struct
  uint8_t  cogs_btdc;    
  int8_t   knock_wnd_begin_abs;         // начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т 
  int8_t   knock_wnd_end_abs;           // конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т  
- uint8_t  knock_wnd_begin;             
- uint8_t  knock_wnd_end;               
+ uint8_t  knock_wnd_begin14;             
+ uint8_t  knock_wnd_end14;               
+ uint8_t  knock_wnd_begin23;             
+ uint8_t  knock_wnd_end23;               
 }CKPSSTATE;
  
 CKPSSTATE ckps;
@@ -171,8 +173,10 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  ckps.cogs_latch23 = cogs_btdc + (WHEEL_COGS_PER_CYCLE - WHEEL_LATCH_BTDC);
  ckps.cogs_btdc14  = cogs_btdc;
  ckps.cogs_btdc23  = cogs_btdc + WHEEL_COGS_PER_CYCLE;  
- ckps.knock_wnd_begin = cogs_btdc + ckps.knock_wnd_begin_abs;
- ckps.knock_wnd_end = cogs_btdc + ckps.knock_wnd_end_abs;
+ ckps.knock_wnd_begin14 = cogs_btdc + ckps.knock_wnd_begin_abs;
+ ckps.knock_wnd_end14 = cogs_btdc + ckps.knock_wnd_end_abs;
+ ckps.knock_wnd_begin23 = cogs_btdc + WHEEL_COGS_PER_CYCLE + ckps.knock_wnd_begin_abs;
+ ckps.knock_wnd_end23 = cogs_btdc + WHEEL_COGS_PER_CYCLE + ckps.knock_wnd_end_abs;
  ckps.cogs_btdc = cogs_btdc;
 }
 
@@ -234,8 +238,10 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
  _t=__save_interrupt();
  __disable_interrupt();
- ckps.knock_wnd_begin = ckps.cogs_btdc + ckps.knock_wnd_begin_abs;
- ckps.knock_wnd_end = ckps.cogs_btdc + ckps.knock_wnd_end_abs;
+ ckps.knock_wnd_begin14 = ckps.cogs_btdc + ckps.knock_wnd_begin_abs;
+ ckps.knock_wnd_end14 = ckps.cogs_btdc + ckps.knock_wnd_end_abs;
+ ckps.knock_wnd_begin23 = ckps.cogs_btdc + WHEEL_COGS_PER_CYCLE + ckps.knock_wnd_begin_abs;
+ ckps.knock_wnd_end23 = ckps.cogs_btdc + WHEEL_COGS_PER_CYCLE + ckps.knock_wnd_end_abs;
  __restore_interrupt(_t);
 }
 
@@ -321,13 +327,13 @@ void process_ckps_cogs(void)
  if (flags.ckps_use_knock_channel)
  {
   //начинаем слушать детонацию (открытие окна)
-  if (ckps.cog == ckps.knock_wnd_begin)
+  if (ckps.cog == ckps.knock_wnd_begin14 || ckps.cog == ckps.knock_wnd_begin23)
   {
    knock_set_integration_mode(KNOCK_INTMODE_INT);
   }
   
   //заканчиваем слушать детонацию (закрытие окна) и запускаем процесс измерения 
-  if (ckps.cog == ckps.knock_wnd_end)
+  if (ckps.cog == ckps.knock_wnd_end14 || ckps.cog == ckps.knock_wnd_end23)
   {
    knock_set_integration_mode(KNOCK_INTMODE_HOLD); 
    adc_begin_measure_knock(); 

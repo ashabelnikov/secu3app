@@ -426,8 +426,8 @@ __C_task void main(void)
     edat.curr_angle+=edat.param.angle_corr;       
     
     //---------------------------------------------- 
-    //отнимаем поправку регулятора по детонации
-    edat.curr_angle-=edat.knock_retard; 
+    //отнимаем поправку регулятора по детонации     
+    edat.curr_angle-=edat.knock_retard;     
     //---------------------------------------------- 
     
     //ограничиваем получившийся УОЗ установленными пределами
@@ -445,8 +445,13 @@ __C_task void main(void)
      edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);         
          
      //---------------------------------------------- 
-     knklogic_detect(&edat, &retard_state);
-     knklogic_retard(&edat, &retard_state);
+     if (edat.param.knock_use_knock_channel)
+     {
+      knklogic_detect(&edat, &retard_state);
+      knklogic_retard(&edat, &retard_state);
+     }
+     else     
+      edat.knock_retard = 0;     
      //----------------------------------------------  
      
      //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       

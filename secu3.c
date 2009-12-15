@@ -292,7 +292,9 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudat
     idling_regulator_init();    
    }
    d->curr_angle=work_function(d, 0);           //базовый УОЗ - функция рабочего режима
-   d->curr_angle+=coolant_function(d);          //добавляем к УОЗ температурную коррекцию
+   d->curr_angle+=coolant_function(d);          //добавляем к УОЗ температурную коррекцию  
+   //отнимаем поправку полученную от регулятора по детонации
+   d->curr_angle-=d->knock_retard;       
    break;     
        
   default:  //непонятная ситуация - угол в ноль       
@@ -440,13 +442,7 @@ __C_task void main(void)
     //КА состояний системы (диспетчер режимов - сердце основного цикла)
     advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
     //добавляем к УОЗ октан-коррекцию
-    edat.curr_angle+=edat.param.angle_corr;       
-    
-    //---------------------------------------------- 
-    //отнимаем поправку регулятора по детонации     
-    edat.curr_angle-=edat.knock_retard;     
-    //---------------------------------------------- 
-    
+    edat.curr_angle+=edat.param.angle_corr;                  
     //ограничиваем получившийся УОЗ установленными пределами
     restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);  
     //------------------------------------------------------------------------

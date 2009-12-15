@@ -21,6 +21,7 @@ typedef struct
  uint16_t knock_value;         //последнее измеренное значение сигнала детонации
 
  uint8_t  sensors_ready;       //датчики обработаны и значения готовы к считыванию
+ uint8_t  measure_all;         //если 1, то производится измерение всех значений
 }adc_state;
 
 adc_state adc;  //переменные состояния АЦП
@@ -73,6 +74,12 @@ void adc_begin_measure_knock(void)
  SETBIT(ADCSRA,ADSC);
 }  
 
+void adc_begin_measure_all(void)
+{
+ adc.measure_all = 1;
+ adc_begin_measure();
+}
+
 uint8_t adc_is_measure_ready(void)
 {
  return adc.sensors_ready; 
@@ -81,6 +88,9 @@ uint8_t adc_is_measure_ready(void)
 //инициализация АЦП и его переменных состояния
 void adc_init(void)
 { 
+ adc.knock_value = 0;
+ adc.measure_all = 0;
+
  //инициализация АЦП, параметры: f = 125.000 kHz, 
  //внутренний источник опорного напряжения - 2.56V, прерывание разрешено 
  ADMUX=ADC_VREF_TYPE;
@@ -113,8 +123,17 @@ __interrupt void ADC_isr(void)
 
   case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
    adc.temp_value = ADC;      
-   ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
-   adc.sensors_ready = 1;                
+   if (0==adc.measure_all)
+   {
+    ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
+    adc.sensors_ready = 1;                
+   }
+   else
+   {
+    adc.measure_all = 0;
+    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE; 
+    SETBIT(ADCSRA,ADSC);
+   }     
    break; 
          
   case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации

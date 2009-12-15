@@ -107,10 +107,7 @@ void meas_initial_measure(ecudata* d)
  {
   adc_begin_measure();                                                     
   while(!adc_is_measure_ready()); 
-    
-  adc_begin_measure_knock();                                                     
-  while(!adc_is_measure_ready());    
-    
+                      
   meas_update_values_buffers(d);
  }while(--i);            
  __restore_interrupt(_t);

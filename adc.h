@@ -37,6 +37,10 @@ void adc_begin_measure(void);
 //измерение холостым.
 void adc_begin_measure_knock(void);
 
+//запускает измерение значений с датчиков и сигнала с ДД. Первыми снимаются значения
+//с датчиков, последним сигнал с ДД
+void adc_begin_measure_all(void);
+
 //возвращает не 0 если измерение готово (АЦП не занято)
 uint8_t adc_is_measure_ready(void); 
 

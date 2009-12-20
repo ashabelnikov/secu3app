@@ -170,18 +170,20 @@ void process_uart_interface(ecudata* d)
   //аналогично для контороля детонации, обязательно после CKPS_PAR!
   if (descriptor == KNOCK_PAR)
   {
-    //инициализируем процессор детонации в случае если он не использовался, а теперь поступила коменда его использовать.
+    //инициализируем процессор детонации в случае если он не использовался, а теперь поступила команда его использовать.
     if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
      if (!knock_module_initialize())
      {//чип сигнального процессора детонации неисправен - зажигаем СЕ
       ce_set_error(ECUERROR_KSP_CHIP_FAILED);   
      }    
 
-    ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);  
     knock_set_band_pass(edat.param.knock_bpf_frequency);
+    //gain устанавливается в каждом рабочем цикле
+    knock_set_int_time_constant(edat.param.knock_int_time_const);
+    ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);  
     ckps_use_knock_channel(d->param.knock_use_knock_channel);   
     
-    //запоминаем состояние флага для того чтобы потом можно было опрежелить нужно инициализировать
+    //запоминаем состояние флага для того чтобы потом можно было определить нужно инициализировать
     //процессор детонации или нет.   
     d->use_knock_channel_prev = d->param.knock_use_knock_channel;  
   }
@@ -353,10 +355,11 @@ __C_task void main(void)
   //инициализируем модуль ДПКВ             
   ckps_init_state();  
   ckps_set_edge_type(edat.param.ckps_edge_type);
-  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc);
+  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
   ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
   ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);  
   ckps_use_knock_channel(edat.param.knock_use_knock_channel);
+  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--now valid initialization
     
   //разрешаем глобально прерывания            
   __enable_interrupt();    

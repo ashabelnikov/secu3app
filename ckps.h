@@ -47,5 +47,11 @@ uint8_t ckps_get_current_cog(void);
 //возвращает 1, если номер текущего зуба изменился.
 uint8_t ckps_is_cog_changed(void);
 
+//установка кол-ва цилиндров двигателя (четное число)
+//допустимые значения: 2,4,6,8 
+void ckps_set_cyl_number(uint8_t i_cyl_number);
+
+//производит инициализацию линий портов
+void ckps_init_ports(void);
 
 #endif //_CKPS_H_

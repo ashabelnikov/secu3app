@@ -162,6 +162,7 @@ void process_uart_interface(ecudata* d)
   //если были изменены параметры ДПКВ, то немедленно применяем их на работающем двигателе
   if (descriptor == CKPS_PAR)
   {
+    ckps_set_cyl_number(d->param.ckps_engine_cyl);  
     ckps_set_edge_type(d->param.ckps_edge_type);
     ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
     ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
@@ -248,6 +249,8 @@ void load_eeprom_params(ecudata* d)
  }  
 } 
    
+//TODO каждое устройство должно само инициализировать нужные ему линии портов.
+//По подобию ckps_init_ports()
 void init_io_ports(void)
 {
   //конфигурируем порты ввода/вывода
@@ -256,9 +259,10 @@ void init_io_ports(void)
   PORTB  = (1<<PB2)|(1<<PB4)|(1<<PB3)|(1<<PB0);             //CE горит(для проверки), клапан ЭПХХ включен, интерфейс с HIP выключен (CS=1, TEST=1)
   DDRB   = (1<<DDB4)|(1<<DDB3)|(1<<DDB2)|(1<<DDB1)|(1<<DDB0);   
   PORTC  = (1<<PC3)|(1<<PC2)/*|(1<<PC7)*/; //ЭМР выключен
-  DDRC   = (1<<DDC7);  //выход для управления клапаном ЭМР
-  PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);                      //стартер заблокирован, режим интегрирования для HIP
-  DDRD   = (1<<DDD7)|(1<<DDD5)|(1<<DDD4)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD 
+  DDRC   = (1<<DDC7);//выход для управления клапаном ЭМР
+  PORTD  = (1<<PD6)|(1<<PD3)|(1<<PD7);      //стартер заблокирован, режим интегрирования для HIP
+  DDRD   = (1<<DDD7)|(1<<DDD3)|(1<<DDD1); //вых. PD1 пока UART не проинициализировал TxD
+  ckps_init_ports();
 }
 
 void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudata* d)
@@ -352,8 +356,9 @@ __C_task void main(void)
   //инициализируем UART
   uart_init(edat.param.uart_divisor);
   
-  //инициализируем модуль ДПКВ             
+  //инициализируем модуль ДПКВ              
   ckps_init_state();  
+  ckps_set_cyl_number(edat.param.ckps_engine_cyl);   
   ckps_set_edge_type(edat.param.ckps_edge_type);
   ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
   ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);

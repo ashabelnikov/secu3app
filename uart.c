@@ -207,7 +207,8 @@ void uart_send_packet(ecudata* d, uint8_t send_mode)
    case CKPS_PAR:
        build_i4h(d->param.ckps_edge_type);       
        build_i8h(d->param.ckps_cogs_btdc);   
-       build_i8h(d->param.ckps_ignit_cogs);  
+       build_i8h(d->param.ckps_ignit_cogs);
+       build_i8h(d->param.ckps_engine_cyl);  
        break;
    case OP_COMP_NC:    
        build_i4h(d->op_comp_code);              
@@ -350,7 +351,8 @@ uint8_t uart_recept_packet(ecudata* d)
     case CKPS_PAR:
        d->param.ckps_edge_type = recept_i4h();       
        d->param.ckps_cogs_btdc  = recept_i8h();  
-       d->param.ckps_ignit_cogs = recept_i8h();  
+       d->param.ckps_ignit_cogs = recept_i8h();
+       d->param.ckps_engine_cyl = recept_i8h();  
        break;       
        
     case OP_COMP_NC: 

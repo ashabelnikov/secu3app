@@ -46,4 +46,3 @@ void knklogic_retard(ecudata* d, retard_state_t* p_rs)
     --(p_rs->delay_counter);
  }     
 }
-

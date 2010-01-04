@@ -42,4 +42,7 @@ uint8_t knock_module_initialize(void);
 #define KNOCK_INTMODE_HOLD 0
 void knock_set_integration_mode(uint8_t mode); 
 
+//инициализация используемых портов ввода/вывода
+void knock_init_ports(void);
+
 #endif //_KNOCK_H_

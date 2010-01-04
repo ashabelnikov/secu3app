@@ -205,3 +205,11 @@ __interrupt void spi_dataready_isr(void)
    break;    
  }      
 }
+
+void knock_init_ports(void)
+{
+ DDRB |= (1<<DDB4)|(1<<DDB3);   
+ DDRD |= (1<<DDD3);
+ PORTB|= (1<<PB4)|(1<<PB3); //интерфейс с HIP выключен (CS=1, TEST=1)
+ PORTD|= (1<<PD3);          //режим интегрирования для HIP
+}

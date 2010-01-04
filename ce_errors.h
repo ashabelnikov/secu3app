@@ -27,4 +27,8 @@ void ce_clear_error(uint8_t error);
 //Вызывать только если EEPROM готово!
 void ce_save_marged_errors(void);
 
+//инициализация используемых портов ввода/вывода
+void ce_init_ports(void);
+
+
 #endif //_CE_ERRORS_H_

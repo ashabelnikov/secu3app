@@ -27,13 +27,13 @@ typedef struct
 ce_state_t ce_state = {0,0,0};
 
 //операции над ошибками
-#pragma inline
+/*#pragma inline*/
 void ce_set_error(uint8_t error)  
 {
  SETBIT(ce_state.ecuerrors, error);
 }
 
-#pragma inline
+/*#pragma inline*/
 void ce_clear_error(uint8_t error)
 {
  CLEARBIT(ce_state.ecuerrors, error);
@@ -101,4 +101,10 @@ void ce_save_marged_errors(void)
  ce_state.write_errors = temp_errors | ce_state.merged_errors; 
  if (ce_state.write_errors!=temp_errors)    
   eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t));      
+}
+
+void ce_init_ports(void)
+{
+ DDRB |= (1<<DDB2); //выход для CE  
+ PORTB|= (1<<PB2);  //CE горит(для проверки)
 }

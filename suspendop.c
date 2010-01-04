@@ -21,7 +21,7 @@
 
 uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 
-#pragma inline
+/*#pragma inline*/
 void sop_set_operation(uint8_t opcode) 
 {
  suspended_opcodes[(opcode)] = (opcode);

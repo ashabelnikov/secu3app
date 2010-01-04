@@ -1018,17 +1018,17 @@
         <option>
           <name>CCOptimization</name>
           <version>1</version>
-          <state>3</state>
+          <state>4</state>
         </option>
         <option>
           <name>CCAllowList</name>
           <version>3</version>
-          <state>00000</state>
+          <state>11111</state>
         </option>
         <option>
           <name>CCCrossCallPassesList</name>
           <version>8</version>
-          <state>3</state>
+          <state>0</state>
         </option>
         <option>
           <name>CCMakeLibraryModule</name>
@@ -1068,7 +1068,7 @@
         </option>
         <option>
           <name>CCOptForceCrossCall</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCCharIs</name>
@@ -1562,10 +1562,28 @@
     <name>$PROJ_DIR$\eeprom.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\ephh.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\ephh.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\epm.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\epm.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\funconv.c</name>
   </file>
   <file>
     <name>$PROJ_DIR$\funconv.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\jumper.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\jumper.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\knklogic.c</name>
@@ -1595,6 +1613,12 @@
     <name>$PROJ_DIR$\secu3.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\starter.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\starter.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\suspendop.c</name>
   </file>
   <file>
@@ -1611,6 +1635,12 @@
   </file>
   <file>
     <name>$PROJ_DIR$\ufcodes.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\ventilator.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\ventilator.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\vstimer.c</name>

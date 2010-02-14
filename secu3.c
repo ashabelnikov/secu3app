@@ -250,7 +250,8 @@ void init_ecu_data(ecudata* d)
  edat.knock_retard = 0;
  edat.ecuerrors_for_transfer = 0;
  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
- edat.engine_mode = EM_START;   
+ edat.engine_mode = EM_START;
+ edat.ce_state = 0;   
 }      
             
 __C_task void main(void)

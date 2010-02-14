@@ -17,6 +17,10 @@
 #include "eeprom.h"
 #include "secu3.h"
 
+//включает/выключает лампу Check Engine  
+#define ce_set_state(s)  {PORTB_Bit2 = s;}
+#define ce_get_state() (PORTB_Bit2)
+
 typedef struct
 {
  uint16_t ecuerrors;         //максимум 16 кодов ошибок
@@ -70,13 +74,17 @@ void ce_check_engine(ecudata* d, s_timer8* ce_control_time_counter)
 
  //если таймер отсчитал время, то гасим СЕ
  if (s_timer_is_action(*ce_control_time_counter))
-  SET_CE_STATE(0);       
+ {
+  ce_set_state(0);       
+  d->ce_state = 0; //<--doubling
+ }
 
  //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер 
  if (ce_state.ecuerrors!=0)
  {
   s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
-  SET_CE_STATE(1);  
+  ce_set_state(1);
+  d->ce_state = 1;  //<--doubling
  }
 
  temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
@@ -94,7 +102,7 @@ void ce_check_engine(ecudata* d, s_timer8* ce_control_time_counter)
  d->ecuerrors_for_transfer|= ce_state.ecuerrors;
 }
 
-void ce_save_marged_errors(void)
+void ce_save_merged_errors(void)
 {
  uint16_t temp_errors;
  eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));

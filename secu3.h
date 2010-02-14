@@ -38,6 +38,7 @@ typedef struct ecudata
  
  uint8_t  ephh_valve;                   //состояние клапана ЭПХХ
  uint8_t  epm_valve;                    //состояние клапана ЭМР
+ uint8_t  ce_state;                     //состояние лампы "CE"
  uint8_t  airflow;                      //расход воздуха
  int16_t  curr_angle;                   //текущий угол опережения
  int16_t  knock_retard;                 //поправка УОЗ от регулятора по детонации

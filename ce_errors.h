@@ -11,9 +11,6 @@
 #define ECUERROR_PROGRAM_CODE_BROKEN    2
 #define ECUERROR_KSP_CHIP_FAILED        3
 
-//включает/выключает лампу Check Engine  
-#define SET_CE_STATE(s)  {PORTB_Bit2 = s;}
-
 struct ecudata;
 
 //производит проверку наличия ошибок и управляет лампой CE.
@@ -25,7 +22,7 @@ void ce_clear_error(uint8_t error);
 
 //Производит сохранение всех накопленных во временной памяти ошибок в EEPROM. 
 //Вызывать только если EEPROM готово!
-void ce_save_marged_errors(void);
+void ce_save_merged_errors(void);
 
 //инициализация используемых портов ввода/вывода
 void ce_init_ports(void);

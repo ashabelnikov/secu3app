@@ -68,7 +68,7 @@ void sop_execute_operations(ecudata* d)
   //она еще не была сохранена. Для этого производится чтение и сравнение.  
   if (eeprom_is_idle())
   {      
-   ce_save_marged_errors();   
+   ce_save_merged_errors();   
                 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SAVE_CE_MERGED_ERRORS] = SOP_NA;

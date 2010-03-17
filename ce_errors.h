@@ -27,5 +27,8 @@ void ce_save_merged_errors(void);
 //инициализация используемых портов ввода/вывода
 void ce_init_ports(void);
 
+//включает/выключает лампу Check Engine  
+#define ce_set_state(s)  {PORTB_Bit2 = s;}
+#define ce_get_state() (PORTB_Bit2)
 
 #endif //_CE_ERRORS_H_

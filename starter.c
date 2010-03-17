@@ -10,6 +10,8 @@
 #include <iom16.h>
 #include "secu3.h"
 #include "starter.h"
+#include "vstimer.h"
+#include "ce_errors.h"
 
 //блокирует/разблокирывает стартер
 #define SET_STARTER_BLOCKING_STATE(s) {PORTD_Bit7 = s;}
@@ -39,7 +41,7 @@ void starter_control(struct ecudata* d)
  if (d->airflow > 15)
  {
   s_timer_set(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
-  SET_CE_STATE(1);  
+  ce_set_state(1);  
  }
 #endif
 }

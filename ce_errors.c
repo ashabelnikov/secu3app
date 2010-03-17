@@ -17,10 +17,6 @@
 #include "eeprom.h"
 #include "secu3.h"
 
-//включает/выключает лампу Check Engine  
-#define ce_set_state(s)  {PORTB_Bit2 = s;}
-#define ce_get_state() (PORTB_Bit2)
-
 typedef struct
 {
  uint16_t ecuerrors;         //максимум 16 кодов ошибок

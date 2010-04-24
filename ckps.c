@@ -395,7 +395,7 @@ void process_ckps_cogs(void)
     knock_set_integration_mode(KNOCK_INTMODE_INT);
       
    //заканчиваем слушать детонацию (закрытие окна) и запускаем процесс измерения 
-   if (ckps.cog == chanstate[i].knock_wnd_begin)
+   if (ckps.cog == chanstate[i].knock_wnd_end)
    {
     knock_set_integration_mode(KNOCK_INTMODE_HOLD); 
     adc_begin_measure_knock(); 

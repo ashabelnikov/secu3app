@@ -18,8 +18,11 @@ void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_ad
 //возвращает не 0 если в текущий момент никакая операция не выполняется
 uint8_t eeprom_is_idle(void);
 
-//читает указанный блок данных из EEPROM
+//читает указанный блок данных из EEPROM (без использования прерываний)
 void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size);
+
+//записывает указанный блок данных в EEPROM (без использования прерываний)
+void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size);
 
 //возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())
 uint8_t eeprom_take_completed_opcode(void);  

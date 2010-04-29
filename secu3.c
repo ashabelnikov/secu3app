@@ -193,7 +193,8 @@ void load_eeprom_params(ecudata* d)
  }
  else
  { //перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены    
-  memcpy_P(&d->param,&def_param,sizeof(params)); 
+  memcpy_P(&d->param,&def_param,sizeof(params));
+  ce_clear_errors(); //сбрасываем сохраненные ошибки
  }  
 } 
    

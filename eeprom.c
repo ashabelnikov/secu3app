@@ -103,3 +103,21 @@ void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
 
  EEAR=0x000;      
 }
+
+void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size)
+{
+ uint8_t _t;
+ uint8_t *src = (uint8_t*)sram_src;  
+ do
+ {
+  _t=__save_interrupt();
+  __disable_interrupt();
+  __EEPUT(eeaddr, *src);
+  __restore_interrupt(_t);
+
+  eeaddr++;
+  src++;
+ }while(--size); 
+
+ EEAR=0x000;      
+}

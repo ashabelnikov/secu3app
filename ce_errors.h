@@ -24,6 +24,9 @@ void ce_clear_error(uint8_t error);
 //Вызывать только если EEPROM готово!
 void ce_save_merged_errors(void);
 
+//очищает ошибки сохраненные в EEPROM
+void ce_clear_errors(void);
+
 //инициализация используемых портов ввода/вывода
 void ce_init_ports(void);
 

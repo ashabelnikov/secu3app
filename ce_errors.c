@@ -7,6 +7,7 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
+#include <string.h>
 #include <iom16.h>
 #include "ce_errors.h"
 #include "bitmask.h"
@@ -105,6 +106,12 @@ void ce_save_merged_errors(void)
  ce_state.write_errors = temp_errors | ce_state.merged_errors; 
  if (ce_state.write_errors!=temp_errors)    
   eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t));      
+}
+
+void ce_clear_errors(void)
+{
+  memset(&ce_state, 0, sizeof(ce_state_t));
+  eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));       
 }
 
 void ce_init_ports(void)

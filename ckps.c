@@ -154,8 +154,14 @@ void ckps_init_ports(void)
  
  //после включения зажигания коммутаторы недолжны быть в режиме накопления,
  //поэтому устанавливаем на их входах низкий уровень.
+#ifndef INVERSE_IGN_OUTPUTS
  PORTD|= (1<<PD5)|(1<<PD4)|(1<<PD6); //1-й и 2-й каналы зажигания, подтяжка для ICP1
  PORTC|= (1<<PC1)|(1<<PC0); //3-й и 4-й каналы зажигания
+#else //режим инверсии выходов
+ PORTD&= ~((1<<PD5)|(1<<PD4));
+ PORTC&= ~((1<<PC1)|(1<<PC0));
+ PORTD|=  (1<<PD6); 
+#endif 
 }
 
 //Высчитывание мгновенной частоты вращения коленвала по измеренному времени прохождения 30 зубьев шкива.
@@ -302,6 +308,30 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  __restore_interrupt(_t);
 }
 
+//Вспомогательный макрос
+//конец импульса накачки (момент искры) для 1-го,2-го,3-го,4-го каналов соответственно
+#define TURNON_IGN_CHANNELS(){\
+  case 0: PORTD |= (1<<PORTD4);\
+   break;\
+  case 1: PORTD |= (1<<PORTD5);\
+   break;\
+  case 2: PORTC |= (1<<PORTC0);\
+   break;\
+  case 3: PORTC |= (1<<PORTC1);\
+   break;}
+
+//Вспомогательный макрос
+//конец импульса запуска зажигания для 1-го,2-го,3-го,4-го каналов соответственно
+#define TURNOFF_IGN_CHANNELS(){\
+ case 0: PORTD &= ~(1<<PORTD4);\
+  break;\
+ case 1: PORTD &= ~(1<<PORTD5);\
+  break;\
+ case 2: PORTC &= ~(1<<PORTC0);\
+  break;\
+ case 3: PORTC &= ~(1<<PORTC1);\
+  break;}  
+
 #pragma vector=TIMER1_COMPA_vect //вектор прерывания по совпадению канала А таймера Т1
 __interrupt void timer1_compa_isr(void)
 {
@@ -309,14 +339,11 @@ __interrupt void timer1_compa_isr(void)
  //накопление энергии и закрыть транзистор (искра).
  switch(ckps.channel_mode)
  {
-  case 0: PORTD |= (1<<PORTD4); //конец импульса накачки (момент искры) для 1-го канала
-   break;
-  case 1: PORTD |= (1<<PORTD5); //конец импульса накачки (момент искры) для 2-го канала
-   break;
-  case 2: PORTC |= (1<<PORTC0); //конец импульса накачки (момент искры) для 3-го канала
-   break;
-  case 3: PORTC |= (1<<PORTC1); //конец импульса накачки (момент искры) для 4-го канала
-   break;
+#ifndef INVERSE_IGN_OUTPUTS 
+  TURNON_IGN_CHANNELS();
+#else
+  TURNOFF_IGN_CHANNELS();
+#endif   
   default:
    return; //никакой канал не выбран - CKPS_CHANNEL_MODENA
  }
@@ -327,18 +354,15 @@ __interrupt void timer1_compa_isr(void)
 #pragma inline
 void turn_off_ignition_channel(uint8_t i_channel)
 {
- //Завершение импульса запмуска коммутатора, перевод линии порта в низкий уровень - заставляем
+ //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
  //коммутатор перейти в режим накопления энегрии
  switch(i_channel)
  {
- case 0: PORTD &= ~(1<<PORTD4); //конец импульса запуска зажигания для 1-го канала
-  break;
- case 1: PORTD &= ~(1<<PORTD5); //конец импульса запуска зажигания для 2-го канала
-  break;
- case 2: PORTC &= ~(1<<PORTC0); //конец импульса запуска зажигания для 3-го канала
-  break;
- case 3: PORTC &= ~(1<<PORTC1); //конец импульса запуска зажигания для 4-го канала
-  break;  
+#ifndef INVERSE_IGN_OUTPUTS 
+  TURNOFF_IGN_CHANNELS();
+#else
+  TURNON_IGN_CHANNELS();
+#endif 
  }
 }
   

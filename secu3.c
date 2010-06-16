@@ -305,6 +305,8 @@ __C_task void main(void)
  ckps_use_knock_channel(edat.param.knock_use_knock_channel);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--now valid initialization
     
+ vent_init_state();   
+    
  //разрешаем глобально прерывания            
  __enable_interrupt();    
 

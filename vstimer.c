@@ -33,6 +33,6 @@ __interrupt void timer2_ovf_isr(void)
 
 void s_timer_init(void)
 {
- TCCR2 = (1<<CS22)|(1<<CS21)|(1<<CS20);      //clock = 15.625kHz  
+ TCCR2|= (1<<CS22)|(1<<CS21)|(1<<CS20);      //clock = 15.625kHz  
  TIMSK|= (1<<TOIE2); //разрешаем прерывание по переполнению таймера 2                          
 }

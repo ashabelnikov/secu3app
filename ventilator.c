@@ -15,6 +15,7 @@
 //включает/выключает вентилятор
 #define SET_VENTILATOR_STATE(s) PORTB_Bit1 = (s)
 
+//number of PWM discretes
 #define PWM_STEPS 10
 
 volatile uint8_t pwm_duty_counter;
@@ -28,26 +29,29 @@ void vent_init_ports(void)
 }
 
 void vent_init_state(void)
-{
- //TIMSK|=(1 << OCIE2);
+{ 
  pwm_duty_counter = 0;
- pwm_duty = 0; //off
+ pwm_duty = 0; // 0%
 }
 
-
-
-
-void set_duty(uint8_t duty)
+void vent_set_duty(uint8_t duty)
 {
- if (0==duty)
+ pwm_duty = duty;
+ 
+ //We don't need interrupts if duty is 0 or 100%
+ if (duty == 0)
  {
-  TIMSK&=~(1 << OCIE2);
-  SET_VENTILATOR_STATE(0);   
+  TIFR&=~(1 << OCIE2);
+  SET_VENTILATOR_STATE(0);
+ }
+ else if (duty == PWM_STEPS)
+ {
+  TIFR&=~(1 << OCIE2);
+  SET_VENTILATOR_STATE(1);
  }
  else
-  TIMSK|=(1 << OCIE2);
+  TIFR|=(1 << OCIE2);  
 }
-
 
 //прерывание по сравненю Т/С 2 - для генерации ШИМ
 //Вызывается каждые 10мс
@@ -55,16 +59,15 @@ void set_duty(uint8_t duty)
 __interrupt void timer2_comp_isr(void)
 { 
  OCR2 = OCR2 + PWM_STEPS;
-
  __enable_interrupt(); //разрешаем более приоритетные прерывания
  
- if (pwm_duty_counter <= pwm_duty)
+ if (pwm_duty_counter >= PWM_STEPS)
+  pwm_duty_counter = 0;  
+ 
+ if (pwm_duty_counter++ < pwm_duty)
   SET_VENTILATOR_STATE(1);
  else
   SET_VENTILATOR_STATE(0);  
-
- if (++pwm_duty_counter >= PWM_STEPS)
-  pwm_duty_counter = 0;  
 }
 
 void vent_control(ecudata *d)
@@ -78,7 +81,5 @@ void vent_control(ecudata *d)
    SET_VENTILATOR_STATE(0); 
   }*/
   
-//  set_duty(0);   
-  set_duty(5);  
-//  set_duty(10);  
+  vent_set_duty(5);  
 }

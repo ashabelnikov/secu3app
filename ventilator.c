@@ -41,16 +41,16 @@ void vent_set_duty(uint8_t duty)
  //We don't need interrupts if duty is 0 or 100%
  if (duty == 0)
  {
-  TIFR&=~(1 << OCIE2);
+  TIMSK&=~(1 << OCIE2);
   SET_VENTILATOR_STATE(0);
  }
  else if (duty == PWM_STEPS)
  {
-  TIFR&=~(1 << OCIE2);
+  TIMSK&=~(1 << OCIE2);
   SET_VENTILATOR_STATE(1);
  }
  else
-  TIFR|=(1 << OCIE2);  
+  TIMSK|=(1 << OCIE2);  
 }
 
 //прерывание по сравненю Т/С 2 - для генерации ШИМ
@@ -58,7 +58,7 @@ void vent_set_duty(uint8_t duty)
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 
- OCR2 = OCR2 + PWM_STEPS;
+ OCR2+= PWM_STEPS;
  __enable_interrupt(); //разрешаем более приоритетные прерывания
  
  if (pwm_duty_counter >= PWM_STEPS)

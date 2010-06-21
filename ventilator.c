@@ -57,7 +57,6 @@ void vent_set_duty(uint8_t duty)
 }
 
 //прерывание по сравненю Т/С 2 - для генерации ШИМ
-//Вызывается каждые 10мс
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 

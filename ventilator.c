@@ -18,7 +18,7 @@
 //number of PWM discretes
 #define PWM_STEPS 10
 
-volatile uint8_t pwm_duty_counter;
+volatile uint8_t pwm_state; //0 - passive, 1 - active
 volatile uint8_t pwm_duty;
 
 void vent_init_ports(void)
@@ -30,7 +30,7 @@ void vent_init_ports(void)
 
 void vent_init_state(void)
 { 
- pwm_duty_counter = 0;
+ pwm_state = 0;
  pwm_duty = 0; // 0%
 }
 
@@ -58,16 +58,18 @@ void vent_set_duty(uint8_t duty)
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 
- OCR2+= PWM_STEPS;
- __enable_interrupt(); //разрешаем более приоритетные прерывания
- 
- if (pwm_duty_counter >= PWM_STEPS)
-  pwm_duty_counter = 0;  
- 
- if (pwm_duty_counter++ < pwm_duty)
-  SET_VENTILATOR_STATE(1);
- else
-  SET_VENTILATOR_STATE(0);  
+  if (0==pwm_state)
+  { //start active part
+   SET_VENTILATOR_STATE(1);
+   OCR2+=pwm_duty;
+   ++pwm_state;
+  }
+  else
+  { //start passive part
+   SET_VENTILATOR_STATE(0);
+   OCR2+=PWM_STEPS-pwm_duty;
+   --pwm_state;   
+  } 
 }
 
 void vent_control(ecudata *d)

@@ -18,6 +18,9 @@
 //number of PWM discretes
 #define PWM_STEPS 10
 
+//MUST be same as in vstimer!
+#define TIMER2_RELOAD_VALUE 100
+
 volatile uint8_t pwm_state; //0 - passive, 1 - active
 volatile uint8_t pwm_duty;
 
@@ -70,6 +73,9 @@ __interrupt void timer2_comp_isr(void)
    OCR2+=PWM_STEPS-pwm_duty;
    --pwm_state;   
   } 
+  
+  if (OCR2 < TIMER2_RELOAD_VALUE)
+    OCR2+=TIMER2_RELOAD_VALUE;
 }
 
 void vent_control(ecudata *d)

@@ -62,21 +62,24 @@ void vent_set_duty(uint8_t duty)
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 
+  uint8_t r = OCR2;
   if (0==pwm_state)
   { //start active part
    SET_VENTILATOR_STATE(1);
-   OCR2+=pwm_duty;
+   r+=pwm_duty;
    ++pwm_state;
   }
   else
   { //start passive part
    SET_VENTILATOR_STATE(0);
-   OCR2+=PWM_STEPS-pwm_duty;
+   r+=PWM_STEPS-pwm_duty;
    --pwm_state;   
   } 
   
-  if (OCR2 < TIMER2_RELOAD_VALUE)
-    OCR2+=TIMER2_RELOAD_VALUE;
+  if (r < TIMER2_RELOAD_VALUE)
+    r+=TIMER2_RELOAD_VALUE;
+    
+  OCR2 = r;
 }
 
 void vent_control(ecudata *d)

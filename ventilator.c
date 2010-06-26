@@ -36,6 +36,7 @@ void vent_init_state(void)
  pwm_state = 0;
  pwm_duty = 0; // 0%
  OCR2 = TIMER2_RELOAD_VALUE + 5; 
+ TIMSK|=(1 << OCIE2);
 }
 
 void vent_set_duty(uint8_t duty)
@@ -43,7 +44,7 @@ void vent_set_duty(uint8_t duty)
  pwm_duty = duty;
  
  //We don't need interrupts if duty is 0 or 100%
- if (duty == 0)
+ /*if (duty == 0)
  {
   TIMSK&=~(1 << OCIE2);
   SET_VENTILATOR_STATE(0);
@@ -54,7 +55,7 @@ void vent_set_duty(uint8_t duty)
   SET_VENTILATOR_STATE(1);
  }
  else
-  TIMSK|=(1 << OCIE2);  
+  TIMSK|=(1 << OCIE2);  */
 }
 
 //прерывание по сравненю Т/С 2 - для генерации ШИМ

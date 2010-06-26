@@ -35,6 +35,7 @@ void vent_init_state(void)
 { 
  pwm_state = 0;
  pwm_duty = 0; // 0%
+ OCR2 = TIMER2_RELOAD_VALUE + 5; 
 }
 
 void vent_set_duty(uint8_t duty)

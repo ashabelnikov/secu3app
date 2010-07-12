@@ -7,14 +7,15 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
-#include <inavr.h>
 #include <iom16.h>
 #include "ventilator.h"
 #include "secu3.h"
 
 //включает/выключает вентилятор
-#define SET_VENTILATOR_STATE(s) PORTB_Bit1 = (s)
+#define SET_VENTILATOR_STATE(s) {PORTB_Bit1 = s;}
 
+
+/*
 //number of PWM discretes
 #define PWM_STEPS 10
 
@@ -23,6 +24,7 @@
 
 volatile uint8_t pwm_state; //0 - passive, 1 - active
 volatile uint8_t pwm_duty;
+*/
 
 void vent_init_ports(void)
 {
@@ -33,29 +35,30 @@ void vent_init_ports(void)
 
 void vent_init_state(void)
 { 
- pwm_state = 0;
+/* pwm_state = 0;
  pwm_duty = 0; // 0%
  OCR2 = TIMER2_RELOAD_VALUE + 5; 
- TIMSK|=(1 << OCIE2);
+ TIMSK|=(1 << OCIE2);*/
 }
 
+/*
 void vent_set_duty(uint8_t duty)
 {
  pwm_duty = duty;
  
  //We don't need interrupts if duty is 0 or 100%
- /*if (duty == 0)
- {
-  TIMSK&=~(1 << OCIE2);
-  SET_VENTILATOR_STATE(0);
- }
- else if (duty == PWM_STEPS)
- {
-  TIMSK&=~(1 << OCIE2);
-  SET_VENTILATOR_STATE(1);
- }
- else
-  TIMSK|=(1 << OCIE2);  */
+// if (duty == 0)
+// {
+//  TIMSK&=~(1 << OCIE2);
+//  SET_VENTILATOR_STATE(0);
+// }
+// else if (duty == PWM_STEPS)
+// {
+//  TIMSK&=~(1 << OCIE2);
+//  SET_VENTILATOR_STATE(1);
+// }
+// else
+//  TIMSK|=(1 << OCIE2);  
 }
 
 //прерывание по сравненю Т/С 2 - для генерации ШИМ
@@ -81,17 +84,18 @@ __interrupt void timer2_comp_isr(void)
     
   OCR2 = r;
 }
+*/
 
 void vent_control(ecudata *d)
 {
  //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе 
- /*if (d->param.tmp_use)
+ if (d->param.tmp_use)
  {
   if (d->sens.temperat >= d->param.vent_on)
    SET_VENTILATOR_STATE(1);
   if (d->sens.temperat <= d->param.vent_off)   
    SET_VENTILATOR_STATE(0); 
-  }*/
-  
-  vent_set_duty(5);  
+  }
+
+ /* vent_set_duty(5);    */
 }

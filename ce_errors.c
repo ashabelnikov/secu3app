@@ -8,7 +8,7 @@
  ****************************************************************/
 
 #include <string.h>
-#include <iom16.h>
+#include <ioavr.h>
 #include "ce_errors.h"
 #include "bitmask.h"
 #include "ckps.h"

@@ -8,7 +8,7 @@
  ****************************************************************/
 
 #include <inavr.h>
-#include <iom16.h>
+#include <ioavr.h>
 #include "ckps.h"
 #include "bitmask.h"
 #include "adc.h"

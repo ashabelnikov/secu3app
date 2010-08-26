@@ -7,7 +7,7 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
-#include <iom16.h>
+#include <ioavr.h>
 #include "secu3.h"
 #include "vstimer.h"
 #include "ephh.h"

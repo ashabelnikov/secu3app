@@ -7,7 +7,7 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
-#include <iom16.h>
+#include <ioavr.h>
 #include <string.h>
 #include "suspendop.h"
 #include "eeprom.h"

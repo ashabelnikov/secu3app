@@ -7,10 +7,10 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
+#include <ioavr.h>
+#include <inavr.h>
 #include "eeprom.h"
 #include "bitmask.h"
-#include <iom16.h>
-#include <inavr.h>
 
 //Описывает информацию необходимую для сохранения данных в EEPROM
 typedef struct 

@@ -8,7 +8,7 @@
  ****************************************************************/
 
 #include <inavr.h>
-#include <iom16.h>
+#include <ioavr.h>
 #include <pgmspace.h>
 
 #include "funconv.h"

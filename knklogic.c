@@ -7,7 +7,7 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 #include <inavr.h>
-#include <iom16.h>
+#include <ioavr.h>
 #include "knklogic.h"
 #include "secu3.h"
 #include "funconv.h"

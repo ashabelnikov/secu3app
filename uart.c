@@ -8,7 +8,7 @@
  ****************************************************************/
 
 #include <ina90.h>
-#include <iom16.h>
+#include <ioavr.h>
 #include <pgmspace.h>
 #include "secu3.h"
 #include "uart.h"

@@ -7,7 +7,7 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
-#include <iom16.h>
+#include <ioavr.h>
 #include "jumper.h"
 
 #define GET_DEFEEPROM_JUMPER_STATE() (PINC_Bit2)

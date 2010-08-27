@@ -7,6 +7,7 @@
  *              ICQ: 405-791-931
  ****************************************************************/
 
+#include <ioavr.h>
 #include <stdlib.h>
 #include "funconv.h"
 #include "adc.h"

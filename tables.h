@@ -35,7 +35,7 @@
 #define _TABLES_H_
 
 #include <stdint.h>
-#include "bootldr.h"   //для того чтобы знать значение SECONDBOOTSTART, и только
+#include "bootldr.h"   //для того чтобы знать значение SECU3BOOTSTART, и только
 
 //определяем количество узлов интерполяции для каждой функции
 #define F_WRK_POINTS_F         16  
@@ -98,12 +98,12 @@ typedef struct params
   int16_t  vent_on;                      //температура включения вентилятора
   int16_t  vent_off;                     //температура выключения вентилятора  
 
-  int16_t  map_adc_factor;
-  int32_t  map_adc_correction;
-  int16_t  ubat_adc_factor;
-  int32_t  ubat_adc_correction;
-  int16_t  temp_adc_factor;
-  int32_t  temp_adc_correction;
+  int16_t  map_adc_factor;               // Поправки для коррекции погрешностей АЦП
+  int32_t  map_adc_correction;           //
+  int16_t  ubat_adc_factor;              //
+  int32_t  ubat_adc_correction;          //
+  int16_t  temp_adc_factor;              //
+  int32_t  temp_adc_correction;          //
   
   uint8_t  ckps_edge_type;                
   uint8_t  ckps_cogs_btdc;
@@ -116,7 +116,7 @@ typedef struct params
   uint16_t map_curve_offset;
   uint16_t map_curve_gradient;
   
-  int16_t  epm_on_threshold; 
+  int16_t  epm_on_threshold;             //порог включения экономайзера мощностных режимов
   
   uint16_t ephh_lot_g;                   //нижний порог ЭПХХ (газ)
   uint16_t ephh_hit_g;                   //верхний порог ЭПХХ (газ)
@@ -159,13 +159,13 @@ typedef struct params
 #define CODE_CRC_SIZE   sizeof(uint16_t) 
 
 //размер кода программы без учета контрольной суммы
-#define CODE_SIZE (SECONDBOOTSTART-CODE_CRC_SIZE)
+#define CODE_SIZE (SECU3BOOTSTART-CODE_CRC_SIZE)
 
 //количество наборов характеристик хранимых в памяти программ
 #define TABLES_NUMBER          8   
 
 //адрес контрольной суммы в прошивке
-#define CODE_CRC_ADDR (SECONDBOOTSTART-CODE_CRC_SIZE)
+#define CODE_CRC_ADDR (SECU3BOOTSTART-CODE_CRC_SIZE)
 
 //адрес массива таблиц - семейств характеристик
 #define TABLES_START (CODE_CRC_ADDR-(sizeof(F_data)*TABLES_NUMBER))

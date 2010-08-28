@@ -11,12 +11,13 @@
 #define _BOOTLDR_H_
 
 //Определяем размер секции бутлоадера в зависимости от выбранной платформы
+//Везде используется размер загрузчика соответствующий значению SECONDBOOTSTART
 #ifdef __ATmega16__
- #define BOOT_LOADER_SIZE  512    //<--second
+ #define BOOT_LOADER_SIZE  512    
 #elif __ATmega32__
- #define BOOT_LOADER_SIZE  512    //<--first
+ #define BOOT_LOADER_SIZE  1024   
 #elif __ATmega64__
- #define BOOT_LOADER_SIZE  1024   //<--first 
+ #define BOOT_LOADER_SIZE  2048
 #else
  #error "Not supported platform!"  
 #endif 

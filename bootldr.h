@@ -12,9 +12,11 @@
 
 //Определяем размер секции бутлоадера в зависимости от выбранной платформы
 #ifdef __ATmega16__
- #define BOOT_LOADER_SIZE  512
+ #define BOOT_LOADER_SIZE  512    //<--second
 #elif __ATmega32__
- #define BOOT_LOADER_SIZE  512
+ #define BOOT_LOADER_SIZE  512    //<--first
+#elif __ATmega64__
+ #define BOOT_LOADER_SIZE  1024   //<--first 
 #else
  #error "Not supported platform!"  
 #endif 
@@ -64,6 +66,8 @@ __flash const uint8_t BootLoader[BOOT_LOADER_SIZE]@SECU3BOOTSTART =
 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 #elif __ATmega32__
+ #error "Not implemented yet!"
+#elif __ATmega64__
  #error "Not implemented yet!"
 #else
  #error "Not supported platform!"

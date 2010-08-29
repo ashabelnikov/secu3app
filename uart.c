@@ -15,6 +15,26 @@
 #include "ufcodes.h"
 #include "bitmask.h"
 
+//Mega64 compatibility
+#ifdef __ATmega64__
+#define UBRRL UBRR0L
+#define UBRRH UBRR0H
+#define RXEN  RXEN0
+#define TXEN  TXEN0
+#define UDR   UDR0
+#define UDRE  UDRE0
+#define RXC   RXC0
+#define RXCIE RXCIE0
+#define UCSRA UCSR0A
+#define UCSRB UCSR0B
+#define UCSRC UCSR0C
+#define UDRIE UDRIE0
+#define UCSZ0 UCSZ00
+#define UCSZ1 UCSZ01
+#define USART_UDRE_vect USART0_UDRE_vect
+#define USART_RXC_vect USART0_RXC_vect
+#endif
+
 typedef struct
 {
  uint8_t send_mode;
@@ -422,7 +442,12 @@ void uart_init(uint16_t baud)
  UBRRL = (uint8_t)baud;
  UCSRA = 0;                                                  //удвоение не используем 
  UCSRB=(1<<RXCIE)|(1<<RXEN)|(1<<TXEN);                       //приемник,прерывание по приему и передатчик разрешены
+#ifdef URSEL 
  UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контроля четности                                      
+#else
+ UCSRC=/*|(1<<USBS)*/(1<<UCSZ1)|(1<<UCSZ0);                  //8 бит, 1 стоп, нет контроля четности                                       
+#endif
+
  uart.send_size = 0;                                         //передатчик ни чем не озабочен
  uart.recv_size = 0;                                         //нет принятых данных
  uart.send_mode = SENSOR_DAT;

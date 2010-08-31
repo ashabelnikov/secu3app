@@ -1538,6 +1538,9 @@
     <name>$PROJ_DIR$\bitmask.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\bootldr.c</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\bootldr.h</name>
   </file>
   <file>

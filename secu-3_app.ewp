@@ -1631,6 +1631,9 @@
     <name>$PROJ_DIR$\suspendop.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\tables.c</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\tables.h</name>
   </file>
   <file>

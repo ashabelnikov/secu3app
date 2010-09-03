@@ -16,7 +16,7 @@ int16_t work_function(struct ecudata* d, uint8_t i_update_airflow_only);
 int16_t coolant_function(struct ecudata* d);
 uint8_t knock_attenuator_function(struct ecudata* d);
 void idling_regulator_init(void);
-int16_t idling_pregulator(struct ecudata* d, s_timer8* io_timer);
+int16_t idling_pregulator(struct ecudata* d, volatile s_timer8* io_timer);
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m);
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
 

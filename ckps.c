@@ -54,28 +54,28 @@ typedef struct
  uint8_t  ckps_new_engine_cycle_happen:1;      //флаг синхронизации с вращением  
  uint8_t  ckps_use_knock_channel:1;            //признак использования канала детонации
  uint8_t  ckps_need_to_set_channel:1;                      
-}CKPSFLAGS;
+}ckpsflags_t;
 
 typedef struct
 {
  uint16_t icr_prev;                   //предыдущее значение регистра захвата
- uint16_t period_curr;                //последнй измеренный межзубный период
+ volatile uint16_t period_curr;       //последнй измеренный межзубный период
  uint16_t period_prev;                //предыдущее значение межзубного периода
- uint8_t  cog;                        //считает зубья после выреза, начинает считать с 1
+ volatile uint8_t  cog;               //считает зубья после выреза, начинает считать с 1
  uint16_t measure_start_value;        //запоминает значение регистра захвата для измерения периода полуоборота
  uint16_t current_angle;              //отсчитывает заданный УОЗ при прохождении каждого зуба
- uint16_t half_turn_period;           //хранит последнее измерение времени прохождения n зубьев  
+ volatile uint16_t half_turn_period;  //хранит последнее измерение времени прохождения n зубьев  
  int16_t  advance_angle;              //требуемый УОЗ * ANGLE_MULTIPLAYER
- int16_t  advance_angle_buffered;     
+ volatile int16_t advance_angle_buffered;     
  uint8_t  ignition_cogs;              //кол-во зубьев определяющее длительность импульсов запуска коммутаторов
  uint8_t  starting_mode;              //состояние конечного автомата обработки зубьев на пуске
  uint8_t  channel_mode;               //определяет какой канал зажигания нужно запускать в данный момент
- uint8_t  cogs_btdc;                  //кол-во зубьев от синхрометки до в.м.т первого цилиндра 
+ volatile uint8_t  cogs_btdc;         //кол-во зубьев от синхрометки до в.м.т первого цилиндра 
  int8_t   knock_wnd_begin_abs;        //начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т 
  int8_t   knock_wnd_end_abs;          //конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т  
- uint8_t  chan_number;                //кол-во каналов зажигания
+ volatile uint8_t chan_number;        //кол-во каналов зажигания
  uint32_t frq_calc_dividend;          //делимое для расчета частоты вращения
-}CKPSSTATE;
+}ckpsstate_t;
  
 //Предрасчитанные данные(опорные точки) и данные состояния для отдельного канала зажигания (пара цилиндров)
 //2ц: cylstate_t[0]
@@ -84,18 +84,18 @@ typedef struct
 //8ц: cylstate_t[0], cylstate_t[1], cylstate_t[2], cylstate_t[3]
 typedef struct
 {
- uint8_t  ignition_pulse_cogs;        //отсчитывает зубья импульса зажигания для цилиндров 1-4
- uint8_t  cogs_latch;                 //определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных
- uint8_t  cogs_btdc;                  //определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. циклами)
- uint8_t  knock_wnd_begin;            //определяет номер зуба на котором открывается окно фазовой селекции сигнала ДД (начало интегрирования) 
- uint8_t  knock_wnd_end;              //определяет номер зуба на котором закрывается окно фазовой селекции сигнала ДД (конец интегрирования)
+ volatile uint8_t ignition_pulse_cogs;//отсчитывает зубья импульса зажигания для цилиндров 1-4
+ volatile uint8_t cogs_latch;         //определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных
+ volatile uint8_t cogs_btdc;          //определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. циклами)
+ volatile uint8_t knock_wnd_begin;    //определяет номер зуба на котором открывается окно фазовой селекции сигнала ДД (начало интегрирования) 
+ volatile uint8_t knock_wnd_end;      //определяет номер зуба на котором закрывается окно фазовой селекции сигнала ДД (конец интегрирования)
 }chanstate_t[IGN_CHANNELS_MAX]; 
   
-CKPSSTATE ckps;
+ckpsstate_t ckps;
 chanstate_t chanstate;
 
 //размещаем в свободных регистрах ввода/вывода
-__no_init volatile CKPSFLAGS flags@0x22;
+__no_init volatile ckpsflags_t flags@0x22;
 
 //для дополнения таймера/счетчика 0 до 16 разрядов, используем R15
 __no_init __regvar uint8_t TCNT0_H@15;
@@ -141,7 +141,7 @@ void ckps_init_state(void)
 
 //устанавливает УОЗ для реализации в алгоритме
 __monitor
-void ckps_set_dwell_angle(int16_t angle)
+void ckps_set_advance_angle(int16_t angle)
 {
  ckps.advance_angle_buffered = angle;
 }
@@ -400,7 +400,7 @@ uint8_t sync_at_startup(void)
   }
  ckps.icr_prev = GetICR();
  ckps.period_prev = ckps.period_curr;  
- ckps.cog++; 
+ ++ckps.cog; 
  return 0; //продолжение процесса синхронизации
 } 
 
@@ -484,7 +484,7 @@ void process_ckps_cogs(void)
 
  //прошел зуб - угол до в.м.т. уменьшился на 6 град.
  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);  
- ckps.cog++;
+ ++ckps.cog;
 }
 
 //прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
@@ -533,7 +533,7 @@ __interrupt void timer0_ovf_isr(void)
  if (TCNT0_H!=0)  //старший байт не исчерпан ?
  {
   TCNT0 = 0;
-  TCNT0_H--;         
+  --TCNT0_H;         
  }  
  else  
  {//отсчет времени закончился    

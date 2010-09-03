@@ -47,11 +47,11 @@
 typedef struct
 {
  uint8_t ksp_bpf; 
- uint8_t ksp_gain;
- uint8_t ksp_inttime;
- uint8_t ksp_interrupt_state;  
+ volatile uint8_t ksp_gain;
+ volatile uint8_t ksp_inttime;
+ volatile uint8_t ksp_interrupt_state;  
  uint8_t ksp_error;
- uint8_t ksp_last_word;
+ volatile uint8_t ksp_last_word;
 }KSPSTATE;
 
 KSPSTATE ksp;

@@ -27,7 +27,7 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc);
 //значение 10, если двухканальный режим то 40. Значения указаны для шкива 60-2.
 void ckps_set_ignition_cogs(uint8_t cogs);
 
-void ckps_set_dwell_angle(int16_t angle);
+void ckps_set_advance_angle(int16_t angle);
 uint16_t ckps_calculate_instant_freq(void);
 
 //установка окна фазовой селекции детонации. Параметры begin, end в градусах относительно в.м.т.  

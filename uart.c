@@ -40,13 +40,13 @@ typedef struct
  uint8_t send_mode;
  uint8_t recv_buf[UART_RECV_BUFF_SIZE];
  uint8_t send_buf[UART_SEND_BUFF_SIZE];
- uint8_t send_size;
+ volatile uint8_t send_size;
  uint8_t send_index;
- uint8_t recv_size;
+ volatile uint8_t recv_size;
  uint8_t recv_index;
-}UARTSTATE;
+}uartstate_t;
 
-UARTSTATE uart;
+uartstate_t uart;
 
 const __flash uint8_t hdig[] = "0123456789ABCDEF";
 
@@ -90,9 +90,9 @@ uint8_t recept_i8h(void)
 {
  uint8_t i8;    
  i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
- uart.recv_index++;
+ ++uart.recv_index;
  i8|= HTOD(uart.recv_buf[uart.recv_index]);
- uart.recv_index++;
+ ++uart.recv_index;
  return i8;
 }
 
@@ -100,13 +100,13 @@ uint16_t recept_i16h(void)
 {
  uint16_t i16;    
  SETBYTE(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;          
- uart.recv_index++;
+ ++uart.recv_index;
  SETBYTE(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));          
- uart.recv_index++;
+ ++uart.recv_index;
  SETBYTE(i16,0) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;    
- uart.recv_index++;
+ ++uart.recv_index;
  SETBYTE(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));          
- uart.recv_index++;
+ ++uart.recv_index;
  return i16;
 }
 
@@ -463,8 +463,8 @@ __interrupt void usart_udre_isr(void)
  if (uart.send_size > 0)
  {
   UDR = uart.send_buf[uart.send_index];
-  uart.send_size--;
-  uart.send_index++;
+  --uart.send_size;
+  ++uart.send_index;
  }
  else
  {//все данные переданы

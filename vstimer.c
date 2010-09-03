@@ -6,13 +6,13 @@
 
 #define TIMER2_RELOAD_VALUE          100                         //для 10 мс
 
-s_timer8  send_packet_interval_counter = 0;
-s_timer8  force_measure_timeout_counter = 0;
-s_timer8  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
-s_timer8  engine_rotation_timeout_counter = 0;
-s_timer8  epxx_delay_time_counter = 0;
-s_timer8  idle_period_time_counter = 0;
-s_timer16 save_param_timeout_counter = 0;
+volatile s_timer8  send_packet_interval_counter = 0;
+volatile s_timer8  force_measure_timeout_counter = 0;
+volatile s_timer8  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
+volatile s_timer8  engine_rotation_timeout_counter = 0;
+volatile s_timer8  epxx_delay_time_counter = 0;
+volatile s_timer8 idle_period_time_counter = 0;
+volatile s_timer16 save_param_timeout_counter = 0;
 
 //прерывание по переполению Т/С 2 - для отсчета временных интервалов в системе (для общего использования). 
 //Вызывается каждые 10мс

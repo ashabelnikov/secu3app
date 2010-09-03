@@ -47,13 +47,13 @@ __monitor uint8_t s_timer16_is_action(s_timer16 i_timer)
 void s_timer_init(void);
 
 //////////////////////////////////////////////////////////////////
-extern s_timer8  send_packet_interval_counter;
-extern s_timer8  force_measure_timeout_counter;
-extern s_timer8  ce_control_time_counter;
-extern s_timer8  engine_rotation_timeout_counter;
-extern s_timer8  epxx_delay_time_counter;
-extern s_timer8  idle_period_time_counter;
-extern s_timer16 save_param_timeout_counter;
+extern volatile s_timer8  send_packet_interval_counter;
+extern volatile s_timer8  force_measure_timeout_counter;
+extern volatile s_timer8  ce_control_time_counter;
+extern volatile s_timer8  engine_rotation_timeout_counter;
+extern volatile s_timer8  epxx_delay_time_counter;
+extern volatile s_timer8 idle_period_time_counter;
+extern volatile s_timer16 save_param_timeout_counter;
 //////////////////////////////////////////////////////////////////
 
 #endif //_VSTIMER_H_

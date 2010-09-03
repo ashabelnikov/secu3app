@@ -14,7 +14,7 @@
 struct ecudata;
 
 //производит проверку наличия ошибок и управляет лампой CE.
-void ce_check_engine(struct ecudata* d, s_timer8* ce_control_time_counter);
+void ce_check_engine(struct ecudata* d, volatile s_timer8* ce_control_time_counter);
 
 //Установка/всброс указанной ошибки (номер бита)
 void ce_set_error(uint8_t error);  

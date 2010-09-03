@@ -415,7 +415,7 @@ __C_task void main(void)
    //----------------------------------------------  
      
    //сохраняем УОЗ для реализации в ближайшем по времени цикле зажигания       
-   ckps_set_dwell_angle(edat.curr_angle);        
+   ckps_set_advance_angle(edat.curr_angle);        
     
    //управляем усилением аттенюатора в зависимости от оборотов
    if (edat.param.knock_use_knock_channel)

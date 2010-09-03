@@ -171,7 +171,7 @@ void idling_regulator_init(void)
 
 //Пропорциональный регулятор для регулирования оборотов ХХ углом опережения зажигания     
 // Возвращает значение угла опережения в целом виде * 32.
-int16_t idling_pregulator(ecudata* d, s_timer8* io_timer)
+int16_t idling_pregulator(ecudata* d, volatile s_timer8* io_timer)
 {
  int16_t error,factor;
  //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ

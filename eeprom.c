@@ -21,9 +21,9 @@ typedef struct
  uint8_t eews;                 //состояние процесса записи
  uint8_t opcode;
  uint8_t completed_opcode;
-}eeprom_wr_desc;
+}eeprom_wr_desc_t;
 
-eeprom_wr_desc eewd = {0,0,0,0,0,0};
+eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
 //инициирует процесс записи байта в EEPROM
 #define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}     

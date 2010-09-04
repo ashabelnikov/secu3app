@@ -20,7 +20,7 @@ void epm_init_ports(void)
  PORTC&= ~(1<<PC7); //ЭМР выключен
 }
 
-void epm_control(ecudata* d)
+void epm_control(struct ecudata_t* d)
 {
  int16_t discharge;
  

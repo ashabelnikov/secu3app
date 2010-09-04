@@ -131,7 +131,7 @@ void uart_begin_send(void)
 
 //строит пакет взависимости от текущего дескриптора и запускает его на передачу. Функция не проверяет
 //занят передатчик или нет, это должно быть сделано до вызова функции
-void uart_send_packet(ecudata* d, uint8_t send_mode)  
+void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)  
 {
  static uint8_t index = 0;
 
@@ -278,7 +278,7 @@ void uart_send_packet(ecudata* d, uint8_t send_mode)
 
 //эта функция не проверяет, был или не был принят фрейм, проверка должна быть произведена до вызова функции.
 //Возвращает дескриптор обработанного фрейма
-uint8_t uart_recept_packet(ecudata* d)
+uint8_t uart_recept_packet(struct ecudata_t* d)
 {
  //буфер приемника содержит дескриптор пакета и данные
  uint8_t temp; 

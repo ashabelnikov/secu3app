@@ -8,7 +8,7 @@
 #define EEPROM_PARAM_START     0x002
 
 //адрес массива ошибок (Check Engine) в EEPROM
-#define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params)))
+#define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
 
 
 //==================интерфейс модуля===============================

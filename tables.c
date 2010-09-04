@@ -12,7 +12,7 @@
 
 //дополнительные данные по умолчанию
 #pragma object_attribute=__root
-FirmwareData __flash fwdata@FIRMWARE_DATA_START=
+firmware_data_t __flash fwdata@FIRMWARE_DATA_START=
 {
   //ƒлина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.  
   //ƒата в формате Mmm dd yyyy.
@@ -31,7 +31,7 @@ FirmwareData __flash fwdata@FIRMWARE_DATA_START=
 
 //данные в таблицах по умолчанию
 #pragma object_attribute=__root
-F_data __flash tables[TABLES_NUMBER]@TABLES_START=
+f_data_t __flash tables[TABLES_NUMBER]@TABLES_START=
 {
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x0C,0x10,0x14,0x14,0x14,  //пускова€ карта
 0x0A,0x0A,0x0A,0x00,0x00,0x00,0x00,0x0A,0x19,0x28,0x37,0x37,0x37,0x37,0x37,0x37,  //’’ карта
@@ -220,7 +220,7 @@ F_data __flash tables[TABLES_NUMBER]@TABLES_START=
 
 //резервные параметры
 #pragma object_attribute=__root
-params __flash def_param@DEFPARAM_START = 
+params_t __flash def_param@DEFPARAM_START = 
 {1,0,0,6,6,1920,1250,1500,600,6400,650,1600,-320,0,800,4,4,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,
  96,96,-320,320,240,410,392,1250,1500,0, 0x0067,8, 4, 0,35,0,800,23,128,8,512,1000,2, 0,0,0,0,0,0,0,0,0,0,/*crc*/0};                                         
 

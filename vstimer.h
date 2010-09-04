@@ -15,8 +15,8 @@
 
 //Типы объектов таймеров. 8-ми разрядный тамйер может отсчитывать периоды
 //до 2.56 сек. 16-ти разрядный таймер может отсчитывать периоды до 655 сек.
-typedef uint8_t   s_timer8;
-typedef uint16_t  s_timer16;
+typedef uint8_t   s_timer8_t;
+typedef uint16_t  s_timer16_t;
 
 //обновление состояния указанного таймера
 #define s_timer_update(T)    { if ((T) > 0) (T)--; }
@@ -39,7 +39,7 @@ typedef uint16_t  s_timer16;
 }
  
 #pragma inline  //а в обычном "С" такого нет ;-), спасибо разработчикам компилятора.
-__monitor uint8_t s_timer16_is_action(s_timer16 i_timer) 
+__monitor uint8_t s_timer16_is_action(s_timer16_t i_timer) 
 {
  return (i_timer==0);
 }
@@ -47,13 +47,13 @@ __monitor uint8_t s_timer16_is_action(s_timer16 i_timer)
 void s_timer_init(void);
 
 //////////////////////////////////////////////////////////////////
-extern volatile s_timer8  send_packet_interval_counter;
-extern volatile s_timer8  force_measure_timeout_counter;
-extern volatile s_timer8  ce_control_time_counter;
-extern volatile s_timer8  engine_rotation_timeout_counter;
-extern volatile s_timer8  epxx_delay_time_counter;
-extern volatile s_timer8 idle_period_time_counter;
-extern volatile s_timer16 save_param_timeout_counter;
+extern volatile s_timer8_t  send_packet_interval_counter;
+extern volatile s_timer8_t  force_measure_timeout_counter;
+extern volatile s_timer8_t  ce_control_time_counter;
+extern volatile s_timer8_t  engine_rotation_timeout_counter;
+extern volatile s_timer8_t  epxx_delay_time_counter;
+extern volatile s_timer8_t  idle_period_time_counter;
+extern volatile s_timer16_t save_param_timeout_counter;
 //////////////////////////////////////////////////////////////////
 
 #endif //_VSTIMER_H_

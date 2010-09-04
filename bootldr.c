@@ -12,7 +12,7 @@
 
 //этот объект будет в памяти программи независимо от того используется он или нет
 #pragma object_attribute=__root 
-__flash uint8_t BootLoader[BOOT_LOADER_SIZE]@SECU3BOOTSTART =
+__flash uint8_t boot_loader[BOOT_LOADER_SIZE]@SECU3BOOTSTART =
 {
 #ifdef __ATmega16__
 0xF8,0x94,0x00,0x24,0x04,0xBA,0x9B,0x99,0xFB,0xC0,0xF8,0x94,0x8F,0xE5,0x94,0xE0,

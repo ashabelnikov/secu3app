@@ -18,8 +18,8 @@
 
 
 //данные массивы констант задают сетку по оси оборотов, для рабочей карты и карты ХХ.
-__flash int16_t F_SlotsRanges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500}; 
-__flash int16_t F_SlotsLength[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140}; 
+__flash int16_t f_slots_ranges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500}; 
+__flash int16_t f_slots_length[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140}; 
 
 // Функция билинейной интерполяции (поверхность)
 // x, y - значения аргументов интерполируемой функции
@@ -50,26 +50,26 @@ int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int
 
 // Реализует функцию УОЗ от оборотов для холостого хода
 // Возвращает значение угла опережения в целом виде * 32. 2 * 16 = 32.
-int16_t idling_function(ecudata* d)
+int16_t idling_function(struct ecudata_t* d)
 {
  int8_t i;
  int16_t rpm = d->sens.inst_frq;
 
  //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы
  for(i = 14; i >= 0; i--)
-  if (d->sens.inst_frq >= F_SlotsRanges[i]) break;                        
+  if (d->sens.inst_frq >= f_slots_ranges[i]) break;                        
 
  if (i < 0)  {i = 0; rpm = 600;}
 
  return simple_interpolation(rpm,
              d->fn_dat->f_idl[i],d->fn_dat->f_idl[i+1],
-             F_SlotsRanges[i],F_SlotsLength[i]);
+             f_slots_ranges[i],f_slots_length[i]);
 }
 
 
 // Реализует функцию УОЗ от оборотов для пуска двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t start_function(ecudata* d)
+int16_t start_function(struct ecudata_t* d)
 {
  int16_t i, i1, rpm = d->sens.inst_frq;                                           
 
@@ -86,7 +86,7 @@ int16_t start_function(ecudata* d)
 
 // Реализует функцию УОЗ от оборотов(мин-1) и нагрузки(кПа) для рабочего режима двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t work_function(ecudata* d, uint8_t i_update_airflow_only)
+int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
 {    
  int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
  int8_t f, fp1, lp1;   
@@ -114,7 +114,7 @@ int16_t work_function(ecudata* d, uint8_t i_update_airflow_only)
 
  //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы            
  for(f = 14; f >= 0; f--)   
-  if (rpm >= F_SlotsRanges[f]) break; 
+  if (rpm >= f_slots_ranges[f]) break; 
                             
  //рабочая карта работает на 600-х оборотах и выше                                                        
  if (f < 0)  {f = 0; rpm = 600;}
@@ -125,15 +125,15 @@ int16_t work_function(ecudata* d, uint8_t i_update_airflow_only)
 	  d->fn_dat->f_wrk[lp1][f],
 	  d->fn_dat->f_wrk[lp1][fp1],
 	  d->fn_dat->f_wrk[l][fp1],
-	  F_SlotsRanges[f],
+	  f_slots_ranges[f],
 	  (gradient * l),
-	  F_SlotsLength[f],
+	  f_slots_length[f],
 	  gradient);
 }
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t coolant_function(ecudata* d)
+int16_t coolant_function(struct ecudata_t* d)
 { 
  int16_t i, i1, t = d->sens.temperat;                                           
 
@@ -159,9 +159,9 @@ typedef struct
 {
  //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
  int16_t output_state;
-}IDLREGULSTATE;
+}idlregul_state_t;
 
-IDLREGULSTATE idl_prstate;
+idlregul_state_t idl_prstate;
 
 //сброс состояния РХХ
 void idling_regulator_init(void)
@@ -171,7 +171,7 @@ void idling_regulator_init(void)
 
 //Пропорциональный регулятор для регулирования оборотов ХХ углом опережения зажигания     
 // Возвращает значение угла опережения в целом виде * 32.
-int16_t idling_pregulator(ecudata* d, volatile s_timer8* io_timer)
+int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 {
  int16_t error,factor;
  //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
@@ -248,7 +248,7 @@ void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_
 // Реализует функцию коэффициента усиления аттенюатора от оборотов
 // Возвращает код 0...63 соответсутвующий определенному коэфф. усиления 
 //(см. HIP9011 datasheet).
-uint8_t knock_attenuator_function(ecudata* d)
+uint8_t knock_attenuator_function(struct ecudata_t* d)
 {
  int16_t i, i1, rpm = d->sens.inst_frq;                                           
 

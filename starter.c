@@ -27,7 +27,7 @@ void starter_init_ports(void)
  PORTD|= (1<<PD7);    //стартер заблокирован
 }
 
-void starter_control(struct ecudata* d)
+void starter_control(struct ecudata_t* d)
 {
 #ifndef VPSEM   
  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)

@@ -52,9 +52,9 @@ typedef struct
  volatile uint8_t ksp_interrupt_state;  
  uint8_t ksp_error;
  volatile uint8_t ksp_last_word;
-}KSPSTATE;
+}kspstate_t;
 
-KSPSTATE ksp;
+kspstate_t ksp;
 
 //Для работы с аппаратной частью SPI
 void spi_master_init(void);

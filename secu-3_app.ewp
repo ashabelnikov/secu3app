@@ -59,7 +59,7 @@
         </option>
         <option>
           <name>LCLibType</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>LCHeapSize</name>
@@ -169,7 +169,7 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state>LOW_ENDIAN_DATA_FORMAT</state>
+          <state>LITTLE_ENDIAN_DATA_FORMAT</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -246,7 +246,7 @@
         <option>
           <name>CCLockRegs</name>
           <version>0</version>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCOptSizeSpeed</name>
@@ -350,7 +350,7 @@
         <option>
           <name>CCStdIncludePaths</name>
           <state>$TOOLKIT_DIR$\INC\</state>
-          <state>$TOOLKIT_DIR$\INC\CLIB\</state>
+          <state>$TOOLKIT_DIR$\INC\DLIB\</state>
         </option>
         <option>
           <name>CCEepromSize</name>
@@ -711,7 +711,7 @@
         </option>
         <option>
           <name>xcLibFile</name>
-          <state>$TOOLKIT_DIR$\lib\clib\cl3s-ec-sf.r90</state>
+          <state>$TOOLKIT_DIR$\lib\dlib\dl3s-ec-sf.r90</state>
         </option>
         <option>
           <name>xcLibIgnore</name>
@@ -932,7 +932,7 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state>LOW_ENDIAN_DATA_FORMAT</state>
+          <state>LITTLE_ENDIAN_DATA_FORMAT</state>
         </option>
         <option>
           <name>CCPreprocFile</name>

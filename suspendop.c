@@ -39,7 +39,7 @@ void sop_init_operations(void)
 }
 
 //Обработка операций которые могут требовать или требуют оложенного выполнения.
-void sop_execute_operations(ecudata* d)
+void sop_execute_operations(struct ecudata_t* d)
 {
  if (sop_is_operation_active(SOP_SAVE_PARAMETERS))
  {
@@ -48,9 +48,9 @@ void sop_execute_operations(ecudata* d)
   if (eeprom_is_idle())
   {     
    //для обеспечения атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
-   memcpy(d->eeprom_parameters_cache,&d->param,sizeof(params));  
-   ((params*)d->eeprom_parameters_cache)->crc=crc16(d->eeprom_parameters_cache,sizeof(params)-PAR_CRC_SIZE); //считаем контролбную сумму
-   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, d->eeprom_parameters_cache, sizeof(params));   
+   memcpy(d->eeprom_parameters_cache,&d->param,sizeof(params_t));  
+   ((params_t*)d->eeprom_parameters_cache)->crc=crc16(d->eeprom_parameters_cache,sizeof(params_t)-PAR_CRC_SIZE); //считаем контролбную сумму
+   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, d->eeprom_parameters_cache, sizeof(params_t));   
     
    //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
    //записаны новые параметры с корректной контрольной суммой 

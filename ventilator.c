@@ -86,7 +86,7 @@ __interrupt void timer2_comp_isr(void)
 }
 */
 
-void vent_control(ecudata *d)
+void vent_control(struct ecudata_t *d)
 {
  //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе 
  if (d->param.tmp_use)

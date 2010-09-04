@@ -16,9 +16,9 @@
 #define  UART_SEND_BUFF_SIZE     64
 
 //==============интерфейс модуля=======================
- struct ecudata;
- void uart_send_packet(struct ecudata* d, uint8_t send_mode);
- uint8_t uart_recept_packet(struct ecudata* d);
+ struct ecudata_t;
+ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode);
+ uint8_t uart_recept_packet(struct ecudata_t* d);
  void uart_notify_processed(void);
  uint8_t uart_is_sender_busy(void);
  uint8_t uart_is_packet_received(void);

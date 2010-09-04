@@ -11,7 +11,7 @@
 #define IDLE_PERIOD_TIME_VALUE        50
 
 //описывает все входы системы - их производные и интегральные величины
-typedef struct sensors
+typedef struct sensors_t
 {
  uint16_t map;                           //давление во впускном коллекторе (усредненное)
  uint16_t voltage;                       //напр€жение бортовой сети (усредненное)
@@ -28,13 +28,13 @@ typedef struct sensors
  int16_t  voltage_raw;
  int16_t  temperat_raw;
 
-}sensors;
+}sensors_t;
 
 //описывает данные системы, обеспечивает единый интерфейс данных
-typedef struct ecudata
+typedef struct ecudata_t
 {
- struct params   param;                        //--параметры
- struct sensors  sens;                         //--сенсоры
+ struct params_t  param;                //--параметры
+ struct sensors_t sens;                 //--сенсоры
  
  uint8_t  ephh_valve;                   //состо€ние клапана Ёѕ’’
  uint8_t  epm_valve;                    //состо€ние клапана Ёћ–
@@ -43,7 +43,7 @@ typedef struct ecudata
  int16_t  curr_angle;                   //текущий угол опережени€
  int16_t  knock_retard;                 //поправка ”ќ« от регул€тора по детонации
  
- __flash F_data*  fn_dat;               //указатель на набор характеристик
+ __flash f_data_t*  fn_dat;             //указатель на набор характеристик
 
  uint8_t  op_comp_code;                 //содержит код который посылаетс€ через UART (пакет OP_COMP_NC)
  uint8_t  op_actn_code;                 //содержит код который принимаетс€ через UART (пакет OP_COMP_NC)
@@ -54,7 +54,7 @@ typedef struct ecudata
  uint8_t* eeprom_parameters_cache;
  
  uint8_t engine_mode;                  //текущий режим двигател€ (пуск, ’’, нагрузка) 
-}ecudata;                                     
+}ecudata_t;                                     
 
 
 #endif  //_SECU3_H_

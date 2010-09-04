@@ -40,13 +40,13 @@
 #define EM_IDLE  1
 #define EM_WORK  2
  
-uint8_t eeprom_parameters_cache[sizeof(params) + 1];
+uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
 
-ecudata edat;
+struct ecudata_t edat;
 
 //управление отдельными узлами двигателя и обновление данных о состоянии 
 //концевика карбюратора, газового клапана, клапана ЭПХХ
-void control_engine_units(ecudata *d)
+void control_engine_units(struct ecudata_t *d)
 {
  //реализация функции ЭПХХ. 
  ephh_control(d);
@@ -62,7 +62,7 @@ void control_engine_units(ecudata *d)
 }
 
 //обрабатывает передаваемые/принимаемые фреймы UART-a
-void process_uart_interface(ecudata* d)
+void process_uart_interface(struct ecudata_t* d)
 { 
  uint8_t descriptor;
 
@@ -158,13 +158,13 @@ void process_uart_interface(ecudata* d)
 //Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы.
 //Сохранение данных в EEPROM произойдет только если за заданное время не произошло ни одной операции приема параметров
 //из UART-a и сохраненные параметры отличаются от текущих.        
-void save_param_if_need(ecudata* d)
+void save_param_if_need(struct ecudata_t* d)
 {   
  //параметры не изменились за заданное время?
  if (s_timer16_is_action(save_param_timeout_counter)) 
  {
   //текущие и сохраненные параметры отличаются?
-  if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params)-PAR_CRC_SIZE))   
+  if (memcmp(eeprom_parameters_cache,&d->param,sizeof(params_t)-PAR_CRC_SIZE))   
    sop_set_operation(SOP_SAVE_PARAMETERS);       
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }   
@@ -172,33 +172,33 @@ void save_param_if_need(ecudata* d)
 
 //загружает параметры из EEPROM, проверяет целостность данных и если они испорчены то
 //берет резервную копию из FLASH.
-void load_eeprom_params(ecudata* d)
+void load_eeprom_params(struct ecudata_t* d)
 {
  if (jumper_get_defeeprom_state())
  { 
   //Загружаем параметры из EEPROM, а затем проверяем целостность.
   //При подсчете контрольной суммы не учитываем байты самой контрольной суммы
   //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
-  eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params));  
+  eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params_t));  
    
-  if (crc16((uint8_t*)&d->param,(sizeof(params)-PAR_CRC_SIZE))!=d->param.crc)
+  if (crc16((uint8_t*)&d->param,(sizeof(params_t)-PAR_CRC_SIZE))!=d->param.crc)
   {
-   memcpy_P(&d->param,&def_param,sizeof(params));
+   memcpy_P(&d->param,&def_param,sizeof(params_t));
    ce_set_error(ECUERROR_EEPROM_PARAM_BROKEN);
   }
    
   //инициализируем кеш параметров, иначе после старта программы произойдет ненужное 
   //их сохранение. 
-  memcpy(eeprom_parameters_cache,&d->param,sizeof(params));         
+  memcpy(eeprom_parameters_cache,&d->param,sizeof(params_t));         
  }
  else
  { //перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены    
-  memcpy_P(&d->param,&def_param,sizeof(params));
+  memcpy_P(&d->param,&def_param,sizeof(params_t));
   ce_clear_errors(); //сбрасываем сохраненные ошибки
  }  
 } 
    
-void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudata* d)
+void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d)
 {
  switch(d->engine_mode)
  {
@@ -242,7 +242,7 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, ecudat
  }
 }
       
-void init_ecu_data(ecudata* d)
+void init_ecu_data(struct ecudata_t* d)
 {
  edat.op_comp_code = 0;
  edat.op_actn_code = 0;

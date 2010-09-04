@@ -22,9 +22,9 @@ typedef struct
 
  volatile uint8_t sensors_ready; //датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;           //если 1, то производится измерение всех значений
-}adc_state;
+}adcstate_t;
 
-adc_state adc;  //переменные состояния АЦП
+adcstate_t adc;  //переменные состояния АЦП
 
 __monitor
 uint16_t adc_get_map_value(void)

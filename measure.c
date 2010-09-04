@@ -35,7 +35,7 @@ uint16_t ubat_circular_buffer[BAT_AVERAGING];     //буфер усреднения напряжения 
 uint16_t temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения температуры охлаждающей жидкости
 
 //обновление буферов усреднения (частота вращения, датчики...)
-void meas_update_values_buffers(ecudata* d)
+void meas_update_values_buffers(struct ecudata_t* d)
 {
  static uint8_t  map_ai  = MAP_AVERAGING-1;
  static uint8_t  bat_ai  = BAT_AVERAGING-1;
@@ -63,7 +63,7 @@ void meas_update_values_buffers(ecudata* d)
 
 //усреднение измеряемых величин используя текущие значения кольцевых буферов усреднения, компенсация 
 //погрешностей АЦП, перевод измеренных значений в физические величины.
-void meas_average_measured_values(ecudata* d)
+void meas_average_measured_values(struct ecudata_t* d)
 {     
  uint8_t i;  uint32_t sum;       
             
@@ -98,7 +98,7 @@ void meas_average_measured_values(ecudata* d)
 
 //Вызывать для предварительного измерения перед пуском двигателя. Вызывать только после 
 //инициализации АЦП.
-void meas_initial_measure(ecudata* d)
+void meas_initial_measure(struct ecudata_t* d)
 { 
  uint8_t _t, i = 16;
  _t=__save_interrupt();
@@ -114,7 +114,7 @@ void meas_initial_measure(ecudata* d)
  meas_average_measured_values(d);  
 }
 
-void meas_take_discrete_inputs(ecudata *d)
+void meas_take_discrete_inputs(struct ecudata_t *d)
 {
  //--инверсия концевика карбюратора если необходимо, включение/выключение клапана ЭПХХ
  d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
@@ -124,8 +124,8 @@ void meas_take_discrete_inputs(ecudata *d)
 
  //переключаем тип топлива в зависимости от состояния газового клапана
  if (d->sens.gas)
-  d->fn_dat = (__flash F_data*)&tables[d->param.fn_gas];    //на газе
+  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gas];    //на газе
  else  
-  d->fn_dat = (__flash F_data*)&tables[d->param.fn_benzin];//на бензине     
+  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_benzin];//на бензине     
 }
 

@@ -11,15 +11,15 @@ typedef struct retard_state_t
  uint8_t knock_flag;
 }retard_state_t;
 
-struct ecudata;
+struct ecudata_t;
 
 //Возвращает: 0 - нет детонации, 1 - есть 
-uint8_t knklogic_detect(struct ecudata* d, retard_state_t* p_rs);
+uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs);
 
 //инициализация переменных состояния
 void knklogic_init(retard_state_t* p_rs);
 
 //вызывается в каждом рабочем цикле
-void knklogic_retard(struct ecudata* d, retard_state_t* p_rs);
+void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs);
 
 #endif //_KNKLOGIC_H_

@@ -50,18 +50,18 @@
 #define FW_SIGNATURE_INFO_SIZE 48
 
 //Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
-typedef struct F_data
+typedef struct f_data_t
 {
   int8_t f_str[F_STR_POINTS];                       // функция УОЗ на старте
   int8_t f_idl[F_IDL_POINTS];                       // функция УОЗ для ХХ
   int8_t f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     // основная функция УОЗ (3D)
   int8_t f_tmp[F_TMP_POINTS];                       // функция коррект. УОЗ по температуре
   uint8_t name[F_NAME_SIZE];                        // ассоциированное имя (имя семейства)
-}F_data;
+}f_data_t;
 
 
 //описывает дополнительные данные хранимые в прошивке
-typedef struct FirmwareData
+typedef struct firmware_data_t
 {
   uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];
   
@@ -72,10 +72,10 @@ typedef struct FirmwareData
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
   uint8_t reserved[128];  
-}FirmwareData;
+}firmware_data_t;
 
 //описывает параметры системы
-typedef struct params
+typedef struct params_t
 {
   uint8_t  tmp_use;                      //признак комплектации ДТОЖ-ом
   uint8_t  carb_invers;                  //инверсия концевика на карбюраторе
@@ -147,7 +147,7 @@ typedef struct params
   uint8_t  reserved[10];
   
   uint16_t crc;                         //контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)  
-}params;
+}params_t;
 
 //================================================================================
 //определяем адреса таблиц в прошивке отталкиваясь от бутлоадера
@@ -162,35 +162,33 @@ typedef struct params
 #define CODE_SIZE (SECU3BOOTSTART-CODE_CRC_SIZE)
 
 //количество наборов характеристик хранимых в памяти программ
-#define TABLES_NUMBER          8   
+#define TABLES_NUMBER  8   
 
 //адрес контрольной суммы в прошивке
 #define CODE_CRC_ADDR (SECU3BOOTSTART-CODE_CRC_SIZE)
 
 //адрес массива таблиц - семейств характеристик
-#define TABLES_START (CODE_CRC_ADDR-(sizeof(F_data)*TABLES_NUMBER))
+#define TABLES_START (CODE_CRC_ADDR-(sizeof(f_data_t)*TABLES_NUMBER))
 
 //адрес структуры дефаултных параметров (параметров EEPROM по умолчанию)
-#define DEFPARAM_START (TABLES_START-sizeof(params))
+#define DEFPARAM_START (TABLES_START-sizeof(params_t))
 
 //адрес дополнительных параметров
-#define FIRMWARE_DATA_START (DEFPARAM_START-sizeof(FirmwareData))
+#define FIRMWARE_DATA_START (DEFPARAM_START-sizeof(firmware_data_t))
 
 //================================================================================
 
-
-
 //дополнительные данные по умолчанию
 #pragma object_attribute=__root
-extern FirmwareData __flash fwdata;
+extern firmware_data_t __flash fwdata;
 
 //данные в таблицах по умолчанию
 #pragma object_attribute=__root
-extern F_data __flash tables[TABLES_NUMBER];
+extern f_data_t __flash tables[TABLES_NUMBER];
 
 //резервные параметры
 #pragma object_attribute=__root
-extern params __flash def_param;
+extern params_t __flash def_param;
 
 #pragma object_attribute=__root
 extern uint16_t __flash code_crc;

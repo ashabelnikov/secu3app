@@ -11,10 +11,10 @@
 #define ECUERROR_PROGRAM_CODE_BROKEN    2
 #define ECUERROR_KSP_CHIP_FAILED        3
 
-struct ecudata;
+struct ecudata_t;
 
 //производит проверку наличия ошибок и управляет лампой CE.
-void ce_check_engine(struct ecudata* d, volatile s_timer8* ce_control_time_counter);
+void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter);
 
 //Установка/всброс указанной ошибки (номер бита)
 void ce_set_error(uint8_t error);  

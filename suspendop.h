@@ -19,7 +19,7 @@
 #define OPCODE_CE_SAVE_ERRORS        2
 #define OPCODE_READ_FW_SIG_INFO      3 
 
-struct ecudata;
+struct ecudata_t;
 
 //установка указанной рперации в очередь на выполнение 
 void sop_set_operation(uint8_t opcode); 
@@ -31,6 +31,6 @@ uint8_t sop_is_operation_active(uint8_t opcode);
 void sop_init_operations(void);
 
 //обработка очереди отложенных операций
-void sop_execute_operations(struct ecudata* d);
+void sop_execute_operations(struct ecudata_t* d);
 
 #endif //#define _SUSPOP_H_

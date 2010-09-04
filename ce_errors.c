@@ -42,7 +42,7 @@ void ce_clear_error(uint8_t error)
  
 //При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
 //то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности. 
-void ce_check_engine(ecudata* d, volatile s_timer8* ce_control_time_counter)
+void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
 {
  uint16_t temp_errors;
   

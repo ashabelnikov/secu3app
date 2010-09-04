@@ -4,9 +4,6 @@
 
 #include <stdint.h>
 
-//uncomment following line if you wish to use 36-1 wheel
-/*#define WHEEL_36_1*/
-
 //коэффициент масштабирования углов поворота коленвала, фигурирует в вычислениях и операциях деления
 //поэтому он должен быть кратен степени 2
 #define ANGLE_MULTIPLAYER            32                           

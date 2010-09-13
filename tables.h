@@ -48,6 +48,7 @@
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128
 #define FW_SIGNATURE_INFO_SIZE 48
+#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 16
 
 //ќписывает одно семейство характеристик, дискрета ”ќ« = 0.5 град.
 typedef struct f_data_t
@@ -68,10 +69,13 @@ typedef struct firmware_data_t
   //таблица усилени€ аттенюатора (зависимость от оборотов).
   uint8_t attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE]; 
   
+  //таблица времени накоплени€ энергии в катушках зажигани€ (зависимость от напр€жени€)
+  uint16_t coil_on_time[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
+  
   //Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
   //новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
-  uint8_t reserved[128];  
+  uint8_t reserved[96];  
 }firmware_data_t;
 
 //описывает параметры системы

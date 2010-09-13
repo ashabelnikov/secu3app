@@ -17,6 +17,8 @@
 #include "secu3.h"  
 #include "knock.h"
 
+//#ifdef COIL_REGULATION todo: implement
+
 #ifndef WHEEL_36_1 //60-2
  #define WHEEL_COGS_NUM   60  //количество зубьев (включая отсутствующие)
  #define WHEEL_COGS_LACK  2   //количество отсутствующих зубьев

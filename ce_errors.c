@@ -116,6 +116,6 @@ void ce_clear_errors(void)
 
 void ce_init_ports(void)
 {
- DDRB |= (1<<DDB2); //выход для CE  
  PORTB|= (1<<PB2);  //CE горит(для проверки)
+ DDRB |= (1<<DDB2); //выход для CE  
 }

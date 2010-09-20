@@ -29,8 +29,8 @@ volatile uint8_t pwm_duty;
 void vent_init_ports(void)
 {
  //конфигурируем порты ввода/вывода       
- DDRB |= (1<<DDB1);   
  PORTB&= ~(1<<PB1);
+ DDRB |= (1<<DDB1);   
 }
 
 void vent_init_state(void)

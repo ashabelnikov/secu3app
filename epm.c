@@ -16,8 +16,8 @@
 
 void epm_init_ports(void)
 {
- DDRC|= (1<<DDC7);  //выход для управления клапаном ЭМР
  PORTC&= ~(1<<PC7); //ЭМР выключен
+ DDRC|= (1<<DDC7);  //выход для управления клапаном ЭМР
 }
 
 void epm_control(struct ecudata_t* d)

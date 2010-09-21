@@ -81,7 +81,7 @@ uint8_t knock_module_initialize(void)
   
  //”станавливаем SO terminal активным и проводим инициализацию. ѕроверка на ответ и корректность
  //прин€тых данных проводим дл€ каждого параметра.
- for(i = 0; i < 2; i++)
+ for(i = 0; i < 2; ++i)
  {
   spi_master_transmit(init_data[i]);  
   response = SPDR;  

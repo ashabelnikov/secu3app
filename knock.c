@@ -111,10 +111,12 @@ void spi_master_transmit(uint8_t i_byte)
 {
  KSP_CS = 0;
  __no_operation();
+ __no_operation();
  //Начало передачи
  SPDR = i_byte;
  //Ждем завершения передачи
  while(!(SPSR & (1 << SPIF)));
+ __no_operation();
  __no_operation();
  KSP_CS = 1;
 }

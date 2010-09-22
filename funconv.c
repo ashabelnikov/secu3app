@@ -175,7 +175,7 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 {
  int16_t error,factor;
  //зона "подхвата" регул€тора при возвращени двигател€ из рабочего режима в ’’
- uint16_t capture_range = 0; //200 
+ uint16_t capture_range = 200; 
     
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов  
  // или двигатель не прогрет то выходим  с нулевой корректировкой        

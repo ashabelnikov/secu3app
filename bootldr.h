@@ -26,7 +26,7 @@
 
 //определ€ем стартовый адрес бутлоадера в прошивке (в байтах)
 //FLASHEND определено в ioavr.h
-#define SECU3BOOTSTART (((((unsigned int)FLASHEND) + 1) * 2) - BOOT_LOADER_SIZE)
+#define SECU3BOOTSTART ((((unsigned int)FLASHEND) + 1) - BOOT_LOADER_SIZE)
 
 //точка входа в бутлоадер из программы (мину€ проверку перемычки)
 //смотрите исходный код загрузчика 

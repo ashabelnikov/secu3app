@@ -138,7 +138,7 @@ void ckps_init_state(void)
  TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);       
 
  //разрешаем прерывание по захвату и сравнению А таймера 1, а также по переполнению таймера 0
- TIMSK|= (1<<TICIE1)|(1<<OCIE1A)|(1<<TOIE0);
+ TIMSK|= (1<<TICIE1)/*|(1<<OCIE1A)*/|(1<<TOIE0);
 }
 
 //устанавливает УОЗ для реализации в алгоритме
@@ -337,6 +337,8 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
 #pragma vector=TIMER1_COMPA_vect //вектор прерывания по совпадению канала А таймера Т1
 __interrupt void timer1_compa_isr(void)
 {
+  TIMSK&= ~(1<<OCIE1A); //запрещаем прерывание
+
  //линия порта в низком уровне, теперь переводим её в высокий уровень - заставляем коммутатор прекратить 
  //накопление энергии и закрыть транзистор (искра).
  switch(ckps.channel_mode)
@@ -473,6 +475,7 @@ void process_ckps_cogs(void)
    SETBIT(TIFR, OCF1A);
    chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
    flags.ckps_need_to_set_channel = 0; // чтобы не войти в режим настройки ещё раз
+   TIMSK|= (1<<OCIE1A); //разрешаем прерывание
   } 
  }
 

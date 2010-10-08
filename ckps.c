@@ -109,7 +109,7 @@ void ckps_init_state_variables(void)
  //при первом же прерывании будет сгенерирован конец импульса запуска зажигания для цилиндров 1-4   
  uint8_t i;
  for(i = 0; i < IGN_CHANNELS_MAX; i++)
-  chanstate[i].ignition_pulse_cogs = 128;
+  chanstate[i].ignition_pulse_cogs = 0;
 
  ckps.cog = 0; 
  ckps.half_turn_period = 0xFFFF;                 

@@ -96,10 +96,7 @@ uint8_t knock_module_initialize(void)
 //Инициализирует SPI в режиме мастера
 __monitor
 void spi_master_init(void)
-{
- //Устанавливаем SS, MOSI и SCK как выходы, остальное не меняем. MISO
- //как вход (DDB6 = 0)  
- DDRB|= (1 << DDB4)|(1 << DDB5)|(1 << DDB7);
+{ 
  // разрешаем SPI, мастер, clock = fck/16, данные по спадающему фронту SCK
  SPCR = (1 << SPE)|(1 << MSTR)|(1 << SPR0)|(1 << CPHA);
 }
@@ -211,7 +208,7 @@ __interrupt void spi_dataready_isr(void)
 void knock_init_ports(void)
 {
  PORTB|= (1<<PB4)|(1<<PB3); //интерфейс с HIP выключен (CS=1, TEST=1)
- PORTD|= (1<<PD3);          //режим интегрирования для HIP
- DDRB |= (1<<DDB4)|(1<<DDB3);   
+ PORTD&=~(1<<PD3);          //режим хранения для HIP
+ DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);   
  DDRD |= (1<<DDD3);
 }

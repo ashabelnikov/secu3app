@@ -75,7 +75,9 @@ uint8_t knock_module_initialize(void)
  ksp.ksp_interrupt_state = 0; //KA готов
  ksp.ksp_error = 0;
  
- //”станавливаем HOLD mode дл€ интегратора и "Run" mode дл€  чипа вообще.
+ __delay_cycles(1600);
+ 
+ //”станавливаем HOLD mode дл€ интегратора и "Run" mode дл€ чипа вообще.
  KSP_TEST = 1;
  KSP_INTHOLD = KNOCK_INTMODE_HOLD;
   
@@ -198,7 +200,7 @@ __interrupt void spi_dataready_isr(void)
    if (t!=ksp.ksp_last_word)  
     ksp.ksp_error = 1;
    //запрещаем прерывание и устанавливаем конечный автомат в состо€ние
-   //готовности к новой загрузке. “акже выключаем сигнал выборки кристалла
+   //готовности к новой загрузке.
    SPCR&= ~(1 << SPIE); 
    ksp.ksp_interrupt_state = 0;   
    break;    
@@ -208,7 +210,7 @@ __interrupt void spi_dataready_isr(void)
 void knock_init_ports(void)
 {
  PORTB|= (1<<PB4)|(1<<PB3); //интерфейс с HIP выключен (CS=1, TEST=1)
- PORTD&=~(1<<PD3);          //режим хранени€ дл€ HIP
+ PORTD&=~(1<<PD3);          //режим HOLD дл€ HIP
  DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);   
  DDRD |= (1<<DDD3);
 }

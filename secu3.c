@@ -335,8 +335,8 @@ __C_task void main(void)
    edat.engine_mode = EM_START; //режим пуска 	      
    starter_set_blocking_state(0); //снимаем блокировку стартера
      
-   /*if (edat.param.knock_use_knock_channel)
-    knock_start_settings_latching();*/     
+   if (edat.param.knock_use_knock_channel)
+    knock_start_settings_latching();     
   }
       
   //запускаем измерени€ ј÷ѕ, через равные промежутки времени. ѕри обнаружении каждого рабочего
@@ -344,12 +344,12 @@ __C_task void main(void)
   //определенную величину, это условие выполн€тс€ перестанет.
   if (s_timer_is_action(force_measure_timeout_counter))
   {
-   /*if (!edat.param.knock_use_knock_channel)
-   {*/
+   if (!edat.param.knock_use_knock_channel)
+   {
     __disable_interrupt();
     adc_begin_measure();            
     __enable_interrupt();     
-   /*}
+   }
    else
    {     
     //если сейчас происходит загрузка настроек в HIP, то нужно дождатьс€ ее завершени€.
@@ -363,7 +363,7 @@ __C_task void main(void)
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);    
     adc_begin_measure_all(); //измер€ем сигнал с ƒƒ тоже            
     __enable_interrupt();     
-   }*/
+   }
           
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(&edat);          

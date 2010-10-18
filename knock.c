@@ -71,11 +71,13 @@ uint8_t knock_module_initialize(void)
  uint8_t i, response;
  uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
                                KSP_SET_CHANNEL | KSP_CHANNEL_0};  
+ KSP_CS = 1;                               
  spi_master_init();
  ksp.ksp_interrupt_state = 0; //KA готов
  ksp.ksp_error = 0;
  
- __delay_cycles(1600);
+ //__delay_cycles(1600);
+ spi_master_transmit(0x00);
  
  //”станавливаем HOLD mode дл€ интегратора и "Run" mode дл€ чипа вообще.
  KSP_TEST = 1;
@@ -85,7 +87,9 @@ uint8_t knock_module_initialize(void)
  //прин€тых данных проводим дл€ каждого параметра.
  for(i = 0; i < 2; ++i)
  {
+  KSP_CS = 0;
   spi_master_transmit(init_data[i]);  
+  KSP_CS = 1;
   response = SPDR;  
   if (response!=init_data[i])
    return 0; //ошибка - микросхема не отвечает!  
@@ -108,7 +112,6 @@ void spi_master_init(void)
 //i_byte - байт дл€ передачи
 void spi_master_transmit(uint8_t i_byte)
 {
- KSP_CS = 0;
  __no_operation();
  __no_operation();
  //Ќачало передачи
@@ -117,7 +120,6 @@ void spi_master_transmit(uint8_t i_byte)
  while(!(SPSR & (1 << SPIF)));
  __no_operation();
  __no_operation();
- KSP_CS = 1;
 }
 
 void knock_start_settings_latching(void)

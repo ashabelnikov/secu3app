@@ -87,7 +87,19 @@ uint8_t knock_module_initialize(void)
   for(i = 0; i < 2; ++i)
   {
    KSP_CS = 0;
+   __no_operation();
+   __no_operation();
+   __no_operation();
+   __no_operation();
+   __no_operation();
+   __no_operation();
+   __no_operation();
    spi_master_transmit(init_data[i]);  
+   __no_operation();
+   __no_operation();
+   __no_operation();
+   __no_operation();
+   __no_operation();
    KSP_CS = 1;
    response = SPDR;  
    if (response!=init_data[i])

@@ -68,7 +68,7 @@ void knock_set_integration_mode(uint8_t mode)
 __monitor //все прерывания должны быть запрещены!
 uint8_t knock_module_initialize(void)
 {
- uint8_t i, response;
+ uint8_t i,j = 10, response;
  uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
                                KSP_SET_CHANNEL | KSP_CHANNEL_0};  
  KSP_CS = 1;                               
@@ -76,24 +76,24 @@ uint8_t knock_module_initialize(void)
  ksp.ksp_interrupt_state = 0; //KA готов
  ksp.ksp_error = 0;
  
- //__delay_cycles(1600);
- spi_master_transmit(0x00);
- 
  //Устанавливаем HOLD mode для интегратора и "Run" mode для чипа вообще.
  KSP_TEST = 1;
  KSP_INTHOLD = KNOCK_INTMODE_HOLD;
-  
+   
  //Устанавливаем SO terminal активным и проводим инициализацию. Проверка на ответ и корректность
  //принятых данных проводим для каждого параметра.
- for(i = 0; i < 2; ++i)
+ do
  {
-  KSP_CS = 0;
-  spi_master_transmit(init_data[i]);  
-  KSP_CS = 1;
-  response = SPDR;  
-  if (response!=init_data[i])
-   return 0; //ошибка - микросхема не отвечает!  
- }
+  for(i = 0; i < 2; ++i)
+  {
+   KSP_CS = 0;
+   spi_master_transmit(init_data[i]);  
+   KSP_CS = 1;
+   response = SPDR;  
+   if (response!=init_data[i])
+    return 0; //ошибка - микросхема не отвечает!  
+  }
+ }while(--j);
   
  //Инициализация прошла успешно
  return 1; 

@@ -68,18 +68,19 @@ void knock_set_integration_mode(uint8_t mode)
 __monitor //все прерывания должны быть запрещены!
 uint8_t knock_module_initialize(void)
 {
- uint8_t i,j = 10, response;
+ uint8_t i, j = 10, response;
  uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
-                               KSP_SET_CHANNEL | KSP_CHANNEL_0};  
- KSP_CS = 1;                               
- spi_master_init();
- ksp.ksp_interrupt_state = 0; //KA готов
- ksp.ksp_error = 0;
+                         KSP_SET_CHANNEL | KSP_CHANNEL_0};  
  
  //Устанавливаем HOLD mode для интегратора и "Run" mode для чипа вообще.
  KSP_TEST = 1;
  KSP_INTHOLD = KNOCK_INTMODE_HOLD;
-   
+ KSP_CS = 1;                      
+          
+ spi_master_init();
+ ksp.ksp_interrupt_state = 0; //KA готов
+ ksp.ksp_error = 0;
+    
  //Устанавливаем SO terminal активным и проводим инициализацию. Проверка на ответ и корректность
  //принятых данных проводим для каждого параметра.
  do
@@ -87,19 +88,7 @@ uint8_t knock_module_initialize(void)
   for(i = 0; i < 2; ++i)
   {
    KSP_CS = 0;
-   __no_operation();
-   __no_operation();
-   __no_operation();
-   __no_operation();
-   __no_operation();
-   __no_operation();
-   __no_operation();
    spi_master_transmit(init_data[i]);  
-   __no_operation();
-   __no_operation();
-   __no_operation();
-   __no_operation();
-   __no_operation();
    KSP_CS = 1;
    response = SPDR;  
    if (response!=init_data[i])
@@ -223,8 +212,8 @@ __interrupt void spi_dataready_isr(void)
 
 void knock_init_ports(void)
 {
- PORTB|= (1<<PB4)|(1<<PB3); //интерфейс с HIP выключен (CS=1, TEST=1)
- PORTD&=~(1<<PD3);          //режим HOLD для HIP
+ PORTB|= (1<<PB4)|(1<<PB3); //интерфейс с HIP выключен (CS=1, TEST=1, MOSI=0, SCK=0)
+ PORTD&=~(1<<PD3);          //INT/~HOLD = 0
  DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);   
  DDRD |= (1<<DDD3);
 }

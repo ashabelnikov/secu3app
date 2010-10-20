@@ -1586,6 +1586,12 @@
     <name>$PROJ_DIR$\funconv.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\ignlogic.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\ignlogic.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\jumper.c</name>
   </file>
   <file>
@@ -1611,6 +1617,18 @@
   </file>
   <file>
     <name>$PROJ_DIR$\measure.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\params.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\params.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\procuart.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\procuart.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\secu3.c</name>

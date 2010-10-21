@@ -1,10 +1,11 @@
 
-      SECU-3 Application software
+    SECU-3 Application software. Distributed under GPL license
 
-Created using IAR Embedded Workbench for Atmel AVR
+    Created using IAR Embedded Workbench for Atmel AVR
 
-Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka. 
-http://secu-3.narod.ru e-mail: secu-3@narod.ru
+    Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka. 
+    Microprocessors systems - design & programming.
+    http://secu-3.narod.ru e-mail: secu-3@narod.ru
 
 
       Как компилировать проект

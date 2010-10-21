@@ -1,11 +1,24 @@
-/****************************************************************
- *       SECU-3  - An open source, free engine control unit
- *    Designed by Alexey A. Shabelnikov. Ukraine, Gorlovka 2007.
- *       Microprocessors systems - design & programming.
- *    contacts:
- *              http://secu-3.narod.ru
- *              ICQ: 405-791-931
- ****************************************************************/
+/* SECU-3  - An open source, free engine control unit
+   Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Gorlovka
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+   contacts:
+              http://secu-3.narod.ru
+              email: secu-3@yandex.ru
+*/
+
 #include <inavr.h>
 #include <ioavr.h>
 #include "knock.h"
@@ -65,13 +78,18 @@ void knock_set_integration_mode(uint8_t mode)
  KSP_INTHOLD = mode;
 }
 
-__monitor //все прерывани€ должны быть запрещены!
 uint8_t knock_module_initialize(void)
 {
  uint8_t i, j = 10, response;
  uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
                          KSP_SET_CHANNEL | KSP_CHANNEL_0};  
- 
+ uint8_t _t;                         
+
+ do
+ { 
+   _t=__save_interrupt();
+  __disable_interrupt();
+
  //”станавливаем HOLD mode дл€ интегратора и "Run" mode дл€ чипа вообще.
  KSP_TEST = 1;
  KSP_INTHOLD = KNOCK_INTMODE_HOLD;
@@ -83,8 +101,6 @@ uint8_t knock_module_initialize(void)
     
  //”станавливаем SO terminal активным и проводим инициализацию. ѕроверка на ответ и корректность
  //прин€тых данных проводим дл€ каждого параметра.
- do
- {
   for(i = 0; i < 2; ++i)
   {
    KSP_CS = 0;
@@ -92,8 +108,14 @@ uint8_t knock_module_initialize(void)
    KSP_CS = 1;
    response = SPDR;  
    if (response!=init_data[i])
+   {
+    __restore_interrupt(_t);
     return 0; //ошибка - микросхема не отвечает!  
+   }
   }
+  __restore_interrupt(_t);
+
+ __delay_cycles(1600);
  }while(--j);
   
  //»нициализаци€ прошла успешно

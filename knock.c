@@ -50,13 +50,13 @@
 #define KSP_PRESCALER_4MHZ     0x00
 
 
-#define KSP_CS PORTB_Bit4        //SS управл€ет выборкой кристалла
-#define KSP_INTHOLD PORTD_Bit3   //ѕереключает режимы интегрировани€/хранени€
-#define KSP_TEST PORTB_Bit3      //ѕереводит сигнальный процессор в диагностический режим
+#define KSP_CS PORTB_Bit4        //SS controls chip selection
+#define KSP_INTHOLD PORTD_Bit3   //Switches between integration/hold modes
+#define KSP_TEST PORTB_Bit3      //Switches chip into diagnostic mode
 
 
-//ƒанна€ структура предназначена дл€ дублировани€ данных текущего
-//состо€ни€ сигнального процессора.
+//This data structure intended for duplication of data of current state
+// of signal processor 
 typedef struct
 {
  uint8_t ksp_bpf; 
@@ -69,7 +69,7 @@ typedef struct
 
 kspstate_t ksp;
 
-//ƒл€ работы с аппаратной частью SPI
+//For work with hardware part of SPI
 void spi_master_init(void);
 void spi_master_transmit(uint8_t i_byte);
 
@@ -87,20 +87,20 @@ uint8_t knock_module_initialize(void)
 
  do
  { 
-   _t=__save_interrupt();
+  _t=__save_interrupt();
   __disable_interrupt();
 
- //”станавливаем HOLD mode дл€ интегратора и "Run" mode дл€ чипа вообще.
- KSP_TEST = 1;
- KSP_INTHOLD = KNOCK_INTMODE_HOLD;
- KSP_CS = 1;                      
+  //Setting HOLD mode for integrator and "Run" mode for chip at all.
+  KSP_TEST = 1;
+  KSP_INTHOLD = KNOCK_INTMODE_HOLD;
+  KSP_CS = 1;                      
           
- spi_master_init();
- ksp.ksp_interrupt_state = 0; //KA готов
- ksp.ksp_error = 0;
-    
- //”станавливаем SO terminal активным и проводим инициализацию. ѕроверка на ответ и корректность
- //прин€тых данных проводим дл€ каждого параметра.
+  spi_master_init();
+  ksp.ksp_interrupt_state = 0; //KA готов
+  ksp.ksp_error = 0;
+ 
+  //Setting SO terminal active and perform initialization. For each parameter perform
+  //checking for response and correcntess of received data.
   for(i = 0; i < 2; ++i)
   {
    KSP_CS = 0;
@@ -110,36 +110,36 @@ uint8_t knock_module_initialize(void)
    if (response!=init_data[i])
    {
     __restore_interrupt(_t);
-    return 0; //ошибка - микросхема не отвечает!  
+    return 0; //error - chip doesn't respond!
    }
   }
   __restore_interrupt(_t);
 
- __delay_cycles(1600);
+  __delay_cycles(1600);
  }while(--j);
   
- //»нициализаци€ прошла успешно
+ //Initialization completed successfully
  return 1; 
 }
 
-//»нициализирует SPI в режиме мастера
+//Initializes SPI in master mode
 __monitor
 void spi_master_init(void)
 { 
- // разрешаем SPI, мастер, clock = fck/16, данные по спадающему фронту SCK
+ // enable SPI, master, clock = fck/16, data on falling edge of SCK
  SPCR = (1 << SPE)|(1 << MSTR)|(1 << SPR0)|(1 << CPHA);
 }
 
 
-//ѕередает один байт через SPI
-//i_byte - байт дл€ передачи
+//Sends one byte via SPI
+//i_byte - byte for sending
 void spi_master_transmit(uint8_t i_byte)
 {
  __no_operation();
  __no_operation();
- //Ќачало передачи
+ //Begin of sending
  SPDR = i_byte;
- //∆дем завершени€ передачи
+ //Waiting for completion of sending
  while(!(SPSR & (1 << SPIF)));
  __no_operation();
  __no_operation();
@@ -153,7 +153,8 @@ void knock_start_settings_latching(void)
  KSP_CS = 0;
  ksp.ksp_interrupt_state = 1;
  SPDR = ksp.ksp_last_word = ksp.ksp_bpf;
- //разрешаем прерывание, передача остальных данных будет завершена в прерывании
+ //enable interrupt, sending of the remaining data will be completed in 
+ //interrupt's state machine
  SPCR|= (1 << SPIE); 
 }
 
@@ -193,19 +194,19 @@ void knock_reset_error(void)
 #pragma vector=SPI_STC_vect
 __interrupt void spi_dataready_isr(void)
 { 
- uint8_t t; 
- //—игнальный процессор требует перехода CS в высокий уровень после каждого байта,
- //не менее чем на 200ns
+ uint8_t t;
+ //signal processor requires transition of CS into high level after each sent 
+ //byte, at least for 200ns
  KSP_CS = 1; 
   
  t = SPDR;
   
  switch(ksp.ksp_interrupt_state)
  {
-  case 0:   // ј остановлен
+  case 0:   //state machine stopped
    break;  
           
-  case 1: //BPF загружена   
+  case 1: //BPF loaded   
    KSP_CS = 0;    
    ksp.ksp_interrupt_state = 2;
    if (t!=ksp.ksp_last_word)  
@@ -213,7 +214,7 @@ __interrupt void spi_dataready_isr(void)
    SPDR = ksp.ksp_last_word = ksp.ksp_gain;
    break;     
     
-  case 2: //Gain загружена
+  case 2: //Gain loaded
    KSP_CS = 0;
    ksp.ksp_interrupt_state = 3;
    if (t!=ksp.ksp_last_word)  
@@ -221,11 +222,10 @@ __interrupt void spi_dataready_isr(void)
    SPDR = ksp.ksp_last_word = ksp.ksp_inttime;
    break; 
         
-  case 3: //Int.Time загружено
+  case 3: //Int.Time loaded
    if (t!=ksp.ksp_last_word)  
     ksp.ksp_error = 1;
-   //запрещаем прерывание и устанавливаем конечный автомат в состо€ние
-   //готовности к новой загрузке.
+   //disable interrupt and switch state machine into initial state - ready to new load
    SPCR&= ~(1 << SPIE); 
    ksp.ksp_interrupt_state = 0;   
    break;    
@@ -234,8 +234,8 @@ __interrupt void spi_dataready_isr(void)
 
 void knock_init_ports(void)
 {
- PORTB|= (1<<PB4)|(1<<PB3); //интерфейс с HIP выключен (CS=1, TEST=1, MOSI=0, SCK=0)
- PORTD&=~(1<<PD3);          //INT/~HOLD = 0
+ PORTB|= (1<<PB4)|(1<<PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
+ PORTD&=~(1<<PD3);          //INT/~HOLD = 0 (hold mode)
  DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);   
  DDRD |= (1<<DDD3);
 }

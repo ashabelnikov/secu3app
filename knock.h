@@ -24,45 +24,47 @@
 
 #include <stdint.h>
 
-//Параметры функций принимают данные в соответствии с форматом регистров 
-//HIP9011. Перестройка параметров разрешена только в режиме HOLD!
+//Parameters of functions receive data according to registers format of 
+//HIP9011. Retuning of parameters allowed only in HOLD mode!
 
-//Эти три функции могут вызываться в реальном времени и при любых углах
-//поворота коленвала. Однако применение устанавливаемого значения начнет происходить
-//только после вызова knock_start_settings_latching()
-//Установка центральной цастоты полосового фильтра
+//These three functions may be called in real time and at any turning angles of 
+//the crankshaft. However, application of value being set will occur only after 
+//a call of knock_start_settings_latching()
+
+//Set center frequency of bandpass filter
 void knock_set_band_pass(uint8_t freq);
-//установка усиления программируемого усилителя
+//Set attenuation gain of digitally programmable gain
 void knock_set_gain(uint8_t gain);
-//установка постоянной времени интегратора
+//Set time constant of integrator
 void knock_set_int_time_constant(uint8_t inttime);
 
-//Запускает процесс передачи настроек в сигнальный процессор. Должна вызываться 
-//при определенных углах поворота коленвала, при которых сигнальный процессор
-//находится в состоянии HOLD. Если на момент вызова этой функции процесс загрузки
-//еще не закончен, то старый процесс будет прерван и запущен новый, но при этом 
-//будет установлен признак ошибки.
+
+//Starts the process of transferring the settings into the signal processor. Must 
+//be invoked under certain turning angles of the crankshaft, at which the signal 
+//processor is in HOLD mode. If at the time of calling of this function latching
+//process is not finished yet, the old process will be aborted and started a new 
+//one, but it will set a sign of error.
 void knock_start_settings_latching(void);
-//возвращает не 0 если в текущий момент операция загрузки не выполняется
+//returns value > 0 if at the current moment latching operation is not in process
 uint8_t knock_is_latching_idle(void);
 
-//Возвращает 1 если была ошибка (микросхема неотвечала или было обнаружено нарушение данных)
+//returns 1 if was an error (chip was not responding or data corruption was detected)
 uint8_t knock_is_error(void);
 
-//сброс ошибки
+//reset an error
 void knock_reset_error(void);
 
-//Подготовка канала детонации и его тестирование.
-//Возвращает 1 - если тестирование прошло успешно, иначе 0. 
+//Initialization of knock channel and its testing.
+//Returns 1 - if testing performed succesfully, otherwise 0. 
 uint8_t knock_module_initialize(void);
 
-//воздействует на вход INT/HOLD HIP-a, устанавливая таким образом  
-//либо режим интегрирования, либо режим удерживания.
+//affects INT/HOLD input of HIP9011, setting in such a way either integration 
+//or hold mode
 #define KNOCK_INTMODE_INT  1
 #define KNOCK_INTMODE_HOLD 0
 void knock_set_integration_mode(uint8_t mode); 
 
-//инициализация используемых портов ввода/вывода
+//initialization of used I/O ports
 void knock_init_ports(void);
 
 #endif //_KNOCK_H_

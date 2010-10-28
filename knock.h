@@ -24,11 +24,11 @@
 
 #include <stdint.h>
 
-//Parameters of functions receive data according to registers format of 
+//Parameters of functions receive data according to registers format of
 //HIP9011. Retuning of parameters allowed only in HOLD mode!
 
-//These three functions may be called in real time and at any turning angles of 
-//the crankshaft. However, application of value being set will occur only after 
+//These three functions may be called in real time and at any turning angles of
+//the crankshaft. However, application of value being set will occur only after
 //a call of knock_start_settings_latching()
 
 //Set center frequency of bandpass filter
@@ -39,10 +39,10 @@ void knock_set_gain(uint8_t gain);
 void knock_set_int_time_constant(uint8_t inttime);
 
 
-//Starts the process of transferring the settings into the signal processor. Must 
-//be invoked under certain turning angles of the crankshaft, at which the signal 
+//Starts the process of transferring the settings into the signal processor. Must
+//be invoked under certain turning angles of the crankshaft, at which the signal
 //processor is in HOLD mode. If at the time of calling of this function latching
-//process is not finished yet, the old process will be aborted and started a new 
+//process is not finished yet, the old process will be aborted and started a new
 //one, but it will set a sign of error.
 void knock_start_settings_latching(void);
 //returns value > 0 if at the current moment latching operation is not in process
@@ -55,14 +55,14 @@ uint8_t knock_is_error(void);
 void knock_reset_error(void);
 
 //Initialization of knock channel and its testing.
-//Returns 1 - if testing performed succesfully, otherwise 0. 
+//Returns 1 - if testing performed succesfully, otherwise 0.
 uint8_t knock_module_initialize(void);
 
-//affects INT/HOLD input of HIP9011, setting in such a way either integration 
+//affects INT/HOLD input of HIP9011, setting in such a way either integration
 //or hold mode
 #define KNOCK_INTMODE_INT  1
 #define KNOCK_INTMODE_HOLD 0
-void knock_set_integration_mode(uint8_t mode); 
+void knock_set_integration_mode(uint8_t mode);
 
 //initialization of used I/O ports
 void knock_init_ports(void);

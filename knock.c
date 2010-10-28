@@ -23,7 +23,7 @@
 #include <ioavr.h>
 #include "knock.h"
 
-//HIP9011 - Knock Signal Processor. 
+//HIP9011 - Knock Signal Processor.
 
 //Command codes and quick description (crib)
 #define KSP_SET_BANDPASS       0x00   //00FFFFFF, F - BPF frequency code
@@ -44,7 +44,7 @@
 
 //channel selection values
 #define KSP_CHANNEL_0          0x00
-#define KSP_CHANNEL_1          0x01 
+#define KSP_CHANNEL_1          0x01
 
 //prescaler
 #define KSP_PRESCALER_4MHZ     0x00
@@ -56,13 +56,13 @@
 
 
 //This data structure intended for duplication of data of current state
-// of signal processor 
+// of signal processor
 typedef struct
 {
- uint8_t ksp_bpf; 
+ uint8_t ksp_bpf;
  volatile uint8_t ksp_gain;
  volatile uint8_t ksp_inttime;
- volatile uint8_t ksp_interrupt_state;  
+ volatile uint8_t ksp_interrupt_state;
  uint8_t ksp_error;
  volatile uint8_t ksp_last_word;
 }kspstate_t;
@@ -73,7 +73,7 @@ kspstate_t ksp;
 void spi_master_init(void);
 void spi_master_transmit(uint8_t i_byte);
 
-void knock_set_integration_mode(uint8_t mode) 
+void knock_set_integration_mode(uint8_t mode)
 {
  KSP_INTHOLD = mode;
 }
@@ -82,8 +82,8 @@ uint8_t knock_module_initialize(void)
 {
  uint8_t i, j = 10, response;
  uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
-                         KSP_SET_CHANNEL | KSP_CHANNEL_0};  
- uint8_t _t;                         
+                         KSP_SET_CHANNEL | KSP_CHANNEL_0};
+ uint8_t _t;
 
  do
  { 
@@ -93,20 +93,20 @@ uint8_t knock_module_initialize(void)
   //Setting HOLD mode for integrator and "Run" mode for chip at all.
   KSP_TEST = 1;
   KSP_INTHOLD = KNOCK_INTMODE_HOLD;
-  KSP_CS = 1;                      
-          
+  KSP_CS = 1;
+
   spi_master_init();
-  ksp.ksp_interrupt_state = 0; //KA готов
+  ksp.ksp_interrupt_state = 0; //init state machine
   ksp.ksp_error = 0;
- 
+
   //Setting SO terminal active and perform initialization. For each parameter perform
   //checking for response and correcntess of received data.
   for(i = 0; i < 2; ++i)
   {
    KSP_CS = 0;
-   spi_master_transmit(init_data[i]);  
+   spi_master_transmit(init_data[i]);
    KSP_CS = 1;
-   response = SPDR;  
+   response = SPDR; 
    if (response!=init_data[i])
    {
     __restore_interrupt(_t);
@@ -117,15 +117,15 @@ uint8_t knock_module_initialize(void)
 
   __delay_cycles(1600);
  }while(--j);
-  
+
  //Initialization completed successfully
- return 1; 
+ return 1;
 }
 
 //Initializes SPI in master mode
 __monitor
 void spi_master_init(void)
-{ 
+{
  // enable SPI, master, clock = fck/16, data on falling edge of SCK
  SPCR = (1 << SPE)|(1 << MSTR)|(1 << SPR0)|(1 << CPHA);
 }
@@ -153,9 +153,9 @@ void knock_start_settings_latching(void)
  KSP_CS = 0;
  ksp.ksp_interrupt_state = 1;
  SPDR = ksp.ksp_last_word = ksp.ksp_bpf;
- //enable interrupt, sending of the remaining data will be completed in 
+ //enable interrupt, sending of the remaining data will be completed in
  //interrupt's state machine
- SPCR|= (1 << SPIE); 
+ SPCR|= (1 << SPIE);
 }
 
 uint8_t knock_is_latching_idle(void)
@@ -193,43 +193,43 @@ void knock_reset_error(void)
 
 #pragma vector=SPI_STC_vect
 __interrupt void spi_dataready_isr(void)
-{ 
+{
  uint8_t t;
- //signal processor requires transition of CS into high level after each sent 
+ //signal processor requires transition of CS into high level after each sent
  //byte, at least for 200ns
- KSP_CS = 1; 
-  
+ KSP_CS = 1;
+
  t = SPDR;
-  
+
  switch(ksp.ksp_interrupt_state)
  {
   case 0:   //state machine stopped
-   break;  
-          
-  case 1: //BPF loaded   
-   KSP_CS = 0;    
+   break;
+
+  case 1: //BPF loaded
+   KSP_CS = 0;
    ksp.ksp_interrupt_state = 2;
-   if (t!=ksp.ksp_last_word)  
+   if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;
    SPDR = ksp.ksp_last_word = ksp.ksp_gain;
-   break;     
-    
+   break;
+
   case 2: //Gain loaded
    KSP_CS = 0;
    ksp.ksp_interrupt_state = 3;
-   if (t!=ksp.ksp_last_word)  
-    ksp.ksp_error = 1;    
+   if (t!=ksp.ksp_last_word)
+    ksp.ksp_error = 1;
    SPDR = ksp.ksp_last_word = ksp.ksp_inttime;
-   break; 
-        
+   break;
+
   case 3: //Int.Time loaded
-   if (t!=ksp.ksp_last_word)  
+   if (t!=ksp.ksp_last_word) 
     ksp.ksp_error = 1;
    //disable interrupt and switch state machine into initial state - ready to new load
    SPCR&= ~(1 << SPIE); 
-   ksp.ksp_interrupt_state = 0;   
+   ksp.ksp_interrupt_state = 0;
    break;    
- }      
+ }
 }
 
 void knock_init_ports(void)

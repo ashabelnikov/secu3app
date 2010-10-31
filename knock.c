@@ -80,44 +80,44 @@ void knock_set_integration_mode(uint8_t mode)
 
 uint8_t knock_module_initialize(void)
 {
- uint8_t i, j = 10, response;
+ uint8_t i, response;
  uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
                          KSP_SET_CHANNEL | KSP_CHANNEL_0};
  uint8_t _t;
 
- do
- { 
-  _t=__save_interrupt();
-  __disable_interrupt();
+ _t=__save_interrupt();
+ __disable_interrupt();
 
-  //Setting HOLD mode for integrator and "Run" mode for chip at all.
-  KSP_TEST = 1;
-  KSP_INTHOLD = KNOCK_INTMODE_HOLD;
+ //Setting HOLD mode for integrator and "Run" mode for chip at all.
+ KSP_TEST = 1;
+ KSP_INTHOLD = KNOCK_INTMODE_HOLD;
+ KSP_CS = 1;
+
+ spi_master_init();
+ ksp.ksp_interrupt_state = 0; //init state machine
+ ksp.ksp_error = 0;
+
+ //set prescaler first
+ KSP_CS = 0;
+ spi_master_transmit(init_data[0]);
+ KSP_CS = 1;
+
+ //Setting SO terminal active and perform initialization. For each parameter perform
+ //checking for response and correcntess of received data.
+ for(i = 0; i < 2; ++i)
+ {
+  KSP_CS = 0;
+  spi_master_transmit(init_data[i]);
   KSP_CS = 1;
-
-  spi_master_init();
-  ksp.ksp_interrupt_state = 0; //init state machine
-  ksp.ksp_error = 0;
-
-  //Setting SO terminal active and perform initialization. For each parameter perform
-  //checking for response and correcntess of received data.
-  for(i = 0; i < 2; ++i)
+  response = SPDR; 
+  if (response!=init_data[i])
   {
-   KSP_CS = 0;
-   spi_master_transmit(init_data[i]);
-   KSP_CS = 1;
-   response = SPDR; 
-   if (response!=init_data[i])
-   {
-    __restore_interrupt(_t);
-    return 0; //error - chip doesn't respond!
-   }
+   __restore_interrupt(_t);
+   return 0; //error - chip doesn't respond!
   }
-  __restore_interrupt(_t);
+ }
 
-  __delay_cycles(1600);
- }while(--j);
-
+ __restore_interrupt(_t);
  //Initialization completed successfully
  return 1;
 }
@@ -129,7 +129,6 @@ void spi_master_init(void)
  // enable SPI, master, clock = fck/16, data on falling edge of SCK
  SPCR = (1 << SPE)|(1 << MSTR)|(1 << SPR0)|(1 << CPHA);
 }
-
 
 //Sends one byte via SPI
 //i_byte - byte for sending

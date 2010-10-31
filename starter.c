@@ -44,7 +44,7 @@ void starter_control(struct ecudata_t* d)
 #ifndef VPSEM   
  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)
  if (d->sens.frequen4 > d->param.starter_off)
-  SET_STARTER_BLOCKING_STATE(1);  
+  SET_STARTER_BLOCKING_STATE(1); 
 #else 
  //управление блокировкой стартера (стартер блокируется при оборотах больше пороговых)
  //и индикация состояния клапана ЭПХХ (используется выход блокировки стартера) 
@@ -56,4 +56,6 @@ void starter_control(struct ecudata_t* d)
   ce_set_state(1);  
  }
 #endif
+ if (d->sens.frequen4 < 30)   
+  SET_STARTER_BLOCKING_STATE(0); //снимаем блокировку стартера
 }

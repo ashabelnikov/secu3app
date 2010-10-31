@@ -158,7 +158,6 @@ __C_task void main(void)
   { //двигатель остановился (его обороты ниже критических)
    ckps_init_state_variables();
    edat.engine_mode = EM_START; //режим пуска 	      
-   starter_set_blocking_state(0); //снимаем блокировку стартера
      
    if (edat.param.knock_use_knock_channel)
     knock_start_settings_latching();     

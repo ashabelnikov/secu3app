@@ -30,6 +30,10 @@
 #define ECUERROR_EEPROM_PARAM_BROKEN    1  // СE погаснет через несколько секунд после запуска двигателя
 #define ECUERROR_PROGRAM_CODE_BROKEN    2  // СЕ погаснет через несколько секунд после запуска двигателя
 #define ECUERROR_KSP_CHIP_FAILED        3
+#define ECUERROR_KNOCK_DETECTED         4
+#define ECUERROR_MAP_SENSOR_FAIL        5
+#define ECUERROR_TEMP_SENSOR_FAIL       6
+#define ECUERROR_VOLT_SENSOR_FAIL       7
 
 struct ecudata_t;
 

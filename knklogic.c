@@ -21,6 +21,7 @@
 
 #include <inavr.h>
 #include <ioavr.h>
+#include "ce_errors.h"
 #include "knklogic.h"
 #include "secu3.h"
 #include "funconv.h"
@@ -28,28 +29,35 @@
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
 {
  p_rs->knock_flag = (d->sens.knock_k > d->param.knock_threshold);
+ 
+ //if knock detected set corresponding CE error
+ if (p_rs->knock_flag)
+  ce_set_error(ECUERROR_KNOCK_DETECTED);
+ else
+  ce_clear_error(ECUERROR_KNOCK_DETECTED); 
+ 
  return p_rs->knock_flag;
 }
 
 void knklogic_init(retard_state_t* p_rs)
 {
  p_rs->delay_counter = 0;
- p_rs->knock_flag = 0; 
+ p_rs->knock_flag = 0;
 }
 
 void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs)
 {
- if (p_rs->delay_counter != 0)     
-  p_rs->delay_counter--;     
+ if (p_rs->delay_counter != 0)
+  p_rs->delay_counter--;
  else
- {          
+ {
   if (p_rs->knock_flag)
-  { //есть детонация         
+  { //detonation present
    d->knock_retard+= d->param.knock_retard_step;//retard
    p_rs->knock_flag = 0;
   }
   else
-  {//нет детонации
+  {//detonation is absent
    d->knock_retard-= d->param.knock_advance_step;//advance
   } 
   restrict_value_to(&d->knock_retard, 0, d->param.knock_max_retard);

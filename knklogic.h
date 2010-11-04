@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 
+//The module contains all the regulation logic of advance angle by detonation
 //Модуль содержащий всю логику регулирования УОЗ по детонации
 
 typedef struct retard_state_t
@@ -34,12 +35,14 @@ typedef struct retard_state_t
 
 struct ecudata_t;
 
-//Возвращает: 0 - нет детонации, 1 - есть 
+//Return: 0 - detonation is absent, 1 - detonation is present
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs);
 
+//initialization of state variables
 //инициализация переменных состояния
 void knklogic_init(retard_state_t* p_rs);
 
+//Called in each work cycle
 //вызывается в каждом рабочем цикле
 void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs);
 

@@ -24,7 +24,7 @@
 
 struct ecudata_t;
 
-//обрабатывает передаваемые/принимаемые фреймы UART-a
+//обрабатывает передаваемые/принимаемые фреймы UART-a. Called from main loop
 void process_uart_interface(struct ecudata_t* d);
 
 #endif //_PROCUART_H_

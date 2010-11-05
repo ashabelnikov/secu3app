@@ -76,36 +76,36 @@ void sop_execute_operations(struct ecudata_t* d)
  if (sop_is_operation_active(SOP_SAVE_CE_MERGED_ERRORS))
  {
   //Если EEPROM не занято, то необходимо сохранить массив с кодами ошибок Cehck Engine.
-  //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если 
-  //она еще не была сохранена. Для этого производится чтение и сравнение.  
+  //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если
+  //она еще не была сохранена. Для этого производится чтение и сравнение.
   if (eeprom_is_idle())
-  {      
-   ce_save_merged_errors();   
-                
+  {
+   ce_save_merged_errors(0);
+
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SAVE_CE_MERGED_ERRORS] = SOP_NA;
   }
  }
-    
- if (sop_is_operation_active(SOP_SEND_NC_PARAMETERS_SAVED))   
+
+ if (sop_is_operation_active(SOP_SEND_NC_PARAMETERS_SAVED))
  {
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   d->op_comp_code = OPCODE_EEPROM_PARAM_SAVE;                
+   d->op_comp_code = OPCODE_EEPROM_PARAM_SAVE;
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-    
+
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SEND_NC_PARAMETERS_SAVED] = SOP_NA;
-  }    
+  }
  }
-  
+
  if (sop_is_operation_active(SOP_SAVE_CE_ERRORS))
  {
   if (eeprom_is_idle())
-  {    
-   eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&d->ecuerrors_saved_transfer, sizeof(uint16_t));      
-        
+  {
+   ce_save_merged_errors(&d->ecuerrors_saved_transfer);
+
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SAVE_CE_ERRORS] = SOP_NA;    
   }

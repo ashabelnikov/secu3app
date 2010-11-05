@@ -32,16 +32,16 @@
 
 typedef struct
 {
- uint16_t ecuerrors;         //максимум 16 кодов ошибок
- uint16_t merged_errors;     //кеширует ошибки для сбережения ресурса EEPROM
- uint16_t write_errors;      //ф. eeprom_start_wr_data() запускает фоновый процесс! 
+ uint16_t ecuerrors;         //16 error codes maximum (максимум 16 кодов ошибок)
+ uint16_t merged_errors;     //caching errors to preserve resource of the EEPROM (кеширует ошибки для сбережения ресурса EEPROM)
+ uint16_t write_errors;      //ф. eeprom_start_wr_data() launches background process! (запускает фоновый процесс!) 
 }ce_state_t;
 
 ce_state_t ce_state = {0,0,0};
 
-//операции над ошибками
+//operations under errors (операции над ошибками)
 /*#pragma inline*/
-void ce_set_error(uint8_t error)  
+void ce_set_error(uint8_t error)
 {
  SETBIT(ce_state.ecuerrors, error);
 }
@@ -51,44 +51,51 @@ void ce_clear_error(uint8_t error)
 {
  CLEARBIT(ce_state.ecuerrors, error);
 }
- 
+
+//If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
+//then the CE will be turned on continuously. At the start of programm the CE lights up for 0.5 seconds. for indicating
+//of the operability.
 //При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
-//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности. 
+//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности.
 void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
 {
  uint16_t temp_errors;
-  
+
+ //If error of CKP sensor was, then set corresponding bit of error
  //если была ошибка ДПКВ то устанавливаем бит соответствующей ошибки
  if (ckps_is_error())
  {
   ce_set_error(ECUERROR_CKPS_MALFUNCTION);
-  ckps_reset_error();        
+  ckps_reset_error();
  }
  else
  {
-  ce_clear_error(ECUERROR_CKPS_MALFUNCTION);  
+  ce_clear_error(ECUERROR_CKPS_MALFUNCTION);
  }
 
+ //if error of knock channel was
  //если была ошибка канала детонации
  if (d->param.knock_use_knock_channel)
   if (knock_is_error())
   {
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
-   knock_reset_error();        
+   knock_reset_error();
   }
   else
   {
-   ce_clear_error(ECUERROR_KSP_CHIP_FAILED);  
+   ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
   }
 
+ //If the timer counted the time, then turn off the CE
  //если таймер отсчитал время, то гасим СЕ
  if (s_timer_is_action(*ce_control_time_counter))
  {
-  ce_set_state(0);       
+  ce_set_state(0);
   d->ce_state = 0; //<--doubling
  }
 
- //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер 
+ //If at least one error is present  - turn on CE and start timer
+ //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер
  if (ce_state.ecuerrors!=0)
  {
   s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
@@ -97,37 +104,52 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  }
 
  temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
- if (temp_errors!=ce_state.merged_errors) //появилась ли ошибка которой нет в merged_errors?
+ //check for error which is still not in merged_errors
+ //появилась ли ошибка которой нет в merged_errors?
+ if (temp_errors!=ce_state.merged_errors)
  {
-  //так как на момент возникновения новой ошибки EEPROM может быть занято (например сохранением параметров),
+  //Because at the time of emergence of a new error, EEPROM can be busy (for example, saving options),
+  //then it is necessary to run deffered operation, which will be automatically executed as soon as the EEPROM
+  //will be released.
+  //Так как на момент возникновения новой ошибки EEPROM может быть занято (например сохранением параметров),
   //то необходимо запустить отложенную операцию, которая будет автоматически выполнена как только EEPROM
-  //освободится. 
+  //освободится.
   sop_set_operation(SOP_SAVE_CE_MERGED_ERRORS);
  }
 
  ce_state.merged_errors = temp_errors;
 
+ //copy error's bits into the cache for transferring
  //переносим биты ошибок в кеш для передачи.
  d->ecuerrors_for_transfer|= ce_state.ecuerrors;
 }
 
-void ce_save_merged_errors(void)
+void ce_save_merged_errors(uint16_t* p_merged_errors)
 {
  uint16_t temp_errors;
- eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
- ce_state.write_errors = temp_errors | ce_state.merged_errors; 
- if (ce_state.write_errors!=temp_errors)    
-  eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t));      
+
+ if (!p_merged_errors) //overwrite with parameter?
+ {
+  eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
+  ce_state.write_errors = temp_errors | ce_state.merged_errors;
+  if (ce_state.write_errors!=temp_errors)
+    eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t)); 
+ }
+ else
+ {
+  ce_state.merged_errors = *p_merged_errors;
+  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.merged_errors, sizeof(uint16_t)); 
+ }
 }
 
 void ce_clear_errors(void)
 {
-  memset(&ce_state, 0, sizeof(ce_state_t));
-  eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));       
+ memset(&ce_state, 0, sizeof(ce_state_t));
+ eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));       
 }
 
 void ce_init_ports(void)
 {
- PORTB|= (1<<PB2);  //CE горит(для проверки)
- DDRB |= (1<<DDB2); //выход для CE  
+ PORTB|= (1<<PB2);  //CE is ON (for checking)
+ DDRB |= (1<<DDB2); //output for CE
 }

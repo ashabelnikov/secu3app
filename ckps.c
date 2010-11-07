@@ -484,7 +484,7 @@ void process_ckps_cogs(void)
   {
    //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения   
    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG); 
-   SETBIT(TIFR, OCF1A);
+   TIFR = (1 << OCF1A);
    chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
    flags.ckps_need_to_set_channel = 0; // чтобы не войти в режим настройки ещё раз
    TIMSK|= (1<<OCIE1A); //разрешаем прерывание

@@ -21,14 +21,16 @@
 
 #include <string.h>
 #include <ioavr.h>
-#include "ce_errors.h"
+#include "adc.h"
 #include "bitmask.h"
+#include "ce_errors.h"
 #include "ckps.h"
-#include "knock.h"
-#include "vstimer.h"
-#include "suspendop.h"
 #include "eeprom.h"
+#include "knock.h"
+#include "magnitude.h"
 #include "secu3.h"
+#include "suspendop.h"
+#include "vstimer.h"
 
 typedef struct
 {
@@ -52,15 +54,8 @@ void ce_clear_error(uint8_t error)
  CLEARBIT(ce_state.ecuerrors, error);
 }
 
-//If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
-//then the CE will be turned on continuously. At the start of programm the CE lights up for 0.5 seconds. for indicating
-//of the operability.
-//При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
-//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности.
-void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
+void check(struct ecudata_t* d)
 {
- uint16_t temp_errors;
-
  //If error of CKP sensor was, then set corresponding bit of error
  //если была ошибка ДПКВ то устанавливаем бит соответствующей ошибки
  if (ckps_is_error())
@@ -85,6 +80,42 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
   {
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
   }
+ 
+ //checking MAP sensor. TODO: implement additional check
+ // error if voltage < 0.3v
+ if (d->sens.map_raw < ROUND(0.3 / ADC_DISCRETE))
+  ce_set_error(ECUERROR_MAP_SENSOR_FAIL);
+ else 
+  ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
+
+ //checking coolant temperature sensor
+ // error if (2.28v > voltage > 3.93v)
+ if (d->sens.temperat_raw < ROUND(2.28 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(3.93 / ADC_DISCRETE))
+  ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
+ else
+  ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
+    
+ //checking voltqage
+ // error if voltage < 4.5v
+ if ( (d->sens.voltage_raw < ROUND(4.5 / ADC_DISCRETE)) || 
+  (d->sens.voltage_raw < ROUND(12.0 / ADC_DISCRETE) && d->sens.inst_frq > 2500) || 
+  (d->sens.voltage_raw > ROUND(16.0 / ADC_DISCRETE)) )   
+  ce_set_error(ECUERROR_VOLT_SENSOR_FAIL);
+ else 
+  ce_clear_error(ECUERROR_VOLT_SENSOR_FAIL);
+}
+
+
+//If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
+//then the CE will be turned on continuously. At the start of programm the CE lights up for 0.5 seconds. for indicating
+//of the operability.
+//При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
+//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности.
+void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
+{
+ uint16_t temp_errors;
+
+ check(d);
 
  //If the timer counted the time, then turn off the CE
  //если таймер отсчитал время, то гасим СЕ

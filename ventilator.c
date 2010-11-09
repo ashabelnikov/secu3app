@@ -23,91 +23,96 @@
 #include "ventilator.h"
 #include "secu3.h"
 
-//включает/выключает вентилятор
+//Turns on/off ventilator
 #define SET_VENTILATOR_STATE(s) {PORTB_Bit1 = s;}
 
+//Warning must be the same as another definition in vstimer.h!
+#define TIMER2_RELOAD_VALUE  6
+#define COMPADD 5
 
-/*
 //number of PWM discretes
-#define PWM_STEPS 10
-
-//MUST be same as in vstimer!
-#define TIMER2_RELOAD_VALUE 100
+#define PWM_STEPS 25
 
 volatile uint8_t pwm_state; //0 - passive, 1 - active
 volatile uint8_t pwm_duty;
-*/
 
 void vent_init_ports(void)
 {
- //конфигурируем порты ввода/вывода       
+ //configure used I/O ports
  PORTB&= ~(1<<PB1);
- DDRB |= (1<<DDB1);   
+ DDRB |= (1<<DDB1);
 }
 
 void vent_init_state(void)
-{ 
-/* pwm_state = 0;
- pwm_duty = 0; // 0%
- OCR2 = TIMER2_RELOAD_VALUE + 5; 
- TIMSK|=(1 << OCIE2);*/
+{
+ pwm_state = 0;  //begin from active level
+ pwm_duty = 0;   // 0%
+ OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 }
 
-/*
 void vent_set_duty(uint8_t duty)
 {
+ //TODO: Maybe we need double buffering?
  pwm_duty = duty;
- 
+
  //We don't need interrupts if duty is 0 or 100%
-// if (duty == 0)
-// {
-//  TIMSK&=~(1 << OCIE2);
-//  SET_VENTILATOR_STATE(0);
-// }
-// else if (duty == PWM_STEPS)
-// {
-//  TIMSK&=~(1 << OCIE2);
-//  SET_VENTILATOR_STATE(1);
-// }
-// else
-//  TIMSK|=(1 << OCIE2);  
+ if (duty == 0)
+ {
+  TIMSK&=~(1 << OCIE2);
+  SET_VENTILATOR_STATE(0);
+ }
+ else if (duty == PWM_STEPS)
+ {
+  TIMSK&=~(1 << OCIE2);
+  SET_VENTILATOR_STATE(1);
+ }
+ else
+  TIMSK|=(1 << OCIE2);
 }
 
-//прерывание по сравненю Т/С 2 - для генерации ШИМ
+//T/C 2 Compare interrupt for renerating PWM (ventilator control)
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 
-  uint8_t r = OCR2;
-  if (0==pwm_state)
-  { //start active part
-   SET_VENTILATOR_STATE(1);
-   r+=pwm_duty;
-   ++pwm_state;
-  }
-  else
-  { //start passive part
-   SET_VENTILATOR_STATE(0);
-   r+=PWM_STEPS-pwm_duty;
-   --pwm_state;   
-  } 
-  
-  if (r < TIMER2_RELOAD_VALUE)
-    r+=TIMER2_RELOAD_VALUE;
-    
-  OCR2 = r;
+ if (0 == pwm_state)
+ { //start active part
+  SET_VENTILATOR_STATE(1);
+  OCR2+= pwm_duty;
+  ++pwm_state;
+ }
+ else
+ { //start passive part
+  SET_VENTILATOR_STATE(0);
+  OCR2+= (PWM_STEPS - pwm_duty);
+  --pwm_state;   
+ }        
 }
-*/
 
+//Control electro ventilator (engine cooling), only in case if coolant temperature 
+//sensor is present in system
 void vent_control(struct ecudata_t *d)
 {
- //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе 
- if (d->param.tmp_use)
- {
-  if (d->sens.temperat >= d->param.vent_on)
-   SET_VENTILATOR_STATE(1);
-  if (d->sens.temperat <= d->param.vent_off)   
-   SET_VENTILATOR_STATE(0); 
-  }
+ if (!d->param.tmp_use)
+  return;
+ 
+#ifndef VENTILATOR_PWM
+ if (d->sens.temperat >= d->param.vent_on)
+  SET_VENTILATOR_STATE(1);
+ if (d->sens.temperat <= d->param.vent_off)
+  SET_VENTILATOR_STATE(0);
+#else //PWM mode
+//  if (!d->param.use_ventilator_pwm)
+//  {
+//     if (d->sens.temperat >= d->param.vent_on)
+//      vent_set_duty(PWM_STEPS);
+//     if (d->sens.temperat <= d->param.vent_off)
+//      vent_set_duty(0);
+//  }
+//  else
+//  {
+//  }
 
- /* vent_set_duty(5);    */
+  vent_set_duty((d->param.starter_off - 500)/10);
+  
+#endif
 }

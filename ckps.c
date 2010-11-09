@@ -489,13 +489,14 @@ void process_ckps_cogs(void)
   diff = ckps.current_angle - ckps.advance_angle;
   if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
   {
-   //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения   
-   OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG); 
+   //до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения
+   //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
+   OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
    TIFR = (1 << OCF1A);
    chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
    flags.ckps_need_to_set_channel = 0; // чтобы не войти в режим настройки ещё раз
    TIMSK|= (1<<OCIE1A); //разрешаем прерывание
-  } 
+  }
  }
 
  //заканчиваем импульсы запуска коммутатора(ов) и сразу увеличиваем номер зуба для обработанного канала

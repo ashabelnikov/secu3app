@@ -101,18 +101,18 @@ void vent_control(struct ecudata_t *d)
  if (d->sens.temperat <= d->param.vent_off)
   SET_VENTILATOR_STATE(0);
 #else //PWM mode
-//  if (!d->param.use_ventilator_pwm)
-//  {
-//     if (d->sens.temperat >= d->param.vent_on)
-//      vent_set_duty(PWM_STEPS);
-//     if (d->sens.temperat <= d->param.vent_off)
-//      vent_set_duty(0);
-//  }
-//  else
-//  {
-//  }
-
-  vent_set_duty((d->param.starter_off - 500)/10);
-  
+ if (!d->param.vent_pwm)
+ {
+  if (d->sens.temperat >= d->param.vent_on)
+   vent_set_duty(PWM_STEPS);
+  if (d->sens.temperat <= d->param.vent_off)
+   vent_set_duty(0);
+ }
+ else
+ {
+  //TODO: implement algorithm 
+  //test, set value in range 0...25
+  vent_set_duty((d->param.starter_off - 500)/10);  
+ }  
 #endif
 }

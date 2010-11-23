@@ -161,6 +161,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   {
     case TEMPER_PAR:   
        build_i4h(d->param.tmp_use);
+       build_i4h(d->param.vent_pwm);
        build_i16h(d->param.vent_on);
        build_i16h(d->param.vent_off);
        break;
@@ -321,6 +322,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 
     case TEMPER_PAR:                   
        d->param.tmp_use   = recept_i4h();
+       d->param.vent_pwm  = recept_i4h();
        d->param.vent_on   = recept_i16h();
        d->param.vent_off  = recept_i16h();
        break;

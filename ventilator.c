@@ -110,9 +110,14 @@ void vent_control(struct ecudata_t *d)
  }
  else
  {
-  //TODO: implement algorithm 
-  //test, set value in range 0...25
-  vent_set_duty((d->param.starter_off - 500)/10);  
+  //note: We skip 1 and 24 values of duty 
+  int16_t d = d->param.vent_on - d->sens.temperat;
+  if (d < 2)
+   d = 0;         //restrict to max.
+  if (d > (PWM_STEPS-2))
+   d = PMM_STEPS; //restrict to min.  
+  //TODO: implement kick on turn on
+  vent_set_duty(PWM_STEPS - d);  
  }  
 #endif
 }

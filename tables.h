@@ -84,10 +84,13 @@ typedef struct firmware_data_t
   //таблица времени накопления энергии в катушках зажигания (зависимость от напряжения)
   uint16_t coil_on_time[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
   
+  //used for checking compatibility with management software. Holds size of all data stored in the firmware.
+  uint16_t fw_data_size; 
+  
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
-  uint8_t reserved[96];  
+  uint8_t reserved[94];  
 }firmware_data_t;
 
 //описывает параметры системы

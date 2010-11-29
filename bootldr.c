@@ -22,7 +22,7 @@
 #include <ioavr.h>
 #include "bootldr.h"
 
-//этот объект будет в памяти программи независимо от того используется он или нет
+//этот объект будет в памяти программ независимо от того используется он или нет
 #pragma object_attribute=__root 
 __flash uint8_t boot_loader[BOOT_LOADER_SIZE]@SECU3BOOTSTART =
 {

@@ -24,10 +24,14 @@
 
 //необходим для округления при преобразовании из числа с плавающей точкой
 //в целое число 
+//Used for rounding-up when transforming from floating point value into integer.
+//Note: it is intended for use with constants
 #define ROUND(x) ((int16_t)( (x) + 0.5 - ((x) < 0) ))
 
-//данные макросы необходимы для преобразования числа-константы с плавающей запятой
+//данные макросы необходимы для преобразования числел-констант с плавающей запятой
 //в целые числа. Значения физических величин хранятся в целых числах.
+//Given macros are necessary when transforming floating point constant-values into integers.
+//Values of phisical magnitudes stored in integers.
 #define ANGLE_MAGNITUDE(a) ROUND ((a) * ANGLE_MULTIPLAYER)
 #define TEMPERATURE_MAGNITUDE(t) ROUND ((t) * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
 #define VOLTAGE_MAGNITUDE(t) ROUND ((t) * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER)

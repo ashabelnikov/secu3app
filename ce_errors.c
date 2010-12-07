@@ -91,7 +91,8 @@ void check(struct ecudata_t* d)
  //checking coolant temperature sensor
  // error if (2.28v > voltage > 3.93v)
  if (d->sens.temperat_raw < ROUND(2.28 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(3.93 / ADC_DISCRETE))
-  ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
+  if (d->param.tmp_use)
+   ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
     

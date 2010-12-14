@@ -19,4 +19,4 @@ What to do in relation to SECU-3 firmware:
 
 5. To check and fix. ECU error related to detonation can leave after engine stopped.
 
-6.
+6. Implement ignition cut-off when RPM reaches unallowed value. Value can be set from mamager.

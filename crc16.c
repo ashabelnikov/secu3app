@@ -19,17 +19,17 @@
               email: secu-3@yandex.ru
 */
 
+/** \file crc16.c
+ * Implementation of CRC16 related functions.
+ * Functions for calculate CRC16 of data in RAM and in the ROM
+ * (Реализация Функций для вычисления контрольной суммы для данных в ОЗУ и в ПЗУ).
+ */
+
 #include "crc16.h"
 
-#define      P_16   0xA001     //полином
+#define      P_16   0xA001     //polynomial (полином)
 
-
-/*  Контрольная сумма crc16
-*    uint8_t *buf - указатель на байтовый буфер
-*    uint16_t num - размер буфера в байтах
-*  Возвращает
-*    uint16_t crc16 буфера
-*/
+//variant for RAM (вариант для данных в RAM)
 uint16_t crc16( uint8_t *buf, uint16_t num )
 {
 uint16_t i;
@@ -50,7 +50,7 @@ uint16_t crc = 0xffff;
   return( crc );
 }
 
-//вариант для данных во flash
+//variant for FLASH (вариант для данных во FLASH)
 uint16_t crc16f(uint8_t __flash *buf, uint16_t num )
 {
 uint16_t i;

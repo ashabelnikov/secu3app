@@ -19,24 +19,43 @@
               email: secu-3@yandex.ru
 */
 
+/** \file adc.c
+ * Implementation of ADC related functions (API).
+ * Functions for read values from ADC, perform conversion to phisical values etc
+ * (Функции для работы с АЦП, считывание значений, преобразование в физические величины и т.д.).
+ */
+
 #include <inavr.h>
 #include <ioavr.h>
 #include "bitmask.h"
 #include "adc.h"
 #include "secu3.h"
 
+/**номер канала используемого для ДАД */
+#define ADCI_MAP                2
+/**номер канала используемого для напряжения бортовой сети */
+#define ADCI_UBAT               1         
+/**номер канала используемого для ДТОЖ */
+#define ADCI_TEMP               0
+/**номер канала используемого для канала детонации */
+#define ADCI_KNOCK              3
+/**заглушка, используется для ADCI_KNOCK чтобы сформировать задержку */
+#define ADCI_STUB               4 
+
+/**Cтруктура данных состояния АЦП */
 typedef struct
 {
- volatile uint16_t map_value;    //последнее измеренное значение абсолютного давления
- volatile uint16_t ubat_value;   //последнее измеренное значение напряжения бортовой сети
- volatile uint16_t temp_value;   //последнее измеренное значение температуры охлаждающей жидкости
- volatile uint16_t knock_value;  //последнее измеренное значение сигнала детонации
-
- volatile uint8_t sensors_ready; //датчики обработаны и значения готовы к считыванию
- uint8_t  measure_all;           //если 1, то производится измерение всех значений
+ volatile uint16_t map_value;   //!< последнее измеренное значение абсолютного давления
+ volatile uint16_t ubat_value;  //!< последнее измеренное значение напряжения бортовой сети
+ volatile uint16_t temp_value;  //!< последнее измеренное значение температуры охлаждающей жидкости
+ volatile uint16_t knock_value; //!< последнее измеренное значение сигнала детонации
+ 
+ volatile uint8_t sensors_ready;//!< датчики обработаны и значения готовы к считыванию 
+ uint8_t  measure_all;          //!< если 1, то производится измерение всех значений
 }adcstate_t;
 
-adcstate_t adc;  //переменные состояния АЦП
+/** переменные состояния АЦП */
+adcstate_t adc;
 
 __monitor
 uint16_t adc_get_map_value(void)
@@ -97,7 +116,6 @@ uint8_t adc_is_measure_ready(void)
  return adc.sensors_ready; 
 }
 
-//инициализация АЦП и его переменных состояния
 void adc_init(void)
 { 
  adc.knock_value = 0;
@@ -115,8 +133,9 @@ void adc_init(void)
  ACSR=(1<<ACD);
 }
 
-//прерывание по завершению преобразования АЦП. Измерение значений всех аналоговых датчиков. После запуска
-//измерения это прерывание будет вызыватся для каждого входа, до тех пор пока все входы не будут обработаны.
+/**прерывание по завершению преобразования АЦП. Измерение значений всех аналоговых датчиков. После запуска
+ * измерения это прерывание будет вызыватся для каждого входа, до тех пор пока все входы не будут обработаны.
+ */
 #pragma vector=ADC_vect
 __interrupt void ADC_isr(void)
 {
@@ -163,20 +182,11 @@ __interrupt void ADC_isr(void)
  } 
 }
 
-
-//Компенсирует погрешности АЦП (погрешность смещения и передаточная погрешность)
-// adcvalue - значене АЦП для компенсации
-// factor = 2^14 * gainfactor, 
-// correction = 2^14 * (0.5 - offset * gainfactor),
-// 2^16 * realvalue = 2^2 * (adcvalue * factor + correction)
 int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction)
 {
  return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
 }
 
-//adcvalue - значение напряжения в дискретах АЦП
-//offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
-//gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
 uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, uint16_t gradient)
 {
  //АЦП не измеряет отрицательных напряжений, однако отрицательное значение может появится после компенсации погрешностей.

@@ -19,66 +19,116 @@
               email: secu-3@yandex.ru
 */
 
+/** \file adc.h
+ * ADC related functions (API).
+ * Functions for read values from ADC, perform conversion to phisical values etc
+ * (Функции для работы с АЦП, считывание значений, преобразование в физические величины и т.д.).
+ */
+
 #ifndef _ADC_H_
 #define _ADC_H_
 
 #include <stdint.h>
 
-#define ADC_DISCRETE            0.0025       //одна дискрета АЦП в вольтах
+/**одна дискрета АЦП в вольтах */
+#define ADC_DISCRETE            0.0025       
 
-#define TSENS_SLOPP             0.01        //наклон прямой датчика температуры вольт/градус
-#define TSENS_ZERO_POINT        2.73        //напряжение на выходе датчика температуры при 0 градусов цельсия
+/**наклон прямой датчика температуры вольт/градус */
+#define TSENS_SLOPP             0.01
 
+/**напряжение на выходе датчика температуры при 0 градусов цельсия */
+#define TSENS_ZERO_POINT        2.73
+
+/**константа для выбора источника опорного напряжения */
 #define ADC_VREF_TYPE           0xC0
 
-//номера используемых каналов АЦП
-#define ADCI_MAP                2
-#define ADCI_UBAT               1         
-#define ADCI_TEMP               0
-#define ADCI_KNOCK              3
-#define ADCI_STUB               4  //заглушка, используется для ADCI_KNOCK
-
+/**дискретность физической величины - ДАД */
 #define MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER  64
+
+/**дискретность физической величины - напряжения */
 #define UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER (1.0/ADC_DISCRETE) //=400
+
+/**дискретность физической величины - ДТОЖ */
 #define TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER (TSENS_SLOPP / ADC_DISCRETE) //=4
 
-//эти функции возвращают текущие значения из буферов усреднения
+/** Получение последнего измеренного значения с ДАД
+ * \return значение в дискретах АЦП
+ */
 uint16_t adc_get_map_value(void);
+
+/** Получение последнего измеренного значения напряжения бортовой сети
+ * \return значение в дискретах АЦП
+ */
 uint16_t adc_get_ubat_value(void);
+
+/** Получение последнего измеренного значения с ДТОЖ
+ * \return значение в дискретах АЦП
+ */
 uint16_t adc_get_temp_value(void);
+
+/** Получение последнего измеренного значения сигнала детонации
+ * \return значение в дискретах АЦП
+ */
 uint16_t adc_get_knock_value(void);
 
-//запускает измерение значений с датчиков, но только если предыдущее  
-//измерение завершено.
+/**запускает измерение значений с датчиков, но только если предыдущее  
+ * измерение завершено.
+ */
 void adc_begin_measure(void);
-//запускает измерение значения с интегратора канала детонации. Так как после установки
-//сигнала INT/HOLD в 0 выход INTOUT перейдет в полностью корректное состояние только через
-//20мкс (приблизительно), а запуск измерения может быть произведен сразу, то делаем первое
-//измерение холостым.
+
+/**запускает измерение значения с интегратора канала детонации. Так как после установки
+ * сигнала INT/HOLD в 0 выход INTOUT перейдет в полностью корректное состояние только через
+ * 20мкс (приблизительно), а запуск измерения может быть произведен сразу, то делаем первое
+ * измерение холостым.
+ */
 void adc_begin_measure_knock(void);
 
-//запускает измерение значений с датчиков и сигнала с ДД. Первыми снимаются значения
-//с датчиков, последним сигнал с ДД
+/**запускает измерение значений с датчиков и сигнала с ДД. Первыми снимаются значения
+ * с датчиков, последним сигнал с ДД
+ */
 void adc_begin_measure_all(void);
 
-//возвращает не 0 если измерение готово (АЦП не занято)
+/**проверка готовности АЦП
+ *\return возвращает не 0 если измерение готово (АЦП не занято) 
+ */
 uint8_t adc_is_measure_ready(void); 
 
-//инициализация АЦП и его переменных состояния
+/**инициализация АЦП и его переменных состояния */
 void adc_init(void);
 
+/**компенсация погрешностей АЦП или входных цепей (погрешность смещения и передаточная погрешность)
+ * \param adcvalue значение АЦП для компенсации
+ * \param factor коэффициен масштабирования
+ * \param correction смещение 
+ * \return compensated value (компенсированное значение)
+ * \details 
+ * factor = 2^14 * gainfactor, 
+ * correction = 2^14 * (0.5 - offset * gainfactor),
+ * 2^16 * realvalue = 2^2 * (adcvalue * factor + correction)
+ */
 int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
 
-//переводит значение АЦП в физическую величину - давление
-//физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+/**переводит значение АЦП в физическую величину - давление
+ * \param adcvalue значение в даскретах АЦП
+ * \param offset смещение кривой ДАД
+ * \param gradient наклон кривой ДАД
+ * \return физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ * \details 
+ * offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
+ * gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
+ */
 uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, uint16_t gradient);
 
-//переводит значение АЦП в физическую величину - напряжение
-//физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER
+/**переводит значение АЦП в физическую величину - напряжение
+ * \param adcvalue значение в дискретах АЦП
+ * \return физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ */
 uint16_t ubat_adc_to_v(int16_t adcvalue);
 
-//переводит значение АЦП в физическую величину - температура
-//физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+/**переводит значение АЦП в физическую величину - температура
+ * \param adcvalue значение в дискретах АЦП
+ * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ */
 int16_t temp_adc_to_c(int16_t adcvalue);
 
 #endif //_ADC_H_

@@ -19,14 +19,20 @@
               email: secu-3@yandex.ru
 */
 
+/** \file jumper.c
+ * Implementation of processing of jumpers which user can open/close to do some actions
+ * (Реализация обработки перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
+ */
+
 #include <ioavr.h>
 #include "jumper.h"
 
+/**Retrieves state of jumper from port's pin */
 #define GET_DEFEEPROM_JUMPER_STATE() (PINC_Bit2)
 
 void jumper_init_ports(void)
 {
- DDRC &= ~((1<<DDC3)|(1<<DDC2)); //входы
+ DDRC &= ~((1<<DDC3)|(1<<DDC2)); //inputs (входы)
  PORTC|= (1<<PC3)|(1<<PC2);
 }
 

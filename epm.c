@@ -19,17 +19,22 @@
               email: secu-3@yandex.ru
 */
 
+/** \file epm.c
+ * Implementation of controlling algorithms for power's modes economizer
+ * (–еализаци€ алгоритмов управлени€ экономайзером мощностных режимов).
+ */
+
 #include <ioavr.h>
 #include "secu3.h"
 #include "epm.h"
 
-//открывает/закрывает клапан Ёћ–
+/** Open/Close EPM valve (открывает/закрывает клапан Ёћ–) */
 #define SET_EPM_VALVE_STATE(s) {PORTC_Bit7 = s;}
 
 void epm_init_ports(void)
 {
- PORTC&= ~(1<<PC7); //Ёћ– выключен
- DDRC|= (1<<DDC7);  //выход дл€ управлени€ клапаном Ёћ–
+ PORTC&= ~(1<<PC7); //EPM is off (Ёћ– выключен)
+ DDRC|= (1<<DDC7);  //Output for control EPM valve (выход дл€ управлени€ клапаном Ёћ–)
 }
 
 void epm_control(struct ecudata_t* d)

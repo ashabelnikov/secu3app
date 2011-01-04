@@ -19,6 +19,11 @@
               email: secu-3@yandex.ru
 */
 
+/** \file knklogic.c
+ * The module implements all the regulation logic of advance angle by detonation
+ * (Модуль реализующий всю логику регулирования УОЗ по детонации).
+ */
+
 #include <inavr.h>
 #include <ioavr.h>
 #include "ce_errors.h"

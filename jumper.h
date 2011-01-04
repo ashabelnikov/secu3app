@@ -19,15 +19,22 @@
               email: secu-3@yandex.ru
 */
 
+/** \file jumper.h
+ * Process jumpers which user can open/close to do some actions
+ * (Обработка перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
+ */
+
 #ifndef _JUMPER_H_
 #define _JUMPER_H_
 
 #include <stdint.h>
 
-//инициализация используемых портов
+/** Initialization of used I/O ports (инициализация используемых портов)*/
 void jumper_init_ports(void);
 
-//возвращает состояние перемычки "Default EEPROM"
+/**Get state of "Default EEPROM" jumper (получение состояния перемычки "Default EEPROM") 
+ * \return 0 - closed, 1 - opened.
+ */
 uint8_t jumper_get_defeeprom_state(void);
 
 #endif //_JUMPER_H_

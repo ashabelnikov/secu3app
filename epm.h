@@ -19,13 +19,22 @@
               email: secu-3@yandex.ru
 */
 
+/** \file epm.h
+ * Control of power's modes economizer
+ * (”правление экономайзером мощностных режимов).
+ */
+
 #ifndef _EPM_H_
 #define _EPM_H_
 
 struct ecudata_t;
 
+/**Initialization of I/O ports*/
 void epm_init_ports(void);
 
+/**Implements control algorithm 
+ * \param d pointer to ECU data structure
+ */
 void epm_control(struct ecudata_t* d);
 
 #endif //_EPM_H_

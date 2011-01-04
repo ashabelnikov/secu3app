@@ -19,6 +19,11 @@
               email: secu-3@yandex.ru
 */
 
+/** \file ignlogic.c
+ * Implementation of logic determining calculation and regulation of anvance angle
+ * (–еализаци€ логики определ€ющей вычисление и регулирование угла опережени€).
+ */
+
 #include "ignlogic.h"
 #include "funconv.h"
 #include "secu3.h"

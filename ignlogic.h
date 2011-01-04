@@ -19,6 +19,11 @@
               email: secu-3@yandex.ru
 */
 
+/** \file ignlogic.h
+ * Logic determining calculation and regulation of anvance angle
+ * (Логика определяющая вычисление и регулирование угла опережения).
+ */
+
 #ifndef _IGNLOGIC_H_
 #define _IGNLOGIC_H_
 
@@ -26,12 +31,20 @@
 
 struct ecudata_t;
 
-//режимы двигателя
+/** Start mode of engine (used by state machine) */
 #define EM_START 0   
+
+/** Idle mode of engine (used by state machine) */
 #define EM_IDLE  1
+
+/** Work mode of engine (used by state machine) */
 #define EM_WORK  2
 
-//конечный автомат режимов двигателя
+/**Implements state machine of engine's modes (конечный автомат режимов двигателя)
+ * \param padvance_angle_inhibitor_state pointer to data structure storing information about inhibition 
+ *        of alternating speed of advane angle
+ * \param d pointer to ECU data structure
+ */
 void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d);
 
 #endif //_IGNLOGIC_H_

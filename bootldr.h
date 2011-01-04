@@ -19,13 +19,21 @@
               email: secu-3@yandex.ru
 */
 
+/** \file bootldr.h
+ * Functionality and information for access boot loader
+ * (Функционал и информация для доступа к загрузчику).
+ */
+
 #ifndef _BOOTLDR_H_
 #define _BOOTLDR_H_
 
 #include <stdint.h>
 
-//Определяем размер секции бутлоадера в зависимости от выбранной платформы
-//Везде используется размер загрузчика соответствующий значению SECONDBOOTSTART
+/**Define size of boot loader's section depending on selected platform.
+ * Size of boot loader which corresponds to SECONDBOOTSTART value is used everywere.
+ * (Определяем размер секции бутлоадера в зависимости от выбранной платформы.
+ * Везде используется размер загрузчика соответствующий значению SECONDBOOTSTART)
+ */
 #ifdef __ATmega16__
  #define BOOT_LOADER_SIZE  512    
 #elif __ATmega32__
@@ -36,12 +44,18 @@
  #error "Not supported platform!"  
 #endif 
 
-//определяем стартовый адрес бутлоадера в прошивке (в байтах)
-//FLASHEND определено в ioavr.h
+/**Define start address of boot loader in the firmware (in bytes),
+ * FLASHEND defined in ioavr.h
+ * (определяем стартовый адрес бутлоадера в прошивке (в байтах),
+ * FLASHEND определено в ioavr.h)
+ */
 #define SECU3BOOTSTART ((((unsigned int)FLASHEND) + 1) - BOOT_LOADER_SIZE)
 
-//точка входа в бутлоадер из программы (минуя проверку перемычки)
-//смотрите исходный код загрузчика 
+/**Input point of boot loader used from programm (passing by jumper checking),
+ * see source code of boot loader
+ * (точка входа в бутлоадер из программы (минуя проверку перемычки),
+ * смотрите исходный код загрузчика).
+ */ 
 #define boot_loader_start() ((void (*)())((SECU3BOOTSTART+0xA)/2))()
 
 #endif //_BOOTLDR_H_

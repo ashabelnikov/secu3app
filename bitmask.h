@@ -19,15 +19,31 @@
               email: secu-3@yandex.ru
 */
 
-#define SETBIT(x,y)   ((x) |= (1<<(y)))    /* установка бита y в байте x*/
-#define CLEARBIT(x,y) ((x) &= (~(1<<(y)))) /* сброс бита y в байте x*/
-#define CHECKBIT(x,y) ((x) & (1<<(y)))     /* проверка бита y в байте x*/
+/** \file bitmask.h
+ * Support for bit operations.
+ * Helpful macros for perform bit operations. Note: You must define corresponding *_ENDIAN_DATA_FORMAT
+ * symbol to ensure correct work of mentioned macros.
+ * (ћакросы дл€ работы с битами).
+ */
+
+#ifndef _BITMASK_H_
+#define _BITMASK_H_
+
+/** Set y bit in the byte x (установка бита y в байте x) */
+#define SETBIT(x,y)   ((x) |= (1<<(y)))
+
+/** Clear y bit in the byte x (сброс бита y в байте x) */
+#define CLEARBIT(x,y) ((x) &= (~(1<<(y))))
+
+/** Check y bit in the byte x (проверка бита y в байте x) */
+#define CHECKBIT(x,y) ((x) & (1<<(y)))     
 
 #ifdef LITTLE_ENDIAN_DATA_FORMAT //little-endian data store format (Intel)
-  #define GETBYTE(src,rel) *(((unsigned char*)&(src)+(rel)))
-  #define SETBYTE(des,rel) *(((unsigned char*)&(des)+(rel)))
-#else                           //big-endian data store format (Motorola) 
-  #define GETBYTE(src,rel) *(((unsigned char*)&(src)+sizeof((src))-1-(rel)))
-  #define SETBYTE(des,rel) *(((unsigned char*)&(des)+sizeof((des))-1-(rel)))
+  #define GETBYTE(src,rel) *(((unsigned char*)&(src)+(rel)))                 /**< Get Nth byte from variable */
+  #define SETBYTE(des,rel) *(((unsigned char*)&(des)+(rel)))                 /**< Set Nth byte of variable */
+#else                            //big-endian data store format (Motorola) 
+  #define GETBYTE(src,rel) *(((unsigned char*)&(src)+sizeof((src))-1-(rel))) /**< Get Nth byte from variable */
+  #define SETBYTE(des,rel) *(((unsigned char*)&(des)+sizeof((des))-1-(rel))) /**< Set Nth byte of variable */
 #endif  
 
+#endif //_BITMASK_H_

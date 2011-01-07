@@ -67,7 +67,7 @@
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128
 #define FW_SIGNATURE_INFO_SIZE 48
-#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 16
+#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32
 
 //Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
 //Describes one set(family) of chracteristics (maps), descrete = 0.5 degr.
@@ -98,13 +98,17 @@ typedef struct firmware_data_t
   //used for checking compatibility with management software. Holds size of all data stored in the firmware.
   uint16_t fw_data_size; 
   
+  //holds flags which give information about options were used to build firmware
+  //(хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка)
+  uint32_t config;
+  
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.
   //Following reserved bytes required for keeping binary compatibility between 
   //different versions of firmware. Useful when you add/remove members to/from 
   //this structure.
-  uint8_t reserved[94];  
+  uint8_t reserved[58];  
 }firmware_data_t;
 
 //описывает параметры системы
@@ -135,21 +139,21 @@ typedef struct params_t
 
   int16_t  map_adc_factor;               // Поправки для коррекции погрешностей АЦП
   int32_t  map_adc_correction;           // (correction values (factors and additions) for ADC) - error compensations
-  int16_t  ubat_adc_factor;              //
-  int32_t  ubat_adc_correction;          //
-  int16_t  temp_adc_factor;              //
-  int32_t  temp_adc_correction;          //
+  int16_t  ubat_adc_factor;              // --
+  int32_t  ubat_adc_correction;          // --
+  int16_t  temp_adc_factor;              // --
+  int32_t  temp_adc_correction;          // --
   
   uint8_t  ckps_edge_type;               //Edge type for interrupt from CKP sensor (rising or falling edge). Depends on polarity of sensor
   uint8_t  ckps_cogs_btdc;               //Teeth before TDC
   uint8_t  ckps_ignit_cogs;              //Duration of ignition driver's pulse countable in teeth of wheel
   
-  int16_t  angle_dec_spead;
-  int16_t  angle_inc_spead;  
-  int16_t  idlreg_min_angle;
-  int16_t  idlreg_max_angle;
-  uint16_t map_curve_offset;
-  uint16_t map_curve_gradient;
+  int16_t  angle_dec_spead;              //limitation of alternation speed of advance angle (when decreasing)
+  int16_t  angle_inc_spead;              //limitation of alternation speed of advance angle (when increasing)
+  int16_t  idlreg_min_angle;             //minimum advance angle correction which can be produced by idling regulator
+  int16_t  idlreg_max_angle;             //maximum advance angle correction which can be produced by idling regulator
+  uint16_t map_curve_offset;             //offset of curve in volts
+  uint16_t map_curve_gradient;           //gradient of curve in kPa/V
   
   int16_t  epm_on_threshold;             //порог включения экономайзера мощностных режимов (switch on threshold of EPM)
   

@@ -19,14 +19,22 @@
               email: secu-3@yandex.ru
 */
 
+/** \file ephh.h
+ * Control of Forced Idle Econimizer Valve (FIEV).
+ * (”правление клапаном принудительного холостого хода(Ёѕ’’)).
+ */
+
 #ifndef _EPHH_H_
 #define _EPHH_H_
 
 struct ecudata_t;
 
-//инициализаци€ используемых портов
+/** Initialization of used I/O ports (инициализаци€ используемых портов) */
 void ephh_init_ports(void);
 
+/** Does control of valve (”правление клапаном) 
+ * \param d pointer to ECU data structure
+ */
 void ephh_control(struct ecudata_t* d);
 
 #endif //_EPHH_H_

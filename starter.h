@@ -19,18 +19,27 @@
               email: secu-3@yandex.ru
 */
 
+/** \file starter.h
+ * Working with starter
+ * (Работа со стартером).
+ */
+
 #ifndef _STARTER_H_
 #define _STARTER_H_
 
 struct ecudata_t;
 
-//инициализация используемых портов
+/** Initialization of used I/O ports (инициализация используемых портов) */
 void starter_init_ports(void);
 
-//управление стартером
+/** Control of starter (управление стартером) 
+ * \param d pointer to ECU data structure
+ */
 void starter_control(struct ecudata_t* d);
 
-//блокировка/разблокировка стартера
+/** Blocking/unblocking of starter (блокировка/разблокировка стартера)
+ * \param i_state 1 - block, 0 - unblock
+ */
 void starter_set_blocking_state(uint8_t i_state);
 
 #endif //_STARTER_H_

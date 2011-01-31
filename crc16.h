@@ -15,8 +15,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
    contacts:
-              http://secu-3.narod.ru
-              email: secu-3@yandex.ru
+              http://secu-3.org
+              email: shabelnikov@secu-3.org
 */
 
 /** \file crc16.h

@@ -31,7 +31,7 @@ firmware_data_t __flash fwdata@FIRMWARE_DATA_START=
   //Дата в формате Mmm dd yyyy.
   //Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
   //Date in format Mmm dd yyyy. 
-  "SECU-3 firmware v2.3. Build ["__DATE__"]       ",
+  "SECU-3 firmware v2.4. Build ["__DATE__"]       ",
    
   //таблица аттенюатора, по умолчанию k = 1.000
   //attenuator's lookup table (for knock channel), by default k = 1.000

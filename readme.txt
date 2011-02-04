@@ -5,7 +5,7 @@
 
     Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka. 
     Microprocessors systems - design & programming.
-    http://secu-3.narod.ru e-mail: secu-3@narod.ru
+    http://secu-3.org e-mail: shabelnikov@secu-3.org
 
 
       Как компилировать проект

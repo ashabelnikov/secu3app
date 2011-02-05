@@ -1529,151 +1529,151 @@
     </settings>
   </configuration>
   <file>
-    <name>$PROJ_DIR$\adc.c</name>
+    <name>$PROJ_DIR$\sources\adc.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\adc.h</name>
+    <name>$PROJ_DIR$\sources\adc.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\bitmask.h</name>
+    <name>$PROJ_DIR$\sources\bitmask.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\bootldr.c</name>
+    <name>$PROJ_DIR$\sources\bootldr.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\bootldr.h</name>
+    <name>$PROJ_DIR$\sources\bootldr.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ce_errors.c</name>
+    <name>$PROJ_DIR$\sources\ce_errors.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ce_errors.h</name>
+    <name>$PROJ_DIR$\sources\ce_errors.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ckps.c</name>
+    <name>$PROJ_DIR$\sources\ckps.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ckps.h</name>
+    <name>$PROJ_DIR$\sources\ckps.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\crc16.c</name>
+    <name>$PROJ_DIR$\sources\crc16.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\crc16.h</name>
+    <name>$PROJ_DIR$\sources\crc16.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\eeprom.c</name>
+    <name>$PROJ_DIR$\sources\eeprom.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\eeprom.h</name>
+    <name>$PROJ_DIR$\sources\eeprom.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ephh.c</name>
+    <name>$PROJ_DIR$\sources\ephh.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ephh.h</name>
+    <name>$PROJ_DIR$\sources\ephh.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\epm.c</name>
+    <name>$PROJ_DIR$\sources\epm.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\epm.h</name>
+    <name>$PROJ_DIR$\sources\epm.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\funconv.c</name>
+    <name>$PROJ_DIR$\sources\funconv.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\funconv.h</name>
+    <name>$PROJ_DIR$\sources\funconv.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ignlogic.c</name>
+    <name>$PROJ_DIR$\sources\ignlogic.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ignlogic.h</name>
+    <name>$PROJ_DIR$\sources\ignlogic.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\jumper.c</name>
+    <name>$PROJ_DIR$\sources\jumper.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\jumper.h</name>
+    <name>$PROJ_DIR$\sources\jumper.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\knklogic.c</name>
+    <name>$PROJ_DIR$\sources\knklogic.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\knklogic.h</name>
+    <name>$PROJ_DIR$\sources\knklogic.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\knock.c</name>
+    <name>$PROJ_DIR$\sources\knock.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\knock.h</name>
+    <name>$PROJ_DIR$\sources\knock.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\magnitude.h</name>
+    <name>$PROJ_DIR$\sources\magnitude.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\measure.c</name>
+    <name>$PROJ_DIR$\sources\measure.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\measure.h</name>
+    <name>$PROJ_DIR$\sources\measure.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\params.c</name>
+    <name>$PROJ_DIR$\sources\params.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\params.h</name>
+    <name>$PROJ_DIR$\sources\params.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\procuart.c</name>
+    <name>$PROJ_DIR$\sources\procuart.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\procuart.h</name>
+    <name>$PROJ_DIR$\sources\procuart.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\secu3.c</name>
+    <name>$PROJ_DIR$\sources\secu3.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\secu3.h</name>
+    <name>$PROJ_DIR$\sources\secu3.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\starter.c</name>
+    <name>$PROJ_DIR$\sources\starter.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\starter.h</name>
+    <name>$PROJ_DIR$\sources\starter.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\suspendop.c</name>
+    <name>$PROJ_DIR$\sources\suspendop.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\suspendop.h</name>
+    <name>$PROJ_DIR$\sources\suspendop.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\tables.c</name>
+    <name>$PROJ_DIR$\sources\tables.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\tables.h</name>
+    <name>$PROJ_DIR$\sources\tables.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\uart.c</name>
+    <name>$PROJ_DIR$\sources\uart.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\uart.h</name>
+    <name>$PROJ_DIR$\sources\uart.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ufcodes.h</name>
+    <name>$PROJ_DIR$\sources\ufcodes.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ventilator.c</name>
+    <name>$PROJ_DIR$\sources\ventilator.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\ventilator.h</name>
+    <name>$PROJ_DIR$\sources\ventilator.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\vstimer.c</name>
+    <name>$PROJ_DIR$\sources\vstimer.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\vstimer.h</name>
+    <name>$PROJ_DIR$\sources\vstimer.h</name>
   </file>
 </project>
 

@@ -19,6 +19,12 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file knock.c
+ * Implementation of knock chip related functions.
+ * Service of HIP9011 knock signal processing chip
+ * (Реализация обслуживания чипа HIP9011 обрабатывающего сигнал детонации).
+ */
+
 #include <inavr.h>
 #include <ioavr.h>
 #include "knock.h"
@@ -26,11 +32,11 @@
 //HIP9011 - Knock Signal Processor.
 
 //Command codes and quick description (crib)
-#define KSP_SET_BANDPASS       0x00   //00FFFFFF, F - BPF frequency code
-#define KSP_SET_GAIN           0x80   //10GGGGGG, G - gain code
-#define KSP_SET_INTEGRATOR     0xC0   //110IIIII, I - integrator time constant code
-#define KSP_SET_PRESCALER      0x40   //01XPPPPZ, X - don't care, P - prescaler code, Z - SO terminal status
-#define KSP_SET_CHANNEL        0xE0   //111TTTTC, T - diagnostic mode code, C - channel code
+#define KSP_SET_BANDPASS       0x00   //!< 00FFFFFF, F - BPF frequency code
+#define KSP_SET_GAIN           0x80   //!< 10GGGGGG, G - gain code
+#define KSP_SET_INTEGRATOR     0xC0   //!< 110IIIII, I - integrator time constant code
+#define KSP_SET_PRESCALER      0x40   //!< 01XPPPPZ, X - don't care, P - prescaler code, Z - SO terminal status
+#define KSP_SET_CHANNEL        0xE0   //!< 111TTTTC, T - diagnostic mode code, C - channel code
 // if Z = 0, then SO terminal is active, otherwise Hi Z
 // if C = 0, then channel 0 selected, otherwise channel 1  
 // Question. How to use T - bits, how many diagnostic modes we have? Datasheet doesn't contain 
@@ -39,24 +45,24 @@
 
 
 //SO status values
-#define KSP_SO_TERMINAL_ACTIVE 0x00
-#define KSP_SO_TERMINAL_HIZ    0x01
+#define KSP_SO_TERMINAL_ACTIVE 0x00 //!< code for activation of SO terminal
+#define KSP_SO_TERMINAL_HIZ    0x01 //!< code for deactivation of SO terminal
 
 //channel selection values
-#define KSP_CHANNEL_0          0x00
-#define KSP_CHANNEL_1          0x01
+#define KSP_CHANNEL_0          0x00 //!< code for select 0 channel
+#define KSP_CHANNEL_1          0x01 //!< code for select 1 channel
 
 //prescaler
-#define KSP_PRESCALER_4MHZ     0x00
+#define KSP_PRESCALER_4MHZ     0x00 //!< code for setup prescaler
 
 
-#define KSP_CS PORTB_Bit4        //SS controls chip selection
-#define KSP_INTHOLD PORTD_Bit3   //Switches between integration/hold modes
-#define KSP_TEST PORTB_Bit3      //Switches chip into diagnostic mode
+#define KSP_CS PORTB_Bit4        //!< SS controls chip selection
+#define KSP_INTHOLD PORTD_Bit3   //!< Switches between integration/hold modes
+#define KSP_TEST PORTB_Bit3      //!< Switches chip into diagnostic mode
 
 
-//This data structure intended for duplication of data of current state
-// of signal processor
+/**This data structure intended for duplication of data of current state
+ * of signal processor */
 typedef struct
 {
  uint8_t ksp_bpf;
@@ -67,10 +73,15 @@ typedef struct
  volatile uint8_t ksp_last_word;
 }kspstate_t;
 
+/**State variables */
 kspstate_t ksp;
 
 //For work with hardware part of SPI
+/**Initialization of SPI in master mode */
 void spi_master_init(void);
+/**Transmit single byte via SPI
+ * \param i_byte byte to transmit
+ */
 void spi_master_transmit(uint8_t i_byte);
 
 void knock_set_integration_mode(uint8_t mode)
@@ -190,6 +201,7 @@ void knock_reset_error(void)
  ksp.ksp_error = 0;
 }
 
+/** Interrupt handler from SPI */
 #pragma vector=SPI_STC_vect
 __interrupt void spi_dataready_isr(void)
 {

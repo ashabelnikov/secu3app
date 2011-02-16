@@ -19,34 +19,61 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file eeprom.h
+ * EEPROM related functions (API).
+ * Functions for read/write EEPROM and related functionality
+ * (Функции для для чтения/записи EEPROM и связанная с ним функциональность) 
+ */
+
 #ifndef _EEPROM_H_
 #define _EEPROM_H_
 
 #include <stdint.h>
 
-//адрес структуры параметров в EEPROM
+/**Address of parameters structure in EEPROM (адрес структуры параметров в EEPROM) */
 #define EEPROM_PARAM_START     0x002
 
-//адрес массива ошибок (Check Engine) в EEPROM
+/**Address of errors's array (Check Engine) in EEPROM (адрес массива ошибок (Check Engine) в EEPROM) */
 #define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
 
 
-//==================интерфейс модуля===============================
-//запускает процесс записи в EEPROM указанного блока данных
+//Interface of module (интерфейс модуля)
+
+/**Start writing process of EEPROM for selected block of data
+ * (запускает процесс записи в EEPROM указанного блока данных)
+ * \param opcode some code which will be remembered and can be retrieved when process finishes
+ * \param eeprom_addr address in the EEPROM for write into
+ * \param sram_addr address of block of data in RAM
+ * \param count number of bytes in RAM to write (size of block)
+ */
 void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count);  
 
-//возвращает не 0 если в текущий момент никакая операция не выполняется
+/**Checks if EEPROM is busy
+ * (возвращает не 0 если в текущий момент никакая операция не выполняется).
+ * \return 0 - busy, > 0 - idle
+ */
 uint8_t eeprom_is_idle(void);
 
-//читает указанный блок данных из EEPROM (без использования прерываний)
+/**Reads specified block of data from EEPROM (without using of interrupts)
+ * читает указанный блок данных из EEPROM (без использования прерываний)
+ * \param sram_dest address of buffer in RAM which will receive data
+ * \param eeaddr address in the EEPROM for read from
+ * \param size size of block of data to read
+ */
 void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size);
 
-//записывает указанный блок данных в EEPROM (без использования прерываний)
+/**Writes specified block of data into EEPROM (without using of interrupts)
+ * записывает указанный блок данных в EEPROM (без использования прерываний)
+ * \param sram_src address of buffer in RAM wich contains data to write
+ * \param eeaddr address in the EEPROM for write into
+ * \param size size of block of data to write
+ */
 void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size);
 
-//возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())
+/**Returns code of last finished operation (code which was passed into eeprom_start_wr_data())
+ * возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())
+ * \return code of last finished operation
+ */
 uint8_t eeprom_take_completed_opcode(void);  
-//=================================================================
-
 
 #endif //_EEPROM_H_

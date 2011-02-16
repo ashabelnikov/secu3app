@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file params.c
+ * Implementation of functionality for work with parameters (save/restore/check)
+ * (Реализация функциональности для работы с параметрами (сохранение/восстановление/проверка)).
+ */
+
 #include <inavr.h>
 #include <pgmspace.h>
 

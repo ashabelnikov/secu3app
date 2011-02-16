@@ -19,25 +19,34 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file eeprom.c
+ * Implementation of EEPROM related functions (API).
+ * Functions for read/write EEPROM and related functionality
+ * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность) 
+ */
+
 #include <ioavr.h>
 #include <inavr.h>
 #include "eeprom.h"
 #include "bitmask.h"
 
-//Описывает информацию необходимую для сохранения данных в EEPROM
+/**Describes information is necessary for storing of data into EEPROM
+ * (Описывает информацию необходимую для сохранения данных в EEPROM)
+ */
 typedef struct 
 {
- uint16_t ee_addr;             //адрес для записи в EEPROM
- uint8_t* sram_addr;           //адрес данных в ОЗУ 
- uint8_t count;                //количество байтов
- uint8_t eews;                 //состояние процесса записи
- uint8_t opcode;
- uint8_t completed_opcode;
+ uint16_t ee_addr;             //!< Address for EEPROM (адрес для записи в EEPROM)
+ uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ) 
+ uint8_t count;                //!< Number of bytes (количество байтов)
+ uint8_t eews;                 //!< State of writing process (состояние процесса записи)
+ uint8_t opcode;               //!< code of specific operation wich cased writing process
+ uint8_t completed_opcode;     //!< will be equal to opcode after finish of process
 }eeprom_wr_desc_t;
 
+/**State variables */
 eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
-//инициирует процесс записи байта в EEPROM
+/** Initiates process of byte's writing (инициирует процесс записи байта в EEPROM) */
 #define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}     
 
 uint8_t eeprom_take_completed_opcode(void)  
@@ -67,8 +76,10 @@ uint8_t eeprom_is_idle(void)
  return (eewd.eews) ? 0 : 1;
 }
 
-//Обработчик прерывания от EEPROM
-//при завершении работы автомата всегда заносим в регистр адреса - адрес нулевой ячейки
+/**Interrupt handler from EEPROM. Each time when state machine finishes we set address
+ * register to zero.
+ * (Обработчик прерывания от EEPROM при завершении работы автомата всегда заносим в 
+ * регистр адреса - адрес нулевой ячейки).
 #pragma vector=EE_RDY_vect
 __interrupt void ee_ready_isr(void)
 { 

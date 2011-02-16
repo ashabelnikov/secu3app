@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file ce_errors.c
+ * Implementation of controling of CE, errors detection and related functionality.
+ * (Реализация управления лампой CE, обнаружения ошибок и соответствующей функциональности).
+ */
+
 #include <string.h>
 #include <ioavr.h>
 #include "adc.h"
@@ -32,13 +37,15 @@
 #include "suspendop.h"
 #include "vstimer.h"
 
+/**CE state variables structure */
 typedef struct
 {
- uint16_t ecuerrors;         //16 error codes maximum (максимум 16 кодов ошибок)
- uint16_t merged_errors;     //caching errors to preserve resource of the EEPROM (кеширует ошибки для сбережения ресурса EEPROM)
- uint16_t write_errors;      //ф. eeprom_start_wr_data() launches background process! (запускает фоновый процесс!) 
+ uint16_t ecuerrors;         //!< 16 error codes maximum (максимум 16 кодов ошибок)
+ uint16_t merged_errors;     //!< caching errors to preserve resource of the EEPROM (кеширует ошибки для сбережения ресурса EEPROM)
+ uint16_t write_errors;      //!< ф. eeprom_start_wr_data() launches background process! (запускает фоновый процесс!) 
 }ce_state_t;
 
+/**State variables */
 ce_state_t ce_state = {0,0,0};
 
 //operations under errors (операции над ошибками)

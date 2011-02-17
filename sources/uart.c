@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file uart.c
+ * Implementation of service for performing communication via UART.
+ * (Реализация поддержки обмена данными через UART).
+ */
+
 #include <ina90.h>
 #include <ioavr.h>
 #include <pgmspace.h>
@@ -47,39 +52,51 @@
 #define USART_RXC_vect USART0_RXC_vect
 #endif
 
+/**Define internal state variables */
 typedef struct
 {
- uint8_t send_mode;
- uint8_t recv_buf[UART_RECV_BUFF_SIZE];
- uint8_t send_buf[UART_SEND_BUFF_SIZE];
- volatile uint8_t send_size;
- uint8_t send_index;
- volatile uint8_t recv_size;
- uint8_t recv_index;
+ uint8_t send_mode;                     //!< current descriptor of packets beeing send
+ uint8_t recv_buf[UART_RECV_BUFF_SIZE]; //!< receiver's buffer
+ uint8_t send_buf[UART_SEND_BUFF_SIZE]; //!< transmitter's buffer
+ volatile uint8_t send_size;            //!< size of data to be send
+ uint8_t send_index;                    //!< index in transmitter's buffer
+ volatile uint8_t recv_size;            //!< size of received data
+ uint8_t recv_index;                    //!< index in receiver's buffer
 }uartstate_t;
 
+/**State variables */
 uartstate_t uart;
 
+/**For BIN-->HEX encoding */
 const __flash uint8_t hdig[] = "0123456789ABCDEF";
 
-
+/**Decodes from HEX to BIN */
 #define HTOD(h) (((h)<0x3A) ? ((h)-'0') : ((h)-'A'+10))
 
 //--------вспомогательные функции для построения пакетов-------------
+
+/**Appends sender's buffer by one byte from specified buffer from programm memory */
 #define build_fb(src, size) \
 { \
  memcpy_P(&uart.send_buf[uart.send_size],(src),(size)); \
  uart.send_size+=(size); \
 }
 
+/**Appends sender's buffer by one HEX byte */
 #define build_i4h(i) {uart.send_buf[uart.send_size++] = ((i)+0x30);}
 
+/**Appends sender's buffer by two HEX bytes 
+ * \param i 8-bit value to be converted into hex
+ */
 void build_i8h(uint8_t i)
 {
  uart.send_buf[uart.send_size++] = hdig[i/16];    //старший байт HEX числа
  uart.send_buf[uart.send_size++] = hdig[i%16];    //младший байт HEX числа
 }
 
+/**Appends sender's buffer by 4 HEX bytes 
+ * \param i 16-bit value to be converted into hex
+ */
 void build_i16h(uint16_t i)
 {
  uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)/16];    //старший байт HEX числа (старший байт)
@@ -88,7 +105,9 @@ void build_i16h(uint16_t i)
  uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,0)%16];    //младший байт HEX числа (младший байт)
 }
 
-
+/**Appends sender's buffer by 8 HEX bytes 
+ * \param i 32-bit value to be converted into hex
+ */
 void build_i32h(uint32_t i)
 {
  build_i16h(i>>16);
@@ -96,8 +115,13 @@ void build_i32h(uint32_t i)
 }
 
 //----------вспомагательные функции для распознавания пакетов---------
+
+/**Retrieves from receiver's buffer 4-bit value */
 #define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
 
+/**Retrieves from receiver's buffer 8-bit value 
+ * \return retrieved value
+ */
 uint8_t recept_i8h(void)
 {
  uint8_t i8;    
@@ -108,6 +132,9 @@ uint8_t recept_i8h(void)
  return i8;
 }
 
+/**Retrieves from receiver's buffer 16-bit value 
+ * \return retrieved value
+ */
 uint16_t recept_i16h(void)
 {
  uint16_t i16;    
@@ -122,7 +149,9 @@ uint16_t recept_i16h(void)
  return i16;
 }
 
-
+/**Retrieves from receiver's buffer 32-bit value 
+ * \return retrieved value
+ */
 uint32_t recept_i32h(void)
 {
  uint32_t i = 0;
@@ -134,15 +163,13 @@ uint32_t recept_i32h(void)
 
 //--------------------------------------------------------------------
 
-
+/**Makes sender to start sending */
 void uart_begin_send(void)
 {
  uart.send_index = 0;
  UCSRB |= (1<<UDRIE); /* enable UDRE interrupt */ 
 }
 
-//строит пакет взависимости от текущего дескриптора и запускает его на передачу. Функция не проверяет
-//занят передатчик или нет, это должно быть сделано до вызова функции
 void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)  
 {
  static uint8_t index = 0;
@@ -289,8 +316,6 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   uart_begin_send();
 }
 
-//эта функция не проверяет, был или не был принят фрейм, проверка должна быть произведена до вызова функции.
-//Возвращает дескриптор обработанного фрейма
 uint8_t uart_recept_packet(struct ecudata_t* d)
 {
  //буфер приемника содержит дескриптор пакета и данные
@@ -468,7 +493,9 @@ void uart_init(uint16_t baud)
 }
 
 
-//Обработчик прерывания по передаче байтов через UART (регистр данных передатчика пуст)
+/**Interrupt handler for the transfer of bytes through the UART (transmitter data register empty)
+ *Обработчик прерывания по передаче байтов через UART (регистр данных передатчика пуст)
+ */
 #pragma vector=USART_UDRE_vect
 __interrupt void usart_udre_isr(void)
 {       
@@ -486,7 +513,7 @@ __interrupt void usart_udre_isr(void)
  }
 }
 
-
+/**Interrupt handler for receive data through the UART */
 #pragma vector=USART_RXC_vect
 __interrupt void usart_rx_isr()
 {

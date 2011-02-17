@@ -19,15 +19,15 @@
               email: shabelnikov@secu-3.org
 */
 
-#ifndef _CKPS_H_
-#define _CKPS_H_
-
-#include <stdint.h>
-
 /** \file ckps.h
  * Processing of crankshaft position sensor.
  * (Обработка датчика положения коленвала).
  */
+
+#ifndef _CKPS_H_
+#define _CKPS_H_
+
+#include <stdint.h>
 
 /**Scaling factor of crankshaft rotation angle, appears in the calculations and operations of the division
  * so it should be a multiple of degree of 2 (коэффициент масштабирования углов поворота коленвала, фигурирует 

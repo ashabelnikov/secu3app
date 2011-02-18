@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file ufcodes.h
+ * Codes of descriptors of packets used in communication via serial interface
+ * ( оды дескрипторов пакетов используемых при передаче данных через последовательный интерфейс).
+ */
+
 #ifndef _UFCODES_H_
 #define _UFCODES_H_
 

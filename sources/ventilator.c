@@ -19,22 +19,29 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file ventilator.c
+ * Implementation of ventilator's control related functions.
+ * (Реализация функций для управления вентилятором).
+ */
+
 #include <ioavr.h>
 #include "ventilator.h"
 #include "secu3.h"
 
-//Turns on/off ventilator
+/**Turns on/off ventilator*/
 #define SET_VENTILATOR_STATE(s) {PORTB_Bit1 = s;}
 
-//Warning must be the same as another definition in vstimer.h!
+/**Warning must be the same as another definition in vstimer.h!*/
 #define TIMER2_RELOAD_VALUE  6
+
+/**will be added to TIMER2_RELOAD_VALUE at the initialization */
 #define COMPADD 5
 
-//number of PWM discretes
+/**number of PWM discretes */
 #define PWM_STEPS 25
 
-volatile uint8_t pwm_state; //0 - passive, 1 - active
-volatile uint8_t pwm_duty;
+volatile uint8_t pwm_state; //!< For state machine. 0 - passive, 1 - active
+volatile uint8_t pwm_duty;  //!< current duty value
 
 void vent_init_ports(void)
 {
@@ -50,6 +57,9 @@ void vent_init_state(void)
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 }
 
+/**Sets duty value 
+ * \param duty value to be set
+ */
 void vent_set_duty(uint8_t duty)
 {
  //TODO: Maybe we need double buffering?
@@ -70,7 +80,7 @@ void vent_set_duty(uint8_t duty)
   TIMSK|=(1 << OCIE2);
 }
 
-//T/C 2 Compare interrupt for renerating PWM (ventilator control)
+/**T/C 2 Compare interrupt for renerating of PWM (ventilator control)*/
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 

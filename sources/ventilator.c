@@ -20,16 +20,16 @@
 */
 
 /** \file ventilator.c
- * Implementation of ventilator's control related functions.
- * (Реализация функций для управления вентилятором).
+ * Implementation of cooling fan's control related functions.
+ * (Реализация функций для управления электрическим вентилятором).
  */
 
 #include <ioavr.h>
 #include "ventilator.h"
 #include "secu3.h"
 
-/**Turns on/off ventilator*/
-#define SET_VENTILATOR_STATE(s) {PORTB_Bit1 = s;}
+/**Turns on/off cooling fan*/
+#define SET_COOLINGFAN_STATE(s) {PORTB_Bit1 = s;}
 
 /**Warning must be the same as another definition in vstimer.h!*/
 #define TIMER2_RELOAD_VALUE  6
@@ -69,47 +69,47 @@ void vent_set_duty(uint8_t duty)
  if (duty == 0)
  {
   TIMSK&=~(1 << OCIE2);
-  SET_VENTILATOR_STATE(0);
+  SET_COOLINGFAN_STATE(0);
  }
  else if (duty == PWM_STEPS)
  {
   TIMSK&=~(1 << OCIE2);
-  SET_VENTILATOR_STATE(1);
+  SET_COOLINGFAN_STATE(1);
  }
  else
   TIMSK|=(1 << OCIE2);
 }
 
-/**T/C 2 Compare interrupt for renerating of PWM (ventilator control)*/
+/**T/C 2 Compare interrupt for renerating of PWM (cooling fan control)*/
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
 { 
  if (0 == pwm_state)
  { //start active part
-  SET_VENTILATOR_STATE(1);
+  SET_COOLINGFAN_STATE(1);
   OCR2+= pwm_duty;
   ++pwm_state;
  }
  else
  { //start passive part
-  SET_VENTILATOR_STATE(0);
+  SET_COOLINGFAN_STATE(0);
   OCR2+= (PWM_STEPS - pwm_duty);
   --pwm_state;   
  }        
 }
 
-//Control electro ventilator (engine cooling), only in case if coolant temperature 
+//Control of electric cooling fan (engine cooling), only in case if coolant temperature 
 //sensor is present in system
 void vent_control(struct ecudata_t *d)
 {
  if (!d->param.tmp_use)
   return;
  
-#ifndef VENTILATOR_PWM
+#ifndef COOLINGFAN_PWM
  if (d->sens.temperat >= d->param.vent_on)
-  SET_VENTILATOR_STATE(1);
+  SET_COOLINGFAN_STATE(1);
  if (d->sens.temperat <= d->param.vent_off)
-  SET_VENTILATOR_STATE(0);
+  SET_COOLINGFAN_STATE(0);
 #else //PWM mode
  if (!d->param.vent_pwm)
  {

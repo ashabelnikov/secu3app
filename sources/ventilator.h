@@ -20,7 +20,7 @@
 */
 
 /** \file ventilator.h
- * Ventilator's control related functions.
+ * Cooling fan's control related functions.
  * (Функции для управления вентилятором).
  */
 

@@ -477,8 +477,8 @@ void process_ckps_cogs(void)
  uint16_t diff; 
  uint8_t i;  
 
-#ifdef VENTILATOR_PWM
- //CKP processing creates a big delay which negatively affects ventilator's PWM. We
+#ifdef COOLINGFAN_PWM
+ //CKP processing creates a big delay which negatively affects cooling fan's PWM. We
  //need to enable T/C 2 interrupts. TODO: it is bad idea to enable all interrupts 
  //here. We need only OCIE2 and TOIE2.
  __enable_interrupt();

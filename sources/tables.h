@@ -134,8 +134,8 @@ typedef struct params_t
   int16_t  ifac1;                        //коэффициенты регулятора оборотов ХХ, для положительной и
   int16_t  ifac2;                        //отрицательной ошибок соответственно. (Idling regulator's factors for positive and negative errors correspondingly)
   int16_t  MINEFR;                       //зона нечувствительности регулятора (обороты) (dead band of idling regulator (min-1))
-  int16_t  vent_on;                      //температура включения вентилятора (ventilator's turn on temperature)
-  int16_t  vent_off;                     //температура выключения вентилятора (ventilator's turn off temperature) 
+  int16_t  vent_on;                      //температура включения вентилятора (cooling fan's turn on temperature)
+  int16_t  vent_off;                     //температура выключения вентилятора (cooling fan's turn off temperature) 
 
   int16_t  map_adc_factor;               // Поправки для коррекции погрешностей АЦП
   int32_t  map_adc_correction;           // (correction values (factors and additions) for ADC) - error compensations
@@ -180,7 +180,7 @@ typedef struct params_t
   uint8_t knock_recovery_delay;          //задержка восстановления УОЗ в рабочих циклах двигателя (Recovery delay of angle countable in engine's cycles)
   //--/knock
   
-  uint8_t vent_pwm;                      //flag - control ventilator by using PWM
+  uint8_t vent_pwm;                      //flag - control cooling fan by using PWM
   //Эти зарезервированные байты необходимы для сохранения бинарной совместимости
   //новых версий прошивок с более старыми версиями. При добавлении новых данных
   //в структуру, необходимо расходовать эти байты.

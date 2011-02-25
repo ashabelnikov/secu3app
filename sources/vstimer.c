@@ -47,8 +47,8 @@ __interrupt void timer2_ovf_isr(void)
 {
  TCNT2 = TIMER2_RELOAD_VALUE;
  
-#ifdef VENTILATOR_PWM 
- //for PWM reneration (ventilator). We need to reinitialize OCR2 because it looses correct value 
+#ifdef COOLINGFAN_PWM 
+ //for PWM's generation (for cooling fan). We need to reinitialize OCR2 because it looses correct value 
  //(I guess) after TCNT2 write. Compare interrupt shifted in time from overflow interrupt by COMPADD
  //value 
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;

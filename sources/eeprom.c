@@ -80,6 +80,7 @@ uint8_t eeprom_is_idle(void)
  * register to zero.
  * (ќбработчик прерывани€ от EEPROM при завершении работы автомата всегда заносим в 
  * регистр адреса - адрес нулевой €чейки).
+ */
 #pragma vector=EE_RDY_vect
 __interrupt void ee_ready_isr(void)
 { 

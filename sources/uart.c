@@ -193,12 +193,12 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
        build_i16h(d->param.vent_off);
        break;
     case CARBUR_PAR:   
-       build_i16h(d->param.ephh_lot);
-       build_i16h(d->param.ephh_hit);
+       build_i16h(d->param.ie_lot);
+       build_i16h(d->param.ie_hit);
        build_i4h(d->param.carb_invers);
-       build_i16h(d->param.epm_on_threshold);
-       build_i16h(d->param.ephh_lot_g);
-       build_i16h(d->param.ephh_hit_g);
+       build_i16h(d->param.fe_on_threshold);
+       build_i16h(d->param.ie_lot_g);
+       build_i16h(d->param.ie_hit_g);
        build_i8h(d->param.shutoff_delay);
        break;
     case IDLREG_PAR:   
@@ -246,11 +246,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
        build_i16h(d->knock_retard);  // <-- knock retard       
        build_i8h(d->airflow);              
        //boolean values              
-       build_i8h((d->ephh_valve  << 0) | 
-                 (d->sens.carb   << 1) | 
-                 (d->sens.gas    << 2) | 
-                 (d->epm_valve   << 3) |
-                 (d->ce_state    << 4));
+       build_i8h((d->ie_valve   << 0) | 
+                 (d->sens.carb  << 1) | 
+                 (d->sens.gas   << 2) | 
+                 (d->fe_valve   << 3) |
+                 (d->ce_state   << 4));
        break;
    case ADCCOR_PAR:   
        build_i16h(d->param.map_adc_factor);
@@ -353,12 +353,12 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
        break;
 
     case CARBUR_PAR:   
-       d->param.ephh_lot  = recept_i16h();
-       d->param.ephh_hit  = recept_i16h();
+       d->param.ie_lot  = recept_i16h();
+       d->param.ie_hit  = recept_i16h();
        d->param.carb_invers= recept_i4h();
-       d->param.epm_on_threshold= recept_i16h();
-       d->param.ephh_lot_g = recept_i16h();
-       d->param.ephh_hit_g = recept_i16h();
+       d->param.fe_on_threshold= recept_i16h();
+       d->param.ie_lot_g = recept_i16h();
+       d->param.ie_hit_g = recept_i16h();
        d->param.shutoff_delay = recept_i8h();
        break;
 

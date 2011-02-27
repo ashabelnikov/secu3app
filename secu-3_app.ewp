@@ -1568,22 +1568,22 @@
     <name>$PROJ_DIR$\sources\eeprom.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\sources\ephh.c</name>
+    <name>$PROJ_DIR$\sources\fuelecon.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\sources\ephh.h</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\sources\epm.c</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\sources\epm.h</name>
+    <name>$PROJ_DIR$\sources\fuelecon.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\sources\funconv.c</name>
   </file>
   <file>
     <name>$PROJ_DIR$\sources\funconv.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\sources\idlecon.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\sources\idlecon.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\sources\ignlogic.c</name>

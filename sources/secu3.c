@@ -29,10 +29,10 @@
 #include "ckps.h"
 #include "crc16.h"
 #include "eeprom.h"
-#include "ephh.h"
-#include "epm.h"
+#include "fuelecon.h"
 #include "funconv.h"
 #include "jumper.h"
+#include "idlecon.h"
 #include "ignlogic.h"
 #include "knklogic.h"
 #include "knock.h"
@@ -55,7 +55,7 @@ struct ecudata_t edat;
 void control_engine_units(struct ecudata_t *d)
 {
  //реализация функции ЭПХХ. 
- ephh_control(d);
+ idlecon_control(d);
 
  //управление блокировкой стартера
  starter_control(d);
@@ -64,7 +64,7 @@ void control_engine_units(struct ecudata_t *d)
  vent_control(d);
   
  //Управление ЭМР (экономайзер мощностных режимов)
- epm_control(d);
+ fuelecon_control(d);
 }
          
 void init_ecu_data(struct ecudata_t* d)
@@ -93,8 +93,8 @@ __C_task void main(void)
  //конфигурируем порты ввода/вывода
  ckps_init_ports();
  vent_init_ports();
- epm_init_ports();
- ephh_init_ports();
+ fuelecon_init_ports();
+ idlecon_init_ports();
  starter_init_ports();
  ce_init_ports();
  knock_init_ports();

@@ -56,7 +56,7 @@ void starter_control(struct ecudata_t* d)
  //and status indication of idle economizer valve (output of starter's blocking is used) 
  //(управление блокировкой стартера (стартер блокируется при оборотах больше пороговых)
  //и индикация состояния клапана ЭПХХ (используется выход блокировки стартера)) 
- SET_STARTER_BLOCKING_STATE( (d->sens.frequen4 > d->param.starter_off)&&(d->ephh_valve) ? 1 : 0);
+ SET_STARTER_BLOCKING_STATE( (d->sens.frequen4 > d->param.starter_off)&&(d->ie_valve) ? 1 : 0);
 
  //if air flow is maximum - turn on CE and start timer
  //(если расход воздуха максимальный - зажигаем СЕ и запускаем таймер)

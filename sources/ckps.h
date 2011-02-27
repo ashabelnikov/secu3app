@@ -59,8 +59,8 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc);
 
 /** Set duration of ignition pulse drive (устанавливает длительность импульса зажигания в зубьях)
  * \param cogs duration of pulse, countable in the teeth of wheel
- * \details For standard commutators duration of driving pulses must be 1/3, when significant deviation to the smaller side 
- * is present then commutators can became out of action. If you connect two outputs together to one commutator, you must put
+ * \details For standard igniters duration of driving pulses must be 1/3, when significant deviation to the smaller side 
+ * is present then igniters can became out of action. If you connect two outputs together to one igniter, you must put
  * a value of 10, if double channel mode then 40. The values given for the 60-2 wheel and 4 cylinder engine.
  * (Для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в меньшую сторону 
  * возможен выход коммутатора из строя.  Если соединять два выхода вместе для одного коммутатора, то необходимо ставить

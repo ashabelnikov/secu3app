@@ -185,7 +185,7 @@ void ckps_set_advance_angle(int16_t angle)
 
 void ckps_init_ports(void)
 { 
- //after ignition is on, commutators must not be in the accumulation mode,
+ //after ignition is on, igniters must not be in the accumulation mode,
  //therefore set low level on their inputs
  //(после включения зажигания коммутаторы недолжны быть в режиме накопления,
  //поэтому устанавливаем на их входах низкий уровень)
@@ -387,7 +387,7 @@ __interrupt void timer1_compa_isr(void)
 {
   TIMSK&= ~(1<<OCIE1A); //disable interrupt (запрещаем прерывание)
 
- //line of port in the low level, now set it into a high level - makes the commutator to stop 
+ //line of port in the low level, now set it into a high level - makes the igniter to stop 
  //the accumulation of energy and close the transistor (spark)
  //(линия порта в низком уровне, теперь переводим её в высокий уровень - заставляем коммутатор прекратить 
  //накопление энергии и закрыть транзистор (искра)).
@@ -411,8 +411,8 @@ __interrupt void timer1_compa_isr(void)
 #pragma inline
 void turn_off_ignition_channel(uint8_t i_channel)
 {
- //Completion of commutator's ignition drive pulse, transfer line of port into a low level - makes 
- //the commutator go to the regime of energy accumulation
+ //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
+ //the igniter go to the regime of energy accumulation
  //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
  //коммутатор перейти в режим накопления энэргии
  switch(i_channel)
@@ -559,7 +559,7 @@ void process_ckps_cogs(void)
   }
  }
 
- //finish the ignition trigger pulses for commutator(s) and immediately increase the number of tooth for processed channel
+ //finish the ignition trigger pulses for igniter(s) and immediately increase the number of tooth for processed channel
  //заканчиваем импульсы запуска коммутатора(ов) и сразу увеличиваем номер зуба для обработанного канала
  for(i = 0; i < ckps.chan_number; ++i)
  {

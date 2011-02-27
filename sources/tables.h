@@ -122,8 +122,8 @@ typedef struct params_t
   uint8_t  fn_benzin;                    //номер набора характеристик используемый дл€ бензина (index of set of characteristics used for gasoline)
   uint8_t  fn_gas;                       //номер набора характеристик используемый дл€ газа (index of set of characteristics used for gas)
   uint16_t map_lower_pressure;           //нижнее значене ƒјƒ по оси таблицы (кѕа) (lower value of MAP at the axis of table(work map) (kPa))
-  uint16_t ephh_lot;                     //нижний порог Ёѕ’’ (мин-1) (lower threshold for forced idle valve(min-1) for gasiline)
-  uint16_t ephh_hit;                     //верхний порог Ёѕ’’ (мин-1) (upper threshold for forced idle valve(min-1) for gasoline)
+  uint16_t ie_lot;                       //нижний порог Ёѕ’’ (мин-1) (lower threshold for idle economizer valve(min-1) for gasiline)
+  uint16_t ie_hit;                       //верхний порог Ёѕ’’ (мин-1) (upper threshold for idle economizer valve(min-1) for gasoline)
   uint16_t starter_off;                  //порог выключени€ стартера (мин-1) (RPM when starter will be turned off)
   int16_t  map_upper_pressure;           //верхнее значение ƒјƒ по оси таблицы (кѕа) (upper value of MAP at the axis of table(work map) (kPa))
   uint16_t smap_abandon;                 //обороты перехода с пусковой карты на рабочую  (мин-1) (RPM when switching from start map(min-1))
@@ -155,11 +155,11 @@ typedef struct params_t
   uint16_t map_curve_offset;             //offset of curve in volts
   uint16_t map_curve_gradient;           //gradient of curve in kPa/V
   
-  int16_t  epm_on_threshold;             //порог включени€ экономайзера мощностных режимов (switch on threshold of EPM)
+  int16_t  fe_on_threshold;              //порог включени€ экономайзера мощностных режимов (switch on threshold of FE)
   
-  uint16_t ephh_lot_g;                   //нижний порог Ёѕ’’ (газ) (lower threshold for forced idle valve(min-1) for gas)
-  uint16_t ephh_hit_g;                   //верхний порог Ёѕ’’ (газ) (upper threshold for forced idle valve(min-1) for gas)
-  uint8_t  shutoff_delay;                //задержка выключени€ клапана (forced idle valve's turn off delay)
+  uint16_t ie_lot_g;                     //нижний порог Ёѕ’’ (газ) (lower threshold for idle economizer valve(min-1) for gas)
+  uint16_t ie_hit_g;                     //верхний порог Ёѕ’’ (газ) (upper threshold for idle economizer valve(min-1) for gas)
+  uint8_t  shutoff_delay;                //задержка выключени€ клапана (idle economizer valve's turn off delay)
  
   uint16_t uart_divisor;                 //делитель дл€ соответствующей скорости UART-a (divider which corresponds to selected baud rate)
   uint8_t  uart_period_t_ms;             //период посылки пакетов в дес€тках миллисекунд (transmition period of data packets which SECU-3 sends, one discrete = 10ms)

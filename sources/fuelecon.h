@@ -19,22 +19,22 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file epm.h
- * Control of power's modes economizer
+/** \file fuelecon.h
+ * Control of Fuel Economizer (FE)
  * (”правление экономайзером мощностных режимов).
  */
 
-#ifndef _EPM_H_
-#define _EPM_H_
+#ifndef _FUELECON_H_
+#define _FUELECON_H_
 
 struct ecudata_t;
 
 /**Initialization of I/O ports*/
-void epm_init_ports(void);
+void fuelecon_init_ports(void);
 
 /**Implements control algorithm 
  * \param d pointer to ECU data structure
  */
-void epm_control(struct ecudata_t* d);
+void fuelecon_control(struct ecudata_t* d);
 
-#endif //_EPM_H_
+#endif //_FUELECON_H_

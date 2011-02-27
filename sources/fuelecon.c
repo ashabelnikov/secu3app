@@ -19,31 +19,31 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file epm.c
- * Implementation of controlling algorithms for power's modes economizer
- * (Реализация алгоритмов управления экономайзером мощностных режимов).
+/** \file fuelecon.c
+ * Implementation of controlling algorithms for Fuel Economizer (FE)
+ * (Реализация алгоритмов управления Экономайзером Мощностных Режимов (ЭМР)).
  */
 
 #include <ioavr.h>
 #include "secu3.h"
-#include "epm.h"
+#include "fuelecon.h"
 
-/** Open/Close EPM valve (открывает/закрывает клапан ЭМР) */
-#define SET_EPM_VALVE_STATE(s) {PORTC_Bit7 = s;}
+/** Open/Close FE valve (открывает/закрывает клапан ЭМР) */
+#define SET_FE_VALVE_STATE(s) {PORTC_Bit7 = s;}
 
-void epm_init_ports(void)
+void fuelecon_init_ports(void)
 {
- PORTC&= ~(1<<PC7); //EPM is off (ЭМР выключен)
- DDRC|= (1<<DDC7);  //Output for control EPM valve (выход для управления клапаном ЭМР)
+ PORTC&= ~(1<<PC7); //FE valve is off (ЭМР выключен)
+ DDRC|= (1<<DDC7);  //Output for control FE valve (выход для управления клапаном ЭМР)
 }
 
-void epm_control(struct ecudata_t* d)
+void fuelecon_control(struct ecudata_t* d)
 {
  int16_t discharge;
  
  discharge = (d->param.map_upper_pressure - d->sens.map);
  if (discharge < 0) 
   discharge = 0;    
- d->epm_valve = discharge < d->param.epm_on_threshold;
- SET_EPM_VALVE_STATE(d->epm_valve);
+ d->fe_valve = discharge < d->param.fe_on_threshold;
+ SET_FE_VALVE_STATE(d->fe_valve);
 }

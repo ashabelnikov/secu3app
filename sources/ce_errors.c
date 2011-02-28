@@ -61,6 +61,7 @@ void ce_clear_error(uint8_t error)
  CLEARBIT(ce_state.ecuerrors, error);
 }
 
+/** Internal function. Contains checking logic */
 void check(struct ecudata_t* d)
 {
  //If error of CKP sensor was, then set corresponding bit of error

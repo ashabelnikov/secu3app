@@ -19,22 +19,27 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file tables.c
+ * Tables and datastructures stored in the frmware (instances).
+ * (Таблицы и структуры данных хранимые в прошивке).
+ */
+
 #include <ioavr.h>
 #include "tables.h"
 
-//дополнительные данные по умолчанию
-//Fill additional data with default values
+/**Дополнительные данные по умолчанию
+ * Fill additional data with default values */
 #pragma object_attribute=__root
 firmware_data_t __flash fwdata@FIRMWARE_DATA_START=
 {
-  //Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.
-  //Дата в формате Mmm dd yyyy.
-  //Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
-  //Date in format Mmm dd yyyy.
+  /**Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.
+   * Дата в формате Mmm dd yyyy.
+   * Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
+   * Date in format Mmm dd yyyy. */
   "SECU-3 firmware v2.4. Build ["__DATE__"]       ",
 
-  //таблица аттенюатора, по умолчанию k = 1.000
-  //attenuator's lookup table (for knock channel), by default k = 1.000
+  /**Таблица аттенюатора, по умолчанию k = 1.000
+   * attenuator's lookup table (for knock channel), by default k = 1.000 */
   0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
   0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
   0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
@@ -44,19 +49,19 @@ firmware_data_t __flash fwdata@FIRMWARE_DATA_START=
   0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
   0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
 
-  //lookup table for controlling coil's accumulation time
+  /**Lookup table for controlling coil's accumulation time */
   0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,
   0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,
 
-  //size of all data for checking
+  /**Size of all data for checking */
   (SECU3BOOTSTART - FIRMWARE_DATA_START),
 
-  //config
+  /**config */
   0x00000000
 };
 
-//данные в таблицах по умолчанию
-//Fill tables with default data
+/**Данные в таблицах по умолчанию
+ * Fill tables with default data */
 #pragma object_attribute=__root
 f_data_t __flash tables[TABLES_NUMBER]@TABLES_START=
 {
@@ -245,12 +250,13 @@ f_data_t __flash tables[TABLES_NUMBER]@TABLES_START=
 '“','‡','Ђ','Њ','3','3','1','7',' ',' ',' ',' ',' ',' ',' ',' '
 };
 
-//резервные параметры
-//fill reserve parameters with default values
+/**Резервные параметры
+ * Fill reserve parameters with default values */
 #pragma object_attribute=__root
 params_t __flash def_param@DEFPARAM_START =
 {1,0,0,6,6,1920,1250,1500,600,6400,650,1600,-320,0,800,4,4,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,
  96,96,-320,320,240,410,392,1250,1500,0, 0x0067,8, 4, 0,35,0,800,23,128,8,512,1000,2,0,  0,0,0,0,0,0,0,0,0,/*crc*/0};
 
+/**Contains check sum for whole firmware */
 #pragma object_attribute=__root
 uint16_t __flash code_crc@CODE_CRC_ADDR = 0x0000;

@@ -27,7 +27,7 @@
 
 #include "crc16.h"
 
-#define      P_16   0xA001     //polynomial (полином)
+#define      P_16   0xA001     //!< polynomial (полином)
 
 //variant for RAM (вариант для данных в RAM)
 uint16_t crc16( uint8_t *buf, uint16_t num )

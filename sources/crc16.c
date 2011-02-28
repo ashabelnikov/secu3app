@@ -36,17 +36,17 @@ uint16_t i;
 uint16_t crc = 0xffff;
 
   while ( num-- )
-  { 
+  {
     crc ^= *buf++;
     i = 8;
     do
-    { 
+    {
       if ( crc & 1 )
         crc = ( crc >> 1 ) ^ P_16;
       else
         crc >>= 1;
     } while ( --i );
-  }  
+  }
   return( crc );
 }
 
@@ -57,17 +57,17 @@ uint16_t i;
 uint16_t crc = 0xffff;
 
   while ( num-- )
-  { 
-    crc ^= *buf++;   
+  {
+    crc ^= *buf++;
     i = 8;
     do
-    { 
+    {
       if ( crc & 1 )
         crc = ( crc >> 1 ) ^ P_16;
       else
         crc >>= 1;
     } while ( --i );
   }
-  
+
   return( crc );
 }

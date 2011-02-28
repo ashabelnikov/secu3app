@@ -22,7 +22,7 @@
 /** \file eeprom.c
  * Implementation of EEPROM related functions (API).
  * Functions for read/write EEPROM and related functionality
- * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность) 
+ * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
 #include <ioavr.h>
@@ -33,10 +33,10 @@
 /**Describes information is necessary for storing of data into EEPROM
  * (Описывает информацию необходимую для сохранения данных в EEPROM)
  */
-typedef struct 
+typedef struct
 {
  uint16_t ee_addr;             //!< Address for EEPROM (адрес для записи в EEPROM)
- uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ) 
+ uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ)
  uint8_t count;                //!< Number of bytes (количество байтов)
  uint8_t eews;                 //!< State of writing process (состояние процесса записи)
  uint8_t opcode;               //!< code of specific operation wich cased writing process
@@ -47,20 +47,20 @@ typedef struct
 eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
 /** Initiates process of byte's writing (инициирует процесс записи байта в EEPROM) */
-#define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}     
+#define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}
 
-uint8_t eeprom_take_completed_opcode(void)  
+uint8_t eeprom_take_completed_opcode(void)
 {
  uint8_t result;
  __disable_interrupt();
  result = eewd.completed_opcode;
- eewd.completed_opcode = 0; 
+ eewd.completed_opcode = 0;
  __enable_interrupt();
  return result;
 }
 
 //запускает процесс записи в EEPROM указанного блока данных
-void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count)  
+void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count)
 {
  eewd.eews = 1;
  eewd.ee_addr = eeprom_addr;
@@ -78,42 +78,42 @@ uint8_t eeprom_is_idle(void)
 
 /**Interrupt handler from EEPROM. Each time when state machine finishes we set address
  * register to zero.
- * (Обработчик прерывания от EEPROM при завершении работы автомата всегда заносим в 
+ * (Обработчик прерывания от EEPROM при завершении работы автомата всегда заносим в
  * регистр адреса - адрес нулевой ячейки).
  */
 #pragma vector=EE_RDY_vect
 __interrupt void ee_ready_isr(void)
-{ 
+{
  switch(eewd.eews)
  {
   case 0:   //КА остановлен
    break;
 
   case 1:   //КА в процессе записи
-   EEAR = eewd.ee_addr;       
+   EEAR = eewd.ee_addr;
    EEDR = *eewd.sram_addr;
-   EE_START_WR_BYTE();                          
+   EE_START_WR_BYTE();
    eewd.sram_addr++;
    eewd.ee_addr++;
    if (--eewd.count==0)
     eewd.eews = 2;   //последний байт запущен на запись.
-   else      
-    eewd.eews = 1;   
-   break;    
+   else
+    eewd.eews = 1;
+   break;
 
   case 2:   //последний байт записан
-   EEAR=0x000;      
-   CLEARBIT(EECR,EERIE); //запрещаем прерывание от EEPROM        
+   EEAR=0x000;
+   CLEARBIT(EECR,EERIE); //запрещаем прерывание от EEPROM
    eewd.eews = 0;
    eewd.completed_opcode = eewd.opcode;
-   break;      
- }//switch  
+   break;
+ }//switch
 }
 
 void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
 {
  uint8_t _t;
- uint8_t *dest = (uint8_t*)sram_dest;  
+ uint8_t *dest = (uint8_t*)sram_dest;
  do
  {
   _t=__save_interrupt();
@@ -123,15 +123,15 @@ void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
 
   eeaddr++;
   dest++;
- }while(--size); 
+ }while(--size);
 
- EEAR=0x000;      
+ EEAR=0x000;
 }
 
 void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size)
 {
  uint8_t _t;
- uint8_t *src = (uint8_t*)sram_src;  
+ uint8_t *src = (uint8_t*)sram_src;
  do
  {
   _t=__save_interrupt();
@@ -141,7 +141,7 @@ void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size)
 
   eeaddr++;
   src++;
- }while(--size); 
+ }while(--size);
 
- EEAR=0x000;      
+ EEAR=0x000;
 }

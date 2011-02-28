@@ -57,7 +57,7 @@ void vent_init_state(void)
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 }
 
-/**Sets duty value 
+/**Sets duty value
  * \param duty value to be set
  */
 void vent_set_duty(uint8_t duty)
@@ -83,7 +83,7 @@ void vent_set_duty(uint8_t duty)
 /**T/C 2 Compare interrupt for renerating of PWM (cooling fan control)*/
 #pragma vector=TIMER2_COMP_vect
 __interrupt void timer2_comp_isr(void)
-{ 
+{
  if (0 == pwm_state)
  { //start active part
   SET_COOLINGFAN_STATE(1);
@@ -94,17 +94,17 @@ __interrupt void timer2_comp_isr(void)
  { //start passive part
   SET_COOLINGFAN_STATE(0);
   OCR2+= (PWM_STEPS - pwm_duty);
-  --pwm_state;   
- }        
+  --pwm_state;
+ }
 }
 
-//Control of electric cooling fan (engine cooling), only in case if coolant temperature 
+//Control of electric cooling fan (engine cooling), only in case if coolant temperature
 //sensor is present in system
 void vent_control(struct ecudata_t *d)
 {
  if (!d->param.tmp_use)
   return;
- 
+
 #ifndef COOLINGFAN_PWM
  if (d->sens.temperat >= d->param.vent_on)
   SET_COOLINGFAN_STATE(1);
@@ -120,14 +120,14 @@ void vent_control(struct ecudata_t *d)
  }
  else
  {
-  //note: We skip 1 and 24 values of duty 
+  //note: We skip 1 and 24 values of duty
   int16_t d = d->param.vent_on - d->sens.temperat;
   if (d < 2)
    d = 0;         //restrict to max.
   if (d > (PWM_STEPS-2))
-   d = PMM_STEPS; //restrict to min.  
+   d = PMM_STEPS; //restrict to min.
   //TODO: implement kick on turn on
-  vent_set_duty(PWM_STEPS - d);  
- }  
+  vent_set_duty(PWM_STEPS - d);
+ }
 #endif
 }

@@ -32,7 +32,7 @@ struct ecudata_t;
 /** Initialization of used I/O ports (инициализаци€ используемых портов) */
 void idlecon_init_ports(void);
 
-/** Does control of valve (”правление клапаном) 
+/** Does control of valve (”правление клапаном)
  * \param d pointer to ECU data structure
  */
 void idlecon_control(struct ecudata_t* d);

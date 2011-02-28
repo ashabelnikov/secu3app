@@ -44,16 +44,16 @@
 
  struct ecudata_t;
 
-/**Builds a packet depending of type of the current descriptor and launches it on the transfer. 
+/**Builds a packet depending of type of the current descriptor and launches it on the transfer.
  * Function does not check the transmitter is busy or not, it should be done before the call
- * (Cтроит пакет в зависимости от текущего дескриптора и запускает его на передачу. Функция не 
+ * (Cтроит пакет в зависимости от текущего дескриптора и запускает его на передачу. Функция не
  * проверяет занят передатчик или нет, это должно быть сделано до вызова функции).
  * \param d pointer to ECU data structure
  * \param send_mode code of descriptor of packet to be send
  */
  void uart_send_packet(struct ecudata_t* d, uint8_t send_mode);
 
-/**This function does not check was or wasn't frame received, checking must be done before the 
+/**This function does not check was or wasn't frame received, checking must be done before the
  * call (Эта функция не проверяет, был или не был принят фрейм, проверка должна быть произведена
  * до вызова функции).
  * \param d pointer to ECU data structure
@@ -67,15 +67,15 @@
 /**\return 1 if sender is busy, otherwise - 0 */
  uint8_t uart_is_sender_busy(void);
 
-/**This function checks for received frame 
- * \return 1 if unprocessed frame is pending 
+/**This function checks for received frame
+ * \return 1 if unprocessed frame is pending
  */
  uint8_t uart_is_packet_received(void);
 
 /** \return code of current descriptor (type of frame) */
  uint8_t uart_get_send_mode(void);
 
-/**Sets current type of frame 
+/**Sets current type of frame
  * \param descriptor code of descriptor of packet
  * \return code of passed(set) descriptor
  */

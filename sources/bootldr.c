@@ -30,7 +30,7 @@
 /**following object will be inserted into the program memory independently on used it or not
  * (этот объект будет в памяти программ независимо от того используется он или нет).
  */
-#pragma object_attribute=__root 
+#pragma object_attribute=__root
 __flash uint8_t boot_loader[BOOT_LOADER_SIZE]@SECU3BOOTSTART =
 {
 #ifdef __ATmega16__

@@ -22,7 +22,7 @@
 /** \file eeprom.h
  * EEPROM related functions (API).
  * Functions for read/write EEPROM and related functionality
- * (Функции для для чтения/записи EEPROM и связанная с ним функциональность) 
+ * (Функции для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
 #ifndef _EEPROM_H_
@@ -46,7 +46,7 @@
  * \param sram_addr address of block of data in RAM
  * \param count number of bytes in RAM to write (size of block)
  */
-void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count);  
+void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count);
 
 /**Checks if EEPROM is busy
  * (возвращает не 0 если в текущий момент никакая операция не выполняется).
@@ -74,6 +74,6 @@ void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size);
  * возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())
  * \return code of last finished operation
  */
-uint8_t eeprom_take_completed_opcode(void);  
+uint8_t eeprom_take_completed_opcode(void);
 
 #endif //_EEPROM_H_

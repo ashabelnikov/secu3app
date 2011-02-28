@@ -42,7 +42,7 @@ typedef struct
 {
  uint16_t ecuerrors;         //!< 16 error codes maximum (максимум 16 кодов ошибок)
  uint16_t merged_errors;     //!< caching errors to preserve resource of the EEPROM (кеширует ошибки для сбережения ресурса EEPROM)
- uint16_t write_errors;      //!< ф. eeprom_start_wr_data() launches background process! (запускает фоновый процесс!) 
+ uint16_t write_errors;      //!< ф. eeprom_start_wr_data() launches background process! (запускает фоновый процесс!)
 }ce_state_t;
 
 /**State variables */
@@ -87,12 +87,12 @@ void check(struct ecudata_t* d)
   {
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
   }
- 
+
  //checking MAP sensor. TODO: implement additional check
  // error if voltage < 0.3v
  if (d->sens.map_raw < ROUND(0.3 / ADC_DISCRETE) && d->sens.carb)
   ce_set_error(ECUERROR_MAP_SENSOR_FAIL);
- else 
+ else
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
 
  //checking coolant temperature sensor
@@ -102,14 +102,14 @@ void check(struct ecudata_t* d)
    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
-    
+
  //checking voltqage
  // error if voltage < 4.5v
- if ( (d->sens.voltage_raw < ROUND(4.5 / ADC_DISCRETE)) || 
-  (d->sens.voltage_raw < ROUND(12.0 / ADC_DISCRETE) && d->sens.inst_frq > 2500) || 
-  (d->sens.voltage_raw > ROUND(16.0 / ADC_DISCRETE)) )   
+ if ( (d->sens.voltage_raw < ROUND(4.5 / ADC_DISCRETE)) ||
+  (d->sens.voltage_raw < ROUND(12.0 / ADC_DISCRETE) && d->sens.inst_frq > 2500) ||
+  (d->sens.voltage_raw > ROUND(16.0 / ADC_DISCRETE)) )
   ce_set_error(ECUERROR_VOLT_SENSOR_FAIL);
- else 
+ else
   ce_clear_error(ECUERROR_VOLT_SENSOR_FAIL);
 }
 
@@ -172,19 +172,19 @@ void ce_save_merged_errors(uint16_t* p_merged_errors)
   eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
   ce_state.write_errors = temp_errors | ce_state.merged_errors;
   if (ce_state.write_errors!=temp_errors)
-    eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t)); 
+    eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.write_errors, sizeof(uint16_t));
  }
  else
  {
   ce_state.merged_errors = *p_merged_errors;
-  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.merged_errors, sizeof(uint16_t)); 
+  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.merged_errors, sizeof(uint16_t));
  }
 }
 
 void ce_clear_errors(void)
 {
  memset(&ce_state, 0, sizeof(ce_state_t));
- eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));       
+ eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
 }
 
 void ce_init_ports(void)

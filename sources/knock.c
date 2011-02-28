@@ -38,8 +38,8 @@
 #define KSP_SET_PRESCALER      0x40   //!< 01XPPPPZ, X - don't care, P - prescaler code, Z - SO terminal status
 #define KSP_SET_CHANNEL        0xE0   //!< 111TTTTC, T - diagnostic mode code, C - channel code
 // if Z = 0, then SO terminal is active, otherwise Hi Z
-// if C = 0, then channel 0 selected, otherwise channel 1  
-// Question. How to use T - bits, how many diagnostic modes we have? Datasheet doesn't contain 
+// if C = 0, then channel 0 selected, otherwise channel 1
+// Question. How to use T - bits, how many diagnostic modes we have? Datasheet doesn't contain
 //such information...
 // SO directly corresponds to SI,(if enabled) without delay.
 
@@ -120,7 +120,7 @@ uint8_t knock_module_initialize(void)
   KSP_CS = 0;
   spi_master_transmit(init_data[i]);
   KSP_CS = 1;
-  response = SPDR; 
+  response = SPDR;
   if (response!=init_data[i])
   {
    __restore_interrupt(_t);
@@ -159,7 +159,7 @@ void knock_start_settings_latching(void)
 {
  if (ksp.ksp_interrupt_state)
   ksp.ksp_error = 1;
- 
+
  KSP_CS = 0;
  ksp.ksp_interrupt_state = 1;
  SPDR = ksp.ksp_last_word = ksp.ksp_bpf;
@@ -175,7 +175,7 @@ uint8_t knock_is_latching_idle(void)
 
 __monitor
 void knock_set_band_pass(uint8_t freq)
-{ 
+{
  ksp.ksp_bpf = KSP_SET_BANDPASS | (freq & 0x3F);
 }
 
@@ -234,12 +234,12 @@ __interrupt void spi_dataready_isr(void)
    break;
 
   case 3: //Int.Time loaded
-   if (t!=ksp.ksp_last_word) 
+   if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;
    //disable interrupt and switch state machine into initial state - ready to new load
-   SPCR&= ~(1 << SPIE); 
+   SPCR&= ~(1 << SPIE);
    ksp.ksp_interrupt_state = 0;
-   break;    
+   break;
  }
 }
 
@@ -247,6 +247,6 @@ void knock_init_ports(void)
 {
  PORTB|= (1<<PB4)|(1<<PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
  PORTD&=~(1<<PD3);          //INT/~HOLD = 0 (hold mode)
- DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);   
+ DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);
  DDRD |= (1<<DDD3);
 }

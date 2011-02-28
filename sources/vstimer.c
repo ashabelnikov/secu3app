@@ -40,21 +40,21 @@ volatile s_timer16_t save_param_timeout_counter = 0;
 //for division, to achieve 10ms, because timer overflovs each 2 ms
 uint8_t divider = DIVIDER_RELOAD;
 
-//Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system 
+//Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
 //(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
 #pragma vector=TIMER2_OVF_vect
 __interrupt void timer2_ovf_isr(void)
 {
  TCNT2 = TIMER2_RELOAD_VALUE;
- 
-#ifdef COOLINGFAN_PWM 
- //for PWM's generation (for cooling fan). We need to reinitialize OCR2 because it looses correct value 
+
+#ifdef COOLINGFAN_PWM
+ //for PWM's generation (for cooling fan). We need to reinitialize OCR2 because it looses correct value
  //(I guess) after TCNT2 write. Compare interrupt shifted in time from overflow interrupt by COMPADD
- //value 
+ //value
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 #endif
 
- __enable_interrupt();     
+ __enable_interrupt();
 
  if (divider > 0)
   --divider;
@@ -73,7 +73,7 @@ __interrupt void timer2_ovf_isr(void)
 
 void s_timer_init(void)
 {
- TCCR2|= (1<<CS22)|(1<<CS20);  //clock = 125kHz (tick = 8us) 
+ TCCR2|= (1<<CS22)|(1<<CS20);  //clock = 125kHz (tick = 8us)
  TCNT2 = 0;
- TIMSK|= (1<<TOIE2);           //enable T/C 2 overflov interrupt                          
+ TIMSK|= (1<<TOIE2);           //enable T/C 2 overflov interrupt
 }

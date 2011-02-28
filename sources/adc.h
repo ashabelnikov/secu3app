@@ -31,7 +31,7 @@
 #include <stdint.h>
 
 /**одна дискрета АЦП в вольтах */
-#define ADC_DISCRETE            0.0025       
+#define ADC_DISCRETE            0.0025
 
 /**наклон прямой датчика температуры вольт/градус */
 #define TSENS_SLOPP             0.01
@@ -71,7 +71,7 @@ uint16_t adc_get_temp_value(void);
  */
 uint16_t adc_get_knock_value(void);
 
-/**запускает измерение значений с датчиков, но только если предыдущее  
+/**запускает измерение значений с датчиков, но только если предыдущее
  * измерение завершено.
  */
 void adc_begin_measure(void);
@@ -89,9 +89,9 @@ void adc_begin_measure_knock(void);
 void adc_begin_measure_all(void);
 
 /**проверка готовности АЦП
- *\return возвращает не 0 если измерение готово (АЦП не занято) 
+ *\return возвращает не 0 если измерение готово (АЦП не занято)
  */
-uint8_t adc_is_measure_ready(void); 
+uint8_t adc_is_measure_ready(void);
 
 /**инициализация АЦП и его переменных состояния */
 void adc_init(void);
@@ -99,10 +99,10 @@ void adc_init(void);
 /**компенсация погрешностей АЦП или входных цепей (погрешность смещения и передаточная погрешность)
  * \param adcvalue значение АЦП для компенсации
  * \param factor коэффициен масштабирования
- * \param correction смещение 
+ * \param correction смещение
  * \return compensated value (компенсированное значение)
- * \details 
- * factor = 2^14 * gainfactor, 
+ * \details
+ * factor = 2^14 * gainfactor,
  * correction = 2^14 * (0.5 - offset * gainfactor),
  * 2^16 * realvalue = 2^2 * (adcvalue * factor + correction)
  */
@@ -113,7 +113,7 @@ int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
  * \param offset смещение кривой ДАД
  * \param gradient наклон кривой ДАД
  * \return физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
- * \details 
+ * \details
  * offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
  * gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
  */

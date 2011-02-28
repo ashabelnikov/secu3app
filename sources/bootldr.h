@@ -35,14 +35,14 @@
  * Везде используется размер загрузчика соответствующий значению SECONDBOOTSTART)
  */
 #ifdef __ATmega16__
- #define BOOT_LOADER_SIZE  512    
+ #define BOOT_LOADER_SIZE  512
 #elif __ATmega32__
- #define BOOT_LOADER_SIZE  1024   
+ #define BOOT_LOADER_SIZE  1024
 #elif __ATmega64__
  #define BOOT_LOADER_SIZE  2048
 #else
- #error "Not supported platform!"  
-#endif 
+ #error "Not supported platform!"
+#endif
 
 /**Define start address of boot loader in the firmware (in bytes),
  * FLASHEND defined in ioavr.h
@@ -55,7 +55,7 @@
  * see source code of boot loader
  * (точка входа в бутлоадер из программы (минуя проверку перемычки),
  * смотрите исходный код загрузчика).
- */ 
+ */
 #define boot_loader_start() ((void (*)())((SECU3BOOTSTART+0xA)/2))()
 
 #endif //_BOOTLDR_H_

@@ -36,14 +36,14 @@
 #define CLEARBIT(x,y) ((x) &= (~(1<<(y))))
 
 /** Check y bit in the byte x (проверка бита y в байте x) */
-#define CHECKBIT(x,y) ((x) & (1<<(y)))     
+#define CHECKBIT(x,y) ((x) & (1<<(y)))
 
 #ifdef LITTLE_ENDIAN_DATA_FORMAT //little-endian data store format (Intel)
   #define GETBYTE(src,rel) *(((unsigned char*)&(src)+(rel)))                 /**< Get Nth byte from variable */
   #define SETBYTE(des,rel) *(((unsigned char*)&(des)+(rel)))                 /**< Set Nth byte of variable */
-#else                            //big-endian data store format (Motorola) 
+#else                            //big-endian data store format (Motorola)
   #define GETBYTE(src,rel) *(((unsigned char*)&(src)+sizeof((src))-1-(rel))) /**< Get Nth byte from variable */
   #define SETBYTE(des,rel) *(((unsigned char*)&(des)+sizeof((des))-1-(rel))) /**< Set Nth byte of variable */
-#endif  
+#endif
 
 #endif //_BITMASK_H_

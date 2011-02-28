@@ -35,7 +35,7 @@
 void idlecon_init_ports(void)
 {
  PORTB|= (1<<PB0); //valve is turned on (клапан ЭПХХ включен)
- DDRB |= (1<<DDB0);   
+ DDRB |= (1<<DDB0);
 }
 
 //Implementation of IE functionality. If throttle gate is closed AND frq > [up.threshold] OR
@@ -44,19 +44,19 @@ void idlecon_init_ports(void)
 
 //реализация функции ЭПХХ. Если заслонка карбюратора закрыта и frq > [верх.порог] или
 //заслонка карбюратора закрыта и frq > [ниж.порог] но клапан уже закрыт, то производится
-//выключение подачи топлива путем прекращения подачи напряжения на обмотку эл.клапана. Иначе - подача топлива.  
+//выключение подачи топлива путем прекращения подачи напряжения на обмотку эл.клапана. Иначе - подача топлива.
 void idlecon_control(struct ecudata_t* d)
 {
  //if throttle gate is opened, then onen valve,reload timer and exit from condition
  //(если дроссель открыт, то открываем клапан, заряжаем таймер и выходим из условия).
  if (d->sens.carb)
  {
-  d->ie_valve = 1; 
+  d->ie_valve = 1;
   s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
  }
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  //(если дроссель закрыт, то состояние клапана зависит от оборотов, предыдущего состояния клапана, таймера и вида топлива).
- else 
+ else
   if (d->sens.gas) //gas (газовое топливо)
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d->sens.frequen > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.frequen > d->param.ie_hit_g)))?0:1;

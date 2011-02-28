@@ -37,7 +37,7 @@
 //the crankshaft. However, application of value being set will occur only after
 //a call of knock_start_settings_latching()
 
-/**Set center frequency of bandpass filter 
+/**Set center frequency of bandpass filter
  * \param freq code of bandpass frequency (according to datasheet)
  */
 void knock_set_band_pass(uint8_t freq);
@@ -47,7 +47,7 @@ void knock_set_band_pass(uint8_t freq);
  */
 void knock_set_gain(uint8_t gain);
 
-/**Set time constant of integrator 
+/**Set time constant of integrator
  * \param inttime code of time constant (according to datasheet)
  */
 void knock_set_int_time_constant(uint8_t inttime);

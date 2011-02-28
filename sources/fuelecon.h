@@ -32,7 +32,7 @@ struct ecudata_t;
 /**Initialization of I/O ports*/
 void fuelecon_init_ports(void);
 
-/**Implements control algorithm 
+/**Implements control algorithm
  * \param d pointer to ECU data structure
  */
 void fuelecon_control(struct ecudata_t* d);

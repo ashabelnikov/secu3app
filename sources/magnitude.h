@@ -23,7 +23,7 @@
 #define _MAGNITUDE_H_
 
 //необходим для округления при преобразовании из числа с плавающей точкой
-//в целое число 
+//в целое число
 //Used for rounding-up when transforming from floating point value into integer.
 //Note: it is intended for use with constants
 #define ROUND(x) ((int16_t)( (x) + 0.5 - ((x) < 0) ))

@@ -32,7 +32,7 @@
 struct ecudata_t;
 
 /** Start mode of engine (used by state machine) */
-#define EM_START 0   
+#define EM_START 0
 
 /** Idle mode of engine (used by state machine) */
 #define EM_IDLE  1
@@ -41,7 +41,7 @@ struct ecudata_t;
 #define EM_WORK  2
 
 /**Implements state machine of engine's modes (конечный автомат режимов двигателя)
- * \param padvance_angle_inhibitor_state pointer to data structure storing information about inhibition 
+ * \param padvance_angle_inhibitor_state pointer to data structure storing information about inhibition
  *        of alternating speed of advane angle
  * \param d pointer to ECU data structure
  */

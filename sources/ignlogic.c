@@ -34,40 +34,40 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct
  {
   case EM_START: //режим пуска
    if (d->sens.inst_frq > d->param.smap_abandon)
-   {                   
-    d->engine_mode = EM_IDLE;    
-    idling_regulator_init();    
-   }      
+   {
+    d->engine_mode = EM_IDLE;
+    idling_regulator_init();
+   }
    d->curr_angle=start_function(d);               //базовый УОЗ - функция для пуска
    d->airflow = 0;                                //в режиме пуска нет расхода
    *padvance_angle_inhibitor_state = d->curr_angle;//в режиме пуска фильтр отключен
-   break;     
-              
+   break;
+
   case EM_IDLE: //режим холостого хода
    if (d->sens.carb)//педаль газа нажали - в рабочий режим
    {
     d->engine_mode = EM_WORK;
-   }             
-   work_function(d, 1);                           //обновляем значение расхода воздуха 
-   d->curr_angle = idling_function(d);            //базовый УОЗ - функция для ХХ 
+   }
+   work_function(d, 1);                           //обновляем значение расхода воздуха
+   d->curr_angle = idling_function(d);            //базовый УОЗ - функция для ХХ
    d->curr_angle+=coolant_function(d);            //добавляем к УОЗ температурную коррекцию
    d->curr_angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
-   break;            
-                                             
-  case EM_WORK: //рабочий режим 
+   break;
+
+  case EM_WORK: //рабочий режим
    if (!d->sens.carb)//педаль газа отпустили - в переходной режим ХХ
    {
     d->engine_mode = EM_IDLE;
-    idling_regulator_init();    
+    idling_regulator_init();
    }
    d->curr_angle=work_function(d, 0);           //базовый УОЗ - функция рабочего режима
-   d->curr_angle+=coolant_function(d);          //добавляем к УОЗ температурную коррекцию  
+   d->curr_angle+=coolant_function(d);          //добавляем к УОЗ температурную коррекцию
    //отнимаем поправку полученную от регулятора по детонации
-   d->curr_angle-=d->knock_retard;       
-   break;     
-       
-  default:  //непонятная ситуация - угол в ноль       
+   d->curr_angle-=d->knock_retard;
+   break;
+
+  default:  //непонятная ситуация - угол в ноль
    d->curr_angle = 0;
-   break;     
+   break;
  }
 }

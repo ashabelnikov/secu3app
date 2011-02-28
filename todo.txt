@@ -8,7 +8,7 @@ What to do in relation to SECU-3 firmware:
 
 1. Move code related to resetting low priority errors from secu-3.c to ce_errors.c
 
-2. Implement inginition cycles counter which can be used in the system. Maybe it is 
+2. Implement inginition cycles counter which can be used in the system. Maybe it is
    good idea to use callback function.
 
 3. Reimplement timers (vstimer.c). Use callback mechanism. Leave in the 10 ms 

@@ -40,10 +40,10 @@ void fuelecon_init_ports(void)
 void fuelecon_control(struct ecudata_t* d)
 {
  int16_t discharge;
- 
+
  discharge = (d->param.map_upper_pressure - d->sens.map);
- if (discharge < 0) 
-  discharge = 0;    
+ if (discharge < 0)
+  discharge = 0;
  d->fe_valve = discharge < d->param.fe_on_threshold;
  SET_FE_VALVE_STATE(d->fe_valve);
 }

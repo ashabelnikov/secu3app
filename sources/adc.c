@@ -34,13 +34,13 @@
 /**номер канала используемого для ДАД */
 #define ADCI_MAP                2
 /**номер канала используемого для напряжения бортовой сети */
-#define ADCI_UBAT               1         
+#define ADCI_UBAT               1
 /**номер канала используемого для ДТОЖ */
 #define ADCI_TEMP               0
 /**номер канала используемого для канала детонации */
 #define ADCI_KNOCK              3
 /**заглушка, используется для ADCI_KNOCK чтобы сформировать задержку */
-#define ADCI_STUB               4 
+#define ADCI_STUB               4
 
 /**Cтруктура данных состояния АЦП */
 typedef struct
@@ -49,8 +49,8 @@ typedef struct
  volatile uint16_t ubat_value;  //!< последнее измеренное значение напряжения бортовой сети
  volatile uint16_t temp_value;  //!< последнее измеренное значение температуры охлаждающей жидкости
  volatile uint16_t knock_value; //!< последнее измеренное значение сигнала детонации
- 
- volatile uint8_t sensors_ready;//!< датчики обработаны и значения готовы к считыванию 
+
+ volatile uint8_t sensors_ready;//!< датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;          //!< если 1, то производится измерение всех значений
 }adcstate_t;
 
@@ -81,29 +81,29 @@ uint16_t adc_get_knock_value(void)
  return adc.knock_value;
 }
 
-void adc_begin_measure(void) 
-{ 
+void adc_begin_measure(void)
+{
  //мы не можем запускать новое измерение, если еще не завершилось
  //предыдущее измерение
- if (!adc.sensors_ready)  
+ if (!adc.sensors_ready)
   return;
 
- adc.sensors_ready = 0; 
- ADMUX = ADCI_MAP|ADC_VREF_TYPE; 
+ adc.sensors_ready = 0;
+ ADMUX = ADCI_MAP|ADC_VREF_TYPE;
  SETBIT(ADCSRA,ADSC);
-}  
+}
 
-void adc_begin_measure_knock(void) 
-{ 
+void adc_begin_measure_knock(void)
+{
  //мы не можем запускать новое измерение, если еще не завершилось
  //предыдущее измерение
- if (!adc.sensors_ready)  
+ if (!adc.sensors_ready)
   return;
 
- adc.sensors_ready = 0; 
- ADMUX = ADCI_STUB|ADC_VREF_TYPE; 
+ adc.sensors_ready = 0;
+ ADMUX = ADCI_STUB|ADC_VREF_TYPE;
  SETBIT(ADCSRA,ADSC);
-}  
+}
 
 void adc_begin_measure_all(void)
 {
@@ -113,18 +113,18 @@ void adc_begin_measure_all(void)
 
 uint8_t adc_is_measure_ready(void)
 {
- return adc.sensors_ready; 
+ return adc.sensors_ready;
 }
 
 void adc_init(void)
-{ 
+{
  adc.knock_value = 0;
  adc.measure_all = 0;
 
- //инициализация АЦП, параметры: f = 125.000 kHz, 
- //внутренний источник опорного напряжения - 2.56V, прерывание разрешено 
+ //инициализация АЦП, параметры: f = 125.000 kHz,
+ //внутренний источник опорного напряжения - 2.56V, прерывание разрешено
  ADMUX=ADC_VREF_TYPE;
- ADCSRA=(1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);     
+ ADCSRA=(1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
 
  //модуль АЦП готов к новому измерению
  adc.sensors_ready = 1;
@@ -139,47 +139,47 @@ void adc_init(void)
 #pragma vector=ADC_vect
 __interrupt void ADC_isr(void)
 {
- __enable_interrupt(); 
+ __enable_interrupt();
 
  switch(ADMUX&0x07)
  {
   case ADCI_MAP: //закончено измерение абсолютного давления
-   adc.map_value = ADC;      
-   ADMUX = ADCI_UBAT|ADC_VREF_TYPE;   
+   adc.map_value = ADC;
+   ADMUX = ADCI_UBAT|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
    break;
 
   case ADCI_UBAT://закончено измерение напряжения бортовой сети
-   adc.ubat_value = ADC;      
-   ADMUX = ADCI_TEMP|ADC_VREF_TYPE;   
+   adc.ubat_value = ADC;
+   ADMUX = ADCI_TEMP|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
    break;
 
   case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
-   adc.temp_value = ADC;      
+   adc.temp_value = ADC;
    if (0==adc.measure_all)
    {
-    ADMUX = ADCI_MAP|ADC_VREF_TYPE;    
-    adc.sensors_ready = 1;                
+    ADMUX = ADCI_MAP|ADC_VREF_TYPE;
+    adc.sensors_ready = 1;
    }
    else
    {
     adc.measure_all = 0;
-    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE; 
+    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
     SETBIT(ADCSRA,ADSC);
-   }     
-   break; 
-         
+   }
+   break;
+
   case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации
    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
-   SETBIT(ADCSRA,ADSC);         
-   break; 
-            
+   SETBIT(ADCSRA,ADSC);
+   break;
+
   case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
-   adc.knock_value = ADC;      
-   adc.sensors_ready = 1;                
-   break; 
- } 
+   adc.knock_value = ADC;
+   adc.sensors_ready = 1;
+   break;
+ }
 }
 
 int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction)
@@ -193,9 +193,9 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, uint16_t gradient)
  //Такой ход событий необходимо предотвращать.
  if (adcvalue < 0)
   adcvalue = 0;
-   
- //выпажение выглядит так: ((adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.   
- return ( ((uint32_t)(adcvalue + offset)) * ((uint32_t)gradient) ) >> 7; 
+
+ //выпажение выглядит так: ((adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.
+ return ( ((uint32_t)(adcvalue + offset)) * ((uint32_t)gradient) ) >> 7;
 }
 
 uint16_t ubat_adc_to_v(int16_t adcvalue)
@@ -206,7 +206,7 @@ uint16_t ubat_adc_to_v(int16_t adcvalue)
 }
 
 int16_t temp_adc_to_c(int16_t adcvalue)
-{   
+{
  if (adcvalue < 0)
   adcvalue = 0;
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );

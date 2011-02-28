@@ -32,59 +32,59 @@
 #include "vstimer.h"
 
 void process_uart_interface(struct ecudata_t* d)
-{ 
+{
  uint8_t descriptor;
 
  if (uart_is_packet_received())//приняли новый фрейм ?
- { 
+ {
   descriptor = uart_recept_packet(d);
   switch(descriptor)
   {
-   case TEMPER_PAR:            
-   case CARBUR_PAR:   
-   case IDLREG_PAR:   
-   case ANGLES_PAR:   
-   case FUNSET_PAR:   
+   case TEMPER_PAR:
+   case CARBUR_PAR:
+   case IDLREG_PAR:
+   case ANGLES_PAR:
+   case FUNSET_PAR:
    case STARTR_PAR:
-   case ADCCOR_PAR: 
-   case CKPS_PAR: 
-   case KNOCK_PAR:  
-   case MISCEL_PAR:     
+   case ADCCOR_PAR:
+   case CKPS_PAR:
+   case KNOCK_PAR:
+   case MISCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
-    break;        
-   case OP_COMP_NC: 
+    break;
+   case OP_COMP_NC:
     if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE) //приняли команду сохранения параметров
     {
-     sop_set_operation(SOP_SAVE_PARAMETERS);     
-     d->op_actn_code = 0; //обработали 
+     sop_set_operation(SOP_SAVE_PARAMETERS);
+     d->op_actn_code = 0; //обработали
     }
-    if (d->op_actn_code == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок  
+    if (d->op_actn_code == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок
     {
-     sop_set_operation(SOP_READ_CE_ERRORS);     
-     d->op_actn_code = 0; //обработали 
+     sop_set_operation(SOP_READ_CE_ERRORS);
+     d->op_actn_code = 0; //обработали
     }
     if (d->op_actn_code == OPCODE_READ_FW_SIG_INFO) //приняли команду чтения и передачи информации о прошивке
     {
      sop_set_operation(SOP_SEND_FW_SIG_INFO);
-     d->op_actn_code = 0; //обработали        
+     d->op_actn_code = 0; //обработали
     }
-    break;    
-      
+    break;
+
    case CE_SAVED_ERR:
     sop_set_operation(SOP_SAVE_CE_ERRORS);
-    break;       
+    break;
   }
-  
+
   //если были изменены параметры ДПКВ, то немедленно применяем их на работающем двигателе
   if (descriptor == CKPS_PAR)
   {
-   ckps_set_cyl_number(d->param.ckps_engine_cyl);  //<--обязательно в первую очередь! 
+   ckps_set_cyl_number(d->param.ckps_engine_cyl);  //<--обязательно в первую очередь!
    ckps_set_edge_type(d->param.ckps_edge_type);
    ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
    ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
   }
-  
+
   //аналогично для контороля детонации, обязательно после CKPS_PAR!
   if (descriptor == KNOCK_PAR)
   {
@@ -92,32 +92,32 @@ void process_uart_interface(struct ecudata_t* d)
    if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
     if (!knock_module_initialize())
     {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-     ce_set_error(ECUERROR_KSP_CHIP_FAILED);   
-    }    
+     ce_set_error(ECUERROR_KSP_CHIP_FAILED);
+    }
 
    knock_set_band_pass(d->param.knock_bpf_frequency);
    //gain устанавливается в каждом рабочем цикле
    knock_set_int_time_constant(d->param.knock_int_time_const);
-   ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);  
-   ckps_use_knock_channel(d->param.knock_use_knock_channel);   
-    
+   ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);
+   ckps_use_knock_channel(d->param.knock_use_knock_channel);
+
    //запоминаем состояние флага для того чтобы потом можно было определить нужно инициализировать
-   //процессор детонации или нет.   
-   d->use_knock_channel_prev = d->param.knock_use_knock_channel;  
+   //процессор детонации или нет.
+   d->use_knock_channel_prev = d->param.knock_use_knock_channel;
   }
 
   //мы обработали принятые данные - приемник ничем теперь не озабочен
-  uart_notify_processed();         
+  uart_notify_processed();
  }
 
  //периодически передаем фреймы с данными
  if (s_timer_is_action(send_packet_interval_counter))
  {
   if (!uart_is_sender_busy())
-  {                
+  {
    uart_send_packet(d, 0);    //теперь передатчик озабочен передачей данных
    s_timer_set(send_packet_interval_counter, d->param.uart_period_t_ms);
-   
+
    //после передачи очищаем кеш ошибок
    d->ecuerrors_for_transfer = 0;
   }

@@ -38,7 +38,7 @@
  */
 uint16_t crc16(uint8_t *buf, uint16_t num);
 
-/** Calculates CRC16 for given block of data in ROM 
+/** Calculates CRC16 for given block of data in ROM
  * (Вычисляет контрольную сумму CRC16 для блока данных в ПЗУ).
  * \param buf pointer to block of data (ROM) (указатель на байтовый буфер)
  * \param num size of block to process (размер буфера в байтах)

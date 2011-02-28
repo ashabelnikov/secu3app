@@ -28,7 +28,7 @@ void meas_update_values_buffers(struct ecudata_t* d);
 void meas_average_measured_values(struct ecudata_t* d);
 void meas_initial_measure(struct ecudata_t* d);
 
-//производит считывание дискретных входов системы и переключение 
+//производит считывание дискретных входов системы и переключение
 //типа топлива (набор таблиц).
 void meas_take_discrete_inputs(struct ecudata_t *d);
 

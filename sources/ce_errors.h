@@ -50,11 +50,11 @@ struct ecudata_t;
  */
 void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter);
 
-/**Set specified error (number of bit) 
+/**Set specified error (number of bit)
  * (Установка указанной ошибки (номер бита)).
  * \param error code of error
  */
-void ce_set_error(uint8_t error);  
+void ce_set_error(uint8_t error);
 
 /**Reset specified error (number of bit)
  * (Cброс указанной ошибки (номер бита)).
@@ -64,7 +64,7 @@ void ce_clear_error(uint8_t error);
 
 /**Performs preservation of all stockpiled in temporary memory errors in the EEPROM.
  * Call only if EEPROM is ready!
- * (Производит сохранение всех накопленных во временной памяти ошибок в EEPROM. 
+ * (Производит сохранение всех накопленных во временной памяти ошибок в EEPROM.
  * Вызывать только если EEPROM готово!).
  * \param p_merged_errors merged errors's bits to save
  */

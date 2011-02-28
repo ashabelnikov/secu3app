@@ -31,9 +31,9 @@
 
 struct ecudata_t;
 
-/**Write data to EEPROM - the process is very slow. It will take place in parallel with 
- * the execution of the program. Storing data in the EEPROM will only happen if for a given 
- * time, there was not a single receive operation of parameters via UART, and saved settings 
+/**Write data to EEPROM - the process is very slow. It will take place in parallel with
+ * the execution of the program. Storing data in the EEPROM will only happen if for a given
+ * time, there was not a single receive operation of parameters via UART, and saved settings
  * are different from current.
  * «апись данных в EEPROM - процесс очень медленный. ќн будет проходить параллельно с выполнением программы.
  * —охранение данных в EEPROM произойдет только если за заданное врем€ не произошло ни одной операции приема параметров

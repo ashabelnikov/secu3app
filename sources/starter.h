@@ -32,7 +32,7 @@ struct ecudata_t;
 /** Initialization of used I/O ports (инициализация используемых портов) */
 void starter_init_ports(void);
 
-/** Control of starter (управление стартером) 
+/** Control of starter (управление стартером)
  * \param d pointer to ECU data structure
  */
 void starter_control(struct ecudata_t* d);

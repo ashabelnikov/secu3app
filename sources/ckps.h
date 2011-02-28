@@ -30,12 +30,12 @@
 #include <stdint.h>
 
 /**Scaling factor of crankshaft rotation angle, appears in the calculations and operations of the division
- * so it should be a multiple of degree of 2 (коэффициент масштабирования углов поворота коленвала, фигурирует 
- * в вычислениях и операциях деления поэтому он должен быть кратен степени 2). 
+ * so it should be a multiple of degree of 2 (коэффициент масштабирования углов поворота коленвала, фигурирует
+ * в вычислениях и операциях деления поэтому он должен быть кратен степени 2).
  */
-#define ANGLE_MULTIPLAYER            32                           
+#define ANGLE_MULTIPLAYER            32
 
-/**Initialization of CKP module (hardware & variables) 
+/**Initialization of CKP module (hardware & variables)
  * (инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится)
  */
 void ckps_init_state(void);
@@ -46,23 +46,23 @@ void ckps_init_state(void);
 void ckps_set_edge_type(uint8_t edge_type);
 
 /** Set count of teeth before TDC.
- * \param cogs_btdc Valid values: 18,19,20,21,22 (for 60-2 wheel), 10,11,12,13,14 (for 36-1 wheel) 
+ * \param cogs_btdc Valid values: 18,19,20,21,22 (for 60-2 wheel), 10,11,12,13,14 (for 36-1 wheel)
  *                 (Допустимые значения: 18,19,20,21,22 (для 60-2 шкива), 10,11,12,13,14 (для 36-1 шкива)).
- * \details If the crankshaft is in a position corresponding to top dead center (tdc) of the first cylinder's piston, 
- * then according to the standards the middle of 20th tooth of sync wheel must be in the opposite to the CKP's core 
+ * \details If the crankshaft is in a position corresponding to top dead center (tdc) of the first cylinder's piston,
+ * then according to the standards the middle of 20th tooth of sync wheel must be in the opposite to the CKP's core
  * (counting out against the direction of rotation from the place of the cutout).
- * (Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке(t.d.c.) поршня первого цилиндра, то 
- * по стандарту напротив середины сердечника ДПКВ должен находиться 20-й зуб диска синхронизации (считаем против 
+ * (Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке(t.d.c.) поршня первого цилиндра, то
+ * по стандарту напротив середины сердечника ДПКВ должен находиться 20-й зуб диска синхронизации (считаем против
  * направления вращения от места выреза)).
  */
 void ckps_set_cogs_btdc(uint8_t cogs_btdc);
 
 /** Set duration of ignition pulse drive (устанавливает длительность импульса зажигания в зубьях)
  * \param cogs duration of pulse, countable in the teeth of wheel
- * \details For standard igniters duration of driving pulses must be 1/3, when significant deviation to the smaller side 
+ * \details For standard igniters duration of driving pulses must be 1/3, when significant deviation to the smaller side
  * is present then igniters can became out of action. If you connect two outputs together to one igniter, you must put
  * a value of 10, if double channel mode then 40. The values given for the 60-2 wheel and 4 cylinder engine.
- * (Для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в меньшую сторону 
+ * (Для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в меньшую сторону
  * возможен выход коммутатора из строя.  Если соединять два выхода вместе для одного коммутатора, то необходимо ставить
  * значение 10, если двухканальный режим то 40. Значения указаны для шкива 60-2 и 4-х цилиндрового двигателя).
  */
@@ -109,8 +109,8 @@ void ckps_init_state_variables(void);
 /** \return Number of current tooth (возвращает номер текущего зуба) */
 uint8_t ckps_get_current_cog(void);
 
-/** \return returns 1 if number of current tooth has been changed 
- *          (возвращает 1, если номер текущего зуба изменился) 
+/** \return returns 1 if number of current tooth has been changed
+ *          (возвращает 1, если номер текущего зуба изменился)
  */
 uint8_t ckps_is_cog_changed(void);
 

@@ -27,31 +27,31 @@
 #ifndef _UFCODES_H_
 #define _UFCODES_H_
 
-#define   CHANGEMODE   'h'
-#define   BOOTLOADER   'i'
+#define   CHANGEMODE   'h'   //!< change mode (type of default packet)
+#define   BOOTLOADER   'i'   //!< start boot loader
 
-#define   TEMPER_PAR   'j'
-#define   CARBUR_PAR   'k'
-#define   IDLREG_PAR   'l'
-#define   ANGLES_PAR   'm'
-#define   FUNSET_PAR   'n'
-#define   STARTR_PAR   'o'
+#define   TEMPER_PAR   'j'   //!< temperature parameters (coolant sensor, engine cooling etc)
+#define   CARBUR_PAR   'k'   //!< carburetor's parameters
+#define   IDLREG_PAR   'l'   //!< idling regulator parameters
+#define   ANGLES_PAR   'm'   //!< advance angle (ign. timing) parameters
+#define   FUNSET_PAR   'n'   //!< parametersrelated to set of functions (lookup tables)
+#define   STARTR_PAR   'o'   //!< engine start parameters
 
-#define   FNNAME_DAT   'p'
-#define   SENSOR_DAT   'q'
+#define   FNNAME_DAT   'p'   //!< used for transfering of names of set of functions (lookup tables)
+#define   SENSOR_DAT   'q'   //!< used for transfering of sensors data
 
-#define   ADCCOR_PAR   'r'
-#define   ADCRAW_DAT   's'
+#define   ADCCOR_PAR   'r'   //!< parameters related to ADC corrections
+#define   ADCRAW_DAT   's'   //!< used for transfering 'raw' values directly from ADC
 
-#define   CKPS_PAR     't'
-#define   OP_COMP_NC   'u'
+#define   CKPS_PAR     't'   //!< CKP sensor parameters
+#define   OP_COMP_NC   'u'   //!< used to indicate that specified (suspended) operation completed
 
-#define   CE_ERR_CODES 'v'
+#define   CE_ERR_CODES 'v'   //!< used for transfering of CE codes
 
-#define   KNOCK_PAR    'w'
+#define   KNOCK_PAR    'w'   //!< parameters related to knock detection and knock chip
 
-#define   CE_SAVED_ERR 'x'
-#define   FWINFO_DAT   'y'
-#define   MISCEL_PAR   'z'
+#define   CE_SAVED_ERR 'x'   //!< used for transfering of CE codes stored in the EEPROM
+#define   FWINFO_DAT   'y'   //!< used for transfering information about firmware
+#define   MISCEL_PAR   'z'   //!< miscellaneous parameters
 
 #endif //_UFCODES_H_

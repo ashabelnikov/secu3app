@@ -65,12 +65,12 @@
  * of signal processor */
 typedef struct
 {
- uint8_t ksp_bpf;
- volatile uint8_t ksp_gain;
- volatile uint8_t ksp_inttime;
- volatile uint8_t ksp_interrupt_state;
- uint8_t ksp_error;
- volatile uint8_t ksp_last_word;
+ uint8_t ksp_bpf;                       //!< band pass frequency
+ volatile uint8_t ksp_gain;             //!< gain
+ volatile uint8_t ksp_inttime;          //!< integrator's time constant
+ volatile uint8_t ksp_interrupt_state;  //!< for state machine executed inside interrupt handler
+ uint8_t ksp_error;                     //!< stores errors flags
+ volatile uint8_t ksp_last_word;        //!< used to control of latching
 }kspstate_t;
 
 /**State variables */

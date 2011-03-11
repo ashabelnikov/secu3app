@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file vstimer.h
+ * Virtual system timers
+ * (Виртуальные системные таймеры).
+ */
+
 #ifndef _VSTIMER_H_
 #define _VSTIMER_H_
 
@@ -28,22 +33,24 @@
 
 //Типы объектов таймеров. 8-ми разрядный тамйер может отсчитывать периоды
 //до 2.56 сек. 16-ти разрядный таймер может отсчитывать периоды до 655 сек.
-typedef uint8_t   s_timer8_t;
-typedef uint16_t  s_timer16_t;
+typedef uint8_t   s_timer8_t;  //!< used by 8-bit timers
+typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
 
-//обновление состояния указанного таймера
+/**Update state of specified timer (обновление состояния указанного таймера) */
 #define s_timer_update(T)    { if ((T) > 0) (T)--; }
 
-//инициализация состояния указанного таймера. Один тик таймера равен 10 мс
+/**Initialization of state of specified timer. One tick = 10ms
+ *(инициализация состояния указанного таймера. Один тик таймера равен 10 мс). */
 #define s_timer_set(T, V)    { (T) = (V); }
 
-//Проверяет сработал ли указанный таймер
+/**Checks whenever specified timer is completed (Проверяет сработал ли указанный таймер) */
 #define s_timer_is_action(T) ((T)==0)
 
 //Ниже, варианты функций для 16-ти разрядных виртуальных таймеров.
 //Так как для этих таймеров используется не атомарный тип данных, то
 //необходимо запрещать прерывания.
 
+/**Set specified timer for specified period */
 #define s_timer16_set(T, V)  \
 {                            \
  __disable_interrupt();      \
@@ -51,12 +58,14 @@ typedef uint16_t  s_timer16_t;
  __enable_interrupt();       \
 }
 
+/**Check specified timer for action */
 #pragma inline  //а в обычном "С" такого нет ;-), спасибо разработчикам компилятора.
 __monitor uint8_t s_timer16_is_action(s_timer16_t i_timer)
 {
  return (i_timer==0);
 }
 
+/**Initialization of system timers */
 void s_timer_init(void);
 
 //////////////////////////////////////////////////////////////////

@@ -19,29 +19,41 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file vstimer.c
+ * Implementation of virtual system timers
+ * (Реализация виртуальных системных таймеров).
+ */
+
 #include <ioavr.h>
 #include <inavr.h>
 #include "vstimer.h"
 #include "secu3.h"
 
+/**Reload value for timer 2 */
 #define TIMER2_RELOAD_VALUE  6               //for 2 ms
+
+/**Addition value for compare rgister */
 #define COMPADD 5
+
+/**Reload count for system timer's divider, to obtain 10 ms from 2 ms */
 #define DIVIDER_RELOAD 4
 
 //TODO: Do refactoring of timers! Implement callback mechanism.
-volatile s_timer8_t  send_packet_interval_counter = 0;
-volatile s_timer8_t  force_measure_timeout_counter = 0;
-volatile s_timer8_t  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE;
-volatile s_timer8_t  engine_rotation_timeout_counter = 0;
-volatile s_timer8_t  epxx_delay_time_counter = 0;
-volatile s_timer8_t  idle_period_time_counter = 0;
-volatile s_timer16_t save_param_timeout_counter = 0;
 
-//for division, to achieve 10ms, because timer overflovs each 2 ms
+volatile s_timer8_t  send_packet_interval_counter = 0;    //!< used for sending of packets
+volatile s_timer8_t  force_measure_timeout_counter = 0;   //!< used by measuring process when engine is stopped
+volatile s_timer8_t  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE; //!< used for counting of time intervals for CE
+volatile s_timer8_t  engine_rotation_timeout_counter = 0; //!< used to determine that engine was stopped
+volatile s_timer8_t  epxx_delay_time_counter = 0;         //!< used by idle economizer's controlling algorithm
+volatile s_timer8_t  idle_period_time_counter = 0;        //!< used by idling regulator's controlling algorithm
+volatile s_timer16_t save_param_timeout_counter = 0;      //!< used for saving of parameters (automatic saving)
+
+/**for division, to achieve 10ms, because timer overflovs each 2 ms */
 uint8_t divider = DIVIDER_RELOAD;
 
-//Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
-//(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
+/**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
+ *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
+ */
 #pragma vector=TIMER2_OVF_vect
 __interrupt void timer2_ovf_isr(void)
 {

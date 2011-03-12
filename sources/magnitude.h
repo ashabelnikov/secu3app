@@ -19,22 +19,38 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file magnitude.h
+ * Helpful macros for working with constants when fixed point representation of fractional numbers is used
+ * (Вспомогательные макросы для работы с константными значениями при использовании целочисленного
+ * представления дробных чисел).
+ */
+
 #ifndef _MAGNITUDE_H_
 #define _MAGNITUDE_H_
 
-//необходим для округления при преобразовании из числа с плавающей точкой
-//в целое число
-//Used for rounding-up when transforming from floating point value into integer.
-//Note: it is intended for use with constants
+/**Used for rounding-up when transforming from floating point value into integer.
+ * Note: it is intended for use with constants
+ * (необходим для округления при преобразовании из числа с плавающей точкой
+ * в целое число).
+ */
 #define ROUND(x) ((int16_t)( (x) + 0.5 - ((x) < 0) ))
 
-//данные макросы необходимы для преобразования числел-констант с плавающей запятой
-//в целые числа. Значения физических величин хранятся в целых числах.
-//Given macros are necessary when transforming floating point constant-values into integers.
-//Values of phisical magnitudes stored in integers.
+/* Following macros are necessary when transforming floating point constant-values into integers.
+ * Values of phisical magnitudes stored in integers
+ * (данные макросы необходимы для преобразования числел-констант с плавающей запятой
+ * в целые числа. Значения физических величин хранятся в целых числах).
+ */
+
+/** Transforms floating point value of advance angle to fixed point value */
 #define ANGLE_MAGNITUDE(a) ROUND ((a) * ANGLE_MULTIPLAYER)
+
+/** Transforms floating point value of temperature to fixed point value */
 #define TEMPERATURE_MAGNITUDE(t) ROUND ((t) * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+
+/** Transforms floating point value of voltage to fixed point value */
 #define VOLTAGE_MAGNITUDE(t) ROUND ((t) * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+
+/** Transforms floating point value of pressure(MAP) to fixed point value */
 #define PRESSURE_MAGNITUDE(t) ROUND ((t) * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
 
 #endif //_MAGNITUDE_H_

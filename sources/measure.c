@@ -19,32 +19,43 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file measure.c
+ * Implementation pf processing (averaging, corrections etc) of data comes from ADC and sensors
+ * (Реализация обработки (усреднение, корректировки и т.д.) данных поступающих от АЦП и датчиков).
+ */
+
 #include <inavr.h>
 #include <ioavr.h>
 #include "measure.h"
 #include "adc.h"
 #include "secu3.h"
 
-//считывает состояние газового клапана
+/**Reads state of gas valve (считывает состояние газового клапана) */
 #define GET_GAS_VALVE_STATE(s) (PINC_Bit6)
 
-//считывает состояние дроссельной заслонки (только значение, без инверсии)
+/**Reads state of throttle gate (only the value, without inversion)
+ * считывает состояние дроссельной заслонки (только значение, без инверсии)
+ */
 #define GET_THROTTLE_GATE_STATE(s) (PINC_Bit5)
 
-//кол-во значений для усреднения частоты вращения к.в.
+/**Number of values for averaging of RPM for tachometer
+ * кол-во значений для усреднения частоты вращения к.в. для оборотов тахометра */
 #define FRQ_AVERAGING           16
+
+/**Number of values for avaraging of RPM for starter blocking
+ * кол-во значений для усреднения частоты вращения к.в. для блокировки страртера */
 #define FRQ4_AVERAGING          4
 
 //размер буферов усреднения по каждому аналоговому датчику
-#define MAP_AVERAGING           4
-#define BAT_AVERAGING           4
-#define TMP_AVERAGING           8
+#define MAP_AVERAGING           4                 //!< Number of values for averaging of pressure (MAP)
+#define BAT_AVERAGING           4                 //!< Number of values for averaging of board voltage
+#define TMP_AVERAGING           8                 //!< Number of values for averaging of coolant temperature
 
-uint16_t freq_circular_buffer[FRQ_AVERAGING];     //буфер усреднения частоты вращения коленвала
-uint16_t freq4_circular_buffer[FRQ4_AVERAGING];   //
-uint16_t map_circular_buffer[MAP_AVERAGING];      //буфер усреднения абсолютного давления
-uint16_t ubat_circular_buffer[BAT_AVERAGING];     //буфер усреднения напряжения бортовой сети
-uint16_t temp_circular_buffer[TMP_AVERAGING];     //буфер усреднения температуры охлаждающей жидкости
+uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
+uint16_t freq4_circular_buffer[FRQ4_AVERAGING];   //!< Ring buffer for RPM averaging for starter blocking (буфер усреднения частоты вращения коленвала для блокировки стартера)
+uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaring of MAP sensor (буфер усреднения абсолютного давления)
+uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaring of voltage (буфер усреднения напряжения бортовой сети)
+uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaring of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
 
 //обновление буферов усреднения (частота вращения, датчики...)
 void meas_update_values_buffers(struct ecudata_t* d)

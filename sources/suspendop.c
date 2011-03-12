@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file suspendop.c
+ * Implementation of execution of suspended operations
+ * (Реализация выполнения отложенных операций).
+ */
+
 #include <ioavr.h>
 #include <string.h>
 #include "suspendop.h"
@@ -29,8 +34,10 @@
 #include "ce_errors.h"
 #include "secu3.h"
 
+/**Maximum allowed number of suspended operations */
 #define SUSPENDED_OPERATIONS_SIZE 16
 
+/**Contains queue of suspended operations. Each operation can appear one time */
 uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 
 /*#pragma inline*/

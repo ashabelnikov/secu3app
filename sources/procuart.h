@@ -19,12 +19,20 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file procuart.h
+ * Functionality for processing of pending data which is sent/received via serial interface (UART)
+ * (Обработка поступающих данных для приема/передачи через последовательный интерфейс (UART)).
+ */
+
 #ifndef _PROCUART_H_
 #define _PROCUART_H_
 
 struct ecudata_t;
 
-//обрабатывает передаваемые/принимаемые фреймы UART-a. Called from main loop
+/** Process sent/received frames from UART. Should be called from main loop!
+ *(обрабатывает передаваемые/принимаемые фреймы UART-a. Должна вызыватся из главного цикла программы)
+ * \param d pointer to ECU data structure
+ */
 void process_uart_interface(struct ecudata_t* d);
 
 #endif //_PROCUART_H_

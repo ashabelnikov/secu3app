@@ -19,17 +19,36 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file measure.h
+ * Process (averaging, corrections etc) data comes from ADC and sensors
+ * (Обработка (усреднение, корректировки и т.д.) данных поступающих от АЦП и данчиков).
+ */
+
 #ifndef _MEASURE_H_
 #define _MEASURE_H_
 
 struct ecudata_t;
 
+/**Update ring buffers with new data given from sensors and ADC
+ * \param d pointer to ECU data structure
+ */
 void meas_update_values_buffers(struct ecudata_t* d);
+
+/**Perform avaraging using data from ring buffers
+ * \param d pointer to ECU data structure
+ */
 void meas_average_measured_values(struct ecudata_t* d);
+
+/**Initialization of ring buffers. Performs initial measurements. Used before start of engine
+ * \param d pointer to ECU data structure
+ */
 void meas_initial_measure(struct ecudata_t* d);
 
-//производит считывание дискретных входов системы и переключение
-//типа топлива (набор таблиц).
+/**Performs reading of discrete inputs and switching of fuel type
+ * производит считывание дискретных входов системы и переключение
+ * типа топлива (набор таблиц).
+ * \param d pointer to ECU data structure
+ */
 void meas_take_discrete_inputs(struct ecudata_t *d);
 
 #endif //_MEASURE_H_

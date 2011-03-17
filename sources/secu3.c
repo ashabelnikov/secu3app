@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file secu3.c
+ * Implementation of main module of the firmware.
+ * (–еализаци€ главного модул€ прошивки).
+ */
+
 #include <inavr.h>
 #include <ioavr.h>
 
@@ -48,10 +53,12 @@
 #include "ventilator.h"
 #include "vstimer.h"
 
+/**ECU data structure. Contains all related data and state information */
 struct ecudata_t edat;
 
-//управление отдельными узлами двигател€ и обновление данных о состо€нии
-//концевика карбюратора, газового клапана, клапана Ёѕ’’
+/**Control of certain units of engine (управление отдельными узлами двигател€). 
+ * \param d pointer to ECU data structure
+ */
 void control_engine_units(struct ecudata_t *d)
 {
  //реализаци€ функции Ёѕ’’.
@@ -67,6 +74,9 @@ void control_engine_units(struct ecudata_t *d)
  fuelecon_control(d);
 }
 
+/**Initialization of variables and data structures 
+ * \param d pointer to ECU data structure
+ */
 void init_ecu_data(struct ecudata_t* d)
 {
  edat.op_comp_code = 0;
@@ -80,6 +90,7 @@ void init_ecu_data(struct ecudata_t* d)
  edat.ce_state = 0;
 }
 
+/**Main function of firmware - entry point */
 __C_task void main(void)
 {
  uint8_t turnout_low_priority_errors_counter = 255;

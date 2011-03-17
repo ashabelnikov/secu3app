@@ -19,61 +19,72 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file secu3.h
+ * Main module of the firmware.
+ * This file contains main data structures used in the firmware.
+ * (Главный модуль прошивки. Этот файл содержит основные структуры данных используемые в прошивке).
+ */
+
 #ifndef _SECU3_H_
 #define _SECU3_H_
 
 #include "tables.h"
 
-#define SAVE_PARAM_TIMEOUT_VALUE      3000
-#define FORCE_MEASURE_TIMEOUT_VALUE   50
-#define CE_CONTROL_STATE_TIME_VALUE   50
-#define ENGINE_ROTATION_TIMEOUT_VALUE 15
-#define IDLE_PERIOD_TIME_VALUE        50
+#define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
+#define FORCE_MEASURE_TIMEOUT_VALUE   50    //!< timeout value used to perform measurements when engine is stopped
+#define CE_CONTROL_STATE_TIME_VALUE   50    //!< used for CE (flashing)
+#define ENGINE_ROTATION_TIMEOUT_VALUE 15    //!< timeout value used to determine that engine is stopped
+#define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
 
-//описывает все входы системы - их производные и интегральные величины
+/**Describes all system's inputs - theirs derivative and integral magnitudes
+ * описывает все входы системы - их производные и интегральные величины
+ */
 typedef struct sensors_t
 {
- uint16_t map;                           //давление во впускном коллекторе (усредненное)
- uint16_t voltage;                       //напряжение бортовой сети (усредненное)
- int16_t  temperat;                      //температура охлаждающей жидкости (усредненная)
- uint16_t frequen;                       //частота вращения коленвала (усредненная)
- uint16_t inst_frq;                      //мгновенная частота вращения
- uint8_t  carb;                          //состояние концевика карбюратора
- uint8_t  gas;                           //состояние газового клапана
- uint16_t frequen4;                      //частота усредненная всего по 4-м выборкам
- uint16_t knock_k;                       //уровень сигнала детонации
+ uint16_t map;                           //!< Input Manifold Pressure (давление во впускном коллекторе (усредненное))
+ uint16_t voltage;                       //!< Board voltage (напряжение бортовой сети (усредненное))
+ int16_t  temperat;                      //!< Coolant temperature (температура охлаждающей жидкости (усредненная))
+ uint16_t frequen;                       //!< Averaged RPM (частота вращения коленвала (усредненная))
+ uint16_t inst_frq;                      //!< Instant RPM - not averaged  (мгновенная частота вращения)
+ uint8_t  carb;                          //!< State of carburetor's limit switch (состояние концевика карбюратора)
+ uint8_t  gas;                           //!< State of gas valve (состояние газового клапана)
+ uint16_t frequen4;                      //!< RPM averaged by using only 4 samples (частота усредненная всего по 4-м выборкам)
+ uint16_t knock_k;                       //!< Knock signal level (уровень сигнала детонации)
 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
- int16_t  map_raw;
- int16_t  voltage_raw;
- int16_t  temperat_raw;
+ int16_t  map_raw;                       //!< raw ADC value from MAP sensor
+ int16_t  voltage_raw;                   //!< raw ADC value from voltage
+ int16_t  temperat_raw;                  //!< raw ADC value from coolant temperature sensor
 
 }sensors_t;
 
-//описывает данные системы, обеспечивает единый интерфейс данных
+/**Describes system's data (main ECU data structure)
+ * описывает данные системы, обеспечивает единый интерфейс данных
+ */
 typedef struct ecudata_t
 {
- struct params_t  param;                //--параметры
- struct sensors_t sens;                 //--сенсоры
+ struct params_t  param;                 //!< --parameters (параметры)
+ struct sensors_t sens;                  //!< --sensors (сенсоры)
 
- uint8_t  ie_valve;                     //состояние клапана ЭПХХ
- uint8_t  fe_valve;                     //состояние клапана ЭМР
- uint8_t  ce_state;                     //состояние лампы "CE"
- uint8_t  airflow;                      //расход воздуха
- int16_t  curr_angle;                   //текущий угол опережения
- int16_t  knock_retard;                 //поправка УОЗ от регулятора по детонации
+ uint8_t  ie_valve;                      //!< State of Idle Economizer valve (состояние клапана ЭПХХ)
+ uint8_t  fe_valve;                      //!< State of Fuel Economizer valve (состояние клапана ЭМР)
+ uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
+ uint8_t  airflow;                       //!< Air flow (расход воздуха)
+ int16_t  curr_angle;                    //!< Current advance angle (текущий угол опережения)
+ int16_t  knock_retard;                  //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
 
- __flash f_data_t*  fn_dat;             //указатель на набор характеристик
+ __flash f_data_t*  fn_dat;              //!< Pointer to set of characteristics (указатель на набор характеристик)
 
- uint8_t  op_comp_code;                 //содержит код который посылается через UART (пакет OP_COMP_NC)
- uint8_t  op_actn_code;                 //содержит код который принимается через UART (пакет OP_COMP_NC)
- uint16_t ecuerrors_for_transfer;       //буферизирует коды ошибок передаваемые через UART в реальном времени.
- uint16_t ecuerrors_saved_transfer;     //буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART.
- uint8_t  use_knock_channel_prev;       //предыдущее состояние признака использования канала детонации
+ uint8_t  op_comp_code;                  //!< Contains code of operation for packet being sent - OP_COMP_NC (содержит код который посылается через UART (пакет OP_COMP_NC))
+ uint8_t  op_actn_code;                  //!< Contains code of operation for packet being received - OP_COMP_NC (содержит код который принимается через UART (пакет OP_COMP_NC))
+ uint16_t ecuerrors_for_transfer;        //!< Buffering of error codes being sent via UART in real time (буферизирует коды ошибок передаваемые через UART в реальном времени)
+ uint16_t ecuerrors_saved_transfer;      //!< Buffering of error codes for read/write from/to EEPROM which is being sent/received (буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART)
+ uint8_t  use_knock_channel_prev;        //!< Previous state of knock channel's usage flag (предыдущее состояние признака использования канала детонации)
 
- uint8_t* eeprom_parameters_cache;
+ //TODO: To reduce memory usage it is possible to use crc or some simple hash algorithms to control state of memory(changes). So this variable becomes unneeded.
+ uint8_t* eeprom_parameters_cache;       //!< Pointer to an array of EEPROM parameters cache (reduces redundant write operations)
 
- uint8_t engine_mode;                  //текущий режим двигателя (пуск, ХХ, нагрузка)
+ uint8_t engine_mode;                    //!< Current engine mode(start, idle, work) (текущий режим двигателя (пуск, ХХ, нагрузка))
 }ecudata_t;
 
 

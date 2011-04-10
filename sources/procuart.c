@@ -87,7 +87,9 @@ void process_uart_interface(struct ecudata_t* d)
    ckps_set_cyl_number(d->param.ckps_engine_cyl);  //<--обязательно в первую очередь!
    ckps_set_edge_type(d->param.ckps_edge_type);
    ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
+#ifndef COIL_REGULATION
    ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
+#endif
   }
 
   //аналогично для контороля детонации, обязательно после CKPS_PAR!

@@ -146,7 +146,9 @@ __C_task void main(void)
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
  ckps_set_edge_type(edat.param.ckps_edge_type);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
+#ifndef COIL_REGULATION
  ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
+#endif
  ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);
  ckps_use_knock_channel(edat.param.knock_use_knock_channel);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--now valid initialization
@@ -226,6 +228,10 @@ __C_task void main(void)
   edat.curr_angle+=edat.param.angle_corr;
   //ограничиваем получившийся УОЗ установленными пределами
   restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
+#ifdef COIL_REGULATION
+  //calculate and update coil regulation time
+  ckps_set_acc_time(accumulation_time(&edat));
+#endif
   //------------------------------------------------------------------------
 
   //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.

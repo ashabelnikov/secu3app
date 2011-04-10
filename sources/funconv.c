@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file funconv.c
+ * Implementation of core mathematics and regulation logic.
+ * (–еализаци€ основной части математического аппарата и логики регулировани€).
+ */
+
 #include <ioavr.h>
 #include <stdlib.h>
 #include "funconv.h"
@@ -287,3 +292,21 @@ uint8_t knock_attenuator_function(struct ecudata_t* d)
  return simple_interpolation(rpm, fwdata.attenuator_table[i],
         fwdata.attenuator_table[i1], (i * 60) + 200, 60) >> 4;
 }
+
+#ifdef COIL_REGULATION
+uint16_t accumulation_time(struct ecudata_t* d)
+{
+ int16_t i, i1, voltage = d->sens.voltage;
+
+ if (voltage < VOLTAGE_MAGNITUDE(5.4)) 
+  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - минимальное значение напр€жени€ в таблице предусмотренной дл€ 12¬ бортовой сети
+
+ i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - шаг по напр€жению
+
+ if (i >= COIL_ON_TIME_LOOKUP_TABLE_SIZE-1) i = i1 = COIL_ON_TIME_LOOKUP_TABLE_SIZE-1;
+  else i1 = i + 1;
+
+ return simple_interpolation(voltage, fwdata.coil_on_time[i], fwdata.coil_on_time[i1], 
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4)) >> 4;
+}
+#endif

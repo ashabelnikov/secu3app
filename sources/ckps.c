@@ -431,7 +431,7 @@ __interrupt void timer1_compa_isr(void)
 #ifdef COIL_REGULATION
  if (!flags.ckps_period_min)
  {
-  ckps.channel_mode_b = (ckps.channel_mode < IGN_CHANNELS_MAX-1) ? ckps.channel_mode + 1 : 0 ;
+  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
   delay = ckps.period_curr * (WHEEL_COGS_NUM / ckps.chan_number);
   if (ckps.cr_acc_time > delay)
   {
@@ -476,7 +476,7 @@ void turn_off_ignition_channel(uint8_t i_channel)
  //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
  //the igniter go to the regime of energy accumulation
  //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
- //коммутатор перейти в режим накопления энэргии
+ //коммутатор перейти в режим накопления энергии
  switch(i_channel)
  {
 #ifndef INVERSE_IGN_OUTPUTS

@@ -40,6 +40,7 @@
 #define ECUERROR_MAP_SENSOR_FAIL        5  //!< MAP sensor does not work
 #define ECUERROR_TEMP_SENSOR_FAIL       6  //!< Coolant temperature sensor does not work
 #define ECUERROR_VOLT_SENSOR_FAIL       7  //!< Voltage is wrong or sensing is disconnected
+#define ECUERROR_COIL_REGULATION        8  //!< Problems with coil regulation (overcharge etc)
 
 struct ecudata_t;
 

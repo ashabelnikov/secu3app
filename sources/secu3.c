@@ -168,6 +168,10 @@ __C_task void main(void)
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
   { //двигатель остановился (его обороты ниже критических)
+#ifdef COIL_REGULATION
+   ckps_init_ports();           //чтобы IGBT не зависли в открытом состоянии
+   //TODO: Сделать мягкую отсечку для избавления от нежелательной искры. Как?
+#endif
    ckps_init_state_variables();
    edat.engine_mode = EM_START; //режим пуска
 

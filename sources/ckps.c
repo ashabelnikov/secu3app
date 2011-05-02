@@ -400,6 +400,26 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  case 3: PORTC &= ~(1<<PORTC1);\
   break;}
 
+/** Turn OFF specified ignition channel
+ * \param i_channel number of ignition channel to turn off
+ */
+#pragma inline
+void turn_off_ignition_channel(uint8_t i_channel)
+{
+ //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
+ //the igniter go to the regime of energy accumulation
+ //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
+ //коммутатор перейти в режим накопления энергии
+ switch(i_channel)
+ {
+#ifndef INVERSE_IGN_OUTPUTS
+  TURNOFF_IGN_CHANNELS();
+#else
+  TURNON_IGN_CHANNELS();
+#endif
+ }
+}
+
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
  */
@@ -407,11 +427,11 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
 __interrupt void timer1_compa_isr(void)
 {
 #ifdef COIL_REGULATION
-  uint16_t timer_value = TCNT1;
-  uint16_t delay;
+ uint16_t timer_value = TCNT1;
+ uint16_t delay;
 #endif
 
-  TIMSK&= ~(1<<OCIE1A); //disable interrupt (запрещаем прерывание)
+ TIMSK&= ~(1<<OCIE1A); //disable interrupt (запрещаем прерывание)
 
  //line of port in the low level, now set it into a high level - makes the igniter to stop 
  //the accumulation of energy and close the transistor (spark)
@@ -454,38 +474,11 @@ __interrupt void timer1_compa_isr(void)
 #pragma vector=TIMER1_COMPB_vect
 __interrupt void timer1_compb_isr(void)
 {
-  TIMSK&= ~(1<<OCIE1B); //запрещаем прерывание
-
- switch(ckps.channel_mode_b)
- {
-#ifndef INVERSE_IGN_OUTPUTS
-  TURNOFF_IGN_CHANNELS();
-#else
-  TURNON_IGN_CHANNELS();
-#endif
- }
+ TIMSK&= ~(1<<OCIE1B); //запрещаем прерывание
+ //start accumulation
+ turn_off_ignition_channel(ckps.channel_mode_b);
 }
 #endif
-
-/** Turn off specified ignition channel
- * \param i_channel number of ignition channel to turn off
- */
-#pragma inline
-void turn_off_ignition_channel(uint8_t i_channel)
-{
- //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
- //the igniter go to the regime of energy accumulation
- //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
- //коммутатор перейти в режим накопления энергии
- switch(i_channel)
- {
-#ifndef INVERSE_IGN_OUTPUTS
-  TURNOFF_IGN_CHANNELS();
-#else
-  TURNON_IGN_CHANNELS();
-#endif
- }
-}
 
 /**Initialization of timer 0 using specified value and start, clock = 250kHz
  * It is assumed that this function called when all interrupts are disabled

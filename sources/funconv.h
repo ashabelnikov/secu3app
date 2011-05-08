@@ -107,10 +107,10 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer);
  */
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m);
 
-/**
- * \param io_value
- * \param i_bottom_limit
- * \param i_top_limit
+/** Restricts specified value to specified limits
+ * \param io_value pointer to value to be restricted. This parameter will also receive result.
+ * \param i_bottom_limit bottom limit
+ * \param i_top_limit upper limit
  */
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
 

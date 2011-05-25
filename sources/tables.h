@@ -218,9 +218,13 @@ typedef struct params_t
  * Size of application's section without taking into account its CRC */
 #define CODE_SIZE (SECU3BOOTSTART-CODE_CRC_SIZE)
 
-/**Количество наборов характеристик хранимых в памяти программ
- * Number of sets(families) of characteristics stored in the firmware */
+/**Количество наборов таблиц хранимых в памяти программ
+ * Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER  8
+
+/**Количество наборов таблиц которые можно редактировать в реальном времени
+ * Number of sets of tables allowed to be tuned in the read time */
+#define TUNABLE_TABLES_NUMBER 1
 
 /**Адрес контрольной суммы в прошивке
  * Address of CRC of whole firmware */
@@ -259,5 +263,9 @@ extern params_t __flash def_param;
 /**Check sum of whole firmware (except this check sum and boot loader) */
 #pragma object_attribute=__root
 extern uint16_t __flash code_crc;
+
+/**Имена наборов таблиц которые можно редактировать в реальном времени
+ * Names of tables sets which can be edited in real time */
+extern uint8_t __flash tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE];
 
 #endif //_TABLES_H_

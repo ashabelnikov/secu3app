@@ -236,11 +236,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
 
   case FNNAME_DAT:
-   build_i8h(TABLES_NUMBER);
+   build_i8h(TABLES_NUMBER + TUNABLE_TABLES_NUMBER);
    build_i8h(index);
-   build_fb(tables[index].name,F_NAME_SIZE);
+   build_fb((index < TABLES_NUMBER) ? tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
    index++;
-   if (index>=TABLES_NUMBER) index=0;
+   if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index=0;
     break;
 
   case SENSOR_DAT:

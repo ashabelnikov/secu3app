@@ -135,12 +135,12 @@
         </option>
         <option>
           <name>GGEepromUtilSize</name>
-          <state>512</state>
+          <state>1024</state>
         </option>
         <option>
           <name>New Variant Processor</name>
           <version>12</version>
-          <state>29</state>
+          <state>38</state>
         </option>
       </data>
     </settings>
@@ -898,12 +898,12 @@
         </option>
         <option>
           <name>GGEepromUtilSize</name>
-          <state>512</state>
+          <state>1024</state>
         </option>
         <option>
           <name>New Variant Processor</name>
           <version>12</version>
-          <state>29</state>
+          <state>38</state>
         </option>
       </data>
     </settings>
@@ -1398,7 +1398,7 @@
         </option>
         <option>
           <name>XclFile</name>
-          <state>$TOOLKIT_DIR$\config\lnkm16s.xcl</state>
+          <state>$TOOLKIT_DIR$\config\lnkm32s.xcl</state>
         </option>
         <option>
           <name>XclFileSlave</name>

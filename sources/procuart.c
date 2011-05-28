@@ -25,9 +25,11 @@
  */
 
 #include <inavr.h>
+#include <pgmspace.h>
 #include <stdint.h>
 #include "ce_errors.h"
 #include "ckps.h"
+#include "eeprom.h"
 #include "knock.h"
 #include "procuart.h"
 #include "secu3.h"
@@ -35,6 +37,33 @@
 #include "uart.h"
 #include "ufcodes.h"
 #include "vstimer.h"
+
+
+#ifdef REALTIME_TABLES
+void load_selected_tables_into_ram(struct ecudata_t* d)
+{
+ if (d->fn_gas_prev != d->param.fn_gas)
+ {
+  //load gas tables
+  if (d->param.fn_gas < TABLES_NUMBER)
+   memcpy_P(&d->tables_gas, &tables[d->param.fn_gas], sizeof(f_data_t));
+  else
+   eeprom_read(&d->tables_gas, EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gas-TABLES_NUMBER)), sizeof(f_data_t));
+  d->fn_gas_prev = d->param.fn_gas;
+ }
+
+ if (d->fn_gasoline_prev != d->param.fn_gasoline)
+ {
+  //load gasoline tables
+  if (d->param.fn_gasoline < TABLES_NUMBER)
+   memcpy_P(&d->tables_gasoline, &tables[d->param.fn_gasoline], sizeof(f_data_t));
+  else
+   eeprom_read(&d->tables_gasoline, EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gasoline-TABLES_NUMBER)), sizeof(f_data_t));  
+  d->fn_gasoline_prev = d->param.fn_gasoline;
+ }
+}
+#endif
+
 
 void process_uart_interface(struct ecudata_t* d)
 {
@@ -49,15 +78,21 @@ void process_uart_interface(struct ecudata_t* d)
    case CARBUR_PAR:
    case IDLREG_PAR:
    case ANGLES_PAR:
-   case FUNSET_PAR:
    case STARTR_PAR:
    case ADCCOR_PAR:
-   case CKPS_PAR:
-   case KNOCK_PAR:
    case MISCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
+
+   case FUNSET_PAR:
+#ifdef REALTIME_TABLES
+    load_selected_tables_into_ram(d);
+#endif
+    //если были изменены параметры то сбрасываем счетчик времени
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
+
    case OP_COMP_NC:
     if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE) //прин€ли команду сохранени€ параметров
     {
@@ -79,38 +114,40 @@ void process_uart_interface(struct ecudata_t* d)
    case CE_SAVED_ERR:
     sop_set_operation(SOP_SAVE_CE_ERRORS);
     break;
-  }
 
-  //если были изменены параметры ƒѕ ¬, то немедленно примен€ем их на работающем двигателе
-  if (descriptor == CKPS_PAR)
-  {
-   ckps_set_cyl_number(d->param.ckps_engine_cyl);  //<--об€зательно в первую очередь!
-   ckps_set_edge_type(d->param.ckps_edge_type);
-   ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
+   case CKPS_PAR:
+    //если были изменены параметры ƒѕ ¬, то немедленно примен€ем их на работающем двигателе и сбрасываем счетчик времени
+    ckps_set_cyl_number(d->param.ckps_engine_cyl);  //<--об€зательно в первую очередь!
+    ckps_set_edge_type(d->param.ckps_edge_type);
+    ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
 #ifndef COIL_REGULATION
-   ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
+    ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
 #endif
-  }
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
 
-  //аналогично дл€ конторол€ детонации, об€зательно после CKPS_PAR!
-  if (descriptor == KNOCK_PAR)
-  {
-   //инициализируем процессор детонации в случае если он не использовалс€, а теперь поступила команда его использовать.
-   if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
-    if (!knock_module_initialize())
-    {//чип сигнального процессора детонации неисправен - зажигаем —≈
-     ce_set_error(ECUERROR_KSP_CHIP_FAILED);
-    }
+   case KNOCK_PAR:
+    //аналогично дл€ конторол€ детонации, об€зательно после CKPS_PAR!
+    //инициализируем процессор детонации в случае если он не использовалс€, а теперь поступила команда его использовать.
+    if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
+     if (!knock_module_initialize())
+     {//чип сигнального процессора детонации неисправен - зажигаем —≈
+      ce_set_error(ECUERROR_KSP_CHIP_FAILED);
+     }
 
-   knock_set_band_pass(d->param.knock_bpf_frequency);
-   //gain устанавливаетс€ в каждом рабочем цикле
-   knock_set_int_time_constant(d->param.knock_int_time_const);
-   ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);
-   ckps_use_knock_channel(d->param.knock_use_knock_channel);
+    knock_set_band_pass(d->param.knock_bpf_frequency);
+    //gain устанавливаетс€ в каждом рабочем цикле
+    knock_set_int_time_constant(d->param.knock_int_time_const);
+    ckps_set_knock_window(d->param.knock_k_wnd_begin_angle, d->param.knock_k_wnd_end_angle);
+    ckps_use_knock_channel(d->param.knock_use_knock_channel);
 
-   //запоминаем состо€ние флага дл€ того чтобы потом можно было определить нужно инициализировать
-   //процессор детонации или нет.
-   d->use_knock_channel_prev = d->param.knock_use_knock_channel;
+    //запоминаем состо€ние флага дл€ того чтобы потом можно было определить нужно инициализировать
+    //процессор детонации или нет.
+    d->use_knock_channel_prev = d->param.knock_use_knock_channel;
+
+    //если были изменены параметры то сбрасываем счетчик времени
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
   }
 
   //мы обработали прин€тые данные - приемник ничем теперь не озабочен

@@ -125,7 +125,7 @@ typedef struct params_t
   uint8_t  tmp_use;                      //!< признак комплектации ДТОЖ-ом (flag of using coolant sensor)
   uint8_t  carb_invers;                  //!< инверсия концевика на карбюраторе (flag of inversion of carburetor's limit switch)
   uint8_t  idl_regul;                    //!< поддерживать заданные обороты ХХ регулированием УОЗ (keep selected idling RPM by alternating advance angle)
-  uint8_t  fn_benzin;                    //!< номер набора характеристик используемый для бензина (index of set of characteristics used for gasoline)
+  uint8_t  fn_gasoline;                  //!< номер набора характеристик используемый для бензина (index of set of characteristics used for gasoline)
   uint8_t  fn_gas;                       //!< номер набора характеристик используемый для газа (index of set of characteristics used for gas)
   uint16_t map_lower_pressure;           //!< нижнее значене ДАД по оси таблицы (кПа) (lower value of MAP at the axis of table(work map) (kPa))
   uint16_t ie_lot;                       //!< нижний порог ЭПХХ (мин-1) (lower threshold for idle economizer valve(min-1) for gasiline)
@@ -223,8 +223,13 @@ typedef struct params_t
 #define TABLES_NUMBER  8
 
 /**Количество наборов таблиц которые можно редактировать в реальном времени
+ * Эти таблицы сохраняются в EEPROM.
  * Number of sets of tables allowed to be tuned in the read time */
-#define TUNABLE_TABLES_NUMBER 1
+#ifdef REALTIME_TABLES
+ #define TUNABLE_TABLES_NUMBER 2
+#else
+ #define TUNABLE_TABLES_NUMBER 0
+#endif
 
 /**Адрес контрольной суммы в прошивке
  * Address of CRC of whole firmware */
@@ -264,8 +269,10 @@ extern params_t __flash def_param;
 #pragma object_attribute=__root
 extern uint16_t __flash code_crc;
 
+#ifdef REALTIME_TABLES
 /**Имена наборов таблиц которые можно редактировать в реальном времени
  * Names of tables sets which can be edited in real time */
 extern uint8_t __flash tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE];
+#endif
 
 #endif //_TABLES_H_

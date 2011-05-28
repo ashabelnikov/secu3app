@@ -26,8 +26,8 @@
 
 #include <inavr.h>
 #include <ioavr.h>
-#include "measure.h"
 #include "adc.h"
+#include "measure.h"
 #include "secu3.h"
 
 /**Reads state of gas valve (считывает состояние газового клапана) */
@@ -146,9 +146,16 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
  d->sens.gas = GET_GAS_VALVE_STATE();
 
  //переключаем тип топлива в зависимости от состояния газового клапана
+#ifndef REALTIME_TABLES
  if (d->sens.gas)
-  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gas];    //на газе
+  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gas];     //на газе
  else
-  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_benzin];//на бензине
+  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gasoline];//на бензине
+#else //use tables from RAM
+ if (d->sens.gas)
+  d->fn_dat = &d->tables_gas;      //using gas(на газе)
+ else
+  d->fn_dat = &d->tables_gasoline; //using petrol(на бензине)
+#endif
 }
 

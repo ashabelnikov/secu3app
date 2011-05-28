@@ -261,6 +261,10 @@ params_t __flash def_param@DEFPARAM_START =
 #pragma object_attribute=__root
 uint16_t __flash code_crc@CODE_CRC_ADDR = 0x0000;
 
+#ifdef REALTIME_TABLES
 /**Имена наборов таблиц которые можно редактировать в реальном времени
  * Names of tables sets which can be edited in real time */
-uint8_t __flash tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE] = {'t','u','n','n','i','n','g','_','1',' ',' ',' ',' ',' ',' ',' '};
+uint8_t __flash tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE] = {
+'t','u','n','i','n','g','_','1',' ',' ',' ',' ',' ',' ',' ',' ',
+'t','u','n','i','n','g','_','2',' ',' ',' ',' ',' ',' ',' ',' '};
+#endif

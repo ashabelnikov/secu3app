@@ -222,7 +222,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
 
   case FUNSET_PAR:
-   build_i8h(d->param.fn_benzin);
+   build_i8h(d->param.fn_gasoline);
    build_i8h(d->param.fn_gas);
    build_i16h(d->param.map_lower_pressure);
    build_i16h(d->param.map_upper_pressure);
@@ -238,7 +238,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case FNNAME_DAT:
    build_i8h(TABLES_NUMBER + TUNABLE_TABLES_NUMBER);
    build_i8h(index);
+#ifdef REALTIME_TABLES   
    build_fb((index < TABLES_NUMBER) ? tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
+#else
+   build_fb(tables[index].name, F_NAME_SIZE);
+#endif
    index++;
    if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index=0;
     break;
@@ -396,11 +400,11 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 
   case FUNSET_PAR:
    temp = recept_i8h();
-   if (temp < TABLES_NUMBER)
-    d->param.fn_benzin = temp;
+   if (temp < TABLES_NUMBER + TUNABLE_TABLES_NUMBER)
+    d->param.fn_gasoline = temp;
 
    temp = recept_i8h();
-   if (temp < TABLES_NUMBER)
+   if (temp < TABLES_NUMBER + TUNABLE_TABLES_NUMBER)
     d->param.fn_gas = temp;
 
    d->param.map_lower_pressure = recept_i16h();

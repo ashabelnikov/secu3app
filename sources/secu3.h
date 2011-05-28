@@ -73,7 +73,16 @@ typedef struct ecudata_t
  int16_t  curr_angle;                    //!< Current advance angle (текущий угол опережения)
  int16_t  knock_retard;                  //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
 
+
+#ifndef REALTIME_TABLES 
  __flash f_data_t*  fn_dat;              //!< Pointer to set of characteristics (указатель на набор характеристик)
+#else
+ f_data_t tables_gasoline;               //!< set of tables in RAM for petrol
+ f_data_t tables_gas;                    //!< set of tables in RAM for gas
+ f_data_t* fn_dat;                       //!< pointer to current set of tables in RAM
+ uint8_t  fn_gas_prev;                   //!< previous index of tables set used for gas
+ uint8_t  fn_gasoline_prev;              //!< previous index of tables set used for petrol
+#endif
 
  uint8_t  op_comp_code;                  //!< Contains code of operation for packet being sent - OP_COMP_NC (содержит код который посылается через UART (пакет OP_COMP_NC))
  uint8_t  op_actn_code;                  //!< Contains code of operation for packet being received - OP_COMP_NC (содержит код который принимается через UART (пакет OP_COMP_NC))

@@ -53,5 +53,6 @@
 #define   CE_SAVED_ERR 'x'   //!< used for transfering of CE codes stored in the EEPROM
 #define   FWINFO_DAT   'y'   //!< used for transfering information about firmware
 #define   MISCEL_PAR   'z'   //!< miscellaneous parameters
+#define   EDITAB_PAR   '{'   //!< used for transferring of data for realtime tables editing
 
 #endif //_UFCODES_H_

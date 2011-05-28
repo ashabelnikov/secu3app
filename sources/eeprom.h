@@ -36,6 +36,8 @@
 /**Address of errors's array (Check Engine) in EEPROM (адрес массива ошибок (Check Engine) в EEPROM) */
 #define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
 
+/**Address of tables which can be edited in real time */
+#define EEPROM_REALTIME_TABLES (EEPROM_ECUERRORS_START+sizeof(uint16_t))
 
 //Interface of module (интерфейс модуля)
 

@@ -88,6 +88,10 @@ void init_ecu_data(struct ecudata_t* d)
  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
  edat.engine_mode = EM_START;
  edat.ce_state = 0;
+#ifdef REALTIME_TABLES
+ edat.fn_gasoline_prev = 255;
+ edat.fn_gas_prev = 255;
+#endif 
 }
 
 /**Main function of firmware - entry point */
@@ -117,6 +121,11 @@ __C_task void main(void)
 
  //читаем параметры
  load_eeprom_params(&edat);
+
+#ifdef REALTIME_TABLES
+ //load currently selected tables into RAM
+ load_selected_tables_into_ram(&edat);
+#endif
 
  //предварительная инициализация параметров сигнального процессора детонации
  knock_set_band_pass(edat.param.knock_bpf_frequency);

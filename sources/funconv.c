@@ -35,7 +35,9 @@
 
 
 //данные массивы констант задают сетку по оси оборотов, для рабочей карты и карты ХХ.
+/**Array which contains RPM axis's grid bounds */
 __flash int16_t f_slots_ranges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500};
+/**Array which contains RPM axis's grid sizes */
 __flash int16_t f_slots_length[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140};
 
 // Функция билинейной интерполяции (поверхность)
@@ -172,12 +174,14 @@ int16_t coolant_function(struct ecudata_t* d)
 }
 
 //Регулятор холостого хода РХХ
+/**Describes state data for idling regulator */
 typedef struct
 {
  //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
- int16_t output_state;
+ int16_t output_state;   //!< regulator's memory
 }idlregul_state_t;
 
+/**Variable. State data for idling regulator */
 idlregul_state_t idl_prstate;
 
 //сброс состояния РХХ

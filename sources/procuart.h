@@ -35,4 +35,11 @@ struct ecudata_t;
  */
 void process_uart_interface(struct ecudata_t* d);
 
+#ifdef REALTIME_TABLES
+/** Load data into the tables in RAM (applicable only with REALTIME_TABLES option)
+ * \param d pointer to ECU data structure
+ */
+void load_selected_tables_into_ram(struct ecudata_t* d);
+#endif
+
 #endif //_PROCUART_H_

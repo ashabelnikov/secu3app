@@ -75,10 +75,19 @@ const __flash uint8_t hdig[] = "0123456789ABCDEF";
 
 //--------вспомогательные функции для построения пакетов-------------
 
-/**Appends sender's buffer by one byte from specified buffer from programm memory */
-#define build_fb(src, size) \
+/**Appends sender's buffer by sequence of bytes from programm memory 
+ * note! can NOT be used for binary data! */
+#define build_fs(src, size) \
 { \
  memcpy_P(&uart.send_buf[uart.send_size],(src),(size)); \
+ uart.send_size+=(size); \
+}
+
+/**Appends sender's buffer by sequence of bytes from RAM 
+ * note! can NOT be used for binary data! */
+#define build_rs(src, size) \
+{ \
+ memcpy(&uart.send_buf[uart.send_size],(src),(size)); \
  uart.send_size+=(size); \
 }
 
@@ -114,7 +123,22 @@ void build_i32h(uint32_t i)
  build_i16h(i);
 }
 
+/**Appends sender's buffer by sequence of bytes from RAM buffer
+ * can be used for binary data */
+void build_rb(const uint8_t* ramBuffer, uint8_t size)
+{
+ while(size--) build_i8h(*ramBuffer++);
+}
+
 //----------вспомагательные функции для распознавания пакетов---------
+/**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
+ * can NOT be used for binary data */
+void recept_rs(uint8_t* ramBuffer, uint8_t size)
+{ 
+ if (size > uart.recv_size)
+  size = uart.recv_size;
+ while(size--) *ramBuffer++ = uart.recv_buf[uart.recv_index++];
+}
 
 /**Retrieves from receiver's buffer 4-bit value */
 #define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
@@ -161,6 +185,14 @@ uint32_t recept_i32h(void)
  return i;
 }
 
+/**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
+ * can be used for binary data */
+void recept_rb(uint8_t* ramBuffer, uint8_t size)
+{
+ if (size > uart.recv_size)
+  size = uart.recv_size;
+ while(size--) *ramBuffer++ = recept_i8h();
+}
 //--------------------------------------------------------------------
 
 /**Makes sender to start sending */
@@ -239,9 +271,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(TABLES_NUMBER + TUNABLE_TABLES_NUMBER);
    build_i8h(index);
 #ifdef REALTIME_TABLES   
-   build_fb((index < TABLES_NUMBER) ? tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
+   build_fs((index < TABLES_NUMBER) ? tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
 #else
-   build_fb(tables[index].name, F_NAME_SIZE);
+   build_fs(tables[index].name, F_NAME_SIZE);
 #endif
    index++;
    if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index=0;
@@ -318,7 +350,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE+8)
  #error "Out of buffer!"
 #endif
-   build_fb(fwdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
+   build_fs(fwdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
    build_i32h(fwdata.config); //<--compile-time options
    break;
 
@@ -326,6 +358,55 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.uart_divisor);
    build_i8h(d->param.uart_period_t_ms);
    break;
+ 
+#ifdef REALTIME_TABLES
+//Following finite state machine will transfer all table's data
+  case EDITAB_PAR:
+  {
+   static uint8_t fuel = 0, state = 0, wrk_index = 0;
+   build_i4h(fuel);
+   build_i4h(state);   
+   switch(state)
+   {
+    case 0: //start map
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram[fuel].f_str, F_STR_POINTS);
+     state = 1;
+     break;
+    case 1: //idle map
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram[fuel].f_idl, F_IDL_POINTS);
+     state = 2, wrk_index = 0;
+     break;
+    case 2: //work map
+     build_i8h(wrk_index*F_WRK_POINTS_L);
+     build_rb((uint8_t*)&d->tables_ram[fuel].f_wrk[wrk_index][0], F_WRK_POINTS_F);
+     if (wrk_index >= F_WRK_POINTS_L-1 )
+     {
+      wrk_index = 0;
+      state = 3;
+     }
+     else
+      ++wrk_index; 
+     break;
+    case 3: //temper. correction.
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram[fuel].f_tmp, F_TMP_POINTS);
+     state = 4;
+     break;
+    case 4:
+     build_i8h(0); //<--not used
+     build_rs(d->tables_ram[fuel].name, F_NAME_SIZE);
+     if (fuel >= 1)
+      fuel = 0;
+     else
+      ++fuel;
+     state = 0;
+     break;
+   }
+  }
+  break;
+#endif
  }//switch
 
  //общая часть для всех пакетов
@@ -462,6 +543,33 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.uart_period_t_ms = recept_i8h();
    break;
 
+#ifdef REALTIME_TABLES   
+  case EDITAB_PAR:
+  {
+   uint8_t fuel = recept_i4h();
+   uint8_t state = recept_i4h();
+   uint8_t addr = recept_i8h();
+   switch(state)
+   {
+    case 0: //start map
+     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_str) + addr, F_STR_POINTS); /*F_STR_POINTS max*/
+     break;
+    case 1: //idle map
+     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_idl) + addr, F_IDL_POINTS); /*F_IDL_POINTS max*/
+     break;
+    case 2: //work map
+     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_wrk[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
+     break;
+    case 3: //temper. correction map
+     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_tmp) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
+     break;
+    case 4: //name
+     recept_rs((d->tables_ram[fuel].name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/
+     break;
+   }
+  }
+  break;
+#endif
  }//switch
 
  return descriptor;

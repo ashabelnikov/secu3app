@@ -77,8 +77,7 @@ typedef struct ecudata_t
 #ifndef REALTIME_TABLES 
  __flash f_data_t*  fn_dat;              //!< Pointer to set of characteristics (указатель на набор характеристик)
 #else
- f_data_t tables_gasoline;               //!< set of tables in RAM for petrol
- f_data_t tables_gas;                    //!< set of tables in RAM for gas
+ f_data_t tables_ram[2];                 //!< set of tables in RAM for petrol(0) and gas(1)
  f_data_t* fn_dat;                       //!< pointer to current set of tables in RAM
  uint8_t  fn_gas_prev;                   //!< previous index of tables set used for gas
  uint8_t  fn_gasoline_prev;              //!< previous index of tables set used for petrol

@@ -153,9 +153,9 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
   d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gasoline];//на бензине
 #else //use tables from RAM
  if (d->sens.gas)
-  d->fn_dat = &d->tables_gas;      //using gas(на газе)
+  d->fn_dat = &d->tables_ram[1]; //using gas(на газе)
  else
-  d->fn_dat = &d->tables_gasoline; //using petrol(на бензине)
+  d->fn_dat = &d->tables_ram[0]; //using petrol(на бензине)
 #endif
 }
 

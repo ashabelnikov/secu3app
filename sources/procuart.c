@@ -46,9 +46,9 @@ void load_selected_tables_into_ram(struct ecudata_t* d)
  {
   //load gas tables
   if (d->param.fn_gas < TABLES_NUMBER)
-   memcpy_P(&d->tables_gas, &tables[d->param.fn_gas], sizeof(f_data_t));
+   memcpy_P(&d->tables_ram[1], &tables[d->param.fn_gas], sizeof(f_data_t));
   else
-   eeprom_read(&d->tables_gas, EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gas-TABLES_NUMBER)), sizeof(f_data_t));
+   eeprom_read(&d->tables_ram[1], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gas-TABLES_NUMBER)), sizeof(f_data_t));
   d->fn_gas_prev = d->param.fn_gas;
  }
 
@@ -56,9 +56,9 @@ void load_selected_tables_into_ram(struct ecudata_t* d)
  {
   //load gasoline tables
   if (d->param.fn_gasoline < TABLES_NUMBER)
-   memcpy_P(&d->tables_gasoline, &tables[d->param.fn_gasoline], sizeof(f_data_t));
+   memcpy_P(&d->tables_ram[0], &tables[d->param.fn_gasoline], sizeof(f_data_t));
   else
-   eeprom_read(&d->tables_gasoline, EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gasoline-TABLES_NUMBER)), sizeof(f_data_t));  
+   eeprom_read(&d->tables_ram[0], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gasoline-TABLES_NUMBER)), sizeof(f_data_t));  
   d->fn_gasoline_prev = d->param.fn_gasoline;
  }
 }

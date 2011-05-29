@@ -65,6 +65,7 @@
 #define F_TMP_POINTS           16     //!< number of points in temperature map
 #define F_STR_POINTS           16     //!< number of points in start map
 #define F_IDL_POINTS           16     //!< number of points in idle map
+#define F_WRK_TOTAL (F_WRK_POINTS_L*F_WRK_POINTS_F) //!< total size of work map
 
 #define F_NAME_SIZE            16     //!< number of symbols in names of families of characteristics
 

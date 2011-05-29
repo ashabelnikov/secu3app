@@ -315,10 +315,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 
   case FWINFO_DAT:
    //проверка на то, чтобы мы не вылезли за пределы буфера. 3 символа - заголовок и конец пакета.
-#if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE)
+#if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE+8)
  #error "Out of buffer!"
 #endif
    build_fb(fwdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
+   build_i32h(fwdata.config); //<--compile-time options
    break;
 
   case MISCEL_PAR:

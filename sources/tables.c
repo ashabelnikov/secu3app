@@ -25,6 +25,7 @@
  */
 
 #include <ioavr.h>
+#include "compilopt.h"
 #include "tables.h"
 
 /**Дополнительные данные по умолчанию
@@ -57,7 +58,9 @@ firmware_data_t __flash fwdata@FIRMWARE_DATA_START=
   (SECU3BOOTSTART - FIRMWARE_DATA_START),
 
   /**config */
-  0x00000000
+  (COPT_ATMEGA16 << 0) | (COPT_ATMEGA32 << 1) | (COPT_ATMEGA64 << 2) | (COPT_ATMEGA128 << 3) |
+  (COPT_VPSEM << 4) | (COPT_WHEEL_36_1 << 5) | (COPT_INVERSE_IGN_OUTPUTS << 6) | (COPT_COIL_REGULATION << 7) |
+  (COPT_COOLINGFAN_PWM << 8) | (COPT_REALTIME_TABLES << 9)
 };
 
 /**Данные в таблицах по умолчанию

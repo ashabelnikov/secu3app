@@ -40,6 +40,11 @@ are ready to compile the project.
     COOLINGFAN_PWM - use PWM for controlling of electric cooling fan
                      использовать или нет ШИМ для управления оборотами вентилятора
 
+    REALTIME_TABLES - allow editing of tables in realtime (use RAM)
+
+    __ATmega16__ - compile for ATMega16 MCU
+
+    __ATmega32__ - compile for ATMega32 MCU
 
 Necessary symbols you can define in the preprocessor's options of compiler.
 Нужные вам символы вы можете определить в опциях препроцессора компилятора.

@@ -50,6 +50,8 @@ void load_selected_tables_into_ram(struct ecudata_t* d)
   else
    eeprom_read(&d->tables_ram[1], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gas-TABLES_NUMBER)), sizeof(f_data_t));
   d->fn_gas_prev = d->param.fn_gas;
+  //будет послано уведомление о том что выбран новый набор таблиц  
+  sop_set_operation(SOP_NEW_TABLSET_SELECTED);
  }
 
  if (d->fn_gasoline_prev != d->param.fn_gasoline)
@@ -60,6 +62,8 @@ void load_selected_tables_into_ram(struct ecudata_t* d)
   else
    eeprom_read(&d->tables_ram[0], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gasoline-TABLES_NUMBER)), sizeof(f_data_t));  
   d->fn_gasoline_prev = d->param.fn_gasoline;
+  //будет послано уведомление о том что выбран новый набор таблиц  
+  sop_set_operation(SOP_NEW_TABLSET_SELECTED);
  }
 }
 #endif

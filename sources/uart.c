@@ -52,6 +52,16 @@
 #define USART_RXC_vect USART0_RXC_vect
 #endif
 
+//Idenfifiers used in EDITAB_PAR
+#define ETTS_GASOLINE_SET 0 //!< tables's set: gasoline id
+#define ETTS_GAS_SET      1 //!< tables's set: gas id
+
+#define ETMT_STRT_MAP 0     //!< start map id
+#define ETMT_IDLE_MAP 1     //!< idle map id
+#define ETMT_WORK_MAP 2     //!< work map id
+#define ETMT_TEMP_MAP 3     //!< temp.corr. map id
+#define ETMT_NAME_STR 4     //!< name of tables's set id
+
 /**Define internal state variables */
 typedef struct
 {
@@ -368,40 +378,40 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i4h(state);   
    switch(state)
    {
-    case 0: //start map
+    case ETMT_STRT_MAP: //start map
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d->tables_ram[fuel].f_str, F_STR_POINTS);
-     state = 1;
+     state = ETMT_IDLE_MAP;
      break;
-    case 1: //idle map
+    case ETMT_IDLE_MAP: //idle map
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d->tables_ram[fuel].f_idl, F_IDL_POINTS);
-     state = 2, wrk_index = 0;
+     state = ETMT_WORK_MAP, wrk_index = 0;
      break;
-    case 2: //work map
+    case ETMT_WORK_MAP: //work map
      build_i8h(wrk_index*F_WRK_POINTS_L);
      build_rb((uint8_t*)&d->tables_ram[fuel].f_wrk[wrk_index][0], F_WRK_POINTS_F);
      if (wrk_index >= F_WRK_POINTS_L-1 )
      {
       wrk_index = 0;
-      state = 3;
+      state = ETMT_TEMP_MAP;
      }
      else
       ++wrk_index; 
      break;
-    case 3: //temper. correction.
+    case ETMT_TEMP_MAP: //temper. correction.
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d->tables_ram[fuel].f_tmp, F_TMP_POINTS);
-     state = 4;
+     state = ETMT_NAME_STR;
      break;
-    case 4:
+    case ETMT_NAME_STR:
      build_i8h(0); //<--not used
      build_rs(d->tables_ram[fuel].name, F_NAME_SIZE);
-     if (fuel >= 1)
-      fuel = 0;
+     if (fuel >= ETTS_GAS_SET)  //last
+      fuel = ETTS_GASOLINE_SET; //first
      else
       ++fuel;
-     state = 0;
+     state = ETMT_STRT_MAP;
      break;
    }
   }
@@ -551,19 +561,19 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    uint8_t addr = recept_i8h();
    switch(state)
    {
-    case 0: //start map
+    case ETMT_STRT_MAP: //start map
      recept_rb(((uint8_t*)&d->tables_ram[fuel].f_str) + addr, F_STR_POINTS); /*F_STR_POINTS max*/
      break;
-    case 1: //idle map
+    case ETMT_IDLE_MAP: //idle map
      recept_rb(((uint8_t*)&d->tables_ram[fuel].f_idl) + addr, F_IDL_POINTS); /*F_IDL_POINTS max*/
      break;
-    case 2: //work map
+    case ETMT_WORK_MAP: //work map
      recept_rb(((uint8_t*)&d->tables_ram[fuel].f_wrk[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
      break;
-    case 3: //temper. correction map
+    case ETMT_TEMP_MAP: //temper. correction map
      recept_rb(((uint8_t*)&d->tables_ram[fuel].f_tmp) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
      break;
-    case 4: //name
+    case ETMT_NAME_STR: //name
      recept_rs((d->tables_ram[fuel].name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/
      break;
    }

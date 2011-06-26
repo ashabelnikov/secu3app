@@ -38,11 +38,13 @@
 #define SOP_READ_CE_ERRORS           5    //!< read CE errors
 #define SOP_TRANSMIT_CE_ERRORS       6    //!< transmit CE errors
 #define SOP_SEND_FW_SIG_INFO         7    //!< send signature information about firmware
+#define SOP_NEW_TABLSET_SELECTED     8    //!< send information about new tables set has being selected
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters
 #define OPCODE_CE_SAVE_ERRORS        2    //!< save CE errors
 #define OPCODE_READ_FW_SIG_INFO      3    //!< read signature information about firmware
+#define OPCODE_NEW_TABLSET_SELECTED  4    //!< new tables set has being selected
 
 struct ecudata_t;
 

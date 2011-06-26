@@ -164,6 +164,19 @@ void sop_execute_operations(struct ecudata_t* d)
   }
  }
 
+ if (sop_is_operation_active(SOP_NEW_TABLSET_SELECTED))
+ {
+  //передатчик занят?
+  if (!uart_is_sender_busy())
+  {
+   d->op_comp_code = OPCODE_NEW_TABLSET_SELECTED;
+   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+
+   //"удаляем" эту операцию из списка так как она уже выполнилась.
+   suspended_opcodes[SOP_NEW_TABLSET_SELECTED] = SOP_NA;
+  } 
+ }
+
  //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
  switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take!
  {

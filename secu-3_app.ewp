@@ -933,6 +933,7 @@
         <option>
           <name>CCDefines</name>
           <state>LITTLE_ENDIAN_DATA_FORMAT</state>
+          <state>REALTIME_TABLES</state>
         </option>
         <option>
           <name>CCPreprocFile</name>

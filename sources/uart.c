@@ -559,6 +559,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    uint8_t fuel = recept_i4h();
    uint8_t state = recept_i4h();
    uint8_t addr = recept_i8h();
+   uart.recv_size-=6;
    switch(state)
    {
     case ETMT_STRT_MAP: //start map

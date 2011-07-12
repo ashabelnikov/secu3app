@@ -245,6 +245,11 @@ __C_task void main(void)
   //calculate and update coil regulation time
   ckps_set_acc_time(accumulation_time(&edat));
 #endif
+  //Если разрешено, то делаем отсечку зажигания при превышении определенных оборотов
+  if (edat.param.ign_cutoff)
+   ckps_enable_ignition(edat.sens.inst_frq < edat.param.ign_cutoff_thrd);
+  else
+   ckps_enable_ignition(1);  
   //------------------------------------------------------------------------
 
   //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.

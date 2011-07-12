@@ -367,6 +367,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case MISCEL_PAR:
    build_i16h(d->param.uart_divisor);
    build_i8h(d->param.uart_period_t_ms);
+   build_i4h(d->param.ign_cutoff);
+   build_i16h(d->param.ign_cutoff_thrd);   
    break;
  
 #ifdef REALTIME_TABLES
@@ -551,6 +553,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   case MISCEL_PAR:
    d->param.uart_divisor = recept_i16h();
    d->param.uart_period_t_ms = recept_i8h();
+   d->param.ign_cutoff = recept_i4h();
+   d->param.ign_cutoff_thrd = recept_i16h();   
    break;
 
 #ifdef REALTIME_TABLES   

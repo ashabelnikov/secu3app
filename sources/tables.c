@@ -258,7 +258,7 @@ f_data_t __flash tables[TABLES_NUMBER]@TABLES_START=
 #pragma object_attribute=__root
 params_t __flash def_param@DEFPARAM_START =
 {1,0,0,6,6,1920,1250,1500,600,6400,650,1600,-320,0,800,4,4,10,392,384,16384,8192,16384,8192,16384,8192,0,20,10,
- 96,96,-320,320,240,410,392,1250,1500,0, 0x0067,8, 4, 0,35,0,800,23,128,8,512,1000,2,0,  0,0,0,0,0,0,0,0,0,/*crc*/0};
+ 96,96,-320,320,240,410,392,1250,1500,0, 0x0067,8, 4, 0,35,0,800,23,128,8,512,1000,2,0, 0, 7500, 0,0,0,0,0,0,/*crc*/0};
 
 /**Contains check sum for whole firmware */
 #pragma object_attribute=__root

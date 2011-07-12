@@ -130,4 +130,9 @@ void ckps_set_cyl_number(uint8_t i_cyl_number);
 /** Initialization of used I/O ports (производит инициализацию линий портов) */
 void ckps_init_ports(void);
 
+/** Enable/disable ignition 
+ * \param i_cutoff 1 - enable ignition, 0 - disable ignition
+ */
+void ckps_enable_ignition(uint8_t i_cutoff);
+
 #endif //_CKPS_H_

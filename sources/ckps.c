@@ -84,6 +84,7 @@ typedef struct
 #ifdef COIL_REGULATION
  uint8_t  ckps_period_min:1;                 //!< Indicates that current torque period is very less comparatively to specified value
 #endif
+ uint8_t  ckps_ign_enabled:1;                //!< Ignition enabled/disabled
 }ckpsflags_t;
 
 /** State variables */
@@ -169,6 +170,7 @@ void ckps_init_state_variables(void)
  flags.ckps_need_to_set_channel = 0;
  flags.ckps_new_engine_cycle_happen = 0;
  flags.ckps_is_synchronized = 0;
+ flags.ckps_ign_enabled = 1;
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
 }
 
@@ -374,6 +376,11 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  __restore_interrupt(_t);
 }
 
+void ckps_enable_ignition(uint8_t i_cutoff)
+{
+ flags.ckps_ign_enabled = i_cutoff;
+}
+
 /**Helpful macro.
  * Generates end of accumulation pulse (moment of spark) for 1st,2nd,3rd,4th channels correspondingly
  * (Вспомогательный макрос. Конец импульса накачки (момент искры) для 1-го,2-го,3-го,4-го каналов соответственно). */
@@ -406,6 +413,8 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
 #pragma inline
 void turn_off_ignition_channel(uint8_t i_channel)
 {
+ if (!flags.ckps_ign_enabled)
+  return; //ignition disabled
  //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
  //the igniter go to the regime of energy accumulation
  //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем

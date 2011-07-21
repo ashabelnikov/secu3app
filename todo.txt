@@ -23,3 +23,5 @@ What to do in relation to SECU-3 firmware:
 
 7. Run time edit of ignition table (table(s) are stored in RAM)
 
+8. Turn on cooling fan only after engine started (do not waste accumulator's energy in critical - start mode)
+

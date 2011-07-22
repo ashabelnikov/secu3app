@@ -5,6 +5,7 @@ By: Alexey A. Shabelnikov
 
 
 What to do in relation to SECU-3 firmware:
+[] - means already fixed/implemented
 
 1. Move code related to resetting low priority errors from secu-3.c to ce_errors.c
 
@@ -19,9 +20,9 @@ What to do in relation to SECU-3 firmware:
 
 5. To check and fix. ECU error related to detonation can leave after engine stopped.
 
-6. Implement ignition cut-off when RPM reaches unallowed value. Value can be set from mamager.
+[6.] Implement ignition cut-off when RPM reaches unallowed value. Value can be set from mamager.
 
-7. Run time edit of ignition table (table(s) are stored in RAM)
+[7.] Run time edit of ignition table (table(s) are stored in RAM)
 
 8. Turn on cooling fan only after engine started (do not waste accumulator's energy in critical - start mode)
 

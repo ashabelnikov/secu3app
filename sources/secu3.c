@@ -162,6 +162,7 @@ MAIN()
  ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);
  ckps_use_knock_channel(edat.param.knock_use_knock_channel);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--now valid initialization
+ ckps_set_merge_outs(edat.param.merge_ign_outs);
 
  s_timer_init();
  vent_init_state();

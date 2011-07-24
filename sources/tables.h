@@ -198,6 +198,7 @@ typedef struct params_t
   uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
 
   uint8_t zero_adv_ang;                  //!< Zero anvance angle flag
+  uint8_t merge_ign_outs;                //!< Merge ignition sugnals to single output flag
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -205,7 +206,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[5];
+  uint8_t  reserved[4];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * CRC of data of this structure (for checking correctness of data after loading from EEPROM) */

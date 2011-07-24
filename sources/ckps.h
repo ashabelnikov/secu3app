@@ -135,4 +135,9 @@ void ckps_init_ports(void);
  */
 void ckps_enable_ignition(uint8_t i_cutoff);
 
+/** Enable/disbale merging of ignition outputs
+ * \param i_merge 1 - merge, 0 - normal mode
+ */
+void ckps_set_merge_outs(uint8_t i_merge);
+
 #endif //_CKPS_H_

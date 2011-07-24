@@ -113,6 +113,7 @@ typedef struct
  volatile uint16_t cr_acc_time;       //!< accumulation time for coil requlation (timer's ticks)
  uint8_t  channel_mode_b;             //!< determines which channel of the ignition to start accumulate at the moment (определяет какой канал зажигания будет накапливать энергию в данный момент)
 #endif
+ volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug (a couple of cylinders)
@@ -172,6 +173,7 @@ void ckps_init_state_variables(void)
  ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
+ ckps.chan_mask = 0xFF; //no masking
  
  flags->ckps_need_to_set_channel = 0;
  flags->ckps_new_engine_cycle_happen = 0;
@@ -393,6 +395,11 @@ void ckps_enable_ignition(uint8_t i_cutoff)
  flags->ckps_ign_enabled = i_cutoff;
 }
 
+void ckps_set_merge_outs(uint8_t i_merge)
+{
+ ckps.chan_mask = i_merge ? 0x00 : 0xFF;
+}
+
 /**Helpful macro.
  * Generates end of accumulation pulse (moment of spark) for 1st,2nd,3rd,4th channels correspondingly
  * (Вспомогательный макрос. Конец импульса накачки (момент искры) для 1-го,2-го,3-го,4-го каналов соответственно). */
@@ -472,6 +479,7 @@ ISR(TIMER1_COMPA_vect)
  if (!flags->ckps_period_min)
  {
   ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
+  ckps.channel_mode_b&= ckps.chan_mask;
   delay = ckps.period_curr * (WHEEL_COGS_NUM / ckps.chan_number);
   if (ckps.cr_acc_time > delay)
   {
@@ -586,8 +594,8 @@ void process_ckps_cogs(void)
   //до этого хранился во временном буфере.
   if (ckps.cog == chanstate[i].cogs_latch)
   {
-   ckps.channel_mode = i;          //remember number of channel (запоминаем номер канала)
-   flags->ckps_need_to_set_channel = 1; //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
+   ckps.channel_mode = (i & ckps.chan_mask); //remember number of channel (запоминаем номер канала)
+   flags->ckps_need_to_set_channel = 1;      //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
    ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * WHEEL_LATCH_BTDC; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
@@ -645,7 +653,7 @@ void process_ckps_cogs(void)
 #ifdef COIL_REGULATION
    if (flags->ckps_period_min)
    {
-    ckps.channel_mode_b = ckps.channel_mode;
+    ckps.channel_mode_b = (ckps.channel_mode & ckps.chan_mask);
     OCR1B = OCR1A - ckps.cr_acc_time;
     TIFR = (1 << OCF1B);
     TIMSK|= (1<<OCIE1B);

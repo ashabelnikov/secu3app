@@ -1,0 +1,80 @@
+###############################################################################
+# Maklefile for build firmware of SECU-3 project using GCC
+# Created by Alexey A. Shabelnikov, Kiev 17 July 2011. 
+# Note: It requires AVR-GCC toolchain (WinAVR)
+
+#include platform-specific options from another file
+include platform_cfg
+
+TARGET = secu-3_app
+OBJDIR = ./output
+CC = avr-gcc
+OBJCOPY = avr-objcopy
+FORMAT = ihex
+
+# Compile options common for all C compilation units.
+CFLAGS = -mmcu=$(MCU)
+CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DREALTIME_TABLES
+CFLAGS += -I.
+CFLAGS += -Os -mcall-prologues 
+CFLAGS += -funsigned-char
+CFLAGS += -funsigned-bitfields
+CFLAGS += -fpack-struct
+CFLAGS += -fshort-enums
+CFLAGS += -ffreestanding
+CFLAGS += -ffunction-sections
+CFLAGS += -fno-inline-small-functions
+CFLAGS += -Wl,--relax
+#CFLAGS += -Wl,--gc-sections
+CFLAGS += -Wall
+CFLAGS += -Wstrict-prototypes
+CFLAGS += -Wa,-adhlns=$(<:sources/%.c=$(OBJDIR)/%.lst)
+CFLAGS += -std=gnu99
+#CFLAGS += -gdwarf-2
+
+# Linker flags
+LDFLAGS = -Wl,-Map=$(OBJDIR)/$(TARGET).map,--cref
+LDFLAGS += -Wl,-section-start=.firmware_data=0x$(FWD_START)
+LDFLAGS += -Wl,-section-start=.boot_loader=0x$(BL_START)
+LDFLAGS += -lm
+
+# Include Directories
+INCLUDES = 
+
+# Define all source files.
+SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
+	eeprom.c fuelecon.c funconv.c idlecon.c ignlogic.c \
+	jumper.c knklogic.c knock.c measure.c params.c \
+	procuart.c secu3.c starter.c suspendop.c tables.c \
+	uart.c ventilator.c vstimer.c
+
+# Define all object files.
+OBJECTS = $(SRC:%.c=$(OBJDIR)/%.o)
+
+# Define all listing files.
+LST = $(SRC:%.c=$(OBJDIR)/%.lst)
+
+# Build
+all: OBJ_DIRS $(TARGET).elf $(TARGET).a90
+
+#Create directory for object files
+OBJ_DIRS:
+	mkdir -p $(OBJDIR)
+
+#Create HEX file
+%.a90: %.elf
+	$(OBJCOPY) -O $(FORMAT) -R .eeprom -R .fuse -R .lock $< $@
+
+# Compile
+$(OBJDIR)/%.o : sources/%.c 
+	$(CC) -c $(INCLUDES) $(CFLAGS) $< -o $@
+
+#Link to obtain elf file
+.SECONDARY : $(TARGET).elf
+.PRECIOUS : $(OBJECTS)
+%.elf: $(OBJECTS)
+	$(CC) $(CFLAGS) $^ --output $@ $(LDFLAGS)
+
+# Clean target
+clean:
+	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(TARGET).elf $(OBJDIR)/$(TARGET).map 

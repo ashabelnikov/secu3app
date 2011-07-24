@@ -242,6 +242,10 @@ MAIN()
   edat.curr_angle+=edat.param.angle_corr;
   //ограничиваем получившийся УОЗ установленными пределами
   restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
+  //Если стоит режим нулевого УОЗ, то 0
+  if (edat.param.zero_adv_ang)
+   edat.curr_angle = 0;
+
 #ifdef COIL_REGULATION
   //calculate and update coil regulation time
   ckps_set_acc_time(accumulation_time(&edat));

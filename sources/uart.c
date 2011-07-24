@@ -280,6 +280,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.angle_corr);
    build_i16h(d->param.angle_dec_spead);
    build_i16h(d->param.angle_inc_spead);
+   build_i4h(d->param.zero_adv_ang);
    break;
 
   case FUNSET_PAR:
@@ -509,6 +510,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.angle_corr= recept_i16h();
    d->param.angle_dec_spead = recept_i16h();
    d->param.angle_inc_spead = recept_i16h();
+   d->param.zero_adv_ang = recept_i4h();
    break;
 
   case FUNSET_PAR:

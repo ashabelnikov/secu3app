@@ -34,6 +34,12 @@
 #include "secu3.h"
 #include "vstimer.h"
 
+//For use with fn_dat pointer, because it can point either to FLASH or RAM
+#ifdef REALTIME_TABLES
+ #define _GB(x) *(x)
+#else
+ #define _GB(x) PGM_GET_BYTE(x)
+#endif
 
 //данные массивы констант задают сетку по оси оборотов, дл€ рабочей карты и карты ’’.
 /**Array which contains RPM axis's grid bounds */
@@ -82,7 +88,7 @@ int16_t idling_function(struct ecudata_t* d)
  if (i < 0)  {i = 0; rpm = 600;}
 
  return simple_interpolation(rpm,
-             PGM_GET_BYTE(&d->fn_dat->f_idl[i]), PGM_GET_BYTE(&d->fn_dat->f_idl[i+1]),
+             _GB(&d->fn_dat->f_idl[i]), _GB(&d->fn_dat->f_idl[i+1]),
              PGM_GET_WORD(&f_slots_ranges[i]), PGM_GET_WORD(&f_slots_length[i]));
 }
 
@@ -100,7 +106,7 @@ int16_t start_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
   else i1 = i + 1;
 
- return simple_interpolation(rpm, PGM_GET_BYTE(&d->fn_dat->f_str[i]), PGM_GET_BYTE(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40);
+ return simple_interpolation(rpm, _GB(&d->fn_dat->f_str[i]), _GB(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40);
 }
 
 
@@ -141,10 +147,10 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
-	  PGM_GET_BYTE(&d->fn_dat->f_wrk[l][f]),
-	  PGM_GET_BYTE(&d->fn_dat->f_wrk[lp1][f]),
-	  PGM_GET_BYTE(&d->fn_dat->f_wrk[lp1][fp1]),
-	  PGM_GET_BYTE(&d->fn_dat->f_wrk[l][fp1]),
+	  _GB(&d->fn_dat->f_wrk[l][f]),
+	  _GB(&d->fn_dat->f_wrk[lp1][f]),
+	  _GB(&d->fn_dat->f_wrk[lp1][fp1]),
+	  _GB(&d->fn_dat->f_wrk[l][fp1]),
 	  PGM_GET_WORD(&f_slots_ranges[f]),
 	  (gradient * l),
 	  PGM_GET_WORD(&f_slots_length[f]),
@@ -170,7 +176,7 @@ int16_t coolant_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, PGM_GET_BYTE(&d->fn_dat->f_tmp[i]), PGM_GET_BYTE(&d->fn_dat->f_tmp[i1]),
+ return simple_interpolation(t, _GB(&d->fn_dat->f_tmp[i]), _GB(&d->fn_dat->f_tmp[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10));
 }
 

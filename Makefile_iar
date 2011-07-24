@@ -1,8 +1,11 @@
 ###############################################################################
 # Maklefile for build firmware of SECU-3 project using IAR
 # Created by Alexey A. Shabelnikov, Kiev 17 July 2011. 
+#
 # Note: It requires IAR compiler and linker
-# Also: Before using of this Makefile you must define environment variable IAR_HOME
+# Also: Before using of this Makefile you must define environment variable IAR_HOME.
+#       For instance "C:\Program Files\IAR Systems\Embedded Workbench 5.4"
+#       Additionaly make sure CC, LD and LIBS variables in this Makefile are correct.
 
 #include platform-specific options from another file
 include platform_cfg
@@ -10,7 +13,8 @@ include platform_cfg
 TARGET = secu-3_app
 OBJDIR = ./output
 CC = $(IAR_HOME)/avr/bin/iccavr.exe
-LD = $(IAR_HOME)/common/bin/xlink.exe
+LD = $(IAR_HOME)/avr/bin/xlink.exe
+#LD = $(IAR_HOME)/common/bin/xlink.exe
 
 # Compile options common for all C compilation units.
 CFLAGS = --cpu $(MCU)
@@ -25,7 +29,8 @@ LDFLAGS = -Fintel-standard -xs -s main
 LDFLAGS += -f $(IAR_HOME)/avr/config/$(LNKXCL)
 LDFLAGS += -l $(OBJDIR)/secu3.map
 LDFLAGS += -Z.boot_loader=$(BL_START) -Z.firmware_data=$(FWD_START)
-LIBS = $(IAR_HOME)/avr/lib/dlib/dl3s-ec-sf.r90
+LIBS = $(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.r90
+#LIBS = $(IAR_HOME)/avr/lib/dlib/dl3s-ec-sf.r90
 
 # Include Directories
 INCLUDES = -I $(IAR_HOME)/avr/inc/dlib -I $(IAR_HOME)/avr/inc

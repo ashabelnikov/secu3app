@@ -24,15 +24,15 @@
  * (Реализация выполнения отложенных операций).
  */
 
-#include <ioavr.h>
+#include "port/port.h"
 #include <string.h>
-#include "suspendop.h"
-#include "eeprom.h"
+#include "ce_errors.h"
 #include "crc16.h"
+#include "eeprom.h"
+#include "secu3.h"
+#include "suspendop.h"
 #include "uart.h"
 #include "ufcodes.h"
-#include "ce_errors.h"
-#include "secu3.h"
 
 /**Maximum allowed number of suspended operations */
 #define SUSPENDED_OPERATIONS_SIZE 16
@@ -46,7 +46,7 @@ void sop_set_operation(uint8_t opcode)
  suspended_opcodes[(opcode)] = (opcode);
 }
 
-#pragma inline
+INLINE
 uint8_t sop_is_operation_active(uint8_t opcode)
 {
  return (suspended_opcodes[(opcode)] == (opcode));

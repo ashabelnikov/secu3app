@@ -27,6 +27,8 @@
 #ifndef _VSTIMER_H_
 #define _VSTIMER_H_
 
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
 #include <stdint.h>
 
 //инструментарий для реализации виртуальных таймерв
@@ -53,16 +55,20 @@ typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
 /**Set specified timer for specified period */
 #define s_timer16_set(T, V)  \
 {                            \
- __disable_interrupt();      \
+ _DISABLE_INTERRUPT();       \
  (T) = (V);                  \
- __enable_interrupt();       \
+ _ENABLE_INTERRUPT();        \
 }
 
 /**Check specified timer for action */
-#pragma inline  //а в обычном "С" такого нет ;-), спасибо разработчикам компилятора.
-__monitor uint8_t s_timer16_is_action(s_timer16_t i_timer)
+INLINE
+uint8_t s_timer16_is_action(s_timer16_t i_timer)
 {
- return (i_timer==0);
+ uint8_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = (i_timer == 0);
+ _END_ATOMIC_BLOCK();
+ return result;
 }
 
 /**Initialization of system timers */

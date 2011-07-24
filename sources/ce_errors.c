@@ -24,8 +24,9 @@
  * (Реализация управления лампой CE, обнаружения ошибок и соответствующей функциональности).
  */
 
+#include "port/avrio.h"
+#include "port/port.h"
 #include <string.h>
-#include <ioavr.h>
 #include "adc.h"
 #include "bitmask.h"
 #include "ce_errors.h"
@@ -79,15 +80,17 @@ void check(struct ecudata_t* d)
  //if error of knock channel was
  //если была ошибка канала детонации
  if (d->param.knock_use_knock_channel)
+ {
   if (knock_is_error())
   {
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
    knock_reset_error();
   }
   else
-  {
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
-  }
+ }
+ else
+  ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
 
  //checking MAP sensor. TODO: implement additional check
  // error if voltage < 0.3v
@@ -97,10 +100,14 @@ void check(struct ecudata_t* d)
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
 
  //checking coolant temperature sensor
- // error if (2.28v > voltage > 3.93v)
- if (d->sens.temperat_raw < ROUND(2.28 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(3.93 / ADC_DISCRETE))
-  if (d->param.tmp_use)
+ if (d->param.tmp_use)
+ {
+  // error if (2.28v > voltage > 3.93v)
+  if (d->sens.temperat_raw < ROUND(2.28 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(3.93 / ADC_DISCRETE))
    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
+  else
+   ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
+ }
  else
   ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
 
@@ -190,6 +197,6 @@ void ce_clear_errors(void)
 
 void ce_init_ports(void)
 {
- PORTB|= (1<<PB2);  //CE is ON (for checking)
- DDRB |= (1<<DDB2); //output for CE
+ PORTB|= _BV(PB2);  //CE is ON (for checking)
+ DDRB |= _BV(DDB2); //output for CE
 }

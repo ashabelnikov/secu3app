@@ -24,18 +24,20 @@
  * (Реализация управления клапаном принудительного холостого хода(ЭПХХ)).
  */
 
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/port.h"
+#include "bitmask.h"
+#include "idlecon.h"
 #include "secu3.h"
 #include "vstimer.h"
-#include "idlecon.h"
 
 /** Opens/closes IE valve (открывает/закрывает клапан ЭПХХ) */
 #define SET_IE_VALVE_STATE(s) {PORTB_Bit0 = s;}
 
 void idlecon_init_ports(void)
 {
- PORTB|= (1<<PB0); //valve is turned on (клапан ЭПХХ включен)
- DDRB |= (1<<DDB0);
+ PORTB|= _BV(PB0); //valve is turned on (клапан ЭПХХ включен)
+ DDRB |= _BV(DDB0);
 }
 
 //Implementation of IE functionality. If throttle gate is closed AND frq > [up.threshold] OR

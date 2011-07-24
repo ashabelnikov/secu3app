@@ -24,17 +24,19 @@
  * (Реализация алгоритмов управления Экономайзером Мощностных Режимов (ЭМР)).
  */
 
-#include <ioavr.h>
-#include "secu3.h"
+#include "port/avrio.h"
+#include "port/port.h"
+#include "bitmask.h"
 #include "fuelecon.h"
+#include "secu3.h"
 
 /** Open/Close FE valve (открывает/закрывает клапан ЭМР) */
 #define SET_FE_VALVE_STATE(s) {PORTC_Bit7 = s;}
 
 void fuelecon_init_ports(void)
 {
- PORTC&= ~(1<<PC7); //FE valve is off (ЭМР выключен)
- DDRC|= (1<<DDC7);  //Output for control FE valve (выход для управления клапаном ЭМР)
+ PORTC&= ~_BV(PC7); //FE valve is off (ЭМР выключен)
+ DDRC|= _BV(DDC7);  //Output for control FE valve (выход для управления клапаном ЭМР)
 }
 
 void fuelecon_control(struct ecudata_t* d)

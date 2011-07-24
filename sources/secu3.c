@@ -24,8 +24,9 @@
  * (–еализаци€ главного модул€ прошивки).
  */
 
-#include <inavr.h>
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
 
 #include "adc.h"
 #include "bitmask.h"
@@ -95,8 +96,8 @@ void init_ecu_data(struct ecudata_t* d)
 }
 
 /**Main function of firmware - entry point */
-__C_task void main(void)
-{
+MAIN()
+{ 
  uint8_t turnout_low_priority_errors_counter = 255;
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
@@ -116,7 +117,7 @@ __C_task void main(void)
  jumper_init_ports();
 
  //если код программы испорчен - зажигаем —≈
- if (crc16f(0, CODE_SIZE)!=code_crc)
+ if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
   ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
 
  //читаем параметры
@@ -129,7 +130,7 @@ __C_task void main(void)
 
  //предварительна€ инициализаци€ параметров сигнального процессора детонации
  knock_set_band_pass(edat.param.knock_bpf_frequency);
- knock_set_gain(fwdata.attenuator_table[0]);
+ knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
  knock_set_int_time_constant(edat.param.knock_int_time_const);
 
  if (edat.param.knock_use_knock_channel)
@@ -166,7 +167,7 @@ __C_task void main(void)
  vent_init_state();
 
  //разрешаем глобально прерывани€
- __enable_interrupt();
+ _ENABLE_INTERRUPT();
 
  sop_init_operations();
  //------------------------------------------------------------------------
@@ -195,23 +196,23 @@ __C_task void main(void)
   {
    if (!edat.param.knock_use_knock_channel)
    {
-    __disable_interrupt();
+    _DISABLE_INTERRUPT();
     adc_begin_measure();
-    __enable_interrupt();
+    _ENABLE_INTERRUPT();
    }
    else
    {
     //если сейчас происходит загрузка настроек в HIP, то нужно дождатьс€ ее завершени€.
     while(!knock_is_latching_idle());
-    __disable_interrupt();
+    _DISABLE_INTERRUPT();
     //включаем режим интегрировани€ и ждем около 20мкс, пока интегратор начнет интегрировать (напр€жение
     //на его выходе упадет до минимума). ¬ данном случае нет ничего страшного в том, что мы держим прерывани€
     //запрещенными 20-25мкс, так как это проискодит на очень маленьких оборотах.
     knock_set_integration_mode(KNOCK_INTMODE_INT);
-    __delay_cycles(350);
+    _DELAY_CYCLES(350);
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
     adc_begin_measure_all(); //измер€ем сигнал с ƒƒ тоже
-    __enable_interrupt();
+    _ENABLE_INTERRUPT();
    }
 
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);

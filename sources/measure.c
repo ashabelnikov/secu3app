@@ -24,8 +24,10 @@
  * (Реализация обработки (усреднение, корректировки и т.д.) данных поступающих от АЦП и датчиков).
  */
 
-#include <inavr.h>
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
 #include "adc.h"
 #include "measure.h"
 #include "secu3.h"
@@ -123,9 +125,9 @@ void meas_average_measured_values(struct ecudata_t* d)
 //инициализации АЦП.
 void meas_initial_measure(struct ecudata_t* d)
 {
- uint8_t _t, i = 16;
- _t=__save_interrupt();
- __enable_interrupt();
+ uint8_t _t,i = 16;
+ _t = _SAVE_INTERRUPT();
+ _ENABLE_INTERRUPT();
  do
  {
   adc_begin_measure();
@@ -133,7 +135,7 @@ void meas_initial_measure(struct ecudata_t* d)
 
   meas_update_values_buffers(d);
  }while(--i);
- __restore_interrupt(_t);
+ _RESTORE_INTERRUPT(_t);
  meas_average_measured_values(d);
 }
 
@@ -148,9 +150,9 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
  //переключаем тип топлива в зависимости от состояния газового клапана
 #ifndef REALTIME_TABLES
  if (d->sens.gas)
-  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gas];     //на газе
+  d->fn_dat = &fw_data.tables[d->param.fn_gas];     //на газе
  else
-  d->fn_dat = (__flash f_data_t*)&tables[d->param.fn_gasoline];//на бензине
+  d->fn_dat = &fw_data.tables[d->param.fn_gasoline];//на бензине
 #else //use tables from RAM
  if (d->sens.gas)
   d->fn_dat = &d->tables_ram[1]; //using gas(на газе)

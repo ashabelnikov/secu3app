@@ -24,12 +24,12 @@
  * (Модуль реализующий всю логику регулирования УОЗ по детонации).
  */
 
-#include <inavr.h>
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/port.h"
 #include "ce_errors.h"
+#include "funconv.h"
 #include "knklogic.h"
 #include "secu3.h"
-#include "funconv.h"
 
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
 {

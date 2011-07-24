@@ -55,6 +55,7 @@
 #ifndef _TABLES_H_
 #define _TABLES_H_
 
+#include "port/pgmspace.h"
 #include <stdint.h>
 #include "bootldr.h"   //to know value of SECU3BOOTSTART, and only
 
@@ -73,6 +74,10 @@
 #define FW_SIGNATURE_INFO_SIZE 48           //!< number of bytes reserved for firmware's signature information
 #define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32   //!< number of points in lookup table used for coil regulation
 
+/**Количество наборов таблиц хранимых в памяти программ
+ * Number of sets of tables stored in the firmware */
+#define TABLES_NUMBER          8
+
 /**Describes one set(family) of chracteristics (maps), descrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */
@@ -89,7 +94,7 @@ typedef struct f_data_t
 /**Describes additional data stored in the firmware
  * Описывает дополнительные данные хранимые в прошивке
  */
-typedef struct firmware_data_t
+typedef struct fw_ex_data_t
 {
   /**Signature information (contains information about firmware) */
   uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];
@@ -116,7 +121,7 @@ typedef struct firmware_data_t
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
   uint8_t reserved[58];
-}firmware_data_t;
+}fw_ex_data_t;
 
 /**Описывает параметры системы
  * Describes system's parameters. One instance of this structure stored in the EEPROM and one
@@ -206,9 +211,19 @@ typedef struct params_t
 
 }params_t;
 
+/**Описывает все данные находящиеся в прошивке 
+ * Describes all data residing in firmware */
+typedef struct fw_data_t
+{
+ fw_ex_data_t exdata;            //!< Дополнительные данные Additional data in the firmware
+ params_t def_param;             //!< Резервные параметры Reserve parameters (loaded when instance in EEPROM is broken)
+ f_data_t tables[TABLES_NUMBER]; //!< Таблицы УОЗ Array of tables of advance angle
+ uint16_t code_crc;              //!< Check sum of whole firmware (except this check sum and boot loader)
+}fw_data_t;
+
 //================================================================================
-//Определяем адреса таблиц в прошивке отталкиваясь от бутлоадера
-//Define addresses of tables in the firmware starting from boot loader's address
+//Определяем адрес данных в прошивке отталкиваясь от бутлоадера
+//Define address of data in the firmware starting from boot loader's address
 
 /**Размер переменной контрольной суммы параметров в байтах
  * Size of variable of CRC of parameters in bytes (used in params_t structure) */
@@ -222,10 +237,6 @@ typedef struct params_t
  * Size of application's section without taking into account its CRC */
 #define CODE_SIZE (SECU3BOOTSTART-CODE_CRC_SIZE)
 
-/**Количество наборов таблиц хранимых в памяти программ
- * Number of sets of tables stored in the firmware */
-#define TABLES_NUMBER  8
-
 /**Количество наборов таблиц которые можно редактировать в реальном времени
  * Эти таблицы сохраняются в EEPROM.
  * Number of sets of tables allowed to be tuned in the read time */
@@ -235,48 +246,20 @@ typedef struct params_t
  #define TUNABLE_TABLES_NUMBER 0
 #endif
 
-/**Адрес контрольной суммы в прошивке
- * Address of CRC of whole firmware */
-#define CODE_CRC_ADDR (SECU3BOOTSTART-CODE_CRC_SIZE)
-
-/**Адрес массива таблиц - семейств характеристик
- * Address of array of tables (array of sets of characteristics) */
-#define TABLES_START (CODE_CRC_ADDR-(sizeof(f_data_t)*TABLES_NUMBER))
-
-/**Адрес структуры дефаултных параметров (параметров EEPROM по умолчанию)
- * Address of structure containing default parameters (loaded when parameters from EEPROM are broken) */
-#define DEFPARAM_START (TABLES_START-sizeof(params_t))
-
-/**Адрес дополнительных параметров
- * Address of additional parameters (extended). Add new data into this structure */
-#define FIRMWARE_DATA_START (DEFPARAM_START-sizeof(firmware_data_t))
+/** Адрес данных в прошивке
+ * Address of data in the firmware */
+#define FIRMWARE_DATA_START (SECU3BOOTSTART-sizeof(fw_data_section_t))
 
 //================================================================================
 //Variables:
 
-/**Дополнительные данные
- * Additional data in the firmware */
-#pragma object_attribute=__root
-extern firmware_data_t __flash fwdata;
-
-/**Таблицы УОЗ
- * Array of tables of advance angle */
-#pragma object_attribute=__root
-extern f_data_t __flash tables[TABLES_NUMBER];
-
-/**Резервные параметры
- * Reserve parameters (loaded when instance in EEPROM is broken) */
-#pragma object_attribute=__root
-extern params_t __flash def_param;
-
-/**Check sum of whole firmware (except this check sum and boot loader) */
-#pragma object_attribute=__root
-extern uint16_t __flash code_crc;
+/**Все данные прошивки All firmware data */
+PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
 
 #ifdef REALTIME_TABLES
 /**Имена наборов таблиц которые можно редактировать в реальном времени
  * Names of tables sets which can be edited in real time */
-extern uint8_t __flash tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE];
+extern prog_uint8_t tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE];
 #endif
 
 #endif //_TABLES_H_

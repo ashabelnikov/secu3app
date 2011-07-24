@@ -24,9 +24,12 @@
  * (Реализация функций для управления электрическим вентилятором).
  */
 
-#include <ioavr.h>
-#include "ventilator.h"
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/port.h"
+#include "bitmask.h"
 #include "secu3.h"
+#include "ventilator.h"
 
 /**Turns on/off cooling fan*/
 #define SET_COOLINGFAN_STATE(s) {PORTB_Bit1 = s;}
@@ -46,8 +49,8 @@ volatile uint8_t pwm_duty;  //!< current duty value
 void vent_init_ports(void)
 {
  //configure used I/O ports
- PORTB&= ~(1<<PB1);
- DDRB |= (1<<DDB1);
+ PORTB&= ~_BV(PB1);
+ DDRB |= _BV(DDB1);
 }
 
 void vent_init_state(void)
@@ -68,21 +71,20 @@ void vent_set_duty(uint8_t duty)
  //We don't need interrupts if duty is 0 or 100%
  if (duty == 0)
  {
-  TIMSK&=~(1 << OCIE2);
+  TIMSK&=~_BV(OCIE2);
   SET_COOLINGFAN_STATE(0);
  }
  else if (duty == PWM_STEPS)
  {
-  TIMSK&=~(1 << OCIE2);
+  TIMSK&=~_BV(OCIE2);
   SET_COOLINGFAN_STATE(1);
  }
  else
-  TIMSK|=(1 << OCIE2);
+  TIMSK|=_BV(OCIE2);
 }
 
 /**T/C 2 Compare interrupt for renerating of PWM (cooling fan control)*/
-#pragma vector=TIMER2_COMP_vect
-__interrupt void timer2_comp_isr(void)
+ISR(TIMER2_COMP_vect)
 {
  if (0 == pwm_state)
  { //start active part

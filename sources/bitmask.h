@@ -39,11 +39,16 @@
 #define CHECKBIT(x,y) ((x) & (1<<(y)))
 
 #ifdef LITTLE_ENDIAN_DATA_FORMAT //little-endian data store format (Intel)
-  #define GETBYTE(src,rel) *(((unsigned char*)&(src)+(rel)))                 /**< Get Nth byte from variable */
-  #define SETBYTE(des,rel) *(((unsigned char*)&(des)+(rel)))                 /**< Set Nth byte of variable */
+ #define GETBYTE(src,rel) *(((unsigned char*)&(src)+(rel)))                 /**< Get Nth byte from variable */
+ #define SETBYTE(des,rel) *(((unsigned char*)&(des)+(rel)))                 /**< Set Nth byte of variable */
 #else                            //big-endian data store format (Motorola)
-  #define GETBYTE(src,rel) *(((unsigned char*)&(src)+sizeof((src))-1-(rel))) /**< Get Nth byte from variable */
-  #define SETBYTE(des,rel) *(((unsigned char*)&(des)+sizeof((des))-1-(rel))) /**< Set Nth byte of variable */
+ #define GETBYTE(src,rel) *(((unsigned char*)&(src)+sizeof((src))-1-(rel))) /**< Get Nth byte from variable */
+ #define SETBYTE(des,rel) *(((unsigned char*)&(des)+sizeof((des))-1-(rel))) /**< Set Nth byte of variable */
+#endif
+
+/**Converts a bit number into a byte value. */
+#ifndef _BV
+ #define _BV(bit) (1 << (bit))
 #endif
 
 #endif //_BITMASK_H_

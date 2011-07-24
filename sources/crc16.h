@@ -28,6 +28,7 @@
 #ifndef _CRC16_H_
 #define _CRC16_H_
 
+#include "port/pgmspace.h"
 #include <stdint.h>
 
 /** Calculates CRC16 for given block of data in RAM
@@ -44,6 +45,6 @@ uint16_t crc16(uint8_t *buf, uint16_t num);
  * \param num size of block to process (размер буфера в байтах)
  * \return calculated CRC16 (контрольная сумма CRC16)
  */
-uint16_t crc16f(uint8_t __flash *buf, uint16_t num);
+uint16_t crc16f(uint8_t _PGM *buf, uint16_t num);
 
 #endif //_CRC16_H_

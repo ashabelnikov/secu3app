@@ -24,30 +24,49 @@
  * (–еализаци€ поддержки обмена данными через UART).
  */
 
-#include <ina90.h>
-#include <ioavr.h>
-#include <pgmspace.h>
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/pgmspace.h"
+#include "port/port.h"
+#include <string.h>
 #include "secu3.h"
 #include "uart.h"
 #include "ufcodes.h"
 #include "bitmask.h"
 
 //Mega64 compatibility
-#ifdef __ATmega64__
+#ifdef _PLATFORM_M64_
+#ifndef RXEN
+ #define RXEN  RXEN0
+#endif
+#ifndef TXEN
+ #define TXEN  TXEN0
+#endif
+#ifndef UDRE
+ #define UDRE  UDRE0
+#endif
+#ifndef RXC
+ #define RXC   RXC0
+#endif
+#ifndef RXCIE
+ #define RXCIE RXCIE0
+#endif
+#ifndef UDRIE
+ #define UDRIE UDRIE0
+#endif
+#ifndef UCSZ0
+ #define UCSZ0 UCSZ00
+#endif
+#ifndef UCSZ1
+ #define UCSZ1 UCSZ01
+#endif
+#define UDR   UDR0
 #define UBRRL UBRR0L
 #define UBRRH UBRR0H
-#define RXEN  RXEN0
-#define TXEN  TXEN0
-#define UDR   UDR0
-#define UDRE  UDRE0
-#define RXC   RXC0
-#define RXCIE RXCIE0
 #define UCSRA UCSR0A
 #define UCSRB UCSR0B
 #define UCSRC UCSR0C
-#define UDRIE UDRIE0
-#define UCSZ0 UCSZ00
-#define UCSZ1 UCSZ01
 #define USART_UDRE_vect USART0_UDRE_vect
 #define USART_RXC_vect USART0_RXC_vect
 #endif
@@ -78,7 +97,7 @@ typedef struct
 uartstate_t uart;
 
 /**For BIN-->HEX encoding */
-const __flash uint8_t hdig[] = "0123456789ABCDEF";
+PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 
 /**Decodes from HEX to BIN */
 #define HTOD(h) (((h)<0x3A) ? ((h)-'0') : ((h)-'A'+10))
@@ -109,8 +128,8 @@ const __flash uint8_t hdig[] = "0123456789ABCDEF";
  */
 void build_i8h(uint8_t i)
 {
- uart.send_buf[uart.send_size++] = hdig[i/16];    //старший байт HEX числа
- uart.send_buf[uart.send_size++] = hdig[i%16];    //младший байт HEX числа
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);    //старший байт HEX числа
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);    //младший байт HEX числа
 }
 
 /**Appends sender's buffer by 4 HEX bytes
@@ -118,10 +137,10 @@ void build_i8h(uint8_t i)
  */
 void build_i16h(uint16_t i)
 {
- uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)/16];    //старший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,1)%16];    //младший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,0)/16];    //старший байт HEX числа (младший байт)
- uart.send_buf[uart.send_size++] = hdig[GETBYTE(i,0)%16];    //младший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,1)/16]);    //старший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,1)%16]);    //младший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,0)/16]);    //старший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,0)%16]);    //младший байт HEX числа (младший байт)
 }
 
 /**Appends sender's buffer by 8 HEX bytes
@@ -281,9 +300,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(TABLES_NUMBER + TUNABLE_TABLES_NUMBER);
    build_i8h(index);
 #ifdef REALTIME_TABLES   
-   build_fs((index < TABLES_NUMBER) ? tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
+   build_fs((index < TABLES_NUMBER) ? fw_data.tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
 #else
-   build_fs(tables[index].name, F_NAME_SIZE);
+   build_fs(fw_data.tables[index].name, F_NAME_SIZE);
 #endif
    index++;
    if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index=0;
@@ -360,8 +379,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE+8)
  #error "Out of buffer!"
 #endif
-   build_fs(fwdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
-   build_i32h(fwdata.config); //<--compile-time options
+   build_fs(fw_data.exdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
+   build_i32h(PGM_GET_DWORD(&fw_data.exdata.config)); //<--compile-time options
    break;
 
   case MISCEL_PAR:
@@ -452,7 +471,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    //передатчик зан€т. необходимо подождать его освобождени€ и только потом запускать бутлоадер
    while (uart_is_sender_busy());
    //если в бутлоадере есть команда "cli", то эту строчку можно убрать
-   __disable_interrupt();
+   _DISABLE_INTERRUPT();
    //прыгаем на бутлоадер мину€ проверку перемычки
    boot_loader_start();
    break;
@@ -622,11 +641,11 @@ void uart_init(uint16_t baud)
  UBRRH = (uint8_t)(baud>>8);
  UBRRL = (uint8_t)baud;
  UCSRA = 0;                                                  //удвоение не используем
- UCSRB=(1<<RXCIE)|(1<<RXEN)|(1<<TXEN);                       //приемник,прерывание по приему и передатчик разрешены
+ UCSRB=_BV(RXCIE)|_BV(RXEN)|_BV(TXEN);                       //приемник,прерывание по приему и передатчик разрешены
 #ifdef URSEL
- UCSRC=(1<<URSEL)/*|(1<<USBS)*/|(1<<UCSZ1)|(1<<UCSZ0);       //8 бит, 1 стоп, нет контрол€ четности
+ UCSRC=_BV(URSEL)/*|_BV(USBS)*/|_BV(UCSZ1)|_BV(UCSZ0);       //8 бит, 1 стоп, нет контрол€ четности
 #else
- UCSRC=/*|(1<<USBS)*/(1<<UCSZ1)|(1<<UCSZ0);                  //8 бит, 1 стоп, нет контрол€ четности
+ UCSRC=/*_BV(USBS)|*/_BV(UCSZ1)|_BV(UCSZ0);                  //8 бит, 1 стоп, нет контрол€ четности
 #endif
 
  uart.send_size = 0;                                         //передатчик ни чем не озабочен
@@ -638,10 +657,9 @@ void uart_init(uint16_t baud)
 /**Interrupt handler for the transfer of bytes through the UART (transmitter data register empty)
  *ќбработчик прерывани€ по передаче байтов через UART (регистр данных передатчика пуст)
  */
-#pragma vector=USART_UDRE_vect
-__interrupt void usart_udre_isr(void)
+ISR(USART_UDRE_vect)
 {
- //__enable_interrupt();
+ //_ENABLE_INTERRUPT();
 
  if (uart.send_size > 0)
  {
@@ -656,13 +674,12 @@ __interrupt void usart_udre_isr(void)
 }
 
 /**Interrupt handler for receive data through the UART */
-#pragma vector=USART_RXC_vect
-__interrupt void usart_rx_isr()
+ISR(USART_RXC_vect)
 {
  static uint8_t state=0;
  uint8_t chr;
 
- //__enable_interrupt();
+ //_ENABLE_INTERRUPT();
  chr = UDR;
  switch(state)
  {

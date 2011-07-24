@@ -25,10 +25,12 @@
  * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
-#include <ioavr.h>
-#include <inavr.h>
-#include "eeprom.h"
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
 #include "bitmask.h"
+#include "eeprom.h"
 
 /**Describes information is necessary for storing of data into EEPROM
  * (Описывает информацию необходимую для сохранения данных в EEPROM)
@@ -47,15 +49,15 @@ typedef struct
 eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
 /** Initiates process of byte's writing (инициирует процесс записи байта в EEPROM) */
-#define EE_START_WR_BYTE()  {EECR|= (1<<EEMWE);  EECR|= (1<<EEWE);}
+#define EE_START_WR_BYTE()  {EECR|= _BV(EEMWE);  EECR|= _BV(EEWE);}
 
 uint8_t eeprom_take_completed_opcode(void)
 {
  uint8_t result;
- __disable_interrupt();
+ _DISABLE_INTERRUPT();
  result = eewd.completed_opcode;
  eewd.completed_opcode = 0;
- __enable_interrupt();
+ _ENABLE_INTERRUPT();
  return result;
 }
 
@@ -81,8 +83,7 @@ uint8_t eeprom_is_idle(void)
  * (Обработчик прерывания от EEPROM при завершении работы автомата всегда заносим в
  * регистр адреса - адрес нулевой ячейки).
  */
-#pragma vector=EE_RDY_vect
-__interrupt void ee_ready_isr(void)
+ISR(EE_RDY_vect)
 {
  switch(eewd.eews)
  {
@@ -116,10 +117,10 @@ void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
  uint8_t *dest = (uint8_t*)sram_dest;
  do
  {
-  _t=__save_interrupt();
-  __disable_interrupt();
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
   __EEGET(*dest,eeaddr);
-  __restore_interrupt(_t);
+  _RESTORE_INTERRUPT(_t);
 
   eeaddr++;
   dest++;
@@ -134,10 +135,10 @@ void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size)
  uint8_t *src = (uint8_t*)sram_src;
  do
  {
-  _t=__save_interrupt();
-  __disable_interrupt();
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
   __EEPUT(eeaddr, *src);
-  __restore_interrupt(_t);
+  _RESTORE_INTERRUPT(_t);
 
   eeaddr++;
   src++;

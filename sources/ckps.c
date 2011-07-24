@@ -24,11 +24,13 @@
  * (Реализация обработки датчика положения коленвала).
  */
 
-#include <inavr.h>
-#include <ioavr.h>
-#include "ckps.h"
-#include "bitmask.h"
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
 #include "adc.h"
+#include "bitmask.h"
+#include "ckps.h"
 #include "magnitude.h"
 
 #include "secu3.h"
@@ -141,23 +143,27 @@ ckpsstate_t ckps;                         //!< instance of state variables
 chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's state variables
 
 /** Arrange in the free I/O registers (размещаем в свободных регистрах ввода/вывода) */
-__no_init volatile ckpsflags_t flags@0x22;
+#define flags ( (volatile ckpsflags_t*)(&TWAR) ) //note: may be not effective on other MCUs
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
-__no_init __regvar uint8_t TCNT0_H@15;
+#ifdef __ICCAVR__
+ __no_init __regvar uint8_t TCNT0_H@15;
+#else //GCC
+ uint8_t TCNT0_H __attribute__((section (".noinit")));
+#endif
 
-__monitor
 void ckps_init_state_variables(void)
 {
+ uint8_t i;
+ _BEGIN_ATOMIC_BLOCK();
 #ifndef COIL_REGULATION
  //at the first interrupt will generate an end trigger pulse ignition
  //(при первом же прерывании будет сгенерирован конец импульса запуска зажигания) 
- uint8_t i;
  for(i = 0; i < IGN_CHANNELS_MAX; i++)
   chanstate[i].ignition_pulse_cogs = 0;
 #else
  ckps.cr_acc_time = 0;
- flags.ckps_period_min = 1;
+ flags->ckps_period_min = 1;
 #endif
 
  ckps.cog = 0;
@@ -167,35 +173,38 @@ void ckps_init_state_variables(void)
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
  
- flags.ckps_need_to_set_channel = 0;
- flags.ckps_new_engine_cycle_happen = 0;
- flags.ckps_is_synchronized = 0;
- flags.ckps_ign_enabled = 1;
+ flags->ckps_need_to_set_channel = 0;
+ flags->ckps_new_engine_cycle_happen = 0;
+ flags->ckps_is_synchronized = 0;
+ flags->ckps_ign_enabled = 1;
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
+ _END_ATOMIC_BLOCK();
 }
 
-__monitor
 void ckps_init_state(void)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ckps_init_state_variables();
- flags.ckps_error_flag = 0;
+ flags->ckps_error_flag = 0;
 
  //Compare channels do not connected to lines of ports (normal port mode)
  //(Каналы Compare неподключены к линиям портов (нормальный режим портов))
  TCCR1A = 0; 
 
  //(Noise reduction(подавление шума), rising edge of capture(передний фронт захвата), clock = 250kHz)
- TCCR1B = (1<<ICNC1)|(1<<ICES1)|(1<<CS11)|(1<<CS10);
+ TCCR1B = _BV(ICNC1)|_BV(ICES1)|_BV(CS11)|_BV(CS10);
 
  //enable input capture and Compare A interrupts of timer 1, also overflow interrupt of timer 0
  //(разрешаем прерывание по захвату и сравнению А таймера 1, а также по переполнению таймера 0)
- TIMSK|= (1<<TICIE1)/*|(1<<OCIE1A)*/|(1<<TOIE0);
+ TIMSK|= _BV(TICIE1)/*|_BV(OCIE1A)*/|_BV(TOIE0);
+ _END_ATOMIC_BLOCK();
 }
 
-__monitor
 void ckps_set_advance_angle(int16_t angle)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ckps.advance_angle_buffered = angle;
+ _END_ATOMIC_BLOCK();
 }
 
 void ckps_init_ports(void)
@@ -218,7 +227,6 @@ void ckps_init_ports(void)
  DDRC|= (1<<DDC1)|(1<<DDC0); //3-4 ignition channels - for 6 and 8 cylinder engines (3-4 каналы зажигания - для 6 и 8 ц. двигателей)
 }
 
-
 //Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine 
 //(for example for 4-cylinder, 4-stroke it is 180 degrees) 
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
@@ -228,9 +236,9 @@ void ckps_init_ports(void)
 uint16_t ckps_calculate_instant_freq(void)
 {
  uint16_t period;
- __disable_interrupt();
+ _DISABLE_INTERRUPT();
  period = ckps.half_turn_period;           //ensure atomic acces to variable (обеспечиваем атомарный доступ к переменной)
- __enable_interrupt();
+ _ENABLE_INTERRUPT();
 
  //if equal to minimum, this means engine is stopped (если самый минимум, значит двигатель остановился)
  if (period!=0xFFFF)
@@ -239,13 +247,14 @@ uint16_t ckps_calculate_instant_freq(void)
   return 0;
 }
 
-__monitor
 void ckps_set_edge_type(uint8_t edge_type)
 {
+ _BEGIN_ATOMIC_BLOCK();
  if (edge_type)
   TCCR1B|= (1<<ICES1);
  else
   TCCR1B&=~(1<<ICES1);
+ _END_ATOMIC_BLOCK();
 }
 
 /**
@@ -267,8 +276,8 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  // pre-compute and store the reference points (teeth) (заранее вычисляем и сохраняем опорные точки (зубья))
  // cogs_per_cycle - number of wheel teeth attributable to a single cycle of engine (количество зубьев шкива приходящиеся на один такт двигателя)
  uint8_t cogs_per_cycle = (WHEEL_COGS_NUM) / ckps.chan_number;
-  _t=__save_interrupt();
- __disable_interrupt();
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
  {
   uint8_t tdc = (cogs_btdc + i * cogs_per_cycle);
@@ -278,69 +287,72 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
   chanstate[i].knock_wnd_end = _normalize_tn(tdc + ckps.knock_wnd_end_abs);
  }
  ckps.cogs_btdc = cogs_btdc;
- __restore_interrupt(_t);
+ _RESTORE_INTERRUPT(_t);
 }
 
 #ifndef COIL_REGULATION
-__monitor
 void ckps_set_ignition_cogs(uint8_t cogs)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ckps.ignition_cogs = cogs;
+ _END_ATOMIC_BLOCK();
 }
 #else
-__monitor
 void ckps_set_acc_time(uint16_t i_acc_time)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ckps.cr_acc_time = i_acc_time;
+ _END_ATOMIC_BLOCK();
 }
 #endif
 
 uint8_t ckps_is_error(void)
 {
- return flags.ckps_error_flag;
+ return flags->ckps_error_flag;
 }
 
 void ckps_reset_error(void)
 {
- flags.ckps_error_flag = 0;
+ flags->ckps_error_flag = 0;
 }
 
 void ckps_use_knock_channel(uint8_t use_knock_channel)
 {
- flags.ckps_use_knock_channel = use_knock_channel;
+ flags->ckps_use_knock_channel = use_knock_channel;
 }
 
-__monitor
 uint8_t ckps_is_cycle_cutover_r()
 {
  uint8_t result;
- result = flags.ckps_new_engine_cycle_happen;
- flags.ckps_new_engine_cycle_happen = 0;
+ _BEGIN_ATOMIC_BLOCK();
+ result = flags->ckps_new_engine_cycle_happen;
+ flags->ckps_new_engine_cycle_happen = 0;
+ _END_ATOMIC_BLOCK();
  return result;
 }
 
-__monitor
 uint8_t ckps_get_current_cog(void)
 {
  return ckps.cog;
 }
 
-__monitor
 uint8_t ckps_is_cog_changed(void)
 {
  static uint8_t prev_cog = 0;
- if (prev_cog!=ckps.cog)
+ uint8_t value = ckps.cog;
+ if (prev_cog != value)
  {
-  prev_cog = ckps.cog;
+  prev_cog = value;
   return 1;
  }
  return 0;
 }
 
-__monitor
 void ckps_set_cyl_number(uint8_t i_cyl_number)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ckps.chan_number = i_cyl_number >> 1; //single ignition channel for two cylinders (один канал зажигания на 2 цилиндра)
+ _END_ATOMIC_BLOCK();
 
  switch(i_cyl_number)
  {
@@ -365,20 +377,20 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
 
  cogs_per_cycle = (WHEEL_COGS_NUM) / ckps.chan_number;
- _t=__save_interrupt();
- __disable_interrupt();
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
  {
   uint8_t tdc = (ckps.cogs_btdc + i * cogs_per_cycle);
   chanstate[i].knock_wnd_begin = _normalize_tn(tdc + ckps.knock_wnd_begin_abs);
   chanstate[i].knock_wnd_end = _normalize_tn(tdc + ckps.knock_wnd_end_abs);
  }
- __restore_interrupt(_t);
+ _RESTORE_INTERRUPT(_t);
 }
 
 void ckps_enable_ignition(uint8_t i_cutoff)
 {
- flags.ckps_ign_enabled = i_cutoff;
+ flags->ckps_ign_enabled = i_cutoff;
 }
 
 /**Helpful macro.
@@ -410,10 +422,10 @@ void ckps_enable_ignition(uint8_t i_cutoff)
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
  */
-#pragma inline
+INLINE
 void turn_off_ignition_channel(uint8_t i_channel)
 {
- if (!flags.ckps_ign_enabled)
+ if (!flags->ckps_ign_enabled)
   return; //ignition disabled
  //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
  //the igniter go to the regime of energy accumulation
@@ -432,8 +444,7 @@ void turn_off_ignition_channel(uint8_t i_channel)
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
  */
-#pragma vector=TIMER1_COMPA_vect
-__interrupt void timer1_compa_isr(void)
+ISR(TIMER1_COMPA_vect)
 {
 #ifdef COIL_REGULATION
  uint16_t timer_value = TCNT1;
@@ -458,7 +469,7 @@ __interrupt void timer1_compa_isr(void)
  }
 
 #ifdef COIL_REGULATION
- if (!flags.ckps_period_min)
+ if (!flags->ckps_period_min)
  {
   ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
   delay = ckps.period_curr * (WHEEL_COGS_NUM / ckps.chan_number);
@@ -480,8 +491,7 @@ __interrupt void timer1_compa_isr(void)
 /**Interrupt handler for Compare/Match channel B of timer T1. Used for coil regulation.
  * вектор прерывания по совпадению канала B таймера Т1. Используется для управления накоплением энергии КЗ.
  */
-#pragma vector=TIMER1_COMPB_vect
-__interrupt void timer1_compb_isr(void)
+ISR(TIMER1_COMPB_vect)
 {
  TIMSK&= ~(1<<OCIE1B); //запрещаем прерывание
  //start accumulation
@@ -495,7 +505,7 @@ __interrupt void timer1_compb_isr(void)
  * Предполагается что вызов этой функции будет происходить при запрещенных прерываниях)
  * \param value value for load into timer (значение для загрузки в таймер)
  */
-#pragma inline
+INLINE
 void set_timer0(uint16_t value)
 {
  TCNT0_H = GETBYTE(value, 1);
@@ -513,7 +523,7 @@ uint8_t sync_at_startup(void)
  {
   case 0: //skip certain number of teeth (пропуск определенного кол-ва зубьев)
    /////////////////////////////////////////
-   flags.ckps_is_valid_half_turn_period = 0;
+   flags->ckps_is_valid_half_turn_period = 0;
    /////////////////////////////////////////
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
     ckps.starting_mode = 1;
@@ -521,7 +531,7 @@ uint8_t sync_at_startup(void)
   case 1: //find out synchro-label (поиск синхрометки)
    if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
    {
-    flags.ckps_is_synchronized = 1;
+    flags->ckps_is_synchronized = 1;
     ckps.period_curr = ckps.period_prev;  //exclude value of synchro-label's period
     ckps.cog = 1; //first tooth (1-й зуб)
     return 1; //finish process of synchronization (конец процесса синхронизации)
@@ -546,10 +556,10 @@ void process_ckps_cogs(void)
  //CKP processing creates a big delay which negatively affects cooling fan's PWM. We
  //need to enable T/C 2 interrupts. TODO: it is bad idea to enable all interrupts 
  //here. We need only OCIE2 and TOIE2.
- __enable_interrupt();
+ _ENABLE_INTERRUPT();
 #endif
 
- if (flags.ckps_use_knock_channel)
+ if (flags->ckps_use_knock_channel)
  {
   for(i = 0; i < ckps.chan_number; ++i)
   {
@@ -577,7 +587,7 @@ void process_ckps_cogs(void)
   if (ckps.cog == chanstate[i].cogs_latch)
   {
    ckps.channel_mode = i;          //remember number of channel (запоминаем номер канала)
-   flags.ckps_need_to_set_channel = 1; //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
+   flags->ckps_need_to_set_channel = 1; //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
    ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * WHEEL_LATCH_BTDC; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
@@ -593,15 +603,15 @@ void process_ckps_cogs(void)
   { 
    //if it was overflow, then set the maximum possible time
    //если было переполнение то устанавливаем максимально возможное время
-   if (((ckps.period_curr > 1250) || !flags.ckps_is_valid_half_turn_period))
+   if (((ckps.period_curr > 1250) || !flags->ckps_is_valid_half_turn_period))
     ckps.half_turn_period = 0xFFFF;
    else
     ckps.half_turn_period = (GetICR() - ckps.measure_start_value);
 
    ckps.measure_start_value = GetICR();
-   flags.ckps_is_valid_half_turn_period = 1;
+   flags->ckps_is_valid_half_turn_period = 1;
    /////////////////////////////////////////
-   flags.ckps_new_engine_cycle_happen = 1; //set the cycle-synchronozation event (устанавливаем событие цикловой синхронизации)
+   flags->ckps_new_engine_cycle_happen = 1; //set the cycle-synchronozation event (устанавливаем событие цикловой синхронизации)
    /////////////////////////////////////////
   }
  }
@@ -613,14 +623,14 @@ void process_ckps_cogs(void)
  #else
  if (ckps.period_curr >= 4000 )
  #endif 
-  flags.ckps_period_min = 1;
+  flags->ckps_period_min = 1;
  else 
-  flags.ckps_period_min = 0;
+  flags->ckps_period_min = 0;
 #endif
 
  //Preparing to start the ignition for the current channel (if the right moment became)
  //подготовка к запуску зажигания для текущего канала (если наступил нужный момент)
- if (flags.ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
+ if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
  {
   diff = ckps.current_angle - ckps.advance_angle;
   if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
@@ -630,10 +640,10 @@ void process_ckps_cogs(void)
    //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
    TIFR = (1 << OCF1A);
-   flags.ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
+   flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    TIMSK|= (1<<OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
 #ifdef COIL_REGULATION
-   if (flags.ckps_period_min)
+   if (flags->ckps_period_min)
    {
     ckps.channel_mode_b = ckps.channel_mode;
     OCR1B = OCR1A - ckps.cr_acc_time;
@@ -666,8 +676,7 @@ void process_ckps_cogs(void)
 /**Input capture interrupt of timer 1 (called at passage of each tooth)
  * прерывание по захвату таймера 1 (вызывается при прохождении очередного зуба)
  */
-#pragma vector=TIMER1_CAPT_vect
-__interrupt void timer1_capt_isr(void)
+ISR(TIMER1_CAPT_vect)
 {
  ckps.period_curr = GetICR() - ckps.icr_prev;
 
@@ -675,7 +684,7 @@ __interrupt void timer1_capt_isr(void)
  //the memory of previous periods. Then look for synchro-label.
  //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации 
  //памяти предыдущих периодов. Затем ищем синхрометку.
- if (!flags.ckps_is_synchronized)
+ if (!flags->ckps_is_synchronized)
  {
   if (sync_at_startup())
    goto synchronized_enter;
@@ -689,7 +698,7 @@ __interrupt void timer1_capt_isr(void)
  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
  {
   if ((ckps.cog != (WHEEL_COGS_NUM + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
-   flags.ckps_error_flag = 1; //ERROR
+   flags->ckps_error_flag = 1; //ERROR
   ckps.cog = 1; //first tooth (1-й зуб)
   ckps.period_curr = ckps.period_prev;  //exclude value of synchro-label's period
  }
@@ -715,8 +724,7 @@ synchronized_enter:
  * for processing teeth when set 16 bit timer expires
  * (Задача этого обработчика дополнять таймер до 16-ти разрядов и вызывать процедуру
  * обработки зубьев по истечении установленного 16-ти разряюного таймера). */
-#pragma vector=TIMER0_OVF_vect
-__interrupt void timer0_ovf_isr(void)
+ISR(TIMER0_OVF_vect)
 {
  if (TCNT0_H!=0)  //Did high byte exhausted (старший байт не исчерпан) ?
  {

@@ -25,61 +25,73 @@
 
 #ifndef _COMPILOPT_H_
 #define _COMPILOPT_H_
+
+#include "port/port.h"
            
-#ifdef __ATmega16__
+/**ATmega16 target */
+#ifdef _PLATFORM_M16_
  #define COPT_ATMEGA16 1
 #else
  #define COPT_ATMEGA16 0
 #endif
 
-#ifdef __ATmega32__
+/**ATmega32 target */
+#ifdef _PLATFORM_M32_
  #define COPT_ATMEGA32 1
 #else
  #define COPT_ATMEGA32 0
 #endif
 
-#ifdef __ATmega64__
+/**ATmega64 target */
+#ifdef _PLATFORM_M64_
  #define COPT_ATMEGA64 1
 #else
  #define COPT_ATMEGA64 0
 #endif
 
-#ifdef __ATmega128__
+/**ATmega128 target */
+#ifdef _PLATFORM_M128_
  #define COPT_ATMEGA128 1
 #else
  #define COPT_ATMEGA128 0
 #endif
 
+/**Use VPSEM mode */
 #ifdef VPSEM
  #define COPT_VPSEM 1
 #else
  #define COPT_VPSEM 0
 #endif
 
+/** Use 36-1 crank */
 #ifdef WHEEL_36_1
  #define COPT_WHEEL_36_1 1
 #else
  #define COPT_WHEEL_36_1 0
 #endif
 
+/** Inverse ignition outputs */
 #ifdef INVERSE_IGN_OUTPUTS
  #define COPT_INVERSE_IGN_OUTPUTS 1
 #else
  #define COPT_INVERSE_IGN_OUTPUTS 0
 #endif
 
+/** Use coil regulation */
 #ifdef COIL_REGULATION
  #define COPT_COIL_REGULATION 1
 #else
  #define COPT_COIL_REGULATION 0
 #endif
 
+/** Use PWM for cooling fan*/
 #ifdef COOLINGFAN_PWM
  #define COPT_COOLINGFAN_PWM 1
 #else
  #define COPT_COOLINGFAN_PWM 0
 #endif
 
+/** Allow realtime editing of tables */
 #ifdef REALTIME_TABLES
  #define COPT_REALTIME_TABLES 1
 #else

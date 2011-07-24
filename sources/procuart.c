@@ -24,8 +24,9 @@
  * (Реализация обработки поступающих данных для приема/передачи через последовательный интерфейс (UART)).
  */
 
-#include <inavr.h>
-#include <pgmspace.h>
+#include "port/pgmspace.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
 #include <stdint.h>
 #include "ce_errors.h"
 #include "ckps.h"
@@ -46,7 +47,7 @@ void load_selected_tables_into_ram(struct ecudata_t* d)
  {
   //load gas tables
   if (d->param.fn_gas < TABLES_NUMBER)
-   memcpy_P(&d->tables_ram[1], &tables[d->param.fn_gas], sizeof(f_data_t));
+   memcpy_P(&d->tables_ram[1], &fw_data.tables[d->param.fn_gas], sizeof(f_data_t));
   else
    eeprom_read(&d->tables_ram[1], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gas-TABLES_NUMBER)), sizeof(f_data_t));
   d->fn_gas_prev = d->param.fn_gas;
@@ -58,7 +59,7 @@ void load_selected_tables_into_ram(struct ecudata_t* d)
  {
   //load gasoline tables
   if (d->param.fn_gasoline < TABLES_NUMBER)
-   memcpy_P(&d->tables_ram[0], &tables[d->param.fn_gasoline], sizeof(f_data_t));
+   memcpy_P(&d->tables_ram[0], &fw_data.tables[d->param.fn_gasoline], sizeof(f_data_t));
   else
    eeprom_read(&d->tables_ram[0], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gasoline-TABLES_NUMBER)), sizeof(f_data_t));  
   d->fn_gasoline_prev = d->param.fn_gasoline;

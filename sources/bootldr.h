@@ -27,6 +27,7 @@
 #ifndef _BOOTLDR_H_
 #define _BOOTLDR_H_
 
+#include "port/port.h"
 #include <stdint.h>
 
 /**Define size of boot loader's section depending on selected platform.
@@ -34,11 +35,11 @@
  * (Определяем размер секции бутлоадера в зависимости от выбранной платформы.
  * Везде используется размер загрузчика соответствующий значению SECONDBOOTSTART)
  */
-#ifdef __ATmega16__
+#ifdef _PLATFORM_M16_
  #define BOOT_LOADER_SIZE  512
-#elif __ATmega32__
+#elif defined _PLATFORM_M32_
  #define BOOT_LOADER_SIZE  1024
-#elif __ATmega64__
+#elif defined _PLATFORM_M64_
  #define BOOT_LOADER_SIZE  2048
 #else
  #error "Not supported platform!"

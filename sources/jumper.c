@@ -24,7 +24,9 @@
  * (Реализация обработки перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
  */
 
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/port.h"
+#include "bitmask.h"
 #include "jumper.h"
 
 /**Retrieves state of jumper from port's pin */
@@ -32,8 +34,8 @@
 
 void jumper_init_ports(void)
 {
- DDRC &= ~((1<<DDC3)|(1<<DDC2)); //inputs (входы)
- PORTC|= (1<<PC3)|(1<<PC2);
+ DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
+ PORTC|= _BV(PC3)|_BV(PC2);
 }
 
 uint8_t jumper_get_defeeprom_state(void)

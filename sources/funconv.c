@@ -24,21 +24,22 @@
  * (–еализаци€ основной части математического аппарата и логики регулировани€).
  */
 
-#include <ioavr.h>
+#include "port/pgmspace.h"
+#include "port/port.h"
 #include <stdlib.h>
-#include "funconv.h"
 #include "adc.h"
 #include "ckps.h"
+#include "funconv.h"
+#include "magnitude.h"
 #include "secu3.h"
 #include "vstimer.h"
-#include "magnitude.h"
 
 
 //данные массивы констант задают сетку по оси оборотов, дл€ рабочей карты и карты ’’.
 /**Array which contains RPM axis's grid bounds */
-__flash int16_t f_slots_ranges[16] = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500};
+PGM_DECLARE(int16_t f_slots_ranges[16]) = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500};
 /**Array which contains RPM axis's grid sizes */
-__flash int16_t f_slots_length[15] = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140};
+PGM_DECLARE(int16_t f_slots_length[15]) = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140};
 
 // ‘ункци€ билинейной интерпол€ции (поверхность)
 // x, y - значени€ аргументов интерполируемой функции
@@ -76,13 +77,13 @@ int16_t idling_function(struct ecudata_t* d)
 
  //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы
  for(i = 14; i >= 0; i--)
-  if (d->sens.inst_frq >= f_slots_ranges[i]) break;
+  if (d->sens.inst_frq >= PGM_GET_WORD(&f_slots_ranges[i])) break;
 
  if (i < 0)  {i = 0; rpm = 600;}
 
  return simple_interpolation(rpm,
-             d->fn_dat->f_idl[i],d->fn_dat->f_idl[i+1],
-             f_slots_ranges[i],f_slots_length[i]);
+             PGM_GET_BYTE(&d->fn_dat->f_idl[i]), PGM_GET_BYTE(&d->fn_dat->f_idl[i+1]),
+             PGM_GET_WORD(&f_slots_ranges[i]), PGM_GET_WORD(&f_slots_length[i]));
 }
 
 
@@ -99,7 +100,7 @@ int16_t start_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
   else i1 = i + 1;
 
- return simple_interpolation(rpm,d->fn_dat->f_str[i],d->fn_dat->f_str[i1], (i * 40) + 200, 40);
+ return simple_interpolation(rpm, PGM_GET_BYTE(&d->fn_dat->f_str[i]), PGM_GET_BYTE(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40);
 }
 
 
@@ -133,20 +134,20 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
 
  //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы
  for(f = 14; f >= 0; f--)
-  if (rpm >= f_slots_ranges[f]) break;
+  if (rpm >= PGM_GET_WORD(&f_slots_ranges[f])) break;
 
  //рабоча€ карта работает на 600-х оборотах и выше
  if (f < 0)  {f = 0; rpm = 600;}
   fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
-	  d->fn_dat->f_wrk[l][f],
-	  d->fn_dat->f_wrk[lp1][f],
-	  d->fn_dat->f_wrk[lp1][fp1],
-	  d->fn_dat->f_wrk[l][fp1],
-	  f_slots_ranges[f],
+	  PGM_GET_BYTE(&d->fn_dat->f_wrk[l][f]),
+	  PGM_GET_BYTE(&d->fn_dat->f_wrk[lp1][f]),
+	  PGM_GET_BYTE(&d->fn_dat->f_wrk[lp1][fp1]),
+	  PGM_GET_BYTE(&d->fn_dat->f_wrk[l][fp1]),
+	  PGM_GET_WORD(&f_slots_ranges[f]),
 	  (gradient * l),
-	  f_slots_length[f],
+	  PGM_GET_WORD(&f_slots_length[f]),
 	  gradient);
 }
 
@@ -169,7 +170,7 @@ int16_t coolant_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t,d->fn_dat->f_tmp[i],d->fn_dat->f_tmp[i1],
+ return simple_interpolation(t, PGM_GET_BYTE(&d->fn_dat->f_tmp[i]), PGM_GET_BYTE(&d->fn_dat->f_tmp[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10));
 }
 
@@ -293,8 +294,8 @@ uint8_t knock_attenuator_function(struct ecudata_t* d)
  else
   i1 = i + 1;
 
- return simple_interpolation(rpm, fwdata.attenuator_table[i],
-        fwdata.attenuator_table[i1], (i * 60) + 200, 60) >> 4;
+ return simple_interpolation(rpm, PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i]),
+        PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i1]), (i * 60) + 200, 60) >> 4;
 }
 
 #ifdef COIL_REGULATION
@@ -310,7 +311,7 @@ uint16_t accumulation_time(struct ecudata_t* d)
  if (i >= COIL_ON_TIME_LOOKUP_TABLE_SIZE-1) i = i1 = COIL_ON_TIME_LOOKUP_TABLE_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(voltage, fwdata.coil_on_time[i], fwdata.coil_on_time[i1], 
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]), 
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4)) >> 4;
 }
 #endif

@@ -25,6 +25,7 @@
  * (Реализация Функций для вычисления контрольной суммы для данных в ОЗУ и в ПЗУ).
  */
 
+#include "port/port.h"
 #include "crc16.h"
 
 #define      P_16   0xA001     //!< polynomial (полином)
@@ -51,14 +52,14 @@ uint16_t crc = 0xffff;
 }
 
 //variant for FLASH (вариант для данных во FLASH)
-uint16_t crc16f(uint8_t __flash *buf, uint16_t num )
+uint16_t crc16f(uint8_t _PGM *buf, uint16_t num )
 {
 uint16_t i;
 uint16_t crc = 0xffff;
 
   while ( num-- )
   {
-    crc ^= *buf++;
+    crc ^= PGM_GET_BYTE(buf++);
     i = 8;
     do
     {

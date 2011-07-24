@@ -25,10 +25,12 @@
  * (Функции для работы с АЦП, считывание значений, преобразование в физические величины и т.д.).
  */
 
-#include <inavr.h>
-#include <ioavr.h>
-#include "bitmask.h"
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
 #include "adc.h"
+#include "bitmask.h"
 #include "secu3.h"
 
 /**номер канала используемого для ДАД */
@@ -57,28 +59,40 @@ typedef struct
 /** переменные состояния АЦП */
 adcstate_t adc;
 
-__monitor
 uint16_t adc_get_map_value(void)
 {
- return adc.map_value;
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.map_value;
+ _END_ATOMIC_BLOCK();
+ return value;
 }
 
-__monitor
 uint16_t adc_get_ubat_value(void)
 {
- return adc.ubat_value;
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.ubat_value;
+ _END_ATOMIC_BLOCK();
+ return value;
 }
 
-__monitor
 uint16_t adc_get_temp_value(void)
 {
- return adc.temp_value;
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.temp_value;
+ _END_ATOMIC_BLOCK();
+ return value;
 }
 
-__monitor
 uint16_t adc_get_knock_value(void)
 {
- return adc.knock_value;
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.knock_value;
+ _END_ATOMIC_BLOCK();
+ return value;
 }
 
 void adc_begin_measure(void)
@@ -124,22 +138,21 @@ void adc_init(void)
  //инициализация АЦП, параметры: f = 125.000 kHz,
  //внутренний источник опорного напряжения - 2.56V, прерывание разрешено
  ADMUX=ADC_VREF_TYPE;
- ADCSRA=(1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
+ ADCSRA=_BV(ADEN)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
 
  //модуль АЦП готов к новому измерению
  adc.sensors_ready = 1;
 
  //запрещаем компаратор - он нам не нужен
- ACSR=(1<<ACD);
+ ACSR=_BV(ACD);
 }
 
 /**прерывание по завершению преобразования АЦП. Измерение значений всех аналоговых датчиков. После запуска
  * измерения это прерывание будет вызыватся для каждого входа, до тех пор пока все входы не будут обработаны.
  */
-#pragma vector=ADC_vect
-__interrupt void ADC_isr(void)
+ISR(ADC_vect)
 {
- __enable_interrupt();
+ _ENABLE_INTERRUPT();
 
  switch(ADMUX&0x07)
  {

@@ -25,8 +25,11 @@
  * (Реализация обслуживания чипа HIP9011 обрабатывающего сигнал детонации).
  */
 
-#include <inavr.h>
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/port.h"
+#include "bitmask.h"
 #include "knock.h"
 
 //HIP9011 - Knock Signal Processor.
@@ -96,8 +99,8 @@ uint8_t knock_module_initialize(void)
                          KSP_SET_CHANNEL | KSP_CHANNEL_0};
  uint8_t _t;
 
- _t=__save_interrupt();
- __disable_interrupt();
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
 
  //Setting HOLD mode for integrator and "Run" mode for chip at all.
  KSP_TEST = 1;
@@ -123,36 +126,37 @@ uint8_t knock_module_initialize(void)
   response = SPDR;
   if (response!=init_data[i])
   {
-   __restore_interrupt(_t);
+   _RESTORE_INTERRUPT(_t);
    return 0; //error - chip doesn't respond!
   }
  }
 
- __restore_interrupt(_t);
+ _RESTORE_INTERRUPT(_t);
  //Initialization completed successfully
  return 1;
 }
 
 //Initializes SPI in master mode
-__monitor
 void spi_master_init(void)
 {
+ _BEGIN_ATOMIC_BLOCK();
  // enable SPI, master, clock = fck/16, data on falling edge of SCK
- SPCR = (1 << SPE)|(1 << MSTR)|(1 << SPR0)|(1 << CPHA);
+ SPCR = _BV(SPE)|_BV(MSTR)|_BV(SPR0)|_BV(CPHA);
+ _END_ATOMIC_BLOCK();
 }
 
 //Sends one byte via SPI
 //i_byte - byte for sending
 void spi_master_transmit(uint8_t i_byte)
 {
- __no_operation();
- __no_operation();
+ _NO_OPERATION();
+ _NO_OPERATION();
  //Begin of sending
  SPDR = i_byte;
  //Waiting for completion of sending
  while(!(SPSR & (1 << SPIF)));
- __no_operation();
- __no_operation();
+ _NO_OPERATION();
+ _NO_OPERATION();
 }
 
 void knock_start_settings_latching(void)
@@ -173,22 +177,25 @@ uint8_t knock_is_latching_idle(void)
  return (ksp.ksp_interrupt_state) ? 0 : 1;
 }
 
-__monitor
 void knock_set_band_pass(uint8_t freq)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ksp.ksp_bpf = KSP_SET_BANDPASS | (freq & 0x3F);
+ _END_ATOMIC_BLOCK();
 }
 
-__monitor
 void knock_set_gain(uint8_t gain)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ksp.ksp_gain = KSP_SET_GAIN | (gain & 0x3F);
+ _END_ATOMIC_BLOCK();
 }
 
-__monitor
 void knock_set_int_time_constant(uint8_t inttime)
 {
+ _BEGIN_ATOMIC_BLOCK();
  ksp.ksp_inttime = KSP_SET_INTEGRATOR | (inttime & 0x1F);
+ _END_ATOMIC_BLOCK();
 }
 
 uint8_t knock_is_error(void)
@@ -202,8 +209,7 @@ void knock_reset_error(void)
 }
 
 /** Interrupt handler from SPI */
-#pragma vector=SPI_STC_vect
-__interrupt void spi_dataready_isr(void)
+ISR(SPI_STC_vect)
 {
  uint8_t t;
  //signal processor requires transition of CS into high level after each sent
@@ -245,8 +251,8 @@ __interrupt void spi_dataready_isr(void)
 
 void knock_init_ports(void)
 {
- PORTB|= (1<<PB4)|(1<<PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
- PORTD&=~(1<<PD3);          //INT/~HOLD = 0 (hold mode)
- DDRB |= (1<<DDB7)|(1<<DDB5)|(1<<DDB4)|(1<<DDB3);
- DDRD |= (1<<DDD3);
+ PORTB|= _BV(PB4)|_BV(PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
+ PORTD&=~_BV(PD3);          //INT/~HOLD = 0 (hold mode)
+ DDRB |= _BV(DDB7)|_BV(DDB5)|_BV(DDB4)|_BV(DDB3);
+ DDRD |= _BV(DDD3);
 }

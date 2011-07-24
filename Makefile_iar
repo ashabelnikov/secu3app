@@ -1,0 +1,63 @@
+###############################################################################
+# Maklefile for build firmware of SECU-3 project using IAR
+# Created by Alexey A. Shabelnikov, Kiev 17 July 2011. 
+# Note: It requires IAR compiler and linker
+# Also: Before using of this Makefile you must define environment variable IAR_HOME
+
+#include platform-specific options from another file
+include platform_cfg
+
+TARGET = secu-3_app
+OBJDIR = ./output
+CC = $(IAR_HOME)/avr/bin/iccavr.exe
+LD = $(IAR_HOME)/common/bin/xlink.exe
+
+# Compile options common for all C compilation units.
+CFLAGS = --cpu $(MCU)
+CFLAGS += -D LITTLE_ENDIAN_DATA_FORMAT -D ENABLE_BIT_DEFINITIONS -DREALTIME_TABLES 
+CFLAGS += -ms -e --initializers_in_flash
+CFLAGS += -s9 --cross_call_passes=1 --do_cross_call
+CFLAGS += --lock_regs 1
+CFLAGS += --eeprom_size $(EE_SIZE)
+
+# Linker flags
+LDFLAGS = -Fintel-standard -xs -s main
+LDFLAGS += -f $(IAR_HOME)/avr/config/$(LNKXCL)
+LDFLAGS += -l $(OBJDIR)/secu3.map
+LDFLAGS += -Z.boot_loader=$(BL_START) -Z.firmware_data=$(FWD_START)
+LIBS = $(IAR_HOME)/avr/lib/dlib/dl3s-ec-sf.r90
+
+# Include Directories
+INCLUDES = -I $(IAR_HOME)/avr/inc/dlib -I $(IAR_HOME)/avr/inc
+
+# Define all source files.
+SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
+	eeprom.c fuelecon.c funconv.c idlecon.c ignlogic.c \
+	jumper.c knklogic.c knock.c measure.c params.c \
+	procuart.c secu3.c starter.c suspendop.c tables.c \
+	uart.c ventilator.c vstimer.c
+
+# Define all object files.
+OBJECTS = $(SRC:%.c=$(OBJDIR)/%.r90)
+
+# Define all listing files.
+LST = $(SRC:%.c=$(OBJDIR)/%.lst)
+
+# Build
+all: OBJ_DIRS $(TARGET).a90
+
+#Create directory for object files
+OBJ_DIRS :
+	mkdir -p $(OBJDIR)
+
+# Compile
+$(OBJDIR)/%.r90 : sources/%.c 
+	$(CC) $(INCLUDES) $(CFLAGS) $< -o $@ -lC $(OBJDIR:%.r90=$(OBJDIR)/%.lst)
+
+#Link
+$(TARGET).a90: $(OBJECTS)
+	 $(LD) $(LDFLAGS) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET).a90
+
+# Clean target
+clean:
+	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(OBJDIR)/*.map 

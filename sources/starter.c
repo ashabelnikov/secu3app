@@ -24,11 +24,13 @@
  * (Реализация работы со стартером).
  */
 
-#include <ioavr.h>
+#include "port/avrio.h"
+#include "port/port.h"
+#include "bitmask.h"
+#include "ce_errors.h"
 #include "secu3.h"
 #include "starter.h"
 #include "vstimer.h"
-#include "ce_errors.h"
 
 /** Blocks/unblocks starter (блокирует/разблокирывает стартер) */
 #define SET_STARTER_BLOCKING_STATE(s) {PORTD_Bit7 = s;}
@@ -40,8 +42,8 @@ void starter_set_blocking_state(uint8_t i_state)
 
 void starter_init_ports(void)
 {
- PORTD|= (1<<PD7);    //starter is blocked (стартер заблокирован)
- DDRD |= (1<<DDD7);   //Output for starter (выход для стартера)
+ PORTD|= _BV(PD7);    //starter is blocked (стартер заблокирован)
+ DDRD |= _BV(DDD7);   //Output for starter (выход для стартера)
 }
 
 void starter_control(struct ecudata_t* d)

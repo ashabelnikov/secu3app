@@ -29,8 +29,9 @@
 #include "ignlogic.h"
 #include "secu3.h"
 
-void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d)
+int16_t advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d)
 {
+ int16_t angle;
  switch(d->engine_mode)
  {
   case EM_START: //режим пуска
@@ -39,9 +40,9 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
    }
-   d->curr_angle=start_function(d);               //базовый УОЗ - функция для пуска
-   d->airflow = 0;                                //в режиме пуска нет расхода
-   *padvance_angle_inhibitor_state = d->curr_angle;//в режиме пуска фильтр отключен
+   angle=start_function(d);                //базовый УОЗ - функция для пуска
+   d->airflow = 0;                         //в режиме пуска нет расхода
+   *padvance_angle_inhibitor_state = angle;//в режиме пуска фильтр отключен
    break;
 
   case EM_IDLE: //режим холостого хода
@@ -49,10 +50,10 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct
    {
     d->engine_mode = EM_WORK;
    }
-   work_function(d, 1);                           //обновляем значение расхода воздуха
-   d->curr_angle = idling_function(d);            //базовый УОЗ - функция для ХХ
-   d->curr_angle+=coolant_function(d);            //добавляем к УОЗ температурную коррекцию
-   d->curr_angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+   work_function(d, 1);                    //обновляем значение расхода воздуха
+   angle = idling_function(d);             //базовый УОЗ - функция для ХХ
+   angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
+   angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
    break;
 
   case EM_WORK: //рабочий режим
@@ -61,14 +62,15 @@ void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
    }
-   d->curr_angle=work_function(d, 0);           //базовый УОЗ - функция рабочего режима
-   d->curr_angle+=coolant_function(d);          //добавляем к УОЗ температурную коррекцию
+   angle=work_function(d, 0);              //базовый УОЗ - функция рабочего режима
+   angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
    //отнимаем поправку полученную от регулятора по детонации
-   d->curr_angle-=d->knock_retard;
+   angle-=d->knock_retard;
    break;
 
   default:  //непонятная ситуация - угол в ноль
-   d->curr_angle = 0;
+   angle = 0;
    break;
  }
+ return angle; //return calculated advance angle
 }

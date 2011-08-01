@@ -44,7 +44,8 @@ struct ecudata_t;
  * \param padvance_angle_inhibitor_state pointer to data structure storing information about inhibition
  *        of alternating speed of advane angle
  * \param d pointer to ECU data structure
+ * \return advance angle
  */
-void advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d);
+int16_t advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d);
 
 #endif //_IGNLOGIC_H_

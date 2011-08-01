@@ -244,29 +244,17 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m)
 {
  int16_t difference;
-
- static uint8_t tact = 0; //TODO: move it into 'state' structure
-
- //experiment: skip every four tacts (for 4-cylinder engine)
- if (tact < 4)
- {
-  ++tact;
-  return *ip_prev_state;
- }
- tact = 0;
- ////////////////////////////////////////////////////////////
-
  difference = new_advance_angle - *ip_prev_state;
 
  if (difference > intstep_p)
  {
-  (*ip_prev_state)+=intstep_p;
+  (*ip_prev_state)+= intstep_p;
   return *ip_prev_state;
  }
 
  if (difference < -intstep_m)
  {
-  (*ip_prev_state)-=intstep_m;
+  (*ip_prev_state)-= intstep_m;
   return *ip_prev_state;
  }
 

@@ -97,7 +97,8 @@ void init_ecu_data(struct ecudata_t* d)
 
 /**Main function of firmware - entry point */
 MAIN()
-{ 
+{
+ int16_t calc_adv_ang; 
  uint8_t turnout_low_priority_errors_counter = 255;
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
@@ -238,14 +239,14 @@ MAIN()
   //управление периферией
   control_engine_units(&edat);
   //КА состояний системы (диспетчер режимов - сердце основного цикла)
-  advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
+  calc_adv_ang = advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
   //добавляем к УОЗ октан-коррекцию
-  edat.curr_angle+=edat.param.angle_corr;
+  calc_adv_ang+=edat.param.angle_corr;
   //ограничиваем получившийся УОЗ установленными пределами
-  restrict_value_to(&edat.curr_angle, edat.param.min_angle, edat.param.max_angle);
+  restrict_value_to(&calc_adv_ang, edat.param.min_angle, edat.param.max_angle);
   //Если стоит режим нулевого УОЗ, то 0
   if (edat.param.zero_adv_ang)
-   edat.curr_angle = 0;
+   calc_adv_ang = 0;
 
 #ifdef COIL_REGULATION
   //calculate and update coil regulation time
@@ -266,7 +267,7 @@ MAIN()
 
    //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
    //за один рабочий цикл.
-   edat.curr_angle = advance_angle_inhibitor(edat.curr_angle, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
+   edat.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
 
    //----------------------------------------------
    if (edat.param.knock_use_knock_channel)

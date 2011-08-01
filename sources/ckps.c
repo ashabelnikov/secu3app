@@ -173,8 +173,7 @@ void ckps_init_state_variables(void)
  ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
- ckps.chan_mask = 0xFF; //no masking
- 
+
  flags->ckps_need_to_set_channel = 0;
  flags->ckps_new_engine_cycle_happen = 0;
  flags->ckps_is_synchronized = 0;

@@ -1,6 +1,6 @@
 
     SECU-3 Application software. Distributed under GPL license
-    
+
     Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka.
     Microprocessors systems - design & programming.
     http://secu-3.org e-mail: shabelnikov@secu-3.org
@@ -10,10 +10,13 @@
       Как компилировать проект
 
     It is possible to compile project for ATMega16, ATMega32, ATMega64. Version for ATMega64 compiles,
-but it will not work! You can compile the project using either IAR or WinAvr. Run configure.bat with 
-corresponding options (type of MCU and type of compiler), it will create Makefile and start building.
+but it will not work! You can compile the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
+    Under MS Windows: Run configure.bat with corresponding options (type of MCU and type of compiler),
+                      it will create Makefile and start building.
+    Under Linux:      Run configure.sh with option - type of MCU, it will create Makefile
+                      and start building.
     Проект можно скомпилировать под ATMega16, ATMega32, ATMega64. Для ATMega64 код компилируется, но
-работать он не будет! Вы можете компилировать проект используя IAR или WinAvr. Запустите configure.bat
+работать он не будет! Вы можете компилировать проект используя IAR или GCC. Запустите configure.bat
 c соответствующими опциями (тип микроконтроллера и тип компилятора), будет создан Makefile и начнется
 сборка проекта.
 

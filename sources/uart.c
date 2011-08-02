@@ -449,6 +449,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
  uart_begin_send();
 }
 
+//TODO: remove it from here. It must be in secu3.c, use callback. E.g. on_bl_starting()
+/** Initialization of used I/O ports (производит инициализацию линий портов) */
+void ckps_init_ports(void);
+
 uint8_t uart_recept_packet(struct ecudata_t* d)
 {
  //буфер приемника содержит дескриптор пакета и данные
@@ -470,10 +474,12 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    break;
 
   case BOOTLOADER:
+   //TODO: in the future use callback and move following code out
    //передатчик зан€т. необходимо подождать его освобождени€ и только потом запускать бутлоадер
    while (uart_is_sender_busy());
    //если в бутлоадере есть команда "cli", то эту строчку можно убрать
    _DISABLE_INTERRUPT();
+   ckps_init_ports();
    //прыгаем на бутлоадер мину€ проверку перемычки
    boot_loader_start();
    break;

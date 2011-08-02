@@ -482,7 +482,7 @@ ISR(TIMER1_COMPA_vect)
   delay = ckps.period_curr * (WHEEL_COGS_NUM / ckps.chan_number);
   if (ckps.cr_acc_time > delay)
   {
-   ckps.cr_acc_time = delay - 10;  //restrict and substract safe threshold value
+   ckps.cr_acc_time = delay - 120;  //restrict and substract safe threshold value
   }
   OCR1B = (timer_value + delay) - ckps.cr_acc_time;
   TIFR = (1 << OCF1B);

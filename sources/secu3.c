@@ -98,7 +98,7 @@ void init_ecu_data(struct ecudata_t* d)
 /**Main function of firmware - entry point */
 MAIN()
 {
- int16_t calc_adv_ang; 
+ int16_t calc_adv_ang = 0; 
  uint8_t turnout_low_priority_errors_counter = 255;
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
@@ -189,6 +189,8 @@ MAIN()
 
    if (edat.param.knock_use_knock_channel)
     knock_start_settings_latching();
+
+   edat.curr_angle = calc_adv_ang;
   }
 
   //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -239,7 +241,7 @@ MAIN()
   //управление периферией
   control_engine_units(&edat);
   //КА состояний системы (диспетчер режимов - сердце основного цикла)
-  calc_adv_ang = advance_angle_state_machine(&advance_angle_inhibitor_state,&edat);
+  calc_adv_ang = advance_angle_state_machine(&edat);
   //добавляем к УОЗ октан-коррекцию
   calc_adv_ang+=edat.param.angle_corr;
   //ограничиваем получившийся УОЗ установленными пределами
@@ -266,8 +268,11 @@ MAIN()
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
-   //за один рабочий цикл.
-   edat.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
+   //за один рабочий цикл. В режиме пуска фильтр УОЗ отключен.
+   if (EM_START == edat.engine_mode)
+    edat.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
+   else
+    edat.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
 
    //----------------------------------------------
    if (edat.param.knock_use_knock_channel)

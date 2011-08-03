@@ -29,7 +29,7 @@
 #include "ignlogic.h"
 #include "secu3.h"
 
-int16_t advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, struct ecudata_t* d)
+int16_t advance_angle_state_machine(struct ecudata_t* d)
 {
  int16_t angle;
  switch(d->engine_mode)
@@ -42,7 +42,6 @@ int16_t advance_angle_state_machine(int16_t* padvance_angle_inhibitor_state, str
    }
    angle=start_function(d);                //базовый УОЗ - функция для пуска
    d->airflow = 0;                         //в режиме пуска нет расхода
-   *padvance_angle_inhibitor_state = angle;//в режиме пуска фильтр отключен
    break;
 
   case EM_IDLE: //режим холостого хода

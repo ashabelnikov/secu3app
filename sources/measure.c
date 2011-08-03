@@ -60,13 +60,22 @@ uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaring
 uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaring of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
 
 //обновление буферов усреднения (частота вращения, датчики...)
-void meas_update_values_buffers(struct ecudata_t* d)
+void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 {
  static uint8_t  map_ai  = MAP_AVERAGING-1;
  static uint8_t  bat_ai  = BAT_AVERAGING-1;
  static uint8_t  tmp_ai  = TMP_AVERAGING-1;
  static uint8_t  frq_ai  = FRQ_AVERAGING-1;
  static uint8_t  frq4_ai = FRQ4_AVERAGING-1;
+
+ freq_circular_buffer[frq_ai] = d->sens.inst_frq;
+ (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
+
+ freq4_circular_buffer[frq4_ai] = d->sens.inst_frq;
+ (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--;
+
+ if (rpm_only)
+  return;
 
  map_circular_buffer[map_ai] = adc_get_map_value();
  (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;
@@ -76,12 +85,6 @@ void meas_update_values_buffers(struct ecudata_t* d)
 
  temp_circular_buffer[tmp_ai] = adc_get_temp_value();
  (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;
-
- freq_circular_buffer[frq_ai] = d->sens.inst_frq;
- (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
-
- freq4_circular_buffer[frq4_ai] = d->sens.inst_frq;
- (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--;
 
  d->sens.knock_k = adc_get_knock_value() * 2;
 }
@@ -133,7 +136,7 @@ void meas_initial_measure(struct ecudata_t* d)
   adc_begin_measure();
   while(!adc_is_measure_ready());
 
-  meas_update_values_buffers(d);
+  meas_update_values_buffers(d, 0); //<-- all
  }while(--i);
  _RESTORE_INTERRUPT(_t);
  meas_average_measured_values(d);

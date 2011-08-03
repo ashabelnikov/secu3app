@@ -31,7 +31,7 @@
 #include "tables.h"
 
 #define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
-#define FORCE_MEASURE_TIMEOUT_VALUE   50    //!< timeout value used to perform measurements when engine is stopped
+#define FORCE_MEASURE_TIMEOUT_VALUE   25    //!< timeout value used to perform measurements when engine is stopped
 #define CE_CONTROL_STATE_TIME_VALUE   50    //!< used for CE (flashing)
 #define ENGINE_ROTATION_TIMEOUT_VALUE 15    //!< timeout value used to determine that engine is stopped
 #define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator

@@ -191,6 +191,7 @@ MAIN()
     knock_start_settings_latching();
 
    edat.curr_angle = calc_adv_ang;
+   meas_update_values_buffers(&edat, 1);  //<-- update RPM only
   }
 
   //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -220,7 +221,7 @@ MAIN()
    }
 
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-   meas_update_values_buffers(&edat);
+   meas_update_values_buffers(&edat, 0);
   }
 
   //----------непрерывное выполнение-----------------------------------------
@@ -264,7 +265,7 @@ MAIN()
   //выполняем операции которые необходимо выполнять строго для каждого рабочего цикла.
   if (ckps_is_cycle_cutover_r())
   {
-   meas_update_values_buffers(&edat);
+   meas_update_values_buffers(&edat, 0);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину

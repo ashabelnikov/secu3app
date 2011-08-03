@@ -27,12 +27,15 @@
 #ifndef _MEASURE_H_
 #define _MEASURE_H_
 
+#include <stdint.h>
+
 struct ecudata_t;
 
 /**Update ring buffers with new data given from sensors and ADC
  * \param d pointer to ECU data structure
+ * \param rpm_only if != 0, then only RPM related buffers will be updated
  */
-void meas_update_values_buffers(struct ecudata_t* d);
+void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only);
 
 /**Perform avaraging using data from ring buffers
  * \param d pointer to ECU data structure

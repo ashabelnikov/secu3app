@@ -154,7 +154,7 @@ void spi_master_transmit(uint8_t i_byte)
  //Begin of sending
  SPDR = i_byte;
  //Waiting for completion of sending
- while(!(SPSR & (1 << SPIF)));
+ while(!(SPSR & _BV(SPIF)));
  _NO_OPERATION();
  _NO_OPERATION();
 }
@@ -169,7 +169,7 @@ void knock_start_settings_latching(void)
  SPDR = ksp.ksp_last_word = ksp.ksp_bpf;
  //enable interrupt, sending of the remaining data will be completed in
  //interrupt's state machine
- SPCR|= (1 << SPIE);
+ SPCR|= _BV(SPIE);
 }
 
 uint8_t knock_is_latching_idle(void)
@@ -243,7 +243,7 @@ ISR(SPI_STC_vect)
    if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;
    //disable interrupt and switch state machine into initial state - ready to new load
-   SPCR&= ~(1 << SPIE);
+   SPCR&= ~_BV(SPIE);
    ksp.ksp_interrupt_state = 0;
    break;
  }

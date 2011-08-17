@@ -62,7 +62,7 @@
 
 /** number of teeth that will be skipped at the start before synchronization
  * (количество зубов которое будет пропускаться при старте перед синхронизацией) */
-#define CKPS_ON_START_SKIP_COGS      30
+#define CKPS_ON_START_SKIP_COGS      5
 
 /** Access Input Capture Register */
 #define GetICR() (ICR1)
@@ -84,7 +84,7 @@ typedef struct
  uint8_t  ckps_use_knock_channel:1;          //!< flag which indicates using of knock channel (признак использования канала детонации)
  uint8_t  ckps_need_to_set_channel:1;        //!< indicates that it is necessary to set channel
 #ifdef COIL_REGULATION
- uint8_t  ckps_period_min:1;                 //!< Indicates that current torque period is very less comparatively to specified value
+ uint8_t  ckps_need_to_set_channel_b:1;      //!< Indicates that it is necessary to set channel (COMPB)
 #endif
  uint8_t  ckps_ign_enabled:1;                //!< Ignition enabled/disabled
 }ckpsflags_t;
@@ -112,6 +112,10 @@ typedef struct
 #ifdef COIL_REGULATION
  volatile uint16_t cr_acc_time;       //!< accumulation time for coil requlation (timer's ticks)
  uint8_t  channel_mode_b;             //!< determines which channel of the ignition to start accumulate at the moment (определяет какой канал зажигания будет накапливать энергию в данный момент)
+ uint32_t acc_delay;                  //!< delay between last ignition and next accumulation
+ uint16_t tmrval_saved;               //!< value of timer at the moment of each spark
+ uint16_t period_saved;               //!< inter-tooth period at the moment of each spark
+ uint8_t  add_period_taken;           //!< indicates that time between spark and next cog was taken into account
 #endif
  volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
 }ckpsstate_t;
@@ -164,7 +168,8 @@ void ckps_init_state_variables(void)
   chanstate[i].ignition_pulse_cogs = 0;
 #else
  ckps.cr_acc_time = 0;
- flags->ckps_period_min = 1;
+ ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
+ flags->ckps_need_to_set_channel_b = 0;
 #endif
 
  ckps.cog = 0;
@@ -215,17 +220,17 @@ void ckps_init_ports(void)
  //(после включения зажигания коммутаторы недолжны быть в режиме накопления,
  //поэтому устанавливаем на их входах низкий уровень)
 #ifndef INVERSE_IGN_OUTPUTS
- PORTD|= (1<<PD5)|(1<<PD4)|(1<<PD6); // 1st and 2nd ignition channels, pullup for ICP1 (1-й и 2-й каналы зажигания, подтяжка для ICP1)
- PORTC|= (1<<PC1)|(1<<PC0); //3rd and 4th ignition channels (3-й и 4-й каналы зажигания)
+ PORTD|= _BV(PD5)|_BV(PD4)|_BV(PD6); // 1st and 2nd ignition channels, pullup for ICP1 (1-й и 2-й каналы зажигания, подтяжка для ICP1)
+ PORTC|= _BV(PC1)|_BV(PC0); //3rd and 4th ignition channels (3-й и 4-й каналы зажигания)
 #else //outputs inversion mode (режим инверсии выходов)
- PORTD&= ~((1<<PD5)|(1<<PD4));
- PORTC&= ~((1<<PC1)|(1<<PC0));
- PORTD|=  (1<<PD6);
+ PORTD&= ~(_BV(PD5)|_BV(PD4));
+ PORTC&= ~(_BV(PC1)|_BV(PC0));
+ PORTD|= _BV(PD6);
 #endif
 
  //PD5,PD4,PC1,PC0 must be configurated as outputs (должны быть сконфигурированы как выходы)
- DDRD|= (1<<DDD5)|(1<<DDD4); //1-2 ignition channels - for 2 and 4 cylinder engines (1-2 каналы зажигания - для 2 и 4 ц. двигателей)
- DDRC|= (1<<DDC1)|(1<<DDC0); //3-4 ignition channels - for 6 and 8 cylinder engines (3-4 каналы зажигания - для 6 и 8 ц. двигателей)
+ DDRD|= _BV(DDD5)|_BV(DDD4); //1-2 ignition channels - for 2 and 4 cylinder engines (1-2 каналы зажигания - для 2 и 4 ц. двигателей)
+ DDRC|= _BV(DDC1)|_BV(DDC0); //3-4 ignition channels - for 6 and 8 cylinder engines (3-4 каналы зажигания - для 6 и 8 ц. двигателей)
 }
 
 //Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine 
@@ -252,9 +257,9 @@ void ckps_set_edge_type(uint8_t edge_type)
 {
  _BEGIN_ATOMIC_BLOCK();
  if (edge_type)
-  TCCR1B|= (1<<ICES1);
+  TCCR1B|= _BV(ICES1);
  else
-  TCCR1B&=~(1<<ICES1);
+  TCCR1B&=~_BV(ICES1);
  _END_ATOMIC_BLOCK();
 }
 
@@ -403,26 +408,26 @@ void ckps_set_merge_outs(uint8_t i_merge)
  * Generates end of accumulation pulse (moment of spark) for 1st,2nd,3rd,4th channels correspondingly
  * (Вспомогательный макрос. Конец импульса накачки (момент искры) для 1-го,2-го,3-го,4-го каналов соответственно). */
 #define TURNON_IGN_CHANNELS(){\
-  case 0: PORTD |= (1<<PORTD4);\
+  case 0: PORTD |= _BV(PORTD4);\
    break;\
-  case 1: PORTD |= (1<<PORTD5);\
+  case 1: PORTD |= _BV(PORTD5);\
    break;\
-  case 2: PORTC |= (1<<PORTC0);\
+  case 2: PORTC |= _BV(PORTC0);\
    break;\
-  case 3: PORTC |= (1<<PORTC1);\
+  case 3: PORTC |= _BV(PORTC1);\
    break;}
 
 /**Helpful macro. 
  * Generates end of ignition drive pulse for 1st,2nd,3rd,4th channels correspondingly
  * (Вспомогательный макрос. Конец импульса запуска зажигания для 1-го,2-го,3-го,4-го каналов соответственно) */
 #define TURNOFF_IGN_CHANNELS(){\
- case 0: PORTD &= ~(1<<PORTD4);\
+ case 0: PORTD &= ~_BV(PORTD4);\
   break;\
- case 1: PORTD &= ~(1<<PORTD5);\
+ case 1: PORTD &= ~_BV(PORTD5);\
   break;\
- case 2: PORTC &= ~(1<<PORTC0);\
+ case 2: PORTC &= ~_BV(PORTC0);\
   break;\
- case 3: PORTC &= ~(1<<PORTC1);\
+ case 3: PORTC &= ~_BV(PORTC1);\
   break;}
 
 /** Turn OFF specified ignition channel
@@ -449,15 +454,14 @@ void turn_off_ignition_channel(uint8_t i_channel)
 
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
- */
+ */                                                                        
 ISR(TIMER1_COMPA_vect)
 {
 #ifdef COIL_REGULATION
- uint16_t timer_value = TCNT1;
- uint16_t delay;
+ ckps.tmrval_saved = TCNT1;
 #endif
 
- TIMSK&= ~(1<<OCIE1A); //disable interrupt (запрещаем прерывание)
+ TIMSK&= ~_BV(OCIE1A); //disable interrupt (запрещаем прерывание)
 
  //line of port in the low level, now set it into a high level - makes the igniter to stop 
  //the accumulation of energy and close the transistor (spark)
@@ -475,19 +479,22 @@ ISR(TIMER1_COMPA_vect)
  }
 
 #ifdef COIL_REGULATION
- if (!flags->ckps_period_min)
- {
-  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
-  ckps.channel_mode_b&= ckps.chan_mask;
-  delay = ckps.period_curr * (WHEEL_COGS_NUM / ckps.chan_number);
-  if (ckps.cr_acc_time > delay)
-  {
-   ckps.cr_acc_time = delay - 120;  //restrict and substract safe threshold value
-  }
-  OCR1B = (timer_value + delay) - ckps.cr_acc_time;
-  TIFR = (1 << OCF1B);
-  TIMSK|= (1<<OCIE1B);
- }
+ ckps.acc_delay = ((uint32_t)ckps.period_curr) * (WHEEL_COGS_NUM / ckps.chan_number);
+ if (ckps.cr_acc_time > ckps.acc_delay-120)
+  ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us   
+ ckps.acc_delay-= ckps.cr_acc_time;
+ ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
+
+ ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
+ ckps.channel_mode_b&= ckps.chan_mask;
+ ckps.add_period_taken = 0;
+ flags->ckps_need_to_set_channel_b = 1;
+
+ //We remembered value of TCNT1 at the top of of this function. But input capture event
+ //may occur when interrupts were already disabled (by hardware) but value of timer is still
+ //not saved. Another words, ICR1 must not be less than tmrval_saved.
+ if (TIFR & _BV(ICF1))
+  ckps.tmrval_saved = ICR1;
 #else
  //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубьях)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
@@ -500,9 +507,10 @@ ISR(TIMER1_COMPA_vect)
  */
 ISR(TIMER1_COMPB_vect)
 {
- TIMSK&= ~(1<<OCIE1B); //запрещаем прерывание
+ TIMSK&= ~_BV(OCIE1B); //запрещаем прерывание
  //start accumulation
  turn_off_ignition_channel(ckps.channel_mode_b);
+ ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
 }
 #endif
 
@@ -517,7 +525,7 @@ void set_timer0(uint16_t value)
 {
  TCNT0_H = GETBYTE(value, 1);
  TCNT0 = 255 - GETBYTE(value, 0);
- TCCR0  = (1<<CS01)|(1<<CS00);
+ TCCR0  = _BV(CS01)|_BV(CS00);
 }
 
 /**Helpful function, used at the startup of engine
@@ -565,6 +573,32 @@ void process_ckps_cogs(void)
  //here. We need only OCIE2 and TOIE2.
  _ENABLE_INTERRUPT();
 #endif
+   
+#ifdef COIL_REGULATION
+ if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
+ {
+  //We must take into account time elapsed between last spark and following tooth.
+  //Because ICR1 can not be less than tmrval_saved we are using addition modulo 65535
+  //to calculate difference (elapsed time).
+  if (!ckps.add_period_taken)
+  {
+   ckps.acc_delay-=((uint16_t)(~ckps.tmrval_saved)) + 1 + GetICR();
+   ckps.add_period_taken = 1;
+  }
+  //Correct our prediction on each cog 
+  ckps.acc_delay+=((int32_t)ckps.period_curr - ckps.period_saved);
+
+  //Do we have to set COMPB ? (We have to set COMPB if less than 2 periods remain)
+  if (flags->ckps_need_to_set_channel_b && ckps.acc_delay <= (ckps.period_curr << 1))
+  {
+   OCR1B = GetICR() + ckps.acc_delay + ((int32_t)ckps.period_curr - ckps.period_saved);
+   TIFR = _BV(OCF1B);
+   TIMSK|= _BV(OCIE1B);
+   flags->ckps_need_to_set_channel_b = 0; // To avoid entering into setup mode (чтобы не войти в режим настройки ещё раз)
+  }
+  ckps.acc_delay-=ckps.period_curr;
+ }
+#endif 
 
  if (flags->ckps_use_knock_channel)
  {
@@ -623,18 +657,6 @@ void process_ckps_cogs(void)
   }
  }
 
- //watch the inter-tooth period (следим за межзубным периодом).
-#ifdef COIL_REGULATION
- #ifndef WHEEL_36_1 //60-2
- if (ckps.period_curr >= 2200 )
- #else
- if (ckps.period_curr >= 4000 )
- #endif 
-  flags->ckps_period_min = 1;
- else 
-  flags->ckps_period_min = 0;
-#endif
-
  //Preparing to start the ignition for the current channel (if the right moment became)
  //подготовка к запуску зажигания для текущего канала (если наступил нужный момент)
  if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
@@ -646,18 +668,10 @@ void process_ckps_cogs(void)
    //(до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения)
    //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
-   TIFR = (1 << OCF1A);
+   TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
-   TIMSK|= (1<<OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
-#ifdef COIL_REGULATION
-   if (flags->ckps_period_min)
-   {
-    ckps.channel_mode_b = (ckps.channel_mode & ckps.chan_mask);
-    OCR1B = OCR1A - ckps.cr_acc_time;
-    TIFR = (1 << OCF1B);
-    TIMSK|= (1<<OCIE1B);
-   }
-#else
+   TIMSK|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
+#ifndef COIL_REGULATION
    chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
 #endif
   }
@@ -733,14 +747,15 @@ synchronized_enter:
  * обработки зубьев по истечении установленного 16-ти разряюного таймера). */
 ISR(TIMER0_OVF_vect)
 {
- if (TCNT0_H!=0)  //Did high byte exhausted (старший байт не исчерпан) ?
+ if (TCNT0_H!=0)  //Did high byte exhaust (старший байт не исчерпан) ?
  {
   TCNT0 = 0;
   --TCNT0_H;
  }
  else
  {//the countdown is over (отсчет времени закончился)
-  TCCR0 = 0; //stop timer (останавливаем таймер)
+  ICR1 = TCNT1;  //simulate input capture 
+  TCCR0 = 0;     //stop timer (останавливаем таймер)
 
 #ifndef WHEEL_36_1 //60-2
   //start timer to recover 60th tooth (запускаем таймер чтобы восстановить 60-й зуб)

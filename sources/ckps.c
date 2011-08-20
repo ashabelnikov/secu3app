@@ -159,14 +159,15 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 
 void ckps_init_state_variables(void)
 {
+#ifndef COIL_REGULATION
  uint8_t i;
  _BEGIN_ATOMIC_BLOCK();
-#ifndef COIL_REGULATION
  //at the first interrupt will generate an end trigger pulse ignition
  //(при первом же прерывании будет сгенерирован конец импульса запуска зажигания) 
  for(i = 0; i < IGN_CHANNELS_MAX; i++)
   chanstate[i].ignition_pulse_cogs = 0;
 #else
+ _BEGIN_ATOMIC_BLOCK();
  ckps.cr_acc_time = 0;
  ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
  flags->ckps_need_to_set_channel_b = 0;
@@ -566,13 +567,6 @@ void process_ckps_cogs(void)
 {
  uint16_t diff;
  uint8_t i;
-
-#ifdef COOLINGFAN_PWM
- //CKP processing creates a big delay which negatively affects cooling fan's PWM. We
- //need to enable T/C 2 interrupts. TODO: it is bad idea to enable all interrupts 
- //here. We need only OCIE2 and TOIE2.
- _ENABLE_INTERRUPT();
-#endif
    
 #ifdef COIL_REGULATION
  if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
@@ -599,6 +593,13 @@ void process_ckps_cogs(void)
   ckps.acc_delay-=ckps.period_curr;
  }
 #endif 
+
+#ifdef COOLINGFAN_PWM
+ //CKP processing creates a big delay which negatively affects cooling fan's PWM. We
+ //need to enable T/C 2 interrupts. TODO: it is bad idea to enable all interrupts 
+ //here. We need only OCIE2 and TOIE2.
+ _ENABLE_INTERRUPT();
+#endif
 
  if (flags->ckps_use_knock_channel)
  {
@@ -662,7 +663,7 @@ void process_ckps_cogs(void)
  if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
  {
   diff = ckps.current_angle - ckps.advance_angle;
-  if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * 2))
+  if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) << 1))
   {
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
    //(до запуска зажигания осталось отсчитать меньше 2-x зубов. Необходимо подготовить модуль сравнения)

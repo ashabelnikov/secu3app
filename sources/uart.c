@@ -669,8 +669,6 @@ void uart_init(uint16_t baud)
  */
 ISR(USART_UDRE_vect)
 {
- //_ENABLE_INTERRUPT();
-
  if (uart.send_size > 0)
  {
   UDR = uart.send_buf[uart.send_index];
@@ -687,10 +685,9 @@ ISR(USART_UDRE_vect)
 ISR(USART_RXC_vect)
 {
  static uint8_t state=0;
- uint8_t chr;
+ uint8_t chr = UDR;
 
- //_ENABLE_INTERRUPT();
- chr = UDR;
+ _ENABLE_INTERRUPT();
  switch(state)
  {
   case 0:            //принимаем (ожидаем символ начала посылки)

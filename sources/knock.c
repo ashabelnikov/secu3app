@@ -211,12 +211,12 @@ void knock_reset_error(void)
 /** Interrupt handler from SPI */
 ISR(SPI_STC_vect)
 {
- uint8_t t;
+ uint8_t t = SPDR;
  //signal processor requires transition of CS into high level after each sent
  //byte, at least for 200ns
  KSP_CS = 1;
 
- t = SPDR;
+ _ENABLE_INTERRUPT();
 
  switch(ksp.ksp_interrupt_state)
  {

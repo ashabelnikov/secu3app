@@ -85,15 +85,20 @@ uint8_t eeprom_is_idle(void)
  */
 ISR(EE_RDY_vect)
 {
+ CLEARBIT(EECR, EERIE); //запрещаем прерывание от EEPROM
+ _ENABLE_INTERRUPT();
  switch(eewd.eews)
  {
   case 0:   //КА остановлен
    break;
 
   case 1:   //КА в процессе записи
+   _DISABLE_INTERRUPT();
    EEAR = eewd.ee_addr;
    EEDR = *eewd.sram_addr;
    EE_START_WR_BYTE();
+   SETBIT(EECR, EERIE);
+   _ENABLE_INTERRUPT();
    eewd.sram_addr++;
    eewd.ee_addr++;
    if (--eewd.count==0)
@@ -104,7 +109,6 @@ ISR(EE_RDY_vect)
 
   case 2:   //последний байт записан
    EEAR=0x000;
-   CLEARBIT(EECR,EERIE); //запрещаем прерывание от EEPROM
    eewd.eews = 0;
    eewd.completed_opcode = eewd.opcode;
    break;

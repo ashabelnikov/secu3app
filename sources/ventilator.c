@@ -26,6 +26,7 @@
 
 #include "port/avrio.h"
 #include "port/interrupt.h"
+#include "port/intrinsic.h"
 #include "port/port.h"
 #include "bitmask.h"
 #include "secu3.h"
@@ -71,16 +72,24 @@ void vent_set_duty(uint8_t duty)
  //We don't need interrupts if duty is 0 or 100%
  if (duty == 0)
  {
+  _DISABLE_INTERRUPT(); 
   TIMSK&=~_BV(OCIE2);
+  _ENABLE_INTERRUPT();
   SET_COOLINGFAN_STATE(0);
  }
  else if (duty == PWM_STEPS)
  {
+  _DISABLE_INTERRUPT(); 
   TIMSK&=~_BV(OCIE2);
+  _ENABLE_INTERRUPT();
   SET_COOLINGFAN_STATE(1);
  }
  else
+ {
+  _DISABLE_INTERRUPT(); 
   TIMSK|=_BV(OCIE2);
+  _ENABLE_INTERRUPT();
+ }
 }
 
 /**T/C 2 Compare interrupt for renerating of PWM (cooling fan control)*/

@@ -33,7 +33,15 @@
 
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
 {
- p_rs->knock_flag = (d->sens.knock_k > d->param.knock_threshold);
+ if (d->sens.frequen4 > d->param.starter_off)
+ {
+  //This is very simple algorithm to determine is knock present. We must
+  //improve it in the nearest future.
+  p_rs->knock_flag = (d->sens.knock_k > d->param.knock_threshold);
+ }
+ else
+  p_rs->knock_flag = 0; //Do not detect knock at the startup of engine
+
 
  //if knock detected set corresponding CE error
  if (p_rs->knock_flag)

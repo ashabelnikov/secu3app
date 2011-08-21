@@ -61,7 +61,7 @@
 #define WHEEL_LAST_COG (WHEEL_COGS_NUM - WHEEL_COGS_LACK)
 
 /** number of teeth that will be skipped at the start before synchronization
- * (количество зубов которое будет пропускатьс€ при старте перед синхронизацией) */
+ * (количество зубьев которое будет пропускатьс€ при старте перед синхронизацией) */
 #define CKPS_ON_START_SKIP_COGS      5
 
 /** Access Input Capture Register */
@@ -155,6 +155,14 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
  __no_init __regvar uint8_t TCNT0_H@15;
 #else //GCC
  uint8_t TCNT0_H __attribute__((section (".noinit")));
+#endif
+
+/**Will speedup calculations - replaces 8-bit division. */
+#define COGSPERCHAN(channum) PGM_GET_BYTE(&cogsperchan[channum])
+#ifndef WHEEL_36_1 //60-2
+prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 60, 30, 20, 15};
+#else //36-1
+prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 36, 18, 12, 9};
 #endif
 
 void ckps_init_state_variables(void)
@@ -282,7 +290,7 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  uint8_t _t, i;
  // pre-compute and store the reference points (teeth) (заранее вычисл€ем и сохран€ем опорные точки (зубь€))
  // cogs_per_cycle - number of wheel teeth attributable to a single cycle of engine (количество зубьев шкива приход€щиес€ на один такт двигател€)
- uint8_t cogs_per_cycle = (WHEEL_COGS_NUM) / ckps.chan_number;
+ uint8_t cogs_per_cycle = COGSPERCHAN(ckps.chan_number); /*(WHEEL_COGS_NUM) / ckps.chan_number*/
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
@@ -383,7 +391,7 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  ckps.knock_wnd_begin_abs = begin / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
  ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
 
- cogs_per_cycle = (WHEEL_COGS_NUM) / ckps.chan_number;
+ cogs_per_cycle = COGSPERCHAN(ckps.chan_number); /*(WHEEL_COGS_NUM) / ckps.chan_number*/
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
@@ -458,6 +466,10 @@ void turn_off_ignition_channel(uint8_t i_channel)
  */                                                                        
 ISR(TIMER1_COMPA_vect)
 {
+#ifdef COOLINGFAN_PWM
+ uint8_t timsk_sv, ucsrb_sv = UCSRB;
+#endif
+
 #ifdef COIL_REGULATION
  ckps.tmrval_saved = TCNT1;
 #endif
@@ -479,8 +491,19 @@ ISR(TIMER1_COMPA_vect)
    return; //none of channels selected (никакой канал не выбран) - CKPS_CHANNEL_MODENA
  }
 
+ //-----------------------------------------------------
+#ifdef COOLINGFAN_PWM
+ timsk_sv = TIMSK;
+ //ADCSRA&=~_BV(ADIE);            //??
+ UCSRB&=~(_BV(RXCIE)|_BV(UDRIE)); //mask UART interrupts
+ TIMSK&= _BV(OCIE2)|_BV(TOIE2);   //mask all timer interrupts except OCF2 and TOV2
+ _ENABLE_INTERRUPT();
+#endif
+ //-----------------------------------------------------
+
 #ifdef COIL_REGULATION
- ckps.acc_delay = ((uint32_t)ckps.period_curr) * (WHEEL_COGS_NUM / ckps.chan_number);
+ //delay = period_curr * (WHEEL_COGS_NUM / chan_number)
+ ckps.acc_delay = ((uint32_t)ckps.period_curr) * COGSPERCHAN(ckps.chan_number); 
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us   
  ckps.acc_delay-= ckps.cr_acc_time;
@@ -500,6 +523,15 @@ ISR(TIMER1_COMPA_vect)
  //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубь€х)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
 #endif
+
+ //-----------------------------------------------------
+#ifdef COOLINGFAN_PWM
+ _DISABLE_INTERRUPT();
+ //ADCSRA|=_BV(ADIE);
+ UCSRB = ucsrb_sv;
+ TIMSK = timsk_sv;
+#endif
+ //-----------------------------------------------------
 }
 
 #ifdef COIL_REGULATION
@@ -566,7 +598,20 @@ uint8_t sync_at_startup(void)
 void process_ckps_cogs(void)
 {
  uint16_t diff;
- uint8_t i;
+ uint8_t i, timsk_sv = TIMSK;
+
+ //-----------------------------------------------------
+ //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
+ //interrupts occur during processing of this handler.
+#ifdef COOLINGFAN_PWM
+ //remember current state, mask all not urgent interrupts and enable interrupts
+ uint8_t ucsrb_sv = UCSRB;
+ //ADCSRA&=~_BV(ADIE);            //??
+ UCSRB&=~(_BV(RXCIE)|_BV(UDRIE)); //mask UART interrupts
+ TIMSK&= _BV(OCIE2)|_BV(TOIE2);   //mask all timer interrupts except OCF2 and TOV2
+ _ENABLE_INTERRUPT();
+#endif
+ //-----------------------------------------------------
    
 #ifdef COIL_REGULATION
  if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
@@ -587,19 +632,12 @@ void process_ckps_cogs(void)
   {
    OCR1B = GetICR() + ckps.acc_delay + ((int32_t)ckps.period_curr - ckps.period_saved);
    TIFR = _BV(OCF1B);
-   TIMSK|= _BV(OCIE1B);
+   timsk_sv|= _BV(OCIE1B);
    flags->ckps_need_to_set_channel_b = 0; // To avoid entering into setup mode (чтобы не войти в режим настройки ещЄ раз)
   }
   ckps.acc_delay-=ckps.period_curr;
  }
 #endif 
-
-#ifdef COOLINGFAN_PWM
- //CKP processing creates a big delay which negatively affects cooling fan's PWM. We
- //need to enable T/C 2 interrupts. TODO: it is bad idea to enable all interrupts 
- //here. We need only OCIE2 and TOIE2.
- _ENABLE_INTERRUPT();
-#endif
 
  if (flags->ckps_use_knock_channel)
  {
@@ -666,12 +704,12 @@ void process_ckps_cogs(void)
   if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) << 1))
   {
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
-   //(до запуска зажигани€ осталось отсчитать меньше 2-x зубов. Ќеобходимо подготовить модуль сравнени€)
+   //(до запуска зажигани€ осталось отсчитать меньше 2-x зубьев. Ќеобходимо подготовить модуль сравнени€)
    //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
    TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещЄ раз)
-   TIMSK|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
+   timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
 #ifndef COIL_REGULATION
    chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
 #endif
@@ -693,6 +731,16 @@ void process_ckps_cogs(void)
  //(прошел зуб - угол до в.м.т. уменьшилс€ на 6 град (дл€ 60-2) или 10 град (дл€ 36-1))
  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
  ++ckps.cog;
+
+ //-----------------------------------------------------
+#ifdef COOLINGFAN_PWM
+ //disable interrupts and restore previous states of masked interrupts
+ _DISABLE_INTERRUPT();
+ //ADCSRA|=_BV(ADIE);
+ UCSRB = ucsrb_sv;
+#endif
+ TIMSK = timsk_sv;
+ //-----------------------------------------------------
 }
 
 /**Input capture interrupt of timer 1 (called at passage of each tooth)
@@ -730,7 +778,7 @@ synchronized_enter:
  //the restoration of missing teeth, as the initial data using the last
  //value of inter-teeth period.
  //(≈сли последний зуб перед синхрометкой, то начинаем отсчет времени дл€
- //восстановлени€ отсутствующих зубов, в качестве исходных данных используем 
+ //восстановлени€ отсутствующих зубьев, в качестве исходных данных используем 
  //последнее значение межзубного периода).
  if (ckps.cog == WHEEL_LAST_COG)
   set_timer0(ckps.period_curr);

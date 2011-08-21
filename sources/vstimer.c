@@ -35,7 +35,7 @@
 /**Reload value for timer 2 */
 #define TIMER2_RELOAD_VALUE  6               //for 2 ms
 
-/**Addition value for compare rgister */
+/**Addition value for compare register */
 #define COMPADD 5
 
 /**Reload count for system timer's divider, to obtain 10 ms from 2 ms */
@@ -89,5 +89,5 @@ void s_timer_init(void)
 {
  TCCR2|= _BV(CS22)|_BV(CS20);  //clock = 125kHz (tick = 8us)
  TCNT2 = 0;
- TIMSK|= _BV(TOIE2);           //enable T/C 2 overflov interrupt
+ TIMSK|= _BV(TOIE2);           //enable T/C 2 overflow interrupt
 }

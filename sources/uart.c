@@ -228,7 +228,9 @@ void recept_rb(uint8_t* ramBuffer, uint8_t size)
 void uart_begin_send(void)
 {
  uart.send_index = 0;
+ _DISABLE_INTERRUPT();
  UCSRB |= _BV(UDRIE); /* enable UDRE interrupt */
+ _ENABLE_INTERRUPT();
 }
 
 void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)

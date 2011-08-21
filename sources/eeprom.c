@@ -69,7 +69,7 @@ void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_ad
  eewd.sram_addr = sram_addr;
  eewd.count = count;
  eewd.opcode = opcode;
- SETBIT(EECR,EERIE);
+ SETBIT(EECR, EERIE);
 }
 
 //возвращает не 0 если в текущий момент никакая операция не выполняется
@@ -99,8 +99,8 @@ ISR(EE_RDY_vect)
    EE_START_WR_BYTE();
    SETBIT(EECR, EERIE);
    _ENABLE_INTERRUPT();
-   eewd.sram_addr++;
-   eewd.ee_addr++;
+   ++eewd.sram_addr;
+   ++eewd.ee_addr;
    if (--eewd.count==0)
     eewd.eews = 2;   //последний байт запущен на запись.
    else

@@ -39,7 +39,7 @@ typedef struct
 {
  uint16_t ee_addr;             //!< Address for EEPROM (адрес для записи в EEPROM)
  uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ)
- uint8_t count;                //!< Number of bytes (количество байтов)
+ uint16_t count;               //!< Number of bytes (количество байтов)
  uint8_t eews;                 //!< State of writing process (состояние процесса записи)
  uint8_t opcode;               //!< code of specific operation wich cased writing process
  uint8_t completed_opcode;     //!< will be equal to opcode after finish of process
@@ -62,12 +62,12 @@ uint8_t eeprom_take_completed_opcode(void)
 }
 
 //запускает процесс записи в EEPROM указанного блока данных
-void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count)
+void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint16_t size)
 {
  eewd.eews = 1;
- eewd.ee_addr = eeprom_addr;
- eewd.sram_addr = sram_addr;
- eewd.count = count;
+ eewd.ee_addr = eeaddr;
+ eewd.sram_addr = sramaddr;
+ eewd.count = size;
  eewd.opcode = opcode;
  SETBIT(EECR, EERIE);
 }
@@ -108,14 +108,14 @@ ISR(EE_RDY_vect)
    break;
 
   case 2:   //последний байт записан
-   EEAR=0x000;
+   EEAR=0x000;      //this will help to prevent corruption of EEPROM
    eewd.eews = 0;
    eewd.completed_opcode = eewd.opcode;
    break;
  }//switch
 }
 
-void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
+void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size)
 {
  uint8_t _t;
  uint8_t *dest = (uint8_t*)sram_dest;
@@ -130,10 +130,10 @@ void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size)
   dest++;
  }while(--size);
 
- EEAR=0x000;
+ EEAR=0x000; //this will help to prevent corruption of EEPROM
 }
 
-void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size)
+void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size)
 {
  uint8_t _t;
  uint8_t *src = (uint8_t*)sram_src;
@@ -148,5 +148,5 @@ void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size)
   src++;
  }while(--size);
 
- EEAR=0x000;
+ EEAR=0x000; //this will help to prevent corruption of EEPROM
 }

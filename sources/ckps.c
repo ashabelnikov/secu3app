@@ -556,8 +556,8 @@ ISR(TIMER1_COMPB_vect)
 INLINE
 void set_timer0(uint16_t value)
 {
- TCNT0_H = GETBYTE(value, 1);
- TCNT0 = 255 - GETBYTE(value, 0);
+ TCNT0_H = _AB(value, 1);
+ TCNT0 = 255 - _AB(value, 0);
  TCCR0  = _BV(CS01)|_BV(CS00);
 }
 

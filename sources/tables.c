@@ -281,13 +281,3 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  /**Contains check sum for whole firmware */
  0x0000
 };
-
-#ifdef REALTIME_TABLES
-/**Имена наборов таблиц которые можно редактировать в реальном времени
- * Names of tables sets which can be edited in real time */
-prog_uint8_t tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE] = 
-{
- {'t','u','n','i','n','g','_','1',' ',' ',' ',' ',' ',' ',' ',' '},
- {'t','u','n','i','n','g','_','2',' ',' ',' ',' ',' ',' ',' ',' '}
-};
-#endif

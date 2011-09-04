@@ -38,14 +38,22 @@
 #define SOP_READ_CE_ERRORS           5    //!< read CE errors
 #define SOP_TRANSMIT_CE_ERRORS       6    //!< transmit CE errors
 #define SOP_SEND_FW_SIG_INFO         7    //!< send signature information about firmware
-#define SOP_NEW_TABLSET_SELECTED     8    //!< send information about new tables set has being selected
+#ifdef REALTIME_TABLES
+#define SOP_SELECT_TABLSET           8    //!< select new set of tables (when selected in parameters)
+#define SOP_LOAD_TABLSET             9    //!< load new set of tables
+#define SOP_SEND_NC_TABLSET_LOADED  10    //!< notify that new tables set has being selected
+#define SOP_SAVE_TABLSET            11    //!< save table set for selected fuel from RAM to EEPROM
+#define SOP_SEND_NC_TABLSET_SAVED   12    //!< notify that table set for selected fuel has been saved
+#endif
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters
 #define OPCODE_CE_SAVE_ERRORS        2    //!< save CE errors
 #define OPCODE_READ_FW_SIG_INFO      3    //!< read signature information about firmware
-#define OPCODE_NEW_TABLSET_SELECTED  4    //!< new tables set has being selected
-
+#ifdef REALTIME_TABLES
+#define OPCODE_LOAD_TABLSET          4    //!< new set of tables must be loaded or notify that it has been loaded
+#define OPCODE_SAVE_TABLSET          5    //!< save teble set for selected fuel from RAM to EEPROM or notify that it has been saved
+#endif
 struct ecudata_t;
 
 /**Set specified operation to execution queue (установка указанной рперации в очередь на выполнение)

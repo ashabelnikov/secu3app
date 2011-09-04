@@ -44,11 +44,11 @@
 /**Start writing process of EEPROM for selected block of data
  * (запускает процесс записи в EEPROM указанного блока данных)
  * \param opcode some code which will be remembered and can be retrieved when process finishes
- * \param eeprom_addr address in the EEPROM for write into
- * \param sram_addr address of block of data in RAM
+ * \param eeaddr address in the EEPROM for write into
+ * \param sramaddr address of block of data in RAM
  * \param count number of bytes in RAM to write (size of block)
  */
-void eeprom_start_wr_data(uint8_t opcode, uint16_t eeprom_addr, uint8_t* sram_addr, uint8_t count);
+void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint16_t size);
 
 /**Checks if EEPROM is busy
  * (возвращает не 0 если в текущий момент никакая операция не выполняется).
@@ -60,9 +60,9 @@ uint8_t eeprom_is_idle(void);
  * читает указанный блок данных из EEPROM (без использования прерываний)
  * \param sram_dest address of buffer in RAM which will receive data
  * \param eeaddr address in the EEPROM for read from
- * \param size size of block of data to read
+ * \param size size of data block to read
  */
-void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size);
+void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size);
 
 /**Writes specified block of data into EEPROM (without using of interrupts)
  * записывает указанный блок данных в EEPROM (без использования прерываний)
@@ -70,7 +70,7 @@ void eeprom_read(void* sram_dest, int16_t eeaddr, uint16_t size);
  * \param eeaddr address in the EEPROM for write into
  * \param size size of block of data to write
  */
-void eeprom_write(const void* sram_src, int16_t eeaddr, uint16_t size);
+void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
 
 /**Returns code of last finished operation (code which was passed into eeprom_start_wr_data())
  * возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())

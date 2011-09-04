@@ -30,10 +30,11 @@
 #include "port/pgmspace.h"
 #include "port/port.h"
 #include <string.h>
+#include "bitmask.h"
+#include "eeprom.h"
 #include "secu3.h"
 #include "uart.h"
 #include "ufcodes.h"
-#include "bitmask.h"
 
 //Mega64 compatibility
 #ifdef _PLATFORM_M64_
@@ -137,10 +138,10 @@ void build_i8h(uint8_t i)
  */
 void build_i16h(uint16_t i)
 {
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,1)/16]);    //старший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,1)%16]);    //младший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,0)/16]);    //старший байт HEX числа (младший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[GETBYTE(i,0)%16]);    //младший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);    //старший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);    //младший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);    //старший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);    //младший байт HEX числа (младший байт)
 }
 
 /**Appends sender's buffer by 8 HEX bytes
@@ -191,13 +192,13 @@ uint8_t recept_i8h(void)
 uint16_t recept_i16h(void)
 {
  uint16_t i16;
- SETBYTE(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
+ _AB(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
  ++uart.recv_index;
- SETBYTE(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));
+ _AB(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));
  ++uart.recv_index;
- SETBYTE(i16,0) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
+ _AB(i16,0) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
  ++uart.recv_index;
- SETBYTE(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));
+ _AB(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));
  ++uart.recv_index;
  return i16;
 }
@@ -218,8 +219,9 @@ uint32_t recept_i32h(void)
  * can be used for binary data */
 void recept_rb(uint8_t* ramBuffer, uint8_t size)
 {
- if (size > uart.recv_size)
-  size = uart.recv_size;
+ uint8_t rcvsize = uart.recv_size >> 1; //two hex symbols per byte
+ if (size > rcvsize)
+  size = rcvsize;
  while(size--) *ramBuffer++ = recept_i8h();
 }
 //--------------------------------------------------------------------
@@ -301,14 +303,33 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 
   case FNNAME_DAT:
    build_i8h(TABLES_NUMBER + TUNABLE_TABLES_NUMBER);
-   build_i8h(index);
-#ifdef REALTIME_TABLES   
-   build_fs((index < TABLES_NUMBER) ? fw_data.tables[index].name : &tunable_tables_names[index - TABLES_NUMBER][0], F_NAME_SIZE);
+#ifdef REALTIME_TABLES
+   if (index < TABLES_NUMBER) //from FLASH
+   {
+    build_i8h(index);
+    build_fs(fw_data.tables[index].name, F_NAME_SIZE);
+   }
+   else //from EEPROM
+   {
+    if (eeprom_is_idle())
+    {
+     build_i8h(index);
+     eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES))[index - TABLES_NUMBER].name, F_NAME_SIZE);
+     uart.send_size+=F_NAME_SIZE;
+    }
+    else //skip this item - will be transferred next time
+    {
+     index = TABLES_NUMBER - 1;
+     build_i8h(index);
+     build_fs(fw_data.tables[index].name, F_NAME_SIZE);
+    }
+   }
 #else
+   build_i8h(index);
    build_fs(fw_data.tables[index].name, F_NAME_SIZE);
 #endif
-   index++;
-   if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index=0;
+   ++index;
+   if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index = 0;
     break;
 
   case SENSOR_DAT:
@@ -353,7 +374,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
 
   case OP_COMP_NC:
-   build_i4h(d->op_comp_code);
+   build_i16h(d->op_comp_code);
    break;
 
   case CE_ERR_CODES:
@@ -391,7 +412,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.uart_divisor);
    build_i8h(d->param.uart_period_t_ms);
    build_i4h(d->param.ign_cutoff);
-   build_i16h(d->param.ign_cutoff_thrd);   
+   build_i16h(d->param.ign_cutoff_thrd);
    break;
  
 #ifdef REALTIME_TABLES
@@ -400,7 +421,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   {
    static uint8_t fuel = 0, state = 0, wrk_index = 0;
    build_i4h(fuel);
-   build_i4h(state);   
+   build_i4h(state);
    switch(state)
    {
     case ETMT_STRT_MAP: //start map
@@ -560,7 +581,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    break;
 
   case OP_COMP_NC:
-   d->op_actn_code = recept_i4h();
+   d->op_actn_code = recept_i16h();
    break;
 
   case KNOCK_PAR:
@@ -585,16 +606,16 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.uart_divisor = recept_i16h();
    d->param.uart_period_t_ms = recept_i8h();
    d->param.ign_cutoff = recept_i4h();
-   d->param.ign_cutoff_thrd = recept_i16h();   
+   d->param.ign_cutoff_thrd = recept_i16h();
    break;
 
-#ifdef REALTIME_TABLES   
+#ifdef REALTIME_TABLES
   case EDITAB_PAR:
   {
    uint8_t fuel = recept_i4h();
    uint8_t state = recept_i4h();
    uint8_t addr = recept_i8h();
-   uart.recv_size-=6;
+   uart.recv_size-=5; //[d][x][x][xx]
    switch(state)
    {
     case ETMT_STRT_MAP: //start map

@@ -26,9 +26,11 @@
 
 #include "port/port.h"
 #include <string.h>
+#include "bitmask.h"
 #include "ce_errors.h"
 #include "crc16.h"
 #include "eeprom.h"
+#include "params.h"
 #include "secu3.h"
 #include "suspendop.h"
 #include "uart.h"
@@ -99,7 +101,7 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   d->op_comp_code = OPCODE_EEPROM_PARAM_SAVE;
+   _AB(d->op_comp_code, 0) = OPCODE_EEPROM_PARAM_SAVE;
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
@@ -123,7 +125,7 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   d->op_comp_code = OPCODE_CE_SAVE_ERRORS;
+   _AB(d->op_comp_code, 0) = OPCODE_CE_SAVE_ERRORS;
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
@@ -164,18 +166,81 @@ void sop_execute_operations(struct ecudata_t* d)
   }
  }
 
- if (sop_is_operation_active(SOP_NEW_TABLSET_SELECTED))
+#ifdef REALTIME_TABLES
+ if (sop_is_operation_active(SOP_SEND_NC_TABLSET_LOADED))
  {
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   d->op_comp_code = OPCODE_NEW_TABLSET_SELECTED;
+   //bits: aaaabbbb
+   // aaaa - index of tables set for gas(газ)
+   // bbbb   index of tables set for gasoline(бензин)
+   _AB(d->op_comp_code, 0) = OPCODE_LOAD_TABLSET;
+   _AB(d->op_comp_code, 1) = 0; //not used
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_NEW_TABLSET_SELECTED] = SOP_NA;
+   suspended_opcodes[SOP_SEND_NC_TABLSET_LOADED] = SOP_NA;
   } 
  }
+
+ if (sop_is_operation_active(SOP_SELECT_TABLSET))
+ {
+  if (eeprom_is_idle())
+  {
+   load_selected_tables_into_ram(d);
+   //"удаляем" эту операцию из списка так как она уже выполнилась.
+   suspended_opcodes[SOP_SELECT_TABLSET] = SOP_NA;
+  }
+ }
+
+ if (sop_is_operation_active(SOP_LOAD_TABLSET))
+ {
+  //TODO: d->op_actn_code may become overwritten while we are waiting here... 
+  if (eeprom_is_idle())
+  {
+   //bits: aaaabbbb
+   // aaaa - fuel type (0, 1)
+   // bbbb - index of tables set to save to, begins from FLASH's indexes
+   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF);   
+   uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
+   load_specified_tables_into_ram(d, fuel_type, index);
+   //"удаляем" эту операцию из списка так как она уже выполнилась.
+   suspended_opcodes[SOP_LOAD_TABLSET] = SOP_NA;
+  }
+ }
+
+ if (sop_is_operation_active(SOP_SEND_NC_TABLSET_SAVED))
+ {
+  //передатчик занят?
+  if (!uart_is_sender_busy())
+  {
+   _AB(d->op_comp_code, 0) = OPCODE_SAVE_TABLSET;
+   _AB(d->op_comp_code, 1) = 0; //not used
+   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+  
+   //"удаляем" эту операцию из списка так как она уже выполнилась.
+   suspended_opcodes[SOP_SEND_NC_TABLSET_SAVED] = SOP_NA;
+  }
+ }
+
+ if (sop_is_operation_active(SOP_SAVE_TABLSET))
+ {
+  //TODO: d->op_actn_code may become overwritten while we are waiting here... 
+  if (eeprom_is_idle())
+  {
+   //bits: aaaabbbb
+   // aaaa - fuel type (0, 1)
+   // bbbb - index of tables set to save to, begins from FLASH's indexes
+   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF) - TABLES_NUMBER;   
+   uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
+   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES + sizeof(f_data_t) * index, &d->tables_ram[fuel_type], sizeof(f_data_t));
+  
+   //"удаляем" эту операцию из списка так как она уже выполнилась.
+   suspended_opcodes[SOP_SAVE_TABLSET] = SOP_NA;
+  }
+ }
+#endif
 
  //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
  switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take!
@@ -187,5 +252,11 @@ void sop_execute_operations(struct ecudata_t* d)
   case OPCODE_CE_SAVE_ERRORS:
    sop_set_operation(SOP_SEND_NC_CE_ERRORS_SAVED);
    break;
+
+#ifdef REALTIME_TABLES
+  case OPCODE_SAVE_TABLSET:
+   sop_set_operation(SOP_SEND_NC_TABLSET_SAVED);
+   break;
+#endif
  }
 }

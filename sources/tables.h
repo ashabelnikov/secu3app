@@ -259,10 +259,4 @@ typedef struct fw_data_t
 /**Все данные прошивки All firmware data */
 PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
 
-#ifdef REALTIME_TABLES
-/**Имена наборов таблиц которые можно редактировать в реальном времени
- * Names of tables sets which can be edited in real time */
-extern prog_uint8_t tunable_tables_names[TUNABLE_TABLES_NUMBER][F_NAME_SIZE];
-#endif
-
 #endif //_TABLES_H_

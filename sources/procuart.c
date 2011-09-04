@@ -28,9 +28,9 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include <stdint.h>
+#include "bitmask.h"
 #include "ce_errors.h"
 #include "ckps.h"
-#include "eeprom.h"
 #include "knock.h"
 #include "procuart.h"
 #include "secu3.h"
@@ -38,37 +38,6 @@
 #include "uart.h"
 #include "ufcodes.h"
 #include "vstimer.h"
-
-
-#ifdef REALTIME_TABLES
-void load_selected_tables_into_ram(struct ecudata_t* d)
-{
- if (d->fn_gas_prev != d->param.fn_gas)
- {
-  //load gas tables
-  if (d->param.fn_gas < TABLES_NUMBER)
-   memcpy_P(&d->tables_ram[1], &fw_data.tables[d->param.fn_gas], sizeof(f_data_t));
-  else
-   eeprom_read(&d->tables_ram[1], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gas-TABLES_NUMBER)), sizeof(f_data_t));
-  d->fn_gas_prev = d->param.fn_gas;
-  //будет послано уведомление о том что выбран новый набор таблиц  
-  sop_set_operation(SOP_NEW_TABLSET_SELECTED);
- }
-
- if (d->fn_gasoline_prev != d->param.fn_gasoline)
- {
-  //load gasoline tables
-  if (d->param.fn_gasoline < TABLES_NUMBER)
-   memcpy_P(&d->tables_ram[0], &fw_data.tables[d->param.fn_gasoline], sizeof(f_data_t));
-  else
-   eeprom_read(&d->tables_ram[0], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(d->param.fn_gasoline-TABLES_NUMBER)), sizeof(f_data_t));  
-  d->fn_gasoline_prev = d->param.fn_gasoline;
-  //будет послано уведомление о том что выбран новый набор таблиц  
-  sop_set_operation(SOP_NEW_TABLSET_SELECTED);
- }
-}
-#endif
-
 
 void process_uart_interface(struct ecudata_t* d)
 {
@@ -92,28 +61,40 @@ void process_uart_interface(struct ecudata_t* d)
 
    case FUNSET_PAR:
 #ifdef REALTIME_TABLES
-    load_selected_tables_into_ram(d);
+    sop_set_operation(SOP_SELECT_TABLSET);
 #endif
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 
    case OP_COMP_NC:
-    if (d->op_actn_code == OPCODE_EEPROM_PARAM_SAVE) //приняли команду сохранения параметров
+    if (_AB(d->op_actn_code, 0) == OPCODE_EEPROM_PARAM_SAVE) //приняли команду сохранения параметров
     {
      sop_set_operation(SOP_SAVE_PARAMETERS);
-     d->op_actn_code = 0; //обработали
+     _AB(d->op_actn_code, 0) = 0; //обработали
     }
-    if (d->op_actn_code == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок
+    if (_AB(d->op_actn_code, 0) == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок
     {
      sop_set_operation(SOP_READ_CE_ERRORS);
-     d->op_actn_code = 0; //обработали
+     _AB(d->op_actn_code, 0) = 0; //обработали
     }
-    if (d->op_actn_code == OPCODE_READ_FW_SIG_INFO) //приняли команду чтения и передачи информации о прошивке
+    if (_AB(d->op_actn_code, 0) == OPCODE_READ_FW_SIG_INFO) //приняли команду чтения и передачи информации о прошивке
     {
      sop_set_operation(SOP_SEND_FW_SIG_INFO);
-     d->op_actn_code = 0; //обработали
+     _AB(d->op_actn_code, 0) = 0; //обработали
     }
+#ifdef REALTIME_TABLES
+    if (_AB(d->op_actn_code, 0) == OPCODE_LOAD_TABLSET) //приняли команду выбора нового набора таблиц
+    {
+     sop_set_operation(SOP_LOAD_TABLSET);
+     _AB(d->op_actn_code, 0) = 0; //обработали
+    }
+    if (_AB(d->op_actn_code, 0) == OPCODE_SAVE_TABLSET) //приняли команду сохранения сохранения набора таблиц для указанного типа топлива
+    {
+     sop_set_operation(SOP_SAVE_TABLSET);
+     _AB(d->op_actn_code, 0) = 0; //обработали
+    }
+#endif
     break;
 
    case CE_SAVED_ERR:

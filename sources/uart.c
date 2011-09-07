@@ -314,7 +314,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     if (eeprom_is_idle())
     {
      build_i8h(index);
-     eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES))[index - TABLES_NUMBER].name, F_NAME_SIZE);
+     eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))[index - TABLES_NUMBER].name, F_NAME_SIZE);
      uart.send_size+=F_NAME_SIZE;
     }
     else //skip this item - will be transferred next time

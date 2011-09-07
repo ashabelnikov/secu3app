@@ -234,7 +234,7 @@ void sop_execute_operations(struct ecudata_t* d)
    // bbbb - index of tables set to save to, begins from FLASH's indexes
    uint8_t index = (_AB(d->op_actn_code, 1) & 0xF) - TABLES_NUMBER;   
    uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
-   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES + sizeof(f_data_t) * index, &d->tables_ram[fuel_type], sizeof(f_data_t));
+   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START + sizeof(f_data_t) * index, &d->tables_ram[fuel_type], sizeof(f_data_t));
   
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SAVE_TABLSET] = SOP_NA;

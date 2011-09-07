@@ -101,7 +101,7 @@ void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t fuel_type, uint
  if (index < TABLES_NUMBER)
   memcpy_P(&d->tables_ram[fuel_type], &fw_data.tables[index], sizeof(f_data_t));
  else
-  eeprom_read(&d->tables_ram[fuel_type], EEPROM_REALTIME_TABLES+(sizeof(f_data_t)*(index-TABLES_NUMBER)), sizeof(f_data_t));
+  eeprom_read(&d->tables_ram[fuel_type], EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)*(index-TABLES_NUMBER)), sizeof(f_data_t));
 
  //будет послано уведомление о том, что загружен новый набор таблиц
  //notification will be sent about that new set of tables has been loaded

@@ -165,7 +165,7 @@ typedef struct params_t
   int16_t  idlreg_min_angle;             //!< minimum advance angle correction which can be produced by idling regulator
   int16_t  idlreg_max_angle;             //!< maximum advance angle correction which can be produced by idling regulator
   uint16_t map_curve_offset;             //!< offset of curve in volts
-  uint16_t map_curve_gradient;           //!< gradient of curve in kPa/V
+  int16_t  map_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
 
   int16_t  fe_on_threshold;              //!< порог включения экономайзера мощностных режимов (switch on threshold of FE)
 
@@ -176,7 +176,7 @@ typedef struct params_t
   uint16_t uart_divisor;                 //!< делитель для соответствующей скорости UART-a (divider which corresponds to selected baud rate)
   uint8_t  uart_period_t_ms;             //!< период посылки пакетов в десятках миллисекунд (transmition period of data packets which SECU-3 sends, one discrete = 10ms)
 
-  uint8_t ckps_engine_cyl;               //!< кол-во цилиндров двигателя (number of engine's cylinders)
+  uint8_t  ckps_engine_cyl;              //!< кол-во цилиндров двигателя (number of engine's cylinders)
 
   //--knock
   uint8_t  knock_use_knock_channel;      //!< признак использования канала детенации (flag of using knock channel)
@@ -185,20 +185,20 @@ typedef struct params_t
   int16_t  knock_k_wnd_end_angle;        //!< конец детонационного окна (градусы)  (Closing angle of knock phase window)
   uint8_t  knock_int_time_const;         //!< постоянная времени интегрирования (код) (Integration time constant)
   //--
-  int16_t knock_retard_step;             //!< шаг смещения УОЗ при детонации (Displacement step of angle)
-  int16_t knock_advance_step;            //!< шаг восстановления УОЗ (Recovery step of angle)
-  int16_t knock_max_retard;              //!< максимальное смещение УОЗ (Maximum displacement of angle)
+  int16_t  knock_retard_step;            //!< шаг смещения УОЗ при детонации (Displacement step of angle)
+  int16_t  knock_advance_step;           //!< шаг восстановления УОЗ (Recovery step of angle)
+  int16_t  knock_max_retard;             //!< максимальное смещение УОЗ (Maximum displacement of angle)
   uint16_t knock_threshold;              //!< порог детонации - напряжение (detonation threshold - voltage)
-  uint8_t knock_recovery_delay;          //!< задержка восстановления УОЗ в рабочих циклах двигателя (Recovery delay of angle countable in engine's cycles)
+  uint8_t  knock_recovery_delay;         //!< задержка восстановления УОЗ в рабочих циклах двигателя (Recovery delay of angle countable in engine's cycles)
   //--/knock
 
-  uint8_t vent_pwm;                      //!< flag - control cooling fan by using PWM
+  uint8_t  vent_pwm;                     //!< flag - control cooling fan by using PWM
   
   uint8_t  ign_cutoff;                   //!< Cutoff ignition when RPM reaches specified threshold
   uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
 
-  uint8_t zero_adv_ang;                  //!< Zero anvance angle flag
-  uint8_t merge_ign_outs;                //!< Merge ignition sugnals to single output flag
+  uint8_t  zero_adv_ang;                 //!< Zero anvance angle flag
+  uint8_t  merge_ign_outs;               //!< Merge ignition sugnals to single output flag
 
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных

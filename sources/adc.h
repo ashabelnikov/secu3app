@@ -111,13 +111,13 @@ int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
 /**переводит значение АЦП в физическую величину - давление
  * \param adcvalue значение в даскретах АЦП
  * \param offset смещение кривой ДАД
- * \param gradient наклон кривой ДАД
+ * \param gradient наклон кривой ДАД (Curve gradient. If < 0, then it means characteristic curve is inverse)
  * \return физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
  * \details
  * offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
  * gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
  */
-uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, uint16_t gradient);
+uint16_t map_adc_to_kpa(int16_t adcvalue, uint16_t offset, int16_t gradient);
 
 /**переводит значение АЦП в физическую величину - напряжение
  * \param adcvalue значение в дискретах АЦП

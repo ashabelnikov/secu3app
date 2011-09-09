@@ -23,6 +23,7 @@ CFLAGS += -ms -e --initializers_in_flash
 CFLAGS += -s9 --cross_call_passes=1 --do_cross_call
 CFLAGS += --lock_regs 1
 CFLAGS += --eeprom_size $(EE_SIZE)
+CFLAGS += --dlib_config $(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.h
 
 # Linker flags
 LDFLAGS = -Fintel-standard -xs -s main

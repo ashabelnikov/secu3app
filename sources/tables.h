@@ -164,7 +164,7 @@ typedef struct params_t
   int16_t  angle_inc_spead;              //!< limitation of alternation speed of advance angle (when increasing)
   int16_t  idlreg_min_angle;             //!< minimum advance angle correction which can be produced by idling regulator
   int16_t  idlreg_max_angle;             //!< maximum advance angle correction which can be produced by idling regulator
-  uint16_t map_curve_offset;             //!< offset of curve in volts
+  int16_t  map_curve_offset;             //!< offset of curve in volts, can be negative
   int16_t  map_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
 
   int16_t  fe_on_threshold;              //!< порог включения экономайзера мощностных режимов (switch on threshold of FE)
@@ -193,7 +193,7 @@ typedef struct params_t
   //--/knock
 
   uint8_t  vent_pwm;                     //!< flag - control cooling fan by using PWM
-  
+
   uint8_t  ign_cutoff;                   //!< Cutoff ignition when RPM reaches specified threshold
   uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
 

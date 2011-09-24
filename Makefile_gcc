@@ -48,8 +48,9 @@ SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
 	procuart.c secu3.c starter.c suspendop.c tables.c \
 	uart.c ventilator.c vstimer.c
 
-# Define all object files.
+# Define all object files and dependencies
 OBJECTS = $(SRC:%.c=$(OBJDIR)/%.o)
+DEPS = $(OBJECTS:$(OBJDIR)/%.o=$(OBJDIR)/%.d)
 
 # Define all listing files.
 LST = $(SRC:%.c=$(OBJDIR)/%.lst)
@@ -57,9 +58,12 @@ LST = $(SRC:%.c=$(OBJDIR)/%.lst)
 # Build
 all: OBJ_DIRS $(TARGET).elf $(TARGET).a90
 
+#Include make files containing dependencies
+-include $(DEPS)
+
 #Create directory for object files
 OBJ_DIRS:
-	mkdir -p $(OBJDIR)
+	@mkdir -p $(OBJDIR)
 
 #Create HEX file
 %.a90: %.elf
@@ -67,7 +71,7 @@ OBJ_DIRS:
 
 # Compile
 $(OBJDIR)/%.o : sources/%.c 
-	$(CC) -c $(INCLUDES) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) -MD $< -o $@
 
 #Link to obtain elf file
 .SECONDARY : $(TARGET).elf
@@ -77,4 +81,4 @@ $(OBJDIR)/%.o : sources/%.c
 
 # Clean target
 clean:
-	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(TARGET).elf $(OBJDIR)/$(TARGET).map 
+	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(TARGET).elf $(OBJDIR)/$(TARGET).map $(DEPS)

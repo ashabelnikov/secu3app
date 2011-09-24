@@ -98,4 +98,18 @@
  #define COPT_REALTIME_TABLES 0
 #endif
 
+/** Compiler used to build project (IAR) */
+#ifdef __ICCAVR__
+ #define COPT_ICCAVR_COMPILER 1
+#else
+ #define COPT_ICCAVR_COMPILER 0
+#endif
+
+/** Compiler used to build project (GCC) */
+#ifdef __GNUC__
+ #define COPT_AVRGCC_COMPILER 1
+#else
+ #define COPT_AVRGCC_COMPILER 0
+#endif
+
 #endif //_COMPILOPT_H_

@@ -43,27 +43,36 @@ SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
 	procuart.c secu3.c starter.c suspendop.c tables.c \
 	uart.c ventilator.c vstimer.c
 
-# Define all object files.
+# Define all object files and dependencies
 OBJECTS = $(SRC:%.c=$(OBJDIR)/%.r90)
+DEPS = $(OBJECTS:$(OBJDIR)/%.r90=$(OBJDIR)/%.d)
 
 # Define all listing files.
 LST = $(SRC:%.c=$(OBJDIR)/%.lst)
 
+#Thanks to guys from Microsoft we have to deal with spaces...
+SPAT=$(shell echo $(IAR_HOME) | sed -e 's/\\\/\\\\\\\\\\\/g')
+RPAT=$(shell echo $(IAR_HOME) | sed -e 's/\\\/\\\\\\\\\\\/g' -e 's/ /\\\\\\\\\\\ /g')
+
 # Build
 all: OBJ_DIRS $(TARGET).a90
 
+#Include make files containing dependencies
+-include $(DEPS)
+
 #Create directory for object files
 OBJ_DIRS :
-	mkdir -p $(OBJDIR)
+	@mkdir -p $(OBJDIR)
 
 # Compile
 $(OBJDIR)/%.r90 : sources/%.c 
-	$(CC) $(INCLUDES) $(CFLAGS) $< -o $@ -lC $(OBJDIR:%.r90=$(OBJDIR)/%.lst)
+	$(CC) $(INCLUDES) $(CFLAGS) $< -o $@ -lC $(OBJDIR:%.r90=$(OBJDIR)/%.lst) --dependencies=m $(OBJDIR:%.r90=$(OBJDIR)/%.d)
+	@sed -e 's/$(SPAT)/$(RPAT)/' $(patsubst %.r90, %.d, $@) > tmpfile; mv tmpfile $(patsubst %.r90, %.d, $@)
 
 #Link
 $(TARGET).a90: $(OBJECTS)
-	 $(LD) $(LDFLAGS) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET).a90
+	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET).a90
 
 # Clean target
 clean:
-	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(OBJDIR)/*.map 
+	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(OBJDIR)/*.map $(DEPS)

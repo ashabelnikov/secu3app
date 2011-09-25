@@ -157,7 +157,7 @@ MAIN()
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
  ckps_set_edge_type(edat.param.ckps_edge_type);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
  ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
 #endif
  ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);
@@ -180,7 +180,7 @@ MAIN()
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
   { //двигатель остановился (его обороты ниже критических)
-#ifdef COIL_REGULATION
+#ifdef DWELL_CONTROL
    ckps_init_ports();           //чтобы IGBT не зависли в открытом состоянии
    //TODO: Сделать мягкую отсечку для избавления от нежелательной искры. Как?
 #endif
@@ -251,8 +251,8 @@ MAIN()
   if (edat.param.zero_adv_ang)
    calc_adv_ang = 0;
 
-#ifdef COIL_REGULATION
-  //calculate and update coil regulation time
+#ifdef DWELL_CONTROL
+  //calculate and update accumulation time (dwell control)
   ckps_set_acc_time(accumulation_time(&edat));
 #endif
   //Если разрешено, то делаем отсечку зажигания при превышении определенных оборотов

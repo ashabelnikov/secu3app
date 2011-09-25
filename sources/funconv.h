@@ -114,8 +114,8 @@ int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_stat
  */
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
 
-#ifdef COIL_REGULATION
-/** Calculates current accumulation time (coil regulation) using current board voltage
+#ifdef DWELL_CONTROL
+/** Calculates current accumulation time (dwell control) using current board voltage
  * \param d pointer to ECU data structure
  * \return accumulation time in timer's ticks (1 tick = 4uS)
  */

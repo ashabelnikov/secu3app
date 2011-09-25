@@ -292,7 +292,7 @@ uint8_t knock_attenuator_function(struct ecudata_t* d)
         PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i1]), (i * 60) + 200, 60) >> 4;
 }
 
-#ifdef COIL_REGULATION
+#ifdef DWELL_CONTROL
 uint16_t accumulation_time(struct ecudata_t* d)
 {
  int16_t i, i1, voltage = d->sens.voltage;

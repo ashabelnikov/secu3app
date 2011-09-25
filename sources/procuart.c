@@ -108,7 +108,7 @@ void process_uart_interface(struct ecudata_t* d)
     ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
     ckps_set_merge_outs(d->param.merge_ign_outs);
 
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
     ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
 #endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);

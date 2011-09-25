@@ -83,7 +83,7 @@ typedef struct
  uint8_t  ckps_new_engine_cycle_happen:1;    //!< flag for synchronization with rotation (флаг синхронизации с вращением)
  uint8_t  ckps_use_knock_channel:1;          //!< flag which indicates using of knock channel (признак использования канала детонации)
  uint8_t  ckps_need_to_set_channel:1;        //!< indicates that it is necessary to set channel
-#ifdef COIL_REGULATION
+#ifdef DWELL_CONTROL
  uint8_t  ckps_need_to_set_channel_b:1;      //!< Indicates that it is necessary to set channel (COMPB)
 #endif
  uint8_t  ckps_ign_enabled:1;                //!< Ignition enabled/disabled
@@ -109,8 +109,8 @@ typedef struct
  int8_t   knock_wnd_end_abs;          //!< end of the phase selection window of detonation in the teeth of wheel, relatively to t.d.c (конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
  uint32_t frq_calc_dividend;          //!< divident for calculating RPM (делимое для расчета частоты вращения)
-#ifdef COIL_REGULATION
- volatile uint16_t cr_acc_time;       //!< accumulation time for coil requlation (timer's ticks)
+#ifdef DWELL_CONTROL
+ volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
  uint8_t  channel_mode_b;             //!< determines which channel of the ignition to start accumulate at the moment (определяет какой канал зажигания будет накапливать энергию в данный момент)
  uint32_t acc_delay;                  //!< delay between last ignition and next accumulation
  uint16_t tmrval_saved;               //!< value of timer at the moment of each spark
@@ -129,7 +129,7 @@ typedef struct
  */
 typedef struct
 {
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
  /** Counts out teeth for ignition pulse (отсчитывает зубья импульса зажигания) */
  volatile uint8_t ignition_pulse_cogs;
 #endif
@@ -167,7 +167,7 @@ prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 36, 18, 12, 9};
 
 void ckps_init_state_variables(void)
 {
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
  uint8_t i;
  _BEGIN_ATOMIC_BLOCK();
  //at the first interrupt will generate an end trigger pulse ignition
@@ -305,7 +305,7 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  _RESTORE_INTERRUPT(_t);
 }
 
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
 void ckps_set_ignition_cogs(uint8_t cogs)
 {
  _BEGIN_ATOMIC_BLOCK();
@@ -470,7 +470,7 @@ ISR(TIMER1_COMPA_vect)
  uint8_t timsk_sv, ucsrb_sv = UCSRB;
 #endif
 
-#ifdef COIL_REGULATION
+#ifdef DWELL_CONTROL
  ckps.tmrval_saved = TCNT1;
 #endif
 
@@ -501,7 +501,7 @@ ISR(TIMER1_COMPA_vect)
 #endif
  //-----------------------------------------------------
 
-#ifdef COIL_REGULATION
+#ifdef DWELL_CONTROL
  //delay = period_curr * (WHEEL_COGS_NUM / chan_number)
  ckps.acc_delay = ((uint32_t)ckps.period_curr) * COGSPERCHAN(ckps.chan_number); 
  if (ckps.cr_acc_time > ckps.acc_delay-120)
@@ -534,8 +534,8 @@ ISR(TIMER1_COMPA_vect)
  //-----------------------------------------------------
 }
 
-#ifdef COIL_REGULATION
-/**Interrupt handler for Compare/Match channel B of timer T1. Used for coil regulation.
+#ifdef DWELL_CONTROL
+/**Interrupt handler for Compare/Match channel B of timer T1. Used for dwell control.
  * вектор прерывания по совпадению канала B таймера Т1. Используется для управления накоплением энергии КЗ.
  */
 ISR(TIMER1_COMPB_vect)
@@ -613,7 +613,7 @@ void process_ckps_cogs(void)
 #endif
  //-----------------------------------------------------
    
-#ifdef COIL_REGULATION
+#ifdef DWELL_CONTROL
  if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
  {
   //We must take into account time elapsed between last spark and following tooth.
@@ -710,13 +710,13 @@ void process_ckps_cogs(void)
    TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
    chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
 #endif
   }
  }
 
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
  //finish the ignition trigger pulses for igniter(s) and immediately increase the number of tooth for processed channel
  //заканчиваем импульсы запуска коммутатора(ов) и сразу увеличиваем номер зуба для обработанного канала
  for(i = 0; i < ckps.chan_number; ++i)

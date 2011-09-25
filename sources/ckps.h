@@ -58,7 +58,7 @@ void ckps_set_edge_type(uint8_t edge_type);
 void ckps_set_cogs_btdc(uint8_t cogs_btdc);
 
 
-#ifndef COIL_REGULATION
+#ifndef DWELL_CONTROL
 /** Set duration of ignition pulse drive (устанавливает длительность импульса зажигания в зубьях)
  * \param cogs duration of pulse, countable in the teeth of wheel
  * \details For standard igniters duration of driving pulses must be 1/3, when significant deviation to the smaller side
@@ -70,7 +70,7 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc);
  */
 void ckps_set_ignition_cogs(uint8_t cogs);
 #else
-/**Coil regulation. Set accumulation time
+/**Dwell control. Set accumulation time
  * \param i_acc_time accumulation time in timer's ticks (1 tick = 4uS)
  */
 void ckps_set_acc_time(uint16_t i_acc_time);

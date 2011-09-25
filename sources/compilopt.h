@@ -77,11 +77,11 @@
  #define COPT_INVERSE_IGN_OUTPUTS 0
 #endif
 
-/** Use coil regulation */
-#ifdef COIL_REGULATION
- #define COPT_COIL_REGULATION 1
+/** Use dwell control */
+#ifdef DWELL_CONTROL
+ #define COPT_DWELL_CONTROL 1
 #else
- #define COPT_COIL_REGULATION 0
+ #define COPT_DWELL_CONTROL 0
 #endif
 
 /** Use PWM for cooling fan*/

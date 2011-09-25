@@ -72,7 +72,7 @@
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128 //!< number of points in attenuator's lookup table
 #define FW_SIGNATURE_INFO_SIZE 48           //!< number of bytes reserved for firmware's signature information
-#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32   //!< number of points in lookup table used for coil regulation
+#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32   //!< number of points in lookup table used for dwell control
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
@@ -104,7 +104,7 @@ typedef struct fw_ex_data_t
   uint8_t attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE];
 
   /**Таблица времени накопления энергии в катушках зажигания (зависимость от напряжения)
-   * Table for coil's regulation. Regulation depends on board voltage */
+   * Table for dwell control. Accumulation time depends on board voltage */
   uint16_t coil_on_time[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
 
   /**Used for checking compatibility with management software. Holds size of all data stored in the firmware. */

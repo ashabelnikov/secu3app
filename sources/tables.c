@@ -51,7 +51,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E
   },
 
-  /**Lookup table for controlling coil's accumulation time */
+  /**Lookup table for controlling coil's accumulation time (dwell control) */
   {0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,
    0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200
   },
@@ -61,7 +61,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**config */
   (COPT_ATMEGA16 << 0) | (COPT_ATMEGA32 << 1) | (COPT_ATMEGA64 << 2) | (COPT_ATMEGA128 << 3) |
-  (COPT_VPSEM << 4) | (COPT_WHEEL_36_1 << 5) | (COPT_INVERSE_IGN_OUTPUTS << 6) | (COPT_COIL_REGULATION << 7) |
+  (COPT_VPSEM << 4) | (COPT_WHEEL_36_1 << 5) | (COPT_INVERSE_IGN_OUTPUTS << 6) | (COPT_DWELL_CONTROL << 7) |
   (COPT_COOLINGFAN_PWM << 8) | (COPT_REALTIME_TABLES << 9) | (COPT_ICCAVR_COMPILER << 10) | (COPT_AVRGCC_COMPILER << 11),
 
   /**reserved*/

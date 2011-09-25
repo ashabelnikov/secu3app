@@ -35,7 +35,7 @@ c соответствующими опциями (тип микроконтроллера и тип компилятора), будет созда
                           для инвертирования выходов управления зажиганием
 
 
-    COIL_REGULATION - for direct controlling of coil regulation
+    DWELL_CONTROL - for direct controlling of dwell
                       для прямого управления накоплением энергии в катушках зажигания
 
 

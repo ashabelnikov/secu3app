@@ -1,0 +1,6 @@
+# Some ignores for SECU-3
+/Makefile
+/output/*
+/platform_cfg
+/secu-3_app.elf
+

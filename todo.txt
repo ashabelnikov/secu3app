@@ -26,6 +26,6 @@ What to do in relation to SECU-3 firmware:
 
 8. Turn on cooling fan only after engine started (do not waste accumulator's energy in critical - start mode)
 
-9. Implement special mode which turns off advance angle (=0), mode can be activated/deactivated from SECU-3 Manager
+[9.] Implement special mode which turns off advance angle (=0), mode can be activated/deactivated from SECU-3 Manager
 
 

@@ -2,7 +2,6 @@
 rem Batch file for generating check sum for firmware of SECU-3 project
 rem Created by Alexey A. Shabelnikov, Kiev 26 September 2009. 
 
-set LOGFILE=crclog.txt
 set HEXTOBIN=hextobin.exe
 set CODECRC=codecrc.exe
 set USAGE=Supported options: M16,M32,M64
@@ -39,40 +38,22 @@ echo %USAGE%
 exit 1
 
 :dowork
-echo See %LOGFILE% for detailed information.
-IF EXIST %LOGFILE% del %LOGFILE%
-
-echo EXECUTING BATCH... >> %LOGFILE%
-echo --------------------------------------------- >> %LOGFILE%
-
 rem Конвертируем HEX файл созданный компилятором в бинарный файл
-IF NOT EXIST %HEXTOBIN% (
- echo ERROR: Can not find file "%HEXTOBIN%" >> %LOGFILE%
- goto error
-)
-%HEXTOBIN% secu-3_app.a90 secu-3_app.bin >> %LOGFILE%
+%HEXTOBIN% secu-3_app.a90 secu-3_app.bin
 IF ERRORLEVEL 1 GOTO error
 
 rem Делаем копию файла без контрольной суммы
-copy secu-3_app.bin secu-3_app0000.bin
-copy secu-3_app.a90 secu-3_app0000.a90
+rem copy secu-3_app.bin secu-3_app0000.bin
+rem copy secu-3_app.a90 secu-3_app0000.a90
 
 rem Считаем и записываем контрольную сумму в бинарный файл
-IF NOT EXIST %CODECRC% (
-echo ERROR: Can not find file "%CODECRC%" >> %LOGFILE%
-goto error
-)
-%CODECRC% secu-3_app.bin secu-3_app.a90  0  %FW_SIZE%  %CRC_ADDR% -h >> %LOGFILE%
+%CODECRC% secu-3_app.bin secu-3_app.a90  0  %FW_SIZE%  %CRC_ADDR% -h
 IF ERRORLEVEL 1 GOTO error
-%CODECRC% secu-3_app.bin secu-3_app.bin  0  %FW_SIZE%  %CRC_ADDR% -b >> %LOGFILE%
+%CODECRC% secu-3_app.bin secu-3_app.bin  0  %FW_SIZE%  %CRC_ADDR% -b
 IF ERRORLEVEL 1 GOTO error
 
-echo --------------------------------------------- >> %LOGFILE%
-echo ALL OPERATIONS WERE COMPLETED SUCCESSFULLY! >> %LOGFILE%
-GOTO exit
+echo ALL OPERATIONS WERE COMPLETED SUCCESSFULLY!
+exit 0
 
 :error
-echo --------------------------------------------- >> %LOGFILE%
-echo WARNING! THERE ARE SOME ERRORS IN EXECUTING BATCH. >> %LOGFILE%
-
-:exit
+exit 1

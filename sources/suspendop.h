@@ -45,6 +45,9 @@
 #define SOP_SAVE_TABLSET            11    //!< save table set for selected fuel from RAM to EEPROM
 #define SOP_SEND_NC_TABLSET_SAVED   12    //!< notify that table set for selected fuel has been saved
 #endif
+#ifdef DEBUG_VARIABLES
+#define SOP_DBGVAR_SENDING          13    //!< send out some of firmware variables
+#endif
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters

@@ -147,7 +147,15 @@ void process_uart_interface(struct ecudata_t* d)
  {
   if (!uart_is_sender_busy())
   {
-   uart_send_packet(d, 0);    //теперь передатчик озабочен передачей данных
+   uart_send_packet(d, 0);                  //теперь передатчик озабочен передачей данных
+#ifdef DEBUG_VARIABLES
+   {
+   uint8_t desc = uart_get_send_mode();
+   if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc)
+    sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information
+   }
+#endif
+
    s_timer_set(send_packet_interval_counter, d->param.uart_period_t_ms);
 
    //после передачи очищаем кеш ошибок

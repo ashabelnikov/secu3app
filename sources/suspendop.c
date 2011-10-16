@@ -240,6 +240,20 @@ void sop_execute_operations(struct ecudata_t* d)
    suspended_opcodes[SOP_SAVE_TABLSET] = SOP_NA;
   }
  }
+
+#endif
+
+#ifdef DEBUG_VARIABLES
+ if (sop_is_operation_active(SOP_DBGVAR_SENDING))
+ {
+  //Is sender busy (передатчик занят)?
+  if (!uart_is_sender_busy())
+  {
+   uart_send_packet(d, DBGVAR_DAT);    //send packet with debug information
+   //"delete" this operation from list because it has already completed
+   suspended_opcodes[SOP_DBGVAR_SENDING] = SOP_NA;
+  }
+ }
 #endif
 
  //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации

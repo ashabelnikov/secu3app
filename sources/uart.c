@@ -460,8 +460,17 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      state = ETMT_STRT_MAP;
      break;
    }
+   break;
   }
-  break;
+#endif
+
+#ifdef DEBUG_VARIABLES
+  case DBGVAR_DAT:
+   build_i16h(/*Your variable here*/0);
+   build_i16h(/*Your variable here*/0);
+   build_i16h(/*Your variable here*/0);
+   build_i16h(/*Your variable here*/0);
+   break;
 #endif
  }//switch
 

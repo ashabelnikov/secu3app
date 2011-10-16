@@ -112,4 +112,11 @@
  #define COPT_AVRGCC_COMPILER 0
 #endif
 
+/** Debug mode. Allows to watch variables and edit them remotely */
+#ifdef DEBUG_VARIABLES
+ #define COPT_DEBUG_VARIABLES 1
+#else
+ #define COPT_DEBUG_VARIABLES 0
+#endif
+
 #endif //_COMPILOPT_H_

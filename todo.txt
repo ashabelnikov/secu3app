@@ -1,31 +1,35 @@
 Project: SECU-3
 Creation date: 29/11/2010
 By: Alexey A. Shabelnikov
-----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 
 What to do in relation to SECU-3 firmware:
 [] - means already fixed/implemented
 
-1. Move code related to resetting low priority errors from secu-3.c to ce_errors.c
+1. Move code related to resetting low priority errors from secu-3.c to 
+   ce_errors.c
 
-2. Implement inginition cycles counter which can be used in the system. Maybe it is
-   good idea to use callback function.
+2. Implement inginition cycles counter which can be used in the system. Maybe it
+   is good idea to use callback function.
 
 3. Reimplement timers (vstimer.c). Use callback mechanism. Leave in the 10 ms 
    interrupt routine only one counter.
 
-4. Callback functions for "permanent" and "each cycle" execution. In this case, main
-   will be as caller. 
+4. Callback functions for "permanent" and "each cycle" execution. In this case,
+   main will be as caller. 
 
-5. To check and fix. ECU error related to detonation can leave after engine stopped.
+5. To check and fix. ECU error related to detonation can leave after engine 
+   stopped.
 
-[6.] Implement ignition cut-off when RPM reaches unallowed value. Value can be set from mamager.
+[6.] Implement ignition cut-off when RPM reaches unallowed value. Value can be
+   set from mamager.
 
 [7.] Run time edit of ignition table (table(s) are stored in RAM)
 
-8. Turn on cooling fan only after engine started (do not waste accumulator's energy in critical - start mode)
+8. Turn on cooling fan only after engine started (do not waste accumulator's
+   energy in critical - start mode)
 
-[9.] Implement special mode which turns off advance angle (=0), mode can be activated/deactivated from SECU-3 Manager
-
+[9.] Implement special mode which turns off advance angle (=0), mode can be
+   activated/deactivated from SECU-3 Manager
 

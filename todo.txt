@@ -33,3 +33,6 @@ What to do in relation to SECU-3 firmware:
 [9.] Implement special mode which turns off advance angle (=0), mode can be
    activated/deactivated from SECU-3 Manager
 
+10.Cooling fan's PWM. As the adjustment is not smooth, then after changing 
+   the PWM duty, it is necessary to sustain a pause of 5 seconds, until the next
+   possible change.

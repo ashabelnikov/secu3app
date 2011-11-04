@@ -119,4 +119,18 @@
  #define COPT_DEBUG_VARIABLES 0
 #endif
 
+/** Use of phase sensor */
+#ifdef PHASE_SENSOR
+ #define COPT_PHASE_SENSOR 1
+#else
+ #define COPT_PHASE_SENSOR 0
+#endif
+
+/** Use of phased ignition (coil on each cylinder)*/
+#ifdef PHASED_IGNITION
+ #define COPT_PHASED_IGNITION 1
+#else
+ #define COPT_PHASED_IGNITION 0
+#endif
+
 #endif //_COMPILOPT_H_

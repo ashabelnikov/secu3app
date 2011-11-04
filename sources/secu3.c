@@ -31,6 +31,7 @@
 #include "adc.h"
 #include "bitmask.h"
 #include "bootldr.h"
+#include "camsens.h"
 #include "ce_errors.h"
 #include "ckps.h"
 #include "crc16.h"
@@ -152,6 +153,11 @@ MAIN()
  //инициализируем UART
  uart_init(edat.param.uart_divisor);
 
+ //initialization of cam module
+#ifdef PHASE_SENSOR
+ cams_init_state();
+#endif
+
  //инициализируем модуль ДПКВ
  ckps_init_state();
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
@@ -185,6 +191,9 @@ MAIN()
    //TODO: Сделать мягкую отсечку для избавления от нежелательной искры. Как?
 #endif
    ckps_init_state_variables();
+#ifdef PHASE_SENSOR
+   cams_init_state_variables();
+#endif
    edat.engine_mode = EM_START; //режим пуска
 
    if (edat.param.knock_use_knock_channel)

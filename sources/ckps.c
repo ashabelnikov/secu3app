@@ -30,11 +30,21 @@
 #include "port/port.h"
 #include "adc.h"
 #include "bitmask.h"
+#include "camsens.h"
 #include "ckps.h"
 #include "magnitude.h"
 
 #include "secu3.h"
 #include "knock.h"
+
+#ifdef PHASED_IGNITION
+//PHASED_IGNITION can't be used without PHASE_SENSOR
+#if !defined(PHASE_SENSOR)
+ #error "You can not use phased ignition without phase sensor. Define PHASE_SENSOR if it is present in the system or do not use phased ignition!"
+#endif
+ void on_cam_edge(void);
+ void on_cam_error(void);
+#endif
 
 #ifndef WHEEL_36_1 //60-2
 /** Number of teeth (including absent) (количество зубьев (включая отсутствующие)) */
@@ -134,6 +144,11 @@ typedef struct
  volatile uint8_t ignition_pulse_cogs;
 #endif
 
+#ifdef PHASED_IGNITION
+ /**Current cylinder attached to this channel (0, 1) */
+ volatile uint8_t chan_cyl;
+#endif
+
  /** Determines number of tooth (relatively to t.d.c) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
  volatile uint8_t cogs_latch;
  /** Determines number of tooth at which measurement of rotation period is performed (определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. циклами)) */
@@ -165,6 +180,18 @@ prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 60, 30, 20, 15};
 prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 36, 18, 12, 9};
 #endif
 
+#ifdef PHASED_IGNITION
+/** Internal function to initialize 'chan_cyl' member of chanstate_t
+ * \param value Value to use for initialization */
+INLINE
+void init_chan_cyl(uint8_t value, uint8_t count)
+{
+ uint8_t i;
+ for(i = 0; i < count; ++i)
+  chanstate[i].chan_cyl = value;
+}
+#endif
+
 void ckps_init_state_variables(void)
 {
 #ifndef DWELL_CONTROL
@@ -172,7 +199,7 @@ void ckps_init_state_variables(void)
  _BEGIN_ATOMIC_BLOCK();
  //at the first interrupt will generate an end trigger pulse ignition
  //(при первом же прерывании будет сгенерирован конец импульса запуска зажигания) 
- for(i = 0; i < IGN_CHANNELS_MAX; i++)
+ for(i = 0; i < IGN_CHANNELS_MAX; ++i)
   chanstate[i].ignition_pulse_cogs = 0;
 #else
  _BEGIN_ATOMIC_BLOCK();
@@ -187,7 +214,11 @@ void ckps_init_state_variables(void)
  ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
-
+#ifdef PHASED_IGNITION
+ init_chan_cyl(255, IGN_CHANNELS_MAX); //<--wasted spark will be by default
+ cams_set_callbacks(&on_cam_edge, &on_cam_error);
+ cams_set_error_threshold(WHEEL_COGS_NUM * 2);
+#endif
  flags->ckps_need_to_set_channel = 0;
  flags->ckps_new_engine_cycle_happen = 0;
  flags->ckps_is_synchronized = 0;
@@ -203,8 +234,8 @@ void ckps_init_state(void)
  flags->ckps_error_flag = 0;
 
  //Compare channels do not connected to lines of ports (normal port mode)
- //(Каналы Compare неподключены к линиям портов (нормальный режим портов))
- TCCR1A = 0; 
+ //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
+ TCCR1A = 0;
 
  //(Noise reduction(подавление шума), rising edge of capture(передний фронт захвата), clock = 250kHz)
  TCCR1B = _BV(ICNC1)|_BV(ICES1)|_BV(CS11)|_BV(CS10);
@@ -226,7 +257,7 @@ void ckps_init_ports(void)
 {
  //after ignition is on, igniters must not be in the accumulation mode,
  //therefore set low level on their inputs
- //(после включения зажигания коммутаторы недолжны быть в режиме накопления,
+ //(после включения зажигания коммутаторы не должны быть в режиме накопления,
  //поэтому устанавливаем на их входах низкий уровень)
 #ifndef INVERSE_IGN_OUTPUTS
  PORTD|= _BV(PD5)|_BV(PD4)|_BV(PD6); // 1st and 2nd ignition channels, pullup for ICP1 (1-й и 2-й каналы зажигания, подтяжка для ICP1)
@@ -413,31 +444,78 @@ void ckps_set_merge_outs(uint8_t i_merge)
  ckps.chan_mask = i_merge ? 0x00 : 0xFF;
 }
 
+#ifndef PHASED_IGNITION
 /**Helpful macro.
  * Generates end of accumulation pulse (moment of spark) for 1st,2nd,3rd,4th channels correspondingly
  * (Вспомогательный макрос. Конец импульса накачки (момент искры) для 1-го,2-го,3-го,4-го каналов соответственно). */
 #define TURNON_IGN_CHANNELS(){\
-  case 0: PORTD |= _BV(PORTD4);\
+  case 0: PORTD |= _BV(PD4);\
    break;\
-  case 1: PORTD |= _BV(PORTD5);\
+  case 1: PORTD |= _BV(PD5);\
    break;\
-  case 2: PORTC |= _BV(PORTC0);\
+  case 2: PORTC |= _BV(PC0);\
    break;\
-  case 3: PORTC |= _BV(PORTC1);\
+  case 3: PORTC |= _BV(PC1);\
    break;}
 
-/**Helpful macro. 
+/**Helpful macro.
  * Generates end of ignition drive pulse for 1st,2nd,3rd,4th channels correspondingly
  * (Вспомогательный макрос. Конец импульса запуска зажигания для 1-го,2-го,3-го,4-го каналов соответственно) */
 #define TURNOFF_IGN_CHANNELS(){\
- case 0: PORTD &= ~_BV(PORTD4);\
+ case 0: PORTD &= ~_BV(PD4);\
   break;\
- case 1: PORTD &= ~_BV(PORTD5);\
+ case 1: PORTD &= ~_BV(PD5);\
   break;\
- case 2: PORTC &= ~_BV(PORTC0);\
+ case 2: PORTC &= ~_BV(PC0);\
   break;\
- case 3: PORTC &= ~_BV(PORTC1);\
+ case 3: PORTC &= ~_BV(PC1);\
   break;}
+
+#else //phased ignition
+
+/**Helpful macro.
+ * Generates end of accumulation pulse (moment of spark) in phased ignition mode
+ */
+#define TURNON_IGN_CHANNELS(){\
+ case 0:\
+  if (0==(chanstate[0].chan_cyl & ckps.chan_mask))\
+   PORTD |= _BV(PD4);\
+  else if (1==chanstate[0].chan_cyl)\
+   PORTD |= _BV(PD5);\
+  else\
+   PORTD |= (_BV(PD4) | _BV(PD5));\
+  break;\
+ case 1:\
+  if (0==chanstate[1].chan_cyl)\
+   PORTC |= _BV(PC0);\
+  else if (1==chanstate[1].chan_cyl)\
+   PORTC |= _BV(PC1);\
+  else\
+   PORTC |= (_BV(PC0) | _BV(PC1));\
+  break;}
+
+/**Helpful macro.
+ * Generates end of ignition drive pulse in phased ignition mode
+ */
+#define TURNOFF_IGN_CHANNELS(){\
+ case 0:\
+  if (0==(chanstate[0].chan_cyl & ckps.chan_mask))\
+   PORTD &= ~_BV(PD4);\
+  else if (1==chanstate[0].chan_cyl)\
+   PORTD &= ~_BV(PD5);\
+  else\
+   PORTD &= ~(_BV(PD4) | _BV(PD5));\
+  break;\
+ case 1:\
+  if (0==chanstate[1].chan_cyl)\
+   PORTC &= ~_BV(PC0);\
+  else if (1==chanstate[1].chan_cyl)\
+   PORTC &= ~_BV(PC1);\
+  else\
+   PORTC &= ~(_BV(PC0) | _BV(PC1));\
+  break;}
+
+#endif
 
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
@@ -461,9 +539,27 @@ void turn_off_ignition_channel(uint8_t i_channel)
  }
 }
 
+#ifdef PHASED_IGNITION
+/** Callback from cam sensor. Executed on each edge,
+ * this function turns on phased ignition.
+ * Note: it is executed from interrupt handler */
+void on_cam_edge(void)
+{
+ init_chan_cyl(0, ckps.chan_number);
+}
+
+/** Callback from cam sensor. Executed on error (cam is missing),
+ * this function turns off phased ignition and turns on wasted spark.
+ * Note: it is executed from interrupt handler */
+void on_cam_error(void)
+{
+ init_chan_cyl(255, ckps.chan_number);
+}
+#endif
+
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
- */                                                                        
+ */
 ISR(TIMER1_COMPA_vect)
 {
 #ifdef COOLINGFAN_PWM
@@ -478,7 +574,7 @@ ISR(TIMER1_COMPA_vect)
 
  //line of port in the low level, now set it into a high level - makes the igniter to stop 
  //the accumulation of energy and close the transistor (spark)
- //(линия порта в низком уровне, теперь переводим её в высокий уровень - заставляем коммутатор прекратить 
+ //(линия порта в низком уровне, теперь переводим её в высокий уровень - заставляем коммутатор прекратить
  //накопление энергии и закрыть транзистор (искра)).
  switch(ckps.channel_mode)
  {
@@ -505,7 +601,7 @@ ISR(TIMER1_COMPA_vect)
  //delay = period_curr * (WHEEL_COGS_NUM / chan_number)
  ckps.acc_delay = ((uint32_t)ckps.period_curr) * COGSPERCHAN(ckps.chan_number); 
  if (ckps.cr_acc_time > ckps.acc_delay-120)
-  ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us   
+  ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
  ckps.acc_delay-= ckps.cr_acc_time;
  ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
 
@@ -522,6 +618,16 @@ ISR(TIMER1_COMPA_vect)
 #else
  //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубьях)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
+#endif
+
+#ifdef PHASED_IGNITION
+ if (chanstate[ckps.channel_mode].chan_cyl !=255 )
+ {
+  if (chanstate[ckps.channel_mode].chan_cyl < 1)
+   ++chanstate[ckps.channel_mode].chan_cyl;
+  else
+   chanstate[ckps.channel_mode].chan_cyl = 0;
+ }
 #endif
 
  //-----------------------------------------------------
@@ -612,7 +718,7 @@ void process_ckps_cogs(void)
  _ENABLE_INTERRUPT();
 #endif
  //-----------------------------------------------------
-   
+
 #ifdef DWELL_CONTROL
  if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
  {
@@ -637,7 +743,7 @@ void process_ckps_cogs(void)
   }
   ckps.acc_delay-=ckps.period_curr;
  }
-#endif 
+#endif
 
  if (flags->ckps_use_knock_channel)
  {
@@ -660,7 +766,7 @@ void process_ckps_cogs(void)
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
-  //for 66° before t.d.c (before working cycle) establish new advance angle to be actuated, 
+  //for 66° before t.d.c (before working cycle) establish new advance angle to be actuated,
   //before this moment value was stored in a temporary buffer.
   //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
   //до этого хранился во временном буфере.
@@ -680,7 +786,7 @@ void process_ckps_cogs(void)
   //(зубья завершения/начала измерения периодов вращения  - в.м.т. считывание и сохранение измеренного периода,
   //затем запоминание текущего значения счетчика для следующего измерения)
   if (ckps.cog==chanstate[i].cogs_btdc) 
-  { 
+  {
    //if it was overflow, then set the maximum possible time
    //если было переполнение то устанавливаем максимально возможное время
    if (((ckps.period_curr > 1250) || !flags->ckps_is_valid_half_turn_period))
@@ -732,6 +838,11 @@ void process_ckps_cogs(void)
  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
  ++ckps.cog;
 
+#ifdef PHASE_SENSOR
+ //search for level's toggle from camshaft sensor on each cog
+ cams_detect_edge();
+#endif
+
  //-----------------------------------------------------
 #ifdef COOLINGFAN_PWM
  //disable interrupts and restore previous states of masked interrupts
@@ -750,9 +861,9 @@ ISR(TIMER1_CAPT_vect)
 {
  ckps.period_curr = GetICR() - ckps.icr_prev;
 
- //At the start of engine, skipping a certain number of teeth for initializing 
+ //At the start of engine, skipping a certain number of teeth for initializing
  //the memory of previous periods. Then look for synchro-label.
- //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации 
+ //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации
  //памяти предыдущих периодов. Затем ищем синхрометку.
  if (!flags->ckps_is_synchronized)
  {
@@ -778,7 +889,7 @@ synchronized_enter:
  //the restoration of missing teeth, as the initial data using the last
  //value of inter-teeth period.
  //(Если последний зуб перед синхрометкой, то начинаем отсчет времени для
- //восстановления отсутствующих зубьев, в качестве исходных данных используем 
+ //восстановления отсутствующих зубьев, в качестве исходных данных используем
  //последнее значение межзубного периода).
  if (ckps.cog == WHEEL_LAST_COG)
   set_timer0(ckps.period_curr);

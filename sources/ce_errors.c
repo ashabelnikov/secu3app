@@ -29,6 +29,7 @@
 #include <string.h>
 #include "adc.h"
 #include "bitmask.h"
+#include "camsens.h"
 #include "ce_errors.h"
 #include "ckps.h"
 #include "eeprom.h"
@@ -76,6 +77,18 @@ void check(struct ecudata_t* d)
  {
   ce_clear_error(ECUERROR_CKPS_MALFUNCTION);
  }
+
+#ifdef PHASE_SENSOR
+ if (cams_is_error())
+ {
+  ce_set_error(ECUERROR_CAMS_MALFUNCTION);
+  cams_reset_error();
+ }
+ else
+ {
+  ce_clear_error(ECUERROR_CAMS_MALFUNCTION);
+ }
+#endif
 
  //if error of knock channel was
  //если была ошибка канала детонации

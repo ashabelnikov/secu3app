@@ -27,37 +27,44 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     List of symbols which affects compilation:
     —писок символов управл€ющих компил€цией:
 
-    VPSEM                for using of starter blocking output for indication of 
+    VPSEM                For using of starter blocking output for indication of 
                          idle economizer valve's state
                          дл€ индикации состо€ни€ клапана Ёѕ’’ используетс€ выход
                          блокировки стартера
 
 
-    WHEEL_36_1           for using 36-1 crank (60-2 used by default)
+    WHEEL_36_1           For using 36-1 crank (60-2 used by default)
                          дл€ использовани€ зубчатого диска 36-1 (по умолчанию 
                          60-2)
 
 
-    INVERSE_IGN_OUTPUTS  use for to invert ignition outputs
+    INVERSE_IGN_OUTPUTS  Use for to invert ignition outputs
                          дл€ инвертировани€ выходов управлени€ зажиганием
 
 
-    DWELL_CONTROL        for direct controlling of dwell
+    DWELL_CONTROL        For direct controlling of dwell
                          дл€ пр€мого управлени€ накоплением энергии в катушках 
                          зажигани€
 
 
-    COOLINGFAN_PWM       use PWM for controlling of electric cooling fan
+    COOLINGFAN_PWM       Use PWM for controlling of electric cooling fan
                          использовать или нет Ў»ћ дл€ управлени€ оборотами 
                          вентил€тора
 
-    REALTIME_TABLES      allow editing of tables in realtime (use RAM)
+    REALTIME_TABLES      Allow editing of tables in realtime (use RAM)
                          разрешить редактирование таблиц в реальном времени
 
-    DEBUG_VARIABLES      for watching and editing of some firmware variables 
+    DEBUG_VARIABLES      For watching and editing of some firmware variables 
                          (used for debug by developers)
                          разрешить режим отладки позвол€ющий отслеживать и 
                          мен€ть некоторые переменные прошивки
+
+    PHASE_SENSOR         Use of phase (cam) sensor
+                         (разрешить использование датчика фаз)
+   
+
+    PHASED_IGNITION      Use phased ignition. PHASE_SENSOR must be also used.
+                         (разрешить фазированное зажигание)
 
 
 Necessary symbols you can define in the preprocessor's options of compiler

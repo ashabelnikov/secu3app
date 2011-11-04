@@ -36,3 +36,6 @@ What to do in relation to SECU-3 firmware:
 10.Cooling fan's PWM. As the adjustment is not smooth, then after changing 
    the PWM duty, it is necessary to sustain a pause of 5 seconds, until the next
    possible change.
+
+11.ckps.c Reenable TIMER_COMPA interrupt inside process_ckps_cogs() function. It will
+   increase accuracy of ignition at some critical moments of time.

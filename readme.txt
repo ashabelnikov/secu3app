@@ -61,11 +61,13 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
 
     PHASE_SENSOR         Use of phase (cam) sensor
                          (разрешить использование датчика фаз)
-   
+
 
     PHASED_IGNITION      Use phased ignition. PHASE_SENSOR must be also used.
                          (разрешить фазированное зажигание)
 
+    FUEL_PUMP            Electric fuel pump control
+                         (”правление электробензонасосом)
 
 Necessary symbols you can define in the preprocessor's options of compiler
 (edit corresponding Makefile).

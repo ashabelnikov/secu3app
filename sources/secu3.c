@@ -37,6 +37,7 @@
 #include "crc16.h"
 #include "eeprom.h"
 #include "fuelecon.h"
+#include "fuelpump.h"
 #include "funconv.h"
 #include "jumper.h"
 #include "idlecon.h"
@@ -74,6 +75,11 @@ void control_engine_units(struct ecudata_t *d)
 
  //Управление ЭМР (экономайзер мощностных режимов)
  fuelecon_control(d);
+
+#ifdef FUEL_PUMP
+ //Controlling of electric fuel pump (Управление электробензонасосом)
+ fuelpump_control(d);
+#endif
 }
 
 /**Initialization of variables and data structures 
@@ -112,6 +118,9 @@ MAIN()
  ckps_init_ports();
  vent_init_ports();
  fuelecon_init_ports();
+#ifdef FUEL_PUMP
+ fuelpump_init_ports();
+#endif
  idlecon_init_ports();
  starter_init_ports();
  ce_init_ports();

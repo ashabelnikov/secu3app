@@ -69,6 +69,10 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     FUEL_PUMP            Electric fuel pump control
                          (Управление электробензонасосом)
 
+    BL_BAUD_RATE         Baud rate for boot loader. Can be set to 9600, 14400,
+                         19200, 28800, 38400, 57600
+                         (Скорость передачи данных для загрузчика)
+
 Necessary symbols you can define in the preprocessor's options of compiler
 (edit corresponding Makefile).
 Нужные вам символы вы можете определить в опциях препроцессора компилятора 

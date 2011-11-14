@@ -14,7 +14,7 @@ FORMAT = ihex
 
 # Compile options common for all C compilation units.
 CFLAGS = -mmcu=$(MCU)
-CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DREALTIME_TABLES
+CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DREALTIME_TABLES -DBL_BAUD_RATE=9600
 CFLAGS += -I.
 CFLAGS += -Os -mcall-prologues 
 CFLAGS += -funsigned-char

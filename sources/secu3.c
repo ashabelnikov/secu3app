@@ -167,6 +167,11 @@ MAIN()
  cams_init_state();
 #endif
 
+#ifdef FUEL_PUMP
+ //initialization of electric fuel pump
+ fuelpump_init();
+#endif
+
  //инициализируем модуль ДПКВ
  ckps_init_state();
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);

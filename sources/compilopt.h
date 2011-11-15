@@ -133,4 +133,11 @@
  #define COPT_PHASED_IGNITION 0
 #endif
 
+/** Enable controlling of electric fuel pump */
+#ifdef FUEL_PUMP
+ #define COPT_FUEL_PUMP 1
+#else
+ #define COPT_FUEL_PUMP 0
+#endif
+
 #endif //_COMPILOPT_H_

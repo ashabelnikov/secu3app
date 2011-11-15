@@ -34,6 +34,9 @@ struct ecudata_t;
 /** Initialization of used I/O ports (инициализаци€ используемых портов) */
 void fuelpump_init_ports(void);
 
+/** Initialization of the module */
+void fuelpump_init(void);
+
 /** Does control of fuel pump (”правление бензонасосом)
  * \param d pointer to ECU data structure
  */

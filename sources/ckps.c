@@ -261,16 +261,34 @@ void ckps_init_ports(void)
  //поэтому устанавливаем на их входах низкий уровень)
 #ifndef INVERSE_IGN_OUTPUTS
  PORTD|= _BV(PD5)|_BV(PD4)|_BV(PD6); // 1st and 2nd ignition channels, pullup for ICP1 (1-й и 2-й каналы зажигания, подтяжка для ICP1)
+
+#if (IGN_CHANNELS_MAX==3)
+ PORTC|= _BV(PC0);          //3rd ignition channel only (только 3-й канал зажигания)
+#elif (IGN_CHANNELS_MAX==4)
  PORTC|= _BV(PC1)|_BV(PC0); //3rd and 4th ignition channels (3-й и 4-й каналы зажигания)
-#else //outputs inversion mode (режим инверсии выходов)
- PORTD&= ~(_BV(PD5)|_BV(PD4));
- PORTC&= ~(_BV(PC1)|_BV(PC0));
- PORTD|= _BV(PD6);
 #endif
+
+#else //outputs inversion mode (режим инверсии выходов)
+ PORTD|= _BV(PD6);
+ PORTD&= ~(_BV(PD5)|_BV(PD4));
+
+#if (IGN_CHANNELS_MAX==3)
+ PORTC&= ~(_BV(PC0));
+#elif (IGN_CHANNELS_MAX==4)
+ PORTC&= ~(_BV(PC1)|_BV(PC0));
+#endif
+
+#endif //INVERSE_IGN_OUTPUTS
 
  //PD5,PD4,PC1,PC0 must be configurated as outputs (должны быть сконфигурированы как выходы)
  DDRD|= _BV(DDD5)|_BV(DDD4); //1-2 ignition channels - for 2 and 4 cylinder engines (1-2 каналы зажигания - для 2 и 4 ц. двигателей)
+
+#if (IGN_CHANNELS_MAX==3)
+ DDRC|= _BV(DDC0);           //3 ignition channel only - for 6 cylinder engines (только 3 канал зажигания - для 6 ц. двигателей)
+#elif (IGN_CHANNELS_MAX==4)
  DDRC|= _BV(DDC1)|_BV(DDC0); //3-4 ignition channels - for 6 and 8 cylinder engines (3-4 каналы зажигания - для 6 и 8 ц. двигателей)
+#endif
+
 }
 
 //Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine 

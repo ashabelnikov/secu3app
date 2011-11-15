@@ -50,6 +50,9 @@ volatile s_timer8_t  engine_rotation_timeout_counter = 0; //!< used to determine
 volatile s_timer8_t  epxx_delay_time_counter = 0;         //!< used by idle economizer's controlling algorithm
 volatile s_timer8_t  idle_period_time_counter = 0;        //!< used by idling regulator's controlling algorithm
 volatile s_timer16_t save_param_timeout_counter = 0;      //!< used for saving of parameters (automatic saving)
+#ifdef FUEL_PUMP
+volatile s_timer16_t fuel_pump_time_counter = 0;          //!< used for fuel pump
+#endif
 
 /**for division, to achieve 10ms, because timer overflovs each 2 ms */
 uint8_t divider = DIVIDER_RELOAD;
@@ -82,6 +85,9 @@ ISR(TIMER2_OVF_vect)
   s_timer_update(engine_rotation_timeout_counter);
   s_timer_update(epxx_delay_time_counter);
   s_timer_update(idle_period_time_counter);
+#ifdef FUEL_PUMP
+  s_timer_update(fuel_pump_time_counter);
+#endif
  }
 }
 

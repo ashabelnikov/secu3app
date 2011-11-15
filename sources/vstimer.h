@@ -82,6 +82,9 @@ extern volatile s_timer8_t  engine_rotation_timeout_counter;
 extern volatile s_timer8_t  epxx_delay_time_counter;
 extern volatile s_timer8_t  idle_period_time_counter;
 extern volatile s_timer16_t save_param_timeout_counter;
+#ifdef FUEL_PUMP
+extern volatile s_timer16_t fuel_pump_time_counter;
+#endif
 //////////////////////////////////////////////////////////////////
 
 #endif //_VSTIMER_H_

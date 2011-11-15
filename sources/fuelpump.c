@@ -33,18 +33,67 @@
 #include "secu3.h"
 #include "vstimer.h"
 
-/** Turn on/turn off fuel pump */
-//#define TURN_ON_ELPUMP(s) {PORTB_Bit0 = s;}
+/**Turn off timeout used at startup, 5 seconds*/
+#define FP_TURNOFF_TIMEOUT_STRT 500
+
+/**Turn off timeout used when engine stops, 3 seconds */
+#define FP_TURNOFF_TIMEOUT_STOP 300
+
+/** Turn on/turn off fuel pump 
+ *NOTE: We are using 4-th ignition channel */
+#define TURN_ON_ELPUMP(s) {PORTC_Bit1 = s;}
+
+typedef struct
+{
+ uint8_t state;   //!< State for finite-state machine
+}fp_state_t;
+
+/**Global instance of state variables */
+fp_state_t fpstate = {0};
 
 void fuelpump_init_ports(void)
 {
-// PORTB|= _BV(PB0); //valve is turned on (клапан ЭПХХ включен)
-// DDRB |= _BV(DDB0);
+ //NOTE: We are using 4-th ignition channel
+ PORTC|= _BV(PC1); //fuel pump is on
+ DDRC|= _BV(DDC1);
+}
+
+void fuelpump_init(void)
+{
+ TURN_ON_ELPUMP(1); //turn on
+ s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STRT);
+ fpstate.state = 0;
 }
 
 void fuelpump_control(struct ecudata_t* d)
 {
- //TODO:
+ switch(fpstate.state)
+ {
+  case 0: //pump is turned on
+   //Turn off pump if timer is expired or gas valve is turned on
+   if (d->sens.gas || s_timer16_is_action(fuel_pump_time_counter))
+   {
+    TURN_ON_ELPUMP(0); //turn off
+    fpstate.state = 1;
+   }
+
+   //reset timer periodically if engine is still running
+   if (d->sens.frequen4 > 0)
+    s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
+
+   break;
+
+  case 1: //pump is turned off
+   //Do not turn on pump if gas valve is turned on
+   if (!d->sens.gas && d->sens.frequen4 > 0)
+   {
+    TURN_ON_ELPUMP(1); //turn on
+    s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
+    fpstate.state = 0;
+   }
+
+   break;
+ }
 }
 
 #endif //FUEL_PUMP

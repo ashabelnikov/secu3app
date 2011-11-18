@@ -29,6 +29,7 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "adc.h"
+#include "magnitude.h"
 #include "measure.h"
 #include "secu3.h"
 
@@ -110,7 +111,11 @@ void meas_average_measured_values(struct ecudata_t* d)
   for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
    sum+=temp_circular_buffer[i];
   d->sens.temperat_raw = adc_compensate((5*(sum/TMP_AVERAGING))/3,d->param.temp_adc_factor,d->param.temp_adc_correction);
+#ifndef THERMISTOR_CS
   d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
+#else
+  d->sens.temperat = thermistor_lookup(ROUND(TSENS_V_TMIN/ADC_DISCRETE), ROUND(TSENS_STEP/ADC_DISCRETE), d->sens.temperat_raw);
+#endif
  }
  else                                       //ДТОЖ не используется
   d->sens.temperat = 0;

@@ -147,14 +147,14 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
-	  _GB(&d->fn_dat->f_wrk[l][f]),
-	  _GB(&d->fn_dat->f_wrk[lp1][f]),
-	  _GB(&d->fn_dat->f_wrk[lp1][fp1]),
-	  _GB(&d->fn_dat->f_wrk[l][fp1]),
-	  PGM_GET_WORD(&f_slots_ranges[f]),
-	  (gradient * l),
-	  PGM_GET_WORD(&f_slots_length[f]),
-	  gradient);
+        _GB(&d->fn_dat->f_wrk[l][f]),
+        _GB(&d->fn_dat->f_wrk[lp1][f]),
+        _GB(&d->fn_dat->f_wrk[lp1][fp1]),
+        _GB(&d->fn_dat->f_wrk[l][fp1]),
+        PGM_GET_WORD(&f_slots_ranges[f]),
+        (gradient * l),
+        PGM_GET_WORD(&f_slots_length[f]),
+        gradient);
 }
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости

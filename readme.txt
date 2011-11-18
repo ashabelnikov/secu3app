@@ -73,6 +73,10 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          19200, 28800, 38400, 57600
                          (Скорость передачи данных для загрузчика)
 
+    THERMISTOR_CS        Use a resistive temperature sensor
+                         (Используется датчик температуры охлаждающей жидкости
+                         резистивного типа)
+
 Necessary symbols you can define in the preprocessor's options of compiler
 (edit corresponding Makefile).
 Нужные вам символы вы можете определить в опциях препроцессора компилятора 

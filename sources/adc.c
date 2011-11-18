@@ -245,7 +245,11 @@ int16_t temp_adc_to_c(int16_t adcvalue)
 }
 #else
 //Coolant sensor is thermistor (тип датчика температуры - термистор)
-//Note: We assume that voltage at the input of ADC depend on thermistor's resistance linearly
+//Note: We assume that voltage on the input of ADC depend on thermistor's resistance linearly.
+//Voltage on the input of ADC can be calculated as following:
+// U3=U1*Rt*R2/(Rp(Rt+R1+R2)+Rt(R1+R2));
+// Rt - thermistor, Rp - pulls up thermistor to voltage U1,
+// R1,R2 - voltage divider resistors.
 
 /**Size of lookup table for thermistor */
 #define THERMISTOR_LOOKUP_TABLE_SIZE 16

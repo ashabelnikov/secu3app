@@ -62,6 +62,9 @@
 #ifndef UCSZ1
  #define UCSZ1 UCSZ01
 #endif
+#ifndef U2X
+ #define U2X U2X0
+#endif
 #define UDR   UDR0
 #define UBRRL UBRR0L
 #define UBRRH UBRR0H
@@ -682,7 +685,7 @@ void uart_init(uint16_t baud)
  // Set baud rate
  UBRRH = (uint8_t)(baud>>8);
  UBRRL = (uint8_t)baud;
- UCSRA = 0;                                                  //удвоение не используем
+ UCSRA = _BV(U2X);                                           //удвоение используем для минимизации ошибки
  UCSRB=_BV(RXCIE)|_BV(RXEN)|_BV(TXEN);                       //приемник,прерывание по приему и передатчик разрешены
 #ifdef URSEL
  UCSRC=_BV(URSEL)/*|_BV(USBS)*/|_BV(UCSZ1)|_BV(UCSZ0);       //8 бит, 1 стоп, нет контроля четности

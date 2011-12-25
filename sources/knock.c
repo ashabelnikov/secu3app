@@ -56,13 +56,19 @@
 #define KSP_CHANNEL_1          0x01 //!< code for select 1 channel
 
 //prescaler
-#define KSP_PRESCALER_4MHZ     0x00 //!< code for setup prescaler
-
+#define KSP_PRESCALER_4MHZ     0x00 //!< code for setup prescaler (4mHz crystal)
+#define KSP_PRESCALER_16MHZ    0x06 //!< code for setup prescaler (16mHz crystal)
 
 #define KSP_CS PORTB_Bit4        //!< SS controls chip selection
 #define KSP_INTHOLD PORTD_Bit3   //!< Switches between integration/hold modes
 #define KSP_TEST PORTB_Bit3      //!< Switches chip into diagnostic mode
 
+//4 and 16 mHz crystals can be used (4mHz is default value)
+#if defined(Z1_CRYSTAL_16MHZ) | defined(SECU3T)
+ #define KSP_PRESCALER_VALUE KSP_PRESCALER_16MHZ  //!< set prescaler for 16mHz crystal
+#else
+ #define KSP_PRESCALER_VALUE KSP_PRESCALER_4MHZ   //!< set prescaler for 4mHz crystal
+#endif
 
 /**This data structure intended for duplication of data of current state
  * of signal processor */
@@ -95,7 +101,7 @@ void knock_set_integration_mode(uint8_t mode)
 uint8_t knock_module_initialize(void)
 {
  uint8_t i, response;
- uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_4MHZ | KSP_SO_TERMINAL_ACTIVE,
+ uint8_t init_data[2] = {KSP_SET_PRESCALER | KSP_PRESCALER_VALUE | KSP_SO_TERMINAL_ACTIVE,
                          KSP_SET_CHANNEL | KSP_CHANNEL_0};
  uint8_t _t;
 

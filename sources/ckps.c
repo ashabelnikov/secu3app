@@ -830,7 +830,10 @@ void process_ckps_cogs(void)
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
    //(до запуска зажигания осталось отсчитать меньше 2-x зубьев. Необходимо подготовить модуль сравнения)
    //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
-   OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
+   if (ckps.period_curr < 128)
+    OCR1A = GetICR() + (diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
+   else
+    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
    TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)

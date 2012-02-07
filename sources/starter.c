@@ -33,10 +33,10 @@
 #include "vstimer.h"
 
 /** Blocks/unblocks starter (блокирует/разблокирывает стартер) */
-#ifndef SECU3T /*SECU-3*/
- #define SET_STARTER_BLOCKING_STATE(s) {PORTD_Bit7 = s;}
-#elif          /*SECU-3T*/
+#ifdef SECU3T  /*SECU-3T*/
  #define SET_STARTER_BLOCKING_STATE(s) {PORTB_Bit1 = s;}
+#else          /*SECU-3*/
+ #define SET_STARTER_BLOCKING_STATE(s) {PORTD_Bit7 = s;}
 #endif
 
 void starter_set_blocking_state(uint8_t i_state)
@@ -46,12 +46,12 @@ void starter_set_blocking_state(uint8_t i_state)
 
 void starter_init_ports(void)
 {
-#ifndef SECU3T /*SECU-3*/
- PORTD|= _BV(PD7);    //starter is blocked (стартер заблокирован)
- DDRD |= _BV(DDD7);   //Output for starter (выход для стартера)
-#elif          /*SECU-3T*/
- PORTB|= _BV(PB1);
- DDRB |= _BV(DDB1);
+#ifdef SECU3T /*SECU-3T*/
+ PORTB|= _BV(PB1);    //starter is blocked (стартер заблокирован)
+ DDRB |= _BV(DDB1);   //Output for starter (выход для стартера)
+#else         /*SECU-3*/
+ PORTD|= _BV(PD7);
+ DDRD |= _BV(DDD7);
 #endif
 }
 

@@ -39,10 +39,10 @@
 /**Reads state of throttle gate (only the value, without inversion)
  * считывает состояние дроссельной заслонки (только значение, без инверсии)
  */
-#ifndef SECU3T /*SECU-3*/
- #define GET_THROTTLE_GATE_STATE() (PINC_Bit5)
-#elif         /*SECU-3T*/
+#ifdef SECU3T  /*SECU-3T*/
  #define GET_THROTTLE_GATE_STATE() (PINA_Bit7)
+#else          /*SECU-3*/
+ #define GET_THROTTLE_GATE_STATE() (PINC_Bit5)
 #endif
 
 /**Number of values for averaging of RPM for tachometer

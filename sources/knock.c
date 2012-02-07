@@ -48,20 +48,24 @@
 
 
 //SO status values
-#define KSP_SO_TERMINAL_ACTIVE 0x00 //!< code for activation of SO terminal
-#define KSP_SO_TERMINAL_HIZ    0x01 //!< code for deactivation of SO terminal
+#define KSP_SO_TERMINAL_ACTIVE 0x00   //!< code for activation of SO terminal
+#define KSP_SO_TERMINAL_HIZ    0x01   //!< code for deactivation of SO terminal
 
 //channel selection values
-#define KSP_CHANNEL_0          0x00 //!< code for select 0 channel
-#define KSP_CHANNEL_1          0x01 //!< code for select 1 channel
+#define KSP_CHANNEL_0          0x00   //!< code for select 0 channel
+#define KSP_CHANNEL_1          0x01   //!< code for select 1 channel
 
 //prescaler
-#define KSP_PRESCALER_4MHZ     0x00 //!< code for setup prescaler (4mHz crystal)
-#define KSP_PRESCALER_16MHZ    0x06 //!< code for setup prescaler (16mHz crystal)
+#define KSP_PRESCALER_4MHZ     0x00   //!< code for setup prescaler (4mHz crystal)
+#define KSP_PRESCALER_16MHZ    0x06   //!< code for setup prescaler (16mHz crystal)
 
-#define KSP_CS PORTB_Bit4        //!< SS controls chip selection
-#define KSP_INTHOLD PORTD_Bit3   //!< Switches between integration/hold modes
-#define KSP_TEST PORTB_Bit3      //!< Switches chip into diagnostic mode
+#define KSP_CS PORTB_Bit4             //!< SS controls chip selection
+#ifdef SECU3T /*SECU-3T*/
+ #define KSP_INTHOLD PORTC_Bit4       //!< Switches between integration/hold modes
+#else         /*SECU-3*/
+ #define KSP_INTHOLD PORTD_Bit3
+#endif
+#define KSP_TEST PORTB_Bit3           //!< Switches chip into diagnostic mode
 
 //4 and 16 mHz crystals can be used (4mHz is default value)
 #if defined(Z1_CRYSTAL_16MHZ) | defined(SECU3T)
@@ -258,7 +262,15 @@ ISR(SPI_STC_vect)
 void knock_init_ports(void)
 {
  PORTB|= _BV(PB4)|_BV(PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
+#ifdef SECU3T
+ PORTC&=~_BV(PC4);
+#else
  PORTD&=~_BV(PD3);          //INT/~HOLD = 0 (hold mode)
+#endif
  DDRB |= _BV(DDB7)|_BV(DDB5)|_BV(DDB4)|_BV(DDB3);
+#ifdef SECU3T
+ DDRC |= _BV(DDC4);
+#else
  DDRD |= _BV(DDD3);
+#endif
 }

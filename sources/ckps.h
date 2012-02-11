@@ -33,7 +33,7 @@
  * so it should be a multiple of degree of 2 (коэффициент масштабирования углов поворота коленвала, фигурирует
  * в вычислениях и операциях деления поэтому он должен быть кратен степени 2).
  */
-#define ANGLE_MULTIPLAYER            32
+#define ANGLE_MULTIPLAYER   32
 
 /**Initialization of CKP module (hardware & variables)
  * (инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится)

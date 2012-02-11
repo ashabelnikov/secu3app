@@ -34,11 +34,11 @@
 
 /**Turns on/off cooling fan*/
 #ifdef SECU3T /*SECU-3T*/
- #define COOLINGFAN_TURNON  {PORTD_Bit7 = 0;}
- #define COOLINGFAN_TURNOFF {PORTD_Bit7 = 1;}
+ #define COOLINGFAN_TURNON()  {PORTD_Bit7 = 0;}
+ #define COOLINGFAN_TURNOFF() {PORTD_Bit7 = 1;}
 #else         /*SECU-3*/
- #define COOLINGFAN_TURNON(s) {PORTB_Bit1 = 1;}
- #define COOLINGFAN_TURNOFF(s) {PORTB_Bit1 = 0;}
+ #define COOLINGFAN_TURNON()  {PORTB_Bit1 = 1;}
+ #define COOLINGFAN_TURNOFF() {PORTB_Bit1 = 0;}
 #endif
 
 /**Warning must be the same as another definition in vstimer.h!*/

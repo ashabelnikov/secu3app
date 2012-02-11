@@ -150,7 +150,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  //если таймер отсчитал время, то гасим СЕ
  if (s_timer_is_action(*ce_control_time_counter))
  {
-  ce_set_state(0);
+  ce_set_state(CE_STATE_OFF);
   d->ce_state = 0; //<--doubling
  }
 
@@ -159,7 +159,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  if (ce_state.ecuerrors!=0)
  {
   s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
-  ce_set_state(1);
+  ce_set_state(CE_STATE_ON);
   d->ce_state = 1;  //<--doubling
  }
 
@@ -210,6 +210,11 @@ void ce_clear_errors(void)
 
 void ce_init_ports(void)
 {
- PORTB|= _BV(PB2);  //CE is ON (for checking)
+#ifdef SECU3T /*SECU-3T*/
+ PORTB&=~_BV(PB2);  //CE is ON (for checking)
  DDRB |= _BV(DDB2); //output for CE
+#else         /*SECU-3*/
+ PORTB|= _BV(PB2);
+ DDRB |= _BV(DDB2);
+#endif
 }

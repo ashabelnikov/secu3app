@@ -74,7 +74,7 @@ void starter_control(struct ecudata_t* d)
  if (d->airflow > 15)
  {
   s_timer_set(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
-  ce_set_state(1);
+  ce_set_state(CE_STATE_ON);
  }
 #endif
  if (d->sens.frequen4 < 30)

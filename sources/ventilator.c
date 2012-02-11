@@ -33,7 +33,13 @@
 #include "ventilator.h"
 
 /**Turns on/off cooling fan*/
-#define SET_COOLINGFAN_STATE(s) {PORTB_Bit1 = s;}
+#ifdef SECU3T /*SECU-3T*/
+ #define COOLINGFAN_TURNON  {PORTD_Bit7 = 0;}
+ #define COOLINGFAN_TURNOFF {PORTD_Bit7 = 1;}
+#else         /*SECU-3*/
+ #define COOLINGFAN_TURNON(s) {PORTB_Bit1 = 1;}
+ #define COOLINGFAN_TURNOFF(s) {PORTB_Bit1 = 0;}
+#endif
 
 /**Warning must be the same as another definition in vstimer.h!*/
 #define TIMER2_RELOAD_VALUE  6
@@ -50,8 +56,13 @@ volatile uint8_t pwm_duty;  //!< current duty value
 void vent_init_ports(void)
 {
  //configure used I/O ports
+#ifdef SECU3T /*SECU-3T*/
+ PORTD|= _BV(PD7);
+ DDRD |= _BV(DDD7);
+#else         /*SECU-3*/
  PORTB&= ~_BV(PB1);
  DDRB |= _BV(DDB1);
+#endif
 }
 
 void vent_init_state(void)
@@ -75,14 +86,14 @@ void vent_set_duty(uint8_t duty)
   _DISABLE_INTERRUPT(); 
   TIMSK&=~_BV(OCIE2);
   _ENABLE_INTERRUPT();
-  SET_COOLINGFAN_STATE(0);
+  COOLINGFAN_TURNOFF();
  }
  else if (duty == PWM_STEPS)
  {
   _DISABLE_INTERRUPT(); 
   TIMSK&=~_BV(OCIE2);
   _ENABLE_INTERRUPT();
-  SET_COOLINGFAN_STATE(1);
+  COOLINGFAN_TURNON();
  }
  else
  {
@@ -97,13 +108,13 @@ ISR(TIMER2_COMP_vect)
 {
  if (0 == pwm_state)
  { //start active part
-  SET_COOLINGFAN_STATE(1);
+  COOLINGFAN_TURNON();
   OCR2+= pwm_duty;
   ++pwm_state;
  }
  else
  { //start passive part
-  SET_COOLINGFAN_STATE(0);
+  COOLINGFAN_TURNOFF();
   OCR2+= (PWM_STEPS - pwm_duty);
   --pwm_state;
  }
@@ -118,9 +129,9 @@ void vent_control(struct ecudata_t *d)
 
 #ifndef COOLINGFAN_PWM
  if (d->sens.temperat >= d->param.vent_on)
-  SET_COOLINGFAN_STATE(1);
+  COOLINGFAN_TURNON();
  if (d->sens.temperat <= d->param.vent_off)
-  SET_COOLINGFAN_STATE(0);
+  COOLINGFAN_TURNOFF();
 #else //PWM mode
  if (!d->param.vent_pwm)
  {

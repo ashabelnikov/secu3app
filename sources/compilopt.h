@@ -147,4 +147,11 @@
  #define COPT_THERMISTOR_CS 0
 #endif
 
+/** For SECU3-T */
+#ifdef SECU3T
+ #define COPT_SECU3T 1
+#else
+ #define COPT_SECU3T 0
+#endif
+
 #endif //_COMPILOPT_H_

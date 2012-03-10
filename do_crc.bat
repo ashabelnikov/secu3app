@@ -38,22 +38,38 @@ echo %USAGE%
 exit 1
 
 :dowork
-rem Конвертируем HEX файл созданный компилятором в бинарный файл
+echo EXECUTING BATCH...
+echo ---------------------------------------------
+
+rem Convert HEX-file created by compiler into a binary file
+for %%X in (%HEXTOBIN%) do (set FOUND_H2B=%%~$PATH:X)
+if not defined FOUND_H2B (
+ echo ERROR: Can not find file "%HEXTOBIN%"
+ goto error
+)
 %HEXTOBIN% secu-3_app.a90 secu-3_app.bin
 IF ERRORLEVEL 1 GOTO error
 
-rem Делаем копию файла без контрольной суммы
+rem Make a copy of file which doesn't contain check sum
 rem copy secu-3_app.bin secu-3_app0000.bin
 rem copy secu-3_app.a90 secu-3_app0000.a90
 
-rem Считаем и записываем контрольную сумму в бинарный файл
+rem Calculate and put check sum into a binary file
+for %%X in (%CODECRC%) do (set FOUND_CRC=%%~$PATH:X)
+if not defined FOUND_CRC (
+ echo ERROR: Can not find file "%CODECRC%"
+ goto error
+)
 %CODECRC% secu-3_app.bin secu-3_app.a90  0  %FW_SIZE%  %CRC_ADDR% -h
 IF ERRORLEVEL 1 GOTO error
 %CODECRC% secu-3_app.bin secu-3_app.bin  0  %FW_SIZE%  %CRC_ADDR% -b
 IF ERRORLEVEL 1 GOTO error
 
+echo ---------------------------------------------
 echo ALL OPERATIONS WERE COMPLETED SUCCESSFULLY!
 exit 0
 
 :error
+echo ---------------------------------------------
+echo WARNING! THERE ARE SOME ERRORS IN EXECUTING BATCH.
 exit 1

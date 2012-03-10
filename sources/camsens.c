@@ -57,7 +57,9 @@ camstate_t camstate;
 
 void cams_init_state_variables(void)
 {
+#ifndef SECU3T /*SECU-3*/
  camstate.prev_level = GET_CAMSTATE();
+#endif
  camstate.cam_ok = 0; //not Ok
  camstate.err_threshold = 60 * 2;
  camstate.err_counter = 0;

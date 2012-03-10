@@ -57,7 +57,7 @@
 
 //prescaler
 #define KSP_PRESCALER_4MHZ     0x00   //!< code for setup prescaler (4mHz crystal)
-#define KSP_PRESCALER_16MHZ    0x06   //!< code for setup prescaler (16mHz crystal)
+#define KSP_PRESCALER_16MHZ    0x0C   //!< code for setup prescaler (16mHz crystal)
 
 #define KSP_CS PORTB_Bit4             //!< SS controls chip selection
 #ifdef SECU3T /*SECU-3T*/

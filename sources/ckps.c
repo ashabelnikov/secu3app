@@ -78,7 +78,7 @@
 #define GetICR() (ICR1)
 
 /** 4 channels of ignition maximum (максимум 4 канала зажигания) */
-#define IGN_CHANNELS_MAX     3
+#define IGN_CHANNELS_MAX     4
 
 /** Used to indicate that none from ignition channels are selected
  * (используется для указания того что ни один канал зажигания не выбран) */

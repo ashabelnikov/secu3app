@@ -32,6 +32,7 @@
  #define _RESTORE_INTERRUPT(s) __restore_interrupt(s)
  #define _NO_OPERATION() __no_operation()
  #define _DELAY_CYCLES(cycles) __delay_cycles(cycles)
+ #define _WATCHDOG_RESET() __watchdog_reset()
 
 #else //AVR GCC
  #include <avr/eeprom.h>       //__EEGET(), __EEPUT() etc
@@ -44,6 +45,7 @@
  #define _RESTORE_INTERRUPT(s) SREG = (s)
  #define _NO_OPERATION() __asm__ __volatile__ ("nop" ::)
  #define _DELAY_CYCLES(cycles) _delay_loop_2(cycles / 4)
+ #define _WATCHDOG_RESET() __asm__ __volatile__ ("wdr")
 
 #endif
 

@@ -154,4 +154,11 @@
  #define COPT_SECU3T 0
 #endif
 
+/** Diagnostics */
+#ifdef DIAGNOSTICS
+ #define COPT_DIAGNOSTICS 1
+#else
+ #define COPT_DIAGNOSTICS 0
+#endif 
+
 #endif //_COMPILOPT_H_

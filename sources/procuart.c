@@ -31,6 +31,7 @@
 #include "bitmask.h"
 #include "ce_errors.h"
 #include "ckps.h"
+#include "diagnost.h"
 #include "knock.h"
 #include "procuart.h"
 #include "secu3.h"
@@ -95,6 +96,20 @@ void process_uart_interface(struct ecudata_t* d)
      _AB(d->op_actn_code, 0) = 0; //обработали
     }
 #endif
+#ifdef DIAGNOSTICS
+    if (_AB(d->op_actn_code, 0) == OPCODE_DIAGNOST_ENTER) //"enter diagnostic mode" command has been received
+    {
+     //this function will send confirmation answer and start diagnostic mode (it will has its own separate loop)     
+     diagnost_start();
+     _AB(d->op_actn_code, 0) = 0; //обработали
+    }
+    if (_AB(d->op_actn_code, 0) == OPCODE_DIAGNOST_LEAVE) //"leave diagnostic mode" command has been received
+    {
+     //this function will send confirmation answer and reset device
+     diagnost_stop();
+     _AB(d->op_actn_code, 0) = 0; //обработали
+    }
+#endif
     break;
 
    case CE_SAVED_ERR:
@@ -151,7 +166,7 @@ void process_uart_interface(struct ecudata_t* d)
 #ifdef DEBUG_VARIABLES
    {
    uint8_t desc = uart_get_send_mode();
-   if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc)
+   if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc || DIAGINP_DAT==desc)
     sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information
    }
 #endif

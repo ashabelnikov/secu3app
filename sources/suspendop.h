@@ -48,6 +48,10 @@
 #ifdef DEBUG_VARIABLES
 #define SOP_DBGVAR_SENDING          13    //!< send out some of firmware variables
 #endif
+#ifdef DIAGNOSTICS
+#define SOP_SEND_NC_ENTER_DIAG      14    //!< notify that device has entered diagnostic mode
+#define SOP_SEND_NC_LEAVE_DIAG      15    //!< notify that device has left diagnostic mode
+#endif
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters
@@ -55,7 +59,11 @@
 #define OPCODE_READ_FW_SIG_INFO      3    //!< read signature information about firmware
 #ifdef REALTIME_TABLES
 #define OPCODE_LOAD_TABLSET          4    //!< new set of tables must be loaded or notify that it has been loaded
-#define OPCODE_SAVE_TABLSET          5    //!< save teble set for selected fuel from RAM to EEPROM or notify that it has been saved
+#define OPCODE_SAVE_TABLSET          5    //!< save table set for selected fuel from RAM to EEPROM or notify that it has been saved
+#endif
+#ifdef DIAGNOSTICS
+#define OPCODE_DIAGNOST_ENTER        6    //!< enter diagnostic mode
+#define OPCODE_DIAGNOST_LEAVE        7    //!< leave diagnostic mode
 #endif
 struct ecudata_t;
 

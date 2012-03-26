@@ -80,6 +80,9 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
 
     SECU3T               Build for SECU-3T unit. Additional functionality will be added
                          (Сборка под блок SECU-3T. Добавляется доп. функциональность)
+    
+    DIAGNOSTICS          Include hardware diagnostics functionality
+                         (Включить поддержку диагностики аппаратной части)
 
 Necessary symbols you can define in the preprocessor's options of compiler
 (edit corresponding Makefile).

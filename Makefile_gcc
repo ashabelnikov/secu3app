@@ -46,7 +46,8 @@ SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
 	eeprom.c fuelecon.c funconv.c idlecon.c ignlogic.c \
 	jumper.c knklogic.c knock.c measure.c params.c \
 	procuart.c secu3.c starter.c suspendop.c tables.c \
-	uart.c ventilator.c vstimer.c camsens.c fuelpump.c
+	uart.c ventilator.c vstimer.c camsens.c fuelpump.c \
+        diagnost.c wdt.c
 
 # Define all object files and dependencies
 OBJECTS = $(SRC:%.c=$(OBJDIR)/%.o)

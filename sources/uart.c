@@ -472,7 +472,19 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(/*Your variable here*/0);
    build_i16h(/*Your variable here*/0);
    build_i16h(/*Your variable here*/0);
-   build_i16h(/*Your variable here*/0);
+   break;
+#endif
+#ifdef DIAGNOSTICS
+  case DIAGINP_DAT:
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+   build_i8h(0);
    break;
 #endif
  }//switch
@@ -648,6 +660,11 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    }
   }
   break;
+#endif
+#ifdef DIAGNOSTICS
+  case DIAGOUT_DAT:
+   recept_i16h();
+   break;
 #endif
  }//switch
 

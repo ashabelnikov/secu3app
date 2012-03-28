@@ -229,7 +229,7 @@ MAIN()
    if (!edat.param.knock_use_knock_channel)
    {
     _DISABLE_INTERRUPT();
-    adc_begin_measure();
+    adc_begin_measure(0);  //normal speed
     _ENABLE_INTERRUPT();
    }
    else

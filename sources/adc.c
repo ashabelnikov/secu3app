@@ -97,7 +97,7 @@ uint16_t adc_get_knock_value(void)
  return value;
 }
 
-void adc_begin_measure(void)
+void adc_begin_measure(uint8_t speed2x)
 {
  //мы не можем запускать новое измерение, если еще не завершилось
  //предыдущее измерение
@@ -106,10 +106,14 @@ void adc_begin_measure(void)
 
  adc.sensors_ready = 0;
  ADMUX = ADCI_MAP|ADC_VREF_TYPE;
- SETBIT(ADCSRA,ADSC);
+ if (speed2x)
+  CLEARBIT(ADCSRA, ADPS0); //250kHz
+ else
+  SETBIT(ADCSRA, ADPS0);   //125kHz
+ SETBIT(ADCSRA, ADSC);
 }
 
-void adc_begin_measure_knock(void)
+void adc_begin_measure_knock(uint8_t speed2x)
 {
  //мы не можем запускать новое измерение, если еще не завершилось
  //предыдущее измерение
@@ -118,13 +122,17 @@ void adc_begin_measure_knock(void)
 
  adc.sensors_ready = 0;
  ADMUX = ADCI_STUB|ADC_VREF_TYPE;
- SETBIT(ADCSRA,ADSC);
+ if (speed2x)
+  CLEARBIT(ADCSRA, ADPS0); //250kHz
+ else
+  SETBIT(ADCSRA, ADPS0);   //125kHz
+ SETBIT(ADCSRA, ADSC);
 }
 
 void adc_begin_measure_all(void)
 {
  adc.measure_all = 1;
- adc_begin_measure();
+ adc_begin_measure(0); //<--normal speed
 }
 
 uint8_t adc_is_measure_ready(void)

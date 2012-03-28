@@ -142,7 +142,7 @@ void meas_initial_measure(struct ecudata_t* d)
  _ENABLE_INTERRUPT();
  do
  {
-  adc_begin_measure();
+  adc_begin_measure(0); //<--normal speed
   while(!adc_is_measure_ready());
 
   meas_update_values_buffers(d, 0); //<-- all

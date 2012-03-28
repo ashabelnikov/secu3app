@@ -36,6 +36,22 @@
 #define ENGINE_ROTATION_TIMEOUT_VALUE 15    //!< timeout value used to determine that engine is stopped
 #define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
 
+#ifdef DIAGNOSTICS
+/**Describes diagnostics inputs data */
+typedef struct diagnost_inp_t
+{
+ uint16_t voltage;  //!< board voltage
+ uint16_t map;      //!< MAP sensor
+ uint16_t temp;     //!< coolant temperature
+ uint16_t add_io1;  //!< additional input 1 (analog)
+ uint16_t add_io2;  //!< additional input 2 (analog)
+ uint16_t carb;     //!< carburetor switch, throttle position sensor (analog)
+ uint8_t  bits;     //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor
+ uint16_t ks_1;     //!< knock sensor 1  
+ uint16_t ks_2;     //!< knock sensor 2
+}diagnost_inp_t;
+#endif
+
 /**Describes all system's inputs - theirs derivative and integral magnitudes
  * описывает все входы системы - их производные и интегральные величины
  */
@@ -93,6 +109,11 @@ typedef struct ecudata_t
  uint8_t* eeprom_parameters_cache;       //!< Pointer to an array of EEPROM parameters cache (reduces redundant write operations)
 
  uint8_t engine_mode;                    //!< Current engine mode(start, idle, work) (текущий режим двигател€ (пуск, ’’, нагрузка))
+
+#ifdef DIAGNOSTICS
+ diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs 
+ uint16_t       diag_out;                //!< diagnostic mode: values of outputs
+#endif
 }ecudata_t;
 
 

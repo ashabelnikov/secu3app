@@ -73,13 +73,32 @@ uint16_t adc_get_ubat_value(void);
  */
 uint16_t adc_get_temp_value(void);
 
-/** Получение последнего измеренного значения сигнала детонации
+#ifdef SECU3T
+/** Получение последнего измеренного значения с ADD_IO1
+ * \return значение в дискретах АЦП
+ */
+uint16_t adc_get_add_io1_value(void);
+
+/** Получение последнего измеренного значения с ADD_IO2
+ * \return значение в дискретах АЦП
+ */
+uint16_t adc_get_add_io2_value(void);
+
+/** Get latest measured value from throttle gate position sensor
+ * (Получение последнего измеренного значения с ДПДЗ)
+ * \return значение в дискретах АЦП
+ */
+uint16_t adc_get_carb_value(void);
+#endif
+
+/** Получение последнего измеренного значения сигнала c датчика(ов) детонации
  * \return значение в дискретах АЦП
  */
 uint16_t adc_get_knock_value(void);
 
 /**запускает измерение значений с датчиков, но только если предыдущее
  * измерение завершено.
+ * \param speed2x Double ADC clock (0,1) (Удвоение тактовой частоты АЦП)
  */
 void adc_begin_measure(uint8_t speed2x);
 
@@ -87,6 +106,7 @@ void adc_begin_measure(uint8_t speed2x);
  * сигнала INT/HOLD в 0 выход INTOUT перейдет в полностью корректное состояние только через
  * 20мкс (приблизительно), а запуск измерения может быть произведен сразу, то делаем первое
  * измерение холостым.
+ * \param speed2x Double ADC clock (0,1) (Удвоение тактовой частоты АЦП)
  */
 void adc_begin_measure_knock(uint8_t speed2x);
 

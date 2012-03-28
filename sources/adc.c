@@ -41,6 +41,14 @@
 #define ADCI_UBAT               1
 /**номер канала используемого дл€ ƒ“ќ∆ */
 #define ADCI_TEMP               0
+#ifdef SECU3T
+/*channel number for ADD_IO1 */
+#define ADCI_ADD_IO1            6
+/*channel number for ADD_IO2 */
+#define ADCI_ADD_IO2            5
+/*channel number for CARB */
+#define ADCI_CARB               7
+#endif
 /**номер канала используемого дл€ канала детонации */
 #define ADCI_KNOCK              3
 /**заглушка, используетс€ дл€ ADCI_KNOCK чтобы сформировать задержку */
@@ -49,13 +57,17 @@
 /**Cтруктура данных состо€ни€ ј÷ѕ */
 typedef struct
 {
- volatile uint16_t map_value;   //!< последнее измеренное значение абсолютного давлени€
- volatile uint16_t ubat_value;  //!< последнее измеренное значение напр€жени€ бортовой сети
- volatile uint16_t temp_value;  //!< последнее измеренное значение температуры охлаждающей жидкости
- volatile uint16_t knock_value; //!< последнее измеренное значение сигнала детонации
-
- volatile uint8_t sensors_ready;//!< датчики обработаны и значени€ готовы к считыванию
- uint8_t  measure_all;          //!< если 1, то производитс€ измерение всех значений
+ volatile uint16_t map_value;    //!< последнее измеренное значение абсолютного давлени€
+ volatile uint16_t ubat_value;   //!< последнее измеренное значение напр€жени€ бортовой сети
+ volatile uint16_t temp_value;   //!< последнее измеренное значение температуры охлаждающей жидкости
+ volatile uint16_t knock_value;  //!< последнее измеренное значение сигнала c датчика(ов) детонации
+#ifdef SECU3T
+ volatile uint16_t add_io1_value;//!< last measured value od ADD_IO1
+ volatile uint16_t add_io2_value;//!< last measured value of ADD_IO2
+ volatile uint16_t carb_value;   //!< last measured value of TPS
+#endif
+ volatile uint8_t sensors_ready; //!< датчики обработаны и значени€ готовы к считыванию
+ uint8_t  measure_all;           //!< если 1, то производитс€ измерение всех значений
 }adcstate_t;
 
 /** переменные состо€ни€ ј÷ѕ */
@@ -87,6 +99,33 @@ uint16_t adc_get_temp_value(void)
  _END_ATOMIC_BLOCK();
  return value;
 }
+
+#ifdef SECU3T
+uint16_t adc_get_add_io1_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.add_io1_value;
+ _END_ATOMIC_BLOCK();
+ return value;
+}
+uint16_t adc_get_add_io2_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.add_io2_value;
+ _END_ATOMIC_BLOCK();
+ return value;
+}
+uint16_t adc_get_carb_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.carb_value;
+ _END_ATOMIC_BLOCK();
+ return value;
+}
+#endif
 
 uint16_t adc_get_knock_value(void)
 {
@@ -180,6 +219,10 @@ ISR(ADC_vect)
 
   case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
    adc.temp_value = ADC;
+#ifdef SECU3T
+   ADMUX = ADCI_CARB|ADC_VREF_TYPE;
+   SETBIT(ADCSRA,ADSC);
+#else /*SECU-3*/
    if (0==adc.measure_all)
    {
     ADMUX = ADCI_MAP|ADC_VREF_TYPE;
@@ -191,7 +234,36 @@ ISR(ADC_vect)
     ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
     SETBIT(ADCSRA,ADSC);
    }
+#endif
    break;
+
+#ifdef SECU3T
+  case ADCI_CARB:
+   adc.carb_value = ADC;
+   ADMUX = ADCI_ADD_IO1|ADC_VREF_TYPE;
+   SETBIT(ADCSRA,ADSC);
+   break;
+
+  case ADCI_ADD_IO1:
+   adc.add_io1_value = ADC;
+   ADMUX = ADCI_ADD_IO2|ADC_VREF_TYPE;
+   break;
+
+  case ADCI_ADD_IO2:
+   adc.add_io2_value = ADC;
+   if (0==adc.measure_all)
+   {
+    ADMUX = ADCI_MAP|ADC_VREF_TYPE;
+    adc.sensors_ready = 1; //finished
+   }
+   else
+   { //continue (knock)
+    adc.measure_all = 0;
+    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
+    SETBIT(ADCSRA,ADSC);
+   }
+   break;
+#endif
 
   case ADCI_STUB: //это холостое измерение необходимо только дл€ задержки перед измерением сигнала детонации
    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;

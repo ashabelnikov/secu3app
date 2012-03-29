@@ -39,6 +39,10 @@
 #include "ufcodes.h"
 #include "wdt.h"
 
+/**Helpful macro used for generation of bit mask for outputs*/
+#define _OBV(b) (((uint16_t)1) << b)
+
+
 /**Describes state variables data*/
 typedef struct
 {
@@ -66,14 +70,90 @@ void diagnost_stop(void)
  sop_set_operation(SOP_SEND_NC_LEAVE_DIAG);
 }
 
+/**Initialization of outputs in diagnostic mode. All outputs are OFF*/
 void init_digital_outputs(void)
 {
-
+ //IGN_OU1, IGN_OUT2, IGN_OUT3, IGN_OUT4
+ PORTD&= ~(_BV(PD5)|_BV(PD4));
+ PORTC&= ~(_BV(PC1)|_BV(PC0));
+ DDRD|= (_BV(DDD5)|_BV(DDD4));
+ DDRC|= (_BV(DDC1)|_BV(DDC0));
+#ifdef SECU3T
+ //ADD_IO1, ADD_IO2
+ PORTC&= ~(_BV(PC5));
+ PORTA&= ~(_BV(PA4));
+ DDRC|= (_BV(DDC5));
+ DDRA|= (_BV(DDA4));
+#endif
+ //IE
+ PORTB&= ~(_BV(PB0));
+ DDRB|= _BV(DDB0);
+ //FE
+ PORTC&= ~_BV(PC7);
+ DDRC|= _BV(DDC7);
+ //ECF
+#ifdef SECU3T /*SECU-3T*/
+ PORTD|= _BV(PD7);
+ DDRD |= _BV(DDD7);
+#else         /*SECU-3*/
+ PORTB&= ~_BV(PB1);
+ DDRB |= _BV(DDB1);
+#endif
+ //CE
+#ifdef SECU3T /*SECU-3T*/
+ PORTB|= _BV(PB2);
+ DDRB |= _BV(DDB2);
+#else         /*SECU-3*/
+ PORTB&= ~(_BV(PB2));
+ DDRB |= _BV(DDB2);
+#endif
+ //ST_BLOCK
+#ifdef SECU3T /*SECU-3T*/
+ PORTB|= _BV(PB1);
+ DDRB |= _BV(DDB1);
+#else         /*SECU-3*/
+ PORTD|= _BV(PD7);
+ DDRD |= _BV(DDD7);
+#endif
 }
 
+void set_outputs(uint16_t o)
+{
+ PORTD_Bit4 = d & _OBV(0);   //IGN_OUT1
+ PORTD_Bit5 = d & _OBV(1);   //IGN_OUT2
+ PORTC_Bit0 = d & _OBV(2);   //IGN_OUT3
+ PORTC_Bit1 = d & _OBV(3);   //IGN_OUT4
+#ifdef SECU3T
+ PORTC_Bit5 = d & _OBV(4);   //ADD_IO1
+ PORTA_Bit4 = d & _OBV(5);   //ADD_IO2
+#endif
+ PORTB_Bit0 = d & _OBV(6);   //IE
+ PORTC_Bit7 = d & _OBV(7);   //FE
+
+#ifdef SECU3T /*SECU-3T*/
+ PORTD_Bit7 = !(d & _OBV(8));//ECF
+#else         /*SECU-3*/
+ PORTB_Bit1 = d & _OBV(8);
+#endif
+
+#ifdef SECU3T /*SECU-3T*/
+ PORTB_Bit2 = !(d & _OBV(9));//CE
+#else         /*SECU-3*/
+ PORTB_Bit2 = d & _OBV(9);
+#endif
+
+ //ST_BLOCK
+#ifdef SECU3T /*SECU-3T*/
+ PORTB_Bit1 = !(d & _OBV(10));//ST_BLOCK
+#else         /*SECU-3*/
+ PORTD_Bit7 = !(d & _OBV(10));
+#endif
+}
+
+/**Initialization of digital inputs in diagnostic mode*/
 void init_digital_inputs(void)
 {
-
+ //todo
 }
 
 void diagnost_process(struct ecudata_t* d)
@@ -92,14 +172,14 @@ void diagnost_process(struct ecudata_t* d)
 
  //Diasable unneeded interrupts
  TIMSK&=~(_BV(OCIE2)|_BV(TICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1)|_BV(OCIE0)|_BV(TOIE0));
- 
+
  //local loop
  while(1)
  {
   //check & execute suspended operations
   sop_execute_operations(d);
   //process data being received and sent via serial port
-  process_uart_interface(d); 
+  process_uart_interface(d);
 
   switch(diag.fsm_state)
   {
@@ -112,7 +192,7 @@ void diagnost_process(struct ecudata_t* d)
     //start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
     knock_start_settings_latching();
     //start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
-    adc_begin_measure(0); //<--normal speed    
+    adc_begin_measure(0); //<--normal speed
     diag.fsm_state = 1;
     break;
 
@@ -122,7 +202,7 @@ void diagnost_process(struct ecudata_t* d)
     {
      knock_set_integration_mode(KNOCK_INTMODE_INT);
      diag.fsm_state = 2;
-    }    
+    }
     break;
 
    //start measurements (knock signal)
@@ -135,7 +215,7 @@ void diagnost_process(struct ecudata_t* d)
    //wait for completion of measurements, and reinitialize state machine
    case 3:
     if (adc_is_measure_ready())
-    {     
+    {
      diag.knock_value[diag.ksp_channel] = adc_get_knock_value();
      _DELAY_CYCLES(1600);
      diag.fsm_state = 0;
@@ -163,10 +243,10 @@ void diagnost_process(struct ecudata_t* d)
 #endif
 
    //digital inputs
-//   d->diag_inp.bits = 0; //todo!!!
+// d->diag_inp.bits = 0; //todo!!!
 
    //outputs
-//   d->diag_out; //todo!!!
+   set_outputs(d->diag_out);
   }
   else
    --diag.skip_loops;

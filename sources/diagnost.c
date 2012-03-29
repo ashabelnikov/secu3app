@@ -124,32 +124,32 @@ void init_digital_outputs(void)
  */
 void set_outputs(uint16_t o)
 {
- PORTD_Bit4 = o & _OBV(0);   //IGN_OUT1
- PORTD_Bit5 = o & _OBV(1);   //IGN_OUT2
- PORTC_Bit0 = o & _OBV(2);   //IGN_OUT3
- PORTC_Bit1 = o & _OBV(3);   //IGN_OUT4
+ PORTD_Bit4 = !!(o & _OBV(0));  //IGN_OUT1
+ PORTD_Bit5 = !!(o & _OBV(1));  //IGN_OUT2
+ PORTC_Bit0 = !!(o & _OBV(2));  //IGN_OUT3
+ PORTC_Bit1 = !!(o & _OBV(3));  //IGN_OUT4
 #ifdef SECU3T
- PORTC_Bit5 = o & _OBV(4);   //ADD_IO1
- PORTA_Bit4 = o & _OBV(5);   //ADD_IO2
+ PORTC_Bit5 = !!(o & _OBV(4));  //ADD_IO1
+ PORTA_Bit4 = !!(o & _OBV(5));  //ADD_IO2
 #endif
- PORTB_Bit0 = o & _OBV(6);   //IE
- PORTC_Bit7 = o & _OBV(7);   //FE
+ PORTB_Bit0 = !!(o & _OBV(6));  //IE
+ PORTC_Bit7 = !!(o & _OBV(7));  //FE
 
 #ifdef SECU3T /*SECU-3T*/
- PORTD_Bit7 = !(o & _OBV(8));//ECF
+ PORTD_Bit7 = !(o & _OBV(8));   //ECF
 #else         /*SECU-3*/
- PORTB_Bit1 = o & _OBV(8);
+ PORTB_Bit1 = !!(o & _OBV(8));
 #endif
 
 #ifdef SECU3T /*SECU-3T*/
- PORTB_Bit2 = !(o & _OBV(9));//CE
+ PORTB_Bit2 = !(o & _OBV(9));   //CE
 #else         /*SECU-3*/
- PORTB_Bit2 = o & _OBV(9);
+ PORTB_Bit2 = !!(o & _OBV(9));
 #endif
 
  //ST_BLOCK
 #ifdef SECU3T /*SECU-3T*/
- PORTB_Bit1 = !(o & _OBV(10));//ST_BLOCK
+ PORTB_Bit1 = !(o & _OBV(10));  //ST_BLOCK
 #else         /*SECU-3*/
  PORTD_Bit7 = !(o & _OBV(10));
 #endif

@@ -42,6 +42,8 @@
 /**Helpful macro used for generation of bit mask for outputs*/
 #define _OBV(b) (((uint16_t)1) << b)
 
+/**Helpful macro used for generation of bit mask for inputs*/
+#define _IBV(v,b) (((uint8_t)v) << b)
 
 /**Describes state variables data*/
 typedef struct
@@ -117,43 +119,68 @@ void init_digital_outputs(void)
 #endif
 }
 
+/**Set states of outputs
+ * \param o Bits containing output states
+ */
 void set_outputs(uint16_t o)
 {
- PORTD_Bit4 = d & _OBV(0);   //IGN_OUT1
- PORTD_Bit5 = d & _OBV(1);   //IGN_OUT2
- PORTC_Bit0 = d & _OBV(2);   //IGN_OUT3
- PORTC_Bit1 = d & _OBV(3);   //IGN_OUT4
+ PORTD_Bit4 = o & _OBV(0);   //IGN_OUT1
+ PORTD_Bit5 = o & _OBV(1);   //IGN_OUT2
+ PORTC_Bit0 = o & _OBV(2);   //IGN_OUT3
+ PORTC_Bit1 = o & _OBV(3);   //IGN_OUT4
 #ifdef SECU3T
- PORTC_Bit5 = d & _OBV(4);   //ADD_IO1
- PORTA_Bit4 = d & _OBV(5);   //ADD_IO2
+ PORTC_Bit5 = o & _OBV(4);   //ADD_IO1
+ PORTA_Bit4 = o & _OBV(5);   //ADD_IO2
 #endif
- PORTB_Bit0 = d & _OBV(6);   //IE
- PORTC_Bit7 = d & _OBV(7);   //FE
+ PORTB_Bit0 = o & _OBV(6);   //IE
+ PORTC_Bit7 = o & _OBV(7);   //FE
 
 #ifdef SECU3T /*SECU-3T*/
- PORTD_Bit7 = !(d & _OBV(8));//ECF
+ PORTD_Bit7 = !(o & _OBV(8));//ECF
 #else         /*SECU-3*/
- PORTB_Bit1 = d & _OBV(8);
+ PORTB_Bit1 = o & _OBV(8);
 #endif
 
 #ifdef SECU3T /*SECU-3T*/
- PORTB_Bit2 = !(d & _OBV(9));//CE
+ PORTB_Bit2 = !(o & _OBV(9));//CE
 #else         /*SECU-3*/
- PORTB_Bit2 = d & _OBV(9);
+ PORTB_Bit2 = o & _OBV(9);
 #endif
 
  //ST_BLOCK
 #ifdef SECU3T /*SECU-3T*/
- PORTB_Bit1 = !(d & _OBV(10));//ST_BLOCK
+ PORTB_Bit1 = !(o & _OBV(10));//ST_BLOCK
 #else         /*SECU-3*/
- PORTD_Bit7 = !(d & _OBV(10));
+ PORTD_Bit7 = !(o & _OBV(10));
 #endif
 }
 
 /**Initialization of digital inputs in diagnostic mode*/
 void init_digital_inputs(void)
 {
- //todo
+ //GAS_V, CKPS, REF_S, PS
+ DDRC&=~(_BV(DDC6));
+ DDRD&=~(_BV(DDD6)|_BV(DDD2));
+#ifdef SECU3T
+ DDRD&=~(_BV(DDB3));
+#else /*SECU-3*/
+ DDRC&=~(_BV(DDC4));
+#endif
+}
+
+/**Get states of inputs
+ * \return bits containing state of digital inputs
+ */
+uint8_t get_inputs(void)
+{
+ //GAS_V, CKPS, REF_S, PS
+ uint8_t i = _IBV(PINC_Bit6, 0) | _IBV(PIND_Bit6, 1) | _IBV(PIND_Bit2, 2) |
+#ifdef SECU3T
+             _IBV(PIND_Bit3, 3);
+#else  /*SECU-3*/
+             _IBV(PINC_Bit4, 3);
+#endif
+ return i; 
 }
 
 void diagnost_process(struct ecudata_t* d)
@@ -236,14 +263,14 @@ void diagnost_process(struct ecudata_t* d)
    d->diag_inp.carb = adc_get_carb_value();
    d->diag_inp.ks_2 = diag.knock_value[1];
 #else /*SECU-3*/
-   d->diag_inp.add_io1 = 0; //not supported in SECU-3
-   d->diag_inp.add_io2 = 0; //not supported in SECU-3
-   d->diag_inp.carb = 0;    //not supported in SECU-3
-   d->diag_inp.ks_2 = 0;    //not supported in SECU-3
+   d->diag_inp.add_io1 = 0;      //not supported in SECU-3
+   d->diag_inp.add_io2 = 0;      //not supported in SECU-3
+   d->diag_inp.carb = PINC_Bit5; //in SECU-3 it is digital input
+   d->diag_inp.ks_2 = 0;         //not supported in SECU-3
 #endif
 
    //digital inputs
-// d->diag_inp.bits = 0; //todo!!!
+   d->diag_inp.bits = get_inputs();
 
    //outputs
    set_outputs(d->diag_out);

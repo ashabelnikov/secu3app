@@ -247,6 +247,7 @@ ISR(ADC_vect)
   case ADCI_ADD_IO1:
    adc.add_io1_value = ADC;
    ADMUX = ADCI_ADD_IO2|ADC_VREF_TYPE;
+   SETBIT(ADCSRA,ADSC);
    break;
 
   case ADCI_ADD_IO2:

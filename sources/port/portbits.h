@@ -108,6 +108,17 @@ typedef struct
 #define PINC_Bit7 (*((volatile __bit_field_t*) (&PINC))).bit7
 #endif //PINC
 
+#ifdef PIND
+#define PIND_Bit0 (*((volatile __bit_field_t*) (&PIND))).bit0
+#define PIND_Bit1 (*((volatile __bit_field_t*) (&PIND))).bit1
+#define PIND_Bit2 (*((volatile __bit_field_t*) (&PIND))).bit2
+#define PIND_Bit3 (*((volatile __bit_field_t*) (&PIND))).bit3
+#define PIND_Bit4 (*((volatile __bit_field_t*) (&PIND))).bit4
+#define PIND_Bit5 (*((volatile __bit_field_t*) (&PIND))).bit5
+#define PIND_Bit6 (*((volatile __bit_field_t*) (&PIND))).bit6
+#define PIND_Bit7 (*((volatile __bit_field_t*) (&PIND))).bit7
+#endif //PIND
+
 #endif //__ICCAVR__
 
 #endif //_SECU3_PORTBITS_H_

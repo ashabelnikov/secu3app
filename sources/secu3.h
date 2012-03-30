@@ -40,15 +40,15 @@
 /**Describes diagnostics inputs data */
 typedef struct diagnost_inp_t
 {
- uint16_t voltage;  //!< board voltage
- uint16_t map;      //!< MAP sensor
- uint16_t temp;     //!< coolant temperature
- uint16_t add_io1;  //!< additional input 1 (analog)
- uint16_t add_io2;  //!< additional input 2 (analog)
- uint16_t carb;     //!< carburetor switch, throttle position sensor (analog)
- uint8_t  bits;     //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor
- uint16_t ks_1;     //!< knock sensor 1  
- uint16_t ks_2;     //!< knock sensor 2
+ uint16_t voltage;                       //!< board voltage
+ uint16_t map;                           //!< MAP sensor
+ uint16_t temp;                          //!< coolant temperature
+ uint16_t add_io1;                       //!< additional input 1 (analog)
+ uint16_t add_io2;                       //!< additional input 2 (analog)
+ uint16_t carb;                          //!< carburetor switch, throttle position sensor (analog)
+ uint8_t  bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp
+ uint16_t ks_1;                          //!< knock sensor 1
+ uint16_t ks_2;                          //!< knock sensor 2
 }diagnost_inp_t;
 #endif
 

@@ -166,6 +166,9 @@ void init_digital_inputs(void)
 #else /*SECU-3*/
  DDRC&=~(_BV(DDC4));
 #endif
+ //BL jmp, DE jmp
+ DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
+ PORTC|= _BV(PC3)|_BV(PC2);
 }
 
 /**Get states of inputs
@@ -176,11 +179,12 @@ uint8_t get_inputs(void)
  //GAS_V, CKPS, REF_S, PS
  uint8_t i = _IBV(PINC_Bit6, 0) | _IBV(PIND_Bit6, 1) | _IBV(PIND_Bit2, 2) |
 #ifdef SECU3T
-             _IBV(PIND_Bit3, 3);
+             _IBV(PIND_Bit3, 3) |
 #else  /*SECU-3*/
-             _IBV(PINC_Bit4, 3);
+             _IBV(PINC_Bit4, 3) |
 #endif
- return i; 
+             _IBV(PINC_Bit3, 4) | _IBV(PINC_Bit2, 5);  //BL jmp, DE jmp
+ return i;
 }
 
 void diagnost_process(struct ecudata_t* d)

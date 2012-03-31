@@ -271,7 +271,7 @@ ISR(SPI_STC_vect)
    ksp.ksp_interrupt_state = 4;
    if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;
-   SPDR = ksp.ksp_last_word = ksp.ksp_inttime;
+   SPDR = ksp.ksp_last_word = ksp.ksp_channel;
    break;
 
   case 4: //channel number loaded

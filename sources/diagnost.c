@@ -217,9 +217,9 @@ void diagnost_process(struct ecudata_t* d)
    //start measurements (sensors), start KSP settings latching
    case 0:
     //select next channel
-    knock_set_channel(diag.ksp_channel++);
     if (diag.ksp_channel > KSP_CHANNEL_1)
      diag.ksp_channel = KSP_CHANNEL_0;
+    knock_set_channel(diag.ksp_channel);
     //start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
     knock_start_settings_latching();
     //start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
@@ -232,6 +232,7 @@ void diagnost_process(struct ecudata_t* d)
     if (adc_is_measure_ready())
     {
      knock_set_integration_mode(KNOCK_INTMODE_INT);
+     _DELAY_CYCLES(16000);  //1ms
      diag.fsm_state = 2;
     }
     break;
@@ -247,7 +248,7 @@ void diagnost_process(struct ecudata_t* d)
    case 3:
     if (adc_is_measure_ready())
     {
-     diag.knock_value[diag.ksp_channel] = adc_get_knock_value();
+     diag.knock_value[diag.ksp_channel++] = adc_get_knock_value();
      _DELAY_CYCLES(1600);
      diag.fsm_state = 0;
     }

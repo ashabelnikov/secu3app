@@ -197,13 +197,13 @@ void sop_execute_operations(struct ecudata_t* d)
 
  if (sop_is_operation_active(SOP_LOAD_TABLSET))
  {
-  //TODO: d->op_actn_code may become overwritten while we are waiting here... 
+  //TODO: d->op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
    //bits: aaaabbbb
    // aaaa - fuel type (0, 1)
    // bbbb - index of tables set to save to, begins from FLASH's indexes
-   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF);   
+   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF);
    uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
    load_specified_tables_into_ram(d, fuel_type, index);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
@@ -219,7 +219,7 @@ void sop_execute_operations(struct ecudata_t* d)
    _AB(d->op_comp_code, 0) = OPCODE_SAVE_TABLSET;
    _AB(d->op_comp_code, 1) = 0; //not used
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-  
+
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SEND_NC_TABLSET_SAVED] = SOP_NA;
   }
@@ -227,16 +227,16 @@ void sop_execute_operations(struct ecudata_t* d)
 
  if (sop_is_operation_active(SOP_SAVE_TABLSET))
  {
-  //TODO: d->op_actn_code may become overwritten while we are waiting here... 
+  //TODO: d->op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
    //bits: aaaabbbb
    // aaaa - fuel type (0, 1)
    // bbbb - index of tables set to save to, begins from FLASH's indexes
-   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF) - TABLES_NUMBER;   
+   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF) - TABLES_NUMBER;
    uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
    eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START + sizeof(f_data_t) * index, &d->tables_ram[fuel_type], sizeof(f_data_t));
-  
+
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    suspended_opcodes[SOP_SAVE_TABLSET] = SOP_NA;
   }
@@ -276,7 +276,11 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    _AB(d->op_comp_code, 0) = OPCODE_DIAGNOST_LEAVE;
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-   _DELAY_CYCLES(320000); //wait 20ms   
+   _DELAY_CYCLES(64000); //wait 20ms
+   _DELAY_CYCLES(64000);
+   _DELAY_CYCLES(64000);
+   _DELAY_CYCLES(64000);
+   _DELAY_CYCLES(64000);
    wdt_reset_device(); //wait for death :-)
   }
  }

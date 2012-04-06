@@ -45,4 +45,4 @@ What to do in relation to SECU-3 firmware:
     after receiving of any packet with CHANGEMODE type.
     This feature will free some processor's resources and increase quality of
     system.
-    
+

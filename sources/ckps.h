@@ -118,7 +118,7 @@ void ckps_init_state_variables(void);
 uint8_t ckps_get_current_cog(void);
 
 /** \return returns 1 if number of current tooth has been changed
- *          (возвращает 1, если номер текущего зуба изменился)
+ *  (возвращает 1, если номер текущего зуба изменился)
  */
 uint8_t ckps_is_cog_changed(void);
 

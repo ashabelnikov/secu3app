@@ -30,6 +30,7 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "fuelpump.h"
+#include "ioconfig.h"
 #include "secu3.h"
 #include "vstimer.h"
 
@@ -39,9 +40,8 @@
 /**Turn off timeout used when engine stops, 3 seconds */
 #define FP_TURNOFF_TIMEOUT_STOP 300
 
-/** Turn on/turn off fuel pump 
- *NOTE: We are using 4-th ignition channel */
-#define TURN_ON_ELPUMP(s) {PORTC_Bit1 = s;}
+/** Turn on/turn off fuel pump */
+#define TURN_ON_ELPUMP(s) IOCFG_SET(IOP_FL_PUMP, s)
 
 typedef struct
 {
@@ -53,9 +53,7 @@ fp_state_t fpstate = {0};
 
 void fuelpump_init_ports(void)
 {
- //NOTE: We are using 4-th ignition channel
- PORTC|= _BV(PC1); //fuel pump is on
- DDRC|= _BV(DDC1);
+ IOCFG_INIT(IOP_FL_PUMP, 1); //fuel pump is on
 }
 
 void fuelpump_init(void)

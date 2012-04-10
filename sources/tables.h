@@ -61,18 +61,18 @@
 
 //Определяем количество узлов интерполяции для каждой функции
 //Define number of interpolation nodes for lookup tables
-#define F_WRK_POINTS_F         16     //!< number of points on RPM axis - work map
-#define F_WRK_POINTS_L         16     //!< number of points on Pressure axis - work map
-#define F_TMP_POINTS           16     //!< number of points in temperature map
-#define F_STR_POINTS           16     //!< number of points in start map
-#define F_IDL_POINTS           16     //!< number of points in idle map
+#define F_WRK_POINTS_F         16                   //!< number of points on RPM axis - work map
+#define F_WRK_POINTS_L         16                   //!< number of points on Pressure axis - work map
+#define F_TMP_POINTS           16                   //!< number of points in temperature map
+#define F_STR_POINTS           16                   //!< number of points in start map
+#define F_IDL_POINTS           16                   //!< number of points in idle map
 #define F_WRK_TOTAL (F_WRK_POINTS_L*F_WRK_POINTS_F) //!< total size of work map
 
-#define F_NAME_SIZE            16     //!< number of symbols in names of families of characteristics
+#define F_NAME_SIZE            16                   //!< number of symbols in names of families of characteristics
 
-#define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128 //!< number of points in attenuator's lookup table
-#define FW_SIGNATURE_INFO_SIZE 48           //!< number of bytes reserved for firmware's signature information
-#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32   //!< number of points in lookup table used for dwell control
+#define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128         //!< number of points in attenuator's lookup table
+#define FW_SIGNATURE_INFO_SIZE 48                   //!< number of bytes reserved for firmware's signature information
+#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32           //!< number of points in lookup table used for dwell control
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
@@ -90,6 +90,19 @@ typedef struct f_data_t
   uint8_t name[F_NAME_SIZE];                        //!< ассоциированное имя (имя семейства) (assosiated name, displayed in user interface)
 }f_data_t;
 
+typedef uint16_t fnptr_t;                //!< Special type for function pointers
+#define IOREM_SLOTS 10                   //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS 12                   //!< Number of plugs used in I/O remapping
+
+/**Describes all data related to I/O remapping */
+typedef struct iorem_slots_t
+{
+ fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
+ fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
+ fnptr_t s_stub;                         //!< special pointer used as stub
+ fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
+ fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
+}iorem_slots_t;
 
 /**Describes additional data stored in the firmware
  * Описывает дополнительные данные хранимые в прошивке
@@ -114,13 +127,17 @@ typedef struct fw_ex_data_t
    * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
   uint32_t config;
 
+  /** Arrays which are used for I/O remapping. Some arrays are "slots", some are "plugs"
+   * Массивы используемые для переназначения выводов.*/
+  iorem_slots_t iorem;
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[58];
+  uint8_t reserved[32];
 }fw_ex_data_t;
 
 /**Описывает параметры системы
@@ -218,10 +235,10 @@ typedef struct params_t
  * Describes all data residing in firmware */
 typedef struct fw_data_t
 {
- fw_ex_data_t exdata;            //!< Дополнительные данные Additional data in the firmware
- params_t def_param;             //!< Резервные параметры Reserve parameters (loaded when instance in EEPROM is broken)
- f_data_t tables[TABLES_NUMBER]; //!< Таблицы УОЗ Array of tables of advance angle
- uint16_t code_crc;              //!< Check sum of whole firmware (except this check sum and boot loader)
+ fw_ex_data_t exdata;                    //!< Дополнительные данные Additional data in the firmware
+ params_t def_param;                     //!< Резервные параметры Reserve parameters (loaded when instance in EEPROM is broken)
+ f_data_t tables[TABLES_NUMBER];         //!< Таблицы УОЗ Array of tables of advance angle
+ uint16_t code_crc;                      //!< Check sum of whole firmware (except this check sum and boot loader)
 }fw_data_t;
 
 //================================================================================

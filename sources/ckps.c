@@ -32,6 +32,7 @@
 #include "bitmask.h"
 #include "camsens.h"
 #include "ckps.h"
+#include "ioconfig.h"
 #include "magnitude.h"
 
 #include "secu3.h"
@@ -77,7 +78,7 @@
 /** Access Input Capture Register */
 #define GetICR() (ICR1)
 
-/** 4 channels of ignition maximum (максимум 4 канала зажигания) */
+/**Maximum number of channels (Each channel means 2 ign. channels)*/
 #define IGN_CHANNELS_MAX     4
 
 /** Used to indicate that none from ignition channels are selected
@@ -175,9 +176,9 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 /**Will speedup calculations - replaces 8-bit division. */
 #define COGSPERCHAN(channum) PGM_GET_BYTE(&cogsperchan[channum])
 #ifndef WHEEL_36_1 //60-2
-prog_uint8_t cogsperchan[1+4] = {0, 60, 30, 20, 15};
+prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 60, 30, 20, 15};
 #else //36-1
-prog_uint8_t cogsperchan[1+4] = {0, 36, 18, 12, 9};
+prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 36, 18, 12, 9};
 #endif
 
 #ifdef PHASED_IGNITION
@@ -261,37 +262,24 @@ void ckps_init_ports(void)
  //поэтому устанавливаем на их входах низкий уровень)
 #ifndef INVERSE_IGN_OUTPUTS
  PORTD|= _BV(PD5)|_BV(PD4)|_BV(PD6); // 1st and 2nd ignition channels, pullup for ICP1 (1-й и 2-й каналы зажигания, подтяжка для ICP1)
-
-#if (IGN_CHANNELS_MAX==3)
- PORTC|= _BV(PC0);          //3rd ignition channel only (только 3-й канал зажигания)
-#elif (IGN_CHANNELS_MAX==4)
- PORTC|= _BV(PC1)|_BV(PC0); //3rd and 4th ignition channels (3-й и 4-й каналы зажигания)
-#endif
-
+ IOCFG_INIT(IOP_IGN_OUT3, 1);        //init 3-rd ignition channel if allowed
+ IOCFG_INIT(IOP_IGN_OUT4, 1);        //init 4-th ...
+ IOCFG_INIT(IOP_ADD_IO1, 1);         //init 5-th ...
+ IOCFG_INIT(IOP_ADD_IO2, 1);         //init 6-th ...
 #else //outputs inversion mode (режим инверсии выходов)
  PORTD|= _BV(PD6);
  PORTD&= ~(_BV(PD5)|_BV(PD4));
-
-#if (IGN_CHANNELS_MAX==3)
- PORTC&= ~(_BV(PC0));
-#elif (IGN_CHANNELS_MAX==4)
- PORTC&= ~(_BV(PC1)|_BV(PC0));
-#endif
-
+ IOCFG_INIT(IOP_IGN_OUT3, 0);        //init 3-rd ignition channel if allowed
+ IOCFG_INIT(IOP_IGN_OUT4, 0);        //init 4-th ...
+ IOCFG_INIT(IOP_ADD_IO1, 0);         //init 5-th ...
+ IOCFG_INIT(IOP_ADD_IO2, 0);         //init 6-th ...
 #endif //INVERSE_IGN_OUTPUTS
 
  //PD5,PD4,PC1,PC0 must be configurated as outputs (должны быть сконфигурированы как выходы)
  DDRD|= _BV(DDD5)|_BV(DDD4); //1-2 ignition channels - for 2 and 4 cylinder engines (1-2 каналы зажигания - для 2 и 4 ц. двигателей)
-
-#if (IGN_CHANNELS_MAX==3)
- DDRC|= _BV(DDC0);           //3 ignition channel only - for 6 cylinder engines (только 3 канал зажигания - для 6 ц. двигателей)
-#elif (IGN_CHANNELS_MAX==4)
- DDRC|= _BV(DDC1)|_BV(DDC0); //3-4 ignition channels - for 6 and 8 cylinder engines (3-4 каналы зажигания - для 6 и 8 ц. двигателей)
-#endif
-
 }
 
-//Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine 
+//Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine
 //(for example for 4-cylinder, 4-stroke it is 180 degrees) 
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
 //Высчитывание мгновенной частоты вращения коленвала по измеренному периоду между тактами двигателя 
@@ -510,6 +498,15 @@ void ckps_set_merge_outs(uint8_t i_merge)
    PORTC |= _BV(PC1);\
   else\
    PORTC |= (_BV(PC0) | _BV(PC1));\
+  break;\
+ case 2:\
+  if (0==chanstate[2].chan_cyl)\
+   PORTC |= _BV(PC5);\
+  else if (1==chanstate[2].chan_cyl)\
+   PORTA |= _BV(PA4);\
+  else {\
+   PORTC |= _BV(PC5); PORTA |= _BV(PA4);\
+   }\
   break;}
 
 /**Helpful macro.
@@ -531,6 +528,15 @@ void ckps_set_merge_outs(uint8_t i_merge)
    PORTC &= ~_BV(PC1);\
   else\
    PORTC &= ~(_BV(PC0) | _BV(PC1));\
+  break;\
+ case 2:\
+  if (0==chanstate[2].chan_cyl)\
+   PORTC &= ~_BV(PC5);\
+  else if (1==chanstate[2].chan_cyl)\
+   PORTA &= ~_BV(PA4);\
+  else {\
+   PORTC &= ~_BV(PC5); PORTA &= ~_BV(PA4);\
+   }\
   break;}
 
 #endif

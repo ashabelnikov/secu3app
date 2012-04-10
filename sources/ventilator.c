@@ -29,10 +29,14 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "bitmask.h"
+#include "ioconfig.h"
 #include "secu3.h"
 #include "ventilator.h"
 
-/**Turns on/off cooling fan*/
+/**Turns on/off cooling fan
+ * This is redundant definitions (see ioconfig.c), but it is opportunity to
+ * speed up corresponding ISR
+ */
 #ifdef SECU3T /*SECU-3T*/
  #define COOLINGFAN_TURNON()  {PORTD_Bit7 = 0;}
  #define COOLINGFAN_TURNOFF() {PORTD_Bit7 = 1;}
@@ -55,14 +59,7 @@ volatile uint8_t pwm_duty;  //!< current duty value
 
 void vent_init_ports(void)
 {
- //configure used I/O ports
-#ifdef SECU3T /*SECU-3T*/
- PORTD|= _BV(PD7);
- DDRD |= _BV(DDD7);
-#else         /*SECU-3*/
- PORTB&= ~_BV(PB1);
- DDRB |= _BV(DDB1);
-#endif
+ IOCFG_INIT(IOP_ECF, 0); //coolong fan is turned Off
 }
 
 void vent_init_state(void)
@@ -83,21 +80,21 @@ void vent_set_duty(uint8_t duty)
  //We don't need interrupts if duty is 0 or 100%
  if (duty == 0)
  {
-  _DISABLE_INTERRUPT(); 
+  _DISABLE_INTERRUPT();
   TIMSK&=~_BV(OCIE2);
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNOFF();
  }
  else if (duty == PWM_STEPS)
  {
-  _DISABLE_INTERRUPT(); 
+  _DISABLE_INTERRUPT();
   TIMSK&=~_BV(OCIE2);
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNON();
  }
  else
  {
-  _DISABLE_INTERRUPT(); 
+  _DISABLE_INTERRUPT();
   TIMSK|=_BV(OCIE2);
   _ENABLE_INTERRUPT();
  }
@@ -124,7 +121,9 @@ ISR(TIMER2_COMP_vect)
 //sensor is present in system
 void vent_control(struct ecudata_t *d)
 {
- if (!d->param.tmp_use)
+ //exit if coolant temperature sensor is disabled or there is no I/O assigned to
+ //electric cooling fan
+ if (!d->param.tmp_use || !IOCFG_CHECK(IOP_ECF))
   return;
 
 #ifndef COOLINGFAN_PWM

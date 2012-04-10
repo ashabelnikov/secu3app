@@ -28,15 +28,16 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "fuelecon.h"
+#include "ioconfig.h"
 #include "secu3.h"
 
 /** Open/Close FE valve (открывает/закрывает клапан ЭМР) */
-#define SET_FE_VALVE_STATE(s) {PORTC_Bit7 = s;}
+#define SET_FE_VALVE_STATE(s) IOCFG_SET(IOP_FE, s)
 
 void fuelecon_init_ports(void)
 {
- PORTC&= ~_BV(PC7); //FE valve is off (ЭМР выключен)
- DDRC|= _BV(DDC7);  //Output for control FE valve (выход для управления клапаном ЭМР)
+ //Output for control FE valve (выход для управления клапаном ЭМР)
+ IOCFG_INIT(IOP_FE, 0); //FE valve is off (ЭМР выключен)
 }
 
 void fuelecon_control(struct ecudata_t* d)

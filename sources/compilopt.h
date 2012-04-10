@@ -159,6 +159,6 @@
  #define COPT_DIAGNOSTICS 1
 #else
  #define COPT_DIAGNOSTICS 0
-#endif 
+#endif
 
 #endif //_COMPILOPT_H_

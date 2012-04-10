@@ -28,16 +28,16 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "idlecon.h"
+#include "ioconfig.h"
 #include "secu3.h"
 #include "vstimer.h"
 
 /** Opens/closes IE valve (открывает/закрывает клапан ЭПХХ) */
-#define SET_IE_VALVE_STATE(s) {PORTB_Bit0 = s;}
+#define SET_IE_VALVE_STATE(s) IOCFG_SET(IOP_IE, s)
 
 void idlecon_init_ports(void)
 {
- PORTB|= _BV(PB0); //valve is turned on (клапан ЭПХХ включен)
- DDRB |= _BV(DDB0);
+ IOCFG_INIT(IOP_IE, 1); //valve is turned on (клапан ЭПХХ включен)
 }
 
 //Implementation of IE functionality. If throttle gate is closed AND frq > [up.threshold] OR

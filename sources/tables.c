@@ -47,6 +47,28 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
  /**Дополнительные данные по умолчанию Fill additional data with default values */
  {
+  /**reserved*/
+  {0},
+
+   /**I/O remapping. Match slots and plugs for default configuration*/
+  {
+   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe)
+   },
+   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe)
+   },
+   _FNC(iocfg_s_stub), //<-- stub
+   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+   },
+   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+   },
+  },
+
   /**Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.
    * Дата в формате Mmm dd yyyy.
    * Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
@@ -78,29 +100,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV(COPT_VPSEM, 4) | _CBV(COPT_WHEEL_36_1, 5) | _CBV(COPT_INVERSE_IGN_OUTPUTS, 6) | _CBV(COPT_DWELL_CONTROL, 7) |
   _CBV(COPT_COOLINGFAN_PWM, 8) | _CBV(COPT_REALTIME_TABLES, 9) | _CBV(COPT_ICCAVR_COMPILER, 10) | _CBV(COPT_AVRGCC_COMPILER, 11) |
   _CBV(COPT_DEBUG_VARIABLES, 12) | _CBV(COPT_PHASE_SENSOR, 13) | _CBV(COPT_PHASED_IGNITION, 14) | _CBV(COPT_FUEL_PUMP, 15) |
-  _CBV(COPT_THERMISTOR_CS, 16) | _CBV(COPT_SECU3T, 17) | _CBV(COPT_DIAGNOSTICS, 18),
-
-  /**I/O remapping. Match slots and plugs for default configuration*/
-  {
-   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe)
-   },
-   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe)
-   },
-   _FNC(iocfg_s_stub), //<-- stub
-   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
-   },
-   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
-   },
-  },
-
-  /**reserved*/
-  {0}
+  _CBV(COPT_THERMISTOR_CS, 16) | _CBV(COPT_SECU3T, 17) | _CBV(COPT_DIAGNOSTICS, 18)
  },
 
  /**Резервные параметры Fill reserve parameters with default values */

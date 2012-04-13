@@ -109,6 +109,20 @@ typedef struct iorem_slots_t
  */
 typedef struct fw_ex_data_t
 {
+  /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
+   * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
+   * в структуру, необходимо расходовать эти байты.
+   * Following reserved bytes required for keeping binary compatibility between
+   * different versions of firmware. Useful when you add/remove members to/from
+   * this structure. */
+  uint8_t reserved[32];
+
+  /*Push new fields here, consuming bytes from above field*/
+
+  /** Arrays which are used for I/O remapping. Some arrays are "slots", some are "plugs"
+   * ћассивы используемые дл€ переназначени€ выводов.*/
+  iorem_slots_t iorem;
+
   /**Signature information (contains information about firmware) */
   uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];
 
@@ -126,18 +140,6 @@ typedef struct fw_ex_data_t
   /**Holds flags which give information about options were used to build firmware
    * (хранит флаги дающие информацию о том с какими опци€ми была скомпилирована прошивка) */
   uint32_t config;
-
-  /** Arrays which are used for I/O remapping. Some arrays are "slots", some are "plugs"
-   * ћассивы используемые дл€ переназначени€ выводов.*/
-  iorem_slots_t iorem;
-
-  /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
-   * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
-   * в структуру, необходимо расходовать эти байты.
-   * Following reserved bytes required for keeping binary compatibility between
-   * different versions of firmware. Useful when you add/remove members to/from
-   * this structure. */
-  uint8_t reserved[32];
 }fw_ex_data_t;
 
 /**ќписывает параметры системы

@@ -71,8 +71,8 @@
 #define F_NAME_SIZE            16                   //!< number of symbols in names of families of characteristics
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128         //!< number of points in attenuator's lookup table
-#define FW_SIGNATURE_INFO_SIZE 48                   //!< number of bytes reserved for firmware's signature information
-#define COIL_ON_TIME_LOOKUP_TABLE_SIZE 32           //!< number of points in lookup table used for dwell control
+#define FW_SIGNATURE_INFO_SIZE          48          //!< number of bytes reserved for firmware's signature information
+#define COIL_ON_TIME_LOOKUP_TABLE_SIZE  32          //!< number of points in lookup table used for dwell control
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
@@ -100,6 +100,7 @@ typedef struct iorem_slots_t
  fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
  fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
  fnptr_t s_stub;                         //!< special pointer used as stub
+ fnptr_t reserved;                       //!< reserved
  fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
 }iorem_slots_t;
@@ -115,7 +116,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[32];
+  uint8_t reserved[33];
 
   /*Push new fields here, consuming bytes from above field*/
 

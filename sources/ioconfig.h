@@ -53,19 +53,19 @@ typedef void (*iocfg_pfn_set)(uint8_t value);
  * io_id - ID of I/O to be initialized
  * io_state - Initial state of I/O (On/off)
  */
-#define IOCFG_INIT(io_id, io_state) ((iocfg_pfn_init)_IOREM_GPTR(&cd_data.iorem.i_plugs[io_id]))(io_state)
+#define IOCFG_INIT(io_id, io_state) ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state)
 
 /**Set value of specified I/O
  * io_id - ID of I/O to be set to specified value
  * io_value - Value for I/O (On/Off)
  */
-#define IOCFG_SET(io_id, io_value) ((iocfg_pfn_set)_IOREM_GPTR(&cd_data.iorem.v_plugs[io_id]))(io_value)
+#define IOCFG_SET(io_id, io_value) ((iocfg_pfn_set)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(io_value)
 
 /**Checks specified I/O for availability. If specified I/O is not available it means that it is not
  * plugged into a real I/O slot.
  * returns 1 - available, 0 - not available
  */
-#define IOCFG_CHECK(io_id) (_IOREM_GPTR(&cd_data.iorem.s_stub) != _IOREM_GPTR(&cd_data.iorem.i_plugs[io_id]))
+#define IOCFG_CHECK(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))
 
 //List all I/O functions. These functions must be used only inside tables.c
 void iocfg_i_ecf(uint8_t value);         //!< init ECF

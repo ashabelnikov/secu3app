@@ -408,7 +408,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
  #error "Out of buffer!"
 #endif
    build_fs(fw_data.exdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
-   build_i32h(PGM_GET_DWORD(&cd_data.config)); //<--compile-time options
+   build_i32h(PGM_GET_DWORD(&fw_data.cddata.config)); //<--compile-time options
    break;
 
   case MISCEL_PAR:

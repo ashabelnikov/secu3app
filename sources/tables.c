@@ -45,6 +45,55 @@
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
+ /**Fill data residing in code area, has floating address. Address is identified by a unique signature*/
+ {
+  //Add new data here
+
+  /**I/O remapping. Match slots and plugs for default configuration*/
+  {
+   //size of this structure
+   sizeof(iorem_slots_t),
+
+   //A reserved byte
+   0,
+
+   //slots and plugs
+   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+    0, 0   //<-- zero means that these slots are not implementae in this firmware
+   },
+   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
+    0, 0   //<-- zero means that these slots are not implementae in this firmware
+   },
+   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+   },
+   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+   },
+
+   _FNC(iocfg_s_stub), _FNC(0), //<-- stub, reserved
+  },
+
+  /**32-bit config data*/
+  _CBV(COPT_ATMEGA16, 0) | _CBV(COPT_ATMEGA32, 1) | _CBV(COPT_ATMEGA64, 2) | _CBV(COPT_ATMEGA128, 3) |
+  _CBV(COPT_VPSEM, 4) | _CBV(COPT_WHEEL_36_1, 5) | _CBV(COPT_INVERSE_IGN_OUTPUTS, 6) | _CBV(COPT_DWELL_CONTROL, 7) |
+  _CBV(COPT_COOLINGFAN_PWM, 8) | _CBV(COPT_REALTIME_TABLES, 9) | _CBV(COPT_ICCAVR_COMPILER, 10) | _CBV(COPT_AVRGCC_COMPILER, 11) |
+  _CBV(COPT_DEBUG_VARIABLES, 12) | _CBV(COPT_PHASE_SENSOR, 13) | _CBV(COPT_PHASED_IGNITION, 14) | _CBV(COPT_FUEL_PUMP, 15) |
+  _CBV(COPT_THERMISTOR_CS, 16) | _CBV(COPT_SECU3T, 17) | _CBV(COPT_DIAGNOSTICS, 18),
+
+  /**Two reserved bytes*/
+  {0, 0},
+
+  /**size of this structure*/
+  sizeof(cd_data_t)
+ },
+
  /**Дополнительные данные по умолчанию Fill additional data with default values */
  {
   /**Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.
@@ -71,7 +120,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   },
 
   /**Size of all data for checking */
-  sizeof(fw_data_t),
+  (sizeof(fw_data_t) - sizeof(cd_data_t)),
 
   /**reserved*/
   0, {0}
@@ -81,7 +130,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  {1, 0, 0, 6, 6, 1920, 1250, 1500, 600, 6400, 650, 1600, -320, 0, 800, 4,
   4,10,392,384,16384,8192,16384,8192,16384,8192, 0, 20, 10, 96, 96, -320,
   320, 240, 410, 392, 1250, 1500, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
-  8, 512, 1000, 2, 0, 0, 7500, 0, 0, {0,0,0,0},/*crc*/0
+  8, 512, 1000, 2, 0, 0, 7500, 0, 0, {0,0,0,0},/*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */
@@ -289,57 +338,4 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
  /**Contains check sum for whole firmware */
  0x0000
-};
-
-/**Fill data residing in code area, has floating address. Address is identified by a unique signature*/
-cd_data_t cd_data =
-{
- /**32-bit signature*/
- 0xAA55642E,
-
- /**size of this structure*/
- sizeof(cd_data_t),
-
- /**32-bit config data*/
- _CBV(COPT_ATMEGA16, 0) | _CBV(COPT_ATMEGA32, 1) | _CBV(COPT_ATMEGA64, 2) | _CBV(COPT_ATMEGA128, 3) |
- _CBV(COPT_VPSEM, 4) | _CBV(COPT_WHEEL_36_1, 5) | _CBV(COPT_INVERSE_IGN_OUTPUTS, 6) | _CBV(COPT_DWELL_CONTROL, 7) |
- _CBV(COPT_COOLINGFAN_PWM, 8) | _CBV(COPT_REALTIME_TABLES, 9) | _CBV(COPT_ICCAVR_COMPILER, 10) | _CBV(COPT_AVRGCC_COMPILER, 11) |
- _CBV(COPT_DEBUG_VARIABLES, 12) | _CBV(COPT_PHASE_SENSOR, 13) | _CBV(COPT_PHASED_IGNITION, 14) | _CBV(COPT_FUEL_PUMP, 15) |
- _CBV(COPT_THERMISTOR_CS, 16) | _CBV(COPT_SECU3T, 17) | _CBV(COPT_DIAGNOSTICS, 18),
-
- /**Two reserved bytes*/
- {0, 0},
-
- /**I/O remapping. Match slots and plugs for default configuration*/
- {
-  //size of this structure
-  sizeof(iorem_slots_t),
-
-  //A reserved byte
-  0,
-
-  //slots and plugs
-  {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-   _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-   0, 0   //<-- zero means that these slots are not implementae in this firmware
-  },
-  {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-   _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-   0, 0   //<-- zero means that these slots are not implementae in this firmware
-  },
-  {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-   _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
-  },
-  {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-   _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
-  },
-
-  _FNC(iocfg_s_stub), _FNC(0), //<-- stub, reserved
- }
-
- //Add new data here
 };

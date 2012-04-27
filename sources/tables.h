@@ -196,7 +196,7 @@ typedef struct params_t
   uint8_t  ign_cutoff;                   //!< Cutoff ignition when RPM reaches specified threshold
   uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
 
-  uint8_t  zero_adv_ang;                 //!< Zero anvance angle flag
+  uint8_t  zero_adv_ang;                 //!< Zero advance angle flag
   uint8_t  merge_ign_outs;               //!< Merge ignition sugnals to single output flag
 
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
@@ -208,19 +208,58 @@ typedef struct params_t
   uint8_t  reserved[4];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
+   * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных
+   * прошивки.
    * CRC of data of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;
 
 }params_t;
 
+//Define data structures are related to code area data and IO remapping data
+typedef uint16_t fnptr_t;                //!< Special type for function pointers
+#define IOREM_SLOTS 10                   //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS 16                   //!< Number of plugs used in I/O remapping
+
+/**Describes all data related to I/O remapping */
+typedef struct iorem_slots_t
+{
+ uint8_t size;                           //!< size of this structure
+ uint8_t reserved;                       //!< a reserved byte
+ fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
+ fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
+ fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
+ fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
+ fnptr_t s_stub;                         //!< special pointer used as stub
+ fnptr_t reserved_ptr;                   //!< reserved
+}iorem_slots_t;
+
+/**Describes all the data residing directly in the code area.*/
+typedef struct cd_data_t
+{
+ /** Arrays which are used for I/O remapping. Some arrays are "slots", some are "plugs"
+  * Массивы используемые для переназначения выводов.*/
+ iorem_slots_t iorem;
+
+ /**Holds flags which give information about options were used to build firmware
+  * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
+ uint32_t config;
+
+ uint8_t reserved[2];                    //!< Two reserved bytes
+
+ uint8_t size;                           //!< size of this structure
+}cd_data_t;
+
+
 /**Описывает все данные находящиеся в прошивке 
  * Describes all data residing in firmware */
 typedef struct fw_data_t
 {
+ cd_data_t cddata;                       //!< All data which is strongly coupled with code (Эти данные жестко связаны с кодом прошивки)
+ //following fields are belong to data area, not to the code area:
  fw_ex_data_t exdata;                    //!< Дополнительные данные Additional data in the firmware
  params_t def_param;                     //!< Резервные параметры Reserve parameters (loaded when instance in EEPROM is broken)
  f_data_t tables[TABLES_NUMBER];         //!< Таблицы УОЗ Array of tables of advance angle
- uint16_t code_crc;                      //!< Check sum of whole firmware (except this check sum and boot loader)
+ uint16_t code_crc;                      //!< Check sum of the whole firmware (except this check sum and boot loader)
 }fw_data_t;
 
 //================================================================================
@@ -252,51 +291,9 @@ typedef struct fw_data_t
  * Address of data in the firmware */
 #define FIRMWARE_DATA_START (SECU3BOOTSTART-sizeof(fw_data_section_t))
 //================================================================================
-
-typedef uint16_t fnptr_t;                //!< Special type for function pointers
-#define IOREM_SLOTS 10                   //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS 16                   //!< Number of plugs used in I/O remapping
-
-/**Describes all data related to I/O remapping */
-typedef struct iorem_slots_t
-{
- uint8_t size;                           //!< size of this structure
- uint8_t reserved;                       //!< a reserved byte
- fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
- fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
- fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
- fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
- fnptr_t s_stub;                         //!< special pointer used as stub
- fnptr_t reserved_ptr;                   //!< reserved
-}iorem_slots_t;
-
-/**Describes all the data residing directly in the code area. That data has no exact address and
- * can be found by signature.
- */
-typedef struct cd_data_t
-{
- uint32_t sign;                          //!< signature (will be used to find this structire)
- uint8_t size;                           //!< size of this structure
-
- /**Holds flags which give information about options were used to build firmware
-  * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
- uint32_t config;
-
- uint8_t reserved[2];                    //!< Two reserved bytes
-
- /** Arrays which are used for I/O remapping. Some arrays are "slots", some are "plugs"
-  * Массивы используемые для переназначения выводов.*/
- iorem_slots_t iorem;
-}cd_data_t;
-
-//================================================================================
 //Variables:
 
 /**Все данные прошивки All firmware data */
 PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
-
-/**Все данные находящиеся непосредственно в коде прошивки
- * (All data residing directly in the firmware code) */
-extern cd_data_t cd_data;
 
 #endif //_TABLES_H_

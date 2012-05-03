@@ -188,6 +188,9 @@ MAIN()
  ckps_use_knock_channel(edat.param.knock_use_knock_channel);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--now valid initialization
  ckps_set_merge_outs(edat.param.merge_ign_outs);
+#ifdef HALL_OUTPUT
+ ckps_set_hall_pulse(edat.param.hop_start_cogs, edat.param.hop_durat_cogs);
+#endif
 
  s_timer_init();
  vent_init_state();

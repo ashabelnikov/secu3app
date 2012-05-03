@@ -161,4 +161,11 @@
  #define COPT_DIAGNOSTICS 0
 #endif
 
+/** Emulation of Hall sensor output */
+#ifdef HALL_OUTPUT
+ #define COPT_HALL_OUTPUT 1
+#else
+ #define COPT_HALL_OUTPUT 0
+#endif
+
 #endif //_COMPILOPT_H_

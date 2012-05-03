@@ -85,7 +85,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV(COPT_VPSEM, 4) | _CBV(COPT_WHEEL_36_1, 5) | _CBV(COPT_INVERSE_IGN_OUTPUTS, 6) | _CBV(COPT_DWELL_CONTROL, 7) |
   _CBV(COPT_COOLINGFAN_PWM, 8) | _CBV(COPT_REALTIME_TABLES, 9) | _CBV(COPT_ICCAVR_COMPILER, 10) | _CBV(COPT_AVRGCC_COMPILER, 11) |
   _CBV(COPT_DEBUG_VARIABLES, 12) | _CBV(COPT_PHASE_SENSOR, 13) | _CBV(COPT_PHASED_IGNITION, 14) | _CBV(COPT_FUEL_PUMP, 15) |
-  _CBV(COPT_THERMISTOR_CS, 16) | _CBV(COPT_SECU3T, 17) | _CBV(COPT_DIAGNOSTICS, 18),
+  _CBV(COPT_THERMISTOR_CS, 16) | _CBV(COPT_SECU3T, 17) | _CBV(COPT_DIAGNOSTICS, 18) | _CBV(COPT_HALL_OUTPUT, 19),
 
   /**Two reserved bytes*/
   {0, 0},
@@ -130,7 +130,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  {1, 0, 0, 6, 6, 1920, 1250, 1500, 600, 6400, 650, 1600, -320, 0, 800, 4,
   4,10,392,384,16384,8192,16384,8192,16384,8192, 0, 20, 10, 96, 96, -320,
   320, 240, 410, 392, 1250, 1500, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
-  8, 512, 1000, 2, 0, 0, 7500, 0, 0, {0,0,0,0},/*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, {0,0},/*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

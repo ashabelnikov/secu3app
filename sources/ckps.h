@@ -140,4 +140,12 @@ void ckps_enable_ignition(uint8_t i_cutoff);
  */
 void ckps_set_merge_outs(uint8_t i_merge);
 
+#ifdef HALL_OUTPUT
+/** Set parameters for Hall output pulse
+ * \param i_offset - offset in tooth relatively to TDC (if > 0, then BTDC)
+ * \param i_duration - duration of pulse in tooth
+ */
+void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration);
+#endif
+
 #endif //_CKPS_H_

@@ -199,13 +199,16 @@ typedef struct params_t
   uint8_t  zero_adv_ang;                 //!< Zero advance angle flag
   uint8_t  merge_ign_outs;               //!< Merge ignition sugnals to single output flag
 
+  int8_t   hop_start_cogs;               //!< Hall output: start of pulse in teeth relatively to TDC 
+  uint8_t  hop_durat_cogs;               //!< Hall output: duration of pulse in teeth
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[4];
+  uint8_t  reserved[2];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

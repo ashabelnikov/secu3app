@@ -55,8 +55,14 @@ void process_uart_interface(struct ecudata_t* d)
    case ANGLES_PAR:
    case STARTR_PAR:
    case ADCCOR_PAR:
-   case MISCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
+
+   case MISCEL_PAR:
+#ifdef HALL_OUTPUT
+    ckps_set_hall_pulse(d->param.hop_start_cogs, d->param.hop_durat_cogs);
+#endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 

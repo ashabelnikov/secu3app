@@ -52,7 +52,7 @@
  #define WHEEL_COGS_NUM   60
 /** Number of absent teeth (количество отсутствующих зубьев) */
  #define WHEEL_COGS_LACK  2
-/**Number of teeth before t.d.c which determines moment of advance angle latching, start of measurements from sensors,
+/**Number of teeth before TDC which determines moment of advance angle latching, start of measurements from sensors,
  * latching of settings into HIP9011 (кол-во зубьев до в.м.т определяющие момент загрузки УОЗ, старт измерения датчиков,
  * загрузку настроек в HIP)  */
  #define WHEEL_LATCH_BTDC 11
@@ -115,9 +115,9 @@ typedef struct
  uint8_t  ignition_cogs;              //!< number of teeth determine the duration of ignition drive pulse (кол-во зубьев определяющее длительность импульсов запуска коммутаторов)
  uint8_t  starting_mode;              //!< state of state machine processing of teeth at the startup (состояние конечного автомата обработки зубьев на пуске)
  uint8_t  channel_mode;               //!< determines which channel of the ignition to run at the moment (определяет какой канал зажигания нужно запускать в данный момент)
- volatile uint8_t  cogs_btdc;         //!< number of teeth from synchro-label to t.d.c of the first cylinder (кол-во зубьев от синхрометки до в.м.т первого цилиндра)
- int8_t   knock_wnd_begin_abs;        //!< begin of the phase selection window of detonation in the teeth of wheel, relatively to t.d.c (начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
- int8_t   knock_wnd_end_abs;          //!< end of the phase selection window of detonation in the teeth of wheel, relatively to t.d.c (конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
+ volatile uint8_t  cogs_btdc;         //!< number of teeth from synchro-label to TDC of the first cylinder (кол-во зубьев от синхрометки до в.м.т первого цилиндра)
+ int8_t   knock_wnd_begin_abs;        //!< begin of the phase selection window of detonation in the teeth of wheel, relatively to TDC (начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
+ int8_t   knock_wnd_end_abs;          //!< end of the phase selection window of detonation in the teeth of wheel, relatively to TDC (конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
  uint32_t frq_calc_dividend;          //!< divident for calculating RPM (делимое для расчета частоты вращения)
 #ifdef DWELL_CONTROL
@@ -129,6 +129,10 @@ typedef struct
  uint8_t  add_period_taken;           //!< indicates that time between spark and next cog was taken into account
 #endif
  volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
+#ifdef HALL_OUTPUT
+ int8_t   hop_offset;                 //!< Hall output: start of pulse in tooth of wheel relatively to TDC
+ uint8_t  hop_duration;               //!< Hall output: duration of pulse in tooth of wheel
+#endif
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug (a couple of cylinders)
@@ -150,7 +154,12 @@ typedef struct
  volatile uint8_t chan_cyl;
 #endif
 
- /** Determines number of tooth (relatively to t.d.c) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
+#ifdef HALL_OUTPUT
+ volatile uint8_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse  
+ volatile uint8_t hop_end_cog;        //!< Hall output: tooth number that corresponds to the end of pulse
+#endif
+
+ /** Determines number of tooth (relatively to TDC) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
  volatile uint8_t cogs_latch;
  /** Determines number of tooth at which measurement of rotation period is performed (определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. циклами)) */
  volatile uint8_t cogs_btdc;
@@ -277,6 +286,10 @@ void ckps_init_ports(void)
 
  //PD5,PD4,PC1,PC0 must be configurated as outputs (должны быть сконфигурированы как выходы)
  DDRD|= _BV(DDD5)|_BV(DDD4); //1-2 ignition channels - for 2 and 4 cylinder engines (1-2 каналы зажигания - для 2 и 4 ц. двигателей)
+
+#ifdef HALL_OUTPUT
+ IOCFG_INIT(IOP_HALL_OUT, 1);
+#endif
 }
 
 //Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine
@@ -337,6 +350,11 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
   chanstate[i].cogs_latch = _normalize_tn(tdc - WHEEL_LATCH_BTDC);
   chanstate[i].knock_wnd_begin = _normalize_tn(tdc + ckps.knock_wnd_begin_abs);
   chanstate[i].knock_wnd_end = _normalize_tn(tdc + ckps.knock_wnd_end_abs);
+#ifdef HALL_OUTPUT
+  //update Hall output pulse parameters because they depend on ckps.cogs_btdc parameter
+  chanstate[i].hop_begin_cog = _normalize_tn(tdc - ckps.hop_offset);
+  chanstate[i].hop_end_cog = _normalize_tn(chanstate[i].hop_begin_cog + ckps.hop_duration);
+#endif
  }
  ckps.cogs_btdc = cogs_btdc;
  _RESTORE_INTERRUPT(_t);
@@ -417,7 +435,7 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  case 8: ckps.frq_calc_dividend = 3750000L;
   break;
  }
- //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window() becomes invalid!
+ //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.
 }
 
@@ -449,6 +467,27 @@ void ckps_set_merge_outs(uint8_t i_merge)
 {
  ckps.chan_mask = i_merge ? 0x00 : 0xFF;
 }
+
+#ifdef HALL_OUTPUT
+void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
+{
+ uint8_t _t, i, cogs_per_cycle;
+ //save values because we will access them from other function
+ ckps.hop_offset = i_offset;
+ ckps.hop_duration = i_duration;
+
+ cogs_per_cycle = COGSPERCHAN(ckps.chan_number); /*(WHEEL_COGS_NUM) / ckps.chan_number*/
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+ for(i = 0; i < ckps.chan_number; ++i)
+ {
+  uint8_t tdc = (ckps.cogs_btdc + i * cogs_per_cycle);
+  chanstate[i].hop_begin_cog = _normalize_tn(tdc - ckps.hop_offset);
+  chanstate[i].hop_end_cog = _normalize_tn(chanstate[i].hop_begin_cog + ckps.hop_duration);
+ }
+ _RESTORE_INTERRUPT(_t);
+}
+#endif
 
 #ifndef PHASED_IGNITION
 /**Helpful macro.
@@ -790,7 +829,7 @@ void process_ckps_cogs(void)
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
-  //for 66° before t.d.c (before working cycle) establish new advance angle to be actuated,
+  //for 66° before TDC (before working cycle) establish new advance angle to be actuated,
   //before this moment value was stored in a temporary buffer.
   //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
   //до этого хранился во временном буфере.
@@ -805,7 +844,7 @@ void process_ckps_cogs(void)
    adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
   }
 
-  //teeth of end/beginning of the measurement of rotation period - t.d.c Read and save the measured period,
+  //teeth of end/beginning of the measurement of rotation period - TDC Read and save the measured period,
   //then remember current value of count for the next measurement
   //(зубья завершения/начала измерения периодов вращения  - в.м.т. считывание и сохранение измеренного периода,
   //затем запоминание текущего значения счетчика для следующего измерения)
@@ -824,6 +863,13 @@ void process_ckps_cogs(void)
    flags->ckps_new_engine_cycle_happen = 1; //set the cycle-synchronozation event (устанавливаем событие цикловой синхронизации)
    /////////////////////////////////////////
   }
+
+#ifdef HALL_OUTPUT
+  if (ckps.cog == chanstate[i].hop_begin_cog)
+   IOCFG_SET(IOP_HALL_OUT, 1);
+  if (ckps.cog == chanstate[i].hop_end_cog)
+   IOCFG_SET(IOP_HALL_OUT, 0);
+#endif
  }
 
  //Preparing to start the ignition for the current channel (if the right moment became)
@@ -860,7 +906,7 @@ void process_ckps_cogs(void)
  }
 #endif
 
- //tooth passed - angle before t.d.c. decriased by 6 degr. (for 60-2) or 10 degr. (for 36-1).
+ //tooth passed - angle before TDC decriased by 6 degr. (for 60-2) or 10 degr. (for 36-1).
  //(прошел зуб - угол до в.м.т. уменьшился на 6 град (для 60-2) или 10 град (для 36-1))
  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
  ++ckps.cog;

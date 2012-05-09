@@ -44,9 +44,19 @@
  #define _AB(src,rel) *(((unsigned char*)&(src)+sizeof((src))-1-(rel))) /**< Access Nth byte in variable */
 #endif
 
-/**Converts a bit number into a byte value. */
+/**Converts a bit number into a 1-byte value. */
 #ifndef _BV
  #define _BV(bit) (1 << (bit))
+#endif
+
+/**Converts a bit number into a 1-byte value with specifying of a bit value */
+#ifndef _CBV8
+ #define _CBV8(val,bit) (((uint8_t)val) << bit)
+#endif
+
+/**Converts a bit number into a 4-byte value with specifying of a bit value */
+#ifndef _CBV32
+ #define _CBV32(val,bit) (((uint32_t)val) << bit)
 #endif
 
 #endif //_BITMASK_H_

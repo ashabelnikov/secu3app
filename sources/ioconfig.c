@@ -141,3 +141,26 @@ void iocfg_s_stub(uint8_t nil)
 {
  //this is a stub!
 }
+
+//Following I/Os can not be remapped
+void iocfg_i_ign_out1(uint8_t value)
+{
+ PORTD_Bit4 = value;
+ DDRD |= _BV(DDD4);
+}
+
+void iocfg_i_ign_out2(uint8_t value)
+{
+ PORTD_Bit5 = value;
+ DDRD |= _BV(DDD5);
+}
+
+void iocfg_s_ign_out1(uint8_t value)
+{
+ PORTD_Bit4 = value;
+}
+
+void iocfg_s_ign_out2(uint8_t value)
+{
+ PORTD_Bit5 = value;
+}

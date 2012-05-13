@@ -46,7 +46,7 @@ typedef void (*iocfg_pfn_set)(uint8_t value);
 #define IOP_FL_PUMP       8     //!< FL_PUMP
 #define IOP_HALL_OUT      9     //!< HALL_OUT
 
-//Wrap macro from port/pgmspace.h. For internal use in this header only!
+//Wrap macro from port/pgmspace.h.
 #define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
 
 /**Init specified I/O
@@ -66,6 +66,12 @@ typedef void (*iocfg_pfn_set)(uint8_t value);
  * returns 1 - available, 0 - not available
  */
 #define IOCFG_CHECK(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))
+
+/**Get specified I/O callback address
+ * io_id - ID of I/O to be set to specified value
+ * returns - corresponding callback address
+ */
+#define IOCFG_CB(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))
 
 //List all I/O functions. These functions must be used only inside tables.c
 void iocfg_i_ecf(uint8_t value);         //!< init ECF
@@ -87,5 +93,10 @@ void iocfg_s_ie(uint8_t value);          //!< set  IE
 void iocfg_i_fe(uint8_t value);          //!< init FE
 void iocfg_s_fe(uint8_t value);          //!< set  FE
 void iocfg_s_stub(uint8_t);              //!< stub function
+//Additional I/O functions which are not for remapping
+void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1
+void iocfg_s_ign_out1(uint8_t value);    //!< set  IGN_OUT1
+void iocfg_i_ign_out2(uint8_t value);    //!< init IGN_OUT2
+void iocfg_s_ign_out2(uint8_t value);    //!< set  IGN_OUT2
 
 #endif //_IOCONFIG_H_

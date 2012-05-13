@@ -27,6 +27,7 @@
  #include <stdint.h>
 
  typedef uint8_t __flash prog_uint8_t;
+ typedef uint32_t __flash prog_uint32_t;
 
  //Declare variable in FLASH at fixed address
  #define PGM_FIXED_ADDR_OBJ(variable, sect_name) _Pragma("object_attribute=__root") \

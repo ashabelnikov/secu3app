@@ -226,15 +226,6 @@ void ckps_init_state_variables(void)
 #ifdef PHASED_IGNITION
  cams_set_callbacks(&on_cam_edge, &on_cam_error);
  cams_set_error_threshold(WHEEL_COGS_NUM * 2);
-
-/*#else
- //Assign I/O callbacks
- chanstate[0].io_callback = (iocfg_pfn_set)_IOREM_GPTR(iocfg_s_ign_out1);
- chanstate[1].io_callback = (iocfg_pfn_set)_IOREM_GPTR(iocfg_s_ign_out2);
- chanstate[2].io_callback = IOCFG_CB(IOP_IGN_OUT3);
- chanstate[3].io_callback = IOCFG_CB(IOP_IGN_OUT4);
- chanstate[4].io_callback = IOCFG_CB(IOP_ADD_IO1);
- chanstate[5].io_callback = IOCFG_CB(IOP_ADD_IO2);*/
 #endif
  flags->ckps_need_to_set_channel = 0;
  flags->ckps_new_engine_cycle_happen = 0;
@@ -417,6 +408,49 @@ uint8_t ckps_is_cog_changed(void)
  return 0;
 }
 
+/**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
+void set_channels_ss(void)
+{
+ uint8_t _t, i = 0, chan = ckps.chan_number / 2;
+ for(; i < chan; ++i)
+ {
+  fnptr_t value;
+  if (0==i)
+   value = _IOREM_GPTR(iocfg_s_ign_out1);
+  else if (1==i)
+   value = _IOREM_GPTR(iocfg_s_ign_out2);
+  else
+   value = IOCFG_CB(IOP_IGN_OUT3 + i);
+
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  chanstate[i].io_callback = value;
+  chanstate[i + chan].io_callback = value;
+  _RESTORE_INTERRUPT(_t);
+ }
+}
+
+/**Tune channels' I/O for full sequential ignition mode */
+void set_channels_fs(void)
+{
+ uint8_t _t, i = 0;
+ for(; i < ckps.chan_number; ++i)
+ {
+  fnptr_t value;
+  if (0==i)
+   value = _IOREM_GPTR(iocfg_s_ign_out1);
+  else if (1==i)
+   value = _IOREM_GPTR(iocfg_s_ign_out2);
+  else
+   value = IOCFG_CB(IOP_IGN_OUT3 + i);
+
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  chanstate[i].io_callback = value;
+  _RESTORE_INTERRUPT(_t);
+ }
+}
+
 void ckps_set_cyl_number(uint8_t i_cyl_number)
 {
  _BEGIN_ATOMIC_BLOCK();
@@ -425,8 +459,16 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
  ckps.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
 
- //TODO:
- 
+ //We have to retune I/O configuration after changing of cylinder number
+#ifndef PHASED_IGNITION
+ set_channels_ss();  // Tune for semi-sequential mode
+#else //phased ignition
+ if (!cams_is_ready())
+  set_channels_ss(); // Tune for semi-sequential mode if cam sensor doesn't work
+ else
+  set_channels_fs(); // Tune for full sequential mode
+#endif
+
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.
 }

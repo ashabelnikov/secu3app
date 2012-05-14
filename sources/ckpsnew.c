@@ -305,7 +305,7 @@ uint16_t ckps_calculate_instant_freq(void)
  _ENABLE_INTERRUPT();
 
  //if equal to minimum, this means engine is stopped (если самый минимум, значит двигатель остановился)
- if (period!=0xFFFF)
+ if (period != 0xFFFF)
   return (ckps.frq_calc_dividend)/(period);
  else
   return 0;
@@ -323,14 +323,14 @@ void ckps_set_edge_type(uint8_t edge_type)
 
 /**
  * Ensures that tooth number will be in the allowed range.
- * Tooth number should not be greater than WHEEL_COGS_NUM or less than zero
+ * Tooth number should not be greater than WHEEL_COGS_NUM*2 or less than zero
  */
 uint8_t _normalize_tn(int8_t i_tn)
 {
- if (i_tn > WHEEL_COGS_NUM)
-  return i_tn - WHEEL_COGS_NUM;
+ if (i_tn > (WHEEL_COGS_NUM * 2))
+  return i_tn - (WHEEL_COGS_NUM * 2);
  if (i_tn < 0)
-  return i_tn + WHEEL_COGS_NUM;
+  return i_tn + (WHEEL_COGS_NUM * 2);
  return i_tn;
 }
 
@@ -339,7 +339,7 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  uint8_t _t, i;
  // pre-compute and store the reference points (teeth) (заранее вычисляем и сохраняем опорные точки (зубья))
  // cogs_per_cycle - number of wheel teeth attributable to a single cycle of engine (количество зубьев шкива приходящиеся на один такт двигателя)
- uint8_t cogs_per_cycle = COGSPERCHAN(ckps.chan_number); /*(WHEEL_COGS_NUM) / ckps.chan_number*/
+ uint8_t cogs_per_cycle = COGSPERCHAN(ckps.chan_number);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
@@ -424,6 +424,9 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  _END_ATOMIC_BLOCK();
 
  ckps.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
+
+ //TODO:
+ 
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.
 }
@@ -435,7 +438,7 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
  ckps.knock_wnd_begin_abs = begin / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
  ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
 
- cogs_per_cycle = COGSPERCHAN(ckps.chan_number); /*(WHEEL_COGS_NUM) / ckps.chan_number*/
+ cogs_per_cycle = COGSPERCHAN(ckps.chan_number);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
@@ -465,7 +468,7 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
  ckps.hop_offset = i_offset;
  ckps.hop_duration = i_duration;
 
- cogs_per_cycle = COGSPERCHAN(ckps.chan_number); /*(WHEEL_COGS_NUM) / ckps.chan_number*/
+ cogs_per_cycle = COGSPERCHAN(ckps.chan_number);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
@@ -547,8 +550,7 @@ ISR(TIMER1_COMPA_vect)
 #endif
  //-----------------------------------------------------
 
-#ifdef DWELL_CONTROL
- //delay = period_curr * (WHEEL_COGS_NUM / chan_number)
+#ifdef DWELL_CONTROL 
  ckps.acc_delay = ((uint32_t)ckps.period_curr) * COGSPERCHAN(ckps.chan_number); 
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
@@ -568,16 +570,6 @@ ISR(TIMER1_COMPA_vect)
 #else
  //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубьях)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
-#endif
-
-#ifdef PHASED_IGNITION
-/* if (chanstate[ckps.channel_mode].chan_cyl !=255 )
- {
-  if (chanstate[ckps.channel_mode].chan_cyl < 1)
-   ++chanstate[ckps.channel_mode].chan_cyl;
-  else
-   chanstate[ckps.channel_mode].chan_cyl = 0;
- }*/
 #endif
 
  //-----------------------------------------------------

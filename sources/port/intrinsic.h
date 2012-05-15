@@ -34,7 +34,7 @@
  #define _DELAY_CYCLES(cycles) __delay_cycles(cycles)
  #define _WATCHDOG_RESET() __watchdog_reset()
 
- #define CALL_ADDRESS(addr) ((void (*)())(((addr)/2))()
+ #define CALL_ADDRESS(addr) ((void (*)())((addr)/2))()
 
 #else //AVR GCC
  #include <avr/eeprom.h>       //__EEGET(), __EEPUT() etc

@@ -36,7 +36,18 @@
 
 #else //AVR GCC
  #include <avr/eeprom.h>       //__EEGET(), __EEPUT() etc
- #include <util/delay_basic.h> //for _DELAY_CYCLES()
+
+ //Following helper function is used by _DELAY_CYCLES() macro.
+ //The loop executes 4 CPU cycles per iteration
+ static inline void _delay_4cpi(uint16_t __count)
+ {
+  __asm__ volatile (
+  "1: sbiw %0,1" "\n\t"
+  "brne 1b"
+  : "=w" (__count)
+  : "0" (__count)
+  );
+ }
 
  //abstracting intrinsics
  #define _ENABLE_INTERRUPT() sei()
@@ -44,7 +55,7 @@
  #define _SAVE_INTERRUPT() SREG
  #define _RESTORE_INTERRUPT(s) SREG = (s)
  #define _NO_OPERATION() __asm__ __volatile__ ("nop" ::)
- #define _DELAY_CYCLES(cycles) _delay_loop_2(cycles / 4)
+ #define _DELAY_CYCLES(cycles) _delay_4cpi(cycles / 4)
  #define _WATCHDOG_RESET() __asm__ __volatile__ ("wdr")
 
 #endif

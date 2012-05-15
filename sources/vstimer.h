@@ -61,7 +61,7 @@ typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
 }
 
 /**Check specified timer for action */
-INLINE
+static INLINE
 uint8_t s_timer16_is_action(s_timer16_t i_timer)
 {
  uint8_t result;

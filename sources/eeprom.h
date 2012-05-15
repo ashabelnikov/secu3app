@@ -25,8 +25,8 @@
  * (Функции для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
-#ifndef _EEPROM_H_
-#define _EEPROM_H_
+#ifndef _SECU3_EEPROM_H_
+#define _SECU3_EEPROM_H_
 
 #include <stdint.h>
 
@@ -78,4 +78,4 @@ void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
  */
 uint8_t eeprom_take_completed_opcode(void);
 
-#endif //_EEPROM_H_
+#endif //_SECU3_EEPROM_H_

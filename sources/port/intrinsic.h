@@ -37,6 +37,15 @@
 #else //AVR GCC
  #include <avr/eeprom.h>       //__EEGET(), __EEPUT() etc
 
+ //Old versions of avr-gcc have only _EEGET() and _EEPUT() defined
+ #ifndef __EEGET
+  #define __EEGET(val, addr) _EEGET(val, addr)
+ #endif
+
+ #ifndef __EEPUT
+  #define __EEPUT(addr, val) _EEPUT(addr, val)
+ #endif
+
  //Following helper function is used by _DELAY_CYCLES() macro.
  //The loop executes 4 CPU cycles per iteration
  static inline void _delay_4cpi(uint16_t __count)

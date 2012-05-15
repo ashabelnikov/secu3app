@@ -57,6 +57,6 @@
  * (точка входа в бутлоадер из программы (мину€ проверку перемычки),
  * смотрите исходный код загрузчика).
  */
-#define boot_loader_start() ((void (*)())((SECU3BOOTSTART+0xA)/2))()
+#define boot_loader_start() CALL_ADDRESS(SECU3BOOTSTART+0xA)
 
 #endif //_BOOTLDR_H_

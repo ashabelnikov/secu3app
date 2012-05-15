@@ -34,6 +34,8 @@
  #define _DELAY_CYCLES(cycles) __delay_cycles(cycles)
  #define _WATCHDOG_RESET() __watchdog_reset()
 
+ #define CALL_ADDRESS(addr) ((void (*)())(((addr)/2))()
+
 #else //AVR GCC
  #include <avr/eeprom.h>       //__EEGET(), __EEPUT() etc
 
@@ -58,6 +60,16 @@
   );
  }
 
+ //Following function implements ICALL AVR instruction.
+ //Function works with word address
+ static inline void _icall_ins(uint16_t __address)
+ {
+  __asm__ volatile (
+  "icall"
+  :: "z" (__address)
+  );
+ }
+
  //abstracting intrinsics
  #define _ENABLE_INTERRUPT() sei()
  #define _DISABLE_INTERRUPT() cli()
@@ -66,6 +78,8 @@
  #define _NO_OPERATION() __asm__ __volatile__ ("nop" ::)
  #define _DELAY_CYCLES(cycles) _delay_4cpi(cycles / 4)
  #define _WATCHDOG_RESET() __asm__ __volatile__ ("wdr")
+
+ #define CALL_ADDRESS(addr) _icall_ins(((addr)/2))
 
 #endif
 

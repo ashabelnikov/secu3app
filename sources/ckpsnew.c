@@ -47,22 +47,28 @@
  void on_cam_error(void);
 #endif
 
+/**Maximum number of ignition channels */
+#define IGN_CHANNELS_MAX      8
+
 #ifndef WHEEL_36_1 //60-2
-/** Number of teeth (including absent) (количество зубьев (включая отсутствующие)) */
+ /** Number of teeth (including absent) (количество зубьев (включая отсутствующие)) */
  #define WHEEL_COGS_NUM   60
-/** Number of absent teeth (количество отсутствующих зубьев) */
+ /** Number of absent teeth (количество отсутствующих зубьев) */
  #define WHEEL_COGS_LACK  2
-/**Number of teeth before TDC which determines moment of advance angle latching, start of measurements from sensors,
- * latching of settings into HIP9011 (кол-во зубьев до в.м.т определяющие момент загрузки УОЗ, старт измерения датчиков,
- * загрузку настроек в HIP)  */
+ /**Number of teeth before TDC which determines moment of advance angle latching, start of measurements from sensors,
+  * latching of settings into HIP9011 (кол-во зубьев до в.м.т определяющие момент загрузки УОЗ, старт измерения датчиков,
+  * загрузку настроек в HIP)  */
  #define WHEEL_LATCH_BTDC 11
-/** p * 2.5,  barrier for detecting of synchro-label (барьер для селекции синхрометки) = 2.5 */
+ /** p * 2.5,  barrier for detecting of missing teeth (барьер для селекции синхрометки) = 2.5 */
  #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p) >> 1))
+ /**Number of teeth per 1 ignition channel           1   2   3   4   5   6   7  8 */
+ prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 120, 60, 40, 30, 24, 20, 0, 15};
 #else //36-1
  #define WHEEL_COGS_NUM   36
  #define WHEEL_COGS_LACK  1
- #define WHEEL_LATCH_BTDC 7   //70 degree (70 градусов)
+ #define WHEEL_LATCH_BTDC 7   //70° (70 градусов)
  #define CKPS_GAP_BARRIER(p) ((p) + ((p) >> 1))  // p * 1.5
+ prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0,  72, 36, 24, 18,  0, 12, 0, 9};
 #endif
 
 /** Number of degrees which corresponds to one rotation (количество градусов приходящееся на один зуб диска) */
@@ -77,9 +83,6 @@
 
 /** Access Input Capture Register */
 #define GetICR() (ICR1)
-
-/**Maximum number of ignition channels */
-#define IGN_CHANNELS_MAX      8
 
 /** Used to indicate that none from ignition channels are selected
  * (используется для указания того что ни один канал зажигания не выбран) */
@@ -101,7 +104,7 @@ typedef struct
 {
  uint8_t  ckps_error_flag:1;                 //!< CKP error flag, set in the CKP's interrupt, reset after processing (признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки)
  uint8_t  ckps_is_valid_half_turn_period:1;  //!< used to indicate that measured period is valid (actually measured)
- uint8_t  ckps_is_synchronized:1;            //!< indicates that synchronization has been completed (syncho-label found)
+ uint8_t  ckps_is_synchronized:1;            //!< indicates that synchronization has been completed (missing teeth found)
  uint8_t  ckps_new_engine_cycle_happen:1;    //!< flag for synchronization with rotation (флаг синхронизации с вращением)
  uint8_t  ckps_use_knock_channel:1;          //!< flag which indicates using of knock channel (признак использования канала детонации)
  uint8_t  ckps_need_to_set_channel:1;        //!< indicates that it is necessary to set channel
@@ -117,7 +120,8 @@ typedef struct
  uint16_t icr_prev;                   //!< previous value if Input Capture Register (предыдущее значение регистра захвата)
  volatile uint16_t period_curr;       //!< last measured inter-tooth period (последнй измеренный межзубный период)
  uint16_t period_prev;                //!< previous value of inter-tooth period (предыдущее значение межзубного периода)
- volatile uint8_t  cog;               //!< counts teeth from synchro-label, begins from 1 (считает зубья после выреза, начинает считать с 1)
+ volatile uint8_t cog;                //!< counts teeth starting from missing teeth (2 revolutions), begins from 1 (считает зубья после выреза, начинает считать с 1)
+ volatile uint8_t cog360;             //!< counts teeth starting from missing teeth (1 revolution).
  uint16_t measure_start_value;        //!< remembers the value of the capture register to measure the half-turn (запоминает значение регистра захвата для измерения периода полуоборота)
  uint16_t current_angle;              //!< counts out given advance angle during the passage of each tooth (отсчитывает заданный УОЗ при прохождении каждого зуба)
  volatile uint16_t half_turn_period;  //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
@@ -126,7 +130,7 @@ typedef struct
  uint8_t  ignition_cogs;              //!< number of teeth determine the duration of ignition drive pulse (кол-во зубьев определяющее длительность импульсов запуска коммутаторов)
  uint8_t  starting_mode;              //!< state of state machine processing of teeth at the startup (состояние конечного автомата обработки зубьев на пуске)
  uint8_t  channel_mode;               //!< determines which channel of the ignition to run at the moment (определяет какой канал зажигания нужно запускать в данный момент)
- volatile uint8_t  cogs_btdc;         //!< number of teeth from synchro-label to TDC of the first cylinder (кол-во зубьев от синхрометки до в.м.т первого цилиндра)
+ volatile uint8_t  cogs_btdc;         //!< number of teeth from missing teeth to TDC of the first cylinder (кол-во зубьев от синхрометки до в.м.т первого цилиндра)
  int8_t   knock_wnd_begin_abs;        //!< begin of the phase selection window of detonation in the teeth of wheel, relatively to TDC (начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  int8_t   knock_wnd_end_abs;          //!< end of the phase selection window of detonation in the teeth of wheel, relatively to TDC (конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
@@ -189,11 +193,6 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 
 /**This will speedup calculations - replaces 8-bit division. */
 #define COGSPERCHAN(channum) PGM_GET_BYTE(&cogsperchan[channum])
-#ifndef WHEEL_36_1 //60-2                           1   2   3   4   5   6   7  8
-prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 120, 60, 40, 30, 24, 20, 0, 15};
-#else //36-1
-prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0,  72, 36, 24, 18,  0, 12, 0, 9};
-#endif
 
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
@@ -206,10 +205,10 @@ void ckps_init_state_variables(void)
 #ifndef DWELL_CONTROL
  uint8_t i;
  _BEGIN_ATOMIC_BLOCK();
- //at the first interrupt will generate an end trigger pulse ignition
- //(при первом же прерывании будет сгенерирован конец импульса запуска зажигания) 
+ //Set to value that means to do nothing with outputs
+ //(Установка в хначение изначающее ничего не делать с выходами) 
  for(i = 0; i < IGN_CHANNELS_MAX; ++i)
-  chanstate[i].ignition_pulse_cogs = 0;
+  chanstate[i].ignition_pulse_cogs = 255;
 #else
  _BEGIN_ATOMIC_BLOCK();
  ckps.cr_acc_time = 0;
@@ -217,7 +216,7 @@ void ckps_init_state_variables(void)
  flags->ckps_need_to_set_channel_b = 0;
 #endif
 
- ckps.cog = 0;
+ ckps.cog = ckps.cog360 = 0;
  ckps.half_turn_period = 0xFFFF;
  ckps.advance_angle = 0;
  ckps.advance_angle_buffered = 0;
@@ -283,7 +282,7 @@ void ckps_init_ports(void)
 }
 
 //Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine
-//(for example for 4-cylinder, 4-stroke it is 180 degrees) 
+//(for example for 4-cylinder, 4-stroke it is 180°) 
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
 //Высчитывание мгновенной частоты вращения коленвала по измеренному периоду между тактами двигателя 
 //(например для 4-цилиндрового, 4-х тактного это 180 градусов)
@@ -416,11 +415,11 @@ void set_channels_ss(void)
  {
   fnptr_t value;
   if (0==i)
-   value = _IOREM_GPTR(iocfg_s_ign_out1);
+   value = (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out1);
   else if (1==i)
-   value = _IOREM_GPTR(iocfg_s_ign_out2);
+   value = (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out2);
   else
-   value = IOCFG_CB(IOP_IGN_OUT3 + i);
+   value = IOCFG_CB(i);
 
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
@@ -438,11 +437,11 @@ void set_channels_fs(void)
  {
   fnptr_t value;
   if (0==i)
-   value = _IOREM_GPTR(iocfg_s_ign_out1);
+   value = (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out1);
   else if (1==i)
-   value = _IOREM_GPTR(iocfg_s_ign_out2);
+   value = (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out2);
   else
-   value = IOCFG_CB(IOP_IGN_OUT3 + i);
+   value = IOCFG_CB(i);
 
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
@@ -476,7 +475,7 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 void ckps_set_knock_window(int16_t begin, int16_t end)
 {
  uint8_t _t, i, cogs_per_cycle;
- //translate from degree to teeth (переводим из градусов в зубья)
+ //translate from degrees to teeth (переводим из градусов в зубья)
  ckps.knock_wnd_begin_abs = begin / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
  ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
 
@@ -666,12 +665,13 @@ uint8_t sync_at_startup(void)
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
     ckps.starting_mode = 1;
    break;
-  case 1: //find out synchro-label (поиск синхрометки)
+  case 1: //find out missing teeth (поиск синхрометки)
    if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)) 
    {
     flags->ckps_is_synchronized = 1;
-    ckps.period_curr = ckps.period_prev;  //exclude value of synchro-label's period
+    ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
     ckps.cog = 1; //first tooth (1-й зуб)
+    ckps.cog360 = 1;
     return 1; //finish process of synchronization (конец процесса синхронизации)
    }
    break;
@@ -810,9 +810,6 @@ void process_ckps_cogs(void)
    TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
-#ifndef DWELL_CONTROL
-   chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
-#endif
   }
  }
 
@@ -821,13 +818,20 @@ void process_ckps_cogs(void)
  //заканчиваем импульсы запуска коммутатора(ов) и сразу увеличиваем номер зуба для обработанного канала
  for(i = 0; i < ckps.chan_number; ++i)
  {
+  if (chanstate[i].ignition_pulse_cogs == 255)
+   continue;
+
   if (chanstate[i].ignition_pulse_cogs >= ckps.ignition_cogs)
+  {
    turn_off_ignition_channel(i);
-  ++(chanstate[i].ignition_pulse_cogs);
+   chanstate[i].ignition_pulse_cogs = 255; //set indication that channel has finished to work
+  }
+  else
+   ++(chanstate[i].ignition_pulse_cogs);
  }
 #endif
 
- //tooth passed - angle before TDC decriased by 6 degr. (for 60-2) or 10 degr. (for 36-1).
+ //tooth passed - angle before TDC decriased by 6°  (for 60-2) or 10° (for 36-1).
  //(прошел зуб - угол до в.м.т. уменьшился на 6 град (для 60-2) или 10 град (для 36-1))
  ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
  ++ckps.cog;
@@ -856,7 +860,7 @@ ISR(TIMER1_CAPT_vect)
  ckps.period_curr = GetICR() - ckps.icr_prev;
 
  //At the start of engine, skipping a certain number of teeth for initializing
- //the memory of previous periods. Then look for synchro-label.
+ //the memory of previous periods. Then look for missing teeth.
  //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации
  //памяти предыдущих периодов. Затем ищем синхрометку.
  if (!flags->ckps_is_synchronized)
@@ -866,30 +870,35 @@ ISR(TIMER1_CAPT_vect)
   return;
  }
 
- //Each period, check for synchro-label, and if, after discovering of synchro-label
+ //Each period, check for missing teeth, and if, after discovering of missing teeth
  //count of teeth being found incorrect, then set error flag.
  //(каждый период проверяем на синхрометку, и если после обнаружения синхрометки
  //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки).
  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
  {
-  if ((ckps.cog != (WHEEL_COGS_NUM + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
+  if ((ckps.cog360 != (WHEEL_COGS_NUM + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
    flags->ckps_error_flag = 1; //ERROR
-  ckps.cog = 1; //first tooth (1-й зуб)
-  ckps.period_curr = ckps.period_prev;  //exclude value of synchro-label's period
+  //Reset 360° tooth counter to the first tooth (1-й зуб)
+  ckps.cog360 = 1;
+  //Also reset 720° tooth counter
+  if (ckps.cog == ((2*WHEEL_COGS_NUM) + 1))
+   ckps.cog = 1;
+  ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
  }
 
 synchronized_enter:
- //If the last tooth before synchro-label, we begin the countdown for
+ //If the last tooth before missing teeth, we begin the countdown for
  //the restoration of missing teeth, as the initial data using the last
  //value of inter-teeth period.
  //(Если последний зуб перед синхрометкой, то начинаем отсчет времени для
  //восстановления отсутствующих зубьев, в качестве исходных данных используем
  //последнее значение межзубного периода).
- if (ckps.cog == WHEEL_LAST_COG)
+ if (ckps.cog360 == WHEEL_LAST_COG)
   set_timer0(ckps.period_curr);
 
  //call handler for normal teeth (вызываем обработчик для нормальных зубьев)
  process_ckps_cogs();
+ ++ckps.cog360;
 
  ckps.icr_prev = GetICR();
  ckps.period_prev = ckps.period_curr;
@@ -911,13 +920,14 @@ ISR(TIMER0_OVF_vect)
   ICR1 = TCNT1;  //simulate input capture 
   TCCR0 = 0;     //stop timer (останавливаем таймер)
 
-#ifndef WHEEL_36_1 //60-2
-  //start timer to recover 60th tooth (запускаем таймер чтобы восстановить 60-й зуб)
-  if (ckps.cog == 59)
+#if (WHEEL_COGS_LACK > 1)
+  //start timer to recover 60th tooth (запускаем таймер чтобы восстановить 60-й (последний) зуб)
+  if (ckps.cog360 == (WHEEL_COGS_NUM-1))
    set_timer0(ckps.period_curr);
 #endif
 
-  //Call handler for absent teeth (вызываем обработчик для отсутствующих зубьев)
+  //Call handler for missing teeth (вызываем обработчик для отсутствующих зубьев)
   process_ckps_cogs();
+  ++ckps.cog360;
  }
 }

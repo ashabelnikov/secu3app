@@ -48,7 +48,8 @@ typedef struct
 #endif
  uint8_t err_threshold;               //!< error threshold in teeth
  volatile uint8_t err_counter;        //!< teeth counter
- volatile uint8_t event;              //!< flag which indicates cam sensor's event
+ CamCallback edg_callback;            //!< Callback function to call on cam edge
+ CamCallback err_callback;            //!< Callback function to call on error (cam is missing)
 }camstate_t;
 
 /** Global instance of cam sensor state variables */
@@ -62,13 +63,14 @@ void cams_init_state_variables(void)
  camstate.cam_ok = 0; //not Ok
  camstate.err_threshold = 60 * 2;
  camstate.err_counter = 0;
- camstate.event = 0;
 }
 
 void cams_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
  cams_init_state_variables();
+ camstate.edg_callback = 0;
+ camstate.err_callback = 0;
  camstate.cam_error = 0; //no errors
 
 #ifdef SECU3T /*SECU-3T*/
@@ -78,6 +80,12 @@ void cams_init_state(void)
 #endif
 
  _END_ATOMIC_BLOCK();
+}
+
+void cams_set_callbacks(CamCallback p_edg_callback, CamCallback p_err_callback)
+{
+ camstate.edg_callback = p_edg_callback;
+ camstate.err_callback = p_err_callback;
 }
 
 void cams_set_error_threshold(uint8_t threshold)
@@ -96,7 +104,8 @@ void cams_detect_edge(void)
    camstate.cam_ok = 1;
    camstate.err_counter = 0;
    camstate.prev_level = level;
-   camstate.event = 1;
+   if (camstate.edg_callback)
+    camstate.edg_callback();
    return; //detected
   }
  }
@@ -107,6 +116,8 @@ void cams_detect_edge(void)
   camstate.cam_ok = 0;
   camstate.cam_error = 1;
   camstate.err_counter = 0;
+  if (camstate.err_callback)
+   camstate.err_callback();
  }
 
 #ifndef SECU3T /*SECU-3*/
@@ -129,23 +140,14 @@ void cams_reset_error(void)
  camstate.cam_error = 0;
 }
 
-uint8_t cams_is_event_r(void)
-{
- uint8_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = camstate.event;
- camstate.event = 0; //reset event flag
- _END_ATOMIC_BLOCK();
- return result;
-}
-
 #ifdef SECU3T /*SECU-3T*/
 /**Interrupt from CAM sensor */
 ISR(INT1_vect)
 {
  camstate.cam_ok = 1;
  camstate.err_counter = 0;
- camstate.event = 1; //set event flag
+ if (camstate.edg_callback)
+  camstate.edg_callback();
 }
 #endif
 

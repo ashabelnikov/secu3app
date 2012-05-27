@@ -31,11 +31,19 @@
 
 #ifdef PHASE_SENSOR
 
+typedef void (*CamCallback)(void);
+
 /** Initialization of state variables */
 void cams_init_state_variables(void);
 
 /** Initialization of cam module (Hardware & variables) */
 void cams_init_state(void);
+
+/** Set callbacks (edge & error callbacks)
+ * p_edg_callback pointer to callback function to process edge event
+ * p_err_callback pointer to callback function to process error event (cam sensor is not ready)
+ */
+void cams_set_callbacks(CamCallback p_edg_callback, CamCallback p_err_callback);
 
 /** Sets threshold value (number of teeth between pulses) for errors checking
  * \param threshold number of teeth between pulses */
@@ -54,10 +62,6 @@ uint8_t cams_is_error(void);
 
 /** Reset internal error flag */
 void cams_reset_error(void);
-
-/**Checks for event and automatically resets the flag
- * \return 1 - event was pending, otherwise - 0 */
-uint8_t cams_is_event_r(void);
 
 #endif
 

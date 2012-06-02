@@ -31,7 +31,6 @@
 #include "port/port.h"
 #include "adc.h"
 #include "bitmask.h"
-#include "funconv.h"   //simple_interpolation()
 #include "magnitude.h"
 #include "secu3.h"
 
@@ -316,7 +315,6 @@ uint16_t ubat_adc_to_v(int16_t adcvalue)
  return adcvalue;
 }
 
-#ifndef THERMISTOR_CS
 //Coolant sensor has linear output. 10mV per C (e.g. LM235)
 int16_t temp_adc_to_c(int16_t adcvalue)
 {
@@ -324,40 +322,3 @@ int16_t temp_adc_to_c(int16_t adcvalue)
   adcvalue = 0;
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
-#else
-//Coolant sensor is thermistor (тип датчика температуры - термистор)
-//Note: We assume that voltage on the input of ADC depend on thermistor's resistance linearly.
-//Voltage on the input of ADC can be calculated as following:
-// U3=U1*Rt*R2/(Rp(Rt+R1+R2)+Rt(R1+R2));
-// Rt - thermistor, Rp - pulls up thermistor to voltage U1,
-// R1,R2 - voltage divider resistors.
-
-/**Size of lookup table for thermistor */
-#define THERMISTOR_LOOKUP_TABLE_SIZE 16
-
-/**Lookup table for converting of thermistor's resistance into temperature 
- * (таблица значений температуры с шагом по напряжению)*/
-PGM_DECLARE(int16_t therm_cs_temperature[THERMISTOR_LOOKUP_TABLE_SIZE]) =
-{TEMPERATURE_MAGNITUDE(-27.9),TEMPERATURE_MAGNITUDE(-13.6),TEMPERATURE_MAGNITUDE(-3.7),TEMPERATURE_MAGNITUDE(2.4),
-TEMPERATURE_MAGNITUDE(8.5),TEMPERATURE_MAGNITUDE(14.1),TEMPERATURE_MAGNITUDE(19.5),TEMPERATURE_MAGNITUDE(24.7),
-TEMPERATURE_MAGNITUDE(30.0),TEMPERATURE_MAGNITUDE(35.6),TEMPERATURE_MAGNITUDE(41.4),TEMPERATURE_MAGNITUDE(47.8),
-TEMPERATURE_MAGNITUDE(55.8),TEMPERATURE_MAGNITUDE(65.5),TEMPERATURE_MAGNITUDE(78.1),TEMPERATURE_MAGNITUDE(100.0)};
-
-int16_t thermistor_lookup(uint16_t start, uint16_t step, uint16_t adcvalue)
-{
- int16_t i, i1;
-
- if (adcvalue > start)
-  adcvalue = start;
-
- i = ((start - adcvalue) / step);
-
- if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return (simple_interpolation(adcvalue, PGM_GET_WORD(&therm_cs_temperature[i1]), PGM_GET_WORD(&therm_cs_temperature[i]),
-         start - (i1 * step), step)) >> 4;
-}
-
-#endif
-

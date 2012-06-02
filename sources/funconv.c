@@ -309,3 +309,27 @@ uint16_t accumulation_time(struct ecudata_t* d)
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4)) >> 4;
 }
 #endif
+
+#ifdef THERMISTOR_CS
+//Coolant sensor is thermistor (тип датчика температуры - термистор)
+//Note: We assume that voltage on the input of ADC depend on thermistor's resistance linearly.
+//Voltage on the input of ADC can be calculated as following:
+// U3=U1*Rt*R2/(Rp(Rt+R1+R2)+Rt(R1+R2));
+// Rt - thermistor, Rp - pulls up thermistor to voltage U1,
+// R1,R2 - voltage divider resistors.
+int16_t thermistor_lookup(uint16_t start, uint16_t step, uint16_t adcvalue)
+{
+ int16_t i, i1;
+
+ if (adcvalue > start)
+  adcvalue = start;
+
+ i = ((start - adcvalue) / step);
+
+ if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]), PGM_GET_WORD(&fw_data.exdata.cts_curve[i]),
+         start - (i1 * step), step)) >> 4;
+}
+#endif

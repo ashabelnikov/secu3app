@@ -120,15 +120,21 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Size of all data for checking */
   (sizeof(fw_data_t) - sizeof(cd_data_t)),
 
-  /**reserved*/
-  0, {0}
+  /**reserved 32 bit value*/
+  0, 
+
+  /**Fill coolant tempersture sensor lookup table*/
+  {-112, -54, -15, 10, 34, 56, 78, 99, 120, 142, 166, 191, 223, 262, 312, 400},
+
+  /**reserved bytes*/
+  {0}
  },
 
  /**Резервные параметры Fill reserve parameters with default values */
  {1, 0, 0, 6, 6, 1920, 1250, 1500, 600, 6400, 650, 1600, -320, 0, 800, 4,
   4,10,392,384,16384,8192,16384,8192,16384,8192, 0, 20, 10, 96, 96, -320,
   320, 240, 410, 392, 1250, 1500, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
-  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, {0,0},/*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, {0},/*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

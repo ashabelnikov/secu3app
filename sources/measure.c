@@ -29,6 +29,7 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "adc.h"
+#include "funconv.h"    //thermistor_lookup()
 #include "magnitude.h"
 #include "measure.h"
 #include "secu3.h"
@@ -118,7 +119,10 @@ void meas_average_measured_values(struct ecudata_t* d)
 #ifndef THERMISTOR_CS
   d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
 #else
-  d->sens.temperat = thermistor_lookup(ROUND(TSENS_V_TMIN/ADC_DISCRETE), ROUND(TSENS_STEP/ADC_DISCRETE), d->sens.temperat_raw);
+  if (!d->param.cts_use_map) //use linear sensor
+   d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
+  else //use lookup table (actual for thermistor sensors)
+   d->sens.temperat = thermistor_lookup(ROUND(TSENS_V_TMIN/ADC_DISCRETE), ROUND(TSENS_STEP/ADC_DISCRETE), d->sens.temperat_raw);
 #endif
  }
  else                                       //ДТОЖ не используется

@@ -122,6 +122,10 @@ typedef struct fw_ex_data_t
   /**Coolant temperature sensor lookup table 
    * (таблица значений температуры с шагом по напр€жению) */
   int16_t cts_curve[THERMISTOR_LOOKUP_TABLE_SIZE];
+  /**Voltage corresponding to the beginning of axis*/
+  uint16_t cts_vl_begin;
+  /**Voltage corresponding to the end of axis*/
+  uint16_t cts_vl_end;
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -129,7 +133,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[26];
+  uint8_t reserved[22];
 }fw_ex_data_t;
 
 /**ќписывает параметры системы

@@ -125,12 +125,10 @@ uint16_t accumulation_time(struct ecudata_t* d);
 #ifdef THERMISTOR_CS
 /**Converts ADC value into phisical magnitude - temperature (given from thermistor)
  * (переводит значение АЦП в физическую величину - температура для резистивного датчика (термистор))
- * \param start Voltage value at lowest temperature in ADC discretes (значение напряжения при минимальной температуре в дискретах АЦП)
- * \param step Voltage step in ADC discretes (значение шага по напряжению в таблице , в дискретах АЦП)
  * \param adcvalue Voltage from sensor (напряжение с датчика - значение в дискретах АЦП))
  * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
  */
-int16_t thermistor_lookup(uint16_t start, uint16_t step, uint16_t adcvalue);
+int16_t thermistor_lookup(uint16_t adcvalue);
 #endif
 
 

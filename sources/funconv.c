@@ -317,19 +317,26 @@ uint16_t accumulation_time(struct ecudata_t* d)
 // U3=U1*Rt*R2/(Rp(Rt+R1+R2)+Rt(R1+R2));
 // Rt - thermistor, Rp - pulls up thermistor to voltage U1,
 // R1,R2 - voltage divider resistors.
-int16_t thermistor_lookup(uint16_t start, uint16_t step, uint16_t adcvalue)
+int16_t thermistor_lookup(uint16_t adcvalue)
 {
  int16_t i, i1;
 
- if (adcvalue > start)
-  adcvalue = start;
+ //Voltage value at the start of axis in ADC discretes (значение напряжения в начале оси в дискретах АЦП)
+ uint16_t v_start = PGM_GET_WORD(&fw_data.exdata.cts_vl_begin);
+ //Voltage value at the end of axis in ADC discretes (значение напряжения в конце оси в дискретах АЦП)
+ uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.cts_vl_end);
 
- i = ((start - adcvalue) / step);
+ uint16_t v_step = (v_end - v_start) / (THERMISTOR_LOOKUP_TABLE_SIZE - 1);
+
+ if (adcvalue < v_start)
+  adcvalue = v_start;
+
+ i = (adcvalue - v_start) / v_step;
 
  if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]), PGM_GET_WORD(&fw_data.exdata.cts_curve[i]),
-         start - (i1 * step), step)) >> 4;
+ return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.cts_curve[i]), PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]),
+        (i * v_step) + v_start, v_step)) >> 4;
 }
 #endif

@@ -39,12 +39,6 @@
 /**напряжение на выходе датчика температуры при 0 градусов цельсия */
 #define TSENS_ZERO_POINT        2.73
 
-/**Voltage which corresponds to minimum temperature (used by THERMISTOR_CS)*/
-#define TSENS_V_TMIN            4.37
-
-/**Voltage which is step between interpolation nodes in table (used by THERMISTOR_CS)*/
-#define TSENS_STEP              0.27
-
 /**константа для выбора источника опорного напряжения */
 #define ADC_VREF_TYPE           0xC0
 

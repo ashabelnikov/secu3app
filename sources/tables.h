@@ -218,13 +218,16 @@ typedef struct params_t
 
   uint8_t  cts_use_map;                  //!< Flag which indicates using of lookup table for coolant temperature sensor
 
+  uint8_t  ckps_cogs_num;                //!< number of crank wheel's teeth 
+  uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[1];
+  uint8_t  reserved[32];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

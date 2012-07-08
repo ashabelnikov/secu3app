@@ -32,12 +32,6 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          дл€ индикации состо€ни€ клапана Ёѕ’’ используетс€ выход
                          блокировки стартера
 
-
-    WHEEL_36_1           For using 36-1 crank (60-2 used by default)
-                         дл€ использовани€ зубчатого диска 36-1 (по умолчанию 
-                         60-2)
-
-
     INVERSE_IGN_OUTPUTS  Use for to invert ignition outputs
                          дл€ инвертировани€ выходов управлени€ зажиганием
 

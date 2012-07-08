@@ -24,6 +24,7 @@
  * (Реализация обработки датчика положения коленвала).
  */
 
+#include <stdlib.h>
 #include "port/avrio.h"
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
@@ -46,32 +47,11 @@
 /**Maximum number of ignition channels */
 #define IGN_CHANNELS_MAX      8
 
-#ifndef WHEEL_36_1 //60-2
- /** Number of teeth (including absent) (количество зубьев (включая отсутствующие)) */
- #define WHEEL_COGS_NUM   60
- /** Number of absent teeth (количество отсутствующих зубьев) */
- #define WHEEL_COGS_LACK  2
- /**Number of teeth before TDC which determines moment of advance angle latching, start of measurements from sensors,
-  * latching of settings into HIP9011 (кол-во зубьев до в.м.т определяющие момент загрузки УОЗ, старт измерения датчиков,
-  * загрузку настроек в HIP)  */
- #define WHEEL_LATCH_BTDC 11
- /** p * 2.5,  barrier for detecting of missing teeth (барьер для селекции синхрометки) = 2.5 */
- #define CKPS_GAP_BARRIER(p) (((p) << 1) + ((p) >> 1))
- /**Number of teeth per 1 ignition channel           1   2   3   4   5   6   7  8 */
- prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0, 120, 60, 40, 30, 24, 20, 0, 15};
-#else //36-1
- #define WHEEL_COGS_NUM   36
- #define WHEEL_COGS_LACK  1
- #define WHEEL_LATCH_BTDC 7   //70° (70 градусов)
- #define CKPS_GAP_BARRIER(p) ((p) + ((p) >> 1))  // p * 1.5
- prog_uint8_t cogsperchan[1+IGN_CHANNELS_MAX] = {0,  72, 36, 24, 18,  0, 12, 0, 9};
-#endif
-
-/** Number of degrees which corresponds to one rotation (количество градусов приходящееся на один зуб диска) */
-#define CKPS_DEGREES_PER_COG (360 / WHEEL_COGS_NUM)
-
-/** Number of last(present) tooth, numeration begins from 1! (номер последнего(существующего) зуба, нумерация ничинается с 1!) */
-#define WHEEL_LAST_COG (WHEEL_COGS_NUM - WHEEL_COGS_LACK)
+/** Barrier for detecting of missing teeth (барьер для селекции синхрометки) 
+ * e.g. for 60-2 crank wheel, p * 2.5
+ *      for 36-1 crank wheel, p * 1.5
+ */
+#define CKPS_GAP_BARRIER(p) ( ((p) << (ckps.miss_cogs_num==2)) + ((p) >> 1) )
 
 /** number of teeth that will be skipped at the start before synchronization
  * (количество зубьев которое будет пропускаться при старте перед синхронизацией) */
@@ -123,10 +103,10 @@ typedef struct
  volatile uint16_t half_turn_period;  //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
  int16_t  advance_angle;              //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
  volatile int16_t advance_angle_buffered;//!< buffered value of advance angle (to ensure correct latching)
- uint8_t  ignition_cogs;              //!< number of teeth determine the duration of ignition drive pulse (кол-во зубьев определяющее длительность импульсов запуска коммутаторов)
+ uint8_t  ignition_cogs;              //!< number of teeth determining the duration of ignition drive pulse (кол-во зубьев определяющее длительность импульсов запуска коммутаторов)
  uint8_t  starting_mode;              //!< state of state machine processing of teeth at the startup (состояние конечного автомата обработки зубьев на пуске)
  uint8_t  channel_mode;               //!< determines which channel of the ignition to run at the moment (определяет какой канал зажигания нужно запускать в данный момент)
- volatile uint8_t  cogs_btdc;         //!< number of teeth from missing teeth to TDC of the first cylinder (кол-во зубьев от синхрометки до в.м.т первого цилиндра)
+ volatile uint8_t cogs_btdc;          //!< number of teeth from missing teeth to TDC of the first cylinder (кол-во зубьев от синхрометки до в.м.т первого цилиндра)
  int8_t   knock_wnd_begin_abs;        //!< begin of the phase selection window of detonation in the teeth of wheel, relatively to TDC (начало окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  int8_t   knock_wnd_end_abs;          //!< end of the phase selection window of detonation in the teeth of wheel, relatively to TDC (конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
@@ -148,6 +128,17 @@ typedef struct
 #ifdef PHASED_IGNITION
  uint8_t  cam_is_synchronized;        //!< Indicates that system has already obtained event from a cam sensor
 #endif
+ volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
+ volatile uint16_t wheel_cogs_num2;   //!< Number of teeth which corresponds to 720° (2 revolutions)
+ volatile uint8_t miss_cogs_num;      //!< Count of crank wheel's missing teeth (количество отсутствующих зубьев)
+ volatile uint8_t wheel_last_cog;     //!< Number of last(present) tooth, numeration begins from 1! (номер последнего(существующего) зуба, нумерация ничинается с 1!)
+ /**Number of teeth before TDC which determines moment of advance angle latching, start of measurements from sensors,
+  * latching of settings into HIP9011 (кол-во зубьев до в.м.т определяющие момент загрузки УОЗ, старт измерения датчиков,
+  * загрузку настроек в HIP)
+  */
+ volatile uint8_t  wheel_latch_btdc;
+ volatile uint16_t degrees_per_cog;   //!< Number of degrees which corresponds to the 1 tooth (количество градусов приходящееся на один зуб диска)
+ volatile uint16_t cogs_per_chan;     //!< Number of teeth per 1 ignition channel (it is fractional number * 256)
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -168,18 +159,18 @@ typedef struct
 #endif
 
 #ifdef HALL_OUTPUT
- volatile uint8_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse  
- volatile uint8_t hop_end_cog;        //!< Hall output: tooth number that corresponds to the end of pulse
+ volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse  
+ volatile uint16_t hop_end_cog;        //!< Hall output: tooth number that corresponds to the end of pulse
 #endif
 
  /** Determines number of tooth (relatively to TDC) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
- volatile uint8_t cogs_latch;
+ volatile uint16_t cogs_latch;
  /** Determines number of tooth at which measurement of rotation period is performed (определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. циклами)) */
- volatile uint8_t cogs_btdc;
+ volatile uint16_t cogs_btdc;
  /** Determines number of tooth at which phase selection window for knock detection is opened (определяет номер зуба на котором открывается окно фазовой селекции сигнала ДД (начало интегрирования)) */
- volatile uint8_t knock_wnd_begin;
+ volatile uint16_t knock_wnd_begin;
  /** Determines number of tooth at which phase selection window for knock detection is closed (определяет номер зуба на котором закрывается окно фазовой селекции сигнала ДД (конец интегрирования)) */
- volatile uint8_t knock_wnd_end;
+ volatile uint16_t knock_wnd_end;
 }chanstate_t;
 
 ckpsstate_t ckps;                         //!< instance of state variables
@@ -195,14 +186,11 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
  uint8_t TCNT0_H __attribute__((section (".noinit")));
 #endif
 
-/**This will speedup calculations - replaces 8-bit division. */
-#define COGSPERCHAN(channum) PGM_GET_BYTE(&cogsperchan[channum])
-
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
 prog_uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX] = 
  //     1          2          3          4         5         6      7      8
- {0, 30000000L, 15000000L, 10000000L, 7500000L, 6000000L, 5000000L, 0L, 3750000L};
+ {0, 30000000L, 15000000L, 10000000L, 7500000L, 6000000L, 5000000L, 4285714L, 3750000L};
 
 void ckps_init_state_variables(void)
 {
@@ -316,30 +304,27 @@ void ckps_set_edge_type(uint8_t edge_type)
 
 /**
  * Ensures that tooth number will be in the allowed range.
- * Tooth number should not be greater than WHEEL_COGS_NUM*2 or less than zero
+ * Tooth number should not be greater than cogs number * 2 or less than zero
  */
-uint8_t _normalize_tn(int8_t i_tn)
+uint16_t _normalize_tn(int16_t i_tn)
 {
- if (i_tn > (WHEEL_COGS_NUM * 2))
-  return i_tn - (WHEEL_COGS_NUM * 2);
+ if (i_tn > ckps.wheel_cogs_num2)
+  return i_tn - ckps.wheel_cogs_num2;
  if (i_tn < 0)
-  return i_tn + (WHEEL_COGS_NUM * 2);
+  return i_tn + ckps.wheel_cogs_num2;
  return i_tn;
 }
 
 void ckps_set_cogs_btdc(uint8_t cogs_btdc)
 {
  uint8_t _t, i;
- // pre-compute and store the reference points (teeth) (заранее вычисляем и сохраняем опорные точки (зубья))
- // cogs_per_cycle - number of wheel teeth attributable to a single cycle of engine (количество зубьев шкива приходящиеся на один такт двигателя)
- uint8_t cogs_per_cycle = COGSPERCHAN(ckps.chan_number);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
  {
-  uint8_t tdc = (cogs_btdc + i * cogs_per_cycle);
+  uint16_t tdc = (((uint16_t)cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
   chanstate[i].cogs_btdc = _normalize_tn(tdc);
-  chanstate[i].cogs_latch = _normalize_tn(tdc - WHEEL_LATCH_BTDC);
+  chanstate[i].cogs_latch = _normalize_tn(tdc - ckps.wheel_latch_btdc);
   chanstate[i].knock_wnd_begin = _normalize_tn(tdc + ckps.knock_wnd_begin_abs);
   chanstate[i].knock_wnd_end = _normalize_tn(tdc + ckps.knock_wnd_end_abs);
 #ifdef HALL_OUTPUT
@@ -488,17 +473,16 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
 void ckps_set_knock_window(int16_t begin, int16_t end)
 {
- uint8_t _t, i, cogs_per_cycle;
+ uint8_t _t, i;
  //translate from degrees to teeth (переводим из градусов в зубья)
- ckps.knock_wnd_begin_abs = begin / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
- ckps.knock_wnd_end_abs = end / (CKPS_DEGREES_PER_COG * ANGLE_MULTIPLAYER);
+ ckps.knock_wnd_begin_abs = begin / ckps.degrees_per_cog;
+ ckps.knock_wnd_end_abs = end / ckps.degrees_per_cog;
 
- cogs_per_cycle = COGSPERCHAN(ckps.chan_number);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
  {
-  uint8_t tdc = (ckps.cogs_btdc + i * cogs_per_cycle);
+  uint16_t tdc = (((uint16_t)ckps.cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
   chanstate[i].knock_wnd_begin = _normalize_tn(tdc + ckps.knock_wnd_begin_abs);
   chanstate[i].knock_wnd_end = _normalize_tn(tdc + ckps.knock_wnd_end_abs);
  }
@@ -518,23 +502,52 @@ void ckps_set_merge_outs(uint8_t i_merge)
 #ifdef HALL_OUTPUT
 void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
 {
- uint8_t _t, i, cogs_per_cycle;
+ uint8_t _t, i;
  //save values because we will access them from other function
  ckps.hop_offset = i_offset;
  ckps.hop_duration = i_duration;
 
- cogs_per_cycle = COGSPERCHAN(ckps.chan_number);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
  {
-  uint8_t tdc = (ckps.cogs_btdc + i * cogs_per_cycle);
+  uint16_t tdc = (((uint16_t)ckps.cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
   chanstate[i].hop_begin_cog = _normalize_tn(tdc - ckps.hop_offset);
   chanstate[i].hop_end_cog = _normalize_tn(chanstate[i].hop_begin_cog + ckps.hop_duration);
  }
  _RESTORE_INTERRUPT(_t);
 }
 #endif
+
+void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
+{
+ div_t dr; uint8_t _t;
+ uint16_t cogs_per_chan, degrees_per_cog;
+
+ //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
+ cogs_per_chan = (((uint32_t)(norm_num * 2)) << 8) / ckps.chan_number;
+
+ //precalculate value of degrees per 1 cog, it is fractional number multiplied by ANGLE_MULTIPLAYER
+ degrees_per_cog = (((((uint32_t)360) << 8) / norm_num) * ANGLE_MULTIPLAYER) >> 8;
+
+ //precalculate value and round it always to the upper bound,
+ //e.g. for 60-2 crank wheel result = 11 (66°), for 36-1 crank wheel result = 7 (70°)
+ dr = div(ANGLE_MAGNITUDE(66), degrees_per_cog);
+
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+ //calculate number of last cog
+ ckps.wheel_last_cog = norm_num - miss_num;
+ //set number of teeth (normal and missing)
+ ckps.wheel_cogs_num = norm_num;
+ ckps.miss_cogs_num = miss_num;
+ ckps.wheel_cogs_num2 = norm_num * 2;
+ //set other precalculated values
+ ckps.wheel_latch_btdc = dr.quot + (dr.rem > 0);
+ ckps.degrees_per_cog = degrees_per_cog;
+ ckps.cogs_per_chan = cogs_per_chan;
+ _RESTORE_INTERRUPT(_t);
+}
 
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
@@ -592,7 +605,7 @@ ISR(TIMER1_COMPA_vect)
  //-----------------------------------------------------
 
 #ifdef DWELL_CONTROL 
- ckps.acc_delay = ((uint32_t)ckps.period_curr) * COGSPERCHAN(ckps.chan_number); 
+ ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8; 
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
  ckps.acc_delay-= ckps.cr_acc_time;
@@ -774,7 +787,7 @@ void process_ckps_cogs(void)
    ckps.channel_mode = (i & ckps.chan_mask); //remember number of channel (запоминаем номер канала)
    flags->ckps_need_to_set_channel = 1;      //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
-   ckps.current_angle = ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) * WHEEL_LATCH_BTDC; // those same 66° (те самые 66°)
+   ckps.current_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
    adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
@@ -813,15 +826,15 @@ void process_ckps_cogs(void)
  if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
  {
   diff = ckps.current_angle - ckps.advance_angle;
-  if (diff <= (ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG) << 1))
+  if (diff <= (ckps.degrees_per_cog << 1))
   {
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
    //(до запуска зажигания осталось отсчитать меньше 2-x зубьев. Необходимо подготовить модуль сравнения)
    //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
    if (ckps.period_curr < 128)
-    OCR1A = GetICR() + (diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
+    OCR1A = GetICR() + (diff * (ckps.period_curr)) / ckps.degrees_per_cog;
    else
-    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
+    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog;
    TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
@@ -846,9 +859,9 @@ void process_ckps_cogs(void)
  }
 #endif
 
- //tooth passed - angle before TDC decriased by 6°  (for 60-2) or 10° (for 36-1).
- //(прошел зуб - угол до в.м.т. уменьшился на 6 град (для 60-2) или 10 град (для 36-1))
- ckps.current_angle-= ANGLE_MAGNITUDE(CKPS_DEGREES_PER_COG);
+ //tooth passed - angle before TDC decriased (e.g 6° per tooth for 60-2).
+ //(прошел зуб - угол до в.м.т. уменьшился (например 6° на зуб для 60-2)).
+ ckps.current_angle-= ckps.degrees_per_cog;
  ++ckps.cog;
 
 #ifdef PHASE_SENSOR
@@ -859,8 +872,8 @@ void process_ckps_cogs(void)
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sonsor event (e.g. falling edge) coming before missing teeth
-  if (ckps.cog < (WHEEL_COGS_NUM+1))
-   ckps.cog+= WHEEL_COGS_NUM;
+  if (ckps.cog < (ckps.wheel_cogs_num + 1))
+   ckps.cog+= ckps.wheel_cogs_num;
 
   //Turn on full sequential mode because Cam sensor is OK
   if (!ckps.cam_is_synchronized)
@@ -915,12 +928,12 @@ ISR(TIMER1_CAPT_vect)
  //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки).
  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
  {
-  if ((ckps.cog360 != (WHEEL_COGS_NUM + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
+  if ((ckps.cog360 != (ckps.wheel_cogs_num + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
    flags->ckps_error_flag = 1; //ERROR
   //Reset 360° tooth counter to the first tooth (1-й зуб)
   ckps.cog360 = 1;
   //Also reset 720° tooth counter
-  if (ckps.cog == ((2*WHEEL_COGS_NUM) + 1))
+  if (ckps.cog == (ckps.wheel_cogs_num2 + 1))
    ckps.cog = 1;
   ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
  }
@@ -932,7 +945,7 @@ synchronized_enter:
  //(Если последний зуб перед синхрометкой, то начинаем отсчет времени для
  //восстановления отсутствующих зубьев, в качестве исходных данных используем
  //последнее значение межзубного периода).
- if (ckps.cog360 == WHEEL_LAST_COG)
+ if (ckps.miss_cogs_num && ckps.cog360 == ckps.wheel_last_cog)
   set_timer0(ckps.period_curr);
 
  //call handler for normal teeth (вызываем обработчик для нормальных зубьев)
@@ -959,11 +972,12 @@ ISR(TIMER0_OVF_vect)
   ICR1 = TCNT1;  //simulate input capture 
   TCCR0 = 0;     //stop timer (останавливаем таймер)
 
-#if (WHEEL_COGS_LACK > 1)
-  //start timer to recover 60th tooth (запускаем таймер чтобы восстановить 60-й (последний) зуб)
-  if (ckps.cog360 == (WHEEL_COGS_NUM-1))
-   set_timer0(ckps.period_curr);
-#endif
+  if (ckps.miss_cogs_num > 1)
+  {
+   //start timer to recover 60th tooth (запускаем таймер чтобы восстановить 60-й (последний) зуб)
+   if (ckps.cog360 == (ckps.wheel_cogs_num - 1))
+    set_timer0(ckps.period_curr);
+  }
 
   //Call handler for missing teeth (вызываем обработчик для отсутствующих зубьев)
   process_ckps_cogs();

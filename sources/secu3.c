@@ -179,6 +179,7 @@ MAIN()
  //инициализируем модуль ДПКВ
  ckps_init_state();
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
+ ckps_set_cogs_num(edat.param.ckps_cogs_num, edat.param.ckps_miss_num);
  ckps_set_edge_type(edat.param.ckps_edge_type);
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL

@@ -63,13 +63,6 @@
  #define COPT_VPSEM 0
 #endif
 
-/** Use 36-1 crank */
-#ifdef WHEEL_36_1
- #define COPT_WHEEL_36_1 1
-#else
- #define COPT_WHEEL_36_1 0
-#endif
-
 /** Inverse ignition outputs */
 #ifdef INVERSE_IGN_OUTPUTS
  #define COPT_INVERSE_IGN_OUTPUTS 1

@@ -46,12 +46,12 @@ void ckps_init_state(void);
 void ckps_set_edge_type(uint8_t edge_type);
 
 /** Set count of teeth before TDC.
- * \param cogs_btdc Valid values: 18,19,20,21,22 (for 60-2 wheel), 10,11,12,13,14 (for 36-1 wheel)
- *                 (Допустимые значения: 18,19,20,21,22 (для 60-2 шкива), 10,11,12,13,14 (для 36-1 шкива)).
- * \details If the crankshaft is in a position corresponding to top dead center (tdc) of the first cylinder's piston,
+ * \param cogs_btdc E.g values for 60-2 wheel: 17,18,19,20,21,22,23 
+                               for 36-1 wheel: 8,9,10,11,12,13,14
+ * \details For 4-cylinder engine. If the crankshaft is in a position corresponding to top dead center (tdc) of the first cylinder's piston,
  * then according to the standards the middle of 20th tooth of sync wheel must be in the opposite to the CKP's core
  * (counting out against the direction of rotation from the place of the cutout).
- * (Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке(t.d.c.) поршня первого цилиндра, то
+ * (Для 4-х цилиндрового двигателя. Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке(t.d.c.) поршня первого цилиндра, то
  * по стандарту напротив середины сердечника ДПКВ должен находиться 20-й зуб диска синхронизации (считаем против
  * направления вращения от места выреза)).
  */
@@ -123,7 +123,8 @@ uint8_t ckps_get_current_cog(void);
 uint8_t ckps_is_cog_changed(void);
 
 /** Set number of engine's cylinders (установка кол-ва цилиндров двигателя (четное число))
- * \param i_cyl_number allowed values(допустимые значения): 2,4,6,8
+ * \param i_cyl_number allowed values(допустимые значения): *1,2,*3,4,*5,6,8
+ * * these values are allowed only if firmware compliled with PHASED_IGNITION option
  */
 void ckps_set_cyl_number(uint8_t i_cyl_number);
 
@@ -147,5 +148,11 @@ void ckps_set_merge_outs(uint8_t i_merge);
  */
 void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration);
 #endif
+
+/** Set number of cranck wheel's teeth
+ * \param norm_num Number of cranck wheel's teeth, including missing teeth (16...200)
+ * \param miss_num Number of missing cranck wheel's teeth (0, 1, 2)
+ */
+void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num);
 
 #endif //_CKPS_H_

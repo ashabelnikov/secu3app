@@ -140,13 +140,32 @@ uint8_t cams_is_event_r(void)
 }
 
 #ifdef SECU3T /*SECU-3T*/
-/**Interrupt from CAM sensor */
+/**Interrupt from CAM sensor (Hall)*/
 ISR(INT1_vect)
 {
  camstate.cam_ok = 1;
  camstate.err_counter = 0;
  camstate.event = 1; //set event flag
 }
+
+/**Interrupt from CAM sensor (VR) */
+/*ISR(INT0_vect)
+{
+ camstate.cam_ok = 1;
+ camstate.err_counter = 0;
+ camstate.event = 1; //set event flag
+}
+
+uint8_t cams_vr_is_event_r(void)
+{
+ uint8_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = camstate.event;
+ camstate.event = 0; //reset event flag
+ _END_ATOMIC_BLOCK();
+ return result;
+}*/
+
 #endif
 
 #endif //PHASE_SENSOR

@@ -55,9 +55,15 @@ uint8_t cams_is_error(void);
 /** Reset internal error flag */
 void cams_reset_error(void);
 
-/**Checks for event and automatically resets the flag
+/**Checks for event(Hall input) and automatically resets the flag
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_is_event_r(void);
+
+#ifdef SECU3T
+/**Checks for event(VR input) and automatically resets the flag
+ * \return 1 - event was pending, otherwise - 0 */
+uint8_t cams_vr_is_event_r(void);
+#endif
 
 #endif
 

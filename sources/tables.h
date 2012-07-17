@@ -299,7 +299,7 @@ typedef struct fw_data_t
 
 /** оличество наборов таблиц которые можно редактировать в реальном времени
  * Ёти таблицы сохран€ютс€ в EEPROM.
- * Number of sets of tables allowed to be tuned in the read time */
+ * Number of sets of tables allowed to be tuned in the real time */
 #ifdef REALTIME_TABLES
  #define TUNABLE_TABLES_NUMBER 2
 #else
@@ -314,5 +314,10 @@ typedef struct fw_data_t
 
 /**¬се данные прошивки All firmware data */
 PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
+
+#ifdef REALTIME_TABLES
+/**Default data for tunable tables stored in the EEPROM */
+PGM_DECLARE(extern f_data_t tt_def_data[]);
+#endif
 
 #endif //_TABLES_H_

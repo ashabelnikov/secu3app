@@ -31,6 +31,7 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "eeprom.h"
+#include "wdt.h"
 
 /**Describes information is necessary for storing of data into EEPROM
  * (Описывает информацию необходимую для сохранения данных в EEPROM)
@@ -144,9 +145,34 @@ void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size)
   __EEPUT(eeaddr, *src);
   _RESTORE_INTERRUPT(_t);
 
+  wdt_reset_timer();
+
   eeaddr++;
   src++;
  }while(--size);
 
  EEAR=0x000; //this will help to prevent corruption of EEPROM
 }
+
+#ifdef REALTIME_TABLES
+void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size)
+{
+ uint8_t _t;
+ uint8_t _PGM *src = (uint8_t _PGM*)pgm_src;
+ do
+ { 
+  uint8_t byte = PGM_GET_BYTE(src);
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  __EEPUT(eeaddr, byte);
+  _RESTORE_INTERRUPT(_t);
+
+  wdt_reset_timer();
+
+  eeaddr++;
+  src++;
+ }while(--size);
+
+ EEAR=0x000; //this will help to prevent corruption of EEPROM
+}
+#endif

@@ -28,6 +28,7 @@
 #ifndef _SECU3_EEPROM_H_
 #define _SECU3_EEPROM_H_
 
+#include "port/pgmspace.h"
 #include <stdint.h>
 
 /**Address of parameters structure in EEPROM (адрес структуры параметров в EEPROM) */
@@ -56,21 +57,31 @@ void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint1
  */
 uint8_t eeprom_is_idle(void);
 
-/**Reads specified block of data from EEPROM (without using of interrupts)
+/**Reads specified block of data from EEPROM to RAM (without using of interrupts)
  * читает указанный блок данных из EEPROM (без использования прерываний)
- * \param sram_dest address of buffer in RAM which will receive data
+ * \param sram_dest address of buffer in the RAM which will receive data
  * \param eeaddr address in the EEPROM for read from
  * \param size size of data block to read
  */
 void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size);
 
-/**Writes specified block of data into EEPROM (without using of interrupts)
+/**Writes specified block of data from RAM into EEPROM (without using of interrupts)
  * записывает указанный блок данных в EEPROM (без использования прерываний)
- * \param sram_src address of buffer in RAM wich contains data to write
+ * \param sram_src address of buffer in the RAM which contains data to write
  * \param eeaddr address in the EEPROM for write into
  * \param size size of block of data to write
  */
 void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
+
+#ifdef REALTIME_TABLES
+/**Writes specified block of data from FLASH into EEPROM (without using of interrupts)
+ * записывает указанный блок данных в EEPROM (без использования прерываний)
+ * \param sram_src address of buffer in the FLASH wich contains data to write
+ * \param eeaddr address in the EEPROM for write into
+ * \param size size of block of data to write
+ */
+void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size);
+#endif
 
 /**Returns code of last finished operation (code which was passed into eeprom_start_wr_data())
  * возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())

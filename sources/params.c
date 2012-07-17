@@ -71,9 +71,13 @@ void load_eeprom_params(struct ecudata_t* d)
   memcpy(eeprom_parameters_cache, &d->param, sizeof(params_t));
  }
  else
- { //перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены
+ {//перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены, а также
+  //загружаем в EEPROM данные по умолчанию для редактируемых наборов таблиц
   memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
   ce_clear_errors(); //сбрасываем сохраненные ошибки
+#ifdef REALTIME_TABLES
+  eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
+#endif  
  }
 }
 

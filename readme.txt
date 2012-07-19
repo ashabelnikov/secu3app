@@ -81,6 +81,9 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     SECU3T               Build for SECU-3T unit. Additional functionality will be added
                          (Сборка под блок SECU-3T. Добавляется доп. функциональность)
 
+    REV9_BOARD           Build for SECU-3T boards of revision 9 and greater.
+                         (Сборка для плат SECU-3T ревизии 9 и выше)
+
     DIAGNOSTICS          Include hardware diagnostics functionality
                          (Включить поддержку диагностики аппаратной части)
 

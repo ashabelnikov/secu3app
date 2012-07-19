@@ -147,6 +147,13 @@
  #define COPT_SECU3T 0
 #endif
 
+/** For SECU3-T rev.9 board */
+#ifdef REV9_BOARD
+ #define COPT_REV9_BOARD 1
+#else
+ #define COPT_REV9_BOARD 0
+#endif
+
 /** Diagnostics */
 #ifdef DIAGNOSTICS
  #define COPT_DIAGNOSTICS 1

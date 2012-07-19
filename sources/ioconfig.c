@@ -32,7 +32,11 @@
 void iocfg_i_ecf(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTD_Bit7 = value;
+#else
  PORTD_Bit7 = !(value);
+#endif
  DDRD |= _BV(DDD7);
 #else         /*SECU-3*/
  PORTB_Bit1 = value;
@@ -43,7 +47,11 @@ void iocfg_i_ecf(uint8_t value)
 void iocfg_s_ecf(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTD_Bit7 = value;
+#else
  PORTD_Bit7 = !(value);
+#endif
 #else         /*SECU-3*/
  PORTB_Bit1 = value;
 #endif
@@ -52,7 +60,11 @@ void iocfg_s_ecf(uint8_t value)
 void iocfg_i_st_block(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTB_Bit1 = value;
+#else
  PORTB_Bit1 = !(value);
+#endif
  DDRB |= _BV(DDB1);
 #else         /*SECU-3*/
  PORTD_Bit7 = !(value);
@@ -63,7 +75,11 @@ void iocfg_i_st_block(uint8_t value)
 void iocfg_s_st_block(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTB_Bit1 = value;
+#else
  PORTB_Bit1 = !(value);
+#endif
 #else         /*SECU-3*/
  PORTD_Bit7 = !(value);
 #endif

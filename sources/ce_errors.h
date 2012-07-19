@@ -79,8 +79,13 @@ void ce_clear_errors(void);
 void ce_init_ports(void);
 
 #ifdef SECU3T  /*SECU-3T*/
+#ifdef REV9_BOARD
+ #define CE_STATE_ON  1
+ #define CE_STATE_OFF 0
+#else
  #define CE_STATE_ON  0
  #define CE_STATE_OFF 1
+#endif
 #else          /*SECU-3*/
  #define CE_STATE_ON  1
  #define CE_STATE_OFF 0

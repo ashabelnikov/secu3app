@@ -38,8 +38,13 @@
  * speed up corresponding ISR
  */
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ #define COOLINGFAN_TURNON()  {PORTD_Bit7 = 1;}
+ #define COOLINGFAN_TURNOFF() {PORTD_Bit7 = 0;}
+#else
  #define COOLINGFAN_TURNON()  {PORTD_Bit7 = 0;}
  #define COOLINGFAN_TURNOFF() {PORTD_Bit7 = 1;}
+#endif
 #else         /*SECU-3*/
  #define COOLINGFAN_TURNON()  {PORTB_Bit1 = 1;}
  #define COOLINGFAN_TURNOFF() {PORTB_Bit1 = 0;}

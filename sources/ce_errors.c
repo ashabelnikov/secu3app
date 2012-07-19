@@ -216,10 +216,13 @@ void ce_clear_errors(void)
 void ce_init_ports(void)
 {
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTB|= _BV(PB2);
+#else
  PORTB&=~_BV(PB2);  //CE is ON (for checking)
- DDRB |= _BV(DDB2); //output for CE
+#endif
 #else         /*SECU-3*/
  PORTB|= _BV(PB2);
- DDRB |= _BV(DDB2);
 #endif
+ DDRB |= _BV(DDB2); //output for CE
 }

@@ -95,7 +95,11 @@ void init_digital_outputs(void)
  DDRC|= _BV(DDC7);
  //ECF
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTD&= ~(_BV(PD7));
+#else
  PORTD|= _BV(PD7);
+#endif
  DDRD |= _BV(DDD7);
 #else         /*SECU-3*/
  PORTB&= ~_BV(PB1);
@@ -103,7 +107,11 @@ void init_digital_outputs(void)
 #endif
  //CE
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTB&= ~(_BV(PB2));
+#else
  PORTB|= _BV(PB2);
+#endif
  DDRB |= _BV(DDB2);
 #else         /*SECU-3*/
  PORTB&= ~(_BV(PB2));
@@ -111,7 +119,11 @@ void init_digital_outputs(void)
 #endif
  //ST_BLOCK
 #ifdef SECU3T /*SECU-3T*/
+#ifdef REV9_BOARD
+ PORTB&= ~(_BV(PB1));
+#else
  PORTB|= _BV(PB1);
+#endif
  DDRB |= _BV(DDB1);
 #else         /*SECU-3*/
  PORTD|= _BV(PD7);
@@ -136,20 +148,32 @@ void set_outputs(uint16_t o)
  PORTC_Bit7 = !!(o & _OBV(7));  //FE
 
 #ifdef SECU3T /*SECU-3T*/
- PORTD_Bit7 = !(o & _OBV(8));   //ECF
+#ifdef REV9_BOARD
+ PORTD_Bit7 = !!(o & _OBV(8));  //ECF
+#else
+ PORTD_Bit7 = !(o & _OBV(8));
+#endif
 #else         /*SECU-3*/
  PORTB_Bit1 = !!(o & _OBV(8));
 #endif
 
 #ifdef SECU3T /*SECU-3T*/
- PORTB_Bit2 = !(o & _OBV(9));   //CE
+#ifdef REV9_BOARD
+ PORTB_Bit2 = !!(o & _OBV(9));  //CE
+#else
+ PORTB_Bit2 = !(o & _OBV(9));
+#endif
 #else         /*SECU-3*/
  PORTB_Bit2 = !!(o & _OBV(9));
 #endif
 
  //ST_BLOCK
 #ifdef SECU3T /*SECU-3T*/
- PORTB_Bit1 = !(o & _OBV(10));  //ST_BLOCK
+#ifdef REV9_BOARD
+ PORTB_Bit1 = !!(o & _OBV(10)); //ST_BLOCK
+#else
+ PORTB_Bit1 = !(o & _OBV(10));
+#endif
 #else         /*SECU-3*/
  PORTD_Bit7 = !(o & _OBV(10));
 #endif

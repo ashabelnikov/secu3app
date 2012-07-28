@@ -167,7 +167,7 @@ MAIN()
  uart_init(edat.param.uart_divisor);
 
  //initialization of cam module
-#ifdef PHASE_SENSOR
+#if defined(PHASE_SENSOR) || defined(SECU3T)
  cams_init_state();
 #endif
 
@@ -213,7 +213,7 @@ MAIN()
    //TODO: Сделать мягкую отсечку для избавления от нежелательной искры. Как?
 #endif
    ckps_init_state_variables();
-#ifdef PHASE_SENSOR
+#if defined(PHASE_SENSOR) || defined(SECU3T)
    cams_init_state_variables();
 #endif
    edat.engine_mode = EM_START; //режим пуска

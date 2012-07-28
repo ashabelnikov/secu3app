@@ -31,7 +31,8 @@
 #include "bitmask.h"
 #include "camsens.h"
 
-#ifdef PHASE_SENSOR
+//Functionality added when either PHASE_SENSOR or SECU3T is defined
+#if defined(PHASE_SENSOR) || defined(SECU3T)
 
 #ifndef SECU3T /*SECU-3*/
  /** Get logic level from cam sensor output */
@@ -48,7 +49,10 @@ typedef struct
 #endif
  uint8_t err_threshold;               //!< error threshold in teeth
  volatile uint8_t err_counter;        //!< teeth counter
- volatile uint8_t event;              //!< flag which indicates cam sensor's event
+ volatile uint8_t event;              //!< flag which indicates Hall cam sensor's event
+#ifdef SECU3T
+ volatile uint8_t vr_event;           //!< flag which indicates VR cam sensor's event
+#endif
 }camstate_t;
 
 /** Global instance of cam sensor state variables */
@@ -63,6 +67,9 @@ void cams_init_state_variables(void)
  camstate.err_threshold = 60 * 2;
  camstate.err_counter = 0;
  camstate.event = 0;
+#ifdef SECU3T
+ camstate.vr_event = 0;
+#endif
 }
 
 void cams_init_state(void)
@@ -74,12 +81,35 @@ void cams_init_state(void)
 #ifdef SECU3T /*SECU-3T*/
  //interrupt by rising edge
  MCUCR|= _BV(ISC11) | _BV(ISC10);
- GICR|=_BV(INT1);
+ MCUCR|= _BV(ISC01) | _BV(ISC00);
+ GICR|=_BV(INT1) | _BV(INT0);
 #endif
 
  _END_ATOMIC_BLOCK();
 }
 
+#ifdef SECU3T /*SECU-3T*/
+uint8_t cams_vr_is_event_r(void)
+{
+ uint8_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = camstate.vr_event;
+ camstate.vr_event = 0; //reset event flag
+ _END_ATOMIC_BLOCK();
+ return result;
+}
+
+/**Interrupt from CAM sensor (VR). Marked as REF_S on the schematics */
+ISR(INT0_vect)
+{
+ camstate.vr_event = 1; //set event flag
+}
+#endif //SECU3T
+#endif //defined(PHASE_SENSOR) || defined(SECU3T)
+
+
+//Functionality added to compilation only when PHASE_SENSOR defined
+#ifdef PHASE_SENSOR
 void cams_set_error_threshold(uint8_t threshold)
 {
  camstate.err_threshold = threshold;
@@ -147,25 +177,5 @@ ISR(INT1_vect)
  camstate.err_counter = 0;
  camstate.event = 1; //set event flag
 }
-
-/**Interrupt from CAM sensor (VR) */
-/*ISR(INT0_vect)
-{
- camstate.cam_ok = 1;
- camstate.err_counter = 0;
- camstate.event = 1; //set event flag
-}
-
-uint8_t cams_vr_is_event_r(void)
-{
- uint8_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = camstate.event;
- camstate.event = 0; //reset event flag
- _END_ATOMIC_BLOCK();
- return result;
-}*/
-
-#endif
-
+#endif //SECU3T
 #endif //PHASE_SENSOR

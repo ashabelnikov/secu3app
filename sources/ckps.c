@@ -691,7 +691,13 @@ uint8_t sync_at_startup(void)
     ckps.cam_is_synchronized = 1;
 #endif
 
-   if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)
+   //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
+   if (
+#ifdef SECU3T
+   ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
+#else
+   (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
+#endif
 #ifdef PHASED_IGNITION
    && ckps.cam_is_synchronized
 #endif
@@ -922,11 +928,17 @@ ISR(TIMER1_CAPT_vect)
   return;
  }
 
+ //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input),
+ //Otherwise:
  //Each period, check for missing teeth, and if, after discovering of missing teeth
  //count of teeth being found incorrect, then set error flag.
  //(каждый период проверяем на синхрометку, и если после обнаружения синхрометки
  //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки).
+#ifdef SECU3T
+ if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
+#else
  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
+#endif
  {
   if ((ckps.cog360 != (ckps.wheel_cogs_num + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
    flags->ckps_error_flag = 1; //ERROR

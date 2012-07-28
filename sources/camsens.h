@@ -29,14 +29,22 @@
 
 #include <stdint.h>
 
-#ifdef PHASE_SENSOR
-
+#if defined(PHASE_SENSOR) || defined(SECU3T)
 /** Initialization of state variables */
 void cams_init_state_variables(void);
 
 /** Initialization of cam module (Hardware & variables) */
 void cams_init_state(void);
 
+#ifdef SECU3T
+/**Checks for event(VR input) and automatically resets the flag
+ * \return 1 - event was pending, otherwise - 0 */
+uint8_t cams_vr_is_event_r(void);
+#endif //SECU3T
+
+#endif //defined(PHASE_SENSOR) || defined(SECU3T)
+
+#ifdef PHASE_SENSOR
 /** Sets threshold value (number of teeth between pulses) for errors checking
  * \param threshold number of teeth between pulses */
 void cams_set_error_threshold(uint8_t threshold);
@@ -59,13 +67,6 @@ void cams_reset_error(void);
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_is_event_r(void);
 
-#ifdef SECU3T
-/**Checks for event(VR input) and automatically resets the flag
- * \return 1 - event was pending, otherwise - 0 */
-uint8_t cams_vr_is_event_r(void);
-#endif
-
-#endif
+#endif //PHASE_SENSOR
 
 #endif //_CAMSENS_H_
-

@@ -308,8 +308,8 @@ void ckps_set_edge_type(uint8_t edge_type)
  */
 uint16_t _normalize_tn(int16_t i_tn)
 {
- if (i_tn > ckps.wheel_cogs_num2)
-  return i_tn - ckps.wheel_cogs_num2;
+ if (i_tn > (int16_t)ckps.wheel_cogs_num2)
+  return i_tn - (int16_t)ckps.wheel_cogs_num2;
  if (i_tn < 0)
   return i_tn + ckps.wheel_cogs_num2;
  return i_tn;

@@ -21,7 +21,8 @@ CFLAGS = --cpu $(MCU)
 CFLAGS += -DREALTIME_TABLES -DBL_BAUD_RATE=9600 -DSECU3T -DTHERMISTOR_CS -DCOOLINGFAN_PWM -DDIAGNOSTICS -DHALL_OUTPUT -DFUEL_PUMP
 CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DENABLE_BIT_DEFINITIONS
 CFLAGS += -ms -e --initializers_in_flash
-CFLAGS += -s9 --cross_call_passes=1 --do_cross_call
+CFLAGS += -s9
+#CFLAGS += --cross_call_passes=1 --do_cross_call
 CFLAGS += --lock_regs 1
 CFLAGS += --eeprom_size $(EE_SIZE)
 CFLAGS += --dlib_config $(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.h

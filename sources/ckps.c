@@ -143,6 +143,7 @@ typedef struct
  volatile uint8_t  wheel_latch_btdc;
  volatile uint16_t degrees_per_cog;   //!< Number of degrees which corresponds to the 1 tooth (количество градусов приходящееся на один зуб диска)
  volatile uint16_t cogs_per_chan;     //!< Number of teeth per 1 ignition channel (it is fractional number * 256)
+ volatile int16_t start_angle;        //!< Precalculated value of the advance angle at 66° (at least) BTDC
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -550,6 +551,7 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_latch_btdc = dr.quot + (dr.rem > 0);
  ckps.degrees_per_cog = degrees_per_cog;
  ckps.cogs_per_chan = cogs_per_chan;
+ ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
  _RESTORE_INTERRUPT(_t);
 }
 
@@ -572,18 +574,19 @@ void turn_off_ignition_channel(uint8_t i_channel)
 }
 
 /**Forces ignition spark if corresponding interrupt is pending*/
-INLINE
-void force_pending_spark(void)
-{
- if ((TIFR & _BV(OCF1A)) && (CKPS_CHANNEL_MODENA != ckps.channel_mode))
- {
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
 #ifdef PHASED_IGNITION
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);
-#endif
+#define force_pending_spark() \
+ if ((TIFR & _BV(OCF1A)) && (CKPS_CHANNEL_MODENA != ckps.channel_mode))\
+ { \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);\
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);\
  }
-}
-
+#else
+#define force_pending_spark() \
+ if ((TIFR & _BV(OCF1A)) && (CKPS_CHANNEL_MODENA != ckps.channel_mode))\
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
+#endif
+ 
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
  */
@@ -676,7 +679,7 @@ INLINE
 void set_timer0(uint16_t value)
 {
  TCNT0_H = _AB(value, 1);
- TCNT0 = 255 - _AB(value, 0);
+ TCNT0 = ~(_AB(value, 0));  //One's complement is faster than 255 - low byte
  TCCR0  = _BV(CS01)|_BV(CS00);
 }
 
@@ -738,7 +741,6 @@ uint8_t sync_at_startup(void)
  */
 void process_ckps_cogs(void)
 {
- uint16_t diff;
  uint8_t i, timsk_sv = TIMSK;
 
  //-----------------------------------------------------
@@ -781,9 +783,11 @@ void process_ckps_cogs(void)
  }
 #endif
 
- if (flags->ckps_use_knock_channel)
+ force_pending_spark();
+
+ for(i = 0; i < ckps.chan_number; ++i)
  {
-  for(i = 0; i < ckps.chan_number; ++i)
+  if (flags->ckps_use_knock_channel)
   {
    //start listening a detonation (opening the window)
    //начинаем слушать детонацию (открытие окна)
@@ -798,12 +802,7 @@ void process_ckps_cogs(void)
     adc_begin_measure_knock(_AB(ckps.half_turn_period, 1) < 4);
    }
   }
- }
 
- force_pending_spark();
-
- for(i = 0; i < ckps.chan_number; ++i)
- {
   //for 66° before TDC (before working cycle) establish new advance angle to be actuated,
   //before this moment value was stored in a temporary buffer.
   //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
@@ -813,7 +812,7 @@ void process_ckps_cogs(void)
    ckps.channel_mode = (i & ckps.chan_mask); //remember number of channel (запоминаем номер канала)
    flags->ckps_need_to_set_channel = 1;      //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
-   ckps.current_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc; // those same 66° (те самые 66°)
+   ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
    adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
@@ -855,7 +854,7 @@ void process_ckps_cogs(void)
  //подготовка к запуску зажигания для текущего канала (если наступил нужный момент)
  if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
  {
-  diff = ckps.current_angle - ckps.advance_angle;
+  uint16_t diff = ckps.current_angle - ckps.advance_angle;
   if (diff <= (ckps.degrees_per_cog << 1))
   {
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module

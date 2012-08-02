@@ -75,6 +75,10 @@
  #define IGN_OUTPUTS_OFF_VAL  1
 #endif
 
+/**Задержка входа в прерывание COMPA и установки уровня на соотв. линии порта в тиках таймера.
+ * Используется для компенсации времени. */
+#define COMPA_VECT_DELAY 2
+
 /** Flags */
 typedef struct
 {
@@ -567,6 +571,19 @@ void turn_off_ignition_channel(uint8_t i_channel)
 #endif
 }
 
+/**Forces ignition spark if corresponding interrupt is pending*/
+INLINE
+void force_pending_spark(void)
+{
+ if ((TIFR & _BV(OCF1A)) && (CKPS_CHANNEL_MODENA != ckps.channel_mode))
+ {
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
+#ifdef PHASED_IGNITION
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);
+#endif
+ }
+}
+
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
  */
@@ -736,6 +753,7 @@ void process_ckps_cogs(void)
  _ENABLE_INTERRUPT();
 #endif
  //-----------------------------------------------------
+ force_pending_spark();
 
 #ifdef DWELL_CONTROL
  if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
@@ -782,6 +800,8 @@ void process_ckps_cogs(void)
   }
  }
 
+ force_pending_spark();
+
  for(i = 0; i < ckps.chan_number; ++i)
  {
   //for 66° before TDC (before working cycle) establish new advance angle to be actuated,
@@ -798,6 +818,8 @@ void process_ckps_cogs(void)
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
    adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
   }
+
+  force_pending_spark();
 
   //teeth of end/beginning of the measurement of rotation period - TDC Read and save the measured period,
   //then remember current value of count for the next measurement
@@ -827,6 +849,8 @@ void process_ckps_cogs(void)
 #endif
  }
 
+ force_pending_spark();
+
  //Preparing to start the ignition for the current channel (if the right moment became)
  //подготовка к запуску зажигания для текущего канала (если наступил нужный момент)
  if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
@@ -838,9 +862,9 @@ void process_ckps_cogs(void)
    //(до запуска зажигания осталось отсчитать меньше 2-x зубьев. Необходимо подготовить модуль сравнения)
    //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
    if (ckps.period_curr < 128)
-    OCR1A = GetICR() + (diff * (ckps.period_curr)) / ckps.degrees_per_cog;
+    OCR1A = GetICR() + ((diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
    else
-    OCR1A = GetICR() + ((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog;
+    OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
    TIFR = _BV(OCF1A);
    flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
@@ -875,6 +899,7 @@ void process_ckps_cogs(void)
  cams_detect_edge();
 #endif
 #ifdef PHASED_IGNITION
+ force_pending_spark();
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sonsor event (e.g. falling edge) coming before missing teeth
@@ -908,6 +933,8 @@ void process_ckps_cogs(void)
 #endif
  TIMSK = timsk_sv;
  //-----------------------------------------------------
+
+ force_pending_spark();
 }
 
 /**Input capture interrupt of timer 1 (called at passage of each tooth)
@@ -915,6 +942,8 @@ void process_ckps_cogs(void)
  */
 ISR(TIMER1_CAPT_vect)
 {
+ force_pending_spark();
+
  ckps.period_curr = GetICR() - ckps.icr_prev;
 
  //At the start of engine, skipping a certain number of teeth for initializing
@@ -966,6 +995,8 @@ synchronized_enter:
 
  ckps.icr_prev = GetICR();
  ckps.period_prev = ckps.period_curr;
+
+ force_pending_spark();
 }
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedure

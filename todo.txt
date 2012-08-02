@@ -37,7 +37,7 @@ What to do in relation to SECU-3 firmware:
    the PWM duty, it is necessary to sustain a pause of 5 seconds, until the next
    possible change.
 
-11.ckps.c Reenable TIMER_COMPA interrupt inside process_ckps_cogs() function. It will
+[11.]ckps.c Reenable TIMER_COMPA interrupt inside process_ckps_cogs() function. It will
    increase accuracy of ignition at some critical moments of time.
 
 12. Flow of outgoing data packets can be turned on/off depending on default value

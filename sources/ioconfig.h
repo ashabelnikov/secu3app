@@ -45,6 +45,7 @@ typedef void (*iocfg_pfn_set)(uint8_t value);
 #define IOP_FE            7     //!< FE
 #define IOP_FL_PUMP       8     //!< FL_PUMP
 #define IOP_HALL_OUT      9     //!< HALL_OUT
+#define IOP_STROBE        10    //!< STROBE
 
 //Wrap macro from port/pgmspace.h.
 #define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)

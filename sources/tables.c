@@ -58,11 +58,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //slots and plugs
    {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    0, 0   //<-- zero means that these slots are not implementae in this firmware
+    0, 0   //<-- zero means that these slots are not implemented in this firmware
    },
    {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    0, 0   //<-- zero means that these slots are not implementae in this firmware
+    0, 0   //<-- zero means that these slots are not implemented in this firmware
    },
    {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
@@ -84,7 +84,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_COOLINGFAN_PWM, 8) | _CBV32(COPT_REALTIME_TABLES, 9) | _CBV32(COPT_ICCAVR_COMPILER, 10) | _CBV32(COPT_AVRGCC_COMPILER, 11) |
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
-  _CBV32(COPT_REV9_BOARD, 20),
+  _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21),
 
   /**Two reserved bytes*/
   {0, 0},

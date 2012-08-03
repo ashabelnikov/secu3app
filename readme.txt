@@ -85,6 +85,9 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          will be used.
                          (Включить поддержку эмуляции сигнала с Датчика Холла)
 
+    STROBOSCOPE          Include stroboscope functionality
+                         (Включить поддержку стробоскопа)
+
 Necessary symbols you can define in the preprocessor's options of compiler
 (edit corresponding Makefile).
 Нужные вам символы вы можете определить в опциях препроцессора компилятора 

@@ -144,6 +144,9 @@ typedef struct
  volatile uint16_t degrees_per_cog;   //!< Number of degrees which corresponds to the 1 tooth (количество градусов приходящееся на один зуб диска)
  volatile uint16_t cogs_per_chan;     //!< Number of teeth per 1 ignition channel (it is fractional number * 256)
  volatile int16_t start_angle;        //!< Precalculated value of the advance angle at 66° (at least) BTDC
+#ifdef STROBOSCOPE
+ uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
+#endif
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -227,6 +230,9 @@ void ckps_init_state_variables(void)
  flags->ckps_is_synchronized = 0;
  flags->ckps_ign_enabled = 1;
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
+#ifdef STROBOSCOPE
+ ckps.strobe = 0;
+#endif
  _END_ATOMIC_BLOCK();
 }
 
@@ -274,6 +280,11 @@ void ckps_init_ports(void)
  //init I/O for Hall output if it is enabled
 #ifdef HALL_OUTPUT
  IOCFG_INIT(IOP_HALL_OUT, 1);
+#endif
+
+ //init I/O for stroboscope
+#ifdef STROBOSCOPE
+ IOCFG_INIT(IOP_STROBE, 0);
 #endif
 }
 
@@ -614,6 +625,18 @@ ISR(TIMER1_COMPA_vect)
  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);
 #endif
 
+#ifdef STROBOSCOPE
+ if (ckps.strobe)
+ {
+  IOCFG_SET(IOP_STROBE, 1); //start pulse
+  ckps.strobe = 0;          //and reset flag
+ }
+ else
+ {
+  IOCFG_SET(IOP_STROBE, 0); //end pulse
+ }
+#endif
+
  //-----------------------------------------------------
 #ifdef COOLINGFAN_PWM
  timsk_sv = TIMSK;
@@ -816,6 +839,10 @@ void process_ckps_cogs(void)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
    adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+#ifdef STROBOSCOPE
+   if (0==i)
+    ckps.strobe = 1; //strobe!
+#endif   
   }
 
   force_pending_spark();

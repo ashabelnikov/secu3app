@@ -168,4 +168,11 @@
  #define COPT_HALL_OUTPUT 0
 #endif
 
+/** Stroboscope functionality */
+#ifdef STROBOSCOPE
+ #define COPT_STROBOSCOPE 1
+#else
+ #define COPT_STROBOSCOPE 0
+#endif
+
 #endif //_COMPILOPT_H_

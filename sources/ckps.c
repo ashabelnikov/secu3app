@@ -620,21 +620,25 @@ ISR(TIMER1_COMPA_vect)
  if (CKPS_CHANNEL_MODENA == ckps.channel_mode)
   return; //none of channels selected (никакой канал не выбран)
 
+#ifdef STROBOSCOPE
+ if (1==ckps.strobe)
+ {
+  IOCFG_SET(IOP_STROBE, 1); //start pulse
+  ckps.strobe = 2;          //and set flag to next state
+  OCR1A = TCNT1 + 25;       //We will generate 100uS pulse
+  TIMSK|= _BV(OCIE1A);      //pulse will be ended in the next interrupt
+ }
+ else if (2==ckps.strobe)
+ {
+  IOCFG_SET(IOP_STROBE, 0); //end pulse
+  ckps.strobe = 0;          //and reset flag
+  return;
+ }
+#endif
+
  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
 #ifdef PHASED_IGNITION
  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);
-#endif
-
-#ifdef STROBOSCOPE
- if (ckps.strobe)
- {
-  IOCFG_SET(IOP_STROBE, 1); //start pulse
-  ckps.strobe = 0;          //and reset flag
- }
- else
- {
-  IOCFG_SET(IOP_STROBE, 0); //end pulse
- }
 #endif
 
  //-----------------------------------------------------

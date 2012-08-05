@@ -133,7 +133,10 @@ typedef struct
  uint8_t  cam_is_synchronized;        //!< Indicates that system has already obtained event from a cam sensor
 #endif
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
+ volatile uint8_t wheel_cogs_nump1;   //!< wheel_cogs_num + 1
+ volatile uint8_t wheel_cogs_numm1;   //!< wheel_cogs_num - 1
  volatile uint16_t wheel_cogs_num2;   //!< Number of teeth which corresponds to 720° (2 revolutions)
+ volatile uint16_t wheel_cogs_num2p1; //!< wheel_cogs_num2 + 1
  volatile uint8_t miss_cogs_num;      //!< Count of crank wheel's missing teeth (количество отсутствующих зубьев)
  volatile uint8_t wheel_last_cog;     //!< Number of last(present) tooth, numeration begins from 1! (номер последнего(существующего) зуба, нумерация ничинается с 1!)
  /**Number of teeth before TDC which determines moment of advance angle latching, start of measurements from sensors,
@@ -556,8 +559,11 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_last_cog = norm_num - miss_num;
  //set number of teeth (normal and missing)
  ckps.wheel_cogs_num = norm_num;
+ ckps.wheel_cogs_nump1 = norm_num + 1;
+ ckps.wheel_cogs_numm1 = norm_num - 1;
  ckps.miss_cogs_num = miss_num;
  ckps.wheel_cogs_num2 = norm_num * 2;
+ ckps.wheel_cogs_num2p1 = (norm_num * 2) + 1;
  //set other precalculated values
  ckps.wheel_latch_btdc = dr.quot + (dr.rem > 0);
  ckps.degrees_per_cog = degrees_per_cog;
@@ -933,7 +939,7 @@ void process_ckps_cogs(void)
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sonsor event (e.g. falling edge) coming before missing teeth
-  if (ckps.cog < (ckps.wheel_cogs_num + 1))
+  if (ckps.cog < ckps.wheel_cogs_nump1)
    ckps.cog+= ckps.wheel_cogs_num;
 
   //Turn on full sequential mode because Cam sensor is OK
@@ -999,12 +1005,12 @@ ISR(TIMER1_CAPT_vect)
  if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
 #endif
  {
-  if ((ckps.cog360 != (ckps.wheel_cogs_num + 1))) //also taking into account recovered teeth (учитываем также восстановленные зубья)
+  if ((ckps.cog360 != ckps.wheel_cogs_nump1)) //also taking into account recovered teeth (учитываем также восстановленные зубья)
    flags->ckps_error_flag = 1; //ERROR
   //Reset 360° tooth counter to the first tooth (1-й зуб)
   ckps.cog360 = 1;
   //Also reset 720° tooth counter
-  if (ckps.cog == (ckps.wheel_cogs_num2 + 1))
+  if (ckps.cog == ckps.wheel_cogs_num2p1)
    ckps.cog = 1;
   ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
  }
@@ -1048,7 +1054,7 @@ ISR(TIMER0_OVF_vect)
   if (ckps.miss_cogs_num > 1)
   {
    //start timer to recover 60th tooth (запускаем таймер чтобы восстановить 60-й (последний) зуб)
-   if (ckps.cog360 == (ckps.wheel_cogs_num - 1))
+   if (ckps.cog360 == ckps.wheel_cogs_numm1)
     set_timer0(ckps.period_curr);
   }
 

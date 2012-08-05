@@ -100,7 +100,7 @@ typedef struct
  uint16_t icr_prev;                   //!< previous value if Input Capture Register (предыдущее значение регистра захвата)
  volatile uint16_t period_curr;       //!< last measured inter-tooth period (последнй измеренный межзубный период)
  uint16_t period_prev;                //!< previous value of inter-tooth period (предыдущее значение межзубного периода)
- volatile uint8_t cog;                //!< counts teeth starting from missing teeth (2 revolutions), begins from 1 (считает зубья после выреза, начинает считать с 1)
+ volatile uint16_t cog;               //!< counts teeth starting from missing teeth (2 revolutions), begins from 1 (считает зубья после выреза, начинает считать с 1)
  volatile uint8_t cog360;             //!< counts teeth starting from missing teeth (1 revolution).
  uint16_t measure_start_value;        //!< remembers the value of the capture register to measure the half-turn (запоминает значение регистра захвата для измерения периода полуоборота)
  uint16_t current_angle;              //!< counts out given advance angle during the passage of each tooth (отсчитывает заданный УОЗ при прохождении каждого зуба)

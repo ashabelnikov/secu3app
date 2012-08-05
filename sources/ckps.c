@@ -1036,10 +1036,10 @@ synchronized_enter:
 
  force_pending_spark();
 
-#ifdef SECU3T
- if ((0==ckps.miss_cogs_num) && ckps.cog360 == ckps.wheel_cogs_numd2)
-  cams_enable_vr_event();
-#endif
+//#ifdef SECU3T
+// if ((0==ckps.miss_cogs_num) && ckps.cog360 == ckps.wheel_cogs_numd2)
+//  cams_enable_vr_event();
+//#endif
 }
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedure

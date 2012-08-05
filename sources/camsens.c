@@ -103,7 +103,7 @@ uint8_t cams_vr_is_event_r(void)
 ISR(INT0_vect)
 {
  camstate.vr_event = 1; //set event flag 
- GICR&=~_BV(INT0);      //disable interrupt to improve noise immunity
+//GICR&=~_BV(INT0);      //disable interrupt to improve noise immunity
 }
 #endif //SECU3T
 #endif //defined(PHASE_SENSOR) || defined(SECU3T)

@@ -135,7 +135,7 @@ typedef struct
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
  volatile uint8_t wheel_cogs_nump1;   //!< wheel_cogs_num + 1
  volatile uint8_t wheel_cogs_numm1;   //!< wheel_cogs_num - 1
- volatile uint8_t wheel_cogs_numd2;   //!< wheel_cogs_num/2
+//volatile uint8_t wheel_cogs_numd2;   //!< wheel_cogs_num/2
  volatile uint16_t wheel_cogs_num2;   //!< Number of teeth which corresponds to 720° (2 revolutions)
  volatile uint16_t wheel_cogs_num2p1; //!< wheel_cogs_num2 + 1
  volatile uint8_t miss_cogs_num;      //!< Count of crank wheel's missing teeth (количество отсутствующих зубьев)
@@ -562,7 +562,7 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_cogs_num = norm_num;
  ckps.wheel_cogs_nump1 = norm_num + 1;
  ckps.wheel_cogs_numm1 = norm_num - 1;
- ckps.wheel_cogs_numd2 = norm_num >> 1;
+//ckps.wheel_cogs_numd2 = norm_num >> 1;
  ckps.miss_cogs_num = miss_num;
  ckps.wheel_cogs_num2 = norm_num * 2;
  ckps.wheel_cogs_num2p1 = (norm_num * 2) + 1;
@@ -1008,13 +1008,17 @@ ISR(TIMER1_CAPT_vect)
 #endif
  {
   if ((ckps.cog360 != ckps.wheel_cogs_nump1)) //also taking into account recovered teeth (учитываем также восстановленные зубья)
+  {
    flags->ckps_error_flag = 1; //ERROR
+   ckps.cog = 1;
+   //TODO: maybe we need to turn off full sequential mode
+  }
   //Reset 360° tooth counter to the first tooth (1-й зуб)
   ckps.cog360 = 1;
   //Also reset 720° tooth counter
   if (ckps.cog == ckps.wheel_cogs_num2p1)
    ckps.cog = 1;
-  ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
+  ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
  }
 
 synchronized_enter:

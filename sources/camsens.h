@@ -43,9 +43,9 @@ uint8_t cams_vr_is_event_r(void);
 
 /**This function improves noise immunity. It will reset possible pending interrupt
  * and enable it. */
-//#define cams_enable_vr_event(){ \
-// GIFR|=_BV(INTF0); \
-// GICR|=_BV(INT0); \
+//#define cams_enable_vr_event(){
+// GIFR|=_BV(INTF0);
+// GICR|=_BV(INT0);
 //}
 
 #endif //SECU3T

@@ -25,6 +25,9 @@
 #ifdef __ICCAVR__
  #include <ioavr.h>     //device IO
 
+/** Define variable by arranging it in the specified free I/O register */
+#define IOSPACEVAR(type, reg) ( (__io volatile type*)(&reg) )
+
 #else //AVR GCC
  #include <avr/io.h>    //device IO
  #include "portbits.h"  //gives PORTx_Bitx ability
@@ -42,6 +45,9 @@
    #define USART0_RXC_vect USART0_RX_vect
   #endif
  #endif
+
+/** Define variable by arranging it in the specified free I/O register */
+#define IOSPACEVAR(type, reg) ( (volatile type*)(_SFR_MEM_ADDR(reg)) )
 
 #endif
 

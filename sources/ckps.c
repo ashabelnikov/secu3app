@@ -189,7 +189,7 @@ ckpsstate_t ckps;                         //!< instance of state variables
 chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's state variables
 
 /** Arrange in the free I/O registers (размещаем в свободных регистрах ввода/вывода) */
-#define flags ( (volatile ckpsflags_t*)(&TWAR) ) //note: may be not effective on other MCUs
+#define flags IOSPACEVAR(ckpsflags_t, TWAR)  //note: may be not effective on other MCUs
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
 #ifdef __ICCAVR__

@@ -415,6 +415,19 @@ uint8_t ckps_is_cog_changed(void)
  return 0;
 }
 
+/** Get value of I/O callback by index
+ * \param index Index of callback
+ */
+fnptr_t get_callback(uint8_t index)
+{
+ if (0 == index)
+  return (fnptr_t)iocfg_s_ign_out1;
+ else if (1 == index)
+  return (fnptr_t)iocfg_s_ign_out2;
+ else
+  return IOCFG_CB(index);
+}
+
 #ifndef PHASED_IGNITION
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
 void set_channels_ss(void)
@@ -422,14 +435,7 @@ void set_channels_ss(void)
  uint8_t _t, i = 0, chan = ckps.chan_number / 2;
  for(; i < chan; ++i)
  {
-  fnptr_t value;
-  if (0==i)
-   value = (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out1);
-  else if (1==i)
-   value = (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out2);
-  else
-   value = IOCFG_CB(i);
-
+  fnptr_t value = get_callback(i);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   chanstate[i].io_callback1 = value;
@@ -439,18 +445,6 @@ void set_channels_ss(void)
 }
 
 #else
-/** Get value of I/O callback by index
- * \param index Index of callback
- */
-fnptr_t get_callback(uint8_t index)
-{
- if (0 == index)
-  return (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out1);
- else if (1 == index)
-  return (fnptr_t)_IOREM_GPTR(iocfg_s_ign_out2);
- else
-  return IOCFG_CB(index);
-}
 
 /**Tune channels' I/O for full sequential ignition mode */
 void set_channels_fs(uint8_t fs_mode)

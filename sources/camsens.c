@@ -82,7 +82,11 @@ void cams_init_state(void)
  //interrupt by rising edge
  MCUCR|= _BV(ISC11) | _BV(ISC10);
  MCUCR|= _BV(ISC01) | _BV(ISC00);
- GICR|=_BV(INT1) | _BV(INT0);
+#ifdef PHASE_SENSOR
+ GICR|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware
+#else
+ GICR|=  _BV(INT0);             //это нам нужно для ДНО
+#endif
 #endif
 
  _END_ATOMIC_BLOCK();
@@ -103,7 +107,7 @@ uint8_t cams_vr_is_event_r(void)
 ISR(INT0_vect)
 {
  camstate.vr_event = 1; //set event flag 
-//GICR&=~_BV(INT0);      //disable interrupt to improve noise immunity
+//GICR&=~_BV(INT0);     //disable interrupt to improve noise immunity
 }
 #endif //SECU3T
 #endif //defined(PHASE_SENSOR) || defined(SECU3T)

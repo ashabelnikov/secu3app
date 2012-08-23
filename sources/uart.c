@@ -130,7 +130,7 @@ PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 /**Appends sender's buffer by two HEX bytes
  * \param i 8-bit value to be converted into hex
  */
-void build_i8h(uint8_t i)
+static void build_i8h(uint8_t i)
 {
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);    //старший байт HEX числа
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);    //младший байт HEX числа
@@ -139,7 +139,7 @@ void build_i8h(uint8_t i)
 /**Appends sender's buffer by 4 HEX bytes
  * \param i 16-bit value to be converted into hex
  */
-void build_i16h(uint16_t i)
+static void build_i16h(uint16_t i)
 {
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);    //старший байт HEX числа (старший байт)
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);    //младший байт HEX числа (старший байт)
@@ -150,7 +150,7 @@ void build_i16h(uint16_t i)
 /**Appends sender's buffer by 8 HEX bytes
  * \param i 32-bit value to be converted into hex
  */
-void build_i32h(uint32_t i)
+static void build_i32h(uint32_t i)
 {
  build_i16h(i>>16);
  build_i16h(i);
@@ -158,7 +158,7 @@ void build_i32h(uint32_t i)
 
 /**Appends sender's buffer by sequence of bytes from RAM buffer
  * can be used for binary data */
-void build_rb(const uint8_t* ramBuffer, uint8_t size)
+static void build_rb(const uint8_t* ramBuffer, uint8_t size)
 {
  while(size--) build_i8h(*ramBuffer++);
 }
@@ -166,7 +166,7 @@ void build_rb(const uint8_t* ramBuffer, uint8_t size)
 //----------вспомагательные функции для распознавания пакетов---------
 /**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
  * can NOT be used for binary data */
-void recept_rs(uint8_t* ramBuffer, uint8_t size)
+static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 { 
  if (size > uart.recv_size)
   size = uart.recv_size;
@@ -179,7 +179,7 @@ void recept_rs(uint8_t* ramBuffer, uint8_t size)
 /**Retrieves from receiver's buffer 8-bit value
  * \return retrieved value
  */
-uint8_t recept_i8h(void)
+static uint8_t recept_i8h(void)
 {
  uint8_t i8;
  i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
@@ -192,7 +192,7 @@ uint8_t recept_i8h(void)
 /**Retrieves from receiver's buffer 16-bit value
  * \return retrieved value
  */
-uint16_t recept_i16h(void)
+static uint16_t recept_i16h(void)
 {
  uint16_t i16;
  _AB(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
@@ -209,7 +209,7 @@ uint16_t recept_i16h(void)
 /**Retrieves from receiver's buffer 32-bit value
  * \return retrieved value
  */
-uint32_t recept_i32h(void)
+static uint32_t recept_i32h(void)
 {
  uint32_t i = 0;
  i = recept_i16h();
@@ -220,7 +220,7 @@ uint32_t recept_i32h(void)
 
 /**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
  * can be used for binary data */
-void recept_rb(uint8_t* ramBuffer, uint8_t size)
+static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 {
  uint8_t rcvsize = uart.recv_size >> 1; //two hex symbols per byte
  if (size > rcvsize)
@@ -230,7 +230,7 @@ void recept_rb(uint8_t* ramBuffer, uint8_t size)
 //--------------------------------------------------------------------
 
 /**Makes sender to start sending */
-void uart_begin_send(void)
+static void uart_begin_send(void)
 {
  uart.send_index = 0;
  _DISABLE_INTERRUPT();

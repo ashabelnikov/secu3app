@@ -30,7 +30,7 @@
 #include "jumper.h"
 
 /**Retrieves state of jumper from port's pin */
-#define GET_DEFEEPROM_JUMPER_STATE() (PINC_Bit2)
+#define GET_DEFEEPROM_JUMPER_STATE() (CHECKBIT(PINC, PINC2) > 0)
 
 void jumper_init_ports(void)
 {

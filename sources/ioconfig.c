@@ -33,13 +33,13 @@ void iocfg_i_ecf(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTD_Bit7 = value;
+ WRITEBIT(PORTD, PD7, value);
 #else
- PORTD_Bit7 = !(value);
+ WRITEBIT(PORTD, PD7, !(value));
 #endif
  DDRD |= _BV(DDD7);
 #else         /*SECU-3*/
- PORTB_Bit1 = value;
+ WRITEBIT(PORTB, PB1, value);
  DDRB |= _BV(DDB1);
 #endif
 }
@@ -48,12 +48,12 @@ void iocfg_s_ecf(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTD_Bit7 = value;
+ WRITEBIT(PORTD, PD7, value);
 #else
- PORTD_Bit7 = !(value);
+ WRITEBIT(PORTD, PD7, !(value));
 #endif
 #else         /*SECU-3*/
- PORTB_Bit1 = value;
+ WRITEBIT(PORTB, PB1, value);
 #endif
 }
 
@@ -61,13 +61,13 @@ void iocfg_i_st_block(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTB_Bit1 = value;
+ WRITEBIT(PORTB, PB1, value);
 #else
- PORTB_Bit1 = !(value);
+ WRITEBIT(PORTB, PB1, !(value));
 #endif
  DDRB |= _BV(DDB1);
 #else         /*SECU-3*/
- PORTD_Bit7 = !(value);
+ WRITEBIT(PORTD, PD7, !(value));
  DDRD |= _BV(DDD7);
 #endif
 }
@@ -76,81 +76,81 @@ void iocfg_s_st_block(uint8_t value)
 {
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTB_Bit1 = value;
+ WRITEBIT(PORTB, PB1, value);
 #else
- PORTB_Bit1 = !(value);
+ WRITEBIT(PORTB, PB1, !(value));
 #endif
 #else         /*SECU-3*/
- PORTD_Bit7 = !(value);
+ WRITEBIT(PORTD, PD7, !(value));
 #endif
 }
 
 void iocfg_i_ign_out3(uint8_t value)
 {
- PORTC_Bit0 = value;
+ WRITEBIT(PORTC, PC0, value);
  DDRC |= _BV(DDC0);
 }
 
 void iocfg_s_ign_out3(uint8_t value)
 {
- PORTC_Bit0 = value;
+ WRITEBIT(PORTC, PC0, value);
 }
 
 void iocfg_i_ign_out4(uint8_t value)
 {
- PORTC_Bit1 = value;
+ WRITEBIT(PORTC, PC1, value);
  DDRC |= _BV(DDC1);
 }
 
 void iocfg_s_ign_out4(uint8_t value)
 {
- PORTC_Bit1 = value;
+ WRITEBIT(PORTC, PC1, value);
 }
 
 #ifdef SECU3T
 void iocfg_i_add_io1(uint8_t value)
 {
- PORTC_Bit5 = value;
+ WRITEBIT(PORTC, PC5, value);
  DDRC |= _BV(DDC5);
 }
 
 void iocfg_s_add_io1(uint8_t value)
 {
- PORTC_Bit5 = value;
+ WRITEBIT(PORTC, PC5, value);
 }
 
 void iocfg_i_add_io2(uint8_t value)
 {
- PORTA_Bit4 = value;
+ WRITEBIT(PORTA, PA4, value);
  DDRA |= _BV(DDA4);
 }
 
 void iocfg_s_add_io2(uint8_t value)
 {
- PORTA_Bit4 = value;
+ WRITEBIT(PORTA, PA4, value);
 }
 #endif
 
 void iocfg_i_ie(uint8_t value)
 {
- PORTB_Bit0 = value;
+ WRITEBIT(PORTB, PB0, value);
  DDRB |= _BV(DDB0);
 }
 
 void iocfg_s_ie(uint8_t value)
 {
- PORTB_Bit0 = value;
+ WRITEBIT(PORTB, PB0, value);
 }
 
 void iocfg_i_fe(uint8_t value)
 {
- PORTC_Bit7 = value;
+ WRITEBIT(PORTC, PC7, value);
  DDRC |= _BV(DDC7);
 }
 
 void iocfg_s_fe(uint8_t value)
 {
- PORTC_Bit7 = value;
+ WRITEBIT(PORTC, PC7, value);
 }
 
 void iocfg_s_stub(uint8_t nil)
@@ -161,22 +161,22 @@ void iocfg_s_stub(uint8_t nil)
 //Following I/Os can not be remapped
 void iocfg_i_ign_out1(uint8_t value)
 {
- PORTD_Bit4 = value;
+ WRITEBIT(PORTD, PD4, value);
  DDRD |= _BV(DDD4);
 }
 
 void iocfg_i_ign_out2(uint8_t value)
 {
- PORTD_Bit5 = value;
+ WRITEBIT(PORTD, PD5, value);
  DDRD |= _BV(DDD5);
 }
 
 void iocfg_s_ign_out1(uint8_t value)
 {
- PORTD_Bit4 = value;
+ WRITEBIT(PORTD, PD4, value);
 }
 
 void iocfg_s_ign_out2(uint8_t value)
 {
- PORTD_Bit5 = value;
+ WRITEBIT(PORTD, PD5, value);
 }

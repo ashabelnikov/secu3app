@@ -55,13 +55,13 @@
 #define KSP_PRESCALER_4MHZ     0x00   //!< code for setup prescaler (4mHz crystal)
 #define KSP_PRESCALER_16MHZ    0x0C   //!< code for setup prescaler (16mHz crystal)
 
-#define KSP_CS PORTB_Bit4             //!< SS controls chip selection
+#define SET_KSP_CS(v) WRITEBIT(PORTB, PB4, v) //!< SS controls chip selection
 #ifdef SECU3T /*SECU-3T*/
- #define KSP_INTHOLD PORTC_Bit4       //!< Switches between integration/hold modes
+ #define SET_KSP_INTHOLD(v) WRITEBIT(PORTC, PC4, v) //!< Switches between integration/hold modes
 #else         /*SECU-3*/
- #define KSP_INTHOLD PORTD_Bit3
+ #define SET_KSP_INTHOLD(v) WRITEBIT(PORTD, PD3, v)
 #endif
-#define KSP_TEST PORTB_Bit3           //!< Switches chip into diagnostic mode
+#define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode
 
 //4 and 16 mHz crystals can be used (4mHz is default value)
 #if defined(Z1_CRYSTAL_16MHZ) | defined(SECU3T)
@@ -90,15 +90,15 @@ kspstate_t ksp;
 
 //For work with hardware part of SPI
 /**Initialization of SPI in master mode */
-void spi_master_init(void);
+static void spi_master_init(void);
 /**Transmit single byte via SPI
  * \param i_byte byte to transmit
  */
-void spi_master_transmit(uint8_t i_byte);
+static void spi_master_transmit(uint8_t i_byte);
 
 void knock_set_integration_mode(uint8_t mode)
 {
- KSP_INTHOLD = mode;
+ SET_KSP_INTHOLD(mode);
 }
 
 uint8_t knock_module_initialize(void)
@@ -112,26 +112,26 @@ uint8_t knock_module_initialize(void)
  _DISABLE_INTERRUPT();
 
  //Setting HOLD mode for integrator and "Run" mode for chip at all.
- KSP_TEST = 1;
- KSP_INTHOLD = KNOCK_INTMODE_HOLD;
- KSP_CS = 1;
+ SET_KSP_TEST(1);
+ SET_KSP_INTHOLD(KNOCK_INTMODE_HOLD);
+ SET_KSP_CS(1);
 
  spi_master_init();
  ksp.ksp_interrupt_state = 0; //init state machine
  ksp.ksp_error = 0;
 
  //set prescaler first
- KSP_CS = 0;
+ SET_KSP_CS(0);
  spi_master_transmit(init_data[0]);
- KSP_CS = 1;
+ SET_KSP_CS(1);
 
  //Setting SO terminal active and perform initialization. For each parameter perform
  //checking for response and correcntess of received data.
  for(i = 0; i < 2; ++i)
  {
-  KSP_CS = 0;
+  SET_KSP_CS(0);
   spi_master_transmit(init_data[i]);
-  KSP_CS = 1;
+  SET_KSP_CS(1);
   response = SPDR;
   if (response!=init_data[i])
   {
@@ -146,7 +146,7 @@ uint8_t knock_module_initialize(void)
 }
 
 //Initializes SPI in master mode
-void spi_master_init(void)
+static void spi_master_init(void)
 {
  _BEGIN_ATOMIC_BLOCK();
  // enable SPI, master, clock = fck/16, data on falling edge of SCK
@@ -156,7 +156,7 @@ void spi_master_init(void)
 
 //Sends one byte via SPI
 //i_byte - byte for sending
-void spi_master_transmit(uint8_t i_byte)
+static void spi_master_transmit(uint8_t i_byte)
 {
  _NO_OPERATION();
  _NO_OPERATION();
@@ -173,7 +173,7 @@ void knock_start_settings_latching(void)
  if (ksp.ksp_interrupt_state)
   ksp.ksp_error = 1;
 
- KSP_CS = 0;
+ SET_KSP_CS(0);
  ksp.ksp_interrupt_state = 1;
  SPDR = ksp.ksp_last_word = ksp.ksp_bpf;
  //enable interrupt, sending of the remaining data will be completed in
@@ -232,7 +232,7 @@ ISR(SPI_STC_vect)
  uint8_t t = SPDR;
  //signal processor requires transition of CS into high level after each sent
  //byte, at least for 200ns
- KSP_CS = 1;
+ SET_KSP_CS(1);
 
  _ENABLE_INTERRUPT();
 
@@ -242,7 +242,7 @@ ISR(SPI_STC_vect)
    break;
 
   case 1: //BPF loaded
-   KSP_CS = 0;
+   SET_KSP_CS(0);
    ksp.ksp_interrupt_state = 2;
    if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;
@@ -250,7 +250,7 @@ ISR(SPI_STC_vect)
    break;
 
   case 2: //Gain loaded
-   KSP_CS = 0;
+   SET_KSP_CS(0);
    ksp.ksp_interrupt_state = 3;
    if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;
@@ -267,7 +267,7 @@ ISR(SPI_STC_vect)
    break;
 #else /*SECU-3T*/
   case 3: //Int.Time loaded
-   KSP_CS = 0;
+   SET_KSP_CS(0);
    ksp.ksp_interrupt_state = 4;
    if (t!=ksp.ksp_last_word)
     ksp.ksp_error = 1;

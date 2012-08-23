@@ -136,46 +136,46 @@ void init_digital_outputs(void)
  */
 void set_outputs(uint16_t o)
 {
- PORTD_Bit4 = !!(o & _OBV(0));  //IGN_OUT1
- PORTD_Bit5 = !!(o & _OBV(1));  //IGN_OUT2
- PORTC_Bit0 = !!(o & _OBV(2));  //IGN_OUT3
- PORTC_Bit1 = !!(o & _OBV(3));  //IGN_OUT4
+ WRITEBIT(PORTD, PD4, (o & _OBV(0)));  //IGN_OUT1
+ WRITEBIT(PORTD, PD5, (o & _OBV(1)));  //IGN_OUT2
+ WRITEBIT(PORTC, PC0, (o & _OBV(2)));  //IGN_OUT3
+ WRITEBIT(PORTC, PC1, (o & _OBV(3)));  //IGN_OUT4
 #ifdef SECU3T
- PORTC_Bit5 = !!(o & _OBV(4));  //ADD_IO1
- PORTA_Bit4 = !!(o & _OBV(5));  //ADD_IO2
+ WRITEBIT(PORTC, PC5, (o & _OBV(4)));  //ADD_IO1
+ WRITEBIT(PORTA, PA4, (o & _OBV(5)));  //ADD_IO2
 #endif
- PORTB_Bit0 = !!(o & _OBV(6));  //IE
- PORTC_Bit7 = !!(o & _OBV(7));  //FE
+ WRITEBIT(PORTB, PB0, (o & _OBV(6)));  //IE
+ WRITEBIT(PORTC, PC7, (o & _OBV(7)));  //FE
 
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTD_Bit7 = !!(o & _OBV(8));  //ECF
+ WRITEBIT(PORTD, PD7, (o & _OBV(8)));  //ECF
 #else
- PORTD_Bit7 = !(o & _OBV(8));
+ WRITEBIT(PORTD, PD7,!(o & _OBV(8)));
 #endif
 #else         /*SECU-3*/
- PORTB_Bit1 = !!(o & _OBV(8));
+ WRITEBIT(PORTB, PB1, (o & _OBV(8)));
 #endif
 
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTB_Bit2 = !!(o & _OBV(9));  //CE
+ WRITEBIT(PORTB, PB2, (o & _OBV(9)));  //CE
 #else
- PORTB_Bit2 = !(o & _OBV(9));
+ WRITEBIT(PORTB, PB2,!(o & _OBV(9)));
 #endif
 #else         /*SECU-3*/
- PORTB_Bit2 = !!(o & _OBV(9));
+ WRITEBIT(PORTB, PB2, (o & _OBV(9)));
 #endif
 
  //ST_BLOCK
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- PORTB_Bit1 = !!(o & _OBV(10)); //ST_BLOCK
+ WRITEBIT(PORTB, PB1, (o & _OBV(10))); //ST_BLOCK
 #else
- PORTB_Bit1 = !(o & _OBV(10));
+ WRITEBIT(PORTB, PB1,!(o & _OBV(10)));
 #endif
 #else         /*SECU-3*/
- PORTD_Bit7 = !(o & _OBV(10));
+ WRITEBIT(PORTD, PD7,!(o & _OBV(10)));
 #endif
 }
 
@@ -201,13 +201,13 @@ void init_digital_inputs(void)
 uint8_t get_inputs(void)
 {
  //GAS_V, CKPS, REF_S, PS
- uint8_t i = _IBV(PINC_Bit6, 0) | _IBV(PIND_Bit6, 1) | _IBV(PIND_Bit2, 2) |
+ uint8_t i = _IBV((!!CHECKBIT(PINC, PINC6)), 0) | _IBV((!!CHECKBIT(PIND, PIND6)), 1) | _IBV((!!CHECKBIT(PIND, PIND2)), 2) |
 #ifdef SECU3T
-             _IBV(PIND_Bit3, 3) |
+             _IBV((!!CHECKBIT(PIND, PIND3)), 3) |
 #else  /*SECU-3*/
-             _IBV(PINC_Bit4, 3) |
+             _IBV((!!CHECKBIT(PINC, PINC4)), 3) |
 #endif
-             _IBV(PINC_Bit3, 4) | _IBV(PINC_Bit2, 5);  //BL jmp, DE jmp
+             _IBV((!!CHECKBIT(PINC, PINC3)), 4) | _IBV((!!CHECKBIT(PINC, PINC2)), 5);  //BL jmp, DE jmp
  return i;
 }
 

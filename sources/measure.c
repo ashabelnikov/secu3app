@@ -29,21 +29,22 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "adc.h"
+#include "bitmask.h"
 #include "funconv.h"    //thermistor_lookup()
 #include "magnitude.h"
 #include "measure.h"
 #include "secu3.h"
 
 /**Reads state of gas valve (считывает состояние газового клапана) */
-#define GET_GAS_VALVE_STATE(s) (PINC_Bit6)
+#define GET_GAS_VALVE_STATE(s) (CHECKBIT(PINC, PINC6) > 0)
 
 /**Reads state of throttle gate (only the value, without inversion)
  * считывает состояние дроссельной заслонки (только значение, без инверсии)
  */
 #ifdef SECU3T  /*SECU-3T*/
- #define GET_THROTTLE_GATE_STATE() (PINA_Bit7)
+ #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
 #else          /*SECU-3*/
- #define GET_THROTTLE_GATE_STATE() (PINC_Bit5)
+ #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINC, PINC5) > 0)
 #endif
 
 /**Number of values for averaging of RPM for tachometer

@@ -79,20 +79,17 @@
  * Используется для компенсации времени. */
 #define COMPA_VECT_DELAY 2
 
-/** Flags */
-typedef struct
-{
- uint8_t  ckps_error_flag:1;                 //!< CKP error flag, set in the CKP's interrupt, reset after processing (признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки)
- uint8_t  ckps_is_valid_half_turn_period:1;  //!< used to indicate that measured period is valid (actually measured)
- uint8_t  ckps_is_synchronized:1;            //!< indicates that synchronization has been completed (missing teeth found)
- uint8_t  ckps_new_engine_cycle_happen:1;    //!< flag for synchronization with rotation (флаг синхронизации с вращением)
- uint8_t  ckps_use_knock_channel:1;          //!< flag which indicates using of knock channel (признак использования канала детонации)
- uint8_t  ckps_need_to_set_channel:1;        //!< indicates that it is necessary to set channel
+// Flags (see flags variable)
+#define F_ERROR     0                 //!< CKP error flag, set in the CKP's interrupt, reset after processing (признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки) 
+#define F_VHTPER    1                 //!< used to indicate that measured period is valid (actually measured)
+#define F_ISSYNC    2                 //!< indicates that synchronization has been completed (missing teeth found)
+#define F_STROKE    3                 //!< flag for synchronization with rotation (флаг синхронизации с вращением)
+#define F_USEKNK    4                 //!< flag which indicates using of knock channel (признак использования канала детонации)
+#define F_NTSCHA    5                 //!< indicates that it is necessary to set channel
 #ifdef DWELL_CONTROL
- uint8_t  ckps_need_to_set_channel_b:1;      //!< Indicates that it is necessary to set channel (COMPB)
+ #define F_NTSCHB   6                 //!< Indicates that it is necessary to set channel (COMPB) 
 #endif
- uint8_t  ckps_ign_enabled:1;                //!< Ignition enabled/disabled
-}ckpsflags_t;
+#define F_IGNIEN    7                 //!< Ignition enabled/disabled
 
 /** State variables */
 typedef struct
@@ -188,8 +185,8 @@ typedef struct
 ckpsstate_t ckps;                         //!< instance of state variables
 chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's state variables
 
-/** Arrange in the free I/O registers (размещаем в свободных регистрах ввода/вывода) */
-#define flags IOSPACEVAR(ckpsflags_t, TWAR)  //note: may be not effective on other MCUs
+/** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) */
+#define flags TWAR  //note: may be not effective on other MCUs
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
 #ifdef __ICCAVR__
@@ -217,7 +214,7 @@ void ckps_init_state_variables(void)
  _BEGIN_ATOMIC_BLOCK();
  ckps.cr_acc_time = 0;
  ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
- flags->ckps_need_to_set_channel_b = 0;
+ CLEARBIT(flags, F_NTSCHB);
 #endif
 
  ckps.cog = ckps.cog360 = 0;
@@ -229,10 +226,11 @@ void ckps_init_state_variables(void)
 #ifdef PHASED_IGNITION
  ckps.cam_is_synchronized = 0;
 #endif
- flags->ckps_need_to_set_channel = 0;
- flags->ckps_new_engine_cycle_happen = 0;
- flags->ckps_is_synchronized = 0;
- flags->ckps_ign_enabled = 1;
+ CLEARBIT(flags, F_NTSCHA);
+ CLEARBIT(flags, F_STROKE);
+ CLEARBIT(flags, F_ISSYNC);
+ SETBIT(flags, F_IGNIEN);
+
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
 #ifdef STROBOSCOPE
  ckps.strobe = 0;
@@ -244,7 +242,7 @@ void ckps_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
  ckps_init_state_variables();
- flags->ckps_error_flag = 0;
+ CLEARBIT(flags, F_ERROR);
 
  //Compare channels do not connected to lines of ports (normal port mode)
  //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
@@ -326,7 +324,7 @@ void ckps_set_edge_type(uint8_t edge_type)
  * Ensures that tooth number will be in the allowed range.
  * Tooth number should not be greater than cogs number * 2 or less than zero
  */
-uint16_t _normalize_tn(int16_t i_tn)
+static uint16_t _normalize_tn(int16_t i_tn)
 {
  if (i_tn > (int16_t)ckps.wheel_cogs_num2)
   return i_tn - (int16_t)ckps.wheel_cogs_num2;
@@ -375,25 +373,25 @@ void ckps_set_acc_time(uint16_t i_acc_time)
 
 uint8_t ckps_is_error(void)
 {
- return flags->ckps_error_flag;
+ return CHECKBIT(flags, F_ERROR) > 0;
 }
 
 void ckps_reset_error(void)
 {
- flags->ckps_error_flag = 0;
+ CLEARBIT(flags, F_ERROR);
 }
 
 void ckps_use_knock_channel(uint8_t use_knock_channel)
 {
- flags->ckps_use_knock_channel = use_knock_channel;
+ WRITEBIT(flags, F_USEKNK, use_knock_channel);
 }
 
 uint8_t ckps_is_cycle_cutover_r()
 {
  uint8_t result;
  _BEGIN_ATOMIC_BLOCK();
- result = flags->ckps_new_engine_cycle_happen;
- flags->ckps_new_engine_cycle_happen = 0;
+ result = CHECKBIT(flags, F_STROKE) > 0;
+ CLEARBIT(flags, F_STROKE);
  _END_ATOMIC_BLOCK();
  return result;
 }
@@ -418,7 +416,7 @@ uint8_t ckps_is_cog_changed(void)
 /** Get value of I/O callback by index
  * \param index Index of callback
  */
-fnptr_t get_callback(uint8_t index)
+static fnptr_t get_callback(uint8_t index)
 {
  if (0 == index)
   return (fnptr_t)iocfg_s_ign_out1;
@@ -430,7 +428,7 @@ fnptr_t get_callback(uint8_t index)
 
 #ifndef PHASED_IGNITION
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
-void set_channels_ss(void)
+static void set_channels_ss(void)
 {
  uint8_t _t, i = 0, chan = ckps.chan_number / 2;
  for(; i < chan; ++i)
@@ -447,7 +445,7 @@ void set_channels_ss(void)
 #else
 
 /**Tune channels' I/O for full sequential ignition mode */
-void set_channels_fs(uint8_t fs_mode)
+static void set_channels_fs(uint8_t fs_mode)
 {
  uint8_t _t, i = 0, ch2 = fs_mode ? 0 : ckps.chan_number / 2, iss;
  for(; i < ckps.chan_number; ++i)
@@ -505,7 +503,7 @@ void ckps_set_knock_window(int16_t begin, int16_t end)
 
 void ckps_enable_ignition(uint8_t i_cutoff)
 {
- flags->ckps_ign_enabled = i_cutoff;
+ WRITEBIT(flags, F_IGNIEN, i_cutoff);
 }
 
 void ckps_set_merge_outs(uint8_t i_merge)
@@ -574,7 +572,7 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 INLINE
 void turn_off_ignition_channel(uint8_t i_channel)
 {
- if (!flags->ckps_ign_enabled)
+ if (!CHECKBIT(flags, F_IGNIEN))
   return; //ignition disabled
  //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes 
  //the igniter go to the regime of energy accumulation
@@ -663,7 +661,7 @@ ISR(TIMER1_COMPA_vect)
  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
  ckps.channel_mode_b&= ckps.chan_mask;
  ckps.add_period_taken = 0;
- flags->ckps_need_to_set_channel_b = 1;
+ SETBIT(flags, F_NTSCHB);
 
  //We remembered value of TCNT1 at the top of of this function. But input capture event
  //may occur when interrupts were already disabled (by hardware) but value of timer is still
@@ -716,14 +714,12 @@ void set_timer0(uint16_t value)
  * (Вспомогательная функция, используется во время пуска)
  * \return 1 when synchronization is finished, othrewise 0 (1 когда синхронизация окончена, иначе 0)
  */
-uint8_t sync_at_startup(void)
+static uint8_t sync_at_startup(void)
 {
  switch(ckps.starting_mode)
  {
   case 0: //skip certain number of teeth (пропуск определенного кол-ва зубьев)
-   /////////////////////////////////////////
-   flags->ckps_is_valid_half_turn_period = 0;
-   /////////////////////////////////////////
+   CLEARBIT(flags, F_VHTPER);
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
     ckps.starting_mode = 1;
    break;
@@ -752,7 +748,7 @@ uint8_t sync_at_startup(void)
 #endif
    ) 
    {
-    flags->ckps_is_synchronized = 1;
+    SETBIT(flags, F_ISSYNC);
     ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
     ckps.cog = ckps.cog360 = 1; //first tooth (1-й зуб)
     return 1; //finish process of synchronization (конец процесса синхронизации)
@@ -768,7 +764,7 @@ uint8_t sync_at_startup(void)
 /**This procedure called for all teeth (including recovered teeth)
  * Процедура. Вызывается для всех зубьев шкива (включительно с восстановленными)
  */
-void process_ckps_cogs(void)
+static void process_ckps_cogs(void)
 {
  uint8_t i, timsk_sv = TIMSK;
 
@@ -801,12 +797,12 @@ void process_ckps_cogs(void)
   ckps.acc_delay+=((int32_t)ckps.period_curr - ckps.period_saved);
 
   //Do we have to set COMPB ? (We have to set COMPB if less than 2 periods remain)
-  if (flags->ckps_need_to_set_channel_b && ckps.acc_delay <= (ckps.period_curr << 1))
+  if (CHECKBIT(flags, F_NTSCHB) && ckps.acc_delay <= (ckps.period_curr << 1))
   {
    OCR1B = GetICR() + ckps.acc_delay + ((int32_t)ckps.period_curr - ckps.period_saved);
    TIFR = _BV(OCF1B);
    timsk_sv|= _BV(OCIE1B);
-   flags->ckps_need_to_set_channel_b = 0; // To avoid entering into setup mode (чтобы не войти в режим настройки ещё раз)
+   CLEARBIT(flags, F_NTSCHB); // To avoid entering into setup mode (чтобы не войти в режим настройки ещё раз)
   }
   ckps.acc_delay-=ckps.period_curr;
  }
@@ -816,7 +812,7 @@ void process_ckps_cogs(void)
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
-  if (flags->ckps_use_knock_channel)
+  if (CHECKBIT(flags, F_USEKNK))
   {
    //start listening a detonation (opening the window)
    //начинаем слушать детонацию (открытие окна)
@@ -839,7 +835,7 @@ void process_ckps_cogs(void)
   if (ckps.cog == chanstate[i].cogs_latch)
   {
    ckps.channel_mode = (i & ckps.chan_mask); //remember number of channel (запоминаем номер канала)
-   flags->ckps_need_to_set_channel = 1;      //establish an indication that needed to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
+   SETBIT(flags, F_NTSCHA);                  //establish an indication that it is need to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
    ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
@@ -861,16 +857,14 @@ void process_ckps_cogs(void)
   {
    //if it was overflow, then set the maximum possible time
    //если было переполнение то устанавливаем максимально возможное время
-   if (((ckps.period_curr > 1250) || !flags->ckps_is_valid_half_turn_period))
+   if (((ckps.period_curr > 1250) || !CHECKBIT(flags, F_VHTPER)))
     ckps.half_turn_period = 0xFFFF;
    else
     ckps.half_turn_period = (GetICR() - ckps.measure_start_value);
 
    ckps.measure_start_value = GetICR();
-   flags->ckps_is_valid_half_turn_period = 1;
-   /////////////////////////////////////////
-   flags->ckps_new_engine_cycle_happen = 1; //set the cycle-synchronozation event (устанавливаем событие цикловой синхронизации)
-   /////////////////////////////////////////
+   SETBIT(flags, F_VHTPER);
+   SETBIT(flags, F_STROKE); //set the cycle-synchronozation event (устанавливаем событие цикловой синхронизации)
   }
 
 #ifdef HALL_OUTPUT
@@ -885,7 +879,7 @@ void process_ckps_cogs(void)
 
  //Preparing to start the ignition for the current channel (if the right moment became)
  //подготовка к запуску зажигания для текущего канала (если наступил нужный момент)
- if (flags->ckps_need_to_set_channel && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
+ if (CHECKBIT(flags, F_NTSCHA) && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
  {
   uint16_t diff = ckps.current_angle - ckps.advance_angle;
   if (diff <= (ckps.degrees_per_cog << 1))
@@ -898,8 +892,8 @@ void process_ckps_cogs(void)
    else
     OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
    TIFR = _BV(OCF1A);
-   flags->ckps_need_to_set_channel = 0; // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
-   timsk_sv|= _BV(OCIE1A); //enable Compare A interrupt (разрешаем прерывание)
+   CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
+   timsk_sv|= _BV(OCIE1A);    // enable Compare A interrupt (разрешаем прерывание)
   }
  }
 
@@ -982,10 +976,10 @@ ISR(TIMER1_CAPT_vect)
  //the memory of previous periods. Then look for missing teeth.
  //при старте двигателя, пропускаем определенное кол-во зубьев для инициализации
  //памяти предыдущих периодов. Затем ищем синхрометку.
- if (!flags->ckps_is_synchronized)
+ if (!CHECKBIT(flags, F_ISSYNC))
  {
   if (sync_at_startup())
-   goto synchronized_enter;
+   goto sync_enter;
   return;
  }
 
@@ -1003,7 +997,7 @@ ISR(TIMER1_CAPT_vect)
  {
   if ((ckps.cog360 != ckps.wheel_cogs_nump1)) //also taking into account recovered teeth (учитываем также восстановленные зубья)
   {
-   flags->ckps_error_flag = 1; //ERROR
+   SETBIT(flags, F_ERROR); //ERROR
    ckps.cog = 1;
    //TODO: maybe we need to turn off full sequential mode
   }
@@ -1015,7 +1009,7 @@ ISR(TIMER1_CAPT_vect)
   ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
  }
 
-synchronized_enter:
+sync_enter:
  //If the last tooth before missing teeth, we begin the countdown for
  //the restoration of missing teeth, as the initial data using the last
  //value of inter-teeth period.

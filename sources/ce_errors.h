@@ -92,9 +92,9 @@ void ce_init_ports(void);
 #endif
 
 /**Turns on/off CE lamp (включает/выключает лампу Check Engine).*/
-#define ce_set_state(s) {PORTB_Bit2 = s;}
+#define ce_set_state(s) WRITEBIT(PORTB, PB2, s)
 
 /**Retrieves state of CE lamp (Получает состояние лампы CE). */
-#define ce_get_state() (PINB_Bit2)
+#define ce_get_state() (CHECKBIT(PINB, PINB2) > 0)
 
 #endif //_CE_ERRORS_H_

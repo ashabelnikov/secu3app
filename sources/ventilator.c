@@ -39,15 +39,15 @@
  */
 #ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
- #define COOLINGFAN_TURNON()  {PORTD_Bit7 = 1;}
- #define COOLINGFAN_TURNOFF() {PORTD_Bit7 = 0;}
+ #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
+ #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
 #else
- #define COOLINGFAN_TURNON()  {PORTD_Bit7 = 0;}
- #define COOLINGFAN_TURNOFF() {PORTD_Bit7 = 1;}
+ #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
+ #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
 #endif
 #else         /*SECU-3*/
- #define COOLINGFAN_TURNON()  {PORTB_Bit1 = 1;}
- #define COOLINGFAN_TURNOFF() {PORTB_Bit1 = 0;}
+ #define COOLINGFAN_TURNON()  SETBIT(PORTB, PB1)
+ #define COOLINGFAN_TURNOFF() CLEARBIT(PORTB, PB1)
 #endif
 
 /**Warning must be the same as another definition in vstimer.h!*/

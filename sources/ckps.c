@@ -91,6 +91,14 @@
 #endif
 #define F_IGNIEN    7                 //!< Ignition enabled/disabled
 
+//Additional flags (see flags2 variable)
+#ifdef DWELL_CONTROL
+ #define F_ADDPTK    0                //!< indicates that time between spark and next cog was taken into account
+#endif
+#ifdef PHASED_IGNITION
+ #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
+#endif
+
 /** State variables */
 typedef struct
 {
@@ -118,7 +126,6 @@ typedef struct
  uint32_t acc_delay;                  //!< delay between last ignition and next accumulation
  uint16_t tmrval_saved;               //!< value of timer at the moment of each spark
  uint16_t period_saved;               //!< inter-tooth period at the moment of each spark
- uint8_t  add_period_taken;           //!< indicates that time between spark and next cog was taken into account
 #endif
  volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
 #ifdef HALL_OUTPUT
@@ -126,9 +133,6 @@ typedef struct
  uint8_t  hop_duration;               //!< Hall output: duration of pulse in tooth of wheel
 #endif
 
-#ifdef PHASED_IGNITION
- uint8_t  cam_is_synchronized;        //!< Indicates that system has already obtained event from a cam sensor
-#endif
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
  volatile uint8_t wheel_cogs_nump1;   //!< wheel_cogs_num + 1
  volatile uint8_t wheel_cogs_numm1;   //!< wheel_cogs_num - 1
@@ -185,8 +189,11 @@ typedef struct
 ckpsstate_t ckps;                         //!< instance of state variables
 chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's state variables
 
-/** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) */
-#define flags TWAR  //note: may be not effective on other MCUs
+/** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
+ *  note: may be not effective on other MCUs or even case bugs! Be aware.
+ */
+#define flags  TWAR  
+#define flags2 TWSR  //only 2 bits are allowed to be used as R/W
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
 #ifdef __ICCAVR__
@@ -224,7 +231,7 @@ void ckps_init_state_variables(void)
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
 #ifdef PHASED_IGNITION
- ckps.cam_is_synchronized = 0;
+ CLEARBIT(flags2, F_CAMISS);
 #endif
  CLEARBIT(flags, F_NTSCHA);
  CLEARBIT(flags, F_STROKE);
@@ -660,7 +667,7 @@ ISR(TIMER1_COMPA_vect)
 
  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
  ckps.channel_mode_b&= ckps.chan_mask;
- ckps.add_period_taken = 0;
+ CLEARBIT(flags2, F_ADDPTK);
  SETBIT(flags, F_NTSCHB);
 
  //We remembered value of TCNT1 at the top of of this function. But input capture event
@@ -730,10 +737,10 @@ static uint8_t sync_at_startup(void)
    {
     cams_detect_edge();
     if (cams_is_event_r())
-     ckps.cam_is_synchronized = 1;
+     SETBIT(flags2, F_CAMISS);
    }
    else //cylinder number is even, cam synchronization will be performed later
-    ckps.cam_is_synchronized = 1;
+    SETBIT(flags2, F_CAMISS);
 #endif
 
    //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
@@ -744,7 +751,7 @@ static uint8_t sync_at_startup(void)
    (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
 #endif
 #ifdef PHASED_IGNITION
-   && ckps.cam_is_synchronized
+   && CHECKBIT(flags2, F_CAMISS)
 #endif
    ) 
    {
@@ -788,10 +795,10 @@ static void process_ckps_cogs(void)
   //We must take into account time elapsed between last spark and following tooth.
   //Because ICR1 can not be less than tmrval_saved we are using addition modulo 65535
   //to calculate difference (elapsed time).
-  if (!ckps.add_period_taken)
+  if (!CHECKBIT(flags2, F_ADDPTK))
   {
    ckps.acc_delay-=((uint16_t)(~ckps.tmrval_saved)) + 1 + GetICR();
-   ckps.add_period_taken = 1;
+   SETBIT(flags2, F_ADDPTK);
   }
   //Correct our prediction on each cog 
   ckps.acc_delay+=((int32_t)ckps.period_curr - ckps.period_saved);
@@ -933,19 +940,19 @@ static void process_ckps_cogs(void)
    ckps.cog+= ckps.wheel_cogs_num;
 
   //Turn on full sequential mode because Cam sensor is OK
-  if (!ckps.cam_is_synchronized)
+  if (!CHECKBIT(flags2, F_CAMISS))
   {
    set_channels_fs(1);
-   ckps.cam_is_synchronized = 1;
+   SETBIT(flags2, F_CAMISS);
   }
  }
  if (cams_is_error())
  {
   //Turn off full sequential mode because cam semsor is not OK
-  if (ckps.cam_is_synchronized)
+  if (CHECKBIT(flags2, F_CAMISS))
   {
    set_channels_fs(0); //<--valid only for engines with even number of cylinders
-   ckps.cam_is_synchronized = 0;
+   CLEARBIT(flags2, F_CAMISS);
   }
  }
 #endif

@@ -109,6 +109,16 @@ ISR(INT0_vect)
  camstate.vr_event = 1; //set event flag 
 //GICR&=~_BV(INT0);     //disable interrupt to improve noise immunity
 }
+
+void cams_vr_set_edge_type(uint8_t edge_type)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ if (edge_type)
+  MCUCR|= _BV(ISC00); //rising
+ else
+  MCUCR&= ~_BV(ISC00);//falling
+ _END_ATOMIC_BLOCK();
+}
 #endif //SECU3T
 #endif //defined(PHASE_SENSOR) || defined(SECU3T)
 

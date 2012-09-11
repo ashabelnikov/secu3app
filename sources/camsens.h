@@ -48,6 +48,11 @@ uint8_t cams_vr_is_event_r(void);
 // GICR|=_BV(INT0);
 //}
 
+/** Set edge type for VR input (Установка фронта для ДНО)
+ * \param edge_type 0 - falling (спадающий), 1 - rising (нарастающий)
+ */
+void cams_vr_set_edge_type(uint8_t edge_type);
+
 #endif //SECU3T
 
 #endif //defined(PHASE_SENSOR) || defined(SECU3T)

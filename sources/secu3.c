@@ -166,7 +166,7 @@ MAIN()
  //инициализируем UART
  uart_init(edat.param.uart_divisor);
 
- //initialization of cam module
+ //initialization of cam module, must precede ckps initialization
 #if defined(PHASE_SENSOR) || defined(SECU3T)
  cams_init_state();
 #endif
@@ -181,6 +181,9 @@ MAIN()
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
  ckps_set_cogs_num(edat.param.ckps_cogs_num, edat.param.ckps_miss_num);
  ckps_set_edge_type(edat.param.ckps_edge_type);
+#ifdef SECU3T
+ cams_vr_set_edge_type(edat.param.ref_s_edge_type); //REF_S edge (Фронт ДНО)
+#endif
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL
  ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);

@@ -49,6 +49,7 @@
 #include "measure.h"
 #include "params.h"
 #include "procuart.h"
+#include "pwrrelay.h"
 #include "secu3.h"
 #include "starter.h"
 #include "suspendop.h"
@@ -82,6 +83,9 @@ void control_engine_units(struct ecudata_t *d)
  //Controlling of electric fuel pump (Управление электробензонасосом)
  fuelpump_control(d);
 #endif
+
+ //power management
+ pwrrelay_control(d);
 }
 
 /**Initialization of variables and data structures 
@@ -128,6 +132,7 @@ MAIN()
  ce_init_ports();
  knock_init_ports();
  jumper_init_ports();
+ pwrrelay_init_ports();
 
  //если код программы испорчен - зажигаем СЕ
  if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))

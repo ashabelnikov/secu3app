@@ -221,13 +221,15 @@ typedef struct params_t
   uint8_t  ckps_cogs_num;                //!< number of crank wheel's teeth 
   uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
 
+  uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input (тип фронта ДНО)
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[32];
+  uint8_t  reserved[31];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

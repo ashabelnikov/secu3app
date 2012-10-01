@@ -40,27 +40,33 @@ void pwrrelay_init_ports(void)
 
 void pwrrelay_control(struct ecudata_t* d)
 {
- //this feature is disabled
+ //if this feature is disabled, then do nothing
  if (!IOCFG_CHECK(IOP_PWRRELAY))
   return;
 
  if (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5))
- { //ignition is off
+ {//ignition is off
 
   //We will wait while temperature is high only if temperature sensor is enabled
-  uint8_t temperature_ok = (d->param.tmp_use && IOCFG_CHECK(IOP_ECF)) ? 
-#ifdef COOLINGFAN_PWM  
-                           (d->sens.temperat <= (d->param.vent_on - TEMPERATURE_MAGNITUDE(2.0))) : 1;
-
-//todo: What when COOLINGFAN_PWM is used but PWM is disabled?
-
+  //and control of electric cooling fan is used.
+  uint8_t temperature_ok = 1;
+  if (d->param.tmp_use && IOCFG_CHECK(IOP_ECF))
+  {
+#ifdef COOLINGFAN_PWM
+   if (d->param.vent_pwm) //PWM is available and enabled
+    temperature_ok = (d->sens.temperat <= (d->param.vent_on - TEMPERATURE_MAGNITUDE(2.0)));
+   else //PWM is available, but disabled
+    temperature_ok = (d->sens.temperat <= (d->param.vent_off));    
 #else
-                           (d->sens.temperat <= (d->param.vent_off)) : 1;
+   //PWM is not available
+   temperature_ok = (d->sens.temperat <= (d->param.vent_off));
 #endif
+  }
 
   if (temperature_ok && eeprom_is_idle())
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
  }
 
  //TODO: eliminate CKPS error
+ //TODO: eliminate voltage error
 }

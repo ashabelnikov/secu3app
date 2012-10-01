@@ -129,9 +129,9 @@ void check(struct ecudata_t* d)
  else
   ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
 
- //checking voltqage
- // error if voltage < 4.5v
- if ( (d->sens.voltage_raw < ROUND(4.5 / ADC_DISCRETE)) ||
+ //checking voltage
+ // error if voltage < 4.5v, or voltage < 12v and RPM > 2500, or voltage > 16v
+ if (/*(d->sens.voltage_raw < ROUND(4.5 / ADC_DISCRETE)) ||*/
   (d->sens.voltage_raw < ROUND(12.0 / ADC_DISCRETE) && d->sens.inst_frq > 2500) ||
   (d->sens.voltage_raw > ROUND(16.0 / ADC_DISCRETE)) )
   ce_set_error(ECUERROR_VOLT_SENSOR_FAIL);

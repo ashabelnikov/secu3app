@@ -56,7 +56,7 @@ void pwrrelay_control(struct ecudata_t* d)
    if (d->param.vent_pwm) //PWM is available and enabled
     temperature_ok = (d->sens.temperat <= (d->param.vent_on - TEMPERATURE_MAGNITUDE(2.0)));
    else //PWM is available, but disabled
-    temperature_ok = (d->sens.temperat <= (d->param.vent_off));    
+    temperature_ok = (d->sens.temperat <= (d->param.vent_off));
 #else
    //PWM is not available
    temperature_ok = (d->sens.temperat <= (d->param.vent_off));

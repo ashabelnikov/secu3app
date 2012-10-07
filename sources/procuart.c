@@ -97,7 +97,7 @@ void process_uart_interface(struct ecudata_t* d)
      sop_set_operation(SOP_LOAD_TABLSET);
      _AB(d->op_actn_code, 0) = 0; //обработали
     }
-    if (_AB(d->op_actn_code, 0) == OPCODE_SAVE_TABLSET) //приняли команду сохранения сохранения набора таблиц для указанного типа топлива
+    if (_AB(d->op_actn_code, 0) == OPCODE_SAVE_TABLSET) //приняли команду сохранения набора таблиц для указанного типа топлива
     {
      sop_set_operation(SOP_SAVE_TABLSET);
      _AB(d->op_actn_code, 0) = 0; //обработали

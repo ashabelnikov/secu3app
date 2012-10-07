@@ -54,6 +54,7 @@
 #define   FWINFO_DAT   'y'   //!< used for transfering information about firmware
 #define   MISCEL_PAR   'z'   //!< miscellaneous parameters
 #define   EDITAB_PAR   '{'   //!< used for transferring of data for realtime tables editing
+#define   ATTTAB_PAR   '}'   //!< used for transferring of attenuator map (knock detection related)
 #define   DBGVAR_DAT   ':'   //!< for watching of firmware variables (used for debug purposes)
 
 #define   DIAGINP_DAT  '='   //!< diagnostics: send input values (analog & digital values)

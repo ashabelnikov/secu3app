@@ -108,7 +108,7 @@ PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 
 //--------вспомогательные функции дл€ построени€ пакетов-------------
 
-/**Appends sender's buffer by sequence of bytes from programm memory 
+/**Appends sender's buffer by sequence of bytes from program memory 
  * note! can NOT be used for binary data! */
 #define build_fs(src, size) \
 { \
@@ -154,6 +154,13 @@ static void build_i32h(uint32_t i)
 {
  build_i16h(i>>16);
  build_i16h(i);
+}
+
+/**Appends sender's buffer by sequence of bytes from program memory buffer
+ * can be used for binary data */
+static void build_fb(uint8_t _PGM *romBuffer, uint8_t size)
+{
+ while(size--) build_i8h(PGM_GET_BYTE(romBuffer++));
 }
 
 /**Appends sender's buffer by sequence of bytes from RAM buffer
@@ -472,6 +479,22 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
   }
 #endif
+
+  case ATTTAB_PAR:
+  {
+   //провер€ем чтобы размер таблицы был кратен 16
+#if (KC_ATTENUATOR_LOOKUP_TABLE_SIZE % 16)
+ #error "KC_ATTENUATOR_LOOKUP_TABLE_SIZE must be a number divisible by 16, if not, you have to change the code below!"
+#endif
+   static uint8_t tab_index = 0;
+   build_i8h(tab_index * 16);
+   build_fb(&fw_data.exdata.attenuator_table[tab_index * 16], 16);
+   if (tab_index >= (KC_ATTENUATOR_LOOKUP_TABLE_SIZE / 16) - 1)
+    tab_index = 0;
+   else
+    ++tab_index; 
+   break;
+  }
 
 #ifdef DEBUG_VARIABLES
   case DBGVAR_DAT:

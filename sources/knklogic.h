@@ -50,7 +50,7 @@ uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs);
  */
 void knklogic_init(retard_state_t* p_rs);
 
-/** Called in each work cycle (вызывается в каждом рабочем цикле)
+/** Called in each work stroke (вызывается в каждом рабочем такте)
  * \param d pointer to ECU data structure
  * \param p_rs poiter to state variables used by algorithm
  */

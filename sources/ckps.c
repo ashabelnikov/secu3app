@@ -178,7 +178,7 @@ typedef struct
 
  /** Determines number of tooth (relatively to TDC) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
  volatile uint16_t cogs_latch;
- /** Determines number of tooth at which measurement of rotation period is performed (определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. циклами)) */
+ /** Determines number of tooth at which measurement of rotation period is performed (определяет номер зуба на котором производится измерение периода вращения коленвала (между раб. тактами)) */
  volatile uint16_t cogs_btdc;
  /** Determines number of tooth at which phase selection window for knock detection is opened (определяет номер зуба на котором открывается окно фазовой селекции сигнала ДД (начало интегрирования)) */
  volatile uint16_t knock_wnd_begin;
@@ -297,7 +297,7 @@ void ckps_init_ports(void)
 #endif
 }
 
-//Calculation of instantaneous frequency of crankshaft rotation from the measured period between the cycles of the engine
+//Instantaneous frequency calculation of crankshaft rotation from the measured period between the engine strokes
 //(for example for 4-cylinder, 4-stroke it is 180°) 
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
 //Высчитывание мгновенной частоты вращения коленвала по измеренному периоду между тактами двигателя 
@@ -393,7 +393,7 @@ void ckps_use_knock_channel(uint8_t use_knock_channel)
  WRITEBIT(flags, F_USEKNK, use_knock_channel);
 }
 
-uint8_t ckps_is_cycle_cutover_r()
+uint8_t ckps_is_stroke_event_r()
 {
  uint8_t result;
  _BEGIN_ATOMIC_BLOCK();
@@ -835,9 +835,9 @@ static void process_ckps_cogs(void)
    }
   }
 
-  //for 66° before TDC (before working cycle) establish new advance angle to be actuated,
+  //for 66° before TDC (before working stroke) establish new advance angle to be actuated,
   //before this moment value was stored in a temporary buffer.
-  //за 66 градусов до в.м.т перед рабочим циклом устанавливаем новый УОЗ для реализации, УОЗ
+  //за 66 градусов до в.м.т перед рабочим тактом устанавливаем новый УОЗ для реализации, УОЗ
   //до этого хранился во временном буфере.
   if (ckps.cog == chanstate[i].cogs_latch)
   {
@@ -871,7 +871,7 @@ static void process_ckps_cogs(void)
 
    ckps.measure_start_value = GetICR();
    SETBIT(flags, F_VHTPER);
-   SETBIT(flags, F_STROKE); //set the cycle-synchronozation event (устанавливаем событие цикловой синхронизации)
+   SETBIT(flags, F_STROKE); //set the stroke-synchronozation event (устанавливаем событие тактовой синхронизации)
   }
 
 #ifdef HALL_OUTPUT

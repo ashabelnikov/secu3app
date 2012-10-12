@@ -105,11 +105,11 @@ uint8_t ckps_is_error(void);
 /** Reset detected errors */
 void ckps_reset_error(void);
 
-/**\return 1 if there was engine cycle and resets flag!
- * (эта функция возвращает 1 если был новый цикл зажигания и сразу сбрасывает событие!)
+/**\return 1 if there was engine stroke and reset flag!
+ * (эта функция возвращает 1 если был новый такт зажигания и сразу сбрасывает событие!)
  * \details Used to perform synchronization with rotation of crankshaft.
  */
-uint8_t ckps_is_cycle_cutover_r(void);
+uint8_t ckps_is_stroke_event_r(void);
 
 /** Initialization of state variables */
 void ckps_init_state_variables(void);

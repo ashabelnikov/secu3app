@@ -98,6 +98,7 @@
 #ifdef PHASED_IGNITION
  #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
 #endif
+#define F_CALTIM     2                //!< Indicates that time calculation is started before the spark
 
 /** State variables */
 typedef struct
@@ -193,7 +194,7 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
  *  note: may be not effective on other MCUs or even case bugs! Be aware.
  */
 #define flags  TWAR  
-#define flags2 TWSR  //only 2 bits are allowed to be used as R/W
+#define flags2 TWBR
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
 #ifdef __ICCAVR__
@@ -237,6 +238,7 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
+ CLEARBIT(flags2, F_CALTIM);
 
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
 #ifdef STROBOSCOPE
@@ -260,7 +262,7 @@ void ckps_init_state(void)
 
  //enable input capture and Compare A interrupts of timer 1, also overflow interrupt of timer 0
  //(разрешаем прерывание по захвату и сравнению А таймера 1, а также по переполнению таймера 0)
- TIMSK|= _BV(TICIE1)/*|_BV(OCIE1A)*/|_BV(TOIE0);
+ TIMSK|= _BV(TICIE1)|_BV(TOIE0);
  _END_ATOMIC_BLOCK();
 }
 
@@ -594,14 +596,14 @@ void turn_off_ignition_channel(uint8_t i_channel)
 /**Forces ignition spark if corresponding interrupt is pending*/
 #ifdef PHASED_IGNITION
 #define force_pending_spark() \
- if ((TIFR & _BV(OCF1A)) && (CKPS_CHANNEL_MODENA != ckps.channel_mode))\
+ if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM))\
  { \
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);\
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);\
  }
 #else
 #define force_pending_spark() \
- if ((TIFR & _BV(OCF1A)) && (CKPS_CHANNEL_MODENA != ckps.channel_mode))\
+ if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
 #endif
  
@@ -680,6 +682,7 @@ ISR(TIMER1_COMPA_vect)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
 #endif
 
+ CLEARBIT(flags2, F_CALTIM); //we already output the spark, so calculation of time is finished
  //-----------------------------------------------------
 #ifdef COOLINGFAN_PWM
  _DISABLE_INTERRUPT();
@@ -900,6 +903,7 @@ static void process_ckps_cogs(void)
     OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
    TIFR = _BV(OCF1A);
    CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
+   SETBIT(flags2, F_CALTIM);  // Set indication that we begin to calculate the time
    timsk_sv|= _BV(OCIE1A);    // enable Compare A interrupt (разрешаем прерывание)
   }
  }

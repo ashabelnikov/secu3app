@@ -38,14 +38,34 @@
  * speed up corresponding ISR
  */
 #ifdef SECU3T /*SECU-3T*/
+
 #ifdef REV9_BOARD
+#ifdef COOLINGFAN_PWM
+ #define REL_DUTY(duty) (PWM_STEPS - duty)
+ #define ECF_VAL(value) !(value)
+ #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
+ #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
+#else
+ #define ECF_VAL(value) (value)
+ #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
+ #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
+#endif
+#else //REV6
+#ifdef COOLINGFAN_PWM
+ #define REL_DUTY(duty) (PWM_STEPS - duty)
+ #define ECF_VAL(value) !(value)
  #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
 #else
+ #define ECF_VAL(value) (value)
  #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
 #endif
+#endif
+
 #else         /*SECU-3*/
+ #define REL_DUTY(duty) (duty)
+ #define ECF_VAL(value) (value)
  #define COOLINGFAN_TURNON()  SETBIT(PORTB, PB1)
  #define COOLINGFAN_TURNOFF() CLEARBIT(PORTB, PB1)
 #endif
@@ -64,7 +84,7 @@ volatile uint8_t pwm_duty;  //!< current duty value
 
 void vent_init_ports(void)
 {
- IOCFG_INIT(IOP_ECF, 0); //coolong fan is turned Off
+ IOCFG_INIT(IOP_ECF, ECF_VAL(0)); //coolong fan is turned Off
 }
 
 void vent_init_state(void)
@@ -131,18 +151,18 @@ void vent_control(struct ecudata_t *d)
  if (!d->param.tmp_use || !IOCFG_CHECK(IOP_ECF))
   return;
 
-#ifndef COOLINGFAN_PWM
+#ifndef COOLINGFAN_PWM //control cooling fan by using relay only
  if (d->sens.temperat >= d->param.vent_on)
   COOLINGFAN_TURNON();
  if (d->sens.temperat <= d->param.vent_off)
   COOLINGFAN_TURNOFF();
-#else //PWM mode
+#else //control cooling fan either by using relay or PWM
  if (!d->param.vent_pwm)
- {
+ { //relay
   if (d->sens.temperat >= d->param.vent_on)
-   vent_set_duty(PWM_STEPS);
+   vent_set_duty(REL_DUTY(PWM_STEPS));
   if (d->sens.temperat <= d->param.vent_off)
-   vent_set_duty(0);
+   vent_set_duty(REL_DUTY(0));
  }
  else
  {

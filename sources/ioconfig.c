@@ -180,3 +180,63 @@ void iocfg_s_ign_out2(uint8_t value)
 {
  WRITEBIT(PORTD, PD5, value);
 }
+
+void iocfg_i_ps(uint8_t value)
+{
+#ifdef SECU3T
+ WRITEBIT(PORTD, PD3, value);  //controlls pullup resistor
+ DDRD &= ~_BV(DDD3);           //input
+#else /*SECU-3*/
+ WRITEBIT(PORTC, PC4, value);
+ DDRC &= ~_BV(DDC4);
+#endif
+}
+
+uint8_t iocfg_g_ps(void)
+{
+#ifdef SECU3T
+ return !!CHECKBIT(PIND, PIND3);
+#else /*SECU-3*/
+ return !!CHECKBIT(PINC, PINC4);
+#endif
+}
+
+#ifdef SECU3T
+//value bits: xxxx xxoi
+//o - point than pullup resistor must be connected (1), or disconnected (0)
+//i - point than linked output mest be set to 1, or 0 (this bit applicable only for ADD_IOx lines)
+void iocfg_i_add_i1(uint8_t value)
+{
+ WRITEBIT(PORTA, PA6, (value & _BV(0))); //controlls pullup resistor
+ CLEARBIT(DDRA, DDA6);                   //input
+ WRITEBIT(PORTC, PC5, (value & _BV(1))); //set output value
+ DDRC |= _BV(DDC5);                      //output
+}
+
+uint8_t iocfg_g_add_i1(void)
+{
+ return !!CHECKBIT(PINA, PINA6);
+}
+
+//value bits: xxxx xxoi
+//o - point than pullup resistor must be connected (1), or disconnected (0)
+//i - point than linked output mest be set to 1, or 0 (this bit applicable only for ADD_IOx lines)
+void iocfg_i_add_i2(uint8_t value)
+{
+ WRITEBIT(PORTA, PA5, (value & _BV(0))); //controlls pullup resistor
+ CLEARBIT(DDRA, DDA5);                   //input
+ WRITEBIT(PORTA, PA4, (value & _BV(1))); //set output value
+ DDRA |= _BV(DDA4);                      //output
+}
+
+uint8_t iocfg_g_add_i2(void)
+{
+ return !!CHECKBIT(PINA, PINA5);
+}
+#endif
+
+uint8_t iocfg_g_stub(void)
+{
+ //this is a stub!
+ return 0;
+}

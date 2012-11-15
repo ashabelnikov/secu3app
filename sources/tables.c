@@ -40,6 +40,9 @@
  #define _FNC_SECU3T(a) (_FNC(iocfg_s_stub))
 #endif
 
+/**Helpful macro for creating of I/O remapping version number*/
+#define IOREMVER(maj, min) ((maj)<<4 | ((min) & 0xf))
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -52,30 +55,44 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //size of this structure
    sizeof(iorem_slots_t),
 
-   //A reserved byte
-   0,
+   //Version of this structure - 1.0
+   IOREMVER(1,0),
 
    //slots and plugs
    {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    0, 0   //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_ps),     //PS input initialization
+    _FNC(iocfg_i_add_i1), //ADD_IO1 input initialization
+    _FNC(iocfg_i_add_i2), //ADD_IO2 input initialization
+    0, 0, 0, 0, 0         //<-- zero means that these slots are not implemented in this firmware
    },
    {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    0, 0   //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_ps),     //PS input get value
+    _FNC(iocfg_g_add_i1), //ADD_IO1 input get value
+    _FNC(iocfg_g_add_i2), //ADD_IO2 input get value
+    0, 0, 0, 0, 0         //<-- zero means that these slots are not implemented in this firmware
    },
    {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+    _FNC(iocfg_i_ps), _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), 0,
+     0, 0, 0, 0,          //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
    {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
+    _FNC(iocfg_g_ps), _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), 0,
+     0, 0, 0, 0,          //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
-   _FNC(iocfg_s_stub), _FNC(0), //<-- stub, reserved
+   _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
   },
 
   /**32-bit config data*/

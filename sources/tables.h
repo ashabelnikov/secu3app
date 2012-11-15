@@ -241,20 +241,20 @@ typedef struct params_t
 
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
-#define IOREM_SLOTS 10                   //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS 16                   //!< Number of plugs used in I/O remapping
+#define IOREM_SLOTS 16                   //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS 32                   //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t
 {
  uint8_t size;                           //!< size of this structure
- uint8_t reserved;                       //!< a reserved byte
+ uint8_t version;                        //!< version of this structure
  fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
  fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
  fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
  fnptr_t s_stub;                         //!< special pointer used as stub
- fnptr_t reserved_ptr;                   //!< reserved
+ fnptr_t g_stub;                         //!< reserved
 }iorem_slots_t;
 
 /**Describes all the data residing directly in the code area.*/

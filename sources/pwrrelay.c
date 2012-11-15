@@ -36,15 +36,20 @@
 void pwrrelay_init_ports(void)
 {
  IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on (реле включено)
+ IOCFG_INIT(IOP_IGN, 1);      //init IGN input
 }
 
 void pwrrelay_control(struct ecudata_t* d)
 {
+ uint8_t pwrdown;
  //if this feature is disabled, then do nothing
  if (!IOCFG_CHECK(IOP_PWRRELAY))
   return;
 
- if (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5))
+ //if IGN input is not available, then we will check board voltage
+ pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
+
+ if (pwrdown)
  {//ignition is off
 
   //We will wait while temperature is high only if temperature sensor is enabled

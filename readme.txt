@@ -32,10 +32,6 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          дл€ индикации состо€ни€ клапана Ёѕ’’ используетс€ выход
                          блокировки стартера
 
-    INVERSE_IGN_OUTPUTS  Use for to invert ignition outputs
-                         дл€ инвертировани€ выходов управлени€ зажиганием
-
-
     DWELL_CONTROL        For direct controlling of dwell
                          дл€ пр€мого управлени€ накоплением энергии в катушках 
                          зажигани€

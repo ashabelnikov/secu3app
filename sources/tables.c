@@ -35,9 +35,11 @@
 
 /**Helpful macro used pointer conversions of functions which are available in SECU-3T*/
 #ifdef SECU3T
- #define _FNC_SECU3T(a) (_FNC(a))
+ #define _FNC_S_SECU3T(a) (_FNC(a))
+ #define _FNC_G_SECU3T(a) (_FNC(a))
 #else
- #define _FNC_SECU3T(a) (_FNC(iocfg_s_stub))
+ #define _FNC_S_SECU3T(a) (_FNC(iocfg_s_stub))
+ #define _FNC_G_SECU3T(a) (_FNC(iocfg_g_stub))
 #endif
 
 /**Helpful macro for creating of I/O remapping version number*/
@@ -59,33 +61,35 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    IOREMVER(1,0),
 
    //slots and plugs
-   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    _FNC(iocfg_i_ps),     //PS input initialization
-    _FNC(iocfg_i_add_i1), //ADD_IO1 input initialization
-    _FNC(iocfg_i_add_i2), //ADD_IO2 input initialization
-    0, 0, 0, 0, 0         //<-- zero means that these slots are not implemented in this firmware
+   {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
+    _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+    _FNC(iocfg_i_ps),              //PS input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i1), //ADD_IO1 input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i2), //ADD_IO2 input initialization
+    0, 0, 0                        //<-- zero means that these slots are not implemented in this firmware
    },
-   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    _FNC(iocfg_g_ps),     //PS input get value
-    _FNC(iocfg_g_add_i1), //ADD_IO1 input get value
-    _FNC(iocfg_g_add_i2), //ADD_IO2 input get value
-    0, 0, 0, 0, 0         //<-- zero means that these slots are not implemented in this firmware
+   {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
+    _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
+    _FNC(iocfg_g_ps),              //PS input get value
+    _FNC_G_SECU3T(iocfg_g_add_i1), //ADD_IO1 input get value
+    _FNC_G_SECU3T(iocfg_g_add_i2), //ADD_IO2 input get value
+    0, 0, 0                        //<-- zero means that these slots are not implemented in this firmware
    },
-   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    _FNC(iocfg_i_ps), _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), 0,
-     0, 0, 0, 0,          //<-- mapped to slots by default
+   {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
+    _FNC(iocfg_i_ie), _FNC(iocfg_i_fe), _FNC(iocfg_i_ps), _FNC_S_SECU3T(iocfg_i_add_i1),
+    _FNC_S_SECU3T(iocfg_i_add_i2), 0, 0, 0,          //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
-   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    _FNC(iocfg_g_ps), _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), 0,
-     0, 0, 0, 0,          //<-- mapped to slots by default
+   {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
+    _FNC(iocfg_s_ie), _FNC(iocfg_s_fe), _FNC(iocfg_g_ps), _FNC_G_SECU3T(iocfg_g_add_i1),
+    _FNC_G_SECU3T(iocfg_g_add_i2), 0, 0, 0,          //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -97,7 +101,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**32-bit config data*/
   _CBV32(COPT_ATMEGA16, 0) | _CBV32(COPT_ATMEGA32, 1) | _CBV32(COPT_ATMEGA64, 2) | _CBV32(COPT_ATMEGA128, 3) |
-  _CBV32(COPT_VPSEM, 4) | _CBV32(0/*not used*/, 5) | _CBV32(COPT_INVERSE_IGN_OUTPUTS, 6) | _CBV32(COPT_DWELL_CONTROL, 7) |
+  _CBV32(COPT_VPSEM, 4) | _CBV32(0/*not used*/, 5) | _CBV32(0/*not used*/, 6) | _CBV32(COPT_DWELL_CONTROL, 7) |
   _CBV32(COPT_COOLINGFAN_PWM, 8) | _CBV32(COPT_REALTIME_TABLES, 9) | _CBV32(COPT_ICCAVR_COMPILER, 10) | _CBV32(COPT_AVRGCC_COMPILER, 11) |
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |

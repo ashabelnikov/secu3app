@@ -38,39 +38,39 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 
 
 //List all I/O plugs
-#define IOP_ECF           0     //!< ECF             (output)
-#define IOP_ST_BLOCK      1     //!< ST_BLOCK        (output)
+#define IOP_IGN_OUT1      0     //!< IGN_OUT1        (output)
+#define IOP_IGN_OUT2      1     //!< IGN_OUT2        (output)
 #define IOP_IGN_OUT3      2     //!< IGN_OUT3        (output)
 #define IOP_IGN_OUT4      3     //!< IGN_OUT4        (output)
 #define IOP_ADD_IO1       4     //!< ADD_IO1         (output)  (applicable only in SECU-3T)
 #define IOP_ADD_IO2       5     //!< ADD_IO2         (output)  (applicable only in SECU-3T)
-#define IOP_IE            6     //!< IE              (output)
-#define IOP_FE            7     //!< FE              (output)
-#define IOP_PS            8     //!< PS              (input)
-#define IOP_ADD_I1        9     //!< ADD_IO1         (input)   (applicable only in SECU-3T)
-#define IOP_ADD_I2       10     //!< ADD_IO2         (input)   (applicable only in SECU-3T)
-#define IOP_RESERVED1    11     //!< reserved slot   ()
-#define IOP_RESERVED2    12     //!< reserved slot   ()
-#define IOP_RESERVED3    13     //!< reserved slot   ()
-#define IOP_RESERVED4    14     //!< reserved slot   ()
-#define IOP_RESERVED5    15     //!< reserved slot   ()
+#define IOP_ECF           6     //!< ECF             (output)
+#define IOP_ST_BLOCK      7     //!< ST_BLOCK        (output)
+#define IOP_IE            8     //!< IE              (output)
+#define IOP_FE            9     //!< FE              (output)
+#define IOP_PS           10     //!< PS              (input)
+#define IOP_ADD_I1       11     //!< ADD_IO1         (input)   (applicable only in SECU-3T)
+#define IOP_ADD_I2       12     //!< ADD_IO2         (input)   (applicable only in SECU-3T)
+#define IOP_RESERVED1    13     //!< reserved slot   ()
+#define IOP_RESERVED2    14     //!< reserved slot   ()
+#define IOP_RESERVED3    15     //!< reserved slot   ()
 //Next definitions correspond to plugs only
 #define IOP_FL_PUMP      16     //!< FL_PUMP         (output)
 #define IOP_HALL_OUT     17     //!< HALL_OUT        (output)
 #define IOP_STROBE       18     //!< STROBE          (output)
 #define IOP_PWRRELAY     19     //!< PWRRELAY        (output)
 #define IOP_IGN          20     //!< IGN             (input)
-#define IOP_RESERVED6    21     //!< reserved plug   ()
-#define IOP_RESERVED7    22     //!< reserved plug   ()
-#define IOP_RESERVED8    23     //!< reserved plug   ()
-#define IOP_RESERVED9    24     //!< reserved plug   ()
-#define IOP_RESERVED10   25     //!< reserved plug   ()
-#define IOP_RESERVED11   26     //!< reserved plug   ()
-#define IOP_RESERVED12   27     //!< reserved plug   ()
-#define IOP_RESERVED13   28     //!< reserved plug   ()
-#define IOP_RESERVED14   29     //!< reserved plug   ()
-#define IOP_RESERVED15   30     //!< reserved plug   ()
-#define IOP_RESERVED16   31     //!< reserved plug   ()
+#define IOP_RESERVED4    21     //!< reserved plug   ()
+#define IOP_RESERVED5    22     //!< reserved plug   ()
+#define IOP_RESERVED6    23     //!< reserved plug   ()
+#define IOP_RESERVED7    24     //!< reserved plug   ()
+#define IOP_RESERVED8    25     //!< reserved plug   ()
+#define IOP_RESERVED9    26     //!< reserved plug   ()
+#define IOP_RESERVED10   27     //!< reserved plug   ()
+#define IOP_RESERVED11   28     //!< reserved plug   ()
+#define IOP_RESERVED12   29     //!< reserved plug   ()
+#define IOP_RESERVED13   30     //!< reserved plug   ()
+#define IOP_RESERVED14   31     //!< reserved plug   ()
 
 //Wrap macro from port/pgmspace.h.
 #define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
@@ -105,10 +105,10 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOCFG_CB(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))
 
 //List all I/O functions. These functions must be used only inside tables.c
-void iocfg_i_ecf(uint8_t value);         //!< init ECF
-void iocfg_s_ecf(uint8_t value);         //!< set  ECF
-void iocfg_i_st_block(uint8_t value);    //!< init ST_BLOCK
-void iocfg_s_st_block(uint8_t value);    //!< set  ST_BLOCK
+void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1
+void iocfg_s_ign_out1(uint8_t value);    //!< set  IGN_OUT1
+void iocfg_i_ign_out2(uint8_t value);    //!< init IGN_OUT2
+void iocfg_s_ign_out2(uint8_t value);    //!< set  IGN_OUT2
 void iocfg_i_ign_out3(uint8_t value);    //!< init IGN_OUT3
 void iocfg_s_ign_out3(uint8_t value);    //!< set  IGN_OUT3
 void iocfg_i_ign_out4(uint8_t value);    //!< init IGN_OUT4
@@ -119,16 +119,15 @@ void iocfg_s_add_io1(uint8_t value);     //!< set  ADD_IO1 output  (applicable o
 void iocfg_i_add_io2(uint8_t value);     //!< init ADD_IO2 output  (applicable only in SECU-3T)
 void iocfg_s_add_io2(uint8_t value);     //!< set  ADD_IO2 output  (applicable only in SECU-3T)
 #endif
+void iocfg_i_ecf(uint8_t value);         //!< init ECF
+void iocfg_s_ecf(uint8_t value);         //!< set  ECF
+void iocfg_i_st_block(uint8_t value);    //!< init ST_BLOCK
+void iocfg_s_st_block(uint8_t value);    //!< set  ST_BLOCK
 void iocfg_i_ie(uint8_t value);          //!< init IE
 void iocfg_s_ie(uint8_t value);          //!< set  IE
 void iocfg_i_fe(uint8_t value);          //!< init FE
 void iocfg_s_fe(uint8_t value);          //!< set  FE
 void iocfg_s_stub(uint8_t);              //!< stub function for outputs
-//Additional I/O functions which are not for remapping
-void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1
-void iocfg_s_ign_out1(uint8_t value);    //!< set  IGN_OUT1
-void iocfg_i_ign_out2(uint8_t value);    //!< init IGN_OUT2
-void iocfg_s_ign_out2(uint8_t value);    //!< set  IGN_OUT2
 
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input

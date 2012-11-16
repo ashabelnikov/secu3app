@@ -64,16 +64,10 @@
  * (используется для указания того что ни один канал зажигания не выбран) */
 #define CKPS_CHANNEL_MODENA  255
 
-//Specify values depending on invertion option
-#ifndef INVERSE_IGN_OUTPUTS
- #define IGN_OUTPUTS_INIT_VAL 1  //!< value used for initialization
- #define IGN_OUTPUTS_ON_VAL   1  //!< value used to turn on ignition channel
- #define IGN_OUTPUTS_OFF_VAL  0  //!< value used to turn off ignition channel
-#else //outputs inversion mode (режим инверсии выходов)
- #define IGN_OUTPUTS_INIT_VAL 0
- #define IGN_OUTPUTS_ON_VAL   0
- #define IGN_OUTPUTS_OFF_VAL  1
-#endif
+//Define values for controlling of outputs
+#define IGN_OUTPUTS_INIT_VAL 1        //!< value used for initialization
+#define IGN_OUTPUTS_ON_VAL   1        //!< value used to turn on ignition channel
+#define IGN_OUTPUTS_OFF_VAL  0        //!< value used to turn off ignition channel
 
 /**Задержка входа в прерывание COMPA и установки уровня на соотв. линии порта в тиках таймера.
  * Используется для компенсации времени. */
@@ -173,7 +167,7 @@ typedef struct
 #endif
 
 #ifdef HALL_OUTPUT
- volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse  
+ volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse
  volatile uint16_t hop_end_cog;        //!< Hall output: tooth number that corresponds to the end of pulse
 #endif
 
@@ -193,7 +187,7 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 /** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
  *  note: may be not effective on other MCUs or even case bugs! Be aware.
  */
-#define flags  TWAR  
+#define flags  TWAR
 #define flags2 TWBR
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
@@ -205,7 +199,7 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
-prog_uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX] = 
+prog_uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX] =
  //     1          2          3          4         5         6      7      8
  {0, 30000000L, 15000000L, 10000000L, 7500000L, 6000000L, 5000000L, 4285714L, 3750000L};
 
@@ -281,8 +275,8 @@ void ckps_init_ports(void)
  //therefore set low level on their inputs
  //(после включения зажигания коммутаторы не должны быть в режиме накопления,
  //поэтому устанавливаем на их входах низкий уровень)
- iocfg_i_ign_out1(IGN_OUTPUTS_INIT_VAL);                //init 1-st ignition channel
- iocfg_i_ign_out2(IGN_OUTPUTS_INIT_VAL);                //init 2-nd ignition channel
+ IOCFG_INIT(IOP_IGN_OUT1, IGN_OUTPUTS_INIT_VAL);        //init 1-st (can be remapped)
+ IOCFG_INIT(IOP_IGN_OUT2, IGN_OUTPUTS_INIT_VAL);        //init 2-nd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT3, IGN_OUTPUTS_INIT_VAL);        //init 3-rd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT4, IGN_OUTPUTS_INIT_VAL);        //init 4-th (can be remapped)
  IOCFG_INIT(IOP_ADD_IO1, IGN_OUTPUTS_INIT_VAL);         //init 5-th (can be remapped)
@@ -422,19 +416,6 @@ uint8_t ckps_is_cog_changed(void)
  return 0;
 }
 
-/** Get value of I/O callback by index
- * \param index Index of callback
- */
-static fnptr_t get_callback(uint8_t index)
-{
- if (0 == index)
-  return (fnptr_t)iocfg_s_ign_out1;
- else if (1 == index)
-  return (fnptr_t)iocfg_s_ign_out2;
- else
-  return IOCFG_CB(index);
-}
-
 #ifndef PHASED_IGNITION
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
 static void set_channels_ss(void)
@@ -442,7 +423,7 @@ static void set_channels_ss(void)
  uint8_t _t, i = 0, chan = ckps.chan_number / 2;
  for(; i < chan; ++i)
  {
-  fnptr_t value = get_callback(i);
+  fnptr_t value = IOCFG_CB(i);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   chanstate[i].io_callback1 = value;
@@ -465,8 +446,8 @@ static void set_channels_fs(uint8_t fs_mode)
 
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
-  chanstate[i].io_callback1 = get_callback(i);
-  chanstate[i].io_callback2 = get_callback(iss);
+  chanstate[i].io_callback1 = IOCFG_CB(i);
+  chanstate[i].io_callback2 = IOCFG_CB(iss);
   _RESTORE_INTERRUPT(_t);
  }
 }

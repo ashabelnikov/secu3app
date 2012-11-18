@@ -247,10 +247,12 @@ typedef uint16_t fnptr_t;                //!< Special type for function pointers
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t
 {
- uint8_t size;                           //!< size of this structure
+ uint16_t size;                          //!< size of this structure
  uint8_t version;                        //!< version of this structure
  fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
+ fnptr_t i_slotsi[IOREM_SLOTS];          //!< initialization slots (inverted)
  fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
+ fnptr_t v_slotsi[IOREM_SLOTS];          //!< data slots           (inverted)
  fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
  fnptr_t s_stub;                         //!< special pointer used as stub
@@ -268,9 +270,9 @@ typedef struct cd_data_t
   * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
  uint32_t config;
 
- uint8_t reserved[2];                    //!< Two reserved bytes
+ uint8_t reserved;                       //!< A reserved byte
 
- uint8_t size;                           //!< size of this structure
+ uint16_t size;                          //!< size of this structure
 }cd_data_t;
 
 

@@ -60,7 +60,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //Version of this structure - 1.0
    IOREMVER(1,0),
 
-   //slots and plugs
+   //normal slots (initialization)
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
     _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
@@ -68,7 +68,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC_S_SECU3T(iocfg_i_add_i1), //ADD_IO1 input initialization
     _FNC_S_SECU3T(iocfg_i_add_i2), //ADD_IO2 input initialization
     0, 0, 0                        //<-- zero means that these slots are not implemented in this firmware
-   },
+   },//inverted slots (initialization)
+   {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
+    _FNC_S_SECU3T(iocfg_i_add_io1i), _FNC_S_SECU3T(iocfg_i_add_io2i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_st_blocki),
+    _FNC(iocfg_i_iei), _FNC(iocfg_i_fei),
+    _FNC(iocfg_i_psi),              //PS input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i1i), //ADD_IO1 input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i2i), //ADD_IO2 input initialization
+    0, 0, 0                         //<-- zero means that these slots are not implemented in this firmware
+   },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
     _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
@@ -76,7 +84,16 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC_G_SECU3T(iocfg_g_add_i1), //ADD_IO1 input get value
     _FNC_G_SECU3T(iocfg_g_add_i2), //ADD_IO2 input get value
     0, 0, 0                        //<-- zero means that these slots are not implemented in this firmware
+   },//inverted slots (get/set value)
+   {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
+    _FNC_S_SECU3T(iocfg_s_add_io1i), _FNC_S_SECU3T(iocfg_s_add_io2i), _FNC(iocfg_s_ecfi), _FNC(iocfg_s_st_blocki),
+    _FNC(iocfg_s_iei), _FNC(iocfg_s_fei),
+    _FNC(iocfg_g_psi),              //PS input get value
+    _FNC_G_SECU3T(iocfg_g_add_i1i), //ADD_IO1 input get value
+    _FNC_G_SECU3T(iocfg_g_add_i2i), //ADD_IO2 input get value
+    0, 0, 0                         //<-- zero means that these slots are not implemented in this firmware
    },
+   //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
     _FNC(iocfg_i_ie), _FNC(iocfg_i_fe), _FNC(iocfg_i_ps), _FNC_S_SECU3T(iocfg_i_add_i1),
@@ -107,8 +124,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
   _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21),
 
-  /**Two reserved bytes*/
-  {0, 0},
+  /**A reserved byte*/
+  0,
 
   /**size of this structure*/
   sizeof(cd_data_t)

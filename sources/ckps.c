@@ -281,6 +281,8 @@ void ckps_init_ports(void)
  IOCFG_INIT(IOP_IGN_OUT4, IGN_OUTPUTS_INIT_VAL);        //init 4-th (can be remapped)
  IOCFG_INIT(IOP_ADD_IO1, IGN_OUTPUTS_INIT_VAL);         //init 5-th (can be remapped)
  IOCFG_INIT(IOP_ADD_IO2, IGN_OUTPUTS_INIT_VAL);         //init 6-th (can be remapped)
+ IOCFG_INIT(IOP_IGN_OUT7, IGN_OUTPUTS_INIT_VAL);        //init 7-th (for maniacs)
+ IOCFG_INIT(IOP_IGN_OUT8, IGN_OUTPUTS_INIT_VAL);        //init 8-th (for maniacs)
 
  //init I/O for Hall output if it is enabled
 #ifdef HALL_OUTPUT
@@ -434,6 +436,14 @@ static void set_channels_ss(void)
 
 #else
 
+/** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
+ * \param index Index of callback */
+INLINE
+static fnptr_t get_callback(uint8_t index)
+{
+ return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + 15);
+}
+
 /**Tune channels' I/O for full sequential ignition mode */
 static void set_channels_fs(uint8_t fs_mode)
 {
@@ -446,8 +456,8 @@ static void set_channels_fs(uint8_t fs_mode)
 
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
-  chanstate[i].io_callback1 = IOCFG_CB(i);
-  chanstate[i].io_callback2 = IOCFG_CB(iss);
+  chanstate[i].io_callback1 = get_callback(i);
+  chanstate[i].io_callback2 = get_callback(iss);
   _RESTORE_INTERRUPT(_t);
  }
 }

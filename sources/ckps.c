@@ -587,7 +587,7 @@ void turn_off_ignition_channel(uint8_t i_channel)
 /**Forces ignition spark if corresponding interrupt is pending*/
 #ifdef PHASED_IGNITION
 #define force_pending_spark() \
- if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM))\
+ if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
  { \
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);\
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);\

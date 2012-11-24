@@ -54,7 +54,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**I/O remapping. Match slots and plugs for default configuration*/
   {
-   //size of this structure
+   //2 bytes - size of this structure
    sizeof(iorem_slots_t),
 
    //Version of this structure - 1.0
@@ -127,8 +127,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**A reserved byte*/
   0,
 
-  /**size of this structure*/
-  sizeof(cd_data_t)
+  /**2 bytes - size of this structure. This value stored in big-endian format (for compatibility reason)*/
+  ((sizeof(cd_data_t) >> 8) & 0x00FF) | ((sizeof(cd_data_t) << 8) & 0xFF00)
  },
 
  /**ƒополнительные данные по умолчанию Fill additional data with default values */

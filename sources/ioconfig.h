@@ -151,16 +151,16 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input
-#define iocfg_i_psi iocfg_i_ps           //!< init PS input           (inverted)
+void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
 uint8_t iocfg_g_ps(void);                //!< get PS input value
 uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
 #ifdef SECU3T
 void iocfg_i_add_i1(uint8_t value);      //!< init ADD_IO1 input   (applicable only in SECU-3T)
-#define iocfg_i_add_i1i iocfg_i_add_i1   //!< init ADD_IO1 input   (applicable only in SECU-3T) (inverted)
+void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_IO1 input   (applicable only in SECU-3T) (inverted)
 uint8_t iocfg_g_add_i1(void);            //!< set  ADD_IO1 input   (applicable only in SECU-3T)
 uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_IO1 input   (applicable only in SECU-3T) (inverted)
 void iocfg_i_add_i2(uint8_t value);      //!< init ADD_IO2 input   (applicable only in SECU-3T)
-#define iocfg_i_add_i2i iocfg_i_add_i2   //!< init ADD_IO2 input   (applicable only in SECU-3T) (inverted)
+void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_IO2 input   (applicable only in SECU-3T) (inverted)
 uint8_t iocfg_g_add_i2(void);            //!< set  ADD_IO2 input   (applicable only in SECU-3T)
 uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_IO2 input   (applicable only in SECU-3T) (inverted)
 #endif

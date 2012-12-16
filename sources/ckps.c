@@ -418,6 +418,14 @@ uint8_t ckps_is_cog_changed(void)
  return 0;
 }
 
+/** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
+ * \param index Index of callback */
+INLINE
+static fnptr_t get_callback(uint8_t index)
+{
+ return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + 15);
+}
+
 #ifndef PHASED_IGNITION
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
 static void set_channels_ss(void)
@@ -435,15 +443,6 @@ static void set_channels_ss(void)
 }
 
 #else
-
-/** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
- * \param index Index of callback */
-INLINE
-static fnptr_t get_callback(uint8_t index)
-{
- return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + 15);
-}
-
 /**Tune channels' I/O for full sequential ignition mode */
 static void set_channels_fs(uint8_t fs_mode)
 {
@@ -465,6 +464,7 @@ static void set_channels_fs(uint8_t fs_mode)
 
 void ckps_set_cyl_number(uint8_t i_cyl_number)
 {
+ uint8_t i = ckps.chan_number;
  _BEGIN_ATOMIC_BLOCK();
  ckps.chan_number = i_cyl_number;
  _END_ATOMIC_BLOCK();
@@ -478,6 +478,11 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
  set_channels_fs(cams_is_ready());
 #endif
+
+ //unused channels must be turned off
+ if (i > i_cyl_number)
+  for(i = i_cyl_number; i < IGN_CHANNELS_MAX; ++i)
+   ((iocfg_pfn_set)get_callback(i))(IGN_OUTPUTS_ON_VAL);
 
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.

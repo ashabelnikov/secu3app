@@ -212,7 +212,7 @@ MAIN()
  while(1)
  {
   if (ckps_is_cog_changed())
-   s_timer_set(engine_rotation_timeout_counter,ENGINE_ROTATION_TIMEOUT_VALUE);
+   s_timer_set(engine_rotation_timeout_counter, ckps_get_revolution_timeout());
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
   { //двигатель остановился (его обороты ниже критических)

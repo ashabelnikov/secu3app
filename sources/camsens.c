@@ -118,7 +118,6 @@ uint8_t cams_vr_is_event_r(void)
 ISR(INT0_vect)
 {
  camstate.vr_event = 1; //set event flag 
-//GICR&=~_BV(INT0);     //disable interrupt to improve noise immunity
 }
 
 void cams_vr_set_edge_type(uint8_t edge_type)

@@ -155,4 +155,9 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration);
  */
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num);
 
+/** Get revolution timeout value. This value determines that engine is stopped
+ * \return timeout value in tens of milliseconds
+ */
+uint8_t ckps_get_revolution_timeout(void);
+
 #endif //_CKPS_H_

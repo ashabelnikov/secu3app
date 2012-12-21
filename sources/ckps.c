@@ -315,11 +315,7 @@ uint16_t ckps_calculate_instant_freq(void)
  _ENABLE_INTERRUPT();
 
  //We know period and number of timer overflows, so we can calculate correct value of RPM even if RPM is very low
- //if equal to minimum, this means engine is stopped (если самый минимум, значит двигатель остановился)
- if (ovfcnt < 5)
-  return (ckps.frq_calc_dividend) / ((((int32_t)65536)*ovfcnt) + period);
- else
-  return 0;  //very low RPM
+ return (ckps.frq_calc_dividend) / ((((int32_t)65536)*ovfcnt) + period);
 }
 
 void ckps_set_edge_type(uint8_t edge_type)
@@ -566,7 +562,6 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_cogs_num = norm_num;
  ckps.wheel_cogs_nump1 = norm_num + 1;
  ckps.wheel_cogs_numm1 = norm_num - 1;
-//ckps.wheel_cogs_numd2 = norm_num >> 1;
  ckps.miss_cogs_num = miss_num;
  ckps.wheel_cogs_num2 = norm_num * 2;
  ckps.wheel_cogs_num2p1 = (norm_num * 2) + 1;
@@ -576,11 +571,6 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
  _RESTORE_INTERRUPT(_t);
-}
-
-uint8_t ckps_get_revolution_timeout(void)
-{
-  return 15; //todo
 }
 
 /** Turn OFF specified ignition channel
@@ -1078,7 +1068,7 @@ ISR(TIMER0_OVF_vect)
 }
 
 /** Timer 1 overflow interrupt.
- * Used to count timer 1 overflows to obtain correct revolution period at very low RPMs (200...400 min-1)
+ * Used to count timer 1 overflows to obtain correct revolution period at very low RPMs (10...400 min-1)
  */
 ISR(TIMER1_OVF_vect)
 {

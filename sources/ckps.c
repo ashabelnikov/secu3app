@@ -93,6 +93,7 @@
  #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
 #endif
 #define F_CALTIM     2                //!< Indicates that time calculation is started before the spark
+#define F_SPSIGN     3                //!< Sign of the measured stroke period (time between TDCs)
 
 /** State variables */
 typedef struct
@@ -104,7 +105,7 @@ typedef struct
  volatile uint8_t cog360;             //!< counts teeth starting from missing teeth (1 revolution).
  uint16_t measure_start_value;        //!< remembers the value of the capture register to measure the half-turn (запоминает значение регистра захвата для измерения периода полуоборота)
  uint16_t current_angle;              //!< counts out given advance angle during the passage of each tooth (отсчитывает заданный УОЗ при прохождении каждого зуба)
- volatile uint16_t half_turn_period;  //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
+ volatile uint16_t stroke_period;     //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
  int16_t  advance_angle;              //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
  volatile int16_t advance_angle_buffered;//!< buffered value of advance angle (to ensure correct latching)
  uint8_t  ignition_cogs;              //!< number of teeth determining the duration of ignition drive pulse (кол-во зубьев определяющее длительность импульсов запуска коммутаторов)
@@ -148,7 +149,7 @@ typedef struct
 #endif
 
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
- volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with half_turn_period value
+ volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -222,7 +223,7 @@ void ckps_init_state_variables(void)
 #endif
 
  ckps.cog = ckps.cog360 = 0;
- ckps.half_turn_period = 0xFFFF;
+ ckps.stroke_period = 0xFFFF;
  ckps.advance_angle = ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
@@ -234,6 +235,7 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
  CLEARBIT(flags2, F_CALTIM);
+ CLEARBIT(flags2, F_SPSIGN);
 
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
 #ifdef STROBOSCOPE
@@ -308,14 +310,19 @@ void ckps_init_ports(void)
 //Период в дискретах таймера (одна дискрета = 4мкс), в одной минуте 60 сек, в одной секунде 1000000 мкс.
 uint16_t ckps_calculate_instant_freq(void)
 {
- uint16_t period; uint8_t ovfcnt;
+ uint16_t period; uint8_t ovfcnt, sign;
+ //ensure atomic acces to variable (обеспечиваем атомарный доступ к переменной)
  _DISABLE_INTERRUPT();
- period = ckps.half_turn_period;           //ensure atomic acces to variable (обеспечиваем атомарный доступ к переменной)
- ovfcnt = ckps.t1oc_s;
+ period = ckps.stroke_period;        //stroke period
+ ovfcnt = ckps.t1oc_s;               //number of timer overflows
+ sign = CHECKBIT(flags2, F_SPSIGN);  //sign of stroke period
  _ENABLE_INTERRUPT();
 
  //We know period and number of timer overflows, so we can calculate correct value of RPM even if RPM is very low
- return (ckps.frq_calc_dividend) / ((((int32_t)65536)*ovfcnt) + period);
+ if (sign && ovfcnt > 0)
+  return ckps.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) - (65536-period));
+ else
+  return ckps.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
 void ckps_set_edge_type(uint8_t edge_type)
@@ -832,7 +839,7 @@ static void process_ckps_cogs(void)
    if (ckps.cog == chanstate[i].knock_wnd_end)
    {
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
-    adc_begin_measure_knock(_AB(ckps.half_turn_period, 1) < 4);
+    adc_begin_measure_knock(_AB(ckps.stroke_period, 1) < 4);
    }
   }
 
@@ -848,7 +855,7 @@ static void process_ckps_cogs(void)
    ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
-   adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+   adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
 #ifdef STROBOSCOPE
    if (0==i)
     ckps.strobe = 1; //strobe!
@@ -866,7 +873,8 @@ static void process_ckps_cogs(void)
    //save period value if it is correct
    if (CHECKBIT(flags, F_VHTPER))
    {
-    ckps.half_turn_period = (GetICR() - ckps.measure_start_value);
+    ckps.stroke_period = (GetICR() - ckps.measure_start_value);
+    WRITEBIT(flags2, F_SPSIGN, GetICR() < ckps.measure_start_value); //save sign
     ckps.t1oc_s = ckps.t1oc, ckps.t1oc = 0; //save value and reset counter
    }
 

@@ -34,6 +34,9 @@ struct ecudata_t;
 /** Initialization of used I/O ports (инициализация используемых портов) */
 void pwrrelay_init_ports(void);
 
+/** Initialization of the module */
+void pwrrelay_init(void);
+
 /** Control of power relay (управление реле питания)
  * \param d pointer to ECU data structure
  */

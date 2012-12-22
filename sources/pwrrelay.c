@@ -32,11 +32,25 @@
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "secu3.h"
+#include "vstimer.h"
+
+/**Define state variables */
+typedef struct
+{
+ uint8_t state;    //!< state mashine for managing of power states
+}pwrstate_t;
+
+pwrstate_t pwrs;   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
  IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on (реле включено)
  IOCFG_INIT(IOP_IGN, 1);      //init IGN input
+}
+
+void pwrrelay_init(void)
+{
+ pwrs.state = 0; 
 }
 
 void pwrrelay_control(struct ecudata_t* d)
@@ -66,12 +80,18 @@ void pwrrelay_control(struct ecudata_t* d)
    //PWM is not available
    temperature_ok = (d->sens.temperat <= (d->param.vent_off));
 #endif
+
+   //set timeout
+   if (0==pwrs.state)
+   {
+    pwrs.state = 1;
+    s_timer16_set(powerdown_timeout_counter, 6000); //60 sec.
+   }
   }
 
-  if (temperature_ok && eeprom_is_idle())
+  if ((temperature_ok && eeprom_is_idle()) || s_timer16_is_action(powerdown_timeout_counter))
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
  }
-
- //TODO: eliminate CKPS error
- //TODO: eliminate voltage error
+ else
+  pwrs.state = 0;
 }

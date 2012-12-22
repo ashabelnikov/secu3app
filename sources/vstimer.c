@@ -53,6 +53,7 @@ volatile s_timer16_t save_param_timeout_counter = 0;      //!< used for saving o
 #ifdef FUEL_PUMP
 volatile s_timer16_t fuel_pump_time_counter = 0;          //!< used for fuel pump
 #endif
+volatile s_timer16_t powerdown_timeout_counter = 0;       //!< used for power-down timeout 
 
 /**for division, to achieve 10ms, because timer overflovs each 2 ms */
 uint8_t divider = DIVIDER_RELOAD;
@@ -88,6 +89,7 @@ ISR(TIMER2_OVF_vect)
 #ifdef FUEL_PUMP
   s_timer_update(fuel_pump_time_counter);
 #endif
+  s_timer_update(powerdown_timeout_counter);
  }
 }
 

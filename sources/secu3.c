@@ -181,6 +181,9 @@ MAIN()
  fuelpump_init();
 #endif
 
+ //initialization of power management unit
+ pwrrelay_init();
+
  //инициализируем модуль ДПКВ
  ckps_init_state();
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);

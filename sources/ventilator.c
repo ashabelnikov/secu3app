@@ -141,9 +141,9 @@ void vent_control(struct ecudata_t *d)
 
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
  if (d->sens.temperat >= d->param.vent_on)
-  IOCFG_SET(IOP_ECF, 1); //turn off
+  IOCFG_SET(IOP_ECF, 1), d->cool_fan = 1; //turn on
  if (d->sens.temperat <= d->param.vent_off)
-  IOCFG_SET(IOP_ECF, 0); //turn on
+  IOCFG_SET(IOP_ECF, 0), d->cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
  if (!d->param.vent_pwm)
  { //relay
@@ -153,9 +153,9 @@ void vent_control(struct ecudata_t *d)
   _ENABLE_INTERRUPT();
 
   if (d->sens.temperat >= d->param.vent_on)
-   IOCFG_SET(IOP_ECF, 1); //turn off
+   IOCFG_SET(IOP_ECF, 1), d->cool_fan = 1; //turn on
   if (d->sens.temperat <= d->param.vent_off)
-   IOCFG_SET(IOP_ECF, 0); //turn on
+   IOCFG_SET(IOP_ECF, 0), d->cool_fan = 0; //turn off
  }
  else
  {
@@ -164,7 +164,13 @@ void vent_control(struct ecudata_t *d)
   if (dd < 2)
    dd = 0;         //restrict to max.
   if (dd > (PWM_STEPS-2))
+  {
    dd = PWM_STEPS; //restrict to min.
+   d->cool_fan = 0; //turned off
+  }
+  else
+   d->cool_fan = 1; //turned on
+
   //TODO: implement kick on turn on
   vent_set_duty(PWM_STEPS - dd);
  }

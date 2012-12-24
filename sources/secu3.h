@@ -84,6 +84,7 @@ typedef struct ecudata_t
 
  uint8_t  ie_valve;                      //!< State of Idle Economizer valve (состояние клапана ЭПХХ)
  uint8_t  fe_valve;                      //!< State of Fuel Economizer valve (состояние клапана ЭМР)
+ uint8_t  cool_fan;                      //!< State of the cooling fan (состояние электровентилятора)
  uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
  uint8_t  airflow;                       //!< Air flow (расход воздуха)
  int16_t  curr_angle;                    //!< Current advance angle (текущий угол опережения)

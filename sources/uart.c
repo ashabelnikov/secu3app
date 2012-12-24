@@ -357,7 +357,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
              (d->sens.carb  << 1) |
              (d->sens.gas   << 2) |
              (d->fe_valve   << 3) |
-             (d->ce_state   << 4));
+             (d->ce_state   << 4) |
+             (d->cool_fan   << 5));
    break;
 
   case ADCCOR_PAR:

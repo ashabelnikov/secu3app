@@ -105,7 +105,8 @@ void init_ecu_data(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
  edat.fn_gasoline_prev = 255;
  edat.fn_gas_prev = 255;
-#endif 
+#endif
+ edat.cool_fan = 0;
 }
 
 /**Main function of firmware - entry point */

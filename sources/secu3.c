@@ -107,6 +107,7 @@ void init_ecu_data(struct ecudata_t* d)
  edat.fn_gas_prev = 255;
 #endif
  edat.cool_fan = 0;
+ edat.st_block = 0; //стартер не заблокирован
 }
 
 /**Main function of firmware - entry point */

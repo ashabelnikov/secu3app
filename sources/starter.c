@@ -49,13 +49,14 @@ void starter_control(struct ecudata_t* d)
  //control of starter's blocking (starter is blocked after reaching the specified RPM, but will not turn back!)
  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)
  if (d->sens.frequen4 > d->param.starter_off)
-  starter_set_blocking_state(1);
+  starter_set_blocking_state(1), d->st_block = 1;
 #else
  //control of starter's blocking (starter is blocked at speeds greater than the threshold)
  //and status indication of idle economizer valve (output of starter's blocking is used)
  //(управление блокировкой стартера (стартер блокируется при оборотах больше пороговых)
  //и индикация состояния клапана ЭПХХ (используется выход блокировки стартера))
- starter_set_blocking_state( (d->sens.frequen4 > d->param.starter_off)&&(d->ie_valve) ? 1 : 0);
+ d->st_block = (d->sens.frequen4 > d->param.starter_off)&&(d->ie_valve) ? 1 : 0;
+ starter_set_blocking_state(d->st_block);
 
  //if air flow is maximum - turn on CE and start timer
  //(если расход воздуха максимальный - зажигаем СЕ и запускаем таймер)
@@ -66,5 +67,5 @@ void starter_control(struct ecudata_t* d)
  }
 #endif
  if (d->sens.frequen4 < 30)
-  starter_set_blocking_state(0); //unblock starter (снимаем блокировку стартера)
+  starter_set_blocking_state(0), d->st_block = 0; //unblock starter (снимаем блокировку стартера)
 }

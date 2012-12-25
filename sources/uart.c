@@ -358,7 +358,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
              (d->sens.gas   << 2) |
              (d->fe_valve   << 3) |
              (d->ce_state   << 4) |
-             (d->cool_fan   << 5));
+             (d->cool_fan   << 5) |
+             (d->st_block   << 6));
    build_i16h(d->ecuerrors_saved_transfer); //CE errors
    break;
 

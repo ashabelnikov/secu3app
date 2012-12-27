@@ -360,7 +360,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
              (d->ce_state   << 4) |
              (d->cool_fan   << 5) |
              (d->st_block   << 6));
-   build_i16h(d->ecuerrors_saved_transfer); //CE errors
+   build_i16h(d->ecuerrors_for_transfer); //CE errors
    break;
 
   case ADCCOR_PAR:

@@ -142,11 +142,14 @@ void cams_set_error_threshold(uint8_t threshold)
 
 void cams_detect_edge(void)
 {
+#ifndef SECU3T /*SECU-3*/
+ uint8_t level;
+#endif
  if (!CHECKBIT(flags, F_CAMSIA))
   return;
 
 #ifndef SECU3T /*SECU-3*/
- uint8_t level = GET_CAMSTATE();
+ level = GET_CAMSTATE();
  if (camstate.prev_level != level)
  {
   if (0 != level) //interesting edge from cam sensor

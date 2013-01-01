@@ -380,6 +380,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.voltage_raw);
    build_i16h(d->sens.temperat_raw);
    build_i16h(d->sens.knock_k);   //<-- knock signal level
+   build_i16h(d->sens.tps_raw);
+   build_i16h(d->sens.add_i1_raw);
+   build_i16h(d->sens.add_i2_raw);
    break;
 
   case CKPS_PAR:

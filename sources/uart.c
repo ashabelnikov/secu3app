@@ -344,23 +344,26 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     break;
 
   case SENSOR_DAT:
-   build_i16h(d->sens.frequen);
-   build_i16h(d->sens.map);
-   build_i16h(d->sens.voltage);
-   build_i16h(d->sens.temperat);
-   build_i16h(d->curr_angle);
-   build_i16h(d->sens.knock_k);  // <-- knock value
-   build_i16h(d->knock_retard);  // <-- knock retard
-   build_i8h(d->airflow);
+   build_i16h(d->sens.frequen);           // averaged RPM
+   build_i16h(d->sens.map);               // MAP pressure
+   build_i16h(d->sens.voltage);           // voltage
+   build_i16h(d->sens.temperat);          // coolant temperature
+   build_i16h(d->curr_angle);             // advance angle
+   build_i16h(d->sens.knock_k);           // knock value
+   build_i16h(d->knock_retard);           // knock retard
+   build_i8h(d->airflow);                 // index if the map axis curve
    //boolean values
-   build_i8h((d->ie_valve   << 0) |
-             (d->sens.carb  << 1) |
-             (d->sens.gas   << 2) |
-             (d->fe_valve   << 3) |
-             (d->ce_state   << 4) |
-             (d->cool_fan   << 5) |
-             (d->st_block   << 6));
-   build_i16h(d->ecuerrors_for_transfer); //CE errors
+   build_i8h((d->ie_valve   << 0) |       // IE flag
+             (d->sens.carb  << 1) |       // carb. limit switch flag
+             (d->sens.gas   << 2) |       // gas valve flag
+             (d->fe_valve   << 3) |       // power valve flag
+             (d->ce_state   << 4) |       // CE flag
+             (d->cool_fan   << 5) |       // cooling fan flag
+             (d->st_block   << 6));       // starter blocking flag
+   build_i8h(d->sens.tps);                // TPS (0...100%, x2)
+   build_i16h(d->sens.add_i1);            // ADD_I1 voltage
+   build_i16h(d->sens.add_i2);            // ADD_I2 voltage
+   build_i16h(d->ecuerrors_for_transfer); // CE errors
    break;
 
   case ADCCOR_PAR:

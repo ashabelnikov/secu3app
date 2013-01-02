@@ -51,6 +51,9 @@
 /**дискретность физической величины - ДТОЖ */
 #define TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER (TSENS_SLOPP / ADC_DISCRETE) //=4
 
+/**дискретность представления % открытия дроссельной заслонки (ДПДЗ)*/
+#define TPS_PHYSICAL_MAGNITUDE_MULTIPLAYER 2
+
 /** Получение последнего измеренного значения с ДАД
  * \return значение в дискретах АЦП
  */
@@ -129,7 +132,7 @@ void adc_init(void);
 int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
 
 /**переводит значение АЦП в физическую величину - давление
- * \param adcvalue значение в даскретах АЦП
+ * \param adcvalue значение в дискретах АЦП
  * \param offset смещение кривой ДАД (Curve offset. Can be negative)
  * \param gradient наклон кривой ДАД (Curve gradient. If < 0, then it means characteristic curve is inverse)
  * \return физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
@@ -145,11 +148,21 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient);
  */
 uint16_t ubat_adc_to_v(int16_t adcvalue);
 
-/**Converts ADV value into phisical magnituge - temperature (given from linear sensor)
+/**Converts ADC value into phisical magnituge - temperature (given from linear sensor)
  * Переводит значение АЦП в физическую величину - температура, для линейного датчика
  * \param adcvalue Voltage from sensor (напряжение с датчика - значение в дискретах АЦП)
  * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
  */
 int16_t temp_adc_to_c(int16_t adcvalue);
+
+#ifdef SECU3T
+/**Converts ADC value of the Throttle Position Sensor to the percentage of throttle opening
+ * \param adcvalue значение в дискретах АЦП (Value in ADC discretes)
+ * \param offset смещение кривой ДПДЗ (Curve offset. Can be negative)
+ * \param gradient наклон кривой ДПДЗ (Curve gradient)
+ * \return percentage * 2 (e.g. value of 200 is 100%)
+ */
+uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
+#endif
 
 #endif //_ADC_H_

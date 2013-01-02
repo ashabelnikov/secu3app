@@ -53,4 +53,7 @@
 /** Transforms floating point value of pressure(MAP) to fixed point value */
 #define PRESSURE_MAGNITUDE(t) ROUND ((t) * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
 
+/** Transforms floating point value of percentage of opening (TPS) to fixed point value */
+#define TPS_MAGNITUDE(t) ROUND ((t) * TPS_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+
 #endif //_MAGNITUDE_H_

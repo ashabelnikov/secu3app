@@ -305,6 +305,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.map_upper_pressure);
    build_i16h(d->param.map_curve_offset);
    build_i16h(d->param.map_curve_gradient);
+   build_i16h(d->param.tps_curve_offset);
+   build_i16h(d->param.tps_curve_gradient);
    break;
 
   case STARTR_PAR:
@@ -373,6 +375,13 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i32h(d->param.ubat_adc_correction);
    build_i16h(d->param.temp_adc_factor);
    build_i32h(d->param.temp_adc_correction);
+   //todo: In the future if we will have a lack of RAM we can split this packet into 2 pieces and decrease size of buffers
+   build_i16h(d->param.tps_adc_factor);
+   build_i32h(d->param.tps_adc_correction);
+   build_i16h(d->param.ai1_adc_factor);
+   build_i32h(d->param.ai1_adc_correction);
+   build_i16h(d->param.ai2_adc_factor);
+   build_i32h(d->param.ai2_adc_correction);
    break;
 
   case ADCRAW_DAT:
@@ -620,6 +629,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.map_upper_pressure = recept_i16h();
    d->param.map_curve_offset = recept_i16h();
    d->param.map_curve_gradient = recept_i16h();
+   d->param.tps_curve_offset = recept_i16h();
+   d->param.tps_curve_gradient = recept_i16h();
    break;
 
   case STARTR_PAR:
@@ -634,6 +645,13 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ubat_adc_correction= recept_i32h();
    d->param.temp_adc_factor    = recept_i16h();
    d->param.temp_adc_correction= recept_i32h();
+   //todo: In the future if we will have a lack of RAM we can split this packet into 2 pieces and decrease size of buffers
+   d->param.tps_adc_factor     = recept_i16h();
+   d->param.tps_adc_correction = recept_i32h();
+   d->param.ai1_adc_factor     = recept_i16h();
+   d->param.ai1_adc_correction = recept_i32h();
+   d->param.ai2_adc_factor     = recept_i16h();
+   d->param.ai2_adc_correction = recept_i32h();
    break;
 
   case CKPS_PAR:

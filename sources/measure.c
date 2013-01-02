@@ -59,12 +59,22 @@
 #define MAP_AVERAGING           4                 //!< Number of values for averaging of pressure (MAP)
 #define BAT_AVERAGING           4                 //!< Number of values for averaging of board voltage
 #define TMP_AVERAGING           8                 //!< Number of values for averaging of coolant temperature
+#ifdef SECU3T
+#define TPS_AVERAGING           4                 //!< Number of values for averaging of throttle position
+#define AI1_AVERAGING           4                 //!< Number of values for averaging of ADD_IO1
+#define AI2_AVERAGING           4                 //!< Number of values for averaging of ADD_IO2
+#endif
 
 uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
 uint16_t freq4_circular_buffer[FRQ4_AVERAGING];   //!< Ring buffer for RPM averaging for starter blocking (буфер усреднения частоты вращения коленвала для блокировки стартера)
 uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaring of MAP sensor (буфер усреднения абсолютного давления)
 uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaring of voltage (буфер усреднения напряжения бортовой сети)
 uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaring of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
+#ifdef SECU3T
+uint16_t tps_circular_buffer[TPS_AVERAGING];      //!< Ring buffer for averaring of TPS
+uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaring of ADD_IO1
+uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaring of ADD_IO2
+#endif
 
 //обновление буферов усреднения (частота вращения, датчики...)
 void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
@@ -74,6 +84,11 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  static uint8_t  tmp_ai  = TMP_AVERAGING-1;
  static uint8_t  frq_ai  = FRQ_AVERAGING-1;
  static uint8_t  frq4_ai = FRQ4_AVERAGING-1;
+#ifdef SECU3T
+ static uint8_t  tps_ai  = TPS_AVERAGING-1;
+ static uint8_t  ai1_ai  = AI1_AVERAGING-1;
+ static uint8_t  ai2_ai  = AI2_AVERAGING-1;
+#endif
 
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
  (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
@@ -92,6 +107,17 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 
  temp_circular_buffer[tmp_ai] = adc_get_temp_value();
  (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;
+
+#ifdef SECU3T
+ tps_circular_buffer[tps_ai] = adc_get_carb_value();
+ (tps_ai==0) ? (tps_ai = TPS_AVERAGING - 1): tps_ai--;
+
+ ai1_circular_buffer[ai1_ai] = adc_get_add_io1_value();
+ (ai1_ai==0) ? (ai1_ai = AI1_AVERAGING - 1): ai1_ai--;
+
+ ai2_circular_buffer[ai2_ai] = adc_get_add_io2_value();
+ (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
+#endif
 
  d->sens.knock_k = adc_get_knock_value() * 2;
 }
@@ -136,6 +162,25 @@ void meas_average_measured_values(struct ecudata_t* d)
  for (sum=0,i = 0; i < FRQ4_AVERAGING; i++) //усредняем частоту вращения коленвала
   sum+=freq4_circular_buffer[i];
  d->sens.frequen4=(sum/FRQ4_AVERAGING);
+
+#ifdef SECU3T
+ for (sum=0,i = 0; i < TPS_AVERAGING; i++)   //average throttle position
+  sum+=tps_circular_buffer[i];
+ d->sens.tps_raw = adc_compensate((sum/TPS_AVERAGING)*2,d->param.tps_adc_factor,d->param.tps_adc_correction);
+ d->sens.tps = tps_adc_to_pc(d->sens.tps_raw, d->param.tps_curve_offset, d->param.tps_curve_gradient);
+ if (d->sens.tps > TPS_MAGNITUDE(100))
+  d->sens.tps = TPS_MAGNITUDE(100);
+
+ for (sum=0,i = 0; i < AI1_AVERAGING; i++)   //average ADD_IO1 input
+  sum+=ai1_circular_buffer[i];
+ d->sens.add_i1_raw = adc_compensate((sum/AI1_AVERAGING)*2,d->param.ai1_adc_factor,d->param.ai1_adc_correction);
+ d->sens.add_i1 = d->sens.add_i1_raw;
+
+ for (sum=0,i = 0; i < AI2_AVERAGING; i++)   //average ADD_IO2 input
+  sum+=ai2_circular_buffer[i];
+ d->sens.add_i2_raw = adc_compensate((sum/AI2_AVERAGING)*2,d->param.ai2_adc_factor,d->param.ai2_adc_correction);
+ d->sens.add_i2 = d->sens.add_i2_raw;
+#endif
 }
 
 //Вызывать для предварительного измерения перед пуском двигателя. Вызывать только после

@@ -108,6 +108,9 @@ void init_ecu_data(struct ecudata_t* d)
 #endif
  edat.cool_fan = 0;
  edat.st_block = 0; //стартер не заблокирован
+ edat.sens.tps = edat.sens.tps_raw = 0;
+ edat.sens.add_i1 = edat.sens.add_i1_raw = 0;
+ edat.sens.add_i2 = edat.sens.add_i2_raw = 0;
 }
 
 /**Main function of firmware - entry point */

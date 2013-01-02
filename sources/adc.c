@@ -322,3 +322,17 @@ int16_t temp_adc_to_c(int16_t adcvalue)
   adcvalue = 0;
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
+
+#ifdef SECU3T
+uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
+{
+ int16_t t;
+ if (adcvalue < 0)
+  adcvalue = 0;
+ t = adcvalue + offset;
+ if (t < 0)
+  t = 0;
+ 
+ return (((int32_t)t) * gradient) >> (7+6);
+}
+#endif

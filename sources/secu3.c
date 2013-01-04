@@ -29,6 +29,7 @@
 #include "port/port.h"
 
 #include "adc.h"
+#include "bc_input.h"
 #include "bitmask.h"
 #include "bootldr.h"
 #include "camsens.h"
@@ -211,6 +212,9 @@ MAIN()
 
  s_timer_init();
  vent_init_state();
+
+ //check and enter blink codes indication mode 
+ bc_indication_mode(&edat);
 
  //разрешаем глобально прерывания
  _ENABLE_INTERRUPT();

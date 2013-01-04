@@ -62,7 +62,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_IGN          20     //!< IGN             (input)
 #define IOP_IGN_OUT7     21     //!< IGN_OUT7        (output)
 #define IOP_IGN_OUT8     22     //!< IGN_OUT8        (output)
-#define IOP_RESERVED6    23     //!< reserved plug   ()
+#define IOP_BC_INPUT     23     //!< BC_INPUT        (input)
 #define IOP_RESERVED7    24     //!< reserved plug   ()
 #define IOP_RESERVED8    25     //!< reserved plug   ()
 #define IOP_RESERVED9    26     //!< reserved plug   ()

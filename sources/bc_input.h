@@ -19,30 +19,21 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file ventilator.h
- * Cooling fan's control related functions.
- * (Функции для управления вентилятором).
+/** \file bc_input.h
+ * CE errors information output using blink codes
+ * (Выдача информации об ошибках СЕ используя блинк коды).
  */
 
-#ifndef _VENTILATOR_H_
-#define _VENTILATOR_H_
+#ifndef _BC_INPUT_H_
+#define _BC_INPUT_H_
 
 struct ecudata_t;
 
-/**Initialization of used I/O ports (инициализация используемых портов)*/
-void vent_init_ports(void);
-
-/**Control of cooling fan (управление вентилятором охлаждения двигателя).
+/** Check BC_INPUT and if it is active, then enter blink codes 
+ * indication mode. This mode has its own infinite loop.
+ * Note that in this mode interrupts must be disabled!
  * \param d pointer to ECU data structure
  */
-void vent_control(struct ecudata_t *d);
+void bc_indication_mode(struct ecudata_t *d);
 
-/**Initialization of internal state (инициализация состояния)*/
-void vent_init_state(void);
-
-/**Turn off cooling fan (used inside bc_input unit)
- * \param d pointer to ECU data structure
- */
-void vent_turnoff(struct ecudata_t *d);
-
-#endif //_VENTILATOR_H_
+#endif //_BC_INPUT_H_

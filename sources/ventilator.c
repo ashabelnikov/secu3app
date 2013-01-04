@@ -176,3 +176,15 @@ void vent_control(struct ecudata_t *d)
  }
 #endif
 }
+
+void vent_turnoff(struct ecudata_t *d)
+{
+#ifndef COOLINGFAN_PWM
+ IOCFG_SET(IOP_ECF, 0);
+#else
+ if (!d->param.vent_pwm)
+  IOCFG_SET(IOP_ECF, 0);
+ else
+  COOLINGFAN_TURNOFF();
+#endif
+}

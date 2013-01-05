@@ -29,6 +29,7 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "bitmask.h"
+#include "ioconfig.h" //for SM_CONTROL
 #include "secu3.h"
 #include "vstimer.h"
 
@@ -58,6 +59,14 @@ volatile s_timer16_t powerdown_timeout_counter = 0;       //!< used for power-do
 /**for division, to achieve 10ms, because timer overflovs each 2 ms */
 uint8_t divider = DIVIDER_RELOAD;
 
+#ifdef SM_CONTROL
+//See smcontrol.c
+extern volatile uint16_t sm_steps;
+extern volatile uint8_t sm_latch;
+extern uint16_t sm_steps_b;
+extern uint8_t sm_pulse_state;
+#endif
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
@@ -73,6 +82,26 @@ ISR(TIMER2_OVF_vect)
 #endif
 
  _ENABLE_INTERRUPT();
+
+#ifdef SM_CONTROL 
+ if (!sm_pulse_state && sm_latch) {
+  sm_steps_b = sm_steps;
+  sm_latch = 0;
+ }
+
+ if (sm_steps_b)
+ {
+  if (!sm_pulse_state) {
+   IOCFG_SET(IOP_SM_STP, 1); //falling edge
+   sm_pulse_state = 1;
+  }
+  else {//The step occurs on the rising edge of ~CLOCK signal
+   IOCFG_SET(IOP_SM_STP, 0); //rising edge
+   sm_pulse_state = 0;
+   --sm_steps_b;
+  }
+ }
+#endif
 
  if (divider > 0)
   --divider;

@@ -168,4 +168,11 @@
  #define COPT_STROBOSCOPE 0
 #endif
 
+/** Stepper motor control and related functionality */
+#ifdef SM_CONTROL
+ #define COPT_SM_CONTROL 1
+#else
+ #define COPT_SM_CONTROL 0
+#endif
+
 #endif //_COMPILOPT_H_

@@ -277,6 +277,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.ie_lot_g);
    build_i16h(d->param.ie_hit_g);
    build_i8h(d->param.shutoff_delay);
+   build_i8h(d->param.tps_threshold);
    break;
 
   case IDLREG_PAR:
@@ -595,6 +596,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ie_lot_g = recept_i16h();
    d->param.ie_hit_g = recept_i16h();
    d->param.shutoff_delay = recept_i8h();
+   d->param.tps_threshold = recept_i8h();
    break;
 
   case IDLREG_PAR:

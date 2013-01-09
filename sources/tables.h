@@ -233,13 +233,15 @@ typedef struct params_t
   int16_t  tps_curve_offset;             //!< offset of curve in volts
   int16_t  tps_curve_gradient;           //!< gradient of curve in Percentage/V
 
+  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[9];
+  uint8_t  reserved[8];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

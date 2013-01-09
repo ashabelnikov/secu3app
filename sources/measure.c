@@ -203,8 +203,13 @@ void meas_initial_measure(struct ecudata_t* d)
 
 void meas_take_discrete_inputs(struct ecudata_t *d)
 {
- //--инверсия концевика карбюратора если необходимо, включение/выключение клапана ЭПХХ
- d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
+ //--инверсия концевика карбюратора если необходимо
+ if (0==d->param.tps_threshold)
+  d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
+ else
+ {//using TPS (привязываемся к ДПДЗ)
+  d->sens.carb=d->param.carb_invers^(d->sens.tps > d->param.tps_threshold);
+ }
 
  //считываем и сохраняем состояние газового клапана
  d->sens.gas = GET_GAS_VALVE_STATE();

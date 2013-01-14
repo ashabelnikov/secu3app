@@ -166,6 +166,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {400, 312, 262, 223, 191, 166, 142, 120, 99, 78, 56, 34, 10, -15, -54, -112},
   154, 1708,
 
+  /**Fill choke closing vs. temperarure lookup table*/
+  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+
   /**reserved bytes*/
   {0}
  },

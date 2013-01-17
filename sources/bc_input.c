@@ -40,7 +40,7 @@
 
 /**Определяем блинк коды. Индекс в массиве должен соответствовать номеру бита 
  * соответствующей ошибки в ф. ce_errors.h */
-PGM_DECLARE(uint8_t blink_codes[16]) = 
+PGM_DECLARE(uint8_t blink_codes[16]) =
  {0x21, 0x13, 0x14, 0x31, 0x32, 0x22, 0x23, 0x24, 0x41, 0x25, 0x26, 0, 0, 0, 0, 0};
 
 /**Delay in hundreds of milliseconds
@@ -53,7 +53,7 @@ void delay_hom(uint8_t hom)
   uint8_t i = 10;
   do {
    _DELAY_CYCLES(160000);  //10ms
-   wdt_reset_timer(); 
+   wdt_reset_timer();
   }while(--i);
  }while(--hom);
 }
@@ -69,9 +69,9 @@ void disp_code(uint8_t bc)
  i = bc >> 4;
  do
  {
-  ce_set_state(CE_STATE_ON); 
+  ce_set_state(CE_STATE_ON);
   delay_hom(2);
-  ce_set_state(CE_STATE_OFF); 
+  ce_set_state(CE_STATE_OFF);
   delay_hom(2);
  }while(--i);
 
@@ -81,9 +81,9 @@ void disp_code(uint8_t bc)
  i = bc & 0xF;
  do
  {
-  ce_set_state(CE_STATE_ON); 
+  ce_set_state(CE_STATE_ON);
   delay_hom(2);
-  ce_set_state(CE_STATE_OFF); 
+  ce_set_state(CE_STATE_OFF);
   delay_hom(2);
  }while(--i);
 }
@@ -94,9 +94,9 @@ void disp_start(void)
  uint8_t i = 4;
  do
  {
-  ce_set_state(CE_STATE_ON); 
+  ce_set_state(CE_STATE_ON);
   delay_hom(8);
-  ce_set_state(CE_STATE_OFF); 
+  ce_set_state(CE_STATE_OFF);
   delay_hom(3);
  }while(--i);
 }
@@ -111,7 +111,7 @@ void bc_indication_mode(struct ecudata_t *d)
  do
  {
   if (IOCFG_GET(IOP_BC_INPUT))
-   return; //normal program execution   
+   return; //normal program execution
  }while(--i);
 
  //We are entered to the blink codes indication mode
@@ -150,6 +150,6 @@ void bc_indication_mode(struct ecudata_t *d)
   }
 
   delay_hom(20);
-  wdt_reset_timer(); 
+  wdt_reset_timer();
  }
 }

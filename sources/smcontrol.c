@@ -26,6 +26,7 @@
 
 #ifdef SM_CONTROL
 
+#include "port/interrupt.h"
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "ioconfig.h"

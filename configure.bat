@@ -28,7 +28,7 @@ exit 1
 )
 
 rem Check validity of command line option
-IF %1 == M16 ( 
+IF %1 == M16 (
 set CFG_BL_START=3E00
 set CFG_FWD_START=3134
 set CFG_EE_SIZE=512
@@ -80,11 +80,11 @@ exit 1
 :build
 rem Generate configuration file
 IF EXIST %CFGFILE% del %CFGFILE%
-echo MCU=%CFG_MCU%>> %CFGFILE% 
-echo BL_START=%CFG_BL_START%>> %CFGFILE% 
-echo FWD_START=%CFG_FWD_START%>> %CFGFILE% 
-echo EE_SIZE=%CFG_EE_SIZE%>> %CFGFILE% 
-echo LNKXCL=%CFG_LNKXCL%>> %CFGFILE% 
+echo MCU=%CFG_MCU%>> %CFGFILE%
+echo BL_START=%CFG_BL_START%>> %CFGFILE%
+echo FWD_START=%CFG_FWD_START%>> %CFGFILE%
+echo EE_SIZE=%CFG_EE_SIZE%>> %CFGFILE%
+echo LNKXCL=%CFG_LNKXCL%>> %CFGFILE%
 
 make clean
 copy %MAKEFILE% Makefile

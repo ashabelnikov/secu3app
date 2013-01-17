@@ -83,7 +83,7 @@ ISR(TIMER2_OVF_vect)
 
  _ENABLE_INTERRUPT();
 
-#ifdef SM_CONTROL 
+#ifdef SM_CONTROL
  if (!sm_pulse_state && sm_latch) {
   sm_steps_b = sm_steps;
   sm_latch = 0;

@@ -38,10 +38,10 @@ void stpmot_init_ports(void);
 void stpmot_init(void);
 
 /** ID of the clockwise direction (направление по часовой стрелке) */
-#define SM_DIR_CW   0 
+#define SM_DIR_CW   0
 
 /** ID of the counterclockwise direction (направление против часовой стрелки) */
-#define SM_DIR_CCW  1 
+#define SM_DIR_CCW  1
 
 /** Set stepper motor direction
  * \param dir Direction (0 - backward, 1 - forward)

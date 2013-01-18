@@ -28,6 +28,7 @@
 #include "compilopt.h"
 #include "bitmask.h"
 #include "ioconfig.h"
+#include "magnitude.h"
 #include "tables.h"
 
 /**Helpful macro used for pointer conversion */
@@ -44,6 +45,12 @@
 
 /**Helpful macro for creating of I/O remapping version number*/
 #define IOREMVER(maj, min) ((maj)<<4 | ((min) & 0xf))
+
+/**For specifying of dwell times in the lookup table*/
+#define _DLV(v) ROUND(((v)*250.0))
+
+/**For specifying of choke position in the lookup table*/
+#define _CLV(v) ROUND(((v)*2.0))
 
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
@@ -152,22 +159,25 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   },
 
   /**Lookup table for controlling coil's accumulation time (dwell control) */
-  {0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,
-   0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200
+  {_DLV(15.0),_DLV(13.6),_DLV(12.5),_DLV(11.4),_DLV(10.2),_DLV(9.25),_DLV(8.30),_DLV(7.55),
+   _DLV(6.80),_DLV(6.30),_DLV(5.80),_DLV(5.34),_DLV(4.88),_DLV(4.53),_DLV(4.19),_DLV(3.94),
+   _DLV(3.69),_DLV(3.44),_DLV(3.19),_DLV(3.03),_DLV(2.90),_DLV(2.70),_DLV(2.55),_DLV(2.43),
+   _DLV(2.30),_DLV(2.22),_DLV(2.13),_DLV(2.00),_DLV(1.88),_DLV(1.85),_DLV(1.82),_DLV(1.80),
   },
 
   /**Size of all data for checking */
   (sizeof(fw_data_t) - sizeof(cd_data_t)),
 
   /**reserved 32 bit value*/
-  0, 
+  0,
 
-  /**Fill coolant tempersture sensor lookup table*/
+  /**Fill coolant temperature sensor lookup table*/
   {400, 312, 262, 223, 191, 166, 142, 120, 99, 78, 56, 34, 10, -15, -54, -112},
   154, 1708,
 
   /**Fill choke closing vs. temperarure lookup table*/
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+  {_CLV(100.0), _CLV(99.0), _CLV(98.0), _CLV(96.0), _CLV(95.0), _CLV(92.0), _CLV(86.0), _CLV(78.0),
+   _CLV(69.0),  _CLV(56.0), _CLV(50.0), _CLV(40.0), _CLV(25.0), _CLV(12.0), _CLV(5.0),  _CLV(0)},
 
   /**reserved bytes*/
   {0}

@@ -31,6 +31,9 @@
 
 struct ecudata_t;
 
+/** Initialization of used I/O ports */
+void choke_init_ports(void);
+
 /** Initialization of the module (state variables etc)*/
 void choke_init(void);
 
@@ -38,6 +41,17 @@ void choke_init(void);
  * \param d pointer to ECU data structure
  */
 void choke_control(struct ecudata_t* d);
+
+/** Used in power management
+ * \return 1 - choke is ready, 0 - choke is not ready
+ */
+uint8_t choke_is_ready(void);
+
+
+/** Set choke to the power-down position. This function is used only when
+ * power management is enabled.
+ */
+//void choke_powerdown(void);
 
 #endif
 

@@ -51,7 +51,7 @@ void stpmot_init(void)
 
 void stpmot_dir(uint8_t dir)
 {
- //Speaking about L297, CW/~CCW input synchronized internally therefore 
+ //Speaking about L297, CW/~CCW input synchronized internally therefore
  //direction can be changed at any time
  IOCFG_SET(IOP_SM_DIR, dir);
 }
@@ -62,6 +62,15 @@ void stpmot_run(uint16_t steps)
   sm_steps = steps;
   sm_latch = 1;
  _ENABLE_INTERRUPT();
+}
+
+uint8_t stpmot_is_busy(void)
+{
+ uint16_t current;
+ _DISABLE_INTERRUPT();
+ current = sm_steps_b;
+ _ENABLE_INTERRUPT();
+ return (current > 0); //busy?
 }
 
 #endif

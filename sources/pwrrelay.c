@@ -28,6 +28,7 @@
 #include "port/port.h"
 #include "adc.h"
 #include "bitmask.h"
+#include "choke.h"
 #include "eeprom.h"
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -50,7 +51,7 @@ void pwrrelay_init_ports(void)
 
 void pwrrelay_init(void)
 {
- pwrs.state = 0; 
+ pwrs.state = 0;
 }
 
 void pwrrelay_control(struct ecudata_t* d)
@@ -89,7 +90,7 @@ void pwrrelay_control(struct ecudata_t* d)
    }
   }
 
-  if ((temperature_ok && eeprom_is_idle()) || s_timer16_is_action(powerdown_timeout_counter))
+  if ((temperature_ok && eeprom_is_idle() && choke_is_ready()) || s_timer16_is_action(powerdown_timeout_counter))
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
  }
  else

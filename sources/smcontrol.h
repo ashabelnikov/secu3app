@@ -54,6 +54,11 @@ void stpmot_dir(uint8_t dir);
  */
 void stpmot_run(uint16_t steps);
 
+/**Check if stepper motor is busy (busy means running at the moment)
+ * \return 1 - stepper motor is busy, 0 - stepper motor is idle
+ */
+uint8_t stpmot_is_busy(void);
+
 #endif
 
 #endif //_SMCONTROL_H_

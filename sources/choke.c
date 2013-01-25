@@ -27,17 +27,89 @@
 #ifdef SM_CONTROL
 
 #include "port/port.h"
+#include "ioconfig.h"
 #include "secu3.h"
 #include "smcontrol.h"
+
+/**Direction used to set choke to the initial position */
+#define INIT_POS_DIR SM_DIR_CW
+
+/**Define state variables*/
+typedef struct
+{
+ uint8_t state;          //!< state machine state
+ uint8_t pwdn;           //!< powerdown flag (used if power management is enabled)
+}choke_st_t;
+
+/**Instance of state variables */
+choke_st_t chks = {0};
+
+void choke_init_ports(void)
+{
+ stpmot_init_ports();
+}
 
 void choke_init(void)
 {
  stpmot_init();
+ chks.state = 0;
+ chks.pwdn = 0;
+}
+
+/** Set choke to initial position. Because we have no position feedback, we
+ * must use number of steps more than stepper actually has.
+ * \param dir Direction (see description on stpmot_dir() function)
+ * \param steps Total number of steps of stepper motor
+ */
+static void initial_pos(uint8_t dir, uint16_t steps)
+{
+ stpmot_dir(dir);                     //set direction
+ stpmot_run(steps + (steps >> 5));    //run using number of steps + 3%
 }
 
 void choke_control(struct ecudata_t* d)
 {
+ switch(chks.state)
+ {
+  case 0:                                                     //Initialization of choke position
+   if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
+    initial_pos(INIT_POS_DIR, d->param.sm_steps);
+   chks.state = 2;
+   break;
 
+  case 1:                                                     //system is being preparing to power-down
+   initial_pos(INIT_POS_DIR, d->param.sm_steps);
+   chks.state = 2;
+   break;
+
+  case 2:                                                     //wait while choke is being initialized
+   if (!stpmot_is_busy())                                     //ready?
+   {
+    if (chks.pwdn)
+     chks.state = 3;                                          //ready to power-down
+    else
+     chks.state = 5;                                          //normal working
+   }
+   break;
+
+  case 3:                                                     //power-down
+   break;
+
+  case 5:                                                     //normal working mode
+   break;
+ }
 }
+
+uint8_t choke_is_ready(void)
+{
+ return (chks.state == 5 || chks.state == 3);
+}
+
+/*
+void choke_powerdown(void)
+{
+ chks.pwdn = 1;
+ chks.state = 1;
+} */
 
 #endif //SM_CONTROL

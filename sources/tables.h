@@ -226,7 +226,7 @@ typedef struct params_t
   uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
 
   uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input (тип фронта ДНО)
-  
+
   int16_t  tps_adc_factor;               //!< ADC error compensation factor for TPS
   int32_t  tps_adc_correction;           //!< ADC error compensation correction for TPS
   int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input 
@@ -237,7 +237,9 @@ typedef struct params_t
   int16_t  tps_curve_offset;             //!< offset of curve in volts
   int16_t  tps_curve_gradient;           //!< gradient of curve in Percentage/V
 
-  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes
+  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
+
+  uint16_t sm_steps;                     //!< Number of steps of choke stepper motor
 
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
@@ -245,7 +247,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[8];
+  uint8_t  reserved[6];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

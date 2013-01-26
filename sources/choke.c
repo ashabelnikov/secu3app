@@ -27,9 +27,12 @@
 #ifdef SM_CONTROL
 
 #include "port/port.h"
+#include <stdlib.h>
 #include "ioconfig.h"
+#include "funconv.h"
 #include "secu3.h"
 #include "smcontrol.h"
+#include "pwrrelay.h"
 
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
@@ -37,8 +40,9 @@
 /**Define state variables*/
 typedef struct
 {
- uint8_t state;          //!< state machine state
- uint8_t pwdn;           //!< powerdown flag (used if power management is enabled)
+ uint8_t   state;          //!< state machine state
+ uint8_t   pwdn;           //!< powerdown flag (used if power management is enabled)
+ uint16_t  smpos;          //!< current position of stepper motor in steps
 }choke_st_t;
 
 /**Instance of state variables */
@@ -89,13 +93,38 @@ void choke_control(struct ecudata_t* d)
      chks.state = 3;                                          //ready to power-down
     else
      chks.state = 5;                                          //normal working
+    chks.smpos = 0;
    }
    break;
 
   case 3:                                                     //power-down
+   if (pwrrelay_get_state())
+   { 
+    chks.pwdn = 0;
+    chks.state = 5;
+   }
    break;
 
   case 5:                                                     //normal working mode
+   if (!pwrrelay_get_state())
+   {                                                          //power-down
+    chks.pwdn = 1;
+    chks.state = 1;
+   }
+
+   {
+   int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d)) / 200;
+   int16_t rpm_cor = 0, diff;
+   int16_t pos = tmp_pos + rpm_cor;
+   restrict_value_to(&pos, 0, d->param.sm_steps);
+   diff = pos - chks.smpos;
+   if (!stpmot_is_busy() && diff != 0)
+   {
+    stpmot_dir(diff < 0 ? SM_DIR_CW : SM_DIR_CCW);
+    stpmot_run(abs(diff));                                    //start stepper motor
+    chks.smpos += diff;
+   }
+   }
    break;
  }
 }
@@ -104,12 +133,5 @@ uint8_t choke_is_ready(void)
 {
  return (chks.state == 5 || chks.state == 3);
 }
-
-/*
-void choke_powerdown(void)
-{
- chks.pwdn = 1;
- chks.state = 1;
-} */
 
 #endif //SM_CONTROL

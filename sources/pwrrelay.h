@@ -42,4 +42,10 @@ void pwrrelay_init(void);
  */
 void pwrrelay_control(struct ecudata_t* d);
 
+/** Get System power state. When power management is not available
+ * this function will always return 1
+ * \return 1 - power is up, 0 - power is down
+ */
+uint8_t pwrrelay_get_state(void);
+
 #endif //_PWRRELAY_H_

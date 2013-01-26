@@ -39,6 +39,7 @@
 typedef struct
 {
  uint8_t state;    //!< state mashine for managing of power states
+ uint8_t pwrdown   //!< power-down flag
 }pwrstate_t;
 
 pwrstate_t pwrs;   //!< instance of state variables
@@ -52,19 +53,19 @@ void pwrrelay_init_ports(void)
 void pwrrelay_init(void)
 {
  pwrs.state = 0;
+ pwrs.pwrdown = 0;
 }
 
 void pwrrelay_control(struct ecudata_t* d)
 {
- uint8_t pwrdown;
  //if this feature is disabled, then do nothing
  if (!IOCFG_CHECK(IOP_PWRRELAY))
   return;
 
  //if IGN input is not available, then we will check board voltage
- pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
+ pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
 
- if (pwrdown)
+ if (pwrs.pwrdown)
  {//ignition is off
 
   //We will wait while temperature is high only if temperature sensor is enabled
@@ -90,9 +91,18 @@ void pwrrelay_control(struct ecudata_t* d)
    }
   }
 
-  if ((temperature_ok && eeprom_is_idle() && choke_is_ready()) || s_timer16_is_action(powerdown_timeout_counter))
+  if ((temperature_ok && eeprom_is_idle() 
+#ifdef SM_CONTROL
+      && choke_is_ready()
+#endif
+      ) || s_timer16_is_action(powerdown_timeout_counter))
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
  }
  else
   pwrs.state = 0;
+}
+
+uint8_t pwrrelay_get_state(void)
+{
+ return (pwrs.pwrdown == 0);
 }

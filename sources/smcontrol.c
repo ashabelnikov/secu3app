@@ -67,10 +67,12 @@ void stpmot_run(uint16_t steps)
 uint8_t stpmot_is_busy(void)
 {
  uint16_t current;
+ uint8_t latching;
  _DISABLE_INTERRUPT();
  current = sm_steps_b;
+ latching = sm_latch;
  _ENABLE_INTERRUPT();
- return (current > 0); //busy?
+ return (current > 0 || latching); //busy?
 }
 
 #endif

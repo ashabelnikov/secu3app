@@ -449,6 +449,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.hop_start_cogs);
    build_i8h(d->param.hop_durat_cogs);
    break;
+
+  case CHOKE_PAR:
+   build_i16h(d->param.sm_steps);
+   break;
  
 #ifdef REALTIME_TABLES
 //Following finite state machine will transfer all table's data
@@ -696,6 +700,10 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ign_cutoff_thrd = recept_i16h();
    d->param.hop_start_cogs = recept_i8h();
    d->param.hop_durat_cogs = recept_i8h();
+   break;
+
+  case CHOKE_PAR:
+   d->param.sm_steps = recept_i16h();
    break;
 
 #ifdef REALTIME_TABLES

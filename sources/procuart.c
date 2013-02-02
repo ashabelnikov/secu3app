@@ -56,6 +56,7 @@ void process_uart_interface(struct ecudata_t* d)
    case ANGLES_PAR:
    case STARTR_PAR:
    case ADCCOR_PAR:
+   case CHOKE_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;

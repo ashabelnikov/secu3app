@@ -121,6 +121,8 @@ typedef struct ecudata_t
  diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs 
  uint16_t       diag_out;                //!< diagnostic mode: values of outputs
 #endif
+
+ uint8_t choke_testing;                  //!< Use to indcated that choke testing if on/off (so it is applicable only if SM_CONTROL compile option is used)
 }ecudata_t;
 
 

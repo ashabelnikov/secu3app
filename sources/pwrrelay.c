@@ -39,7 +39,7 @@
 typedef struct
 {
  uint8_t state;    //!< state mashine for managing of power states
- uint8_t pwrdown   //!< power-down flag
+ uint8_t pwrdown;  //!< power-down flag
 }pwrstate_t;
 
 pwrstate_t pwrs;   //!< instance of state variables

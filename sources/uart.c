@@ -453,6 +453,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 
   case CHOKE_PAR:
    build_i16h(d->param.sm_steps);
+   build_i4h(d->choke_testing);      //fake parameter (actually it is command)
    break;
  
 #ifdef REALTIME_TABLES
@@ -706,6 +707,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 
   case CHOKE_PAR:
    d->param.sm_steps = recept_i16h();
+   d->choke_testing = recept_i4h(); //fake parameter (actually it is status)
    break;
 
 #ifdef REALTIME_TABLES

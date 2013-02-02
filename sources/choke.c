@@ -106,24 +106,55 @@ void choke_control(struct ecudata_t* d)
    break;
 
   case 5:                                                     //normal working mode
+   if (d->choke_testing)
+   {
+    initial_pos(INIT_POS_DIR, d->param.sm_steps);
+    chks.state = 6;                                           //start testing
+   }
+   else
+   {
+    int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d)) / 200;
+    int16_t rpm_cor = 0, diff;
+    int16_t pos = tmp_pos + rpm_cor;
+    restrict_value_to(&pos, 0, d->param.sm_steps);
+    diff = pos - chks.smpos;
+    if (!stpmot_is_busy() && diff != 0)
+    {
+     stpmot_dir(diff < 0 ? SM_DIR_CW : SM_DIR_CCW);
+     stpmot_run(abs(diff));                                    //start stepper motor
+     chks.smpos += diff;
+    }
+   }
+   goto check_pwr; 
+
+  //     Testing modes
+  case 6:                                                     //initialization of choke
+   if (!stpmot_is_busy())                                     //ready?
+   {
+    stpmot_dir(SM_DIR_CCW);
+    stpmot_run(d->param.sm_steps);
+    chks.state = 7;
+   }
+   goto check_tst; 
+
+  case 7:
+   if (!stpmot_is_busy())                                     //ready?
+   {
+    stpmot_dir(SM_DIR_CW);
+    stpmot_run(d->param.sm_steps);
+    chks.state = 6;
+   }
+   goto check_tst; 
+
+  default:
+  check_tst:
+   if (!d->choke_testing)
+    chks.state = 1;                                           //exit choke testing mode
+  check_pwr:
    if (!pwrrelay_get_state())
    {                                                          //power-down
     chks.pwdn = 1;
     chks.state = 1;
-   }
-
-   {
-   int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d)) / 200;
-   int16_t rpm_cor = 0, diff;
-   int16_t pos = tmp_pos + rpm_cor;
-   restrict_value_to(&pos, 0, d->param.sm_steps);
-   diff = pos - chks.smpos;
-   if (!stpmot_is_busy() && diff != 0)
-   {
-    stpmot_dir(diff < 0 ? SM_DIR_CW : SM_DIR_CCW);
-    stpmot_run(abs(diff));                                    //start stepper motor
-    chks.smpos += diff;
-   }
    }
    break;
  }

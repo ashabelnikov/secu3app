@@ -241,13 +241,15 @@ typedef struct params_t
 
   uint16_t sm_steps;                     //!< Number of steps of choke stepper motor
 
+  int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[6];
+  uint8_t  reserved[4];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

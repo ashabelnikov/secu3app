@@ -288,6 +288,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.idling_rpm);
    build_i16h(d->param.idlreg_min_angle);
    build_i16h(d->param.idlreg_max_angle);
+   build_i16h(d->param.idlreg_turn_on_temp);
    break;
 
   case ANGLES_PAR:
@@ -611,6 +612,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.idling_rpm = recept_i16h();
    d->param.idlreg_min_angle = recept_i16h();
    d->param.idlreg_max_angle = recept_i16h();
+   d->param.idlreg_turn_on_temp = recept_i16h();
    break;
 
   case ANGLES_PAR:

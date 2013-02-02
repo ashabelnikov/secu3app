@@ -208,7 +208,7 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
  if (!d->param.idl_regul || (d->sens.frequen >(d->param.idling_rpm + capture_range))
-    || (d->sens.temperat < TEMPERATURE_MAGNITUDE(50) && d->param.tmp_use))
+    || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use))
   return 0;
 
  //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне

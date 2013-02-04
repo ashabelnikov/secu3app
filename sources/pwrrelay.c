@@ -62,9 +62,7 @@ void pwrrelay_control(struct ecudata_t* d)
  if (!IOCFG_CHECK(IOP_PWRRELAY))
   return;
 
- //if IGN input is not available, then we will check board voltage
- pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
-
+ //apply power management logic
  if (pwrs.pwrdown)
  {//ignition is off
 
@@ -91,7 +89,7 @@ void pwrrelay_control(struct ecudata_t* d)
    }
   }
 
-  if ((temperature_ok && eeprom_is_idle() 
+  if ((temperature_ok && eeprom_is_idle()
 #ifdef SM_CONTROL
       && choke_is_ready()
 #endif
@@ -100,6 +98,9 @@ void pwrrelay_control(struct ecudata_t* d)
  }
  else
   pwrs.state = 0;
+
+ //if IGN input is not available, then we will check board voltage
+ pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
 }
 
 uint8_t pwrrelay_get_state(void)

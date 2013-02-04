@@ -99,7 +99,7 @@ void choke_control(struct ecudata_t* d)
 
   case 3:                                                     //power-down
    if (pwrrelay_get_state())
-   { 
+   {
     chks.pwdn = 0;
     chks.state = 5;
    }
@@ -125,7 +125,7 @@ void choke_control(struct ecudata_t* d)
      chks.smpos += diff;
     }
    }
-   goto check_pwr; 
+   goto check_pwr;
 
   //     Testing modes
   case 6:                                                     //initialization of choke
@@ -135,7 +135,7 @@ void choke_control(struct ecudata_t* d)
     stpmot_run(d->param.sm_steps);
     chks.state = 7;
    }
-   goto check_tst; 
+   goto check_tst;
 
   case 7:
    if (!stpmot_is_busy())                                     //ready?
@@ -144,7 +144,7 @@ void choke_control(struct ecudata_t* d)
     stpmot_run(d->param.sm_steps);
     chks.state = 6;
    }
-   goto check_tst; 
+   goto check_tst;
 
   default:
   check_tst:

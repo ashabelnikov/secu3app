@@ -47,12 +47,6 @@ void choke_control(struct ecudata_t* d);
  */
 uint8_t choke_is_ready(void);
 
-
-/** Set choke to the power-down position. This function is used only when
- * power management is enabled.
- */
-//void choke_powerdown(void);
-
 #endif
 
 #endif //_CHOKE_H_

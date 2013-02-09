@@ -290,20 +290,17 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
  if (adcvalue < 0)
   adcvalue = 0;
 
- //выражение выглядит так: ((adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.
- //или
- //выражение выглядит так: ((-5.0 + adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.
+ //выражение выглядит так: ((adcvalue + offset) * gradient ) / 128, где offset,gradient - константы.
+ t = adcvalue + offset;
  if (gradient > 0)
  {
-  t = adcvalue + offset;
   if (t < 0)
-   t = 0;
+   t = 0;    //restrict value
  }
  else
  {
-  t = -ROUND(5.0/ADC_DISCRETE) + adcvalue + offset;
   if (t > 0)
-   t = 0;
+   t = 0;    //restrict value
  }
  return ( ((int32_t)t) * gradient ) >> 7;
 }

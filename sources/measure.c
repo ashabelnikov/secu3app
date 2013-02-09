@@ -31,6 +31,7 @@
 #include "adc.h"
 #include "bitmask.h"
 #include "funconv.h"    //thermistor_lookup()
+#include "ioconfig.h"
 #include "magnitude.h"
 #include "measure.h"
 #include "secu3.h"
@@ -216,10 +217,21 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
 
  //переключаем тип топлива в зависимости от состояния газового клапана
 #ifndef REALTIME_TABLES
- if (d->sens.gas)
-  d->fn_dat = &fw_data.tables[d->param.fn_gas];     //на газе
+ if (!IOCFG_CHECK(IOP_MAPSEL0))
+ { //without additioanl selection input
+  if (d->sens.gas)
+   d->fn_dat = &fw_data.tables[d->param.fn_gas];     //на газе
+  else
+   d->fn_dat = &fw_data.tables[d->param.fn_gasoline];//на бензине
+ }
  else
-  d->fn_dat = &fw_data.tables[d->param.fn_gasoline];//на бензине
+ {
+  uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
+  if (d->sens.gas) //на газе
+   d->fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d->param.fn_gas];
+  else             //на бензине
+   d->fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d->param.fn_gasoline];
+ }
 #else //use tables from RAM
  if (d->sens.gas)
   d->fn_dat = &d->tables_ram[1]; //using gas(на газе)

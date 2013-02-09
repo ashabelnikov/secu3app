@@ -65,7 +65,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_BC_INPUT     23     //!< BC_INPUT        (input)
 #define IOP_SM_DIR       24     //!< SM_DIR          (output)
 #define IOP_SM_STP       25     //!< SM_STP          (output)
-#define IOP_RESERVED9    26     //!< reserved plug   ()
+#define IOP_MAPSEL0      26     //!< MAPSEL0         (input)
 #define IOP_RESERVED10   27     //!< reserved plug   ()
 #define IOP_RESERVED11   28     //!< reserved plug   ()
 #define IOP_RESERVED12   29     //!< reserved plug   ()

@@ -82,6 +82,7 @@ void vent_init_state(void)
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 }
 
+#ifdef COOLINGFAN_PWM
 /**Sets duty value
  * \param duty value to be set
  */
@@ -129,6 +130,7 @@ ISR(TIMER2_COMP_vect)
   --pwm_state;
  }
 }
+#endif
 
 //Control of electric cooling fan (engine cooling), only in case if coolant temperature
 //sensor is present in system

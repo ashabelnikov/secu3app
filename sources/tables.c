@@ -25,8 +25,9 @@
  */
 
 #include "port/port.h"
-#include "compilopt.h"
+#include "adc.h"
 #include "bitmask.h"
+#include "compilopt.h"
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "tables.h"
@@ -51,6 +52,9 @@
 
 /**For specifying of choke position in the lookup table*/
 #define _CLV(v) ROUND(((v)*2.0))
+
+/**For specifying of temperature values in the lookup table*/
+#define _TLV(v) ROUND(((v)*4.0))
 
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
@@ -172,8 +176,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   0,
 
   /**Fill coolant temperature sensor lookup table*/
-  {400, 312, 262, 223, 191, 166, 142, 120, 99, 78, 56, 34, 10, -15, -54, -112},
-  154, 1708,
+  {_TLV(120.0), _TLV(95.0), _TLV(79.0), _TLV(66.5), _TLV(57.4), _TLV(49.5), _TLV(43.8), _TLV(37.9), 
+   _TLV(31.0), _TLV(24.8), _TLV(19.8), _TLV(13.8), _TLV(6.0), _TLV(-1.0), _TLV(-12.5), _TLV(-30.0)},
+  ROUND(0.182 / ADC_DISCRETE), ROUND(4.25 / ADC_DISCRETE),
 
   /**Fill choke closing vs. temperarure lookup table*/
   {_CLV(100.0), _CLV(99.0), _CLV(98.0), _CLV(96.0), _CLV(95.0), _CLV(92.0), _CLV(86.0), _CLV(78.0),

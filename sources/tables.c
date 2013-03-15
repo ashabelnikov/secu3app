@@ -25,9 +25,11 @@
  */
 
 #include "port/port.h"
-#include "compilopt.h"
+#include "adc.h"
 #include "bitmask.h"
+#include "compilopt.h"
 #include "ioconfig.h"
+#include "magnitude.h"
 #include "tables.h"
 
 /**Helpful macro used for pointer conversion */
@@ -35,10 +37,24 @@
 
 /**Helpful macro used pointer conversions of functions which are available in SECU-3T*/
 #ifdef SECU3T
- #define _FNC_SECU3T(a) (_FNC(a))
+ #define _FNC_S_SECU3T(a) (_FNC(a))
+ #define _FNC_G_SECU3T(a) (_FNC(a))
 #else
- #define _FNC_SECU3T(a) (_FNC(iocfg_s_stub))
+ #define _FNC_S_SECU3T(a) (_FNC(iocfg_s_stub))
+ #define _FNC_G_SECU3T(a) (_FNC(iocfg_g_stub))
 #endif
+
+/**Helpful macro for creating of I/O remapping version number*/
+#define IOREMVER(maj, min) ((maj)<<4 | ((min) & 0xf))
+
+/**For specifying of dwell times in the lookup table*/
+#define _DLV(v) ROUND(((v)*250.0))
+
+/**For specifying of choke position in the lookup table*/
+#define _CLV(v) ROUND(((v)*2.0))
+
+/**For specifying of temperature values in the lookup table*/
+#define _TLV(v) ROUND(((v)*4.0))
 
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
@@ -49,48 +65,81 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**I/O remapping. Match slots and plugs for default configuration*/
   {
-   //size of this structure
+   //2 bytes - size of this structure
    sizeof(iorem_slots_t),
 
-   //A reserved byte
-   0,
+   //Version of this structure - 1.3
+   IOREMVER(1,3),
 
-   //slots and plugs
-   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    0, 0   //<-- zero means that these slots are not implemented in this firmware
+   //normal slots (initialization)
+   {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
+    _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+    _FNC(iocfg_i_ps),              //PS input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i1), //ADD_IO1 input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i2), //ADD_IO2 input initialization
+    0, 0, 0                        //<-- zero means that these slots are not implemented in this firmware
+   },//inverted slots (initialization)
+   {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
+    _FNC_S_SECU3T(iocfg_i_add_io1i), _FNC_S_SECU3T(iocfg_i_add_io2i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_st_blocki),
+    _FNC(iocfg_i_iei), _FNC(iocfg_i_fei),
+    _FNC(iocfg_i_psi),              //PS input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i1i), //ADD_IO1 input initialization
+    _FNC_S_SECU3T(iocfg_i_add_i2i), //ADD_IO2 input initialization
+    0, 0, 0                         //<-- zero means that these slots are not implemented in this firmware
+   },//normal slots (get/set value)
+   {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
+    _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
+    _FNC(iocfg_g_ps),              //PS input get value
+    _FNC_G_SECU3T(iocfg_g_add_i1), //ADD_IO1 input get value
+    _FNC_G_SECU3T(iocfg_g_add_i2), //ADD_IO2 input get value
+    0, 0, 0                        //<-- zero means that these slots are not implemented in this firmware
+   },//inverted slots (get/set value)
+   {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
+    _FNC_S_SECU3T(iocfg_s_add_io1i), _FNC_S_SECU3T(iocfg_s_add_io2i), _FNC(iocfg_s_ecfi), _FNC(iocfg_s_st_blocki),
+    _FNC(iocfg_s_iei), _FNC(iocfg_s_fei),
+    _FNC(iocfg_g_psi),              //PS input get value
+    _FNC_G_SECU3T(iocfg_g_add_i1i), //ADD_IO1 input get value
+    _FNC_G_SECU3T(iocfg_g_add_i2i), //ADD_IO2 input get value
+    0, 0, 0                         //<-- zero means that these slots are not implemented in this firmware
    },
-   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    0, 0   //<-- zero means that these slots are not implemented in this firmware
-   },
-   {_FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC_SECU3T(iocfg_i_add_io1), _FNC_SECU3T(iocfg_i_add_io2),_FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
+   //plugs
+   {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
+    _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
+    _FNC(iocfg_i_ie), _FNC(iocfg_i_fe), _FNC(iocfg_i_ps), _FNC_S_SECU3T(iocfg_i_add_i1),
+    _FNC_S_SECU3T(iocfg_i_add_i2), 0, 0, 0,          //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
-   },
-   {_FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC_SECU3T(iocfg_s_add_io1), _FNC_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+   },
+   {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
+    _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
+    _FNC(iocfg_s_ie), _FNC(iocfg_s_fe), _FNC(iocfg_g_ps), _FNC_G_SECU3T(iocfg_g_add_i1),
+    _FNC_G_SECU3T(iocfg_g_add_i2), 0, 0, 0,          //<-- mapped to slots by default
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
-   _FNC(iocfg_s_stub), _FNC(0), //<-- stub, reserved
+   _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
   },
 
   /**32-bit config data*/
   _CBV32(COPT_ATMEGA16, 0) | _CBV32(COPT_ATMEGA32, 1) | _CBV32(COPT_ATMEGA64, 2) | _CBV32(COPT_ATMEGA128, 3) |
-  _CBV32(COPT_VPSEM, 4) | _CBV32(0/*not used*/, 5) | _CBV32(COPT_INVERSE_IGN_OUTPUTS, 6) | _CBV32(COPT_DWELL_CONTROL, 7) |
+  _CBV32(COPT_VPSEM, 4) | _CBV32(0/*not used*/, 5) | _CBV32(0/*not used*/, 6) | _CBV32(COPT_DWELL_CONTROL, 7) |
   _CBV32(COPT_COOLINGFAN_PWM, 8) | _CBV32(COPT_REALTIME_TABLES, 9) | _CBV32(COPT_ICCAVR_COMPILER, 10) | _CBV32(COPT_AVRGCC_COMPILER, 11) |
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
-  _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21),
+  _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22),
 
-  /**Two reserved bytes*/
-  {0, 0},
+  /**A reserved byte*/
+  0,
 
-  /**size of this structure*/
-  sizeof(cd_data_t)
+  /**2 bytes - size of this structure. This value stored in big-endian format (for compatibility reason)*/
+  ((sizeof(cd_data_t) >> 8) & 0x00FF) | ((sizeof(cd_data_t) << 8) & 0xFF00)
  },
 
  /**Дополнительные данные по умолчанию Fill additional data with default values */
@@ -99,7 +148,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    * Дата в формате Mmm dd yyyy.
    * Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
    * Date in format Mmm dd yyyy. */
-  {"SECU-3 firmware v3.5. Build ["__DATE__"]       "},
+  {"SECU-3 firmware v3.6. Build ["__DATE__"]       "},
 
   /**Таблица аттенюатора, по умолчанию k = 1.000
    * attenuator's lookup table (for knock channel), by default k = 1.000 */
@@ -114,19 +163,26 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   },
 
   /**Lookup table for controlling coil's accumulation time (dwell control) */
-  {0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,
-   0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200,0x200
+  {_DLV(15.0),_DLV(13.6),_DLV(12.5),_DLV(11.4),_DLV(10.2),_DLV(9.25),_DLV(8.30),_DLV(7.55),
+   _DLV(6.80),_DLV(6.30),_DLV(5.80),_DLV(5.34),_DLV(4.88),_DLV(4.53),_DLV(4.19),_DLV(3.94),
+   _DLV(3.69),_DLV(3.44),_DLV(3.19),_DLV(3.03),_DLV(2.90),_DLV(2.70),_DLV(2.55),_DLV(2.43),
+   _DLV(2.30),_DLV(2.22),_DLV(2.13),_DLV(2.00),_DLV(1.88),_DLV(1.85),_DLV(1.82),_DLV(1.80),
   },
 
   /**Size of all data for checking */
   (sizeof(fw_data_t) - sizeof(cd_data_t)),
 
   /**reserved 32 bit value*/
-  0, 
+  0,
 
-  /**Fill coolant tempersture sensor lookup table*/
-  {400, 312, 262, 223, 191, 166, 142, 120, 99, 78, 56, 34, 10, -15, -54, -112},
-  154, 1708,
+  /**Fill coolant temperature sensor lookup table*/
+  {_TLV(120.0), _TLV(95.0), _TLV(79.0), _TLV(66.5), _TLV(57.4), _TLV(49.5), _TLV(43.8), _TLV(37.9), 
+   _TLV(31.0), _TLV(24.8), _TLV(19.8), _TLV(13.8), _TLV(6.0), _TLV(-1.0), _TLV(-12.5), _TLV(-30.0)},
+  ROUND(0.182 / ADC_DISCRETE), ROUND(4.25 / ADC_DISCRETE),
+
+  /**Fill choke closing vs. temperarure lookup table*/
+  {_CLV(100.0), _CLV(99.0), _CLV(98.0), _CLV(96.0), _CLV(95.0), _CLV(92.0), _CLV(86.0), _CLV(78.0),
+   _CLV(69.0),  _CLV(56.0), _CLV(50.0), _CLV(40.0), _CLV(25.0), _CLV(12.0), _CLV(5.0),  _CLV(0)},
 
   /**reserved bytes*/
   {0}
@@ -136,8 +192,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  {1, 0, 0, 6, 6, 1920, 1900, 2100, 600, 6400, 650, 1600, -320, 0, 800, 4,
   4,10,392,384,16384,8192,16384,8192,16384,8192, 0, 20, 10, 96, 96, -320,
   320, 066, 1089, 392, 1900, 2100, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
-  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, {0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, 16384, 8192, 
+  16384,8192, 16384,8192, 160, 1050, 0, 984, 200, {0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

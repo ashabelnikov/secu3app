@@ -40,4 +40,9 @@ void vent_control(struct ecudata_t *d);
 /**Initialization of internal state (инициализация состояния)*/
 void vent_init_state(void);
 
+/**Turn off cooling fan (used inside bc_input unit)
+ * \param d pointer to ECU data structure
+ */
+void vent_turnoff(struct ecudata_t *d);
+
 #endif //_VENTILATOR_H_

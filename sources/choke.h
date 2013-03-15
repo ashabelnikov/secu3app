@@ -19,20 +19,34 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file procuart.h
- * Functionality for processing of pending data which is sent/received via serial interface (UART)
- * (Обработка поступающих данных для приема/передачи через последовательный интерфейс (UART)).
+/** \file choke.h
+ * Carburetor choke control.
+ * (Управление воздушной заслонкой карбюратора).
  */
 
-#ifndef _PROCUART_H_
-#define _PROCUART_H_
+#ifndef _CHOKE_H_
+#define _CHOKE_H_
+
+#ifdef SM_CONTROL
 
 struct ecudata_t;
 
-/** Process sent/received frames from UART. Should be called from main loop!
- *(обрабатывает передаваемые/принимаемые фреймы UART-a. Должна вызыватся из главного цикла программы)
+/** Initialization of used I/O ports */
+void choke_init_ports(void);
+
+/** Initialization of the module (state variables etc)*/
+void choke_init(void);
+
+/** Does control of choke (Управление воздушной заслонкой)
  * \param d pointer to ECU data structure
  */
-void process_uart_interface(struct ecudata_t* d);
+void choke_control(struct ecudata_t* d);
 
-#endif //_PROCUART_H_
+/** Used in power management
+ * \return 1 - choke is ready, 0 - choke is not ready
+ */
+uint8_t choke_is_ready(void);
+
+#endif
+
+#endif //_CHOKE_H_

@@ -85,6 +85,7 @@ extern volatile s_timer16_t save_param_timeout_counter;
 #ifdef FUEL_PUMP
 extern volatile s_timer16_t fuel_pump_time_counter;
 #endif
+extern volatile s_timer16_t powerdown_timeout_counter;
 //////////////////////////////////////////////////////////////////
 
 #endif //_VSTIMER_H_

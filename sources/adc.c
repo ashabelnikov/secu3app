@@ -290,20 +290,17 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
  if (adcvalue < 0)
   adcvalue = 0;
 
- //выражение выглядит так: ((adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.
- //или
- //выражение выглядит так: ((-5.0 + adcvalue + K1) * K2 ) / 128, где K1,K2 - константы.
+ //выражение выглядит так: ((adcvalue + offset) * gradient ) / 128, где offset,gradient - константы.
+ t = adcvalue + offset;
  if (gradient > 0)
  {
-  t = adcvalue + offset;
   if (t < 0)
-   t = 0;
+   t = 0;    //restrict value
  }
  else
  {
-  t = -ROUND(5.0/ADC_DISCRETE) + adcvalue + offset;
   if (t > 0)
-   t = 0;
+   t = 0;    //restrict value
  }
  return ( ((int32_t)t) * gradient ) >> 7;
 }
@@ -322,3 +319,17 @@ int16_t temp_adc_to_c(int16_t adcvalue)
   adcvalue = 0;
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
+
+#ifdef SECU3T
+uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
+{
+ int16_t t;
+ if (adcvalue < 0)
+  adcvalue = 0;
+ t = adcvalue + offset;
+ if (t < 0)
+  t = 0;
+ 
+ return (((int32_t)t) * gradient) >> (7+6);
+}
+#endif

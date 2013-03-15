@@ -131,5 +131,13 @@ uint16_t accumulation_time(struct ecudata_t* d);
 int16_t thermistor_lookup(uint16_t adcvalue);
 #endif
 
+#ifdef SM_CONTROL
+/** Obtains choke position (closing %) from coolant temperature using lookup table
+ * Получает положение воздушной заслонки (% закрытия) по температре охлаждающей жидкости
+ * \param d pointer to ECU data structure
+ * \return choke closing percentage (value * 2)
+ */
+uint8_t choke_closing_lookup(struct ecudata_t* d);
+#endif
 
 #endif //_FUNCONV_H_

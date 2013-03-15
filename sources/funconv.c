@@ -208,7 +208,7 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
  if (!d->param.idl_regul || (d->sens.frequen >(d->param.idling_rpm + capture_range))
-    || (d->sens.temperat < TEMPERATURE_MAGNITUDE(70) && d->param.tmp_use))
+    || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use))
   return 0;
 
  //вычисл€ем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне
@@ -338,5 +338,28 @@ int16_t thermistor_lookup(uint16_t adcvalue)
 
  return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.cts_curve[i]), PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]),
         (i * v_step) + v_start, v_step)) >> 4;
+}
+#endif
+
+#ifdef SM_CONTROL
+uint8_t choke_closing_lookup(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 0;   //блок не укомплектован ƒ“ќ∆-ом
+
+ //-5 - минимальное значение температуры
+ if (t < TEMPERATURE_MAGNITUDE(-5))
+  t = TEMPERATURE_MAGNITUDE(-5);
+
+ //5 - шаг между узлами интерпол€ции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-5)) / TEMPERATURE_MAGNITUDE(5);
+
+ if (i >= 15) i = i1 = 15;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GB(&fw_data.exdata.choke_closing[i]), _GB(&fw_data.exdata.choke_closing[i1]),
+ (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5)) >> 4;
 }
 #endif

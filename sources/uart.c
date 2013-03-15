@@ -277,6 +277,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.ie_lot_g);
    build_i16h(d->param.ie_hit_g);
    build_i8h(d->param.shutoff_delay);
+   build_i8h(d->param.tps_threshold);
    break;
 
   case IDLREG_PAR:
@@ -287,6 +288,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.idling_rpm);
    build_i16h(d->param.idlreg_min_angle);
    build_i16h(d->param.idlreg_max_angle);
+   build_i16h(d->param.idlreg_turn_on_temp);
    break;
 
   case ANGLES_PAR:
@@ -305,6 +307,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.map_upper_pressure);
    build_i16h(d->param.map_curve_offset);
    build_i16h(d->param.map_curve_gradient);
+   build_i16h(d->param.tps_curve_offset);
+   build_i16h(d->param.tps_curve_gradient);
    break;
 
   case STARTR_PAR:
@@ -344,20 +348,26 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     break;
 
   case SENSOR_DAT:
-   build_i16h(d->sens.frequen);
-   build_i16h(d->sens.map);
-   build_i16h(d->sens.voltage);
-   build_i16h(d->sens.temperat);
-   build_i16h(d->curr_angle);
-   build_i16h(d->sens.knock_k);  // <-- knock value
-   build_i16h(d->knock_retard);  // <-- knock retard
-   build_i8h(d->airflow);
+   build_i16h(d->sens.frequen);           // averaged RPM
+   build_i16h(d->sens.map);               // MAP pressure
+   build_i16h(d->sens.voltage);           // voltage
+   build_i16h(d->sens.temperat);          // coolant temperature
+   build_i16h(d->curr_angle);             // advance angle
+   build_i16h(d->sens.knock_k);           // knock value
+   build_i16h(d->knock_retard);           // knock retard
+   build_i8h(d->airflow);                 // index if the map axis curve
    //boolean values
-   build_i8h((d->ie_valve   << 0) |
-             (d->sens.carb  << 1) |
-             (d->sens.gas   << 2) |
-             (d->fe_valve   << 3) |
-             (d->ce_state   << 4));
+   build_i8h((d->ie_valve   << 0) |       // IE flag
+             (d->sens.carb  << 1) |       // carb. limit switch flag
+             (d->sens.gas   << 2) |       // gas valve flag
+             (d->fe_valve   << 3) |       // power valve flag
+             (d->ce_state   << 4) |       // CE flag
+             (d->cool_fan   << 5) |       // cooling fan flag
+             (d->st_block   << 6));       // starter blocking flag
+   build_i8h(d->sens.tps);                // TPS (0...100%, x2)
+   build_i16h(d->sens.add_i1);            // ADD_I1 voltage
+   build_i16h(d->sens.add_i2);            // ADD_I2 voltage
+   build_i16h(d->ecuerrors_for_transfer); // CE errors
    break;
 
   case ADCCOR_PAR:
@@ -367,6 +377,13 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i32h(d->param.ubat_adc_correction);
    build_i16h(d->param.temp_adc_factor);
    build_i32h(d->param.temp_adc_correction);
+   //todo: In the future if we will have a lack of RAM we can split this packet into 2 pieces and decrease size of buffers
+   build_i16h(d->param.tps_adc_factor);
+   build_i32h(d->param.tps_adc_correction);
+   build_i16h(d->param.ai1_adc_factor);
+   build_i32h(d->param.ai1_adc_correction);
+   build_i16h(d->param.ai2_adc_factor);
+   build_i32h(d->param.ai2_adc_correction);
    break;
 
   case ADCRAW_DAT:
@@ -374,6 +391,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.voltage_raw);
    build_i16h(d->sens.temperat_raw);
    build_i16h(d->sens.knock_k);   //<-- knock signal level
+   build_i16h(d->sens.tps_raw);
+   build_i16h(d->sens.add_i1_raw);
+   build_i16h(d->sens.add_i2_raw);
    break;
 
   case CKPS_PAR:
@@ -429,6 +449,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.ign_cutoff_thrd);
    build_i8h(d->param.hop_start_cogs);
    build_i8h(d->param.hop_durat_cogs);
+   break;
+
+  case CHOKE_PAR:
+   build_i16h(d->param.sm_steps);
+   build_i4h(d->choke_testing);      //fake parameter (actually it is command)
    break;
  
 #ifdef REALTIME_TABLES
@@ -577,6 +602,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ie_lot_g = recept_i16h();
    d->param.ie_hit_g = recept_i16h();
    d->param.shutoff_delay = recept_i8h();
+   d->param.tps_threshold = recept_i8h();
    break;
 
   case IDLREG_PAR:
@@ -587,6 +613,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.idling_rpm = recept_i16h();
    d->param.idlreg_min_angle = recept_i16h();
    d->param.idlreg_max_angle = recept_i16h();
+   d->param.idlreg_turn_on_temp = recept_i16h();
    break;
 
   case ANGLES_PAR:
@@ -611,6 +638,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.map_upper_pressure = recept_i16h();
    d->param.map_curve_offset = recept_i16h();
    d->param.map_curve_gradient = recept_i16h();
+   d->param.tps_curve_offset = recept_i16h();
+   d->param.tps_curve_gradient = recept_i16h();
    break;
 
   case STARTR_PAR:
@@ -625,6 +654,13 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ubat_adc_correction= recept_i32h();
    d->param.temp_adc_factor    = recept_i16h();
    d->param.temp_adc_correction= recept_i32h();
+   //todo: In the future if we will have a lack of RAM we can split this packet into 2 pieces and decrease size of buffers
+   d->param.tps_adc_factor     = recept_i16h();
+   d->param.tps_adc_correction = recept_i32h();
+   d->param.ai1_adc_factor     = recept_i16h();
+   d->param.ai1_adc_correction = recept_i32h();
+   d->param.ai2_adc_factor     = recept_i16h();
+   d->param.ai2_adc_correction = recept_i32h();
    break;
 
   case CKPS_PAR:
@@ -667,6 +703,11 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ign_cutoff_thrd = recept_i16h();
    d->param.hop_start_cogs = recept_i8h();
    d->param.hop_durat_cogs = recept_i8h();
+   break;
+
+  case CHOKE_PAR:
+   d->param.sm_steps = recept_i16h();
+   d->choke_testing = recept_i4h(); //fake parameter (actually it is status)
    break;
 
 #ifdef REALTIME_TABLES

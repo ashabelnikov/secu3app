@@ -37,38 +37,22 @@
  * This is redundant definitions (see ioconfig.c), but it is opportunity to
  * speed up corresponding ISR
  */
+#ifdef COOLINGFAN_PWM
 #ifdef SECU3T /*SECU-3T*/
 
 #ifdef REV9_BOARD
-#ifdef COOLINGFAN_PWM
- #define REL_DUTY(duty) (PWM_STEPS - duty)
- #define ECF_VAL(value) !(value)
  #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
-#else
- #define ECF_VAL(value) (value)
- #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
- #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
-#endif
 #else //REV6
-#ifdef COOLINGFAN_PWM
- #define REL_DUTY(duty) (PWM_STEPS - duty)
- #define ECF_VAL(value) !(value)
  #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
-#else
- #define ECF_VAL(value) (value)
- #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
- #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
-#endif
 #endif
 
 #else         /*SECU-3*/
- #define REL_DUTY(duty) (duty)
- #define ECF_VAL(value) (value)
  #define COOLINGFAN_TURNON()  SETBIT(PORTB, PB1)
  #define COOLINGFAN_TURNOFF() CLEARBIT(PORTB, PB1)
 #endif
+#endif //COOLINGFAN_PWM
 
 /**Warning must be the same as another definition in vstimer.h!*/
 #define TIMER2_RELOAD_VALUE  6
@@ -84,7 +68,11 @@ volatile uint8_t pwm_duty;  //!< current duty value
 
 void vent_init_ports(void)
 {
- IOCFG_INIT(IOP_ECF, ECF_VAL(0)); //coolong fan is turned Off
+#ifdef COOLINGFAN_PWM
+ IOCFG_INIT(IOP_ECF, 1); //coolong fan is turned Off
+#else //relay only
+ IOCFG_INIT(IOP_ECF, 0); //coolong fan is turned Off
+#endif
 }
 
 void vent_init_state(void)
@@ -94,6 +82,7 @@ void vent_init_state(void)
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 }
 
+#ifdef COOLINGFAN_PWM
 /**Sets duty value
  * \param duty value to be set
  */
@@ -125,7 +114,7 @@ void vent_set_duty(uint8_t duty)
  }
 }
 
-/**T/C 2 Compare interrupt for renerating of PWM (cooling fan control)*/
+/**T/C 2 Compare interrupt for generating of PWM (cooling fan control)*/
 ISR(TIMER2_COMP_vect)
 {
  if (0 == pwm_state)
@@ -141,6 +130,7 @@ ISR(TIMER2_COMP_vect)
   --pwm_state;
  }
 }
+#endif
 
 //Control of electric cooling fan (engine cooling), only in case if coolant temperature
 //sensor is present in system
@@ -153,16 +143,21 @@ void vent_control(struct ecudata_t *d)
 
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
  if (d->sens.temperat >= d->param.vent_on)
-  COOLINGFAN_TURNON();
+  IOCFG_SET(IOP_ECF, 1), d->cool_fan = 1; //turn on
  if (d->sens.temperat <= d->param.vent_off)
-  COOLINGFAN_TURNOFF();
+  IOCFG_SET(IOP_ECF, 0), d->cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
  if (!d->param.vent_pwm)
  { //relay
+  //We don't need interrupts for relay control
+  _DISABLE_INTERRUPT();
+  TIMSK&=~_BV(OCIE2);
+  _ENABLE_INTERRUPT();
+
   if (d->sens.temperat >= d->param.vent_on)
-   vent_set_duty(REL_DUTY(PWM_STEPS));
+   IOCFG_SET(IOP_ECF, 1), d->cool_fan = 1; //turn on
   if (d->sens.temperat <= d->param.vent_off)
-   vent_set_duty(REL_DUTY(0));
+   IOCFG_SET(IOP_ECF, 0), d->cool_fan = 0; //turn off
  }
  else
  {
@@ -171,9 +166,27 @@ void vent_control(struct ecudata_t *d)
   if (dd < 2)
    dd = 0;         //restrict to max.
   if (dd > (PWM_STEPS-2))
+  {
    dd = PWM_STEPS; //restrict to min.
+   d->cool_fan = 0; //turned off
+  }
+  else
+   d->cool_fan = 1; //turned on
+
   //TODO: implement kick on turn on
   vent_set_duty(PWM_STEPS - dd);
  }
+#endif
+}
+
+void vent_turnoff(struct ecudata_t *d)
+{
+#ifndef COOLINGFAN_PWM
+ IOCFG_SET(IOP_ECF, 0);
+#else
+ if (!d->param.vent_pwm)
+  IOCFG_SET(IOP_ECF, 0);
+ else
+  COOLINGFAN_TURNOFF();
 #endif
 }

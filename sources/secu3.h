@@ -31,9 +31,9 @@
 #include "tables.h"
 
 #define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
-#define FORCE_MEASURE_TIMEOUT_VALUE   25    //!< timeout value used to perform measurements when engine is stopped
+#define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #define CE_CONTROL_STATE_TIME_VALUE   50    //!< used for CE (flashing)
-#define ENGINE_ROTATION_TIMEOUT_VALUE 15    //!< timeout value used to determine that engine is stopped
+#define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
 #define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
 
 #ifdef DIAGNOSTICS
@@ -66,12 +66,17 @@ typedef struct sensors_t
  uint8_t  gas;                           //!< State of gas valve (состояние газового клапана)
  uint16_t frequen4;                      //!< RPM averaged by using only 4 samples (частота усредненная всего по 4-м выборкам)
  uint16_t knock_k;                       //!< Knock signal level (уровень сигнала детонации)
-
+ uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
+ uint16_t add_i1;                        //!< ADD_I1 input voltage
+ uint16_t add_i2;                        //!< ADD_I2 input voltage
+ 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor
  int16_t  voltage_raw;                   //!< raw ADC value from voltage
  int16_t  temperat_raw;                  //!< raw ADC value from coolant temperature sensor
-
+ int16_t  tps_raw;                       //!< raw ADC value from TPS sensor
+ int16_t  add_i1_raw;                    //!< raw ADC value from ADD_I1 input
+ int16_t  add_i2_raw;                    //!< raw ADC value from ADD_I2 input
 }sensors_t;
 
 /**Describes system's data (main ECU data structure)
@@ -84,13 +89,15 @@ typedef struct ecudata_t
 
  uint8_t  ie_valve;                      //!< State of Idle Economizer valve (состояние клапана ЭПХХ)
  uint8_t  fe_valve;                      //!< State of Fuel Economizer valve (состояние клапана ЭМР)
+ uint8_t  cool_fan;                      //!< State of the cooling fan (состояние электровентилятора)
+ uint8_t  st_block;                      //!< State of the starter blocking output (состояние выхода блокировки стартера)
  uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
  uint8_t  airflow;                       //!< Air flow (расход воздуха)
  int16_t  curr_angle;                    //!< Current advance angle (текущий угол опережения)
  int16_t  knock_retard;                  //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
 
 
-#ifndef REALTIME_TABLES 
+#ifndef REALTIME_TABLES
  f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
 #else
  f_data_t tables_ram[2];                 //!< set of tables in RAM for petrol(0) and gas(1)
@@ -114,6 +121,8 @@ typedef struct ecudata_t
  diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs 
  uint16_t       diag_out;                //!< diagnostic mode: values of outputs
 #endif
+
+ uint8_t choke_testing;                  //!< Use to indcated that choke testing if on/off (so it is applicable only if SM_CONTROL compile option is used)
 }ecudata_t;
 
 

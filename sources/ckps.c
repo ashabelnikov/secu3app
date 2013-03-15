@@ -64,16 +64,10 @@
  * (используется для указания того что ни один канал зажигания не выбран) */
 #define CKPS_CHANNEL_MODENA  255
 
-//Specify values depending on invertion option
-#ifndef INVERSE_IGN_OUTPUTS
- #define IGN_OUTPUTS_INIT_VAL 1  //!< value used for initialization
- #define IGN_OUTPUTS_ON_VAL   1  //!< value used to turn on ignition channel
- #define IGN_OUTPUTS_OFF_VAL  0  //!< value used to turn off ignition channel
-#else //outputs inversion mode (режим инверсии выходов)
- #define IGN_OUTPUTS_INIT_VAL 0
- #define IGN_OUTPUTS_ON_VAL   0
- #define IGN_OUTPUTS_OFF_VAL  1
-#endif
+//Define values for controlling of outputs
+#define IGN_OUTPUTS_INIT_VAL 1        //!< value used for initialization
+#define IGN_OUTPUTS_ON_VAL   1        //!< value used to turn on ignition channel
+#define IGN_OUTPUTS_OFF_VAL  0        //!< value used to turn off ignition channel
 
 /**Задержка входа в прерывание COMPA и установки уровня на соотв. линии порта в тиках таймера.
  * Используется для компенсации времени. */
@@ -99,6 +93,7 @@
  #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
 #endif
 #define F_CALTIM     2                //!< Indicates that time calculation is started before the spark
+#define F_SPSIGN     3                //!< Sign of the measured stroke period (time between TDCs)
 
 /** State variables */
 typedef struct
@@ -110,7 +105,7 @@ typedef struct
  volatile uint8_t cog360;             //!< counts teeth starting from missing teeth (1 revolution).
  uint16_t measure_start_value;        //!< remembers the value of the capture register to measure the half-turn (запоминает значение регистра захвата для измерения периода полуоборота)
  uint16_t current_angle;              //!< counts out given advance angle during the passage of each tooth (отсчитывает заданный УОЗ при прохождении каждого зуба)
- volatile uint16_t half_turn_period;  //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
+ volatile uint16_t stroke_period;     //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
  int16_t  advance_angle;              //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
  volatile int16_t advance_angle_buffered;//!< buffered value of advance angle (to ensure correct latching)
  uint8_t  ignition_cogs;              //!< number of teeth determining the duration of ignition drive pulse (кол-во зубьев определяющее длительность импульсов запуска коммутаторов)
@@ -137,7 +132,6 @@ typedef struct
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
  volatile uint8_t wheel_cogs_nump1;   //!< wheel_cogs_num + 1
  volatile uint8_t wheel_cogs_numm1;   //!< wheel_cogs_num - 1
-//volatile uint8_t wheel_cogs_numd2;   //!< wheel_cogs_num/2
  volatile uint16_t wheel_cogs_num2;   //!< Number of teeth which corresponds to 720° (2 revolutions)
  volatile uint16_t wheel_cogs_num2p1; //!< wheel_cogs_num2 + 1
  volatile uint8_t miss_cogs_num;      //!< Count of crank wheel's missing teeth (количество отсутствующих зубьев)
@@ -153,6 +147,9 @@ typedef struct
 #ifdef STROBOSCOPE
  uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
 #endif
+
+ volatile uint8_t t1oc;               //!< Timer 1 overflow counter
+ volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -173,7 +170,7 @@ typedef struct
 #endif
 
 #ifdef HALL_OUTPUT
- volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse  
+ volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse
  volatile uint16_t hop_end_cog;        //!< Hall output: tooth number that corresponds to the end of pulse
 #endif
 
@@ -193,7 +190,7 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 /** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
  *  note: may be not effective on other MCUs or even case bugs! Be aware.
  */
-#define flags  TWAR  
+#define flags  TWAR
 #define flags2 TWBR
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
@@ -205,8 +202,8 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
-prog_uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX] = 
- //     1          2          3          4         5         6      7      8
+prog_uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX] =
+ //     1          2          3          4         5         6         7         8
  {0, 30000000L, 15000000L, 10000000L, 7500000L, 6000000L, 5000000L, 4285714L, 3750000L};
 
 void ckps_init_state_variables(void)
@@ -226,9 +223,8 @@ void ckps_init_state_variables(void)
 #endif
 
  ckps.cog = ckps.cog360 = 0;
- ckps.half_turn_period = 0xFFFF;
- ckps.advance_angle = 0;
- ckps.advance_angle_buffered = 0;
+ ckps.stroke_period = 0xFFFF;
+ ckps.advance_angle = ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
 #ifdef PHASED_IGNITION
@@ -239,11 +235,16 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
  CLEARBIT(flags2, F_CALTIM);
+ CLEARBIT(flags2, F_SPSIGN);
 
  TCCR0 = 0; //timer is stopped (останавливаем таймер0)
 #ifdef STROBOSCOPE
  ckps.strobe = 0;
 #endif
+
+  TIMSK|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
+  ckps.t1oc = 0;                       //reset overflow counter
+  ckps.t1oc_s = 255;                   //RPM is very low
  _END_ATOMIC_BLOCK();
 }
 
@@ -281,12 +282,14 @@ void ckps_init_ports(void)
  //therefore set low level on their inputs
  //(после включения зажигания коммутаторы не должны быть в режиме накопления,
  //поэтому устанавливаем на их входах низкий уровень)
- iocfg_i_ign_out1(IGN_OUTPUTS_INIT_VAL);                //init 1-st ignition channel
- iocfg_i_ign_out2(IGN_OUTPUTS_INIT_VAL);                //init 2-nd ignition channel
+ IOCFG_INIT(IOP_IGN_OUT1, IGN_OUTPUTS_INIT_VAL);        //init 1-st (can be remapped)
+ IOCFG_INIT(IOP_IGN_OUT2, IGN_OUTPUTS_INIT_VAL);        //init 2-nd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT3, IGN_OUTPUTS_INIT_VAL);        //init 3-rd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT4, IGN_OUTPUTS_INIT_VAL);        //init 4-th (can be remapped)
  IOCFG_INIT(IOP_ADD_IO1, IGN_OUTPUTS_INIT_VAL);         //init 5-th (can be remapped)
  IOCFG_INIT(IOP_ADD_IO2, IGN_OUTPUTS_INIT_VAL);         //init 6-th (can be remapped)
+ IOCFG_INIT(IOP_IGN_OUT7, IGN_OUTPUTS_INIT_VAL);        //init 7-th (for maniacs)
+ IOCFG_INIT(IOP_IGN_OUT8, IGN_OUTPUTS_INIT_VAL);        //init 8-th (for maniacs)
 
  //init I/O for Hall output if it is enabled
 #ifdef HALL_OUTPUT
@@ -300,23 +303,26 @@ void ckps_init_ports(void)
 }
 
 //Instantaneous frequency calculation of crankshaft rotation from the measured period between the engine strokes
-//(for example for 4-cylinder, 4-stroke it is 180°) 
+//(for example for 4-cylinder, 4-stroke it is 180°)
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
-//Высчитывание мгновенной частоты вращения коленвала по измеренному периоду между тактами двигателя 
+//Высчитывание мгновенной частоты вращения коленвала по измеренному периоду между тактами двигателя
 //(например для 4-цилиндрового, 4-х тактного это 180 градусов)
 //Период в дискретах таймера (одна дискрета = 4мкс), в одной минуте 60 сек, в одной секунде 1000000 мкс.
 uint16_t ckps_calculate_instant_freq(void)
 {
- uint16_t period;
+ uint16_t period; uint8_t ovfcnt, sign;
+ //ensure atomic acces to variable (обеспечиваем атомарный доступ к переменной)
  _DISABLE_INTERRUPT();
- period = ckps.half_turn_period;           //ensure atomic acces to variable (обеспечиваем атомарный доступ к переменной)
+ period = ckps.stroke_period;        //stroke period
+ ovfcnt = ckps.t1oc_s;               //number of timer overflows
+ sign = CHECKBIT(flags2, F_SPSIGN);  //sign of stroke period
  _ENABLE_INTERRUPT();
 
- //if equal to minimum, this means engine is stopped (если самый минимум, значит двигатель остановился)
- if (period != 0xFFFF)
-  return (ckps.frq_calc_dividend)/(period);
+ //We know period and number of timer overflows, so we can calculate correct value of RPM even if RPM is very low
+ if (sign && ovfcnt > 0)
+  return ckps.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) - (65536-period));
  else
-  return 0;
+  return ckps.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
 void ckps_set_edge_type(uint8_t edge_type)
@@ -422,17 +428,12 @@ uint8_t ckps_is_cog_changed(void)
  return 0;
 }
 
-/** Get value of I/O callback by index
- * \param index Index of callback
- */
+/** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
+ * \param index Index of callback */
+INLINE
 static fnptr_t get_callback(uint8_t index)
 {
- if (0 == index)
-  return (fnptr_t)iocfg_s_ign_out1;
- else if (1 == index)
-  return (fnptr_t)iocfg_s_ign_out2;
- else
-  return IOCFG_CB(index);
+ return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + 15);
 }
 
 #ifndef PHASED_IGNITION
@@ -442,7 +443,7 @@ static void set_channels_ss(void)
  uint8_t _t, i = 0, chan = ckps.chan_number / 2;
  for(; i < chan; ++i)
  {
-  fnptr_t value = get_callback(i);
+  fnptr_t value = IOCFG_CB(i);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   chanstate[i].io_callback1 = value;
@@ -452,7 +453,6 @@ static void set_channels_ss(void)
 }
 
 #else
-
 /**Tune channels' I/O for full sequential ignition mode */
 static void set_channels_fs(uint8_t fs_mode)
 {
@@ -474,6 +474,7 @@ static void set_channels_fs(uint8_t fs_mode)
 
 void ckps_set_cyl_number(uint8_t i_cyl_number)
 {
+ uint8_t i = ckps.chan_number;
  _BEGIN_ATOMIC_BLOCK();
  ckps.chan_number = i_cyl_number;
  _END_ATOMIC_BLOCK();
@@ -487,6 +488,11 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
  set_channels_fs(cams_is_ready());
 #endif
+
+ //unused channels must be turned off
+ if (i > i_cyl_number)
+  for(i = i_cyl_number; i < IGN_CHANNELS_MAX; ++i)
+   ((iocfg_pfn_set)get_callback(i))(IGN_OUTPUTS_ON_VAL);
 
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.
@@ -563,7 +569,6 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_cogs_num = norm_num;
  ckps.wheel_cogs_nump1 = norm_num + 1;
  ckps.wheel_cogs_numm1 = norm_num - 1;
-//ckps.wheel_cogs_numd2 = norm_num >> 1;
  ckps.miss_cogs_num = miss_num;
  ckps.wheel_cogs_num2 = norm_num * 2;
  ckps.wheel_cogs_num2p1 = (norm_num * 2) + 1;
@@ -596,7 +601,7 @@ void turn_off_ignition_channel(uint8_t i_channel)
 /**Forces ignition spark if corresponding interrupt is pending*/
 #ifdef PHASED_IGNITION
 #define force_pending_spark() \
- if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM))\
+ if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
  { \
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);\
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);\
@@ -660,8 +665,8 @@ ISR(TIMER1_COMPA_vect)
 #endif
  //-----------------------------------------------------
 
-#ifdef DWELL_CONTROL 
- ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8; 
+#ifdef DWELL_CONTROL
+ ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
  ckps.acc_delay-= ckps.cr_acc_time;
@@ -730,7 +735,7 @@ static uint8_t sync_at_startup(void)
  {
   case 0: //skip certain number of teeth (пропуск определенного кол-ва зубьев)
    CLEARBIT(flags, F_VHTPER);
-   if (ckps.cog >= CKPS_ON_START_SKIP_COGS) 
+   if (ckps.cog >= CKPS_ON_START_SKIP_COGS)
     ckps.starting_mode = 1;
    break;
 
@@ -803,7 +808,7 @@ static void process_ckps_cogs(void)
    ckps.acc_delay-=((uint16_t)(~ckps.tmrval_saved)) + 1 + GetICR();
    SETBIT(flags2, F_ADDPTK);
   }
-  //Correct our prediction on each cog 
+  //Correct our prediction on each cog
   ckps.acc_delay+=((int32_t)ckps.period_curr - ckps.period_saved);
 
   //Do we have to set COMPB ? (We have to set COMPB if less than 2 periods remain)
@@ -834,7 +839,7 @@ static void process_ckps_cogs(void)
    if (ckps.cog == chanstate[i].knock_wnd_end)
    {
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
-    adc_begin_measure_knock(_AB(ckps.half_turn_period, 1) < 4);
+    adc_begin_measure_knock(_AB(ckps.stroke_period, 1) < 4);
    }
   }
 
@@ -850,11 +855,11 @@ static void process_ckps_cogs(void)
    ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
-   adc_begin_measure(_AB(ckps.half_turn_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+   adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
 #ifdef STROBOSCOPE
    if (0==i)
     ckps.strobe = 1; //strobe!
-#endif   
+#endif
   }
 
   force_pending_spark();
@@ -863,14 +868,15 @@ static void process_ckps_cogs(void)
   //then remember current value of count for the next measurement
   //(зубья завершения/начала измерения периодов вращения  - в.м.т. считывание и сохранение измеренного периода,
   //затем запоминание текущего значения счетчика для следующего измерения)
-  if (ckps.cog==chanstate[i].cogs_btdc) 
+  if (ckps.cog==chanstate[i].cogs_btdc)
   {
-   //if it was overflow, then set the maximum possible time
-   //если было переполнение то устанавливаем максимально возможное время
-   if (((ckps.period_curr > 1250) || !CHECKBIT(flags, F_VHTPER)))
-    ckps.half_turn_period = 0xFFFF;
-   else
-    ckps.half_turn_period = (GetICR() - ckps.measure_start_value);
+   //save period value if it is correct
+   if (CHECKBIT(flags, F_VHTPER))
+   {
+    ckps.stroke_period = (GetICR() - ckps.measure_start_value);
+    WRITEBIT(flags2, F_SPSIGN, GetICR() < ckps.measure_start_value); //save sign
+    ckps.t1oc_s = ckps.t1oc, ckps.t1oc = 0; //save value and reset counter
+   }
 
    ckps.measure_start_value = GetICR();
    SETBIT(flags, F_VHTPER);
@@ -1038,11 +1044,6 @@ sync_enter:
  ckps.period_prev = ckps.period_curr;
 
  force_pending_spark();
-
-//#ifdef SECU3T
-// if ((0==ckps.miss_cogs_num) && ckps.cog360 == ckps.wheel_cogs_numd2)
-//  cams_enable_vr_event();
-//#endif
 }
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedure
@@ -1058,7 +1059,7 @@ ISR(TIMER0_OVF_vect)
  }
  else
  {//the countdown is over (отсчет времени закончился)
-  ICR1 = TCNT1;  //simulate input capture 
+  ICR1 = TCNT1;  //simulate input capture
   TCCR0 = 0;     //stop timer (останавливаем таймер)
 
   if (ckps.miss_cogs_num > 1)
@@ -1072,4 +1073,12 @@ ISR(TIMER0_OVF_vect)
   process_ckps_cogs();
   ++ckps.cog360;
  }
+}
+
+/** Timer 1 overflow interrupt.
+ * Used to count timer 1 overflows to obtain correct revolution period at very low RPMs (10...400 min-1)
+ */
+ISR(TIMER1_OVF_vect)
+{
+ ++ckps.t1oc;
 }

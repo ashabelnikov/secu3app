@@ -19,33 +19,46 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file pwrrelay.h
- * Power management using external relay, allows SECU-3 to be turned on some time
- * after ignition is off. So, for instance electric colling fan can work even ignition is off
- * (Управление питанием используя внешнее реле, позволяет SECU-3 оставаться включенным еще
- * некоторое время после выключения зажигания).
+/** \file smcontrol.h
+ * Stepper motor control
+ * (Управление шаговым двигателем).
  */
 
-#ifndef _PWRRELAY_H_
-#define _PWRRELAY_H_
+#ifndef _SMCONTROL_H_
+#define _SMCONTROL_H_
 
-struct ecudata_t;
+#ifdef SM_CONTROL
+
+#include <stdint.h>
 
 /** Initialization of used I/O ports (инициализация используемых портов) */
-void pwrrelay_init_ports(void);
+void stpmot_init_ports(void);
 
 /** Initialization of the module */
-void pwrrelay_init(void);
+void stpmot_init(void);
 
-/** Control of power relay (управление реле питания)
- * \param d pointer to ECU data structure
+/** ID of the clockwise direction (направление по часовой стрелке) */
+#define SM_DIR_CW   0
+
+/** ID of the counterclockwise direction (направление против часовой стрелки) */
+#define SM_DIR_CCW  1
+
+/** Set stepper motor direction
+ * \param dir Direction (0 - backward, 1 - forward)
  */
-void pwrrelay_control(struct ecudata_t* d);
+void stpmot_dir(uint8_t dir);
 
-/** Get System power state. When power management is not available
- * this function will always return 1
- * \return 1 - power is up, 0 - power is down
+/** Run stepper motor using specified number of steps
+ * \param steps Number of steps to run. Use 0 if you want to stop
+ * the stepper motor.
  */
-uint8_t pwrrelay_get_state(void);
+void stpmot_run(uint16_t steps);
 
-#endif //_PWRRELAY_H_
+/**Check if stepper motor is busy (busy means running at the moment)
+ * \return 1 - stepper motor is busy, 0 - stepper motor is idle
+ */
+uint8_t stpmot_is_busy(void);
+
+#endif
+
+#endif //_SMCONTROL_H_

@@ -29,10 +29,12 @@
 #include "port/port.h"
 
 #include "adc.h"
+#include "bc_input.h"
 #include "bitmask.h"
 #include "bootldr.h"
 #include "camsens.h"
 #include "ce_errors.h"
+#include "choke.h"
 #include "ckps.h"
 #include "crc16.h"
 #include "diagnost.h"
@@ -62,7 +64,7 @@
 /**ECU data structure. Contains all related data and state information */
 struct ecudata_t edat;
 
-/**Control of certain units of engine (управление отдельными узлами двигателя). 
+/**Control of certain units of engine (управление отдельными узлами двигателя).
  * \param d pointer to ECU data structure
  */
 void control_engine_units(struct ecudata_t *d)
@@ -86,9 +88,14 @@ void control_engine_units(struct ecudata_t *d)
 
  //power management
  pwrrelay_control(d);
+
+#ifdef SM_CONTROL
+ //choke control
+ choke_control(d);
+#endif
 }
 
-/**Initialization of variables and data structures 
+/**Initialization of variables and data structures
  * \param d pointer to ECU data structure
  */
 void init_ecu_data(struct ecudata_t* d)
@@ -105,13 +112,19 @@ void init_ecu_data(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
  edat.fn_gasoline_prev = 255;
  edat.fn_gas_prev = 255;
-#endif 
+#endif
+ edat.cool_fan = 0;
+ edat.st_block = 0; //стартер не заблокирован
+ edat.sens.tps = edat.sens.tps_raw = 0;
+ edat.sens.add_i1 = edat.sens.add_i1_raw = 0;
+ edat.sens.add_i2 = edat.sens.add_i2_raw = 0;
+ edat.choke_testing = 0;
 }
 
 /**Main function of firmware - entry point */
 MAIN()
 {
- int16_t calc_adv_ang = 0; 
+ int16_t calc_adv_ang = 0;
  uint8_t turnout_low_priority_errors_counter = 255;
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
@@ -133,6 +146,9 @@ MAIN()
  knock_init_ports();
  jumper_init_ports();
  pwrrelay_init_ports();
+#ifdef SM_CONTROL
+ choke_init_ports();
+#endif
 
  //если код программы испорчен - зажигаем СЕ
  if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
@@ -181,6 +197,13 @@ MAIN()
  fuelpump_init();
 #endif
 
+ //initialization of power management unit
+ pwrrelay_init();
+
+#ifdef SM_CONTROL
+ choke_init();
+#endif
+
  //инициализируем модуль ДПКВ
  ckps_init_state();
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
@@ -204,6 +227,9 @@ MAIN()
  s_timer_init();
  vent_init_state();
 
+ //check and enter blink codes indication mode
+ bc_indication_mode(&edat);
+
  //разрешаем глобально прерывания
  _ENABLE_INTERRUPT();
 
@@ -212,7 +238,7 @@ MAIN()
  while(1)
  {
   if (ckps_is_cog_changed())
-   s_timer_set(engine_rotation_timeout_counter,ENGINE_ROTATION_TIMEOUT_VALUE);
+   s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
   { //двигатель остановился (его обороты ниже критических)

@@ -19,20 +19,21 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file procuart.h
- * Functionality for processing of pending data which is sent/received via serial interface (UART)
- * (Обработка поступающих данных для приема/передачи через последовательный интерфейс (UART)).
+/** \file bc_input.h
+ * CE errors information output using blink codes
+ * (Выдача информации об ошибках СЕ используя блинк коды).
  */
 
-#ifndef _PROCUART_H_
-#define _PROCUART_H_
+#ifndef _BC_INPUT_H_
+#define _BC_INPUT_H_
 
 struct ecudata_t;
 
-/** Process sent/received frames from UART. Should be called from main loop!
- *(обрабатывает передаваемые/принимаемые фреймы UART-a. Должна вызыватся из главного цикла программы)
+/** Check BC_INPUT and if it is active, then enter blink codes 
+ * indication mode. This mode has its own infinite loop.
+ * Note that in this mode interrupts must be disabled!
  * \param d pointer to ECU data structure
  */
-void process_uart_interface(struct ecudata_t* d);
+void bc_indication_mode(struct ecudata_t *d);
 
-#endif //_PROCUART_H_
+#endif //_BC_INPUT_H_

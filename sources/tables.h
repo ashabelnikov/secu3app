@@ -79,6 +79,7 @@
 #define FW_SIGNATURE_INFO_SIZE          48          //!< number of bytes reserved for firmware's signature information
 #define COIL_ON_TIME_LOOKUP_TABLE_SIZE  32          //!< number of points in lookup table used for dwell control
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
+#define CHOKE_CLOSING_LOOKUP_TABLE_SIZE 16          //!< Size of lookup table defining choke closing versus coolant temperature
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
@@ -127,13 +128,16 @@ typedef struct fw_ex_data_t
   /**Voltage corresponding to the end of axis*/
   uint16_t cts_vl_end;
 
+  /*Choke closing versus coolant temperature */
+  uint8_t choke_closing[CHOKE_CLOSING_LOOKUP_TABLE_SIZE];
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[22];
+  uint8_t reserved[6];
 }fw_ex_data_t;
 
 /**Описывает параметры системы
@@ -223,13 +227,29 @@ typedef struct params_t
 
   uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input (тип фронта ДНО)
 
+  int16_t  tps_adc_factor;               //!< ADC error compensation factor for TPS
+  int32_t  tps_adc_correction;           //!< ADC error compensation correction for TPS
+  int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input 
+  int32_t  ai1_adc_correction;           //!< ADC error compensation correction for ADD_IO1 input
+  int16_t  ai2_adc_factor;               //!< ADC error compensation factor for ADD_IO2 input
+  int32_t  ai2_adc_correction;           //!< ADC error compensation correction for ADD_IO2 input
+
+  int16_t  tps_curve_offset;             //!< offset of curve in volts
+  int16_t  tps_curve_gradient;           //!< gradient of curve in Percentage/V
+
+  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
+
+  uint16_t sm_steps;                     //!< Number of steps of choke stepper motor
+
+  int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[31];
+  uint8_t  reserved[4];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных
@@ -241,20 +261,22 @@ typedef struct params_t
 
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
-#define IOREM_SLOTS 10                   //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS 16                   //!< Number of plugs used in I/O remapping
+#define IOREM_SLOTS 16                   //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS 32                   //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t
 {
- uint8_t size;                           //!< size of this structure
- uint8_t reserved;                       //!< a reserved byte
+ uint16_t size;                          //!< size of this structure
+ uint8_t version;                        //!< version of this structure
  fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
+ fnptr_t i_slotsi[IOREM_SLOTS];          //!< initialization slots (inverted)
  fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
+ fnptr_t v_slotsi[IOREM_SLOTS];          //!< data slots           (inverted)
  fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
  fnptr_t s_stub;                         //!< special pointer used as stub
- fnptr_t reserved_ptr;                   //!< reserved
+ fnptr_t g_stub;                         //!< reserved
 }iorem_slots_t;
 
 /**Describes all the data residing directly in the code area.*/
@@ -268,9 +290,9 @@ typedef struct cd_data_t
   * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
  uint32_t config;
 
- uint8_t reserved[2];                    //!< Two reserved bytes
+ uint8_t reserved;                       //!< A reserved byte
 
- uint8_t size;                           //!< size of this structure
+ uint16_t size;                          //!< size of this structure
 }cd_data_t;
 
 

@@ -60,4 +60,6 @@
 #define   DIAGINP_DAT  '='   //!< diagnostics: send input values (analog & digital values)
 #define   DIAGOUT_DAT  '^'   //!< diagnostics: receive output states (bits)
 
+#define   CHOKE_PAR    '%'   //!< parameters  related to choke control
+
 #endif //_UFCODES_H_

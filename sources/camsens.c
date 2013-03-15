@@ -30,6 +30,8 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "camsens.h"
+#include "ioconfig.h"
+#include "tables.h"
 
 //Functionality added when either PHASE_SENSOR or SECU3T is defined
 #if defined(PHASE_SENSOR) || defined(SECU3T)
@@ -38,6 +40,9 @@
  /** Get logic level from cam sensor output */
  #define GET_CAMSTATE() (PINC_Bit4)
 #endif
+
+#define F_CAMSIA 0  //cam sensor input is available (not remmaped to other function)
+#define flags TWSR  //only 2 bits are allowed to be used as R/W
 
 /** Defines state variables */
 typedef struct
@@ -78,12 +83,18 @@ void cams_init_state(void)
  cams_init_state_variables();
  camstate.cam_error = 0; //no errors
 
+ //set flag indicating that cam sensor input is available
+ WRITEBIT(flags, F_CAMSIA, IOCFG_CHECK(IOP_PS));
+
 #ifdef SECU3T /*SECU-3T*/
  //interrupt by rising edge
  MCUCR|= _BV(ISC11) | _BV(ISC10);
  MCUCR|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
- GICR|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware
+ if (CHECKBIT(flags, F_CAMSIA))
+  GICR|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
+ else
+  GICR|=  _BV(INT0);
 #else
  GICR|=  _BV(INT0);             //это нам нужно для ДНО
 #endif
@@ -107,7 +118,6 @@ uint8_t cams_vr_is_event_r(void)
 ISR(INT0_vect)
 {
  camstate.vr_event = 1; //set event flag 
-//GICR&=~_BV(INT0);     //disable interrupt to improve noise immunity
 }
 
 void cams_vr_set_edge_type(uint8_t edge_type)
@@ -133,7 +143,13 @@ void cams_set_error_threshold(uint8_t threshold)
 void cams_detect_edge(void)
 {
 #ifndef SECU3T /*SECU-3*/
- uint8_t level = GET_CAMSTATE();
+ uint8_t level;
+#endif
+ if (!CHECKBIT(flags, F_CAMSIA))
+  return;
+
+#ifndef SECU3T /*SECU-3*/
+ level = GET_CAMSTATE();
  if (camstate.prev_level != level)
  {
   if (0 != level) //interesting edge from cam sensor

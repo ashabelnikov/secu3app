@@ -28,14 +28,32 @@
 #include "port/port.h"
 #include "adc.h"
 #include "bitmask.h"
+#include "choke.h"
 #include "eeprom.h"
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "secu3.h"
+#include "vstimer.h"
+
+/**Define state variables */
+typedef struct
+{
+ uint8_t state;    //!< state mashine for managing of power states
+ uint8_t pwrdown;  //!< power-down flag
+}pwrstate_t;
+
+pwrstate_t pwrs;   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
  IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on (реле включено)
+ IOCFG_INIT(IOP_IGN, 1);      //init IGN input
+}
+
+void pwrrelay_init(void)
+{
+ pwrs.state = 0;
+ pwrs.pwrdown = 0;
 }
 
 void pwrrelay_control(struct ecudata_t* d)
@@ -44,7 +62,8 @@ void pwrrelay_control(struct ecudata_t* d)
  if (!IOCFG_CHECK(IOP_PWRRELAY))
   return;
 
- if (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5))
+ //apply power management logic
+ if (pwrs.pwrdown)
  {//ignition is off
 
   //We will wait while temperature is high only if temperature sensor is enabled
@@ -61,12 +80,30 @@ void pwrrelay_control(struct ecudata_t* d)
    //PWM is not available
    temperature_ok = (d->sens.temperat <= (d->param.vent_off));
 #endif
+
+   //set timeout
+   if (0==pwrs.state)
+   {
+    pwrs.state = 1;
+    s_timer16_set(powerdown_timeout_counter, 6000); //60 sec.
+   }
   }
 
-  if (temperature_ok && eeprom_is_idle())
+  if ((temperature_ok && eeprom_is_idle()
+#ifdef SM_CONTROL
+      && choke_is_ready()
+#endif
+      ) || s_timer16_is_action(powerdown_timeout_counter))
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
  }
+ else
+  pwrs.state = 0;
 
- //TODO: eliminate CKPS error
- //TODO: eliminate voltage error
+ //if IGN input is not available, then we will check board voltage
+ pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
+}
+
+uint8_t pwrrelay_get_state(void)
+{
+ return (pwrs.pwrdown == 0);
 }

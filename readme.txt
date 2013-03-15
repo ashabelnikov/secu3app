@@ -2,7 +2,7 @@
     SECU-3 Application software. Distributed under GPL license
 
     Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka.
-    Microprocessors systems - design & programming.
+    Microprocessor systems - design & programming.
     http://secu-3.org e-mail: shabelnikov@secu-3.org
 
 
@@ -31,10 +31,6 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          idle economizer valve's state
                          дл€ индикации состо€ни€ клапана Ёѕ’’ используетс€ выход
                          блокировки стартера
-
-    INVERSE_IGN_OUTPUTS  Use for to invert ignition outputs
-                         дл€ инвертировани€ выходов управлени€ зажиганием
-
 
     DWELL_CONTROL        For direct controlling of dwell
                          дл€ пр€мого управлени€ накоплением энергии в катушках 

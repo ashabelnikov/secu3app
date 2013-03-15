@@ -169,7 +169,7 @@ void check(struct ecudata_t* d)
    if ((0==ce_state.bv_dev && d->sens.voltage_raw > ROUND(12.0 / ADC_DISCRETE)) ||
        (1==ce_state.bv_dev && d->sens.voltage_raw < ROUND(16.0 / ADC_DISCRETE)))
     ce_state.bv_eds = 0;
-    
+
    --ce_state.bv_tdc;
   }
   else

@@ -42,6 +42,7 @@
 #define ECUERROR_VOLT_SENSOR_FAIL       7  //!< Voltage is wrong or sensing is disconnected
 #define ECUERROR_DWELL_CONTROL          8  //!< Problems with dwell control (overcharge etc)
 #define ECUERROR_CAMS_MALFUNCTION       9  //!< CAM sensor malfunction
+#define ECUERROR_TPS_SENSOR_FAIL       10  //!< TPS sensor does not work
 
 struct ecudata_t;
 

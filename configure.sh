@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Script for build firmware of SECU-3 project under Linux. This script will
+# Script for building of the SECU-3 project firmware under Linux. This script will
 # configure Makefile for you and build project.
 # Created by Alexey A. Shabelnikov, Kiev 24 July 2011.
 # Note: It requires AVR-GCC toolchain
@@ -29,19 +29,19 @@ if [ $1 = "M16" ]
 then
  CFG_MCU="atmega16"
  CFG_BL_START="3E00"
- CFG_FWD_START="31CD"
+ CFG_FWD_START="3134"
  CFG_EE_SIZE="512"
 elif [ $1 = "M32" ]
 then
  CFG_MCU="atmega32"
  CFG_BL_START="7C00"
- CFG_FWD_START="6FCD"
+ CFG_FWD_START="6F34"
  CFG_EE_SIZE="1024"
 elif [ $1 = "M64" ]
 then
  CFG_MCU="atmega64"
  CFG_BL_START="F800"
- CFG_FWD_START="EBCD"
+ CFG_FWD_START="EB34"
  CFG_EE_SIZE="2048"
 else
  echo "Invalid platform!"

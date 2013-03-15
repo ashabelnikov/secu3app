@@ -63,13 +63,6 @@
  #define COPT_VPSEM 0
 #endif
 
-/** Inverse ignition outputs */
-#ifdef INVERSE_IGN_OUTPUTS
- #define COPT_INVERSE_IGN_OUTPUTS 1
-#else
- #define COPT_INVERSE_IGN_OUTPUTS 0
-#endif
-
 /** Use dwell control */
 #ifdef DWELL_CONTROL
  #define COPT_DWELL_CONTROL 1
@@ -173,6 +166,13 @@
  #define COPT_STROBOSCOPE 1
 #else
  #define COPT_STROBOSCOPE 0
+#endif
+
+/** Stepper motor control and related functionality */
+#ifdef SM_CONTROL
+ #define COPT_SM_CONTROL 1
+#else
+ #define COPT_SM_CONTROL 0
 #endif
 
 #endif //_COMPILOPT_H_

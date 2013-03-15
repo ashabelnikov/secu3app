@@ -41,13 +41,6 @@ void cams_init_state(void);
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_vr_is_event_r(void);
 
-/**This function improves noise immunity. It will reset possible pending interrupt
- * and enable it. */
-//#define cams_enable_vr_event(){
-// GIFR|=_BV(INTF0);
-// GICR|=_BV(INT0);
-//}
-
 /** Set edge type for VR input (Установка фронта для ДНО)
  * \param edge_type 0 - falling (спадающий), 1 - rising (нарастающий)
  */

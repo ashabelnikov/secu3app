@@ -30,7 +30,7 @@
 
 #include <stdint.h>
 
-/**одна дискрета АЦП в вольтах */
+/**одна дискрета АЦП в вольтах (ADC discrete in Volts)*/
 #define ADC_DISCRETE            0.0025
 
 /**наклон прямой датчика температуры вольт/градус */
@@ -40,7 +40,13 @@
 #define TSENS_ZERO_POINT        2.73
 
 /**константа для выбора источника опорного напряжения */
-#define ADC_VREF_TYPE           0xC0
+#ifdef VREF_5V //5V
+ #define ADC_VREF_TYPE          0x40
+ #define ADC_VREF_FACTOR        1.9531  //!< 5.0V/2.56V
+#else         //internal 2.56V
+ #define ADC_VREF_TYPE          0xC0
+ #define ADC_VREF_FACTOR        1.0000
+#endif
 
 /**дискретность физической величины - ДАД */
 #define MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER  64

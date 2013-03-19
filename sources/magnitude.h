@@ -34,6 +34,8 @@
  * в целое число).
  */
 #define ROUND(x) ((int16_t)( (x) + 0.5 - ((x) < 0) ))
+/**32 bit integer version of ROUND() */
+#define ROUND32(x) ((int32_t)( (x) + 0.5 - ((x) < 0) ))
 
 /* Following macros are necessary when transforming floating point constant-values into integers.
  * Values of phisical magnitudes stored in integers
@@ -55,5 +57,10 @@
 
 /** Transforms floating point value of percentage of opening (TPS) to fixed point value */
 #define TPS_MAGNITUDE(t) ROUND ((t) * TPS_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+
+/** Transforms ADC compensation factor to fixed point value */
+#define ADC_COMP_FACTOR(f) ROUND((f) * 16384)
+/** Transforms ADC compensation correction to fixed point value */
+#define ADC_COMP_CORR(f, c) ROUND32(16384 * (0.5 - ((-(c)) / ADC_DISCRETE) * (f)))
 
 #endif //_MAGNITUDE_H_

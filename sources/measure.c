@@ -36,6 +36,13 @@
 #include "measure.h"
 #include "secu3.h"
 
+#ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
+ /**Special macro for compensating of voltage division*/
+ #define _RESDIV(v, n, d) (v)
+#else //voltage divider is used
+ #define _RESDIV(v, n, d) (((n) * (v)) / (d))
+#endif
+
 /**Reads state of gas valve (считывает состояние газового клапана) */
 #define GET_GAS_VALVE_STATE(s) (CHECKBIT(PINC, PINC6) > 0)
 
@@ -120,8 +127,13 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
 #endif
 
+#ifdef VREF_5V
+ d->sens.knock_k = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
+#else //internal 2.56V
  d->sens.knock_k = adc_get_knock_value() * 2;
+#endif
 }
+
 
 //усреднение измеряемых величин используя текущие значения кольцевых буферов усреднения, компенсация
 //погрешностей АЦП, перевод измеренных значений в физические величины.
@@ -131,19 +143,19 @@ void meas_average_measured_values(struct ecudata_t* d)
 
  for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
   sum+=map_circular_buffer[i];
- d->sens.map_raw = adc_compensate((sum/MAP_AVERAGING)*2,d->param.map_adc_factor,d->param.map_adc_correction);
+ d->sens.map_raw = adc_compensate(_RESDIV((sum/MAP_AVERAGING), 2, 1), d->param.map_adc_factor, d->param.map_adc_correction);
  d->sens.map = map_adc_to_kpa(d->sens.map_raw, d->param.map_curve_offset, d->param.map_curve_gradient);
 
  for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
   sum+=ubat_circular_buffer[i];
- d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING)*6,d->param.ubat_adc_factor,d->param.ubat_adc_correction);
+ d->sens.voltage_raw = adc_compensate(_RESDIV((sum/BAT_AVERAGING), 6, 1), d->param.ubat_adc_factor,d->param.ubat_adc_correction);
  d->sens.voltage = ubat_adc_to_v(d->sens.voltage_raw);
 
  if (d->param.tmp_use)
  {
   for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
    sum+=temp_circular_buffer[i];
-  d->sens.temperat_raw = adc_compensate((5*(sum/TMP_AVERAGING))/3,d->param.temp_adc_factor,d->param.temp_adc_correction);
+  d->sens.temperat_raw = adc_compensate(_RESDIV((sum/TMP_AVERAGING), 5, 3),d->param.temp_adc_factor,d->param.temp_adc_correction);
 #ifndef THERMISTOR_CS
   d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
 #else
@@ -167,19 +179,19 @@ void meas_average_measured_values(struct ecudata_t* d)
 #ifdef SECU3T
  for (sum=0,i = 0; i < TPS_AVERAGING; i++)   //average throttle position
   sum+=tps_circular_buffer[i];
- d->sens.tps_raw = adc_compensate((sum/TPS_AVERAGING)*2,d->param.tps_adc_factor,d->param.tps_adc_correction);
+ d->sens.tps_raw = adc_compensate(_RESDIV((sum/TPS_AVERAGING), 2, 1), d->param.tps_adc_factor, d->param.tps_adc_correction);
  d->sens.tps = tps_adc_to_pc(d->sens.tps_raw, d->param.tps_curve_offset, d->param.tps_curve_gradient);
  if (d->sens.tps > TPS_MAGNITUDE(100))
   d->sens.tps = TPS_MAGNITUDE(100);
 
  for (sum=0,i = 0; i < AI1_AVERAGING; i++)   //average ADD_IO1 input
   sum+=ai1_circular_buffer[i];
- d->sens.add_i1_raw = adc_compensate((sum/AI1_AVERAGING)*2,d->param.ai1_adc_factor,d->param.ai1_adc_correction);
+ d->sens.add_i1_raw = adc_compensate(_RESDIV((sum/AI1_AVERAGING), 2, 1), d->param.ai1_adc_factor, d->param.ai1_adc_correction);
  d->sens.add_i1 = d->sens.add_i1_raw;
 
  for (sum=0,i = 0; i < AI2_AVERAGING; i++)   //average ADD_IO2 input
   sum+=ai2_circular_buffer[i];
- d->sens.add_i2_raw = adc_compensate((sum/AI2_AVERAGING)*2,d->param.ai2_adc_factor,d->param.ai2_adc_correction);
+ d->sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d->param.ai2_adc_factor, d->param.ai2_adc_correction);
  d->sens.add_i2 = d->sens.add_i2_raw;
 #endif
 }

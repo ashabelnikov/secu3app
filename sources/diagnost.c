@@ -32,6 +32,7 @@
 #include "bitmask.h"
 #include "diagnost.h"
 #include "knock.h"
+#include "magnitude.h"
 #include "procuart.h"
 #include "secu3.h"
 #include "suspendop.h"
@@ -44,6 +45,9 @@
 
 /**Helpful macro used for generation of bit mask for inputs*/
 #define _IBV(v,b) (((uint8_t)v) << b)
+
+/**Helpful macro for ADC compensation, f,c - must be floationg point constants*/
+#define _ADC_COMPENSATE(v, f, c) adc_compensate(v, ADC_COMP_FACTOR(f), ADC_COMP_CORR(f, c))
 
 /**Describes state variables data*/
 typedef struct
@@ -286,15 +290,15 @@ void diagnost_process(struct ecudata_t* d)
   if (diag.skip_loops == 0)
   {
    //analog inputs
-   d->diag_inp.voltage = adc_get_ubat_value();
-   d->diag_inp.map = adc_get_map_value();
-   d->diag_inp.temp = adc_get_temp_value();
-   d->diag_inp.ks_1 = diag.knock_value[0];
+   d->diag_inp.voltage = _ADC_COMPENSATE(adc_get_ubat_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.ks_1 = _ADC_COMPENSATE(diag.knock_value[0], ADC_VREF_FACTOR, 0.0);
 #ifdef SECU3T
-   d->diag_inp.add_io1 = adc_get_add_io1_value();
-   d->diag_inp.add_io2 = adc_get_add_io2_value();
-   d->diag_inp.carb = adc_get_carb_value();
-   d->diag_inp.ks_2 = diag.knock_value[1];
+   d->diag_inp.add_io1 = _ADC_COMPENSATE(adc_get_add_io1_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.add_io2 = _ADC_COMPENSATE(adc_get_add_io2_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
 #else /*SECU-3*/
    d->diag_inp.add_io1 = 0;      //not supported in SECU-3
    d->diag_inp.add_io2 = 0;      //not supported in SECU-3

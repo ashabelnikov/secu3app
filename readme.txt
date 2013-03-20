@@ -60,16 +60,18 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          (Управление электробензонасосом)
 
     BL_BAUD_RATE         Baud rate for boot loader. Can be set to 9600, 14400,
-                         19200, 28800, 38400, 57600. Note! Will not take effect without
-                         reprogramming using ISP programmator.
+                         19200, 28800, 38400, 57600. Note! Will not take effect
+                         without reprogramming using ISP programmator.
                          (Скорость передачи данных для загрузчика)
 
     THERMISTOR_CS        Use a resistive temperature sensor
                          (Используется датчик температуры охлаждающей жидкости
                          резистивного типа)
 
-    SECU3T               Build for SECU-3T unit. Additional functionality will be added
-                         (Сборка под блок SECU-3T. Добавляется доп. функциональность)
+    SECU3T               Build for SECU-3T unit. Additional functionality will 
+                         be added.
+                         (Сборка под блок SECU-3T. Добавляется дополнительная
+                         функциональность)
 
     REV9_BOARD           Build for SECU-3T boards of revision 9 and greater.
                          (Сборка для плат SECU-3T ревизии 9 и выше)
@@ -77,14 +79,19 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     DIAGNOSTICS          Include hardware diagnostics functionality
                          (Включить поддержку диагностики аппаратной части)
 
-    HALL_OUTPUT          Include Hall sensor emulation functionality. Separate output
-                         will be used.
+    HALL_OUTPUT          Include Hall sensor emulation functionality. Separate 
+                         output will be used.
                          (Включить поддержку эмуляции сигнала с Датчика Холла)
 
     STROBOSCOPE          Include stroboscope functionality
                          (Включить поддержку стробоскопа)
 
-Necessary symbols you can define in the preprocessor's options of compiler
+    VREF_5V              Use 5V ADC reference voltage. In this case divider 
+                         bottom resistors are not necessary. So, input impedance
+                         will be high.
+                         (Использовать опорное напряжение для АЦП 5В)
+
+Necessary symbols you can define in the preprocessor's options of the compiler
 (edit corresponding Makefile).
 Нужные вам символы вы можете определить в опциях препроцессора компилятора 
 (редактируйте соответствующий Makefile).

@@ -148,7 +148,7 @@ void meas_average_measured_values(struct ecudata_t* d)
 
  for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
   sum+=ubat_circular_buffer[i];
- d->sens.voltage_raw = adc_compensate(_RESDIV((sum/BAT_AVERAGING), 6, 1), d->param.ubat_adc_factor,d->param.ubat_adc_correction);
+ d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING) * 6, d->param.ubat_adc_factor,d->param.ubat_adc_correction);
  d->sens.voltage = ubat_adc_to_v(d->sens.voltage_raw);
 
  if (d->param.tmp_use)

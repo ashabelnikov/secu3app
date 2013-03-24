@@ -36,6 +36,7 @@
 #include "secu3.h"
 #include "suspendop.h"
 #include "vstimer.h"
+#include "wdt.h"
 
 uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
 
@@ -49,6 +50,32 @@ void save_param_if_need(struct ecudata_t* d)
    sop_set_operation(SOP_SAVE_PARAMETERS);
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }
+}
+
+void reset_eeprom_params(struct ecudata_t* d)
+{
+ uint16_t crc;
+ uint16_t i = 5000; //5 seconds max
+ while(!eeprom_is_idle() && --i)
+ {
+  wdt_reset_timer();
+  _DELAY_CYCLES(16000); //1ms
+ }
+ _DISABLE_INTERRUPT();
+
+ wdt_reset_timer();
+ //1. calculate CRC; 2. write all except 2 bytes of CRC; 3. write CRC
+ crc = crc16f((uint8_t _PGM*)&fw_data.def_param, sizeof(params_t)-PAR_CRC_SIZE);
+ eeprom_write_P(&fw_data.def_param, EEPROM_PARAM_START, sizeof(params_t)-PAR_CRC_SIZE);
+ eeprom_write(&crc, EEPROM_PARAM_START+(sizeof(params_t)-PAR_CRC_SIZE), PAR_CRC_SIZE);
+
+ wdt_reset_timer();
+ ce_clear_errors(); //сбрасываем сохраненные ошибки
+ wdt_reset_timer();
+#ifdef REALTIME_TABLES
+ eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
+#endif
+ wdt_reset_device(); //reboot!  
 }
 
 void load_eeprom_params(struct ecudata_t* d)

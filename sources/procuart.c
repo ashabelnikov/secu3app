@@ -118,6 +118,12 @@ void process_uart_interface(struct ecudata_t* d)
      _AB(d->op_actn_code, 0) = 0; //обработали
     }
 #endif
+    if (_AB(d->op_actn_code, 0) == OPCODE_RESET_EEPROM) //reset EEPROM command received
+    {
+     if (_AB(d->op_actn_code, 1) == 0xAA) //second byte must be 0xAA
+      sop_set_operation(SOP_SEND_NC_RESET_EEPROM);
+     _AB(d->op_actn_code, 0) = 0; //processed
+    }
     break;
 
    case CE_SAVED_ERR:

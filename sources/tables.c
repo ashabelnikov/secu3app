@@ -56,6 +56,12 @@
 /**For specifying of temperature values in the lookup table*/
 #define _TLV(v) ROUND(((v)*4.0))
 
+/**ADC compensation factor, see magnitude.h for more information*/
+#define _ACF ADC_COMP_FACTOR(ADC_VREF_FACTOR)
+
+/**ADC compensation correction, see magnitude.h for more information*/
+#define _ACC ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -133,7 +139,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_COOLINGFAN_PWM, 8) | _CBV32(COPT_REALTIME_TABLES, 9) | _CBV32(COPT_ICCAVR_COMPILER, 10) | _CBV32(COPT_AVRGCC_COMPILER, 11) |
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
-  _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22),
+  _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22) | _CBV32(COPT_VREF_5V, 23),
 
   /**A reserved byte*/
   0,
@@ -176,7 +182,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   0,
 
   /**Fill coolant temperature sensor lookup table*/
-  {_TLV(120.0), _TLV(95.0), _TLV(79.0), _TLV(66.5), _TLV(57.4), _TLV(49.5), _TLV(43.8), _TLV(37.9), 
+  {_TLV(120.0), _TLV(95.0), _TLV(79.0), _TLV(66.5), _TLV(57.4), _TLV(49.5), _TLV(43.8), _TLV(37.9),
    _TLV(31.0), _TLV(24.8), _TLV(19.8), _TLV(13.8), _TLV(6.0), _TLV(-1.0), _TLV(-12.5), _TLV(-30.0)},
   ROUND(0.182 / ADC_DISCRETE), ROUND(4.25 / ADC_DISCRETE),
 
@@ -190,10 +196,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
  /**Резервные параметры Fill reserve parameters with default values */
  {1, 0, 0, 6, 6, 1920, 1900, 2100, 600, 6400, 650, 1600, -320, 0, 800, 4,
-  4,10,392,384,16384,8192,16384,8192,16384,8192, 0, 20, 10, 96, 96, -320,
+  4,10,392,384,_ACF,_ACC,_ACF,_ACC,_ACF,_ACC, 0, 20, 10, 96, 96, -320,
   320, 066, 1089, 392, 1900, 2100, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
-  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, 16384, 8192, 
-  16384,8192, 16384,8192, 160, 1050, 0, 984, 200, {0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
+  _ACF,_ACC, _ACF,_ACC, 160, 1050, 0, 984, 200, {0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

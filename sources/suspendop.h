@@ -52,6 +52,7 @@
 #define SOP_SEND_NC_ENTER_DIAG      14    //!< notify that device has entered diagnostic mode
 #define SOP_SEND_NC_LEAVE_DIAG      15    //!< notify that device has left diagnostic mode
 #endif
+#define SOP_SEND_NC_RESET_EEPROM    16    //!< notify that device has entered into the EEPROM resetting mode
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters
@@ -65,6 +66,7 @@
 #define OPCODE_DIAGNOST_ENTER        6    //!< enter diagnostic mode
 #define OPCODE_DIAGNOST_LEAVE        7    //!< leave diagnostic mode
 #endif
+#define OPCODE_RESET_EEPROM       0xCF    //!< reset EEPROM, second byte must be 0xAA
 struct ecudata_t;
 
 /**Set specified operation to execution queue (установка указанной рперации в очередь на выполнение)

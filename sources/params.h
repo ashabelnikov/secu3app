@@ -70,4 +70,10 @@ void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t fuel_type, uint
 /** Cache for buffering parameters used during suspended EEPROM operations */
 extern uint8_t eeprom_parameters_cache[];
 
+/** Resets EEPROM contents to default values and resets device, this function has same effect as
+ *  closed jumper "Default EEPROM"
+ * \param d pointer to ECU data structure
+ */
+void reset_eeprom_params(struct ecudata_t* d);
+
 #endif //_PARAMS_H_

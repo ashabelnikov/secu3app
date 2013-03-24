@@ -38,7 +38,7 @@
 #include "wdt.h"
 
 /**Maximum allowed number of suspended operations */
-#define SUSPENDED_OPERATIONS_SIZE 16
+#define SUSPENDED_OPERATIONS_SIZE 17
 
 /**Contains queue of suspended operations. Each operation can appear one time */
 uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
@@ -58,6 +58,21 @@ uint8_t sop_is_operation_active(uint8_t opcode)
 void sop_init_operations(void)
 {
  memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE);
+}
+
+/**Delay 25ms*/
+void delay_25ms(void)
+{
+ _DELAY_CYCLES(64000);
+ _DELAY_CYCLES(64000);
+ wdt_reset_timer();
+ _DELAY_CYCLES(64000);
+ _DELAY_CYCLES(64000);
+ wdt_reset_timer();
+ _DELAY_CYCLES(64000);
+ _DELAY_CYCLES(64000);
+ wdt_reset_timer();
+ _DELAY_CYCLES(16000);
 }
 
 //ќбработка операций которые могут требовать или требуют оложенного выполнени€.
@@ -276,15 +291,24 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    _AB(d->op_comp_code, 0) = OPCODE_DIAGNOST_LEAVE;
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
-   _DELAY_CYCLES(64000); //wait 20ms
-   _DELAY_CYCLES(64000);
-   _DELAY_CYCLES(64000);
-   _DELAY_CYCLES(64000);
-   _DELAY_CYCLES(64000);
+   delay_25ms();       //wait 25ms because of pending UART packet
    wdt_reset_device(); //wait for death :-)
   }
  }
 #endif
+
+ if (sop_is_operation_active(SOP_SEND_NC_RESET_EEPROM))
+ {
+  //передатчик зан€т?
+  if (!uart_is_sender_busy())
+  {
+   _AB(d->op_comp_code, 0) = OPCODE_RESET_EEPROM;
+   _AB(d->op_comp_code, 1) = 0x55;
+   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   delay_25ms();           //wait 25ms because of pending UART packet
+   reset_eeprom_params(d); //no back way!
+  }
+ }
 
  //если есть завершенна€ операци€ EEPROM, то сохран€ем ее код дл€ отправки нотификации
  switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take!

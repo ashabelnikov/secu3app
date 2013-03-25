@@ -31,10 +31,13 @@
 #include "ce_errors.h"
 #include "crc16.h"
 #include "eeprom.h"
+#include "ioconfig.h"
 #include "jumper.h"
 #include "params.h"
 #include "secu3.h"
+#include "starter.h"
 #include "suspendop.h"
+#include "ventilator.h"
 #include "vstimer.h"
 #include "wdt.h"
 
@@ -52,10 +55,22 @@ void save_param_if_need(struct ecudata_t* d)
  }
 }
 
+void ckps_enable_ignition(uint8_t);
+void ckps_init_ports(void);
+
 void reset_eeprom_params(struct ecudata_t* d)
 {
  uint16_t crc;
  uint16_t i = 5000; //5 seconds max
+
+ ckps_enable_ignition(0);        //turn off ignition
+ ckps_init_ports();
+ vent_turnoff(d);                //turn off ventilator
+ starter_set_blocking_state(1);  //block starter
+ IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
+ IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
+ IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
+
  while(!eeprom_is_idle() && --i)
  {
   wdt_reset_timer();

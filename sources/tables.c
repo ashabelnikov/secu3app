@@ -154,7 +154,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    * Дата в формате Mmm dd yyyy.
    * Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
    * Date in format Mmm dd yyyy. */
-  {"SECU-3 firmware v3.6. Build ["__DATE__"]       "},
+  {"SECU-3 firmware v3.7. Build ["__DATE__"]       "},
 
   /**Таблица аттенюатора, по умолчанию k = 1.000
    * attenuator's lookup table (for knock channel), by default k = 1.000 */

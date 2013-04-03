@@ -25,6 +25,7 @@
  */
 
 #include "port/avrio.h"
+#include "port/interrupt.h"
 #include "port/intrinsic.h"
 #include "port/port.h"
 
@@ -63,6 +64,10 @@
 
 /**ECU data structure. Contains all related data and state information */
 struct ecudata_t edat;
+
+static s_timer8_t engine_rotation_timer; //!< used to determine that engine has been stopped
+static s_timer8_t force_measure_timer;   //!< used by measuring process when engine is stopped
+static s_timer8_t ce_control_timer;      //!< used for counting of time intervals for CE
 
 /**Control of certain units of engine (управление отдельными узлами двигател€).
  * \param d pointer to ECU data structure
@@ -238,9 +243,9 @@ MAIN()
  while(1)
  {
   if (ckps_is_cog_changed())
-   s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
+   s_timer_set8(&engine_rotation_timer, ENGINE_ROTATION_TIMEOUT_VALUE);
 
-  if (s_timer_is_action(engine_rotation_timeout_counter))
+  if (s_timer_isexp8(&engine_rotation_timer))
   { //двигатель остановилс€ (его обороты ниже критических)
 #ifdef DWELL_CONTROL
    ckps_init_ports();           //чтобы IGBT не зависли в открытом состо€нии
@@ -262,7 +267,7 @@ MAIN()
   //запускаем измерени€ ј÷ѕ, через равные промежутки времени. ѕри обнаружении каждого рабочего
   //такта этот таймер переинициализируетс€. “аким образом, когда частота вращени€ двигател€ превысит
   //определенную величину, то это условие перестанет выполн€тьс€.
-  if (s_timer_is_action(force_measure_timeout_counter))
+  if (s_timer_isexp8(&force_measure_timer))
   {
    if (!edat.param.knock_use_knock_channel)
    {
@@ -285,7 +290,7 @@ MAIN()
     _ENABLE_INTERRUPT();
    }
 
-   s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+   s_timer_set8(&force_measure_timer, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(&edat, 0);
   }
 
@@ -293,7 +298,7 @@ MAIN()
   //выполнение отложенных операций
   sop_execute_operations(&edat);
   //управление фиксированием и индицированием возникающих ошибок
-  ce_check_engine(&edat, &ce_control_time_counter);
+  ce_check_engine(&edat, &ce_control_timer);
   //обработка приход€щих/уход€щих данных последовательного порта
   process_uart_interface(&edat);
   //управление сохранением настроек
@@ -335,7 +340,7 @@ MAIN()
   if (ckps_is_stroke_event_r())
   {
    meas_update_values_buffers(&edat, 0);
-   s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+   s_timer_set8(&force_measure_timer, FORCE_MEASURE_TIMEOUT_VALUE);
 
    //ќграничиваем быстрые изменени€ ”ќ«, он не может изменитс€ больше чем на определенную величину
    //за один рабочий такт. ¬ режиме пуска фильтр ”ќ« отключен.

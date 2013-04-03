@@ -29,6 +29,9 @@
 #include "ignlogic.h"
 #include "secu3.h"
 
+/**Special timer used for idling regulator*/
+static s_timer8_t idle_period_timer;
+
 int16_t advance_angle_state_machine(struct ecudata_t* d)
 {
  int16_t angle;
@@ -52,7 +55,7 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    work_function(d, 1);                    //обновляем значение расхода воздуха
    angle = idling_function(d);             //базовый УОЗ - функция для ХХ
    angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
-   angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+   angle+=idling_pregulator(d, &idle_period_timer);//добавляем регулировку
    break;
 
   case EM_WORK: //рабочий режим

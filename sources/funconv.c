@@ -199,7 +199,7 @@ void idling_regulator_init(void)
 
 //Пропорциональный регулятор для регулирования оборотов ХХ углом опережения зажигания
 // Возвращает значение угла опережения в целом виде * 32.
-int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
+int16_t idling_pregulator(struct ecudata_t* d, s_timer8_t* io_timer)
 {
  int16_t error,factor;
  //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
@@ -225,9 +225,9 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
   factor = d->param.ifac2;
 
  //изменяем значение коррекции только по таймеру idle_period_time_counter
- if (s_timer_is_action(*io_timer))
+ if (s_timer_isexp8(io_timer))
  {
-  s_timer_set(*io_timer,IDLE_PERIOD_TIME_VALUE);
+  s_timer_set8(io_timer, IDLE_PERIOD_TIME_VALUE);
   idl_prstate.output_state = idl_prstate.output_state + (error * factor) / 4;
  }
  //ограничиваем коррекцию нижним и верхним пределами регулирования

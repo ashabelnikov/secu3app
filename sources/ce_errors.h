@@ -51,7 +51,7 @@ struct ecudata_t;
  * \param d pointer to ECU data structure
  * \param ce_control_time_counter time counter object
  */
-void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter);
+void ce_check_engine(struct ecudata_t* d, s_timer8_t* ce_control_time_counter);
 
 /**Set specified error (number of bit)
  * (Установка указанной ошибки (номер бита)).

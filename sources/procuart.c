@@ -34,12 +34,16 @@
 #include "ckps.h"
 #include "diagnost.h"
 #include "knock.h"
+#include "params.h"
 #include "procuart.h"
 #include "secu3.h"
 #include "suspendop.h"
 #include "uart.h"
 #include "ufcodes.h"
 #include "vstimer.h"
+
+/**Tomer object used by for sending of data packets (counting out time intervals) */
+static s_timer8_t send_packet_interval_timer;
 
 void process_uart_interface(struct ecudata_t* d)
 {
@@ -58,14 +62,14 @@ void process_uart_interface(struct ecudata_t* d)
    case ADCCOR_PAR:
    case CHOKE_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    reset_timeout_timer();
     break;
 
    case MISCEL_PAR:
 #ifdef HALL_OUTPUT
     ckps_set_hall_pulse(d->param.hop_start_cogs, d->param.hop_durat_cogs);
 #endif
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    reset_timeout_timer();
     break;
 
    case FUNSET_PAR:
@@ -73,7 +77,7 @@ void process_uart_interface(struct ecudata_t* d)
     sop_set_operation(SOP_SELECT_TABLSET);
 #endif
     //если были изменены параметры то сбрасываем счетчик времени
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    reset_timeout_timer();
     break;
 
    case OP_COMP_NC:
@@ -144,7 +148,7 @@ void process_uart_interface(struct ecudata_t* d)
 #ifndef DWELL_CONTROL
     ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
 #endif
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    reset_timeout_timer();
     break;
 
    case KNOCK_PAR:
@@ -167,7 +171,7 @@ void process_uart_interface(struct ecudata_t* d)
     d->use_knock_channel_prev = d->param.knock_use_knock_channel;
 
     //если были изменены параметры то сбрасываем счетчик времени
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    reset_timeout_timer();
     break;
   }
 
@@ -176,7 +180,7 @@ void process_uart_interface(struct ecudata_t* d)
  }
 
  //периодически передаем фреймы с данными
- if (s_timer_is_action(send_packet_interval_counter))
+ if (s_timer_isexp8(&send_packet_interval_timer))
  {
   if (!uart_is_sender_busy())
   {
@@ -187,7 +191,7 @@ void process_uart_interface(struct ecudata_t* d)
     sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information
 #endif
 
-   s_timer_set(send_packet_interval_counter, d->param.uart_period_t_ms);
+   s_timer_set8(&send_packet_interval_timer, d->param.uart_period_t_ms);
 
    //после передачи очищаем кеш ошибок, передача битов ошибок осуществляется только в 1 из 2 пакетов
    if (SENSOR_DAT==desc || CE_ERR_CODES==desc)

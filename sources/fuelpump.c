@@ -51,6 +51,9 @@ typedef struct
 /**Global instance of state variables */
 fp_state_t fpstate = {0};
 
+/**Timer object use for counting out time intervals */
+static s_timer16_t fuel_pump_timer;
+
 void fuelpump_init_ports(void)
 {
  IOCFG_INIT(IOP_FL_PUMP, 1); //fuel pump is on
@@ -59,7 +62,7 @@ void fuelpump_init_ports(void)
 void fuelpump_init(void)
 {
  TURN_ON_ELPUMP(1); //turn on
- s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STRT);
+ s_timer_set16(&fuel_pump_timer, FP_TURNOFF_TIMEOUT_STRT);
  fpstate.state = 0;
 }
 
@@ -69,7 +72,7 @@ void fuelpump_control(struct ecudata_t* d)
  {
   case 0: //pump is turned on
    //Turn off pump if timer is expired or gas valve is turned on
-   if (d->sens.gas || s_timer16_is_action(fuel_pump_time_counter))
+   if (d->sens.gas || s_timer_isexp16(&fuel_pump_timer))
    {
     TURN_ON_ELPUMP(0); //turn off
     fpstate.state = 1;
@@ -77,7 +80,7 @@ void fuelpump_control(struct ecudata_t* d)
 
    //reset timer periodically if engine is still running
    if (d->sens.frequen4 > 0)
-    s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
+    s_timer_set16(&fuel_pump_timer, FP_TURNOFF_TIMEOUT_STOP);
 
    break;
 
@@ -86,7 +89,7 @@ void fuelpump_control(struct ecudata_t* d)
    if (!d->sens.gas && d->sens.frequen4 > 0)
    {
     TURN_ON_ELPUMP(1); //turn on
-    s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
+    s_timer_set16(&fuel_pump_timer, FP_TURNOFF_TIMEOUT_STOP);
     fpstate.state = 0;
    }
 

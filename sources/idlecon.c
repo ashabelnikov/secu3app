@@ -35,6 +35,9 @@
 /** Opens/closes IE valve (открывает/закрывает клапан Ёѕ’’) */
 #define SET_IE_VALVE_STATE(s) IOCFG_SET(IOP_IE, s)
 
+//timer used by idle cut-off valve controlling algorithm
+static s_timer8_t icv_delay_timer;
+
 void idlecon_init_ports(void)
 {
  IOCFG_INIT(IOP_IE, 1); //valve is turned on (клапан Ёѕ’’ включен)
@@ -54,16 +57,16 @@ void idlecon_control(struct ecudata_t* d)
  if (d->sens.carb)
  {
   d->ie_valve = 1;
-  s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
+  s_timer_set8(&icv_delay_timer, d->param.shutoff_delay);
  }
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  //(если дроссель закрыт, то состо€ние клапана зависит от оборотов, предыдущего состо€ни€ клапана, таймера и вида топлива).
  else
   if (d->sens.gas) //gas (газовое топливо)
-   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+   d->ie_valve = ((s_timer_isexp8(&icv_delay_timer))
    &&(((d->sens.frequen > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.frequen > d->param.ie_hit_g)))?0:1;
   else //gasoline (бензин)
-   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+   d->ie_valve = ((s_timer_isexp8(&icv_delay_timer))
    &&(((d->sens.frequen > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.frequen > d->param.ie_hit)))?0:1;
  SET_IE_VALVE_STATE(d->ie_valve);
 }

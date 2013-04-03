@@ -24,6 +24,8 @@
  * (Реализация функциональности для работы с параметрами (сохранение/восстановление/проверка)).
  */
 
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
 
@@ -42,16 +44,18 @@
 #include "wdt.h"
 
 uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
+/**Timer object used by parametrs' saving algorithm */
+static s_timer16_t save_param_timer;
 
 void save_param_if_need(struct ecudata_t* d)
 {
  //параметры не изменились за заданное время?
- if (s_timer16_is_action(save_param_timeout_counter))
+ if (s_timer_isexp16(&save_param_timer))
  {
   //текущие и сохраненные параметры отличаются?
   if (memcmp(eeprom_parameters_cache, &d->param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
-  s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+  s_timer_set16(&save_param_timer, SAVE_PARAM_TIMEOUT_VALUE);
  }
 }
 
@@ -90,7 +94,7 @@ void reset_eeprom_params(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
  eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
 #endif
- wdt_reset_device(); //reboot!  
+ wdt_reset_device(); //reboot!
 }
 
 void load_eeprom_params(struct ecudata_t* d)
@@ -119,7 +123,7 @@ void load_eeprom_params(struct ecudata_t* d)
   ce_clear_errors(); //сбрасываем сохраненные ошибки
 #ifdef REALTIME_TABLES
   eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
-#endif  
+#endif
  }
 }
 
@@ -152,6 +156,11 @@ void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t fuel_type, uint
  //будет послано уведомление о том, что загружен новый набор таблиц
  //notification will be sent about that new set of tables has been loaded
  sop_set_operation(SOP_SEND_NC_TABLSET_LOADED);
+}
+
+void reset_timeout_timer(void)
+{
+ s_timer_set16(&save_param_timer, SAVE_PARAM_TIMEOUT_VALUE);
 }
 
 #endif

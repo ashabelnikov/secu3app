@@ -33,8 +33,8 @@
 #include "secu3.h"
 #include "vstimer.h"
 
-/**Reload value for timer 2 */
-#define TIMER2_RELOAD_VALUE  6               //for 2 ms
+/**Reload value for timer 2, for 2ms */
+#define TIMER2_RELOAD_VALUE  6
 
 /**Addition value for compare register */
 #define COMPADD 5
@@ -44,22 +44,10 @@
 
 //TODO: Do refactoring of timers! Implement callback mechanism.
 
-volatile s_timer8_t  send_packet_interval_counter = 0;    //!< used for sending of packets
-volatile s_timer8_t  force_measure_timeout_counter = 0;   //!< used by measuring process when engine is stopped
-volatile s_timer8_t  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE; //!< used for counting of time intervals for CE
-volatile s_timer8_t  engine_rotation_timeout_counter = 0; //!< used to determine that engine was stopped
-volatile s_timer8_t  epxx_delay_time_counter = 0;         //!< used by idle economizer's controlling algorithm
-volatile s_timer8_t  idle_period_time_counter = 0;        //!< used by idling regulator's controlling algorithm
-volatile s_timer16_t save_param_timeout_counter = 0;      //!< used for saving of parameters (automatic saving)
-#ifdef FUEL_PUMP
-volatile s_timer16_t fuel_pump_time_counter = 0;          //!< used for fuel pump
-#endif
-volatile s_timer16_t powerdown_timeout_counter = 0;       //!< used for power-down timeout 
-
 /**for division, to achieve 10ms, because timer overflovs each 2 ms */
 uint8_t divider = DIVIDER_RELOAD;
 
-volatile uint16_t sys_counter = 0;                        //!< system tick counter, 1 tick = 10ms
+volatile uint16_t sys_counter = 0; //!< system tick counter, 1 tick = 10ms
 
 #ifdef SM_CONTROL
 //See smcontrol.c
@@ -68,6 +56,52 @@ extern volatile uint8_t sm_latch;
 extern uint16_t sm_steps_b;
 extern uint8_t sm_pulse_state;
 #endif
+
+
+void s_timer_set8(s_timer8_t* timer, uint8_t value)
+{
+ timer->start_val = _AB(sys_counter, 0);
+ timer->timeout = value;
+}
+
+void s_timer_set16(s_timer16_t* timer, uint16_t value)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ timer->start_val = sys_counter;
+ _END_ATOMIC_BLOCK();
+ timer->timeout = value;
+}
+
+uint8_t s_timer_gtc8(void)
+{
+ return _AB(sys_counter, 0);
+}
+
+uint16_t s_timer_gtc16(void)
+{
+ uint16_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = sys_counter;
+ _END_ATOMIC_BLOCK();
+ return result;
+}
+
+uint8_t s_timer_isexp8(const s_timer8_t* timer)
+{
+ return (s_timer_gtc8() - (timer->start_val) >= timer->timeout);
+}
+
+uint8_t s_timer_isexp16(const s_timer16_t* timer)
+{
+ return (s_timer_gtc16() - (timer->start_val) >= timer->timeout);
+}
+
+void s_timer_init(void)
+{
+ TCCR2|= _BV(CS22)|_BV(CS20);  //clock = 125kHz (tick = 8us)
+ TCNT2 = 0;
+ TIMSK|= _BV(TOIE2);           //enable T/C 2 overflow interrupt
+}
 
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
@@ -110,24 +144,6 @@ ISR(TIMER2_OVF_vect)
  else
  {//each 10 ms
   divider = DIVIDER_RELOAD;
-  s_timer_update(force_measure_timeout_counter);
-  s_timer_update(save_param_timeout_counter);
-  s_timer_update(send_packet_interval_counter);
-  s_timer_update(ce_control_time_counter);
-  s_timer_update(engine_rotation_timeout_counter);
-  s_timer_update(epxx_delay_time_counter);
-  s_timer_update(idle_period_time_counter);
-#ifdef FUEL_PUMP
-  s_timer_update(fuel_pump_time_counter);
-#endif
-  s_timer_update(powerdown_timeout_counter);
   ++sys_counter;
  }
-}
-
-void s_timer_init(void)
-{
- TCCR2|= _BV(CS22)|_BV(CS20);  //clock = 125kHz (tick = 8us)
- TCNT2 = 0;
- TIMSK|= _BV(TOIE2);           //enable T/C 2 overflow interrupt
 }

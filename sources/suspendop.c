@@ -25,6 +25,7 @@
  */
 
 #include "port/port.h"
+#include "port/intrinsic.h"
 #include <string.h>
 #include "bitmask.h"
 #include "ce_errors.h"

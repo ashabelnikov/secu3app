@@ -27,77 +27,65 @@
 #ifndef _VSTIMER_H_
 #define _VSTIMER_H_
 
-#include "port/interrupt.h"
-#include "port/intrinsic.h"
 #include <stdint.h>
-
 //инструментарий для реализации виртуальных таймерв
 
 //Типы объектов таймеров. 8-ми разрядный тамйер может отсчитывать периоды
 //до 2.56 сек. 16-ти разрядный таймер может отсчитывать периоды до 655 сек.
-typedef uint8_t   s_timer8_t;  //!< used by 8-bit timers
-typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
 
-/**Update state of specified timer (обновление состояния указанного таймера) */
-#define s_timer_update(T)    { if ((T) > 0) (T)--; }
-
-/**Initialization of state of specified timer. One tick = 10ms
- *(инициализация состояния указанного таймера. Один тик таймера равен 10 мс). */
-#define s_timer_set(T, V)    { (T) = (V); }
-
-/**Checks whenever specified timer is completed (Проверяет сработал ли указанный таймер) */
-#define s_timer_is_action(T) ((T)==0)
-
-//Ниже, варианты функций для 16-ти разрядных виртуальных таймеров.
-//Так как для этих таймеров используется не атомарный тип данных, то
-//необходимо запрещать прерывания.
-
-/**Set specified timer for specified period */
-#define s_timer16_set(T, V)  \
-{                            \
- _DISABLE_INTERRUPT();       \
- (T) = (V);                  \
- _ENABLE_INTERRUPT();        \
-}
-
-/**Check specified timer for action */
-static INLINE
-uint8_t s_timer16_is_action(s_timer16_t i_timer)
+/** Describes a timer. Used by 8-bit timers */
+typedef struct
 {
- uint8_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = (i_timer == 0);
- _END_ATOMIC_BLOCK();
- return result;
-}
+ uint16_t timeout;    //!< timeout
+ uint16_t start_val;  //!< start value, used for counddown
+}s_timer16_t;
 
-extern volatile uint16_t sys_counter;
-/**Get value of the system 10ms counter */
-static INLINE
-uint16_t s_timer_gtc(void)
+/** Describes a timer. Used by 16-bit timers */
+typedef struct
 {
- uint16_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = sys_counter;
- _END_ATOMIC_BLOCK();
- return result;
-}
+ uint8_t timeout;     //!< timeout
+ uint8_t start_val;   //!< start value, used for counddown
+}s_timer8_t;
+
+/**Initialization specified timer state (8-bit version). One tick = 10ms
+ *(инициализация состояния указанного таймера. Один тик таймера равен 10 мс).
+ * \param timer pointer to timer's descriptor
+ * \param value timeout value used for countdown
+ */
+void s_timer_set8(s_timer8_t* timer, uint8_t value);
+
+/**Initialization specified timer state (16-bit version). One tick = 10ms
+ *(инициализация состояния указанного таймера. Один тик таймера равен 10 мс).
+ * \param timer pointer to timer's descriptor
+ * \param value timeout value used for countdown
+ */
+void s_timer_set16(s_timer16_t* timer, uint16_t value);
+
+/**Checks whenever specified timer is expired (Проверяет сработал ли указанный таймер)
+ * (8-bit version)
+ * \param timer pointer to timer's descriptor
+ * \return 1 - expired, 0 - not expired
+ */
+uint8_t s_timer_isexp8(const s_timer8_t* timer);
+
+/**Checks whenever specified timer is expired (Проверяет сработал ли указанный таймер)
+ * (16-bit version)
+ * \param timer pointer to timer's descriptor
+ * \return 1 - expired, 0 - not expired
+ */
+uint8_t s_timer_isexp16(const s_timer16_t* timer);
+
+/**Get value of the system 10ms counter (8-bit version)
+ * \return current value of 10ms 8-bit system tick counter
+ */
+uint8_t s_timer_gtc8(void);
+
+/**Get value of the system 10ms counter (16-bit version)
+ * \return current value of 10ms 16-bit system tick counter
+ */
+uint16_t s_timer_gtc16(void);
 
 /**Initialization of system timers */
 void s_timer_init(void);
-
-//////////////////////////////////////////////////////////////////
-extern volatile s_timer8_t  send_packet_interval_counter;
-extern volatile s_timer8_t  force_measure_timeout_counter;
-extern volatile s_timer8_t  ce_control_time_counter;
-extern volatile s_timer8_t  engine_rotation_timeout_counter;
-extern volatile s_timer8_t  epxx_delay_time_counter;
-extern volatile s_timer8_t  idle_period_time_counter;
-extern volatile s_timer16_t save_param_timeout_counter;
-#ifdef FUEL_PUMP
-extern volatile s_timer16_t fuel_pump_time_counter;
-#endif
-extern volatile s_timer16_t powerdown_timeout_counter;
-//////////////////////////////////////////////////////////////////
 
 #endif //_VSTIMER_H_

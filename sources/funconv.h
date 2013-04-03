@@ -93,10 +93,10 @@ void idling_regulator_init(void);
 
 /**
  * \param d pointer to ECU data structure
- * \param io_timer
+ * \param io_timer Timer object used by regulator
  * \return value of advance angle * 32
  */
-int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer);
+int16_t idling_pregulator(struct ecudata_t* d, s_timer8_t* io_timer);
 
 /**
  * \param new_advance_angle

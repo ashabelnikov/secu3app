@@ -76,4 +76,7 @@ extern uint8_t eeprom_parameters_cache[];
  */
 void reset_eeprom_params(struct ecudata_t* d);
 
+/** Reset timeout timer used for automatic saving of parameters */
+void reset_timeout_timer(void);
+
 #endif //_PARAMS_H_

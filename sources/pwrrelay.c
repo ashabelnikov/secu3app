@@ -42,7 +42,8 @@ typedef struct
  uint8_t pwrdown;  //!< power-down flag
 }pwrstate_t;
 
-pwrstate_t pwrs;   //!< instance of state variables
+pwrstate_t pwrs;                    //!< instance of state variables
+static s_timer16_t powerdown_timer; //!< timer object used for counting out of power down timeout
 
 void pwrrelay_init_ports(void)
 {
@@ -85,7 +86,7 @@ void pwrrelay_control(struct ecudata_t* d)
    if (0==pwrs.state)
    {
     pwrs.state = 1;
-    s_timer16_set(powerdown_timeout_counter, 6000); //60 sec.
+    s_timer_set16(&powerdown_timer, 6000); //60 sec.
    }
   }
 
@@ -93,7 +94,7 @@ void pwrrelay_control(struct ecudata_t* d)
 #ifdef SM_CONTROL
       && choke_is_ready()
 #endif
-      ) || s_timer16_is_action(powerdown_timeout_counter))
+      ) || s_timer_isexp16(&powerdown_timer))
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
  }
  else

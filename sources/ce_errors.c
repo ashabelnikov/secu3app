@@ -190,7 +190,7 @@ void check(struct ecudata_t* d)
 //of the operability.
 //При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
 //то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности.
-void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
+void ce_check_engine(struct ecudata_t* d, s_timer8_t* ce_control_time_counter)
 {
  uint16_t temp_errors;
 
@@ -198,7 +198,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
 
  //If the timer counted the time, then turn off the CE
  //если таймер отсчитал время, то гасим СЕ
- if (s_timer_is_action(*ce_control_time_counter))
+ if (s_timer_isexp8(ce_control_time_counter))
  {
   ce_set_state(CE_STATE_OFF);
   d->ce_state = 0; //<--doubling
@@ -208,7 +208,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер
  if (ce_state.ecuerrors!=0)
  {
-  s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
+  s_timer_set8(ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
   ce_set_state(CE_STATE_ON);
   d->ce_state = 1;  //<--doubling
  }

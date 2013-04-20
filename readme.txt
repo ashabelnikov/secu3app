@@ -86,6 +86,10 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     STROBOSCOPE          Include stroboscope functionality
                          (¬ключить поддержку стробоскопа)
 
+    SM_CONTROL           Enable stepper motor and choke control functionality
+                         (¬ключить функциональность по управлению шаговым 
+                         двигателем и воздушной заслонкой)
+
     VREF_5V              Use 5V ADC reference voltage. In this case divider 
                          bottom resistors are not necessary. So, input impedance
                          will be high.

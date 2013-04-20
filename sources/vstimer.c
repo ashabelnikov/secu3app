@@ -59,6 +59,8 @@ volatile s_timer16_t powerdown_timeout_counter = 0;       //!< used for power-do
 /**for division, to achieve 10ms, because timer overflovs each 2 ms */
 uint8_t divider = DIVIDER_RELOAD;
 
+volatile uint16_t sys_counter = 0;                        //!< system tick counter, 1 tick = 10ms
+
 #ifdef SM_CONTROL
 //See smcontrol.c
 extern volatile uint16_t sm_steps;
@@ -119,6 +121,7 @@ ISR(TIMER2_OVF_vect)
   s_timer_update(fuel_pump_time_counter);
 #endif
   s_timer_update(powerdown_timeout_counter);
+  ++sys_counter;
  }
 }
 

@@ -37,12 +37,21 @@
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
+/**Startup choke closing correction value, 30% */
+#define STARTUP_CORR_VAL  (30*2)
+
+/**Startup choke closing correction time, 3 sec. */
+#define STARTUP_CORR_TIME (3*100)
+
 /**Define state variables*/
 typedef struct
 {
  uint8_t   state;          //!< state machine state
  uint8_t   pwdn;           //!< powerdown flag (used if power management is enabled)
  uint16_t  smpos;          //!< current position of stepper motor in steps
+
+ uint8_t   strt_mode;      //!< state machine state used for starting mode
+ uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
 }choke_st_t;
 
 /**Instance of state variables */
@@ -58,6 +67,31 @@ void choke_init(void)
  stpmot_init();
  chks.state = 0;
  chks.pwdn = 0;
+ chks.strt_mode = 0;
+}
+
+int16_t calc_startup_corr(struct ecudata_t* d)
+{
+ switch(chks.strt_mode)
+ {
+  case 0:  //starting
+   if (d->st_block)
+   {
+    chks.strt_t1 = s_timer_gtc();
+    chks.strt_mode = 1;
+   }
+   break; //use correction
+  case 1:
+   if ((s_timer_gtc() - chks.strt_t1) >= STARTUP_CORR_TIME)
+    chks.strt_mode = 2;
+   break; //use correction
+  case 2:
+   if (!d->st_block)
+    chks.strt_mode = 0; //engine is stopped, so use correction again
+   return 0; //do not use correction
+ }
+
+ return (((int32_t)d->param.sm_steps) * STARTUP_CORR_VAL) / 200;
 }
 
 /** Set choke to initial position. Because we have no position feedback, we
@@ -115,7 +149,7 @@ void choke_control(struct ecudata_t* d)
    {
     int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d)) / 200;
     int16_t rpm_cor = 0, diff;
-    int16_t pos = tmp_pos + rpm_cor;
+    int16_t pos = tmp_pos + rpm_cor + calc_startup_corr(d);
     restrict_value_to(&pos, 0, d->param.sm_steps);
     diff = pos - chks.smpos;
     if (!stpmot_is_busy() && diff != 0)

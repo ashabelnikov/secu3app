@@ -49,6 +49,7 @@ typedef struct
  uint8_t   state;          //!< state machine state
  uint8_t   pwdn;           //!< powerdown flag (used if power management is enabled)
  uint16_t  smpos;          //!< current position of stepper motor in steps
+ int16_t   prev_temp;      //!< used for choke_closing_lookup()
 
  uint8_t   strt_mode;      //!< state machine state used for starting mode
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
@@ -113,6 +114,7 @@ void choke_control(struct ecudata_t* d)
    if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
     initial_pos(INIT_POS_DIR, d->param.sm_steps);
    chks.state = 2;
+   chks.prev_temp = d->sens.temperat;
    break;
 
   case 1:                                                     //system is being preparing to power-down
@@ -147,7 +149,7 @@ void choke_control(struct ecudata_t* d)
    }
    else
    {
-    int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d)) / 200;
+    int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200;
     int16_t rpm_cor = 0, diff;
     int16_t pos = tmp_pos + rpm_cor + calc_startup_corr(d);
     restrict_value_to(&pos, 0, d->param.sm_steps);

@@ -37,8 +37,8 @@
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
-/**Startup choke closing correction value, 30% */
-#define STARTUP_CORR_VAL  (30*2)
+/**Startup choke closing correction value, 10% */
+#define STARTUP_CORR_VAL  (10*2)
 
 /**Startup choke closing correction time, 3 sec. */
 #define STARTUP_CORR_TIME (3*100)
@@ -49,6 +49,7 @@ typedef struct
  uint8_t   state;          //!< state machine state
  uint8_t   pwdn;           //!< powerdown flag (used if power management is enabled)
  uint16_t  smpos;          //!< current position of stepper motor in steps
+ int16_t   prev_temp;      //!< used for choke_closing_lookup()
 
  uint8_t   strt_mode;      //!< state machine state used for starting mode
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
@@ -105,6 +106,16 @@ static void initial_pos(uint8_t dir, uint16_t steps)
  stpmot_run(steps + (steps >> 5));    //run using number of steps + 3%
 }
 
+/** Calculates choke position (%*2) from step value
+ * \param value Position of choke in stepper motor steps
+ * \param steps total number of steps
+ * \return choke position in %*2
+ */
+uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
+{
+ return (((uint32_t)value) * 200) / steps;
+}
+
 void choke_control(struct ecudata_t* d)
 {
  switch(chks.state)
@@ -113,6 +124,7 @@ void choke_control(struct ecudata_t* d)
    if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
     initial_pos(INIT_POS_DIR, d->param.sm_steps);
    chks.state = 2;
+   chks.prev_temp = d->sens.temperat;
    break;
 
   case 1:                                                     //system is being preparing to power-down
@@ -147,7 +159,7 @@ void choke_control(struct ecudata_t* d)
    }
    else
    {
-    int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d)) / 200;
+    int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200;
     int16_t rpm_cor = 0, diff;
     int16_t pos = tmp_pos + rpm_cor + calc_startup_corr(d);
     restrict_value_to(&pos, 0, d->param.sm_steps);
@@ -159,6 +171,7 @@ void choke_control(struct ecudata_t* d)
      chks.smpos += diff;
     }
    }
+   d->choke_pos = calc_percent_pos(chks.smpos, d->param.sm_steps);//update position value
    goto check_pwr;
 
   //     Testing modes

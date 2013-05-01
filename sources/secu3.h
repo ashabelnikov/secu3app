@@ -69,7 +69,7 @@ typedef struct sensors_t
  uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage
- 
+
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor
  int16_t  voltage_raw;                   //!< raw ADC value from voltage
@@ -95,7 +95,7 @@ typedef struct ecudata_t
  uint8_t  airflow;                       //!< Air flow (расход воздуха)
  int16_t  curr_angle;                    //!< Current advance angle (текущий угол опережения)
  int16_t  knock_retard;                  //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
-
+ uint8_t  choke_pos;                     //!< Choke position in % * 2
 
 #ifndef REALTIME_TABLES
  f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
@@ -118,11 +118,11 @@ typedef struct ecudata_t
  uint8_t engine_mode;                    //!< Current engine mode(start, idle, work) (текущий режим двигателя (пуск, ХХ, нагрузка))
 
 #ifdef DIAGNOSTICS
- diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs 
+ diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs
  uint16_t       diag_out;                //!< diagnostic mode: values of outputs
 #endif
 
- uint8_t choke_testing;                  //!< Use to indcated that choke testing if on/off (so it is applicable only if SM_CONTROL compile option is used)
+ uint8_t choke_testing;                  //!< Used to indcate that choke testing is on/off (so it is applicable only if SM_CONTROL compilation option is used)
 }ecudata_t;
 
 

@@ -355,7 +355,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->curr_angle);             // advance angle
    build_i16h(d->sens.knock_k);           // knock value
    build_i16h(d->knock_retard);           // knock retard
-   build_i8h(d->airflow);                 // index if the map axis curve
+   build_i8h(d->airflow);                 // index of the map axis curve
    //boolean values
    build_i8h((d->ie_valve   << 0) |       // IE flag
              (d->sens.carb  << 1) |       // carb. limit switch flag
@@ -368,6 +368,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.add_i1);            // ADD_I1 voltage
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
+   build_i8h(d->choke_pos);               // choke position
    break;
 
   case ADCCOR_PAR:

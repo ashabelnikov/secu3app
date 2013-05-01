@@ -37,8 +37,8 @@
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
-/**Startup choke closing correction value, 30% */
-#define STARTUP_CORR_VAL  (30*2)
+/**Startup choke closing correction value, 10% */
+#define STARTUP_CORR_VAL  (10*2)
 
 /**Startup choke closing correction time, 3 sec. */
 #define STARTUP_CORR_TIME (3*100)
@@ -106,6 +106,16 @@ static void initial_pos(uint8_t dir, uint16_t steps)
  stpmot_run(steps + (steps >> 5));    //run using number of steps + 3%
 }
 
+/** Calculates choke position (%*2) from step value
+ * \param value Position of choke in stepper motor steps
+ * \param steps total number of steps
+ * \return choke position in %*2
+ */
+uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
+{
+ return (((uint32_t)value) * 200) / steps;
+}
+
 void choke_control(struct ecudata_t* d)
 {
  switch(chks.state)
@@ -161,6 +171,7 @@ void choke_control(struct ecudata_t* d)
      chks.smpos += diff;
     }
    }
+   d->choke_pos = calc_percent_pos(chks.smpos, d->param.sm_steps);//update position value
    goto check_pwr;
 
   //     Testing modes

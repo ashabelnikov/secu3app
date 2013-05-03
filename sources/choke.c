@@ -50,6 +50,7 @@ typedef struct
  uint8_t   pwdn;           //!< powerdown flag (used if power management is enabled)
  uint16_t  smpos;          //!< current position of stepper motor in steps
  int16_t   prev_temp;      //!< used for choke_closing_lookup()
+ uint8_t   manual;         //!< manual control mode
 
  uint8_t   strt_mode;      //!< state machine state used for starting mode
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
@@ -69,6 +70,7 @@ void choke_init(void)
  chks.state = 0;
  chks.pwdn = 0;
  chks.strt_mode = 0;
+ chks.manual = 0;
 }
 
 int16_t calc_startup_corr(struct ecudata_t* d)
@@ -159,9 +161,21 @@ void choke_control(struct ecudata_t* d)
    }
    else
    {
-    int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200;
-    int16_t rpm_cor = 0, diff;
-    int16_t pos = tmp_pos + rpm_cor + calc_startup_corr(d);
+    int16_t pos, diff;
+    if (!chks.manual)
+    {
+     int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200;
+     int16_t rpm_cor = 0; //todo
+     pos = tmp_pos + rpm_cor + calc_startup_corr(d);
+     if (d->choke_manpos_d)
+      chks.manual = 1; //enter manual mode
+    }
+    else
+    { //manual control
+     pos = chks.smpos + d->choke_manpos_d;
+     d->choke_manpos_d = 0;
+    }
+
     restrict_value_to(&pos, 0, d->param.sm_steps);
     diff = pos - chks.smpos;
     if (!stpmot_is_busy() && diff != 0)
@@ -178,6 +192,7 @@ void choke_control(struct ecudata_t* d)
   case 6:                                                     //initialization of choke
    if (!stpmot_is_busy())                                     //ready?
    {
+    d->choke_pos = 0;//update position value
     stpmot_dir(SM_DIR_CCW);
     stpmot_run(d->param.sm_steps);
     chks.state = 7;
@@ -187,6 +202,7 @@ void choke_control(struct ecudata_t* d)
   case 7:
    if (!stpmot_is_busy())                                     //ready?
    {
+    d->choke_pos = 200;//update position value
     stpmot_dir(SM_DIR_CW);
     stpmot_run(d->param.sm_steps);
     chks.state = 6;

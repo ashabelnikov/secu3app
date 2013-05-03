@@ -123,6 +123,7 @@ typedef struct ecudata_t
 #endif
 
  uint8_t choke_testing;                  //!< Used to indcate that choke testing is on/off (so it is applicable only if SM_CONTROL compilation option is used)
+ int8_t choke_manpos_d;                  //!< Muanual position setting delta value used for choke control
 }ecudata_t;
 
 

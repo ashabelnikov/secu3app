@@ -120,6 +120,7 @@ void init_ecu_data(struct ecudata_t* d)
  edat.sens.add_i2 = edat.sens.add_i2_raw = 0;
  edat.choke_testing = 0;
  edat.choke_pos = 0;
+ edat.choke_manpos_d = 0;
 }
 
 /**Main function of firmware - entry point */

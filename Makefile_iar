@@ -4,7 +4,7 @@
 #
 # Note: It requires IAR compiler and linker
 # Also: Before using of this Makefile you must define environment variable IAR_HOME.
-#       For instance "C:\Program Files\IAR Systems\Embedded Workbench 5.4"
+#       For instance "C:\Program Files\IAR Systems\Embedded Workbench 5.4" (without the double quotation marks)
 #       Additionaly make sure CC, LD and LIBS variables in this Makefile are correct.
 
 #include platform-specific options from another file
@@ -12,9 +12,9 @@ include platform_cfg
 
 TARGET = secu-3_app
 OBJDIR = ./output
-CC = $(IAR_HOME)/avr/bin/iccavr.exe
-LD = $(IAR_HOME)/avr/bin/xlink.exe
-#LD = $(IAR_HOME)/common/bin/xlink.exe
+CC = "$(IAR_HOME)/avr/bin/iccavr.exe"
+LD = "$(IAR_HOME)/avr/bin/xlink.exe"
+#LD = "$(IAR_HOME)/common/bin/xlink.exe"
 
 # Compile options common for all C compilation units.
 CFLAGS = --cpu $(MCU)
@@ -25,18 +25,18 @@ CFLAGS += -s9
 #CFLAGS += --cross_call_passes=1 --do_cross_call
 CFLAGS += --lock_regs 1
 CFLAGS += --eeprom_size $(EE_SIZE)
-CFLAGS += --dlib_config $(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.h
+CFLAGS += --dlib_config "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.h"
 
 # Linker flags
 LDFLAGS = -Fintel-standard -xs -s main
-LDFLAGS += -f $(IAR_HOME)/avr/config/$(LNKXCL)
+LDFLAGS += -f "$(IAR_HOME)/avr/config/$(LNKXCL)"
 LDFLAGS += -l $(OBJDIR)/secu3.map
 LDFLAGS += -Z.boot_loader=$(BL_START) -Z.firmware_data=$(FWD_START)
-LIBS = $(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.r90
-#LIBS = $(IAR_HOME)/avr/lib/dlib/dl3s-ec-sf.r90
+LIBS = "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.r90"
+#LIBS = "$(IAR_HOME)/avr/lib/dlib/dl3s-ec-sf.r90"
 
 # Include Directories
-INCLUDES = -I $(IAR_HOME)/avr/inc/dlib -I $(IAR_HOME)/avr/inc
+INCLUDES = -I "$(IAR_HOME)/avr/inc/dlib" -I "$(IAR_HOME)/avr/inc"
 
 # Define all source files.
 SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
@@ -55,8 +55,8 @@ DEPS = $(OBJECTS:$(OBJDIR)/%.r90=$(OBJDIR)/%.d)
 LST = $(SRC:%.c=$(OBJDIR)/%.lst)
 
 #Thanks to guys from Microsoft we have to deal with spaces...
-SPAT=$(shell echo $(IAR_HOME) | sed -e 's/\\\/\\\\\\\\\\\/g')
-RPAT=$(shell echo $(IAR_HOME) | sed -e 's/\\\/\\\\\\\\\\\/g' -e 's/ /\\\\\\\\\\\ /g')
+SPAT=$(shell echo "$(IAR_HOME)" | sed -e 's/\\\/\\\\\\\\\\\/g')
+RPAT=$(shell echo "$(IAR_HOME)" | sed -e 's/\\\/\\\\\\\\\\\/g' -e 's/ /\\\\\\\\\\\ /g')
 
 # Build
 all: OBJ_DIRS $(TARGET).a90

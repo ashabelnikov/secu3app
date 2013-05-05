@@ -342,12 +342,19 @@ int16_t thermistor_lookup(uint16_t adcvalue)
 #endif
 
 #ifdef SM_CONTROL
-uint8_t choke_closing_lookup(struct ecudata_t* d)
+uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp)
 {
  int16_t i, i1, t = d->sens.temperat;
 
  if (!d->param.tmp_use)
   return 0;   //блок не укомплектован ДТОЖ-ом
+
+ //if difference between current and previous temperature values is less than +/-1.5,
+ //then previous value will be used for calculations.
+ if (abs(*p_prev_temp - t) < TEMPERATURE_MAGNITUDE(1.5))
+  t = *p_prev_temp;
+ else
+  *p_prev_temp = t; //make it current
 
  //-5 - минимальное значение температуры
  if (t < TEMPERATURE_MAGNITUDE(-5))

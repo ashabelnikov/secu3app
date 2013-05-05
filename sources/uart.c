@@ -355,7 +355,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->curr_angle);             // advance angle
    build_i16h(d->sens.knock_k);           // knock value
    build_i16h(d->knock_retard);           // knock retard
-   build_i8h(d->airflow);                 // index if the map axis curve
+   build_i8h(d->airflow);                 // index of the map axis curve
    //boolean values
    build_i8h((d->ie_valve   << 0) |       // IE flag
              (d->sens.carb  << 1) |       // carb. limit switch flag
@@ -368,6 +368,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.add_i1);            // ADD_I1 voltage
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
+   build_i8h(d->choke_pos);               // choke position
    break;
 
   case ADCCOR_PAR:
@@ -454,8 +455,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case CHOKE_PAR:
    build_i16h(d->param.sm_steps);
    build_i4h(d->choke_testing);      //fake parameter (actually it is command)
+   build_i8h(0);                     //fake parameter, not used in outgoing paket
    break;
- 
+
 #ifdef REALTIME_TABLES
 //Following finite state machine will transfer all table's data
   case EDITAB_PAR:
@@ -708,6 +710,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   case CHOKE_PAR:
    d->param.sm_steps = recept_i16h();
    d->choke_testing = recept_i4h(); //fake parameter (actually it is status)
+   d->choke_manpos_d = recept_i8h();//fake parameter
    break;
 
 #ifdef REALTIME_TABLES

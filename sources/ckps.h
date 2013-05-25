@@ -114,9 +114,6 @@ uint8_t ckps_is_stroke_event_r(void);
 /** Initialization of state variables */
 void ckps_init_state_variables(void);
 
-/** \return Number of current tooth (возвращает номер текущего зуба) */
-uint8_t ckps_get_current_cog(void);
-
 /** \return returns 1 if number of current tooth has been changed
  *  (возвращает 1, если номер текущего зуба изменился)
  */
@@ -154,5 +151,14 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration);
  * \param miss_num Number of missing cranck wheel's teeth (0, 1, 2)
  */
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num);
+
+#ifdef HALL_SYNC
+/** Enable/disable spark generation using shutter entering (used on startup - at low RPM)
+ * Note: This function is applicable only when synchronization from Hall sensor is selected
+ * \param i_shutter 1 - use shutter, 0 - don't use shutter (use timer)
+ */
+void ckps_set_shutter_spark(uint8_t i_shutter);
+#endif
+
 
 #endif //_CKPS_H_

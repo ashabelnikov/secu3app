@@ -33,7 +33,11 @@
 #define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #define CE_CONTROL_STATE_TIME_VALUE   50    //!< used for CE (flashing)
+#ifdef HALL_SYNC
+#define ENGINE_ROTATION_TIMEOUT_VALUE 150   //!< timeout value used to determine that engine is stopped (used for Hall sensor)
+#else
 #define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
+#endif
 #define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
 
 #ifdef DIAGNOSTICS

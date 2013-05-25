@@ -342,9 +342,22 @@ MAIN()
    //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
    //за один рабочий такт. В режиме пуска фильтр УОЗ отключен.
    if (EM_START == edat.engine_mode)
+   {
+#ifdef HALL_SYNC
+    int16_t strt_map_angle = start_function(&edat);
+    ckps_set_shutter_spark(0==strt_map_angle);
+    edat.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
+#else
     edat.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
+#endif
+   }
    else
+  {
+#ifdef HALL_SYNC
+    ckps_set_shutter_spark(edat.sens.frequen < 200);
+#endif
     edat.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
+  }
 
    //----------------------------------------------
    if (edat.param.knock_use_knock_channel)

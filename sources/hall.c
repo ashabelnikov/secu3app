@@ -373,11 +373,23 @@ ISR(TIMER1_COMPA_vect)
  ((iocfg_pfn_set)hall.io_callback)(IGN_OUTPUTS_ON_VAL);
  TIMSK&= ~_BV(OCIE1A); //disable interrupt (запрещаем прерывание)
 
+ //-----------------------------------------------------
+ //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
+ //interrupts occur during processing of this handler.
+#ifdef COOLINGFAN_PWM
+ _ENABLE_INTERRUPT();
+#endif
+ //-----------------------------------------------------
+
  //set timer for pulse completion, use fast division by 3
  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
   OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
+
+#ifdef COOLINGFAN_PWM
+ _DISABLE_INTERRUPT();
+#endif
 
  TIFR = _BV(OCF1B);
  TIMSK|= _BV(OCIE1B);
@@ -461,16 +473,36 @@ ISR(INT1_vect)
 #ifdef STROBOSCOPE
    hall.strobe = 1; //strobe!
 #endif
+
+   //-----------------------------------------------------
+   //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
+   //interrupts occur during processing of this handler.
+#ifdef COOLINGFAN_PWM
+   _ENABLE_INTERRUPT();
+#endif
+   //-----------------------------------------------------
+
    //start timer for counting out of advance angle (spark)
    delay = (((uint32_t)hall.advance_angle * hall.stroke_period) / hall.degrees_per_stroke);
-   OCR1A = tmr + ((delay < 14) ? 14 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
+#ifdef COOLINGFAN_PWM
+   _DISABLE_INTERRUPT();
+#endif
+
+   OCR1A = tmr + ((delay < 15) ? 15 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
    TIFR = _BV(OCF1A);
    TIMSK|= _BV(OCIE1A);
 
    //start timer for countiong out of knock window opening
    if (CHECKBIT(flags, F_USEKNK))
    {
-    set_timer0(((uint32_t)hall.knock_wnd_begin * hall.stroke_period) / hall.degrees_per_stroke);
+#ifdef COOLINGFAN_PWM
+   _ENABLE_INTERRUPT();
+#endif
+    delay = ((uint32_t)hall.knock_wnd_begin * hall.stroke_period) / hall.degrees_per_stroke;
+#ifdef COOLINGFAN_PWM
+   _DISABLE_INTERRUPT();
+#endif
+    set_timer0(delay);
     hall.knkwnd_mode = 0;
    }
 
@@ -519,9 +551,21 @@ ISR(TIMER0_OVF_vect)
 
   if (!hall.knkwnd_mode)
   {//start listening detonation (opening the window)
+   uint16_t delay;
    knock_set_integration_mode(KNOCK_INTMODE_INT);
    ++hall.knkwnd_mode;
-   set_timer0(((uint32_t)hall.knock_wnd_end * hall.stroke_period) / hall.degrees_per_stroke);
+   //-----------------------------------------------------
+   //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
+   //interrupts occur during processing of this handler.
+#ifdef COOLINGFAN_PWM
+   _ENABLE_INTERRUPT();
+#endif
+   //-----------------------------------------------------
+   delay = ((uint32_t)hall.knock_wnd_end * hall.stroke_period) / hall.degrees_per_stroke;
+#ifdef COOLINGFAN_PWM
+   _DISABLE_INTERRUPT();
+#endif
+   set_timer0(delay);
   }
   else
   {//finish listening a detonation (closing the window) and start the process of measuring integrated value

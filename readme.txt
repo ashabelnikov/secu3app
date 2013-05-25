@@ -10,43 +10,43 @@
     Как компилировать проект
 
     It is possible to compile project for ATMega16, ATMega32, ATMega64. Version
-for ATMega64 compiles,but it will not work! You can compile the project using 
+for ATMega64 compiles,but it will not work! You can compile the project using
 either IAR(MS Windows) or GCC(Linux, MS Windows).
     Under MS Windows: Run configure.bat with corresponding options (type of MCU
-                      and type of compiler),it will create Makefile and start 
+                      and type of compiler),it will create Makefile and start
                       building.
     Under Linux:      Run configure.sh with option - type of MCU, it will create
                       Makefile and start building.
 
-    Проект можно скомпилировать под ATMega16, ATMega32, ATMega64. Для ATMega64 
-код компилируется, но работать он не будет! Вы можете компилировать проект 
-используя IAR или GCC. Запустите configure.bat c соответствующими опциями (тип 
-микроконтроллера и тип компилятора), будет создан Makefile и начнется сборка 
+    Проект можно скомпилировать под ATMega16, ATMega32, ATMega64. Для ATMega64
+код компилируется, но работать он не будет! Вы можете компилировать проект
+используя IAR или GCC. Запустите configure.bat c соответствующими опциями (тип
+микроконтроллера и тип компилятора), будет создан Makefile и начнется сборка
 проекта.
 
     List of symbols which affects compilation:
     Список символов управляющих компиляцией:
 
-    VPSEM                For using of starter blocking output for indication of 
+    VPSEM                For using of starter blocking output for indication of
                          idle economizer valve's state
                          для индикации состояния клапана ЭПХХ используется выход
                          блокировки стартера
 
     DWELL_CONTROL        For direct controlling of dwell
-                         для прямого управления накоплением энергии в катушках 
+                         для прямого управления накоплением энергии в катушках
                          зажигания
 
 
     COOLINGFAN_PWM       Use PWM for controlling of electric cooling fan
-                         использовать или нет ШИМ для управления оборотами 
+                         использовать или нет ШИМ для управления оборотами
                          вентилятора
 
     REALTIME_TABLES      Allow editing of tables in realtime (use RAM)
                          разрешить редактирование таблиц в реальном времени
 
-    DEBUG_VARIABLES      For watching and editing of some firmware variables 
+    DEBUG_VARIABLES      For watching and editing of some firmware variables
                          (used for debug by developers)
-                         разрешить режим отладки позволяющий отслеживать и 
+                         разрешить режим отладки позволяющий отслеживать и
                          менять некоторые переменные прошивки
 
     PHASE_SENSOR         Use of phase (cam) sensor
@@ -68,7 +68,7 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          (Используется датчик температуры охлаждающей жидкости
                          резистивного типа)
 
-    SECU3T               Build for SECU-3T unit. Additional functionality will 
+    SECU3T               Build for SECU-3T unit. Additional functionality will
                          be added.
                          (Сборка под блок SECU-3T. Добавляется дополнительная
                          функциональность)
@@ -79,7 +79,7 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     DIAGNOSTICS          Include hardware diagnostics functionality
                          (Включить поддержку диагностики аппаратной части)
 
-    HALL_OUTPUT          Include Hall sensor emulation functionality. Separate 
+    HALL_OUTPUT          Include Hall sensor emulation functionality. Separate
                          output will be used.
                          (Включить поддержку эмуляции сигнала с Датчика Холла)
 
@@ -87,13 +87,17 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          (Включить поддержку стробоскопа)
 
     SM_CONTROL           Enable stepper motor and choke control functionality
-                         (Включить функциональность по управлению шаговым 
+                         (Включить функциональность по управлению шаговым
                          двигателем и воздушной заслонкой)
 
-    VREF_5V              Use 5V ADC reference voltage. In this case divider 
+    VREF_5V              Use 5V ADC reference voltage. In this case divider
                          bottom resistors are not necessary. So, input impedance
                          will be high.
                          (Использовать опорное напряжение для АЦП 5В)
+
+    HALL_SYNC            Use synchronization from Hall sensor (connected to PS
+                         input) instead of CKP sensor
+                         Использовать синхронизацию от ДХ вместо ДПКВ
 
 Necessary symbols you can define in the preprocessor's options of the compiler
 (edit corresponding Makefile).

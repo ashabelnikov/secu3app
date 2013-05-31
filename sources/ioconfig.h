@@ -51,9 +51,9 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_PS           10     //!< PS              (input)
 #define IOP_ADD_I1       11     //!< ADD_IO1         (input)   (applicable only in SECU-3T)
 #define IOP_ADD_I2       12     //!< ADD_IO2         (input)   (applicable only in SECU-3T)
-#define IOP_RESERVED1    13     //!< reserved slot   ()
-#define IOP_RESERVED2    14     //!< reserved slot   ()
-#define IOP_RESERVED3    15     //!< reserved slot   ()
+#define IOP_CE           13     //!< CE              (output)
+#define IOP_BL           14     //!< "Bootloader"    (output)
+#define IOP_DE           15     //!< "Default EEPROM"(output)
 //Next definitions correspond to plugs only
 #define IOP_FL_PUMP      16     //!< FL_PUMP         (output)
 #define IOP_HALL_OUT     17     //!< HALL_OUT        (output)
@@ -131,7 +131,7 @@ void iocfg_i_add_io2i(uint8_t value);    //!< init ADD_IO2 output  (applicable o
 void iocfg_s_add_io2(uint8_t value);     //!< set  ADD_IO2 output  (applicable only in SECU-3T)
 void iocfg_s_add_io2i(uint8_t value);    //!< set  ADD_IO2 output  (applicable only in SECU-3T) (inverted)
 #endif
-void iocfg_i_ecf(uint8_t value);         //!< init ECF      
+void iocfg_i_ecf(uint8_t value);         //!< init ECF
 void iocfg_i_ecfi(uint8_t value);        //!< init ECF                (inverted)
 void iocfg_s_ecf(uint8_t value);         //!< set  ECF
 void iocfg_s_ecfi(uint8_t value);        //!< set  ECF                (inverted)
@@ -148,6 +148,19 @@ void iocfg_i_fei(uint8_t value);         //!< init FE                 (inverted)
 void iocfg_s_fe(uint8_t value);          //!< set  FE
 void iocfg_s_fei(uint8_t value);         //!< set  FE                 (inverted)
 void iocfg_s_stub(uint8_t);              //!< stub function for outputs
+
+void iocfg_i_ce(uint8_t value);          //!< init CE
+void iocfg_i_cei(uint8_t value);         //!< init CE                 (inverted)
+void iocfg_s_ce(uint8_t value);          //!< set  CE
+void iocfg_s_cei(uint8_t value);         //!< set  CE                 (inverted)
+void iocfg_i_bl(uint8_t value);          //!< init BL
+void iocfg_i_bli(uint8_t value);         //!< init BL                 (inverted)
+void iocfg_s_bl(uint8_t value);          //!< set  BL
+void iocfg_s_bli(uint8_t value);         //!< set  BL                 (inverted)
+void iocfg_i_de(uint8_t value);          //!< init DE
+void iocfg_i_dei(uint8_t value);         //!< init DE                 (inverted)
+void iocfg_s_de(uint8_t value);          //!< set  DE
+void iocfg_s_dei(uint8_t value);         //!< set  DE                 (inverted)
 
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input

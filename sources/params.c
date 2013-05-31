@@ -90,7 +90,7 @@ void reset_eeprom_params(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
  eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
 #endif
- wdt_reset_device(); //reboot!  
+ wdt_reset_device(); //reboot!
 }
 
 void load_eeprom_params(struct ecudata_t* d)
@@ -119,7 +119,7 @@ void load_eeprom_params(struct ecudata_t* d)
   ce_clear_errors(); //сбрасываем сохраненные ошибки
 #ifdef REALTIME_TABLES
   eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
-#endif  
+#endif
  }
 }
 

@@ -33,6 +33,7 @@
 #include "ce_errors.h"
 #include "ckps.h"
 #include "eeprom.h"
+#include "ioconfig.h"
 #include "knock.h"
 #include "magnitude.h"
 #include "secu3.h"
@@ -260,14 +261,5 @@ void ce_clear_errors(void)
 
 void ce_init_ports(void)
 {
-#ifdef SECU3T /*SECU-3T*/
-#ifdef REV9_BOARD
- PORTB|= _BV(PB2);
-#else
- PORTB&=~_BV(PB2);  //CE is ON (for checking)
-#endif
-#else         /*SECU-3*/
- PORTB|= _BV(PB2);
-#endif
- DDRB |= _BV(DDB2); //output for CE
+ IOCFG_INIT(IOP_CE, CE_STATE_ON); //CE is ON (for checking)
 }

@@ -287,7 +287,7 @@ void iocfg_i_iei(uint8_t value)        //inverted version
  DDRB |= _BV(DDB0);
 }
 
-void iocfg_s_ie(uint8_t value)         
+void iocfg_s_ie(uint8_t value)
 {
  WRITEBIT(PORTB, PB0, value);
 }
@@ -322,6 +322,106 @@ void iocfg_s_fei(uint8_t value)        //inverted version
 void iocfg_s_stub(uint8_t nil)
 {
  //this is a stub!
+}
+
+void iocfg_i_ce(uint8_t value)
+{
+#ifdef SECU3T  /*SECU-3T*/
+#ifdef REV9_BOARD
+ WRITEBIT(PORTB, PB2, value);
+#else
+ WRITEBIT(PORTB, PB2, !value);
+#endif
+ DDRB |= _BV(DDB2);
+#else          /*SECU-3*/
+ WRITEBIT(PORTB, PB2, value);
+ DDRB |= _BV(DDB2);
+#endif
+}
+
+void iocfg_i_cei(uint8_t value)        //inverted version
+{
+#ifdef SECU3T  /*SECU-3T*/
+#ifdef REV9_BOARD
+ WRITEBIT(PORTB, PB2, !value);
+#else
+ WRITEBIT(PORTB, PB2, value);
+#endif
+ DDRB |= _BV(DDB2);
+#else          /*SECU-3*/
+ WRITEBIT(PORTB, PB2, !value);
+ DDRB |= _BV(DDB2);
+#endif
+}
+
+void iocfg_s_ce(uint8_t value)
+{
+#ifdef SECU3T  /*SECU-3T*/
+#ifdef REV9_BOARD
+ WRITEBIT(PORTB, PB2, value);
+#else
+ WRITEBIT(PORTB, PB2, !value);
+#endif
+#else          /*SECU-3*/
+ WRITEBIT(PORTB, PB2, value);
+#endif
+}
+
+void iocfg_s_cei(uint8_t value)        //inverted version
+{
+#ifdef SECU3T  /*SECU-3T*/
+#ifdef REV9_BOARD
+ WRITEBIT(PORTB, PB2, !value);
+#else
+ WRITEBIT(PORTB, PB2, value);
+#endif
+#else          /*SECU-3*/
+ WRITEBIT(PORTB, PB2, !value);
+#endif
+}
+
+void iocfg_i_bl(uint8_t value)
+{
+ WRITEBIT(PORTC, PC3, value);
+ DDRC |= _BV(DDC3);
+}
+
+void iocfg_i_bli(uint8_t value)        //inverted version
+{
+ WRITEBIT(PORTC, PC3, !value);
+ DDRC |= _BV(DDC3);
+}
+
+void iocfg_s_bl(uint8_t value)
+{
+ WRITEBIT(PORTC, PC3, value);
+}
+
+void iocfg_s_bli(uint8_t value)        //inverted version
+{
+ WRITEBIT(PORTC, PC3, !value);
+}
+
+void iocfg_i_de(uint8_t value)
+{
+ WRITEBIT(PORTC, PC2, value);
+ DDRC |= _BV(DDC2);
+}
+
+void iocfg_i_dei(uint8_t value)        //inverted version
+{
+ WRITEBIT(PORTC, PC2, !value);
+ DDRC |= _BV(DDC2);
+}
+
+void iocfg_s_de(uint8_t value)
+{
+ WRITEBIT(PORTC, PC2, value);
+}
+
+void iocfg_s_dei(uint8_t value)        //inverted version
+{
+ WRITEBIT(PORTC, PC2, !value);
 }
 
 void iocfg_i_ps(uint8_t value)

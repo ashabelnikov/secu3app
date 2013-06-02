@@ -32,7 +32,7 @@
 /** Initialization of used I/O ports (инициализация используемых портов)*/
 void jumper_init_ports(void);
 
-/**Get state of "Default EEPROM" jumper (получение состояния перемычки "Default EEPROM")
+/**Get state of "Default EEPROM" jumper which was at the moment of start up (получение состояния перемычки "Default EEPROM" которое было на момент старта системы)
  * \return 0 - closed, 1 - opened.
  */
 uint8_t jumper_get_defeeprom_state(void);

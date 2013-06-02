@@ -24,6 +24,8 @@
  * (Реализация обработки датчика положения коленвала).
  */
 
+#ifndef HALL_SYNC
+
 #include <stdlib.h>
 #include "port/avrio.h"
 #include "port/interrupt.h"
@@ -409,11 +411,6 @@ uint8_t ckps_is_stroke_event_r()
  CLEARBIT(flags, F_STROKE);
  _END_ATOMIC_BLOCK();
  return result;
-}
-
-uint8_t ckps_get_current_cog(void)
-{
- return ckps.cog;
 }
 
 uint8_t ckps_is_cog_changed(void)
@@ -1082,3 +1079,5 @@ ISR(TIMER1_OVF_vect)
 {
  ++ckps.t1oc;
 }
+
+#endif //HALL_SYNC

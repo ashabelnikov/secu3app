@@ -32,13 +32,22 @@
 /**Retrieves state of jumper from port's pin */
 #define GET_DEFEEPROM_JUMPER_STATE() (CHECKBIT(PINC, PINC2) > 0)
 
+/**3 последовательно считанных состояния перемычки*/
+uint8_t de_samples[3];
+
 void jumper_init_ports(void)
 {
+ uint8_t i = 3;
  DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
  PORTC|= _BV(PC3)|_BV(PC2);
+
+ //accumulate 3 samples
+ while(i--)
+  de_samples[i] = GET_DEFEEPROM_JUMPER_STATE();
 }
 
 uint8_t jumper_get_defeeprom_state(void)
 {
- return GET_DEFEEPROM_JUMPER_STATE();
+ //Majority gate (Мажоритарный элемент)
+ return (de_samples[0] & de_samples[1]) | (de_samples[1] & de_samples[2]) | (de_samples[0] & de_samples[2]);
 }

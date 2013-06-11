@@ -383,7 +383,8 @@ ISR(TIMER1_COMPA_vect)
 
  //set timer for pulse completion, use fast division by 3
  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
-  OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
+//OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
+  OCR1B = tmr + hall.stroke_period / 3;
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
 

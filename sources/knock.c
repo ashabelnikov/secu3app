@@ -31,6 +31,8 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "knock.h"
+#include "secu3.h"
+#include "ce_errors.h"
 
 //HIP9011 - Knock Signal Processor.
 
@@ -299,4 +301,18 @@ void knock_init_ports(void)
 #else
  DDRD |= _BV(DDD3);
 #endif
+}
+
+void knock_init(struct params_t *param, uint8_t gain)
+{
+ //предварительная инициализация параметров сигнального процессора детонации
+ knock_set_band_pass(param->knock_bpf_frequency);
+ knock_set_gain(gain);
+ knock_set_int_time_constant(param->knock_int_time_const);
+
+ if (param->knock_use_knock_channel)
+  if (!knock_module_initialize())
+  {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+   ce_set_error(ECUERROR_KSP_CHIP_FAILED);
+  }
 }

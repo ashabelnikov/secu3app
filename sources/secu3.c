@@ -173,16 +173,7 @@ MAIN()
  load_selected_tables_into_ram(&edat);
 #endif
 
- //предварительная инициализация параметров сигнального процессора детонации
- knock_set_band_pass(edat.param.knock_bpf_frequency);
- knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
- knock_set_int_time_constant(edat.param.knock_int_time_const);
-
- if (edat.param.knock_use_knock_channel)
-  if (!knock_module_initialize())
-  {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-   ce_set_error(ECUERROR_KSP_CHIP_FAILED);
-  }
+ knock_init(&edat.param, PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
 
  adc_init();

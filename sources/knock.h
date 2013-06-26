@@ -30,6 +30,9 @@
 
 #include <stdint.h>
 
+struct params_t;
+
+
 //Parameters of functions receive data according to registers format of
 //HIP9011. Retuning of parameters allowed only in HOLD mode!
 
@@ -96,5 +99,7 @@ void knock_set_integration_mode(uint8_t mode);
 
 /**Initialization of used I/O ports */
 void knock_init_ports(void);
+
+void knock_init(struct params_t *param, uint8_t gain);
 
 #endif //_KNOCK_H_

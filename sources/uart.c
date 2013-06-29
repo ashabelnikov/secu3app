@@ -100,40 +100,129 @@ typedef struct
 /**State variables */
 uartstate_t uart;
 
+#ifdef UART_BINARY //binary mode
+// There are several special reserved symbols in binary mode: 0x21, 0x40, 0x0D, 0x0A
+#define FIBEGIN  0x21       //!< '!' indicates beginning of the ingoing packet
+#define FOBEGIN  0x40       //!< '@' indicates beginning of the outgoing packet
+#define FIOEND   0x0D       //!<'\r' indicates ending of the ingoing/outgoing packet
+#define FESC     0x0A       //!<'\n' Packet escape (FESC)
+// Following bytes are used only in escape sequeces and may appear in the data without any problems
+#define TFIBEGIN 0x81       //!< Transposed FIBEGIN
+#define TFOBEGIN 0x82       //!< Transposed FOBEGIN
+#define TFIOEND  0x83       //!< Transposed FIOEND
+#define TFESC    0x84       //!< Transposed FESC
+
+#define PACKET_BYTE_SIZE 1  //!< Size of byte in packet
+
+/** Appends transmitter's buffer
+ * \param b byte which will be used to append tx buffer
+ */
+INLINE
+void append_tx_buff(uint8_t b)
+{
+ if (b == FOBEGIN)
+ {
+  uart.send_buf[uart.send_size++] = FESC;
+  uart.send_buf[uart.send_size++] = TFOBEGIN;
+ }
+ else if ((b) == FIOEND)
+ {
+  uart.send_buf[uart.send_size++] = FESC;
+  uart.send_buf[uart.send_size++] = TFIOEND;
+ }
+ else if ((b) == FESC)
+ {
+  uart.send_buf[uart.send_size++] = FESC;
+  uart.send_buf[uart.send_size++] = TFESC;
+ }
+ else
+  uart.send_buf[uart.send_size++] = b;
+}
+
+/** Takes out byte from receiver's buffer
+ * \return byte retrieved from buffer
+ */
+INLINE
+uint8_t takeout_rx_buff(void)
+{
+ uint8_t b1 = uart.recv_buf[uart.recv_index++];
+ if (b1 == FESC)
+ {
+  uint8_t b2 = uart.recv_buf[uart.recv_index++];
+  if (b2 == TFIBEGIN)
+   return FIBEGIN;
+  else if (b2 == TFIOEND)
+   return FIOEND;
+  else if (b2 = TFESC)
+   return FESC;
+ }
+ else
+  return b1;
+}
+
+#else //HEX mode
+
+#define PACKET_BYTE_SIZE 2  //!< Size of byte in packet
+
 /**For BIN-->HEX encoding */
 PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 
 /**Decodes from HEX to BIN */
 #define HTOD(h) (((h)<0x3A) ? ((h)-'0') : ((h)-'A'+10))
 
+#endif
+
 //--------вспомогательные функции для построения пакетов-------------
 
 /**Appends sender's buffer by sequence of bytes from program memory 
  * note! can NOT be used for binary data! */
+#ifdef UART_BINARY
+static void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
+{
+ while(size--) append_tx_buff(PGM_GET_BYTE(romBuffer++));
+}
+#else
 #define build_fs(src, size) \
 { \
  memcpy_P(&uart.send_buf[uart.send_size],(src),(size)); \
  uart.send_size+=(size); \
 }
+#endif
+
 
 /**Appends sender's buffer by sequence of bytes from RAM 
  * note! can NOT be used for binary data! */
+#ifdef UART_BINARY
+static void build_rs(const uint8_t* ramBuffer, uint8_t size)
+{
+ while(size--) append_tx_buff(*ramBuffer++);
+}
+#else
 #define build_rs(src, size) \
 { \
  memcpy(&uart.send_buf[uart.send_size],(src),(size)); \
  uart.send_size+=(size); \
 }
+#endif
 
 /**Appends sender's buffer by one HEX byte */
+#ifdef UART_BINARY
+#define build_i4h(i) {append_tx_buff((i));}
+#else
 #define build_i4h(i) {uart.send_buf[uart.send_size++] = ((i)+0x30);}
+#endif
 
 /**Appends sender's buffer by two HEX bytes
  * \param i 8-bit value to be converted into hex
  */
 static void build_i8h(uint8_t i)
 {
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);    //старший байт HEX числа
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);    //младший байт HEX числа
+#ifdef UART_BINARY
+ append_tx_buff(i);           //1 байт
+#else
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);          //старший байт HEX числа
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);          //младший байт HEX числа
+#endif
 }
 
 /**Appends sender's buffer by 4 HEX bytes
@@ -141,10 +230,15 @@ static void build_i8h(uint8_t i)
  */
 static void build_i16h(uint16_t i)
 {
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);    //старший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);    //младший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);    //старший байт HEX числа (младший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);    //младший байт HEX числа (младший байт)
+#ifdef UART_BINARY
+ append_tx_buff(_AB(i,1));    //старший байт
+ append_tx_buff(_AB(i,0));    //младший байт
+#else
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);   //старший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);   //младший байт HEX числа (старший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);   //старший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);   //младший байт HEX числа (младший байт)
+#endif
 }
 
 /**Appends sender's buffer by 8 HEX bytes
@@ -174,26 +268,38 @@ static void build_rb(const uint8_t* ramBuffer, uint8_t size)
 /**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
  * can NOT be used for binary data */
 static void recept_rs(uint8_t* ramBuffer, uint8_t size)
-{ 
+{
  if (size > uart.recv_size)
   size = uart.recv_size;
+#ifdef UART_BINARY
+ while(size--) *ramBuffer++ = takeout_rx_buff();
+#else
  while(size--) *ramBuffer++ = uart.recv_buf[uart.recv_index++];
+#endif
 }
 
 /**Retrieves from receiver's buffer 4-bit value */
+#ifdef UART_BINARY
+#define recept_i4h() (takeout_rx_buff())
+#else
 #define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
+#endif
 
 /**Retrieves from receiver's buffer 8-bit value
  * \return retrieved value
  */
 static uint8_t recept_i8h(void)
 {
+#ifdef UART_BINARY
+ return takeout_rx_buff();
+#else
  uint8_t i8;
  i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
  ++uart.recv_index;
  i8|= HTOD(uart.recv_buf[uart.recv_index]);
  ++uart.recv_index;
  return i8;
+#endif
 }
 
 /**Retrieves from receiver's buffer 16-bit value
@@ -202,6 +308,10 @@ static uint8_t recept_i8h(void)
 static uint16_t recept_i16h(void)
 {
  uint16_t i16;
+#ifdef UART_BINARY
+ _AB(i16,1) = takeout_rx_buff(); //Hi byte
+ _AB(i16,0) = takeout_rx_buff(); //Lo byte
+#else
  _AB(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
  ++uart.recv_index;
  _AB(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));
@@ -210,6 +320,7 @@ static uint16_t recept_i16h(void)
  ++uart.recv_index;
  _AB(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));
  ++uart.recv_index;
+#endif
  return i16;
 }
 
@@ -229,7 +340,11 @@ static uint32_t recept_i32h(void)
  * can be used for binary data */
 static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 {
+#ifdef UART_BINARY
+ uint8_t rcvsize = uart.recv_size;
+#else
  uint8_t rcvsize = uart.recv_size >> 1; //two hex symbols per byte
+#endif
  if (size > rcvsize)
   size = rcvsize;
  while(size--) *ramBuffer++ = recept_i8h();
@@ -486,7 +601,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
       state = ETMT_TEMP_MAP;
      }
      else
-      ++wrk_index; 
+      ++wrk_index;
      break;
     case ETMT_TEMP_MAP: //temper. correction.
      build_i8h(0); //<--not used
@@ -519,7 +634,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    if (tab_index >= (KC_ATTENUATOR_LOOKUP_TABLE_SIZE / 16) - 1)
     tab_index = 0;
    else
-    ++tab_index; 
+    ++tab_index;
    break;
   }
 
@@ -719,7 +834,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    uint8_t fuel = recept_i4h();
    uint8_t state = recept_i4h();
    uint8_t addr = recept_i8h();
-   uart.recv_size-=5; //[d][x][x][xx]
+   uart.recv_size-=(1+1+1+PACKET_BYTE_SIZE); //[d][x][x][xx]
    switch(state)
    {
     case ETMT_STRT_MAP: //start map

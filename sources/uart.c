@@ -35,6 +35,7 @@
 #include "secu3.h"
 #include "uart.h"
 #include "ufcodes.h"
+#include "wdt.h"
 
 //Mega64 compatibility
 #ifdef _PLATFORM_M64_
@@ -695,7 +696,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   case BOOTLOADER:
    //TODO: in the future use callback and move following code out
    //передатчик занят. необходимо подождать его освобождения и только потом запускать бутлоадер
-   while (uart_is_sender_busy());
+   while (uart_is_sender_busy()) { wdt_reset_timer(); }
    //если в бутлоадере есть команда "cli", то эту строчку можно убрать
    _DISABLE_INTERRUPT();
    ckps_init_ports();

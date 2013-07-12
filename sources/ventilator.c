@@ -68,9 +68,9 @@ volatile uint8_t pwm_duty;  //!< current duty value
 
 void vent_init_ports(void)
 {
-#ifdef COOLINGFAN_PWM
+#if defined(COOLINGFAN_PWM) && defined(SECU3T)
  IOCFG_INIT(IOP_ECF, 1); //coolong fan is turned Off
-#else //relay only
+#else //relay only or SECU-3
  IOCFG_INIT(IOP_ECF, 0); //coolong fan is turned Off
 #endif
 }

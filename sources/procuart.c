@@ -29,6 +29,7 @@
 #include "port/port.h"
 #include <stdint.h>
 #include "bitmask.h"
+#include "bluetooth.h"
 #include "camsens.h"
 #include "ce_errors.h"
 #include "ckps.h"
@@ -44,6 +45,9 @@
 void process_uart_interface(struct ecudata_t* d)
 {
  uint8_t descriptor;
+
+ if (!bt_set_baud(d->param.uart_divisor))
+  return;
 
  if (uart_is_packet_received())//приняли новый фрейм ?
  {

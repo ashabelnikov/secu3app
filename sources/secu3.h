@@ -128,6 +128,9 @@ typedef struct ecudata_t
 
  uint8_t choke_testing;                  //!< Used to indcate that choke testing is on/off (so it is applicable only if SM_CONTROL compilation option is used)
  int8_t choke_manpos_d;                  //!< Muanual position setting delta value used for choke control
+
+ uint8_t bt_name[9];                     //!< received name for Bluetooth (8 chars max), zero element is size
+ uint8_t bt_pass[7];                     //!< received password for Bluetooth (6 chars max), zero element is size
 }ecudata_t;
 
 

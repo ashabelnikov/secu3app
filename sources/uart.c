@@ -353,7 +353,7 @@ static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 //--------------------------------------------------------------------
 
 /**Makes sender to start sending */
-static void uart_begin_send(void)
+void uart_begin_send(void)
 {
  uart.send_index = 0;
  _DISABLE_INTERRUPT();
@@ -572,6 +572,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.sm_steps);
    build_i4h(d->choke_testing);      //fake parameter (actually it is command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
+   break;
+
+  case SECUR_PAR:
+   build_i4h(0);
+   build_i4h(0);
    break;
 
 #ifdef REALTIME_TABLES
@@ -829,6 +834,17 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->choke_manpos_d = recept_i8h();//fake parameter
    break;
 
+  case SECUR_PAR:
+   d->bt_name[0] = recept_i4h();
+   if (d->bt_name[0] > 8)
+    d->bt_name[0] = 8;
+   d->bt_pass[0] = recept_i4h();
+   if (d->bt_pass[0] > 6)
+    d->bt_pass[0] = 6;
+   recept_rs(&d->bt_name[1], d->bt_name[0]);
+   recept_rs(&d->bt_pass[1], d->bt_pass[0]);
+   break;
+
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
   {
@@ -891,6 +907,21 @@ uint8_t uart_get_send_mode(void)
 uint8_t uart_set_send_mode(uint8_t descriptor)
 {
  return uart.send_mode = descriptor;
+}
+
+/** Clears sender's buffer 
+ */
+void uart_reset_send_buff(void)
+{
+ uart.send_size = 0;
+}
+
+/** Append sender's buffer by one byte. This function is used in the bluetooth module
+ * \param ch Byte value to be appended to the buffer
+ */
+void uart_append_send_buff(uint8_t ch)
+{
+ uart.send_buf[uart.send_size++] = ch;
 }
 
 void uart_init(uint16_t baud)

@@ -577,6 +577,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case SECUR_PAR:
    build_i4h(0);
    build_i4h(0);
+   buldd_i8h(d->param.bt_flags);
    break;
 
 #ifdef REALTIME_TABLES
@@ -843,6 +844,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
     d->bt_pass[0] = 6;
    recept_rs(&d->bt_name[1], d->bt_name[0]);
    recept_rs(&d->bt_pass[1], d->bt_pass[0]);
+   d->param.bt_flags = recept_i8h();
    break;
 
 #ifdef REALTIME_TABLES

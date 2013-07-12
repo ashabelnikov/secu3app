@@ -229,7 +229,7 @@ typedef struct params_t
 
   int16_t  tps_adc_factor;               //!< ADC error compensation factor for TPS
   int32_t  tps_adc_correction;           //!< ADC error compensation correction for TPS
-  int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input 
+  int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input
   int32_t  ai1_adc_correction;           //!< ADC error compensation correction for ADD_IO1 input
   int16_t  ai2_adc_factor;               //!< ADC error compensation factor for ADD_IO2 input
   int32_t  ai2_adc_correction;           //!< ADC error compensation correction for ADD_IO2 input
@@ -243,13 +243,15 @@ typedef struct params_t
 
   int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
 
+  uint8_t bt_flags;                      //!< Bluetooth and security related flags
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[4];
+  uint8_t  reserved[3];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

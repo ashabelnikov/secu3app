@@ -46,8 +46,16 @@ void process_uart_interface(struct ecudata_t* d)
 {
  uint8_t descriptor;
 
- if (!bt_set_baud(d->param.uart_divisor))
-  return;
+ //Following code executes at start up only if bluetooth is enabled and only 1 time
+ if (d->param.bt_flags & _BV(BTF_USE_BT))
+ {
+  if (!bt_set_baud(d, d->param.uart_divisor))
+   return;
+
+  if (d->bt_name[0] && d->bt_pass[0])
+   if (!bt_set_namepass(d))
+    return;
+ }
 
  if (uart_is_packet_received())//приняли новый фрейм ?
  {
@@ -171,6 +179,12 @@ void process_uart_interface(struct ecudata_t* d)
     d->use_knock_channel_prev = d->param.knock_use_knock_channel;
 
     //если были изменены параметры то сбрасываем счетчик времени
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
+
+   case SECUR_PAR:
+    if (d->bt_name[0] && d->bt_pass[0])
+     bt_start_set_namepass();
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
   }

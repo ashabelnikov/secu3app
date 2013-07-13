@@ -577,7 +577,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case SECUR_PAR:
    build_i4h(0);
    build_i4h(0);
-   buldd_i8h(d->param.bt_flags);
+   build_i8h(d->param.bt_flags);
    break;
 
 #ifdef REALTIME_TABLES
@@ -821,13 +821,18 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    break;
 
   case MISCEL_PAR:
+  {
+   uint16_t old_divisor = d->param.uart_divisor;
    d->param.uart_divisor = recept_i16h();
+   if (d->param.uart_divisor != old_divisor)
+    d->param.bt_flags|= _BV(BTF_SET_BBR); //set flag indicating that we have to set bluetooth baud rate on next reset
    d->param.uart_period_t_ms = recept_i8h();
    d->param.ign_cutoff = recept_i4h();
    d->param.ign_cutoff_thrd = recept_i16h();
    d->param.hop_start_cogs = recept_i8h();
    d->param.hop_durat_cogs = recept_i8h();
-   break;
+  }
+  break;
 
   case CHOKE_PAR:
    d->param.sm_steps = recept_i16h();
@@ -836,6 +841,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    break;
 
   case SECUR_PAR:
+  {
+   uint8_t old_bt_flags = d->param.bt_flags;
    d->bt_name[0] = recept_i4h();
    if (d->bt_name[0] > 8)
     d->bt_name[0] = 8;
@@ -845,7 +852,10 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    recept_rs(&d->bt_name[1], d->bt_name[0]);
    recept_rs(&d->bt_pass[1], d->bt_pass[0]);
    d->param.bt_flags = recept_i8h();
-   break;
+   if ((old_bt_flags & _BV(BTF_USE_BT)) != (d->param.bt_flags & _BV(BTF_USE_BT)))
+    d->param.bt_flags|= _BV(BTF_SET_BBR); //set flag indicating that we have to set bluetooth baud rate on next reset
+  }
+  break;
 
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
@@ -911,7 +921,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
  return uart.send_mode = descriptor;
 }
 
-/** Clears sender's buffer 
+/** Clears sender's buffer
  */
 void uart_reset_send_buff(void)
 {

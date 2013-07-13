@@ -28,6 +28,8 @@
 #include "port/pgmspace.h"
 #include "port/port.h"
 #include "bluetooth.h"
+#include "secu3.h"
+#include "suspendop.h"
 #include "uart.h"
 #include "vstimer.h"
 
@@ -61,15 +63,17 @@ PGM_DECLARE(uint8_t AT_PIN[])  = "AT+PIN";
 typedef struct
 {
  uint8_t btbr_mode;                     //!< finite state machine state for setting of BT baud rate
+ uint8_t btnp_mode;                     //!< finite state machine state for setting of name and password
  uint16_t strt_t1;                      //!< used for time calculations
 }bts_t;
 
 /**Instance of internal state variables */
 bts_t bts;
 
-void bt_init(void)
+void bt_init(uint8_t en_set_baud)
 {
- bts.btbr_mode = 0;
+ bts.btbr_mode = en_set_baud ? 0 : 255;
+ bts.btnp_mode = 0;
 }
 
 /** Builds AT+BAUDx command in the sender's buffer
@@ -86,10 +90,14 @@ static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
  else if (baud == CBR_57600) uart_append_send_buff('7');
 }
 
-uint8_t bt_set_baud(uint16_t baud)
+uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
 {
+ if (255 == bts.btbr_mode)
+  return 1; //not enabled/stopped
+
  switch(bts.btbr_mode)
  {
+  //wait some time before we start to send first AT command
   case 0:
    ++bts.btbr_mode;
    bts.strt_t1 = s_timer_gtc();    //set timer
@@ -99,6 +107,7 @@ uint8_t bt_set_baud(uint16_t baud)
     ++bts.btbr_mode;
    return 0;
 
+  //Send command on 9600 baud
   case 2:
    SET_BRR(CBR_9600);
    append_tx_buff_with_at_baud_cmd(baud);
@@ -110,6 +119,7 @@ uint8_t bt_set_baud(uint16_t baud)
     ++bts.btbr_mode;
    return 0;
 
+  //Send command on 19200 baud
   case 4:
    if (!uart_is_sender_busy())
    {
@@ -125,6 +135,7 @@ uint8_t bt_set_baud(uint16_t baud)
     ++bts.btbr_mode;
    return 0;
 
+  //Send command on 38400 baud
   case 6:
    if (!uart_is_sender_busy())
    {
@@ -140,7 +151,7 @@ uint8_t bt_set_baud(uint16_t baud)
     ++bts.btbr_mode;
    return 0;
 
-
+  //Send command on 57600 baud
   case 8:
    if (!uart_is_sender_busy())
    {
@@ -156,17 +167,97 @@ uint8_t bt_set_baud(uint16_t baud)
     ++bts.btbr_mode;
    return 0;
 
+  //Finishing...
   case 10:
    if (!uart_is_sender_busy())
    {
     SET_BRR(baud);                 //return old baud rate back
     ++bts.btbr_mode;
-    break;
+    //reset flag and save parameters
+    d->param.bt_flags&=~(1 << 1);
+    sop_set_operation(SOP_SAVE_PARAMETERS);
    }
-   else return 0;                  //busy
+   return 0;
 
   default:
    return 1; //stopped
+ }
+
+ //Start background process of packet sending
+ uart_begin_send();
+ return 0;
+}
+
+
+void bt_start_set_namepass(void)
+{
+ bts.btnp_mode = 0;
+}
+
+/** Builds AT+NAMEx command in the sender's buffer
+ * \param name Buffer containing name, 1-st byte of buffer contains size of string
+ */
+static void append_tx_buff_with_at_name_cmd(uint8_t* name)
+{
+ uint8_t i = 0;
+ uart_reset_send_buff();
+ for(; i < 7; ++i) uart_append_send_buff(PGM_GET_BYTE(&AT_NAME[i]));
+ for(i = 0; i < name[0]; ++i) uart_append_send_buff(name[i+1]);
+}
+
+/** Builds AT+PINx command in the sender's buffer
+ * \param name Buffer containing password, 1-st byte of buffer contains size of string
+ */
+static void append_tx_buff_with_at_pass_cmd(uint8_t* pass)
+{
+ uint8_t i = 0;
+ uart_reset_send_buff();
+ for(; i < 6; ++i) uart_append_send_buff(PGM_GET_BYTE(&AT_PIN[i]));
+ for(i = 0; i < pass[0]; ++i) uart_append_send_buff(pass[i+1]);
+}
+
+uint8_t bt_set_namepass(struct ecudata_t *d)
+{
+ switch(bts.btnp_mode)
+ {
+  //wait some time before we start to send first AT command
+  case 0:
+   ++bts.btnp_mode;
+   bts.strt_t1 = s_timer_gtc();    //set timer
+   return 0;
+  case 1:
+   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
+    ++bts.btnp_mode;
+   return 0;
+
+  //Send command to change name
+  case 2:
+   append_tx_buff_with_at_name_cmd(d->bt_name);
+   ++bts.btnp_mode;
+   bts.strt_t1 = s_timer_gtc();    //set timer
+   break;                          //send!
+  case 3:                          //wait some time
+   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
+    ++bts.btnp_mode;
+   return 0;
+
+  //Send command to change password (pin)
+  case 4:
+   append_tx_buff_with_at_pass_cmd(d->bt_pass);
+   ++bts.btnp_mode;
+   bts.strt_t1 = s_timer_gtc();    //set timer
+   break;                          //send!
+  case 5:                          //wait some time
+   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
+   {
+    ++bts.btnp_mode;
+    d->bt_name[0] = 0, d->bt_pass[0] = 0;
+    return 1; //finished!
+   }
+   return 0;
+
+  default:
+   return 1;  //stopped
  }
 
  //Start background process of packet sending

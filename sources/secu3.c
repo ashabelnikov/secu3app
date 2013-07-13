@@ -130,6 +130,8 @@ void init_ecu_data(struct ecudata_t* d)
  edat.choke_testing = 0;
  edat.choke_pos = 0;
  edat.choke_manpos_d = 0;
+ edat.bt_name[0] = 0;
+ edat.bt_pass[0] = 0;
 }
 
 /**Initialization of I/O ports
@@ -182,7 +184,7 @@ void init_modules(void)
  uart_init(edat.param.uart_divisor);
 
  //Initialization of Bluetooth related module
- bt_init();
+ bt_init(edat.param.bt_flags & (1 << 1));
 
  //initialization of cam module, must precede ckps initialization
 #if defined(PHASE_SENSOR) || defined(SECU3T)

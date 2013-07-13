@@ -85,6 +85,10 @@
  * Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER          8
 
+//Bluetooth and security flags (bit numbers)
+#define BTF_USE_BT             0                   //!< Bluetooth and security flags: specifies to use or nor to use bluetooth
+#define BTF_SET_BBR            1                   //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
+
 /**Describes one set(family) of chracteristics (maps), descrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */

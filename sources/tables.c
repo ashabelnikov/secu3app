@@ -140,7 +140,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
   _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22) | _CBV32(COPT_VREF_5V, 23) |
-  _CBV32(COPT_HALL_SYNC, 24),
+  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(COPT_UART_BINARY, 25),
 
   /**A reserved byte*/
   0,
@@ -200,7 +200,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   4,10,392,384,_ACF,_ACC,_ACF,_ACC,_ACF,_ACC, 0, 20, 10, 96, 96, -320,
   320, 066, 1089, 392, 1900, 2100, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
-  _ACF,_ACC, _ACF,_ACC, 160, 1050, 0, 984, 200, {0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  _ACF,_ACC, _ACF,_ACC, 160, 1050, 0, 984, 200, 0x02, {0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

@@ -31,6 +31,7 @@
 #include "adc.h"
 #include "bc_input.h"
 #include "bitmask.h"
+#include "bluetooth.h"
 #include "bootldr.h"
 #include "camsens.h"
 #include "ce_errors.h"
@@ -95,6 +96,14 @@ void control_engine_units(struct ecudata_t *d)
 #endif
 }
 
+/** Check firmware integrity (CRC) and set error indication if code or data is damaged
+ */
+void check_firmware_integrity(void)
+{
+ if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
+  ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
+}
+
 /**Initialization of variables and data structures
  * \param d pointer to ECU data structure
  */
@@ -121,6 +130,8 @@ void init_ecu_data(struct ecudata_t* d)
  edat.choke_testing = 0;
  edat.choke_pos = 0;
  edat.choke_manpos_d = 0;
+ edat.bt_name[0] = 0;
+ edat.bt_pass[0] = 0;
 }
 
 /**Initialization of I/O ports
@@ -144,35 +155,10 @@ void init_ports(void)
 #endif
 }
 
-/**Main function of firmware - entry point */
-MAIN()
+/**Initialization of system modules
+ */
+void init_modules(void)
 {
- int16_t calc_adv_ang = 0;
- uint8_t turnout_low_priority_errors_counter = 255;
- int16_t advance_angle_inhibitor_state = 0;
- retard_state_t retard_state;
-
- //подготовка структуры данных переменных состояния системы
- init_ecu_data(&edat);
- knklogic_init(&retard_state);
-
- //конфигурируем порты ввода/вывода
- init_ports();
-
- //если код программы испорчен - зажигаем СЕ
- if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
-  ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
-
- wdt_start_timer();
-
- //читаем параметры
- load_eeprom_params(&edat);
-
-#ifdef REALTIME_TABLES
- //load currently selected tables into RAM
- load_selected_tables_into_ram(&edat);
-#endif
-
  //предварительная инициализация параметров сигнального процессора детонации
  knock_set_band_pass(edat.param.knock_bpf_frequency);
  knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
@@ -185,16 +171,20 @@ MAIN()
   }
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
 
+ //Initialization of ADC
  adc_init();
 
  //проводим несколько циклов измерения датчиков для инициализации данных
  meas_initial_measure(&edat);
 
- //снимаем блокировку стартера
+ //Take away of starter blocking (снимаем блокировку стартера)
  starter_set_blocking_state(0);
 
- //инициализируем UART
+ //Initialization of UART (инициализируем UART)
  uart_init(edat.param.uart_divisor);
+
+ //Initialization of Bluetooth related module
+ bt_init(edat.param.bt_flags & (1 << 1));
 
  //initialization of cam module, must precede ckps initialization
 #if defined(PHASE_SENSOR) || defined(SECU3T)
@@ -239,10 +229,50 @@ MAIN()
  //check and enter blink codes indication mode
  bc_indication_mode(&edat);
 
- //разрешаем глобально прерывания
+ //Initialization of the suspended operations module
+ sop_init_operations();
+}
+
+
+/**Main function of firmware - entry point. Contains initialization and main loop 
+ * (Главная функция в коде прошивки. С нее начинается выполнение программы, она содержит
+ * код инициализации и главный цикл)
+ */
+MAIN()
+{
+ int16_t calc_adv_ang = 0;
+ uint8_t turnout_low_priority_errors_counter = 255;
+ int16_t advance_angle_inhibitor_state = 0;
+ retard_state_t retard_state;
+
+ //подготовка структуры данных переменных состояния системы
+ init_ecu_data(&edat);
+ knklogic_init(&retard_state);
+
+ //Perform I/O ports configuration/initialization (конфигурируем порты ввода/вывода)
+ init_ports();
+
+ //If firmware code is damaged then turn on CE (если код программы испорчен - зажигаем СЕ)
+ check_firmware_integrity();
+
+ //Start watchdog timer! (запускаем сторожевой таймер)
+ wdt_start_timer();
+
+ //Read all system parameters (читаем все параметры системы)
+ load_eeprom_params(&edat);
+
+#ifdef REALTIME_TABLES
+ //load currently selected tables into RAM
+ load_selected_tables_into_ram(&edat);
+#endif
+
+ //perform initialization of all system modules
+ init_modules();
+
+ //Enable all interrupts globally before we fall in main loop
+ //разрешаем глобально прерывания перед запуском основного цикла программы
  _ENABLE_INTERRUPT();
 
- sop_init_operations();
  //------------------------------------------------------------------------
  while(1)
  {

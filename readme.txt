@@ -99,6 +99,10 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          input) instead of CKP sensor
                          Использовать синхронизацию от ДХ вместо ДПКВ
 
+    UART_BINARY          Use binary mode for UART instead of ASCII
+                         Использовать бинарный режим при передаче данных через
+                         UART вместо ASCII
+
 Necessary symbols you can define in the preprocessor's options of the compiler
 (edit corresponding Makefile).
 Нужные вам символы вы можете определить в опциях препроцессора компилятора 

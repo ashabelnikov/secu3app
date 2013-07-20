@@ -189,4 +189,11 @@
  #define COPT_HALL_SYNC 0
 #endif
 
+/** Use binary mode for UART instead of default ASCII */
+#ifdef UART_BINARY
+ #define COPT_UART_BINARY 1
+#else
+ #define COPT_UART_BINARY 0
+#endif
+
 #endif //_COMPILOPT_H_

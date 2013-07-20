@@ -61,5 +61,6 @@
 #define   DIAGOUT_DAT  '^'   //!< diagnostics: receive output states (bits)
 
 #define   CHOKE_PAR    '%'   //!< parameters  related to choke control
+#define   SECUR_PAR    '#'   //!< security parameters
 
 #endif //_UFCODES_H_

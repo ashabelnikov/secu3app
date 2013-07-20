@@ -85,6 +85,10 @@
  * Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER          8
 
+//Bluetooth and security flags (bit numbers)
+#define BTF_USE_BT             0                   //!< Bluetooth and security flags: specifies to use or nor to use bluetooth
+#define BTF_SET_BBR            1                   //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
+
 /**Describes one set(family) of chracteristics (maps), descrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */
@@ -229,7 +233,7 @@ typedef struct params_t
 
   int16_t  tps_adc_factor;               //!< ADC error compensation factor for TPS
   int32_t  tps_adc_correction;           //!< ADC error compensation correction for TPS
-  int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input 
+  int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input
   int32_t  ai1_adc_correction;           //!< ADC error compensation correction for ADD_IO1 input
   int16_t  ai2_adc_factor;               //!< ADC error compensation factor for ADD_IO2 input
   int32_t  ai2_adc_correction;           //!< ADC error compensation correction for ADD_IO2 input
@@ -243,13 +247,15 @@ typedef struct params_t
 
   int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
 
+  uint8_t bt_flags;                      //!< Bluetooth and security related flags
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[4];
+  uint8_t  reserved[3];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

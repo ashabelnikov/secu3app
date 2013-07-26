@@ -25,4 +25,38 @@
  */
 
 #include "port/port.h"
+#include <string.h>
+#include "crc16.h"
 #include "onewire.h"
+#include "secu3.h"
+
+uint8_t ibtn_key[6] = {0,0,0,0,0,0}; //<--write out your 48-bit key here
+
+void immob_check_state(struct ecudata_t* d)
+{
+ uint8_t i = 0, crc = 0;
+ uint8_t key[8];
+ if (!(d->param.bt_flags & _BV(BTF_USE_IMM)))
+  return; //immibilizer was not activated
+
+ if (!onewire_reset())
+  goto lock_system;    //not device present, lock the system!
+
+ //Read 64-bit key
+ onewire_write_byte(OWCMD_READ_ROM);
+ for(; i < 8; ++i) key[i] = onewire_read_byte();
+
+ //validate CRC8
+ for(i = 0; i < 7; ++i) crc = update_crc8(key[i], crc);
+ if (crc != key[7])
+  goto lock_system;    //crc doesn't match, lock the system!
+
+ //validate read key, skip family code and CRC8 bytes
+ if (memcmp(key+1, ibtn_key, 6))
+  goto lock_system;    //read and stored keys don't match, lock the system!
+
+ return; //ok, system is unlocked
+
+lock_system:
+ d->sys_locked = 1;    //set locking flag
+}

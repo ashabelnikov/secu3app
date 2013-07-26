@@ -93,7 +93,7 @@ static uint8_t onewire_read_bit(void)
  _NO_OPERATION();
  _NO_OPERATION();
  CLEARBIT(OW_DDR, OW_DQ);
- _DEALAY_US(10);
+ _DELAY_US(10);
  return (OW_PIN & _BV(OW_DQ));     // read and return bit value
 }
 

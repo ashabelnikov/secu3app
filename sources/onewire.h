@@ -29,6 +29,8 @@
 
 #include <stdint.h>
 
+#define OWCMD_READ_ROM      0x33     //!< Read ROM command
+
 //Note that interrupts must be disabled when using 1-wire functions.
 
 /** Call this function before using any other 1-wire functions,

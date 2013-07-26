@@ -131,6 +131,7 @@ typedef struct ecudata_t
 
  uint8_t bt_name[9];                     //!< received name for Bluetooth (8 chars max), zero element is size
  uint8_t bt_pass[7];                     //!< received password for Bluetooth (6 chars max), zero element is size
+ uint8_t sys_locked;                     //!< used by immobilizer to indicate that system is locked
 }ecudata_t;
 
 

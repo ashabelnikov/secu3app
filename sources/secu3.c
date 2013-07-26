@@ -46,6 +46,7 @@
 #include "jumper.h"
 #include "idlecon.h"
 #include "ignlogic.h"
+#include "immobiliz.h"
 #include "knklogic.h"
 #include "knock.h"
 #include "magnitude.h"
@@ -132,6 +133,7 @@ void init_ecu_data(struct ecudata_t* d)
  edat.choke_manpos_d = 0;
  edat.bt_name[0] = 0;
  edat.bt_pass[0] = 0;
+ edat.sys_locked = 0; //unlocked
 }
 
 /**Initialization of I/O ports
@@ -261,6 +263,9 @@ MAIN()
  //Read all system parameters (читаем все параметры системы)
  load_eeprom_params(&edat);
 
+ //If enabled, reads and checks security keys, performs system lock/unlock
+ immob_check_state(&edat);
+
 #ifdef REALTIME_TABLES
  //load currently selected tables into RAM
  load_selected_tables_into_ram(&edat);
@@ -359,11 +364,16 @@ MAIN()
   //calculate and update accumulation time (dwell control)
   ckps_set_acc_time(accumulation_time(&edat));
 #endif
-  //Если разрешено, то делаем отсечку зажигания при превышении определенных оборотов
-  if (edat.param.ign_cutoff)
-   ckps_enable_ignition(edat.sens.inst_frq < edat.param.ign_cutoff_thrd);
+  if (edat.sys_locked)
+   ckps_enable_ignition(0);
   else
-   ckps_enable_ignition(1);
+  {
+   //Если разрешено, то делаем отсечку зажигания при превышении определенных оборотов
+   if (edat.param.ign_cutoff)
+    ckps_enable_ignition(edat.sens.inst_frq < edat.param.ign_cutoff_thrd);
+   else
+    ckps_enable_ignition(1);
+  }
 
 #ifdef DIAGNOSTICS
   diagnost_process(&edat);

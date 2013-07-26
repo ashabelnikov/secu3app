@@ -82,6 +82,7 @@ uint8_t update_crc8(uint8_t data, uint8_t crc)
    crc = ((crc ^ 0x18) >> 1) | 0x80;
   else
    crc >>= 1;
+  data >>= 1;
  }
  while( --i );
 

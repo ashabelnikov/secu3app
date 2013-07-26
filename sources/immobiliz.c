@@ -26,11 +26,12 @@
 
 #include "port/port.h"
 #include <string.h>
+#include "bitmask.h"
 #include "crc16.h"
 #include "onewire.h"
 #include "secu3.h"
 
-uint8_t ibtn_key[6] = {0,0,0,0,0,0}; //<--write out your 48-bit key here
+uint8_t ibtn_key[6] = {0xCB,0x60,0x82,0x16,0,0}; //<--write out your own 48-bit key here
 
 void immob_check_state(struct ecudata_t* d)
 {
@@ -50,6 +51,7 @@ void immob_check_state(struct ecudata_t* d)
 
  //validate CRC8
  for(i = 0; i < 7; ++i) crc = update_crc8(key[i], crc);
+
  if (crc != key[7])
   goto lock_system;    //crc doesn't match, lock the system!
 

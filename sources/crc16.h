@@ -47,4 +47,12 @@ uint16_t crc16(uint8_t *buf, uint16_t num);
  */
 uint16_t crc16f(uint8_t _PGM *buf, uint16_t num);
 
+/** Calculates CRC8 for given byte using given seed (previous CRC value)
+ * The polynomial is X8 + X5 + X4 + 1 (1-Wire bus)
+ * \param data Byte which CRC will be calculated
+ * \param crc Previous CRC value or zero
+ * \return calculated value of CRC8
+ */
+uint8_t update_crc8(uint8_t data, uint8_t crc);
+
 #endif //_CRC16_H_

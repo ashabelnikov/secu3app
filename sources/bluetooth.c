@@ -59,7 +59,7 @@ PGM_DECLARE(uint8_t AT_NAME[]) = "AT+NAME";
 /**Template for AT+PINx command */
 PGM_DECLARE(uint8_t AT_PIN[])  = "AT+PIN";
 
-/**Define internal state variable */
+/**Define internal state variables */
 typedef struct
 {
  uint8_t btbr_mode;                     //!< finite state machine state for setting of BT baud rate

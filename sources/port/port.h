@@ -28,10 +28,13 @@
  //convert compiler-specific symbols to common symbols
  #ifdef __ATmega16__
   #define _PLATFORM_M16_
+  #define F_CPU 16000000UL
  #elif  __ATmega32__
   #define _PLATFORM_M32_
+  #define F_CPU 16000000UL
  #elif  __ATmega64__
   #define _PLATFORM_M64_
+  #define F_CPU 16000000UL
  #else
   #error "avrio.h: Wrong platform identifier!"
  #endif
@@ -45,10 +48,13 @@
  //convert compiler-specific symbols to common symbols
  #if defined (__AVR_ATmega16__)
   #define _PLATFORM_M16_
+  #define F_CPU 16000000UL
  #elif defined (__AVR_ATmega32__)
   #define _PLATFORM_M32_
+  #define F_CPU 16000000UL
  #elif defined (__AVR_ATmega64__)
   #define _PLATFORM_M64_
+  #define F_CPU 16000000UL
  #else
   #error "avrio.h: Wrong platform identifier!"
  #endif

@@ -39,6 +39,8 @@ void immob_check_state(struct ecudata_t* d)
  if (!(d->param.bt_flags & _BV(BTF_USE_IMM)))
   return; //immibilizer was not activated
 
+ onewire_save_io_registers();
+
  if (!onewire_reset())
   goto lock_system;    //not device present, lock the system!
 
@@ -55,8 +57,10 @@ void immob_check_state(struct ecudata_t* d)
  if (memcmp(key+1, ibtn_key, 6))
   goto lock_system;    //read and stored keys don't match, lock the system!
 
+ onewire_restore_io_registers();
  return; //ok, system is unlocked
 
 lock_system:
+ onewire_restore_io_registers();
  d->sys_locked = 1;    //set locking flag
 }

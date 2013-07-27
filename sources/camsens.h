@@ -53,7 +53,7 @@ void cams_vr_set_edge_type(uint8_t edge_type);
 #ifdef PHASE_SENSOR
 /** Sets threshold value (number of teeth between pulses) for errors checking
  * \param threshold number of teeth between pulses */
-void cams_set_error_threshold(uint8_t threshold);
+void cams_set_error_threshold(uint16_t threshold);
 
 /** Edge detection (if non-interrupt driven) and checking logic. Must be executed on each tooth. */
 void cams_detect_edge(void);

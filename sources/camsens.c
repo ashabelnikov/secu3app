@@ -52,8 +52,8 @@ typedef struct
 #ifndef SECU3T /*SECU-3*/
  uint8_t prev_level;                  //!< previos logic level of sensor's output
 #endif
- uint8_t err_threshold;               //!< error threshold in teeth
- volatile uint8_t err_counter;        //!< teeth counter
+ uint16_t err_threshold;              //!< error threshold in teeth
+ volatile uint16_t err_counter;       //!< teeth counter
  volatile uint8_t event;              //!< flag which indicates Hall cam sensor's event
 #ifdef SECU3T
  volatile uint8_t vr_event;           //!< flag which indicates VR cam sensor's event
@@ -69,7 +69,7 @@ void cams_init_state_variables(void)
  camstate.prev_level = GET_CAMSTATE();
 #endif
  camstate.cam_ok = 0; //not Ok
- camstate.err_threshold = 60 * 2;
+ camstate.err_threshold = 65 * 2;
  camstate.err_counter = 0;
  camstate.event = 0;
 #ifdef SECU3T
@@ -135,7 +135,7 @@ void cams_vr_set_edge_type(uint8_t edge_type)
 
 //Functionality added to compilation only when PHASE_SENSOR defined
 #ifdef PHASE_SENSOR
-void cams_set_error_threshold(uint8_t threshold)
+void cams_set_error_threshold(uint16_t threshold)
 {
  camstate.err_threshold = threshold;
 }

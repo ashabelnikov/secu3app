@@ -31,7 +31,28 @@
 #include "onewire.h"
 #include "secu3.h"
 
-uint8_t ibtn_key[6] = {0xCB,0x60,0x82,0x16,0,0}; //<--write out your own 48-bit key here
+#define IBTN_KEYS_NUM     2   //!< Number of iButton keys
+#define IBTN_KEY_SIZE     6   //!< Size of iButton key (except CRC8 and family code)
+
+/**iButton keys database. Write out your own 48-bit key here */
+uint8_t ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE] = {{0xCB,0x60,0x82,0x16, 0, 0}, {0xB7, 0x83, 0xA8, 0, 0, 0}};
+
+/** Key validation function
+ * \param key Pointer to an array containing key
+ * \param size Size of key in array
+ * \return 1 - specified key is valid, 0 - not valid
+ */
+static uint8_t validate_key(uint8_t* key, uint8_t size)
+{
+ uint8_t i = 0;
+ for(; i < IBTN_KEYS_NUM; ++i)
+ {
+  if (!memcmp(key, ibtn_keys[i], size))
+   return 1; //valid key
+ }
+ return 0; //key is not valid
+}
+
 
 void immob_check_state(struct ecudata_t* d)
 {
@@ -49,14 +70,14 @@ void immob_check_state(struct ecudata_t* d)
  onewire_write_byte(OWCMD_READ_ROM);
  for(; i < 8; ++i) key[i] = onewire_read_byte();
 
- //validate CRC8
+ //validate CRC8, all bytes except CRC8 byte
  for(i = 0; i < 7; ++i) crc = update_crc8(key[i], crc);
 
  if (crc != key[7])
   goto lock_system;    //crc doesn't match, lock the system!
 
  //validate read key, skip family code and CRC8 bytes
- if (memcmp(key+1, ibtn_key, 6))
+ if (!validate_key(key+1, IBTN_KEY_SIZE))
   goto lock_system;    //read and stored keys don't match, lock the system!
 
  onewire_restore_io_registers();

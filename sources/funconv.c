@@ -304,9 +304,9 @@ uint16_t accumulation_time(struct ecudata_t* d)
 
  if (i >= COIL_ON_TIME_LOOKUP_TABLE_SIZE-1) i = i1 = COIL_ON_TIME_LOOKUP_TABLE_SIZE-1;
   else i1 = i + 1;
-
- return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]), 
-        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4)) >> 4;
+ //divide function points by 2, this will prevent overflow in simple_interpolation()
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]) >> 1, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]) >> 1,
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4)) >> 3;
 }
 #endif
 

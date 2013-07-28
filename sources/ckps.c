@@ -672,13 +672,22 @@ ISR(TIMER1_COMPA_vect)
  ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
- ckps.acc_delay-= ckps.cr_acc_time;
+ ckps.acc_delay-= ckps.cr_acc_time;    //apply dwell time
  ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
 
  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
  ckps.channel_mode_b&= ckps.chan_mask;
  CLEARBIT(flags2, F_ADDPTK);
  SETBIT(flags, F_NTSCHB);
+
+ //if less than 2 teeth remains to the accumulation beginning we have to program compare channel in advance, otherwise
+ //we may loose spark in some cases
+ if (ckps.acc_delay < (ckps.period_curr << 1))
+ {
+  OCR1B = GetICR() + ckps.acc_delay;
+  TIFR = _BV(OCF1B);
+  TIMSK|= _BV(OCIE1B);
+ }
 
  //We remembered value of TCNT1 at the top of of this function. But input capture event
  //may occur when interrupts were already disabled (by hardware) but value of timer is still

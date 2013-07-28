@@ -748,21 +748,27 @@ static uint8_t sync_at_startup(void)
   case 0: //skip certain number of teeth (пропуск определенного кол-ва зубьев)
    CLEARBIT(flags, F_VHTPER);
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS)
-    ckps.starting_mode = 1;
+#ifdef PHASED_IGNITION
+    //if cylinder number is even, then cam synchronization will be performed later
+    ckps.starting_mode = (ckps.chan_number & 1) ? 1 : 2;
+#else
+    ckps.starting_mode = 2; //even number of cylinders only
+#endif
    break;
 
-  case 1: //find out missing teeth (поиск синхрометки)
 #ifdef PHASED_IGNITION
-   if (ckps.chan_number & 1) //cylinder number is odd?
+  case 1: //we fall into this state only if number of cylinders is odd
+   cams_detect_edge();
+   if (cams_is_event_r())
    {
-    cams_detect_edge();
-    if (cams_is_event_r())
-     SETBIT(flags2, F_CAMISS);
-   }
-   else //cylinder number is even, cam synchronization will be performed later
+    set_channels_fs(1);     //set full sequential mode
     SETBIT(flags2, F_CAMISS);
+    ckps.starting_mode = 2;
+   }
+   break;
 #endif
 
+  case 2: //find out missing teeth (поиск синхрометки)
    //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
    if (
 #ifdef SECU3T
@@ -770,10 +776,7 @@ static uint8_t sync_at_startup(void)
 #else
    (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
 #endif
-#ifdef PHASED_IGNITION
-   && CHECKBIT(flags2, F_CAMISS)
-#endif
-   ) 
+   )
    {
     SETBIT(flags, F_ISSYNC);
     ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
@@ -957,7 +960,7 @@ static void process_ckps_cogs(void)
  force_pending_spark();
  if (cams_is_event_r())
  {
-  //Synchronize. We rely that cam sonsor event (e.g. falling edge) coming before missing teeth
+  //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
   if (ckps.cog < ckps.wheel_cogs_nump1)
    ckps.cog+= ckps.wheel_cogs_num;
 

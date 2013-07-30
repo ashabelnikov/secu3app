@@ -73,6 +73,10 @@ typedef struct sensors_t
  uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+ uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 4us)
+ uint32_t distance;                      //!< Distance expressed by number of speed sensor pulses since last ignition turn on
+#endif
 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor

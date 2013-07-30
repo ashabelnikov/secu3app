@@ -242,6 +242,12 @@ static void build_i16h(uint16_t i)
 #endif
 }
 
+static void build_i24h(uint32_t i)
+{
+ build_i8h(i>>16);
+ build_i16h(i);
+}
+
 /**Appends sender's buffer by 8 HEX bytes
  * \param i 32-bit value to be converted into hex
  */
@@ -485,6 +491,13 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
    build_i8h(d->choke_pos);               // choke position
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+   build_i16h(d->sens.speed);             // vehicle speed (2 bytes)
+   build_i24h(d->sens.distance);          // distance (3 bytes)
+#else
+   build_i16h(0);
+   build_i24h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

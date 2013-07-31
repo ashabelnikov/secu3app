@@ -258,7 +258,7 @@ uint16_t spdsens_get_period(void)
  _BEGIN_ATOMIC_BLOCK();
  value = camstate.spdsens_period;
  _END_ATOMIC_BLOCK();
- return value;
+ return CHECKBIT(flags, F_SPDSIA) ? value : 0;
 }
 
 uint32_t spdsens_get_pulse_count(void)
@@ -267,6 +267,6 @@ uint32_t spdsens_get_pulse_count(void)
  _BEGIN_ATOMIC_BLOCK();
  value = camstate.spdsens_counter;
  _END_ATOMIC_BLOCK();
- return value;
+ return CHECKBIT(flags, F_SPDSIA) ? value : 0;
 }
 #endif

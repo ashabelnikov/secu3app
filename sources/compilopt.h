@@ -196,4 +196,11 @@
  #define COPT_UART_BINARY 0
 #endif
 
+/**Build firmware for using 2 channel igniters (driven by both edges)*/
+#ifdef CKPS_2CHIGN
+ #define COPT_CKPS_2CHIGN 1
+#else
+ #define COPT_CKPS_2CHIGN 0
+#endif
+
 #endif //_COMPILOPT_H_

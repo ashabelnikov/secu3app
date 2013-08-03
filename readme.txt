@@ -99,6 +99,11 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
                          input) instead of CKP sensor
                          Использовать синхронизацию от ДХ вместо ДПКВ
 
+    CKPS_2CHIGN          Build firmware for use 2 channel igniters (driven by
+                         both edges)
+                         Собрать прошивку с поддержкой 2-х канальных
+                         коммутаторов (управляются 2-мя фронтами)
+
     UART_BINARY          Use binary mode for UART instead of ASCII
                          Использовать бинарный режим при передаче данных через
                          UART вместо ASCII

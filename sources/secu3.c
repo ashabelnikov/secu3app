@@ -224,6 +224,9 @@ void init_modules(void)
 #ifdef HALL_OUTPUT
  ckps_set_hall_pulse(edat.param.hop_start_cogs, edat.param.hop_durat_cogs);
 #endif
+#ifdef HALL_SYNC
+ ckps_select_input(edat.param.hall_flags & HSF_USECKPINP); //select input (CKPS or PS)
+#endif
 
  s_timer_init();
  vent_init_state();

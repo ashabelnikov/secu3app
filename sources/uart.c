@@ -535,6 +535,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i4h(d->param.merge_ign_outs);
    build_i8h(d->param.ckps_cogs_num);
    build_i8h(d->param.ckps_miss_num);
+   build_i8h(d->param.hall_flags);
    break;
 
   case OP_COMP_NC:
@@ -809,6 +810,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.merge_ign_outs = recept_i4h();
    d->param.ckps_cogs_num = recept_i8h();
    d->param.ckps_miss_num = recept_i8h();
+   d->param.hall_flags = recept_i8h();
    break;
 
   case OP_COMP_NC:

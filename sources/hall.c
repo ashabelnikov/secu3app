@@ -103,6 +103,8 @@ typedef struct
  volatile uint8_t knkwnd_mode;        //!< used to indicate that knock measuring window is opened
  volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, relatively to TDC (начало окна фазовой селекции детонации в градусах относительно в.м.т)
  volatile int16_t knock_wnd_end;      //!< width of the  phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, (ширина окна фазовой селекции детонации в градусах)
+ uint8_t edge_type;                   //!< stores selected edge type (applicable only if CKPS input is selected)
+ uint8_t inp_type;                    //!< stores selected input type (either CKPS or PS can be used)
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -164,8 +166,7 @@ void ckps_init_state(void)
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
 
- MCUCR|=_BV(ISC11); //falling edge for INT1
- MCUCR|=_BV(ISC10);
+ MCUCR|=_BV(ISC11) | _BV(ISC10); //falling edge for PS input by default
 
  //set flag indicating that Hall sensor input is available
  WRITEBIT(flags, F_HALLSIA, IOCFG_CHECK(IOP_PS));
@@ -243,10 +244,23 @@ uint16_t ckps_calculate_instant_freq(void)
   return hall.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
+/**Set edge type for CKPS input*/
+#define SET_CKPS_EDGE(type) \
+  if ((type)) \
+   TCCR1B|= _BV(ICES1); \
+  else \
+   TCCR1B&=~_BV(ICES1);
+
 void ckps_set_edge_type(uint8_t edge_type)
 {
- //Not used by Hall sensor, we decided to select edge by reading I/O remapping inversion flag.
- //but for now it is not implemented.
+ //We need to select input capture interrupt edge only if CKPS is selected for input
+ if (hall.inp_type)
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  SET_CKPS_EDGE(edge_type);
+  _END_ATOMIC_BLOCK();
+ }
+ hall.edge_type = edge_type;
 }
 
 void ckps_set_cogs_btdc(uint8_t cogs_btdc)
@@ -352,6 +366,37 @@ void ckps_set_shutter_spark(uint8_t i_shutter)
  WRITEBIT(flags2, F_SHUTTER, i_shutter);
 }
 
+void ckps_select_input(uint8_t i_type)
+{
+ if (!i_type)
+ { //Use PS input
+  _BEGIN_ATOMIC_BLOCK();
+  //Do operations only if Hall sensor input is available
+  if (CHECKBIT(flags, F_HALLSIA))
+  {
+   //We select edge by reading I/O remapping inversion flag
+   //if PS input not inverted, then falling edge on PS input (rising on the INT1 pin)
+   MCUCR|=_BV(ISC11);
+   MCUCR|=(IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0;
+
+   GICR|= _BV(INT1);    //enable INT1 interrupt
+  }
+  TIMSK&= ~_BV(TICIE1); //disable input capture interrupt
+ _END_ATOMIC_BLOCK();
+ }
+ else
+ { //Use CKPS input
+  _BEGIN_ATOMIC_BLOCK();
+  SET_CKPS_EDGE(hall.edge_type);
+
+  TIMSK|=_BV(TICIE1);   //enable input capture interrupt
+  if (CHECKBIT(flags, F_HALLSIA))
+   GICR&= ~_BV(INT1);   //diable INT1 interrupt (PS input)
+ _END_ATOMIC_BLOCK();
+ }
+ hall.inp_type = i_type;
+}
+
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
  */
@@ -445,16 +490,9 @@ void set_timer0(uint16_t value)
  TCCR0  = _BV(CS01)|_BV(CS00);
 }
 
-/**Input capture interrupt of timer 1 (прерывание по захвату таймера 1) */
-ISR(TIMER1_CAPT_vect)
+INLINE
+void ProcessISR(uint16_t tmr)
 {
- //not used by Hall sensor
-}
-
-/**Interrupt from a Hall sensor*/
-ISR(INT1_vect)
-{
- uint16_t tmr = TCNT1; //remember current value of timer 1
  //toggle edge
  if (MCUCR & _BV(ISC10))
  { //falling
@@ -536,6 +574,18 @@ ISR(INT1_vect)
 
  WRITEBIT(flags2, F_SHUTTER_S, CHECKBIT(flags2, F_SHUTTER)); //synchronize
  SETBIT(flags, F_HALLEV); //set event flag
+}
+
+/**Input capture interrupt of timer 1 (прерывание по захвату таймера 1) */
+ISR(TIMER1_CAPT_vect)
+{
+ ProcessISR(ICR1);
+}
+
+/**Interrupt from a Hall sensor (external)*/
+ISR(INT1_vect)
+{
+ ProcessISR(TCNT1);
 }
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedures

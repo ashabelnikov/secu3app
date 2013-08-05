@@ -109,8 +109,8 @@ void cams_init_state(void)
 #endif
 
 #ifdef SECU3T /*SECU-3T*/
- //interrupt by rising edge
- MCUCR|= _BV(ISC11) | _BV(ISC10);
+ //interrupt edge for Hall input depends on PS inversion, interrupt by rising edge for VR input
+ MCUCR|= _BV(ISC11) | ((IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0);
  MCUCR|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
  if (CHECKBIT(flags, F_CAMSIA))

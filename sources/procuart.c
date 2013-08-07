@@ -159,7 +159,7 @@ void process_uart_interface(struct ecudata_t* d)
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
 
 #ifdef HALL_SYNC
-    ckps_select_input(d->param.hall_flags & HSF_USECKPINP); //select input (CKPS or PS)
+    ckps_select_input(d->param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
 #endif
     break;
 

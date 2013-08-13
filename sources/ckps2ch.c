@@ -509,6 +509,9 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
  div_t dr; uint8_t _t;
+#ifdef PHASE_SENSOR
+ uint16_t err_thrd = (norm_num * 2) + (norm_num >> 3); //+ 12.5%
+#endif
  uint16_t cogs_per_chan, degrees_per_cog;
 
  //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
@@ -537,6 +540,9 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.degrees_per_cog = degrees_per_cog;
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
+#ifdef PHASE_SENSOR
+ cams_set_error_threshold(err_thrd);
+#endif
  _RESTORE_INTERRUPT(_t);
 }
 

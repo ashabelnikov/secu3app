@@ -118,17 +118,17 @@ void cams_init_state(void)
  MCUCR|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
  if (CHECKBIT(flags, F_CAMSIA))
-  GICR|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
+  EIMSK|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
  else
-  GICR|=  _BV(INT0);
+  EIMSK|=  _BV(INT0);
 #else
- GICR|=  _BV(INT0);              //это нам нужно для ДНО
+ EIMSK|=  _BV(INT0);              //это нам нужно для ДНО
 #endif
 #endif
 
 #ifdef SPEED_SENSOR
  if (CHECKBIT(flags, F_SPDSIA))
-  GICR|= _BV(INT1);              //enable spped sensor interrupt also, because cam sensor input remmaped as speed sensor
+  EIMSK|= _BV(INT1);              //enable spped sensor interrupt also, because cam sensor input remmaped as speed sensor
 #endif
 
  _END_ATOMIC_BLOCK();
@@ -147,9 +147,9 @@ uint8_t cams_vr_is_event_r(void)
 
 void cams_control(void)
 {
+#ifdef SPEED_SENSOR
  uint16_t t1_curr, t1_prev, period;
  uint8_t _t, event;
-#ifdef SPEED_SENSOR
  if (!CHECKBIT(flags, F_SPDSIA))
   return;                                //speed sensor is not enabled
  _t = _SAVE_INTERRUPT();

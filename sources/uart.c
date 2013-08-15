@@ -37,45 +37,6 @@
 #include "ufcodes.h"
 #include "wdt.h"
 
-//Mega64 compatibility
-#ifdef _PLATFORM_M64_
-#ifndef RXEN
- #define RXEN  RXEN0
-#endif
-#ifndef TXEN
- #define TXEN  TXEN0
-#endif
-#ifndef UDRE
- #define UDRE  UDRE0
-#endif
-#ifndef RXC
- #define RXC   RXC0
-#endif
-#ifndef RXCIE
- #define RXCIE RXCIE0
-#endif
-#ifndef UDRIE
- #define UDRIE UDRIE0
-#endif
-#ifndef UCSZ0
- #define UCSZ0 UCSZ00
-#endif
-#ifndef UCSZ1
- #define UCSZ1 UCSZ01
-#endif
-#ifndef U2X
- #define U2X U2X0
-#endif
-#define UDR   UDR0
-#define UBRRL UBRR0L
-#define UBRRH UBRR0H
-#define UCSRA UCSR0A
-#define UCSRB UCSR0B
-#define UCSRC UCSR0C
-#define USART_UDRE_vect USART0_UDRE_vect
-#define USART_RXC_vect USART0_RXC_vect
-#endif
-
 //Idenfifiers used in EDITAB_PAR
 #define ETTS_GASOLINE_SET 0 //!< tables's set: gasoline id
 #define ETTS_GAS_SET      1 //!< tables's set: gas id

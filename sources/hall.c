@@ -193,7 +193,7 @@ void ckps_init_state(void)
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
 
- GICR|=  CHECKBIT(flags, F_HALLSIA) ? _BV(INT1) : 0; //INT1 enabled only when Hall sensor input is available
+ EIMSK|=  CHECKBIT(flags, F_HALLSIA) ? _BV(INT1) : 0; //INT1 enabled only when Hall sensor input is available
 
  //Compare channels do not connected to lines of ports (normal port mode)
  //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
@@ -411,7 +411,7 @@ void ckps_select_input(uint8_t i_type)
   if (CHECKBIT(flags, F_HALLSIA))
   {
    SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));
-   GICR|= _BV(INT1);    //enable INT1 interrupt
+   EIMSK|= _BV(INT1);    //enable INT1 interrupt
   }
   TIMSK&= ~_BV(TICIE1); //disable input capture interrupt
   _END_ATOMIC_BLOCK();
@@ -423,7 +423,7 @@ void ckps_select_input(uint8_t i_type)
 
   TIMSK|=_BV(TICIE1);   //enable input capture interrupt
   if (CHECKBIT(flags, F_HALLSIA))
-   GICR&= ~_BV(INT1);   //diable INT1 interrupt (PS input)
+   EIMSK&= ~_BV(INT1);   //diable INT1 interrupt (PS input)
   _END_ATOMIC_BLOCK();
  }
  WRITEBIT(flags2, F_SELINP, i_type); //save selected value

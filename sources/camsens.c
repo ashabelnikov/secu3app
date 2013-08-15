@@ -69,7 +69,10 @@ typedef struct
 #ifdef SPEED_SENSOR
  uint16_t spdsens_period_prev;        //!< for storing previous value of timer counting time between speed sensor pulse interrupts
  volatile uint16_t spdsens_period;    //!< period between speed sensor pulses (1 tick  = 4us)
+ uint16_t spdsens_period_buff;        //!< period between speed sensor pulses (buffered and everflow free)
  volatile uint32_t spdsens_counter;   //!< number of speed sensor pulses since last ignition turn on
+ volatile uint8_t spdsens_event;      //!< indicates pending event from speed sensor
+ uint8_t spdsens_state;               //!< Used in special state machine to filter overflows
 #endif
 }camstate_t;
 
@@ -88,9 +91,6 @@ void cams_init_state_variables(void)
 #ifdef SECU3T
  camstate.vr_event = 0;
 #endif
-#ifdef SPEED_SENSOR
- camstate.spdsens_period = 0xFFFF;
-#endif
 }
 
 void cams_init_state(void)
@@ -100,6 +100,10 @@ void cams_init_state(void)
  camstate.cam_error = 0; //no errors
 #ifdef SPEED_SENSOR
  camstate.spdsens_counter = 0;
+ camstate.spdsens_period = 0xFFFF;
+ camstate.spdsens_period_buff = 0xFFFF;
+ camstate.spdsens_event = 0;
+ camstate.spdsens_state = 0;
 #endif
 
  //set flag indicating that cam sensor input is available
@@ -139,6 +143,43 @@ uint8_t cams_vr_is_event_r(void)
  camstate.vr_event = 0; //reset event flag
  _END_ATOMIC_BLOCK();
  return result;
+}
+
+void cams_control(void)
+{
+ uint16_t t1_curr, t1_prev, period;
+ uint8_t _t, event;
+#ifdef SPEED_SENSOR
+ if (!CHECKBIT(flags, F_SPDSIA))
+  return;                                //speed sensor is not enabled
+ _t = _SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+ t1_curr = TCNT1;                        //current value of timer
+ t1_prev = camstate.spdsens_period_prev; //value of timer remembered in ISR
+ _RESTORE_INTERRUPT(_t);                 //reenable interrupts
+ _DISABLE_INTERRUPT();
+ period = camstate.spdsens_period;       //read and reset flag
+ event = camstate.spdsens_event;         //
+ camstate.spdsens_event = 0;
+ _RESTORE_INTERRUPT(_t);
+
+ switch(camstate.spdsens_state)
+ {
+  case 0:
+   if (event)
+    ++camstate.spdsens_state;            //skip first "dirty" event
+   break;
+  case 1:
+   if ((t1_curr - t1_prev) > 62000)
+   { //overflow
+    camstate.spdsens_period_buff = 0xFFFF;
+    camstate.spdsens_state = 0;
+   }
+   else if (event)
+    camstate.spdsens_period_buff = period;
+   break;
+ }
+#endif
 }
 
 /**Interrupt from CAM sensor (VR). Marked as REF_S on the schematics */
@@ -238,13 +279,14 @@ ISR(INT1_vect)
 {
  camstate.cam_ok = 1;
  camstate.err_counter = 0;
- camstate.event = 1; //set event flag
+ camstate.event = 1;          //set event flag
 #ifdef SPEED_SENSOR
  if (!CHECKBIT(flags, F_SPDSIA))
   return;
  ++camstate.spdsens_counter;
  camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;
  camstate.spdsens_period_prev = TCNT1;
+ camstate.spdsens_event = 1;  //set event flag
 #endif
 }
 #endif //SECU3T
@@ -254,11 +296,7 @@ ISR(INT1_vect)
 #ifdef SPEED_SENSOR
 uint16_t spdsens_get_period(void)
 {
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = camstate.spdsens_period;
- _END_ATOMIC_BLOCK();
- return CHECKBIT(flags, F_SPDSIA) ? value : 0;
+ return CHECKBIT(flags, F_SPDSIA) ? camstate.spdsens_period_buff : 0;
 }
 
 uint32_t spdsens_get_pulse_count(void)

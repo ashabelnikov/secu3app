@@ -95,6 +95,11 @@ void control_engine_units(struct ecudata_t *d)
  //choke control
  choke_control(d);
 #endif
+
+#if defined(PHASE_SENSOR) || defined(SECU3T)
+ //Cam sensor control
+ cams_control();
+#endif
 }
 
 /** Check firmware integrity (CRC) and set error indication if code or data is damaged

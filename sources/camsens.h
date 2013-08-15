@@ -36,6 +36,9 @@ void cams_init_state_variables(void);
 /** Initialization of cam module (Hardware & variables) */
 void cams_init_state(void);
 
+/** Must be called from main loop to perform some operations */
+void cams_control(void);
+
 #ifdef SECU3T
 /**Checks for event(VR input) and automatically resets the flag
  * \return 1 - event was pending, otherwise - 0 */

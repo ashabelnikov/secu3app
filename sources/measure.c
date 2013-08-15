@@ -109,7 +109,6 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  static uint8_t  spd_ai = SPD_AVERAGING-1;
 #endif
 
-
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
  (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
 

@@ -366,7 +366,7 @@ uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, _GB(&fw_data.exdata.choke_closing[i]), _GB(&fw_data.exdata.choke_closing[i1]),
+ return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.choke_closing[i]), PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1]),
  (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5)) >> 4;
 }
 #endif

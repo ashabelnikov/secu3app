@@ -43,7 +43,7 @@
 
 #ifndef SECU3T /*SECU-3*/
  /** Get logic level from cam sensor output */
- #define GET_CAMSTATE() (PINC_Bit4)
+ #define GET_CAMSTATE() (CHECKBIT(PINC, PINC4) > 0)
 #endif
 
 #define F_CAMSIA 0  //cam sensor input is available (not remmaped to other function)
@@ -134,17 +134,6 @@ void cams_init_state(void)
  _END_ATOMIC_BLOCK();
 }
 
-#ifdef SECU3T /*SECU-3T*/
-uint8_t cams_vr_is_event_r(void)
-{
- uint8_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = camstate.vr_event;
- camstate.vr_event = 0; //reset event flag
- _END_ATOMIC_BLOCK();
- return result;
-}
-
 void cams_control(void)
 {
 #ifdef SPEED_SENSOR
@@ -180,6 +169,17 @@ void cams_control(void)
    break;
  }
 #endif
+}
+
+#ifdef SECU3T /*SECU-3T*/
+uint8_t cams_vr_is_event_r(void)
+{
+ uint8_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = camstate.vr_event;
+ camstate.vr_event = 0; //reset event flag
+ _END_ATOMIC_BLOCK();
+ return result;
 }
 
 /**Interrupt from CAM sensor (VR). Marked as REF_S on the schematics */

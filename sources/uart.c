@@ -115,8 +115,9 @@ uint8_t takeout_rx_buff(void)
    return FIBEGIN;
   else if (b2 == TFIOEND)
    return FIOEND;
-  else if (b2 = TFESC)
+  else if (b2 == TFESC)
    return FESC;
+  return 0; //wrong code
  }
  else
   return b1;

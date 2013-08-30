@@ -4,7 +4,7 @@ rem configure Makefile for you and build project.
 rem Created by Alexey A. Shabelnikov, Kiev 17 July 2011.
 rem Note: It requires IAR compiler and linker or WinAvr
 
-set USAGE=Supported platforms: M16,M32,M64  Supported toolchains: IAR,GCC
+set USAGE=Supported platforms: M16,M32,M64,M644  Supported toolchains: IAR,GCC
 set PLATFORM=Undefined
 set CFGFILE=platform_cfg
 set MAKEFILE=Undefined
@@ -45,6 +45,12 @@ set CFG_BL_START=F800
 set CFG_FWD_START=EB34
 set CFG_EE_SIZE=2048
 set CFG_LNKXCL=lnkm64s.xcl
+) else IF %1 == M644 (
+set CFG_MCU=m644
+set CFG_BL_START=F800
+set CFG_FWD_START=EB34
+set CFG_EE_SIZE=2048
+set CFG_LNKXCL=lnkm644s.xcl
 ) else (
 echo Invalid platform!
 echo %USAGE%
@@ -58,6 +64,8 @@ set CFG_MCU=m16
 set CFG_MCU=m32
 ) else IF %1 == M64 (
 set CFG_MCU=m64
+) else IF %1 == M644 (
+set CFG_MCU=m644
 )
 set MAKEFILE=Makefile_iar
 GOTO build
@@ -68,6 +76,8 @@ set CFG_MCU=atmega16
 set CFG_MCU=atmega32
 ) else IF %1 == M64 (
 set CFG_MCU=atmega64
+) else IF %1 == M644 (
+set CFG_MCU=atmega644
 )
 set MAKEFILE=Makefile_gcc
 GOTO build

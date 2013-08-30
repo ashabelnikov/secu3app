@@ -5,7 +5,7 @@
 # Created by Alexey A. Shabelnikov, Kiev 24 July 2011.
 # Note: It requires AVR-GCC toolchain
 
-USAGE="USAGE: configure.sh <platform> <toolchain> \n Supported platforms: M16,M32,M64, Supported toolchains: IAR, GCC"
+USAGE="USAGE: configure.sh <platform> <toolchain> \n Supported platforms: M16,M32,M64,M644, Supported toolchains: IAR, GCC"
 PLATFORM=Undefined
 CFGFILE="platform_cfg"
 MAKEFILE="Makefile_gcc"
@@ -49,6 +49,12 @@ then
  CFG_FWD_START="EB34"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm64s.xcl"
+elif [ $1 = "M644" ]
+then
+ CFG_BL_START="F800"
+ CFG_FWD_START="EB34"
+ CFG_EE_SIZE="2048"
+ CFG_LNKXCL="lnkm644s.xcl"
 else
  echo "Invalid platform!"
  echo " "$USAGE
@@ -66,6 +72,9 @@ then
  elif [ $1 = "M64" ]
  then
   CFG_MCU="m64"
+ elif [ $1 = "M644" ]
+ then
+  CFG_MCU="m644"
  fi
  MAKEFILE="Makefile_iar"
 elif [ $TC = "GCC" ]
@@ -79,6 +88,9 @@ elif [ $TC = "GCC" ]
  elif [ $1 = "M64" ]
  then
   CFG_MCU="atmega64"
+ elif [ $1 = "M644" ]
+ then
+  CFG_MCU="atmega644"
  fi
  MAKEFILE="Makefile_gcc"
 else

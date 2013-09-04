@@ -56,6 +56,13 @@
  #define COPT_ATMEGA128 0
 #endif
 
+/**ATmega644 target */
+#ifdef _PLATFORM_M644_
+ #define COPT_ATMEGA644 1
+#else
+ #define COPT_ATMEGA644 0
+#endif
+
 /**Use VPSEM mode */
 #ifdef VPSEM
  #define COPT_VPSEM 1

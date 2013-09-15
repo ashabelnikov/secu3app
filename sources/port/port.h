@@ -35,6 +35,9 @@
  #elif  __ATmega64__
   #define _PLATFORM_M64_
   #define F_CPU 16000000UL
+ #elif __ATmega644__
+  #define _PLATFORM_M644_
+  #define F_CPU 20000000UL
  #else
   #error "avrio.h: Wrong platform identifier!"
  #endif
@@ -55,6 +58,9 @@
  #elif defined (__AVR_ATmega64__)
   #define _PLATFORM_M64_
   #define F_CPU 16000000UL
+ #elif defined (__AVR_ATmega644__)
+  #define _PLATFORM_M644_
+  #define F_CPU 20000000UL
  #else
   #error "avrio.h: Wrong platform identifier!"
  #endif

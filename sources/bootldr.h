@@ -39,7 +39,7 @@
  #define BOOT_LOADER_SIZE  512
 #elif defined _PLATFORM_M32_
  #define BOOT_LOADER_SIZE  1024
-#elif defined _PLATFORM_M64_
+#elif defined(_PLATFORM_M64_) || defined(_PLATFORM_M644_)
  #define BOOT_LOADER_SIZE  2048
 #else
  #error "Not supported platform!"

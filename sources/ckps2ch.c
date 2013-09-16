@@ -24,7 +24,10 @@
  * (Реализация обработки датчика положения коленвала, версия для 2-х канального коммутатора).
  */
 
-#ifndef HALL_SYNC
+#ifdef CKPS_2CHIGN
+#if defined(HALL_SYNC)
+ #error "You can not use HALL_SYNC option together with CKPS_2CHIGN!"
+#endif
 
 #include <stdlib.h>
 #include "port/avrio.h"
@@ -108,7 +111,6 @@ typedef struct
  int8_t   knock_wnd_end_abs;          //!< end of the phase selection window of detonation in the teeth of wheel, relatively to TDC (конец окна фазовой селекции детонации в зубьях шкива относительно в.м.т)
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
  uint32_t frq_calc_dividend;          //!< divident for calculating RPM (делимое для расчета частоты вращения)
- volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
 #ifdef HALL_OUTPUT
  int8_t   hop_offset;                 //!< Hall output: start of pulse in tooth of wheel relatively to TDC
  uint8_t  hop_duration;               //!< Hall output: duration of pulse in tooth of wheel
@@ -142,8 +144,10 @@ typedef struct
  */
 typedef struct
 {
- /**Address of callback which will be used for settiong of I/O */
+ /**Address of first callback which will be used for settiong of I/O */
  volatile fnptr_t io_callback1;
+ /**Address of second callback which will be used for settiong of I/O */
+ volatile fnptr_t io_callback2;
 
 #ifdef HALL_OUTPUT
  volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse
@@ -159,7 +163,8 @@ typedef struct
  /** Determines number of tooth at which phase selection window for knock detection is closed (определяет номер зуба на котором закрывается окно фазовой селекции сигнала ДД (конец интегрирования)) */
  volatile uint16_t knock_wnd_end;
 
- uint8_t output_state;                 //!< This variable specifies state of channel's output to be set
+ uint8_t output_state1;                //!< This variable specifies state of channel's output to be set, I/O1
+ uint8_t output_state2;                //!< This variable specifies state of channel's output to be set, I/O2
 }chanstate_t;
 
 ckpsstate_t ckps;                         //!< instance of state variables
@@ -305,7 +310,7 @@ static uint16_t _normalize_tn(int16_t i_tn)
 {
  if (i_tn > (int16_t)ckps.wheel_cogs_num2)
   return i_tn - (int16_t)ckps.wheel_cogs_num2;
- if (i_tn < 0)
+ if (i_tn <= 0)
   return i_tn + ckps.wheel_cogs_num2;
  return i_tn;
 }
@@ -386,16 +391,35 @@ static fnptr_t get_callback(uint8_t index)
 static void set_channels_ss(void)
 {
  uint8_t _t, i;
- if (4 == ckps.chan_number)
+ if (2 == ckps.chan_number || 4 == ckps.chan_number)
  { //4 cylinders
   for(i = 0; i < ckps.chan_number; ++i)
   {
    _t=_SAVE_INTERRUPT();
    _DISABLE_INTERRUPT();
-   chanstate[i].io_callback1 = IOCFG_CB(0);
-   chanstate[i].output_state = (i & 1) ? IGN_OUTPUTS_OFF_VAL : IGN_OUTPUTS_ON_VAL;
+   chanstate[i].io_callback1 = chanstate[i].io_callback2 = IOCFG_CB(0);
+   chanstate[i].output_state1 = chanstate[i].output_state2 = (i & 1) ? IGN_OUTPUTS_OFF_VAL : IGN_OUTPUTS_ON_VAL;
    _RESTORE_INTERRUPT(_t);
   }
+ }
+ else if (6 == ckps.chan_number)
+ {
+   _t=_SAVE_INTERRUPT();
+   _DISABLE_INTERRUPT();
+    chanstate[0].io_callback1 = chanstate[3].io_callback1 = IOCFG_CB(0);
+    chanstate[0].io_callback2 = chanstate[3].io_callback2 = IOCFG_CB(1);
+    chanstate[0].output_state1 = chanstate[3].output_state1 = IGN_OUTPUTS_ON_VAL;
+    chanstate[0].output_state2 = chanstate[3].output_state2 = IGN_OUTPUTS_OFF_VAL;
+    chanstate[1].io_callback1 = chanstate[4].io_callback1 = IOCFG_CB(0);
+    chanstate[1].io_callback2 = chanstate[4].io_callback2 = IOCFG_CB(1);
+    chanstate[1].output_state1 = chanstate[4].output_state1 = IGN_OUTPUTS_OFF_VAL;
+    chanstate[1].output_state2 = chanstate[4].output_state2 = IGN_OUTPUTS_OFF_VAL;
+    chanstate[2].io_callback1 = chanstate[5].io_callback1 = IOCFG_CB(0);
+    chanstate[2].io_callback2 = chanstate[5].io_callback2 = IOCFG_CB(1);
+    chanstate[2].output_state1 = chanstate[5].output_state1 = IGN_OUTPUTS_OFF_VAL;
+    chanstate[2].output_state2 = chanstate[5].output_state2 = IGN_OUTPUTS_ON_VAL;
+   _RESTORE_INTERRUPT(_t);
+
  }
  else if (8 == ckps.chan_number)
  { //8 cylinders
@@ -404,10 +428,10 @@ static void set_channels_ss(void)
     uint8_t state = (i & 2) ? IGN_OUTPUTS_OFF_VAL : IGN_OUTPUTS_ON_VAL;
    _t=_SAVE_INTERRUPT();
    _DISABLE_INTERRUPT();
-    chanstate[i].io_callback1 = IOCFG_CB(0);
-    chanstate[i].output_state = state;
-    chanstate[i + 1].io_callback1 = IOCFG_CB(1);
-    chanstate[i + 1].output_state = state;
+    chanstate[i].io_callback1 = chanstate[i].io_callback2 = IOCFG_CB(0);
+    chanstate[i].output_state1 = chanstate[i].output_state2 = state;
+    chanstate[i + 1].io_callback1 = chanstate[i + 1].io_callback2 = IOCFG_CB(1);
+    chanstate[i + 1].output_state1 = chanstate[i + 1].output_state2 = state;
    _RESTORE_INTERRUPT(_t);
   }
  }
@@ -459,7 +483,7 @@ void ckps_enable_ignition(uint8_t i_cutoff)
 
 void ckps_set_merge_outs(uint8_t i_merge)
 {
- ckps.chan_mask = i_merge ? 0x00 : 0xFF;
+ //not supported by this implementation
 }
 
 #ifdef HALL_OUTPUT
@@ -485,6 +509,9 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
  div_t dr; uint8_t _t;
+#ifdef PHASE_SENSOR
+ uint16_t err_thrd = (norm_num * 2) + (norm_num >> 3); //+ 12.5%
+#endif
  uint16_t cogs_per_chan, degrees_per_cog;
 
  //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
@@ -513,13 +540,19 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.degrees_per_cog = degrees_per_cog;
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
+#ifdef PHASE_SENSOR
+ cams_set_error_threshold(err_thrd);
+#endif
  _RESTORE_INTERRUPT(_t);
 }
 
 /**Forces ignition spark if corresponding interrupt is pending*/
 #define force_pending_spark() \
  if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)) && CHECKBIT(flags, F_IGNIEN))\
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(chanstate[ckps.channel_mode].output_state);
+ { \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(chanstate[ckps.channel_mode].output_state1); \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(chanstate[ckps.channel_mode].output_state2); \
+ }
 
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
@@ -556,7 +589,10 @@ ISR(TIMER1_COMPA_vect)
 #endif
 
  if (CHECKBIT(flags, F_IGNIEN)) //ignition disabled
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(chanstate[ckps.channel_mode].output_state);
+ {
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(chanstate[ckps.channel_mode].output_state1);
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(chanstate[ckps.channel_mode].output_state2);
+ }
 
  //-----------------------------------------------------
 #ifdef COOLINGFAN_PWM
@@ -676,7 +712,7 @@ static void process_ckps_cogs(void)
   //до этого хранился во временном буфере.
   if (ckps.cog == chanstate[i].cogs_latch)
   {
-   ckps.channel_mode = (i & ckps.chan_mask); //remember number of channel (запоминаем номер канала)
+   ckps.channel_mode = i;                    //remember number of channel (запоминаем номер канала)
    SETBIT(flags, F_NTSCHA);                  //establish an indication that it is need to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
    ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
@@ -867,4 +903,4 @@ ISR(TIMER1_OVF_vect)
  ++ckps.t1oc;
 }
 
-#endif //HALL_SYNC
+#endif //CKPS_2CHIGN

@@ -4,7 +4,7 @@ rem Created by Alexey A. Shabelnikov, Kiev 26 September 2009.
 
 set HEXTOBIN=hextobin.exe
 set CODECRC=codecrc.exe
-set USAGE=Supported options: M16,M32,M64
+set USAGE=Supported options: M16,M32,M64,M644
 set FW_SIZE=Undefined
 set CRC_ADDR=Undefined
 
@@ -28,6 +28,12 @@ GOTO dowork
 )
 
 IF %1 == M64 ( 
+set FW_SIZE=63486
+set CRC_ADDR=F7FE
+GOTO dowork
+)
+
+IF %1 == M644 ( 
 set FW_SIZE=63486
 set CRC_ADDR=F7FE
 GOTO dowork

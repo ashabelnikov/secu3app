@@ -33,15 +33,23 @@
 #include "ioconfig.h"
 #include "tables.h"
 
+//Speed sensor available in SECU-3T only, because cam sensor input in SECU-3 is not interrupt-driven
+#if defined(SPEED_SENSOR) && !defined(SECU3T)
+ #error "You can not use SPEED_SENSOR option without SECU3T option! Define SECU3T if you want to use this option."
+#endif
+
 //Functionality added when either PHASE_SENSOR or SECU3T is defined
 #if defined(PHASE_SENSOR) || defined(SECU3T)
 
 #ifndef SECU3T /*SECU-3*/
  /** Get logic level from cam sensor output */
- #define GET_CAMSTATE() (PINC_Bit4)
+ #define GET_CAMSTATE() (CHECKBIT(PINC, PINC4) > 0)
 #endif
 
 #define F_CAMSIA 0  //cam sensor input is available (not remmaped to other function)
+#ifdef SPEED_SENSOR
+#define F_SPDSIA 1  //cam sensor input is remmaped to speed sensor
+#endif
 #define flags TWSR  //only 2 bits are allowed to be used as R/W
 
 /** Defines state variables */
@@ -52,11 +60,19 @@ typedef struct
 #ifndef SECU3T /*SECU-3*/
  uint8_t prev_level;                  //!< previos logic level of sensor's output
 #endif
- uint8_t err_threshold;               //!< error threshold in teeth
- volatile uint8_t err_counter;        //!< teeth counter
+ uint16_t err_threshold;              //!< error threshold in teeth
+ volatile uint16_t err_counter;       //!< teeth counter
  volatile uint8_t event;              //!< flag which indicates Hall cam sensor's event
 #ifdef SECU3T
  volatile uint8_t vr_event;           //!< flag which indicates VR cam sensor's event
+#endif
+#ifdef SPEED_SENSOR
+ uint16_t spdsens_period_prev;        //!< for storing previous value of timer counting time between speed sensor pulse interrupts
+ volatile uint16_t spdsens_period;    //!< period between speed sensor pulses (1 tick  = 4us)
+ uint16_t spdsens_period_buff;        //!< period between speed sensor pulses (buffered and everflow free)
+ volatile uint32_t spdsens_counter;   //!< number of speed sensor pulses since last ignition turn on
+ volatile uint8_t spdsens_event;      //!< indicates pending event from speed sensor
+ uint8_t spdsens_state;               //!< Used in special state machine to filter overflows
 #endif
 }camstate_t;
 
@@ -69,7 +85,7 @@ void cams_init_state_variables(void)
  camstate.prev_level = GET_CAMSTATE();
 #endif
  camstate.cam_ok = 0; //not Ok
- camstate.err_threshold = 60 * 2;
+ camstate.err_threshold = 65 * 2;
  camstate.err_counter = 0;
  camstate.event = 0;
 #ifdef SECU3T
@@ -82,25 +98,77 @@ void cams_init_state(void)
  _BEGIN_ATOMIC_BLOCK();
  cams_init_state_variables();
  camstate.cam_error = 0; //no errors
+#ifdef SPEED_SENSOR
+ camstate.spdsens_counter = 0;
+ camstate.spdsens_period = 0xFFFF;
+ camstate.spdsens_period_buff = 0xFFFF;
+ camstate.spdsens_event = 0;
+ camstate.spdsens_state = 0;
+#endif
 
  //set flag indicating that cam sensor input is available
  WRITEBIT(flags, F_CAMSIA, IOCFG_CHECK(IOP_PS));
+#ifdef SPEED_SENSOR
+ WRITEBIT(flags, F_SPDSIA, IOCFG_CHECK(IOP_SPDSENS));
+#endif
 
 #ifdef SECU3T /*SECU-3T*/
- //interrupt by rising edge
- MCUCR|= _BV(ISC11) | _BV(ISC10);
+ //interrupt edge for Hall input depends on PS inversion, interrupt by rising edge for VR input
+ MCUCR|= _BV(ISC11) | ((IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0);
  MCUCR|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
  if (CHECKBIT(flags, F_CAMSIA))
-  GICR|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
+  EIMSK|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
  else
-  GICR|=  _BV(INT0);
+  EIMSK|=  _BV(INT0);
 #else
- GICR|=  _BV(INT0);             //это нам нужно для ДНО
+ EIMSK|=  _BV(INT0);              //это нам нужно для ДНО
 #endif
 #endif
 
+#ifdef SPEED_SENSOR
+ if (CHECKBIT(flags, F_SPDSIA))
+  EIMSK|= _BV(INT1);              //enable spped sensor interrupt also, because cam sensor input remmaped as speed sensor
+#endif
+
  _END_ATOMIC_BLOCK();
+}
+
+void cams_control(void)
+{
+#ifdef SPEED_SENSOR
+ uint16_t t1_curr, t1_prev, period;
+ uint8_t _t, event;
+ if (!CHECKBIT(flags, F_SPDSIA))
+  return;                                //speed sensor is not enabled
+ _t = _SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+ t1_curr = TCNT1;                        //current value of timer
+ t1_prev = camstate.spdsens_period_prev; //value of timer remembered in ISR
+ _RESTORE_INTERRUPT(_t);                 //reenable interrupts
+ _DISABLE_INTERRUPT();
+ period = camstate.spdsens_period;       //read and reset flag
+ event = camstate.spdsens_event;         //
+ camstate.spdsens_event = 0;
+ _RESTORE_INTERRUPT(_t);
+
+ switch(camstate.spdsens_state)
+ {
+  case 0:
+   if (event)
+    ++camstate.spdsens_state;            //skip first "dirty" event
+   break;
+  case 1:
+   if ((t1_curr - t1_prev) > 62000)
+   { //overflow
+    camstate.spdsens_period_buff = 0xFFFF;
+    camstate.spdsens_state = 0;
+   }
+   else if (event)
+    camstate.spdsens_period_buff = period;
+   break;
+ }
+#endif
 }
 
 #ifdef SECU3T /*SECU-3T*/
@@ -135,7 +203,7 @@ void cams_vr_set_edge_type(uint8_t edge_type)
 
 //Functionality added to compilation only when PHASE_SENSOR defined
 #ifdef PHASE_SENSOR
-void cams_set_error_threshold(uint8_t threshold)
+void cams_set_error_threshold(uint16_t threshold)
 {
  camstate.err_threshold = threshold;
 }
@@ -199,6 +267,11 @@ uint8_t cams_is_event_r(void)
  _END_ATOMIC_BLOCK();
  return result;
 }
+#endif //PHASE_SENSOR
+
+
+//We need following ISR if cam sensor or speed sensor are enabled
+#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
 
 #ifdef SECU3T /*SECU-3T*/
 /**Interrupt from CAM sensor (Hall)*/
@@ -206,7 +279,32 @@ ISR(INT1_vect)
 {
  camstate.cam_ok = 1;
  camstate.err_counter = 0;
- camstate.event = 1; //set event flag
+ camstate.event = 1;          //set event flag
+#ifdef SPEED_SENSOR
+ if (!CHECKBIT(flags, F_SPDSIA))
+  return;
+ ++camstate.spdsens_counter;
+ camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;
+ camstate.spdsens_period_prev = TCNT1;
+ camstate.spdsens_event = 1;  //set event flag
+#endif
 }
 #endif //SECU3T
-#endif //PHASE_SENSOR
+
+#endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
+
+#ifdef SPEED_SENSOR
+uint16_t spdsens_get_period(void)
+{
+ return CHECKBIT(flags, F_SPDSIA) ? camstate.spdsens_period_buff : 0;
+}
+
+uint32_t spdsens_get_pulse_count(void)
+{
+ uint32_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = camstate.spdsens_counter;
+ _END_ATOMIC_BLOCK();
+ return CHECKBIT(flags, F_SPDSIA) ? value : 0;
+}
+#endif

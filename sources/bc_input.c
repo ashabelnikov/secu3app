@@ -139,12 +139,12 @@ void bc_indication_mode(struct ecudata_t *d)
   eeprom_read(&errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
 
   for(i = 0; i < 16; ++i)
-  {  
-   if (0 == blink_codes[i])
+  {
+   if (0 == PGM_GET_BYTE(&blink_codes[i]))
     continue;
    if (errors & (1 << i))
    {
-    disp_code(blink_codes[i]);
+    disp_code(PGM_GET_BYTE(&blink_codes[i]));
     delay_hom(20);
    }
   }

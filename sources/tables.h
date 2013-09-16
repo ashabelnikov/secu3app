@@ -86,8 +86,12 @@
 #define TABLES_NUMBER          8
 
 //Bluetooth and security flags (bit numbers)
-#define BTF_USE_BT             0                   //!< Bluetooth and security flags: specifies to use or nor to use bluetooth
+#define BTF_USE_BT             0                   //!< Bluetooth and security flags: specifies to use or not to use bluetooth
 #define BTF_SET_BBR            1                   //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
+#define BTF_USE_IMM            2                   //!< Bluetooth and security flags: specifies to use or not to use immobilizer
+
+//Hall sensor flags
+#define HSF_USECKPINP          0                   //!< Specifies which input to use for Hall sensor (CKPS or PS)
 
 /**Describes one set(family) of chracteristics (maps), descrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
@@ -249,13 +253,15 @@ typedef struct params_t
 
   uint8_t bt_flags;                      //!< Bluetooth and security related flags
 
+  uint8_t hall_flags;                    //!< Hall sensor related flags
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[3];
+  uint8_t  reserved[2];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

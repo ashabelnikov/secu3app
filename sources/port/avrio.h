@@ -25,6 +25,51 @@
 #ifdef __ICCAVR__
  #include <ioavr.h>     //device IO
 
+//Mega64 compatibility
+#ifdef __ATmega64__
+#ifndef RXEN
+ #define RXEN  RXEN0
+#endif
+#ifndef TXEN
+ #define TXEN  TXEN0
+#endif
+#ifndef UDRE
+ #define UDRE  UDRE0
+#endif
+#ifndef RXC
+ #define RXC   RXC0
+#endif
+#ifndef RXCIE
+ #define RXCIE RXCIE0
+#endif
+#ifndef UDRIE
+ #define UDRIE UDRIE0
+#endif
+#ifndef UCSZ0
+ #define UCSZ0 UCSZ00
+#endif
+#ifndef UCSZ1
+ #define UCSZ1 UCSZ01
+#endif
+#ifndef U2X
+ #define U2X U2X0
+#endif
+ #define UDR   UDR0
+ #define UBRRL UBRR0L
+ #define UBRRH UBRR0H
+ #define UCSRA UCSR0A
+ #define UCSRB UCSR0B
+ #define UCSRC UCSR0C
+ #define USART_UDRE_vect USART0_UDRE_vect
+ #define USART_RXC_vect USART0_RXC_vect
+#endif
+
+#ifdef __ATmega16__
+ #define EIMSK GICR
+#elif __ATmega32__
+ #define EIMSK GICR
+#endif
+
 #else //AVR GCC
  #include <avr/io.h>    //device IO
 
@@ -41,6 +86,51 @@
    #define USART0_RXC_vect USART0_RX_vect
   #endif
  #endif
+
+//Mega64 compatibility
+#ifdef __AVR_ATmega64__
+#ifndef RXEN
+ #define RXEN  RXEN0
+#endif
+#ifndef TXEN
+ #define TXEN  TXEN0
+#endif
+#ifndef UDRE
+ #define UDRE  UDRE0
+#endif
+#ifndef RXC
+ #define RXC   RXC0
+#endif
+#ifndef RXCIE
+ #define RXCIE RXCIE0
+#endif
+#ifndef UDRIE
+ #define UDRIE UDRIE0
+#endif
+#ifndef UCSZ0
+ #define UCSZ0 UCSZ00
+#endif
+#ifndef UCSZ1
+ #define UCSZ1 UCSZ01
+#endif
+#ifndef U2X
+ #define U2X U2X0
+#endif
+ #define UDR   UDR0
+ #define UBRRL UBRR0L
+ #define UBRRH UBRR0H
+ #define UCSRA UCSR0A
+ #define UCSRB UCSR0B
+ #define UCSRC UCSR0C
+ #define USART_UDRE_vect USART0_UDRE_vect
+ #define USART_RXC_vect USART0_RXC_vect
+#endif
+
+#ifdef __AVR_ATmega16__
+ #define EIMSK GICR
+#elif __AVR_ATmega32__
+ #define EIMSK GICR
+#endif
 
 #endif
 

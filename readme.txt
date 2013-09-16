@@ -9,9 +9,9 @@
     How to compile the project
     Как компилировать проект
 
-    It is possible to compile project for ATMega16, ATMega32, ATMega64. Version
-for ATMega64 compiles,but it will not work! You can compile the project using
-either IAR(MS Windows) or GCC(Linux, MS Windows).
+    It is possible to compile the project for ATMega16, ATMega32, ATMega64,
+ATMega644. Version for ATMega64 compiles, but it will not work! You can compile
+the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     Under MS Windows: Run configure.bat with corresponding options (type of MCU
                       and type of compiler),it will create Makefile and start
                       building.
@@ -98,6 +98,11 @@ either IAR(MS Windows) or GCC(Linux, MS Windows).
     HALL_SYNC            Use synchronization from Hall sensor (connected to PS
                          input) instead of CKP sensor
                          Использовать синхронизацию от ДХ вместо ДПКВ
+
+    CKPS_2CHIGN          Build firmware for use 2 channel igniters (driven by
+                         both edges)
+                         Собрать прошивку с поддержкой 2-х канальных
+                         коммутаторов (управляются 2-мя фронтами)
 
     UART_BINARY          Use binary mode for UART instead of ASCII
                          Использовать бинарный режим при передаче данных через

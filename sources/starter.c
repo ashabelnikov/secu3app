@@ -45,6 +45,12 @@ void starter_init_ports(void)
 
 void starter_control(struct ecudata_t* d)
 {
+ if (d->sys_locked)
+ { //system locked by immobilizer
+  starter_set_blocking_state(1), d->st_block = 1;
+  return;
+ }
+
 #ifndef VPSEM
  //control of starter's blocking (starter is blocked after reaching the specified RPM, but will not turn back!)
  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)

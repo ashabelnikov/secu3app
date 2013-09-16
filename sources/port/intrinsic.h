@@ -32,6 +32,7 @@
  #define _RESTORE_INTERRUPT(s) __restore_interrupt(s)
  #define _NO_OPERATION() __no_operation()
  #define _DELAY_CYCLES(cycles) __delay_cycles(cycles)
+ #define _DELAY_US(us) __delay_cycles((us) * (F_CPU / 1000000UL))
  #define _WATCHDOG_RESET() __watchdog_reset()
 
  #define CALL_ADDRESS(addr) ((void (*)())((addr)/2))()
@@ -77,6 +78,7 @@
  #define _RESTORE_INTERRUPT(s) SREG = (s)
  #define _NO_OPERATION() __asm__ __volatile__ ("nop" ::)
  #define _DELAY_CYCLES(cycles) _delay_4cpi(cycles / 4)
+ #define _DELAY_US(us) _delay_4cpi((us) * (F_CPU / 4000000UL))
  #define _WATCHDOG_RESET() __asm__ __volatile__ ("wdr")
 
  #define CALL_ADDRESS(addr) _icall_ins(((addr)/2))

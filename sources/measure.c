@@ -30,6 +30,7 @@
 #include "port/port.h"
 #include "adc.h"
 #include "bitmask.h"
+#include "spdsens.h"
 #include "funconv.h"    //thermistor_lookup()
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -72,6 +73,9 @@
 #define AI1_AVERAGING           4                 //!< Number of values for averaging of ADD_IO1
 #define AI2_AVERAGING           4                 //!< Number of values for averaging of ADD_IO2
 #endif
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+#define SPD_AVERAGING           8                 //!< Number of values for averaging of speed sensor periods
+#endif
 
 uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
 uint16_t freq4_circular_buffer[FRQ4_AVERAGING];   //!< Ring buffer for RPM averaging for starter blocking (буфер усреднения частоты вращения коленвала для блокировки стартера)
@@ -83,6 +87,10 @@ uint16_t tps_circular_buffer[TPS_AVERAGING];      //!< Ring buffer for averaring
 uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaring of ADD_IO1
 uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaring of ADD_IO2
 #endif
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging of speed sensor periods
+#endif
+
 
 //обновление буферов усреднения (частота вращения, датчики...)
 void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
@@ -96,6 +104,9 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  static uint8_t  tps_ai  = TPS_AVERAGING-1;
  static uint8_t  ai1_ai  = AI1_AVERAGING-1;
  static uint8_t  ai2_ai  = AI2_AVERAGING-1;
+#endif
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+ static uint8_t  spd_ai = SPD_AVERAGING-1;
 #endif
 
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
@@ -131,6 +142,12 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  d->sens.knock_k = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
 #else //internal 2.56V
  d->sens.knock_k = adc_get_knock_value() * 2;
+#endif
+
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+ spd_circular_buffer[spd_ai] = spdsens_get_period();
+ (spd_ai==0) ? (spd_ai = SPD_AVERAGING - 1): spd_ai--;
+ d->sens.distance = spdsens_get_pulse_count();
 #endif
 }
 
@@ -175,6 +192,12 @@ void meas_average_measured_values(struct ecudata_t* d)
  for (sum=0,i = 0; i < FRQ4_AVERAGING; i++) //усредняем частоту вращения коленвала
   sum+=freq4_circular_buffer[i];
  d->sens.frequen4=(sum/FRQ4_AVERAGING);
+
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+ for (sum=0,i = 0; i < SPD_AVERAGING; i++)  //average periods from speed sensor
+  sum+=spd_circular_buffer[i];
+ d->sens.speed=(sum/SPD_AVERAGING);
+#endif
 
 #ifdef SECU3T
  for (sum=0,i = 0; i < TPS_AVERAGING; i++)   //average throttle position

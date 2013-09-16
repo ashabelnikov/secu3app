@@ -36,6 +36,9 @@ void cams_init_state_variables(void);
 /** Initialization of cam module (Hardware & variables) */
 void cams_init_state(void);
 
+/** Must be called from main loop to perform some operations */
+void cams_control(void);
+
 #ifdef SECU3T
 /**Checks for event(VR input) and automatically resets the flag
  * \return 1 - event was pending, otherwise - 0 */
@@ -53,7 +56,7 @@ void cams_vr_set_edge_type(uint8_t edge_type);
 #ifdef PHASE_SENSOR
 /** Sets threshold value (number of teeth between pulses) for errors checking
  * \param threshold number of teeth between pulses */
-void cams_set_error_threshold(uint8_t threshold);
+void cams_set_error_threshold(uint16_t threshold);
 
 /** Edge detection (if non-interrupt driven) and checking logic. Must be executed on each tooth. */
 void cams_detect_edge(void);

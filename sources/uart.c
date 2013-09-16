@@ -37,45 +37,6 @@
 #include "ufcodes.h"
 #include "wdt.h"
 
-//Mega64 compatibility
-#ifdef _PLATFORM_M64_
-#ifndef RXEN
- #define RXEN  RXEN0
-#endif
-#ifndef TXEN
- #define TXEN  TXEN0
-#endif
-#ifndef UDRE
- #define UDRE  UDRE0
-#endif
-#ifndef RXC
- #define RXC   RXC0
-#endif
-#ifndef RXCIE
- #define RXCIE RXCIE0
-#endif
-#ifndef UDRIE
- #define UDRIE UDRIE0
-#endif
-#ifndef UCSZ0
- #define UCSZ0 UCSZ00
-#endif
-#ifndef UCSZ1
- #define UCSZ1 UCSZ01
-#endif
-#ifndef U2X
- #define U2X U2X0
-#endif
-#define UDR   UDR0
-#define UBRRL UBRR0L
-#define UBRRH UBRR0H
-#define UCSRA UCSR0A
-#define UCSRB UCSR0B
-#define UCSRC UCSR0C
-#define USART_UDRE_vect USART0_UDRE_vect
-#define USART_RXC_vect USART0_RXC_vect
-#endif
-
 //Idenfifiers used in EDITAB_PAR
 #define ETTS_GASOLINE_SET 0 //!< tables's set: gasoline id
 #define ETTS_GAS_SET      1 //!< tables's set: gas id
@@ -154,8 +115,9 @@ uint8_t takeout_rx_buff(void)
    return FIBEGIN;
   else if (b2 == TFIOEND)
    return FIOEND;
-  else if (b2 = TFESC)
+  else if (b2 == TFESC)
    return FESC;
+  return 0; //wrong code
  }
  else
   return b1;
@@ -240,6 +202,12 @@ static void build_i16h(uint16_t i)
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);   //старший байт HEX числа (младший байт)
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);   //младший байт HEX числа (младший байт)
 #endif
+}
+
+static void build_i24h(uint32_t i)
+{
+ build_i8h(i>>16);
+ build_i16h(i);
 }
 
 /**Appends sender's buffer by 8 HEX bytes
@@ -485,6 +453,13 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
    build_i8h(d->choke_pos);               // choke position
+#if defined(SPEED_SENSOR) && defined(SECU3T)
+   build_i16h(d->sens.speed);             // vehicle speed (2 bytes)
+   build_i24h(d->sens.distance);          // distance (3 bytes)
+#else
+   build_i16h(0);
+   build_i24h(0);
+#endif
    break;
 
   case ADCCOR_PAR:
@@ -522,6 +497,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i4h(d->param.merge_ign_outs);
    build_i8h(d->param.ckps_cogs_num);
    build_i8h(d->param.ckps_miss_num);
+   build_i8h(d->param.hall_flags);
    break;
 
   case OP_COMP_NC:
@@ -796,6 +772,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.merge_ign_outs = recept_i4h();
    d->param.ckps_cogs_num = recept_i8h();
    d->param.ckps_miss_num = recept_i8h();
+   d->param.hall_flags = recept_i8h();
    break;
 
   case OP_COMP_NC:

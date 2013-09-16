@@ -74,8 +74,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
 
-   //Version of this structure - 1.4
-   IOREMVER(1,4),
+   //Version of this structure - 1.5
+   IOREMVER(1,5),
 
    //normal slots (initialization)
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
@@ -126,7 +126,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC_G_SECU3T(iocfg_g_add_i2), _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de), //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
@@ -140,7 +140,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
   _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22) | _CBV32(COPT_VREF_5V, 23) |
-  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(COPT_UART_BINARY, 25),
+  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(COPT_UART_BINARY, 25) | _CBV32(COPT_CKPS_2CHIGN, 26) | _CBV(COPT_ATMEGA644, 27),
 
   /**A reserved byte*/
   0,
@@ -155,7 +155,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    * Дата в формате Mmm dd yyyy.
    * Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
    * Date in format Mmm dd yyyy. */
-  {"SECU-3 firmware v3.7. Build ["__DATE__"]       "},
+  {"SECU-3 firmware v3.8. Build ["__DATE__"]       "},
 
   /**Таблица аттенюатора, по умолчанию k = 1.000
    * attenuator's lookup table (for knock channel), by default k = 1.000 */
@@ -200,7 +200,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   4,10,392,384,_ACF,_ACC,_ACF,_ACC,_ACF,_ACC, 0, 20, 10, 96, 96, -320,
   320, 066, 1089, 392, 1900, 2100, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
-  _ACF,_ACC, _ACF,_ACC, 160, 1050, 0, 984, 200, 0x02, {0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  _ACF,_ACC, _ACF,_ACC, 160, 1050, 0, 984, 200, 0x02, 0x00, {0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

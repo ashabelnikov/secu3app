@@ -24,7 +24,7 @@
  * (Реализация обработки датчика положения коленвала).
  */
 
-#ifndef HALL_SYNC
+#if !defined(HALL_SYNC) && !defined(CKPS_2CHIGN)
 
 #include <stdlib.h>
 #include "port/avrio.h"
@@ -345,7 +345,7 @@ static uint16_t _normalize_tn(int16_t i_tn)
 {
  if (i_tn > (int16_t)ckps.wheel_cogs_num2)
   return i_tn - (int16_t)ckps.wheel_cogs_num2;
- if (i_tn < 0)
+ if (i_tn <= 0)
   return i_tn + ckps.wheel_cogs_num2;
  return i_tn;
 }
@@ -546,6 +546,9 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
  div_t dr; uint8_t _t;
+#ifdef PHASE_SENSOR
+ uint16_t err_thrd = (norm_num * 2) + (norm_num >> 3); //+ 12.5%
+#endif
  uint16_t cogs_per_chan, degrees_per_cog;
 
  //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
@@ -574,6 +577,9 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.degrees_per_cog = degrees_per_cog;
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
+#ifdef PHASE_SENSOR
+ cams_set_error_threshold(err_thrd);
+#endif
  _RESTORE_INTERRUPT(_t);
 }
 
@@ -666,13 +672,22 @@ ISR(TIMER1_COMPA_vect)
  ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
- ckps.acc_delay-= ckps.cr_acc_time;
+ ckps.acc_delay-= ckps.cr_acc_time;    //apply dwell time
  ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
 
  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
  ckps.channel_mode_b&= ckps.chan_mask;
  CLEARBIT(flags2, F_ADDPTK);
  SETBIT(flags, F_NTSCHB);
+
+ //if less than 2 teeth remains to the accumulation beginning we have to program compare channel in advance, otherwise
+ //we may loose spark in some cases
+ if (ckps.acc_delay < (ckps.period_curr << 1))
+ {
+  OCR1B = GetICR() + ckps.acc_delay;
+  TIFR = _BV(OCF1B);
+  TIMSK|= _BV(OCIE1B);
+ }
 
  //We remembered value of TCNT1 at the top of of this function. But input capture event
  //may occur when interrupts were already disabled (by hardware) but value of timer is still
@@ -733,21 +748,27 @@ static uint8_t sync_at_startup(void)
   case 0: //skip certain number of teeth (пропуск определенного кол-ва зубьев)
    CLEARBIT(flags, F_VHTPER);
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS)
-    ckps.starting_mode = 1;
+#ifdef PHASED_IGNITION
+    //if cylinder number is even, then cam synchronization will be performed later
+    ckps.starting_mode = (ckps.chan_number & 1) ? 1 : 2;
+#else
+    ckps.starting_mode = 2; //even number of cylinders only
+#endif
    break;
 
-  case 1: //find out missing teeth (поиск синхрометки)
 #ifdef PHASED_IGNITION
-   if (ckps.chan_number & 1) //cylinder number is odd?
+  case 1: //we fall into this state only if number of cylinders is odd
+   cams_detect_edge();
+   if (cams_is_event_r())
    {
-    cams_detect_edge();
-    if (cams_is_event_r())
-     SETBIT(flags2, F_CAMISS);
-   }
-   else //cylinder number is even, cam synchronization will be performed later
+    set_channels_fs(1);     //set full sequential mode
     SETBIT(flags2, F_CAMISS);
+    ckps.starting_mode = 2;
+   }
+   break;
 #endif
 
+  case 2: //find out missing teeth (поиск синхрометки)
    //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
    if (
 #ifdef SECU3T
@@ -755,10 +776,7 @@ static uint8_t sync_at_startup(void)
 #else
    (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
 #endif
-#ifdef PHASED_IGNITION
-   && CHECKBIT(flags2, F_CAMISS)
-#endif
-   ) 
+   )
    {
     SETBIT(flags, F_ISSYNC);
     ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
@@ -942,7 +960,7 @@ static void process_ckps_cogs(void)
  force_pending_spark();
  if (cams_is_event_r())
  {
-  //Synchronize. We rely that cam sonsor event (e.g. falling edge) coming before missing teeth
+  //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
   if (ckps.cog < ckps.wheel_cogs_nump1)
    ckps.cog+= ckps.wheel_cogs_num;
 
@@ -1080,4 +1098,4 @@ ISR(TIMER1_OVF_vect)
  ++ckps.t1oc;
 }
 
-#endif //HALL_SYNC
+#endif //!HALL_SYNC && !CKPS_2CHIGN

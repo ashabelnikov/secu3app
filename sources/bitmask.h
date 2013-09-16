@@ -54,12 +54,12 @@
 
 /**Converts a bit number into a 1-byte value with specifying of a bit value */
 #ifndef _CBV8
- #define _CBV8(val,bit) (((uint8_t)val) << bit)
+ #define _CBV8(val,bit) (((uint8_t)val) << (bit))
 #endif
 
 /**Converts a bit number into a 4-byte value with specifying of a bit value */
 #ifndef _CBV32
- #define _CBV32(val,bit) (((uint32_t)val) << bit)
+ #define _CBV32(val,bit) (((uint32_t)val) << (bit))
 #endif
 
 #endif //_BITMASK_H_

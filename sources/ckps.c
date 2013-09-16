@@ -192,7 +192,11 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 /** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
  *  note: may be not effective on other MCUs or even case bugs! Be aware.
  */
+#ifdef _PLATFORM_M644_
+#define flags  GPIOR0                  // ATmega644 has one general purpose I/O register
+#else
 #define flags  TWAR
+#endif
 #define flags2 TWBR
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
@@ -239,14 +243,20 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags2, F_CALTIM);
  CLEARBIT(flags2, F_SPSIGN);
 
- TCCR0 = 0; //timer is stopped (останавливаем таймер0)
+#ifdef _PLATFORM_M644_
+ TCCR0B = 0;
+ TIMSK1|=_BV(TOIE1);
+#else
+ TCCR0 = 0;                           //timer is stopped (останавливаем таймер0)
+ TIMSK|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
+#endif
+
 #ifdef STROBOSCOPE
  ckps.strobe = 0;
 #endif
 
-  TIMSK|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
-  ckps.t1oc = 0;                       //reset overflow counter
-  ckps.t1oc_s = 255;                   //RPM is very low
+ ckps.t1oc = 0;                       //reset overflow counter
+ ckps.t1oc_s = 255;                   //RPM is very low
  _END_ATOMIC_BLOCK();
 }
 
@@ -265,7 +275,12 @@ void ckps_init_state(void)
 
  //enable input capture and Compare A interrupts of timer 1, also overflow interrupt of timer 0
  //(разрешаем прерывание по захвату и сравнению А таймера 1, а также по переполнению таймера 0)
+#ifdef _PLATFORM_M644_
+ TIMSK1|= _BV(ICIE1);
+ TIMSK0|= _BV(TOIE0);
+#else
  TIMSK|= _BV(TICIE1)|_BV(TOIE0);
+#endif
  _END_ATOMIC_BLOCK();
 }
 
@@ -602,6 +617,21 @@ void turn_off_ignition_channel(uint8_t i_channel)
 }
 
 /**Forces ignition spark if corresponding interrupt is pending*/
+#ifdef _PLATFORM_M644_
+#ifdef PHASED_IGNITION
+#define force_pending_spark() \
+ if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
+ { \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);\
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);\
+ }
+#else
+#define force_pending_spark() \
+ if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
+#endif
+
+#else
 #ifdef PHASED_IGNITION
 #define force_pending_spark() \
  if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
@@ -614,21 +644,30 @@ void turn_off_ignition_channel(uint8_t i_channel)
  if ((TIFR & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
 #endif
- 
+#endif
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
  */
 ISR(TIMER1_COMPA_vect)
 {
 #ifdef COOLINGFAN_PWM
- uint8_t timsk_sv, ucsrb_sv = UCSRB;
+#ifdef _PLATFORM_M644_
+ uint8_t timsk_sv0, timsk_sv1;
+#else
+ uint8_t timsk_sv;
+#endif
+ uint8_t ucsrb_sv = UCSRB;
 #endif
 
 #ifdef DWELL_CONTROL
  ckps.tmrval_saved = TCNT1;
 #endif
 
- TIMSK&= ~_BV(OCIE1A); //disable interrupt (запрещаем прерывание)
+#ifdef _PLATFORM_M644_
+ TIMSK1&= ~_BV(OCIE1A);
+#else
+ TIMSK&= ~_BV(OCIE1A);  //disable interrupt (запрещаем прерывание)
+#endif
 
  //line of port in the low level, now set it into a high level - makes the igniter to stop 
  //the accumulation of energy and close the transistor (spark)
@@ -642,8 +681,13 @@ ISR(TIMER1_COMPA_vect)
  {
   IOCFG_SET(IOP_STROBE, 1); //start pulse
   ckps.strobe = 2;          //and set flag to next state
+#ifdef _PLATFORM_M644_
+  OCR1A = TCNT1 + 31;
+  TIMSK1|= _BV(OCIE1A);
+#else
   OCR1A = TCNT1 + 25;       //We will generate 100uS pulse
   TIMSK|= _BV(OCIE1A);      //pulse will be ended in the next interrupt
+#endif
  }
  else if (2==ckps.strobe)
  {
@@ -660,10 +704,15 @@ ISR(TIMER1_COMPA_vect)
 
  //-----------------------------------------------------
 #ifdef COOLINGFAN_PWM
- timsk_sv = TIMSK;
  //ADCSRA&=~_BV(ADIE);            //??
  UCSRB&=~(_BV(RXCIE)|_BV(UDRIE)); //mask UART interrupts
+#ifdef _PLATFORM_M644_
+ timsk_sv0 = TIMSK0, timsk_sv1 = TIMSK1;
+ TIMSK0=0, TIMSK1=0;              //mask all timer interrupts except OCF2 and TOV2
+#else
+ timsk_sv = TIMSK;
  TIMSK&= _BV(OCIE2)|_BV(TOIE2);   //mask all timer interrupts except OCF2 and TOV2
+#endif
  _ENABLE_INTERRUPT();
 #endif
  //-----------------------------------------------------
@@ -685,15 +734,25 @@ ISR(TIMER1_COMPA_vect)
  if (ckps.acc_delay < (ckps.period_curr << 1))
  {
   OCR1B = GetICR() + ckps.acc_delay;
+#ifdef _PLATFORM_M644_
+  TIFR1 = _BV(OCF1B);
+  TIMSK1|= _BV(OCIE1B);
+#else
   TIFR = _BV(OCF1B);
   TIMSK|= _BV(OCIE1B);
+#endif
  }
 
  //We remembered value of TCNT1 at the top of of this function. But input capture event
  //may occur when interrupts were already disabled (by hardware) but value of timer is still
  //not saved. Another words, ICR1 must not be less than tmrval_saved.
+#ifdef _PLATFORM_M644_
+ if (TIFR1 & _BV(ICF1))
+#else
  if (TIFR & _BV(ICF1))
+#endif
   ckps.tmrval_saved = ICR1;
+
 #else
  //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубьях)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
@@ -705,7 +764,11 @@ ISR(TIMER1_COMPA_vect)
  _DISABLE_INTERRUPT();
  //ADCSRA|=_BV(ADIE);
  UCSRB = ucsrb_sv;
+#ifdef _PLATFORM_M644_
+ TIMSK0 = timsk_sv0, TIMSK1 = timsk_sv1;
+#else
  TIMSK = timsk_sv;
+#endif
 #endif
  //-----------------------------------------------------
 }
@@ -716,7 +779,11 @@ ISR(TIMER1_COMPA_vect)
  */
 ISR(TIMER1_COMPB_vect)
 {
+#ifdef _PLATFORM_M644_
+ TIMSK1&= ~_BV(OCIE1B);
+#else
  TIMSK&= ~_BV(OCIE1B); //запрещаем прерывание
+#endif
  //start accumulation
  turn_off_ignition_channel(ckps.channel_mode_b);
  ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
@@ -734,7 +801,11 @@ void set_timer0(uint16_t value)
 {
  TCNT0_H = _AB(value, 1);
  TCNT0 = ~(_AB(value, 0));  //One's complement is faster than 255 - low byte
+#ifdef _PLATFORM_M644_
+ TCCR0B  = _BV(CS01)|_BV(CS00);
+#else
  TCCR0  = _BV(CS01)|_BV(CS00);
+#endif
 }
 
 /**Helpful function, used at the startup of engine
@@ -796,7 +867,12 @@ static uint8_t sync_at_startup(void)
  */
 static void process_ckps_cogs(void)
 {
- uint8_t i, timsk_sv = TIMSK;
+ uint8_t i;
+#ifdef _PLATFORM_M644_
+ uint8_t timsk_sv0 = TIMSK0, timsk_sv1 = TIMSK1;
+#else
+ uint8_t timsk_sv = TIMSK;
+#endif
 
  //-----------------------------------------------------
  //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
@@ -806,7 +882,11 @@ static void process_ckps_cogs(void)
  uint8_t ucsrb_sv = UCSRB;
  //ADCSRA&=~_BV(ADIE);            //??
  UCSRB&=~(_BV(RXCIE)|_BV(UDRIE)); //mask UART interrupts
+#ifdef _PLATFORM_M644_
+ TIMSK0=0,TIMSK1=0;
+#else
  TIMSK&= _BV(OCIE2)|_BV(TOIE2);   //mask all timer interrupts except OCF2 and TOV2
+#endif
  _ENABLE_INTERRUPT();
 #endif
  //-----------------------------------------------------
@@ -922,10 +1002,15 @@ static void process_ckps_cogs(void)
     OCR1A = GetICR() + ((diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
    else
     OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
+#ifdef _PLATFORM_M644_
+   TIFR1 = _BV(OCF1A);
+   timsk_sv1|= _BV(OCIE1A);   // enable Compare A interrupt (разрешаем прерывание)
+#else
    TIFR = _BV(OCF1A);
+   timsk_sv|= _BV(OCIE1A);    // enable Compare A interrupt (разрешаем прерывание)
+#endif
    CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    SETBIT(flags2, F_CALTIM);  // Set indication that we begin to calculate the time
-   timsk_sv|= _BV(OCIE1A);    // enable Compare A interrupt (разрешаем прерывание)
   }
  }
 
@@ -989,7 +1074,11 @@ static void process_ckps_cogs(void)
  //ADCSRA|=_BV(ADIE);
  UCSRB = ucsrb_sv;
 #endif
+#ifdef _PLATFORM_M644_
+ TIMSK0 = timsk_sv0, TIMSK1 = timsk_sv1;
+#else
  TIMSK = timsk_sv;
+#endif
  //-----------------------------------------------------
 
  force_pending_spark();
@@ -1075,7 +1164,11 @@ ISR(TIMER0_OVF_vect)
  else
  {//the countdown is over (отсчет времени закончился)
   ICR1 = TCNT1;  //simulate input capture
+#ifdef _PLATFORM_M644_
+  TCCR0B = 0;
+#else
   TCCR0 = 0;     //stop timer (останавливаем таймер)
+#endif
 
   if (ckps.miss_cogs_num > 1)
   {

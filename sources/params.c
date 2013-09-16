@@ -74,7 +74,7 @@ void reset_eeprom_params(struct ecudata_t* d)
  while(!eeprom_is_idle() && --i)
  {
   wdt_reset_timer();
-  _DELAY_CYCLES(16000); //1ms
+  _DELAY_US(1000);      //1ms
  }
  _DISABLE_INTERRUPT();
 

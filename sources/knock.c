@@ -54,6 +54,7 @@
 //prescaler
 #define KSP_PRESCALER_4MHZ     0x00   //!< code for setup prescaler (4mHz crystal)
 #define KSP_PRESCALER_16MHZ    0x0C   //!< code for setup prescaler (16mHz crystal)
+#define KSP_PRESCALER_20MHZ    0x0E   //!< code for setup prescaler (20mHz crystal)
 
 #define SET_KSP_CS(v) WRITEBIT(PORTB, PB4, v) //!< SS controls chip selection
 #ifdef SECU3T /*SECU-3T*/
@@ -63,11 +64,19 @@
 #endif
 #define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode
 
+#ifdef _PLATFORM_M644_
+#if defined(Z1_CRYSTAL_20MHZ) | defined(SECU3T)
+ #define KSP_PRESCALER_VALUE KSP_PRESCALER_20MHZ  //!< set prescaler for 20mHz crystal
+#else
+ #define KSP_PRESCALER_VALUE KSP_PRESCALER_4MHZ   //!< set prescaler for 4mHz crystal
+#endif
+#else
 //4 and 16 mHz crystals can be used (4mHz is default value)
 #if defined(Z1_CRYSTAL_16MHZ) | defined(SECU3T)
  #define KSP_PRESCALER_VALUE KSP_PRESCALER_16MHZ  //!< set prescaler for 16mHz crystal
 #else
  #define KSP_PRESCALER_VALUE KSP_PRESCALER_4MHZ   //!< set prescaler for 4mHz crystal
+#endif
 #endif
 
 /**This data structure intended for duplication of data of current state

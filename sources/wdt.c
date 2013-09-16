@@ -32,10 +32,17 @@
 
 void wdt_start_timer(void)
 {
+#ifdef _PLATFORM_M644_
+ if (!(WDTCSR & _BV(WDE)))
+ { //not started yet
+  WDTCSR = _BV(WDP0) | _BV(WDE);
+ }
+#else
  if (!(WDTCR & _BV(WDE)))
  { //not started yet
   WDTCR = _BV(WDP0) | _BV(WDE);  //timeout = 32ms
  }
+#endif
 }
 
 void wdt_reset_timer(void)

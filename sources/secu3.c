@@ -331,7 +331,7 @@ MAIN()
     //на его выходе упадет до минимума). ¬ данном случае нет ничего страшного в том, что мы держим прерывани€
     //запрещенными 20-25мкс, так как это проискодит на очень маленьких оборотах.
     knock_set_integration_mode(KNOCK_INTMODE_INT);
-    _DELAY_CYCLES(350);
+    _DELAY_US(22);
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
     adc_begin_measure_all(); //измер€ем сигнал с ƒƒ тоже
     _ENABLE_INTERRUPT();

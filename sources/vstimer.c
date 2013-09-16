@@ -33,14 +33,20 @@
 #include "secu3.h"
 #include "vstimer.h"
 
+
+/**Addition value for compare register */
+#define COMPADD              5
+
+#ifdef _PLATFORM_M644_
+#define TIMER2_RELOAD_VALUE  0
+#define DIVIDER_RELOAD       5
+#else
 /**Reload value for timer 2 */
 #define TIMER2_RELOAD_VALUE  6               //for 2 ms
 
-/**Addition value for compare register */
-#define COMPADD 5
-
 /**Reload count for system timer's divider, to obtain 10 ms from 2 ms */
-#define DIVIDER_RELOAD 4
+#define DIVIDER_RELOAD       4
+#endif
 
 //TODO: Do refactoring of timers! Implement callback mechanism.
 
@@ -80,7 +86,11 @@ ISR(TIMER2_OVF_vect)
  //for PWM's generation (for cooling fan). We need to reinitialize OCR2 because it looses correct value
  //(I guess) after TCNT2 write. Compare interrupt shifted in time from overflow interrupt by COMPADD
  //value
+#ifdef _PLATFORM_M644_
+ OCR2A = TIMER2_RELOAD_VALUE + COMPADD;
+#else
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
+#endif
 #endif
 
  _ENABLE_INTERRUPT();
@@ -127,7 +137,13 @@ ISR(TIMER2_OVF_vect)
 
 void s_timer_init(void)
 {
+#ifdef _PLATFORM_M644_
+ TCCR2B|= _BV(CS22)|_BV(CS20); //clock = 156.25kHz (tick = 6.4us)
+ TCNT2 = 0;
+ TIMSK2|= _BV(TOIE2);
+#else
  TCCR2|= _BV(CS22)|_BV(CS20);  //clock = 125kHz (tick = 8us)
  TCNT2 = 0;
  TIMSK|= _BV(TOIE2);           //enable T/C 2 overflow interrupt
+#endif
 }

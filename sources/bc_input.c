@@ -52,7 +52,7 @@ void delay_hom(uint8_t hom)
  {
   uint8_t i = 10;
   do {
-   _DELAY_CYCLES(160000);  //10ms
+   _DELAY_US(10000);       //10ms
    wdt_reset_timer();
   }while(--i);
  }while(--hom);

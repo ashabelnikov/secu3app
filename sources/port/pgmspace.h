@@ -55,7 +55,7 @@ __flash variable@sect_name
  #define PGM_GET_WORD(addr) pgm_read_word(addr)
  #define PGM_GET_DWORD(addr) pgm_read_dword(addr)
 
- //GCC doesn't support Harvard's architerture, so use const at least to indicate
+ //GCC doesn't support Harvard's architecture, so use const at least to indicate
  //that variable will be read-only
  #define _PGM const
 

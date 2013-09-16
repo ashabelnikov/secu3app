@@ -63,16 +63,13 @@ void sop_init_operations(void)
 /**Delay 25ms*/
 void delay_25ms(void)
 {
- _DELAY_CYCLES(64000);
- _DELAY_CYCLES(64000);
+ _DELAY_US(8000);    //8ms
  wdt_reset_timer();
- _DELAY_CYCLES(64000);
- _DELAY_CYCLES(64000);
+ _DELAY_US(8000);    //8ms
  wdt_reset_timer();
- _DELAY_CYCLES(64000);
- _DELAY_CYCLES(64000);
+ _DELAY_US(8000);    //8ms
  wdt_reset_timer();
- _DELAY_CYCLES(16000);
+ _DELAY_US(1000);    //1ms
 }
 
 //Обработка операций которые могут требовать или требуют оложенного выполнения.

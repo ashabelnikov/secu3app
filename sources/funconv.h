@@ -117,7 +117,7 @@ void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_
 #ifdef DWELL_CONTROL
 /** Calculates current accumulation time (dwell control) using current board voltage
  * \param d pointer to ECU data structure
- * \return accumulation time in timer's ticks (1 tick = 4uS)
+ * \return accumulation time in timer's ticks (1 tick = 4uS, when clock is 16mHz and 1 tick = 3.2uS, when clock is 20mHz)
  */
 uint16_t accumulation_time(struct ecudata_t* d);
 #endif

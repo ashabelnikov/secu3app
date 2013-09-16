@@ -113,7 +113,11 @@ hallstate_t hall;                     //!< instance of state variables
 /** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
  *  note: may be not effective on other MCUs or even case bugs! Be aware.
  */
+#ifdef _PLATFORM_M644_
+#define flags  GPIOR0                 //ATmega644 has one general purpose I/O register
+#else
 #define flags  TWAR
+#endif
 #define flags2 TWBR
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
@@ -158,7 +162,13 @@ void ckps_init_state_variables(void)
  SETBIT(flags2, F_SHUTTER);
  SETBIT(flags2, F_SHUTTER_S);
 
- TCCR0 = 0; //timer is stopped (останавливаем таймер0)
+#ifdef _PLATFORM_M644_
+ TCCR0B = 0;
+ TIMSK1|=_BV(TOIE1);
+#else
+ TCCR0 = 0;                           //timer is stopped (останавливаем таймер0)
+ TIMSK|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
+#endif
 
  if (CHECKBIT(flags2, F_SELINP)) //CKPS input
  {
@@ -170,7 +180,6 @@ void ckps_init_state_variables(void)
    SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));  //set previously selected edge for INT1
  }
 
- TIMSK|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
  hall.t1oc = 0;                       //reset overflow counter
  hall.t1oc_s = 255;                   //RPM is very low
 
@@ -204,7 +213,11 @@ void ckps_init_state(void)
 
  //enable overflow interrupt of timer 0
  //(разрешаем прерывание по переполнению таймера 0)
+#ifdef _PLATFORM_M644_
+ TIMSK0|=_BV(TOIE0);
+#else
  TIMSK|= _BV(TOIE0);
+#endif
  _END_ATOMIC_BLOCK();
 }
 
@@ -396,7 +409,13 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 
 void ckps_set_shutter_spark(uint8_t i_shutter)
 {
+#ifdef _PLATFORM_M644_
+ _BEGIN_ATOMIC_BLOCK(); //we need this because in ATmega644 this flag is not in I/O register
+#endif
  WRITEBIT(flags2, F_SHUTTER, i_shutter);
+#ifdef _PLATFORM_M644_
+ _END_ATOMIC_BLOCK();
+#endif
 }
 
 void ckps_select_input(uint8_t i_type)
@@ -413,7 +432,11 @@ void ckps_select_input(uint8_t i_type)
    SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));
    EIMSK|= _BV(INT1);    //enable INT1 interrupt
   }
+#ifdef _PLATFORM_M644_
+  TIMSK1&= ~_BV(ICIE1);
+#else
   TIMSK&= ~_BV(TICIE1); //disable input capture interrupt
+#endif
   _END_ATOMIC_BLOCK();
  }
  else
@@ -421,7 +444,11 @@ void ckps_select_input(uint8_t i_type)
   _BEGIN_ATOMIC_BLOCK();
   SET_CKPS_EDGE(CHECKBIT(flags2, F_SELEDGE_C));
 
+#ifdef _PLATFORM_M644_
+  TIMSK1|=_BV(ICIE1);
+#else
   TIMSK|=_BV(TICIE1);   //enable input capture interrupt
+#endif
   if (CHECKBIT(flags, F_HALLSIA))
    EIMSK&= ~_BV(INT1);   //diable INT1 interrupt (PS input)
   _END_ATOMIC_BLOCK();
@@ -451,7 +478,11 @@ ISR(TIMER1_COMPA_vect)
 {
  uint16_t tmr = TCNT1;
  ((iocfg_pfn_set)hall.io_callback)(IGN_OUTPUTS_ON_VAL);
+#ifdef _PLATFORM_M644_
+ TIMSK1&= ~_BV(OCIE1A);
+#else
  TIMSK&= ~_BV(OCIE1A); //disable interrupt (запрещаем прерывание)
+#endif
 
  //-----------------------------------------------------
  //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
@@ -472,8 +503,13 @@ ISR(TIMER1_COMPA_vect)
  _DISABLE_INTERRUPT();
 #endif
 
+#ifdef _PLATFORM_M644_
+ TIFR1 = _BV(OCF1B);
+ TIMSK1|= _BV(OCIE1B);
+#else
  TIFR = _BV(OCF1B);
  TIMSK|= _BV(OCIE1B);
+#endif
 
 #ifdef HALL_OUTPUT
  IOCFG_SET(IOP_HALL_OUT, 1);//begin of pulse
@@ -484,8 +520,13 @@ ISR(TIMER1_COMPA_vect)
  {
   IOCFG_SET(IOP_STROBE, 1); //start pulse
   hall.strobe = 2;          //and set flag to next state
+#ifdef _PLATFORM_M644_
+  OCR1A = TCNT1 + 31;
+  TIMSK1|= _BV(OCIE1A);
+#else
   OCR1A = TCNT1 + 25;       //We will generate 100uS pulse
   TIMSK|= _BV(OCIE1A);      //pulse will be ended in the next interrupt
+#endif
  }
  else if (2==hall.strobe)
  {
@@ -502,7 +543,12 @@ ISR(TIMER1_COMPA_vect)
 ISR(TIMER1_COMPB_vect)
 {
  turn_off_ignition_channel();//finish ignition pulse
+#ifdef _PLATFORM_M644_
+ TIMSK1&= ~_BV(OCIE1B);
+#else
  TIMSK&= ~_BV(OCIE1B);      //disable interrupt (запрещаем прерывание)
+#endif
+
 #ifdef HALL_OUTPUT
  IOCFG_SET(IOP_HALL_OUT, 0);//end of pulse
 #endif
@@ -519,7 +565,11 @@ void set_timer0(uint16_t value)
 {
  TCNT0_H = _AB(value, 1);
  TCNT0 = ~(_AB(value, 0));  //One's complement is faster than 255 - low byte
+#ifdef _PLATFORM_M644_
+ TCCR0B = _BV(CS01)|_BV(CS00);
+#else
  TCCR0  = _BV(CS01)|_BV(CS00);
+#endif
 }
 
 /** Special function for processing falling edge,
@@ -563,8 +613,13 @@ void ProcessFallingEdge(uint16_t tmr)
 #endif
 
   OCR1A = tmr + ((delay < 15) ? 15 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
+#ifdef _PLATFORM_M644_
+  TIFR1 = _BV(OCF1A);
+  TIMSK1|= _BV(OCIE1A);
+#else
   TIFR = _BV(OCF1A);
   TIMSK|= _BV(OCIE1A);
+#endif
 
   //start timer for countiong out of knock window opening
   if (CHECKBIT(flags, F_USEKNK))
@@ -599,8 +654,13 @@ void ProcessRisingEdge(void)
 #endif
 
   OCR1A = TCNT1 + 2;
+#ifdef _PLATFORM_M644_
+  TIFR1 = _BV(OCF1A);
+  TIMSK1|= _BV(OCIE1A);
+#else
   TIFR = _BV(OCF1A);
   TIMSK|= _BV(OCIE1A);
+#endif
  }
 }
 
@@ -668,7 +728,11 @@ ISR(TIMER0_OVF_vect)
  }
  else
  {//the countdown is over (отсчет времени закончился)
+#ifdef _PLATFORM_M644_
+  TCCR0B = 0;
+#else
   TCCR0 = 0;     //stop timer (останавливаем таймер)
+#endif
 
   if (!hall.knkwnd_mode)
   {//start listening detonation (opening the window)

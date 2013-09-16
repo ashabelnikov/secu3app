@@ -31,6 +31,7 @@
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "tables.h"
+#include "uart.h"
 
 /**Helpful macro used for pointer conversion */
 #define _FNC(a) ((fnptr_t)(a))
@@ -48,7 +49,11 @@
 #define IOREMVER(maj, min) ((maj)<<4 | ((min) & 0xf))
 
 /**For specifying of dwell times in the lookup table*/
+#ifdef _PLATFORM_M644_
+#define _DLV(v) ROUND(((v)*312.5))
+#else
 #define _DLV(v) ROUND(((v)*250.0))
+#endif
 
 /**For specifying of choke position in the lookup table*/
 #define _CLV(v) ROUND(((v)*2.0))
@@ -140,7 +145,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
   _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22) | _CBV32(COPT_VREF_5V, 23) |
-  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(COPT_UART_BINARY, 25) | _CBV32(COPT_CKPS_2CHIGN, 26) | _CBV(COPT_ATMEGA644, 27),
+  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(COPT_UART_BINARY, 25) | _CBV32(COPT_CKPS_2CHIGN, 26) | _CBV32(COPT_ATMEGA644, 27),
 
   /**A reserved byte*/
   0,
@@ -198,7 +203,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  /**Резервные параметры Fill reserve parameters with default values */
  {1, 0, 0, 6, 6, 1920, 1900, 2100, 600, 6400, 650, 1600, -320, 0, 800, 4,
   4,10,392,384,_ACF,_ACC,_ACF,_ACC,_ACF,_ACC, 0, 20, 10, 96, 96, -320,
-  320, 066, 1089, 392, 1900, 2100, 0, 0x00CF, 8, 4, 0, 35, 0, 800, 23, 128,
+  320, 066, 1089, 392, 1900, 2100, 0, CBR_9600, 8, 4, 0, 35, 0, 800, 23, 128,
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
   _ACF,_ACC, _ACF,_ACC, 160, 1050, 0, 984, 200, 0x02, 0x00, {0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },

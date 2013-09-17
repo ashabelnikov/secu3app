@@ -120,6 +120,8 @@ void load_eeprom_params(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
   eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
 #endif
+  //write 4 bytes of magic number identifying platform
+  eeprom_write_P((void*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
  }
 }
 

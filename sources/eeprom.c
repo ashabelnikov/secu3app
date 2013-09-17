@@ -160,7 +160,7 @@ void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size)
  uint8_t _t;
  uint8_t _PGM *src = (uint8_t _PGM*)pgm_src;
  do
- { 
+ {
   uint8_t byte = PGM_GET_BYTE(src);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();

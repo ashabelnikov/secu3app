@@ -40,6 +40,9 @@
 /**Address of tables which can be edited in real time */
 #define EEPROM_REALTIME_TABLES_START (EEPROM_ECUERRORS_START + 16)
 
+/**Address of magic number in EEPROM (last 4 bytes) */
+#define EEPROM_MAGIC_START (E2END-3)
+
 //Interface of module (интерфейс модуля)
 
 /**Start writing process of EEPROM for selected block of data

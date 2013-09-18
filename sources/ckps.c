@@ -209,8 +209,12 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
 prog_uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX] =
+#ifdef _PLATFORM_M644_
  //     1          2          3          4         5         6         7         8
+ {0, 37500000L, 18750000L, 12500000L, 9375000L, 7500000L, 6250000L, 5357143L, 4687500L};
+#else
  {0, 30000000L, 15000000L, 10000000L, 7500000L, 6000000L, 5000000L, 4285714L, 3750000L};
+#endif
 
 void ckps_init_state_variables(void)
 {

@@ -914,8 +914,13 @@ static void process_ckps_cogs(void)
   if (CHECKBIT(flags, F_NTSCHB) && ckps.acc_delay <= (ckps.period_curr << 1))
   {
    OCR1B = GetICR() + ckps.acc_delay + ((int32_t)ckps.period_curr - ckps.period_saved);
+#ifdef _PLATFORM_M644_
+   TIFR1 = _BV(OCF1B);
+   timsk_sv1|= _BV(OCIE1B);
+#else
    TIFR = _BV(OCF1B);
    timsk_sv|= _BV(OCIE1B);
+#endif
    CLEARBIT(flags, F_NTSCHB); // To avoid entering into setup mode (чтобы не войти в режим настройки ещё раз)
   }
   ckps.acc_delay-=ckps.period_curr;

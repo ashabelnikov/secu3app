@@ -67,10 +67,49 @@
 //Mega64/644 compatibility - External interrupts, EEPROM
 #if defined(__ATmega16__) || defined(__ATmega32__)
  #define EIMSK GICR
-#elif defined(__AVR_ATmega644__)
+#elif defined(__ATmega644__)
+#ifndef EEWE
  #define EEWE EEPE
+#endif
+#ifndef EEMWE
  #define EEMWE EEMPE
 #endif
+#endif
+
+#if defined(__ATmega644__)
+#ifndef SPIE
+ #define SPIE SPIE0
+#endif
+#ifndef SPE
+ #define SPE SPE0
+#endif
+#ifndef MSTR
+ #define MSTR MSTR0
+#endif
+#ifndef SPR0
+ #define SPR0 SPR00
+#endif
+#ifndef CPHA
+ #define CPHA CPHA0
+#endif
+#ifndef SPIF
+ #define SPIF SPIF0
+#endif
+#endif
+
+ //EE_READY_vect is defined instead of EE_RDY_vect in iom644.h
+ #if defined(__ATmega644__)
+  #ifndef EE_RDY_vect
+   #define EE_RDY_vect EE_READY_vect
+  #endif
+ #endif
+
+ //USART0_RX_vect is defined instead of USART0_RXC_vect in iom644.h
+ #if defined(__ATmega644__)
+  #ifndef USART0_RXC_vect
+   #define USART0_RXC_vect USART0_RX_vect
+  #endif
+ #endif
 
 #else //AVR GCC
  #include <avr/io.h>    //device IO

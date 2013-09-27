@@ -65,7 +65,7 @@
 #endif
 
 //Mega64/644 compatibility - External interrupts, EEPROM
-#if defined(__ATmega16__) || dcefined(__ATmega32__)
+#if defined(__ATmega16__) || defined(__ATmega32__)
  #define EIMSK GICR
 #elif defined(__AVR_ATmega644__)
  #define EEWE EEPE

@@ -47,6 +47,7 @@
 #include "idlecon.h"
 #include "ignlogic.h"
 #include "immobiliz.h"
+#include "intkheat.h"
 #include "knklogic.h"
 #include "knock.h"
 #include "magnitude.h"
@@ -99,6 +100,10 @@ void control_engine_units(struct ecudata_t *d)
 #if defined(PHASE_SENSOR) || defined(SECU3T)
  //Cam sensor control
  cams_control();
+#endif
+
+#ifdef INTK_HEATING
+ intkheat_control(d);
 #endif
 }
 
@@ -160,6 +165,9 @@ void init_ports(void)
 #ifdef SM_CONTROL
  choke_init_ports();
 #endif
+#ifdef INTK_HEATING
+ intkheat_init_ports();
+#endif
 }
 
 /**Initialization of system modules
@@ -208,6 +216,11 @@ void init_modules(void)
 
 #ifdef SM_CONTROL
  choke_init();
+#endif
+
+ //initialization of intake manifold heating unit
+#ifdef INTK_HEATING
+ intkheat_init();
 #endif
 
  //инициализируем модуль ДПКВ

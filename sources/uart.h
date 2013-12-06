@@ -74,6 +74,19 @@
 #define  CBR_57600               0x0022 //!< 57600 baud
 #endif
 
+
+//Define ID for each baud rate value
+#define  CBRID_2400              0x0340 //!<  2400 baud ID
+#define  CBRID_4800              0x01A0 //!<  4800 baud ID
+#define  CBRID_9600              0x00CF //!<  9600 baud ID
+#define  CBRID_14400             0x008A //!< 14400 baud ID
+#define  CBRID_19200             0x0067 //!< 19200 baud ID
+#define  CBRID_28800             0x0044 //!< 28800 baud ID
+#define  CBRID_38400             0x0033 //!< 38400 baud ID
+#define  CBRID_57600             0x0022 //!< 57600 baud ID
+#define  CBRID_NUM               8      //!< Number of IDs
+
+
 #define  UART_RECV_BUFF_SIZE     82 //!< Size of receiver's buffer
 #define  UART_SEND_BUFF_SIZE     82 //!< Size of transmitter's buffer
 
@@ -119,8 +132,14 @@
  uint8_t uart_set_send_mode(uint8_t descriptor);
 
 /**Initialization of module
- * \param baud code of baud rate (divisor's value - see datasheet)
+ * \param baud ID of baud rate (divisor's value - see datasheet)            
  */
  void uart_init(uint16_t baud);
+
+/**Converts baud rate ID to baud rate value (divider value)
+ * \param id ID of the related baud rate
+ * \return value(divider value) of the baud rate
+ */
+ uint16_t convert_id_to_br(uint16_t id);
 
 #endif //_UART_H_

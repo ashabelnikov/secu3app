@@ -55,9 +55,9 @@ typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
 /**Set specified timer for specified period */
 #define s_timer16_set(T, V)  \
 {                            \
- _DISABLE_INTERRUPT();       \
+ _BEGIN_ATOMIC_BLOCK();      \
  (T) = (V);                  \
- _ENABLE_INTERRUPT();        \
+ _END_ATOMIC_BLOCK();        \
 }
 
 /**Check specified timer for action */

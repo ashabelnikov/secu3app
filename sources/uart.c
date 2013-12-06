@@ -913,8 +913,28 @@ void uart_append_send_buff(uint8_t ch)
  uart.send_buf[uart.send_size++] = ch;
 }
 
+#ifdef _PLATFORM_M644_
+/**Used to convert baud rate ID to baud rate value*/
+PGM_DECLARE(uint16_t brtoid[CBRID_NUM][2]) = {
+      {CBR_2400, CBRID_2400},   {CBR_4800, CBRID_4800},   {CBR_9600, CBRID_9600},   {CBR_14400, CBRID_14400}, 
+      {CBR_19200, CBRID_19200}, {CBR_28800, CBRID_28800}, {CBR_38400, CBRID_38400}, {CBR_57600, CBRID_57600}};
+
+uint16_t convert_id_to_br(uint16_t id)
+{
+ uint8_t i = 0;
+ for(; i < CBRID_NUM; ++i)
+  if (brtoid[i][1] == id)
+   return brtoid[i][0];
+ return CBR_9600; 
+}
+#endif
+
 void uart_init(uint16_t baud)
 {
+#ifdef _PLATFORM_M644_
+ baud = convert_id_to_br(baud);
+#endif
+
  // Set baud rate
  UBRRH = (uint8_t)(baud>>8);
  UBRRL = (uint8_t)baud;

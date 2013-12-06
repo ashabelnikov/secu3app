@@ -92,6 +92,10 @@ static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
 
 uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
 {
+#ifdef _PLATFORM_M644_
+ baud = convert_id_to_br(baud);
+#endif
+
  if (255 == bts.btbr_mode)
   return 1; //not enabled/stopped
 

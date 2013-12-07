@@ -148,9 +148,9 @@ PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
 /**Set edge type for PS input*/
 #define SET_PS_EDGE(type) {\
   if ((type)) \
-   MCUCR = (MCUCR | _BV(ISC11)) & ~_BV(ISC10); \
+   EICRA = (EICRA | _BV(ISC11)) & ~_BV(ISC10); \
   else \
-   MCUCR|=_BV(ISC11) | _BV(ISC10); }
+   EICRA|=_BV(ISC11) | _BV(ISC10); }
 
 void ckps_init_state_variables(void)
 {
@@ -699,13 +699,13 @@ ISR(INT1_vect)
 {
  uint16_t tmr = TCNT1;
  //toggle edge
- if (MCUCR & _BV(ISC10))
+ if (EICRA & _BV(ISC10))
  { //falling
   if (CHECKBIT(flags2, F_SELEDGE_P))
    ProcessRisingEdge();
   else
    ProcessFallingEdge(tmr);
-  MCUCR&= ~(_BV(ISC10));  //next edge will be rising
+  EICRA&= ~(_BV(ISC10));  //next edge will be rising
  }
  else
  { //rising
@@ -713,7 +713,7 @@ ISR(INT1_vect)
    ProcessFallingEdge(tmr);
   else
    ProcessRisingEdge();
-  MCUCR|=_BV(ISC10); //next will be falling
+  EICRA|=_BV(ISC10); //next will be falling
  }
 
  WRITEBIT(flags2, F_SHUTTER_S, CHECKBIT(flags2, F_SHUTTER)); //synchronize

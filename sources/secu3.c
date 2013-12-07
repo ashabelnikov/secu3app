@@ -185,7 +185,7 @@ void init_modules(void)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
-
+ 
  //Initialization of ADC
  adc_init();
 
@@ -194,7 +194,7 @@ void init_modules(void)
 
  //Take away of starter blocking (снимаем блокировку стартера)
  starter_set_blocking_state(0);
-
+ 
  //Initialization of UART (инициализируем UART)
  uart_init(edat.param.uart_divisor);
 
@@ -267,6 +267,11 @@ MAIN()
  uint8_t turnout_low_priority_errors_counter = 255;
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
+
+#ifdef _PLATFORM_M644_
+ //We need this because we might been reset by WDT
+ wdt_turnoff_timer();
+#endif
 
  //подготовка структуры данных переменных состояния системы
  init_ecu_data(&edat);
@@ -353,7 +358,7 @@ MAIN()
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(&edat, 0);
   }
-
+  
   //----------непрерывное выполнение-----------------------------------------
   //выполнение отложенных операций
   sop_execute_operations(&edat);
@@ -395,7 +400,7 @@ MAIN()
    else
     ckps_enable_ignition(1);
   }
-
+ 
 #ifdef DIAGNOSTICS
   diagnost_process(&edat);
 #endif
@@ -454,7 +459,7 @@ MAIN()
    if (turnout_low_priority_errors_counter > 0)
     turnout_low_priority_errors_counter--;
   }
-
+  
   wdt_reset_timer();
  }//main loop
  //------------------------------------------------------------------------

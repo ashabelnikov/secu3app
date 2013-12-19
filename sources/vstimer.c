@@ -33,18 +33,19 @@
 #include "secu3.h"
 #include "vstimer.h"
 
-
+#ifdef _PLATFORM_M644_
+/**Reload count for system timer's divider, to obtain approximately 10 ms from 1.6384 ms,
+ frequency will be divided by 6 */
+#define DIVIDER_RELOAD       5
+#else
 /**Addition value for compare register */
 #define COMPADD              5
 
-#ifdef _PLATFORM_M644_
-#define TIMER2_RELOAD_VALUE  0
-#define DIVIDER_RELOAD       5
-#else
 /**Reload value for timer 2 */
 #define TIMER2_RELOAD_VALUE  6               //for 2 ms
 
-/**Reload count for system timer's divider, to obtain 10 ms from 2 ms */
+/**Reload count for system timer's divider, to obtain 10 ms from 2 ms,
+ frequency will be divided by 5 */
 #define DIVIDER_RELOAD       4
 #endif
 
@@ -80,15 +81,13 @@ extern uint8_t sm_pulse_state;
  */
 ISR(TIMER2_OVF_vect)
 {
+#ifndef _PLATFORM_M644_
  TCNT2 = TIMER2_RELOAD_VALUE;
 
 #ifdef COOLINGFAN_PWM
  //for PWM's generation (for cooling fan). We need to reinitialize OCR2 because it looses correct value
  //(I guess) after TCNT2 write. Compare interrupt shifted in time from overflow interrupt by COMPADD
  //value
-#ifdef _PLATFORM_M644_
- OCR2A = TIMER2_RELOAD_VALUE + COMPADD;
-#else
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
 #endif
 #endif

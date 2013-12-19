@@ -54,14 +54,18 @@
 #endif
 #endif //COOLINGFAN_PWM
 
-/**Warning must be the same as another definition in vstimer.h!*/
-#define TIMER2_RELOAD_VALUE  6
+#ifdef _PLATFORM_M644_
+ /**Warning must be the same as another definition in vstimer.h!*/
+ #define TIMER2_RELOAD_VALUE  0
+ /**number of PWM discretes for 5kHz */
+ #define PWM_STEPS 31
+#else
+ #define TIMER2_RELOAD_VALUE  6
+ #define PWM_STEPS 25
+#endif
 
 /**will be added to TIMER2_RELOAD_VALUE at the initialization */
 #define COMPADD 5
-
-/**number of PWM discretes */
-#define PWM_STEPS 25
 
 volatile uint8_t pwm_state; //!< For state machine. 0 - passive, 1 - active
 volatile uint8_t pwm_duty;  //!< current duty value

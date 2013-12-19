@@ -76,7 +76,6 @@ void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size);
  */
 void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
 
-#ifdef REALTIME_TABLES
 /**Writes specified block of data from FLASH into EEPROM (without using of interrupts)
  * записывает указанный блок данных в EEPROM (без использования прерываний)
  * \param sram_src address of buffer in the FLASH wich contains data to write
@@ -84,7 +83,6 @@ void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
  * \param size size of block of data to write
  */
 void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size);
-#endif
 
 /**Returns code of last finished operation (code which was passed into eeprom_start_wr_data())
  * возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())

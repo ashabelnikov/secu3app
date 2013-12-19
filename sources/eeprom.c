@@ -154,7 +154,6 @@ void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size)
  EEAR=0x000; //this will help to prevent corruption of EEPROM
 }
 
-#ifdef REALTIME_TABLES
 void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size)
 {
  uint8_t _t;
@@ -175,4 +174,3 @@ void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size)
 
  EEAR=0x000; //this will help to prevent corruption of EEPROM
 }
-#endif

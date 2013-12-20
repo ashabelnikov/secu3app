@@ -68,7 +68,6 @@ typedef struct sensors_t
  uint16_t inst_frq;                      //!< Instant RPM - not averaged  (мгновенная частота вращения)
  uint8_t  carb;                          //!< State of carburetor's limit switch (состояние концевика карбюратора)
  uint8_t  gas;                           //!< State of gas valve (состояние газового клапана)
- uint16_t frequen4;                      //!< RPM averaged by using only 4 samples (частота усредненная всего по 4-м выборкам)
  uint16_t knock_k;                       //!< Knock signal level (уровень сигнала детонации)
  uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
  uint16_t add_i1;                        //!< ADD_I1 input voltage

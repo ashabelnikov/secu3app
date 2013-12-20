@@ -76,14 +76,14 @@ void fuelpump_control(struct ecudata_t* d)
    }
 
    //reset timer periodically if engine is still running
-   if (d->sens.frequen4 > 0)
+   if (d->sens.frequen > 0)
     s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
 
    break;
 
   case 1: //pump is turned off
    //Do not turn on pump if gas valve is turned on
-   if (!d->sens.gas && d->sens.frequen4 > 0)
+   if (!d->sens.gas && d->sens.frequen > 0)
    {
     TURN_ON_ELPUMP(1); //turn on
     s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);

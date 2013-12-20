@@ -33,7 +33,7 @@
 
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
 {
- if (d->sens.frequen4 > d->param.starter_off)
+ if (d->sens.frequen > d->param.starter_off)
  {
   //This is very simple algorithm to determine is knock present. We must
   //improve it in the nearest future.

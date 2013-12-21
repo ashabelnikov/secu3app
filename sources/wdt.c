@@ -36,6 +36,7 @@ void wdt_start_timer(void)
 #ifdef _PLATFORM_M644_
  if (!(WDTCSR & _BV(WDE)))
  { //not started yet
+  WDTCSR = _BV(WDCE) | _BV(WDE);
   WDTCSR = _BV(WDP0) | _BV(WDE);
  }
 #else

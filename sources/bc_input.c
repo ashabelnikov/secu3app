@@ -124,6 +124,8 @@ void bc_indication_mode(struct ecudata_t *d)
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
  IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
 
+ wdt_reset_timer();
+
  //delay 2 sec.
  delay_hom(20);
 

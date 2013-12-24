@@ -229,8 +229,14 @@ void diagnost_process(struct ecudata_t* d)
  //perform initialization of digital inputs
  init_digital_inputs();
 
+#ifdef _PLATFORM_M644_
+ TIMSK0&=~(_BV(OCIE0A)|_BV(OCIE0B)|_BV(TOIE0));
+ TIMSK1&=~(_BV(ICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1));
+ TIMSK2&=~(_BV(OCIE2A)|_BV(OCIE2B));
+#else
  //Diasable unneeded interrupts
  TIMSK&=~(_BV(OCIE2)|_BV(TICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1)|_BV(OCIE0)|_BV(TOIE0));
+#endif
 
  //local loop
  while(1)
@@ -261,7 +267,7 @@ void diagnost_process(struct ecudata_t* d)
     if (adc_is_measure_ready())
     {
      knock_set_integration_mode(KNOCK_INTMODE_INT);
-     _DELAY_CYCLES(16000);  //1ms
+     _DELAY_US(1000);   //1ms
      diag.fsm_state = 2;
     }
     break;
@@ -281,7 +287,7 @@ void diagnost_process(struct ecudata_t* d)
 #ifdef SECU3T
      ++diag.ksp_channel;  //select next channel
 #endif
-     _DELAY_CYCLES(1600);
+     _DELAY_US(100);
      diag.fsm_state = 0;
     }
     break;
@@ -302,7 +308,7 @@ void diagnost_process(struct ecudata_t* d)
 #else /*SECU-3*/
    d->diag_inp.add_io1 = 0;      //not supported in SECU-3
    d->diag_inp.add_io2 = 0;      //not supported in SECU-3
-   d->diag_inp.carb = PINC_Bit5; //in SECU-3 it is digital input
+   d->diag_inp.carb = (CHECKBIT(PINC, PINC5) > 0); //in SECU-3 it is digital input
    d->diag_inp.ks_2 = 0;         //not supported in SECU-3
 #endif
 

@@ -85,7 +85,7 @@ void cams_init_state_variables(void)
  camstate.prev_level = GET_CAMSTATE();
 #endif
  camstate.cam_ok = 0; //not Ok
- camstate.err_threshold = 65 * 2;
+//camstate.err_threshold = 65 * 2;
  camstate.err_counter = 0;
  camstate.event = 0;
 #ifdef SECU3T
@@ -114,8 +114,8 @@ void cams_init_state(void)
 
 #ifdef SECU3T /*SECU-3T*/
  //interrupt edge for Hall input depends on PS inversion, interrupt by rising edge for VR input
- MCUCR|= _BV(ISC11) | ((IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0);
- MCUCR|= _BV(ISC01) | _BV(ISC00);
+ EICRA|= _BV(ISC11) | ((IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0);
+ EICRA|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
  if (CHECKBIT(flags, F_CAMSIA))
   EIMSK|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
@@ -192,9 +192,9 @@ void cams_vr_set_edge_type(uint8_t edge_type)
 {
  _BEGIN_ATOMIC_BLOCK();
  if (edge_type)
-  MCUCR|= _BV(ISC00); //rising
+  EICRA|= _BV(ISC00); //rising
  else
-  MCUCR&= ~_BV(ISC00);//falling
+  EICRA&= ~_BV(ISC00);//falling
  _END_ATOMIC_BLOCK();
 }
 #endif //SECU3T

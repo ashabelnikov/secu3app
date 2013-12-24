@@ -58,11 +58,7 @@
 
 /**Number of values for averaging of RPM for tachometer
  * кол-во значений для усреднения частоты вращения к.в. для оборотов тахометра */
-#define FRQ_AVERAGING           16
-
-/**Number of values for avaraging of RPM for starter blocking
- * кол-во значений для усреднения частоты вращения к.в. для блокировки страртера */
-#define FRQ4_AVERAGING          4
+#define FRQ_AVERAGING           4
 
 //размер буферов усреднения по каждому аналоговому датчику
 #define MAP_AVERAGING           4                 //!< Number of values for averaging of pressure (MAP)
@@ -78,7 +74,6 @@
 #endif
 
 uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
-uint16_t freq4_circular_buffer[FRQ4_AVERAGING];   //!< Ring buffer for RPM averaging for starter blocking (буфер усреднения частоты вращения коленвала для блокировки стартера)
 uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaring of MAP sensor (буфер усреднения абсолютного давления)
 uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaring of voltage (буфер усреднения напряжения бортовой сети)
 uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaring of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
@@ -99,7 +94,6 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  static uint8_t  bat_ai  = BAT_AVERAGING-1;
  static uint8_t  tmp_ai  = TMP_AVERAGING-1;
  static uint8_t  frq_ai  = FRQ_AVERAGING-1;
- static uint8_t  frq4_ai = FRQ4_AVERAGING-1;
 #ifdef SECU3T
  static uint8_t  tps_ai  = TPS_AVERAGING-1;
  static uint8_t  ai1_ai  = AI1_AVERAGING-1;
@@ -111,9 +105,6 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
  (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
-
- freq4_circular_buffer[frq4_ai] = d->sens.inst_frq;
- (frq4_ai==0) ? (frq4_ai = FRQ4_AVERAGING - 1): frq4_ai--;
 
  if (rpm_only)
   return;
@@ -188,10 +179,6 @@ void meas_average_measured_values(struct ecudata_t* d)
  for (sum=0,i = 0; i < FRQ_AVERAGING; i++)  //усредняем частоту вращения коленвала
   sum+=freq_circular_buffer[i];
  d->sens.frequen=(sum/FRQ_AVERAGING);
-
- for (sum=0,i = 0; i < FRQ4_AVERAGING; i++) //усредняем частоту вращения коленвала
-  sum+=freq4_circular_buffer[i];
- d->sens.frequen4=(sum/FRQ4_AVERAGING);
 
 #if defined(SPEED_SENSOR) && defined(SECU3T)
  for (sum=0,i = 0; i < SPD_AVERAGING; i++)  //average periods from speed sensor

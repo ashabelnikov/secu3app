@@ -24,6 +24,7 @@
  * (Реализация функциональности для работы с параметрами (сохранение/восстановление/проверка)).
  */
 
+#include "port/avrio.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
 
@@ -74,7 +75,7 @@ void reset_eeprom_params(struct ecudata_t* d)
  while(!eeprom_is_idle() && --i)
  {
   wdt_reset_timer();
-  _DELAY_CYCLES(16000); //1ms
+  _DELAY_US(1000);      //1ms
  }
  _DISABLE_INTERRUPT();
 
@@ -120,6 +121,8 @@ void load_eeprom_params(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
   eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
 #endif
+  //write 4 bytes of magic number identifying platform
+  eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
  }
 }
 

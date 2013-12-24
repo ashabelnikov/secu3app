@@ -52,7 +52,7 @@ void delay_hom(uint8_t hom)
  {
   uint8_t i = 10;
   do {
-   _DELAY_CYCLES(160000);  //10ms
+   _DELAY_US(10000);       //10ms
    wdt_reset_timer();
   }while(--i);
  }while(--hom);
@@ -123,6 +123,8 @@ void bc_indication_mode(struct ecudata_t *d)
  IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
  IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
+
+ wdt_reset_timer();
 
  //delay 2 sec.
  delay_hom(20);

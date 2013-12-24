@@ -54,14 +54,18 @@
 #endif
 #endif //COOLINGFAN_PWM
 
-/**Warning must be the same as another definition in vstimer.h!*/
-#define TIMER2_RELOAD_VALUE  6
+#ifdef _PLATFORM_M644_
+ /**Warning must be the same as another definition in vstimer.h!*/
+ #define TIMER2_RELOAD_VALUE  0
+ /**number of PWM discretes for 5kHz */
+ #define PWM_STEPS 31
+#else
+ #define TIMER2_RELOAD_VALUE  6
+ #define PWM_STEPS 25
+#endif
 
 /**will be added to TIMER2_RELOAD_VALUE at the initialization */
 #define COMPADD 5
-
-/**number of PWM discretes */
-#define PWM_STEPS 25
 
 volatile uint8_t pwm_state; //!< For state machine. 0 - passive, 1 - active
 volatile uint8_t pwm_duty;  //!< current duty value
@@ -79,7 +83,11 @@ void vent_init_state(void)
 {
  pwm_state = 0;  //begin from active level
  pwm_duty = 0;   // 0%
+#ifdef _PLATFORM_M644_
+ OCR2A = TIMER2_RELOAD_VALUE + COMPADD;
+#else
  OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
+#endif
 }
 
 #ifdef COOLINGFAN_PWM
@@ -95,38 +103,62 @@ void vent_set_duty(uint8_t duty)
  if (duty == 0)
  {
   _DISABLE_INTERRUPT();
+#ifdef _PLATFORM_M644_
+  TIMSK2&=~_BV(OCIE2A);
+#else
   TIMSK&=~_BV(OCIE2);
+#endif
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNOFF();
  }
  else if (duty == PWM_STEPS)
  {
   _DISABLE_INTERRUPT();
+#ifdef _PLATFORM_M644_
+  TIMSK2&=~_BV(OCIE2A);
+#else
   TIMSK&=~_BV(OCIE2);
+#endif
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNON();
  }
  else
  {
   _DISABLE_INTERRUPT();
+#ifdef _PLATFORM_M644_
+  TIMSK2|=_BV(OCIE2A);
+#else
   TIMSK|=_BV(OCIE2);
+#endif
   _ENABLE_INTERRUPT();
  }
 }
 
 /**T/C 2 Compare interrupt for generating of PWM (cooling fan control)*/
+#ifdef _PLATFORM_M644_
+ISR(TIMER2_COMPA_vect)
+#else
 ISR(TIMER2_COMP_vect)
+#endif
 {
  if (0 == pwm_state)
  { //start active part
   COOLINGFAN_TURNON();
+#ifdef _PLATFORM_M644_
+  OCR2A+= pwm_duty;
+#else
   OCR2+= pwm_duty;
+#endif
   ++pwm_state;
  }
  else
  { //start passive part
   COOLINGFAN_TURNOFF();
+#ifdef _PLATFORM_M644_
+  OCR2A+= (PWM_STEPS - pwm_duty);
+#else
   OCR2+= (PWM_STEPS - pwm_duty);
+#endif
   --pwm_state;
  }
 }
@@ -151,7 +183,11 @@ void vent_control(struct ecudata_t *d)
  { //relay
   //We don't need interrupts for relay control
   _DISABLE_INTERRUPT();
+#ifdef _PLATFORM_M644_
+  TIMSK2&=~_BV(OCIE2A);
+#else
   TIMSK&=~_BV(OCIE2);
+#endif
   _ENABLE_INTERRUPT();
 
   if (d->sens.temperat >= d->param.vent_on)

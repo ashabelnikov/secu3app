@@ -38,7 +38,7 @@ void bt_init(uint8_t en_set_baud);
 
 /** Sets bluetooth baud rate. Must be called subsequently until it return non-zero
  * \param d Pointer to ECU data structure
- * \param baud Baud rate code (see uart.h for more information)
+ * \param baud ID of baud rate (see uart.h for more information)
  * \return value > 0 if baud rate is set, 0 if baud rate is not set yet
  */
 uint8_t bt_set_baud(struct ecudata_t* d, uint16_t baud);

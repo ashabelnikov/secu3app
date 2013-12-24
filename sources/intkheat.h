@@ -19,25 +19,29 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file wdt.h
- * Watchdog timer API (Модуль сторожевого таймера)
+/** \file intkheat.h
+ * Intake manifold heating control.
+ * (Управление подогревом впускного коллектора).
  */
 
-#ifndef _WDT_H_
-#define _WDT_H_
+#ifndef _INTKHEAT_H_
+#define _INTKHEAT_H_
 
-/** Starts watchdog timer if it is not started yet */
-void wdt_start_timer(void);
+#ifdef INTK_HEATING
 
-/** Reset watchdog timer */
-void wdt_reset_timer(void);
+struct ecudata_t;
 
-/** Reset device using watchdog */
-void wdt_reset_device(void);
+/** Initialization of used I/O ports (Инициализация используемых портов) */
+void intkheat_init_ports(void);
 
-#ifdef _PLATFORM_M644_
-/** Turn off watchdog timer */
-void wdt_turnoff_timer(void);
-#endif 
+/** Initialization of the module */
+void intkheat_init(void);
 
-#endif //_WDT_H_
+/** Performs control of intake manifold heating
+ * \param d Pointer to ECU data structure
+ */
+void intkheat_control(struct ecudata_t *d);
+
+#endif //INTK_HEATING
+
+#endif //_INTKHEAT_H_

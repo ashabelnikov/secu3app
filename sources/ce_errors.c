@@ -110,8 +110,8 @@ void check(struct ecudata_t* d)
   ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
 
  //checking MAP sensor. TODO: implement additional check
- // error if voltage < 0.15v
- if (d->sens.map_raw < ROUND(0.15 / ADC_DISCRETE) && d->sens.carb)
+ // error if voltage < 0.1v
+ if (d->sens.map_raw < ROUND(0.1 / ADC_DISCRETE) && d->sens.carb)
   ce_set_error(ECUERROR_MAP_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);

@@ -32,7 +32,7 @@
 #include <stdint.h>
 
 /** Get current period between speed pulses
- * \return Value in us multiplied by 4
+ * \return Value in us multiplied by 4 (when clock=16mHz), by 3.2 (when clock=20mHz)
  */
 uint16_t spdsens_get_period(void);
 

@@ -25,8 +25,8 @@
 #ifdef __ICCAVR__
  #include <ioavr.h>     //device IO
 
-//Mega64 compatibility
-#ifdef __ATmega64__
+//Mega64/644 compatibility - UART registers
+#if defined(__ATmega64__) || defined(__ATmega644__)
 #ifndef RXEN
  #define RXEN  RXEN0
 #endif
@@ -64,31 +64,73 @@
  #define USART_RXC_vect USART0_RXC_vect
 #endif
 
-#ifdef __ATmega16__
+//Mega64/644 compatibility - External interrupts, EEPROM
+#if defined(__ATmega16__) || defined(__ATmega32__)
  #define EIMSK GICR
-#elif __ATmega32__
- #define EIMSK GICR
+ #define EICRA MCUCR
+#elif defined(__ATmega644__)
+#ifndef EEWE
+ #define EEWE EEPE
 #endif
+#ifndef EEMWE
+ #define EEMWE EEMPE
+#endif
+#endif
+
+#if defined(__ATmega644__)
+#ifndef SPIE
+ #define SPIE SPIE0
+#endif
+#ifndef SPE
+ #define SPE SPE0
+#endif
+#ifndef MSTR
+ #define MSTR MSTR0
+#endif
+#ifndef SPR0
+ #define SPR0 SPR00
+#endif
+#ifndef CPHA
+ #define CPHA CPHA0
+#endif
+#ifndef SPIF
+ #define SPIF SPIF0
+#endif
+#endif
+
+ //EE_READY_vect is defined instead of EE_RDY_vect in iom644.h
+ #if defined(__ATmega644__)
+  #ifndef EE_RDY_vect
+   #define EE_RDY_vect EE_READY_vect
+  #endif
+ #endif
+
+ //USART0_RX_vect is defined instead of USART0_RXC_vect in iom644.h
+ #if defined(__ATmega644__)
+  #ifndef USART0_RXC_vect
+   #define USART0_RXC_vect USART0_RX_vect
+  #endif
+ #endif
 
 #else //AVR GCC
  #include <avr/io.h>    //device IO
 
  //Who can tell me why I must do this?
- #ifdef __AVR_ATmega64__
+ #if defined(__AVR_ATmega64__) || defined(__AVR_ATmega644__)
   #ifndef EE_RDY_vect
    #define EE_RDY_vect EE_READY_vect
   #endif
  #endif
 
  //Again...
- #ifdef __AVR_ATmega64__
+ #if defined(__AVR_ATmega64__)  || defined(__AVR_ATmega644__)
   #ifndef USART0_RXC_vect
    #define USART0_RXC_vect USART0_RX_vect
   #endif
  #endif
 
-//Mega64 compatibility
-#ifdef __AVR_ATmega64__
+//Mega64/644 compatibility - UART registers
+#if defined(__AVR_ATmega64__) || defined(__AVR_ATmega644__)
 #ifndef RXEN
  #define RXEN  RXEN0
 #endif
@@ -126,10 +168,13 @@
  #define USART_RXC_vect USART0_RXC_vect
 #endif
 
-#ifdef __AVR_ATmega16__
+//Mega64/644 compatibility - External interrupts, EEPROM
+#if defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__)
  #define EIMSK GICR
-#elif __AVR_ATmega32__
- #define EIMSK GICR
+ #define EICRA MCUCR
+#elif defined(__AVR_ATmega644__)
+ #define EEWE EEPE
+ #define EEMWE EEMPE
 #endif
 
 #endif

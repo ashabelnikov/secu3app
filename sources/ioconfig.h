@@ -67,7 +67,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_SM_STP       25     //!< SM_STP          (output)
 #define IOP_MAPSEL0      26     //!< MAPSEL0         (input)
 #define IOP_SPDSENS      27     //!< SPD_SENS        (input)
-#define IOP_RESERVED11   28     //!< reserved plug   ()
+#define IOP_INTK_HEAT    28     //!< INTK_HEAT       (output)
 #define IOP_RESERVED12   29     //!< reserved plug   ()
 #define IOP_RESERVED13   30     //!< reserved plug   ()
 #define IOP_RESERVED14   31     //!< reserved plug   ()

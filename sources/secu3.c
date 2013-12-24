@@ -47,6 +47,7 @@
 #include "idlecon.h"
 #include "ignlogic.h"
 #include "immobiliz.h"
+#include "intkheat.h"
 #include "knklogic.h"
 #include "knock.h"
 #include "magnitude.h"
@@ -99,6 +100,10 @@ void control_engine_units(struct ecudata_t *d)
 #if defined(PHASE_SENSOR) || defined(SECU3T)
  //Cam sensor control
  cams_control();
+#endif
+
+#ifdef INTK_HEATING
+ intkheat_control(d);
 #endif
 }
 
@@ -160,6 +165,9 @@ void init_ports(void)
 #ifdef SM_CONTROL
  choke_init_ports();
 #endif
+#ifdef INTK_HEATING
+ intkheat_init_ports();
+#endif
 }
 
 /**Initialization of system modules
@@ -177,7 +185,7 @@ void init_modules(void)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
-
+ 
  //Initialization of ADC
  adc_init();
 
@@ -186,7 +194,7 @@ void init_modules(void)
 
  //Take away of starter blocking (снимаем блокировку стартера)
  starter_set_blocking_state(0);
-
+ 
  //Initialization of UART (инициализируем UART)
  uart_init(edat.param.uart_divisor);
 
@@ -208,6 +216,11 @@ void init_modules(void)
 
 #ifdef SM_CONTROL
  choke_init();
+#endif
+
+ //initialization of intake manifold heating unit
+#ifdef INTK_HEATING
+ intkheat_init();
 #endif
 
  //инициализируем модуль ƒѕ ¬
@@ -254,6 +267,11 @@ MAIN()
  uint8_t turnout_low_priority_errors_counter = 255;
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
+
+#ifdef _PLATFORM_M644_
+ //We need this because we might been reset by WDT
+ wdt_turnoff_timer();
+#endif
 
  //подготовка структуры данных переменных состо€ни€ системы
  init_ecu_data(&edat);
@@ -331,7 +349,7 @@ MAIN()
     //на его выходе упадет до минимума). ¬ данном случае нет ничего страшного в том, что мы держим прерывани€
     //запрещенными 20-25мкс, так как это проискодит на очень маленьких оборотах.
     knock_set_integration_mode(KNOCK_INTMODE_INT);
-    _DELAY_CYCLES(350);
+    _DELAY_US(22);
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
     adc_begin_measure_all(); //измер€ем сигнал с ƒƒ тоже
     _ENABLE_INTERRUPT();
@@ -340,7 +358,7 @@ MAIN()
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(&edat, 0);
   }
-
+  
   //----------непрерывное выполнение-----------------------------------------
   //выполнение отложенных операций
   sop_execute_operations(&edat);
@@ -382,7 +400,7 @@ MAIN()
    else
     ckps_enable_ignition(1);
   }
-
+ 
 #ifdef DIAGNOSTICS
   diagnost_process(&edat);
 #endif
@@ -441,7 +459,7 @@ MAIN()
    if (turnout_low_priority_errors_counter > 0)
     turnout_low_priority_errors_counter--;
   }
-
+  
   wdt_reset_timer();
  }//main loop
  //------------------------------------------------------------------------

@@ -61,9 +61,9 @@ void idlecon_control(struct ecudata_t* d)
  else
   if (d->sens.gas) //gas (газовое топливо)
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d->sens.frequen > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.frequen > d->param.ie_hit_g)))?0:1;
+   &&(((d->sens.inst_frq > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit_g)))?0:1;
   else //gasoline (бензин)
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d->sens.frequen > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.frequen > d->param.ie_hit)))?0:1;
+   &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
  SET_IE_VALVE_STATE(d->ie_valve);
 }

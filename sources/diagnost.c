@@ -245,6 +245,9 @@ void diagnost_process(struct ecudata_t* d)
  //Diasable unneeded interrupts
  TIMSK&=~(_BV(OCIE2)|_BV(TICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1)|_BV(OCIE0)|_BV(TOIE0));
 #endif
+ 
+ //Disable external interrupts
+ EIMSK&=  ~(_BV(INT0) | _BV(INT1) | _BV(INT2));
 
  //local loop
  while(1)

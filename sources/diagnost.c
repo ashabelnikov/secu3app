@@ -181,6 +181,14 @@ void set_outputs(uint16_t o)
 #else         /*SECU-3*/
  WRITEBIT(PORTD, PD7,!(o & _OBV(10)));
 #endif
+
+ //BL
+ WRITEBIT(PORTC, PC3, (o & _OBV(11)));
+ WRITEBIT(DDRC, DDC3, (o & _OBV(12)));   //select mode: input/output
+
+ //DE
+ WRITEBIT(PORTC, PC2, (o & _OBV(13)));
+ WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
 }
 
 /**Initialization of digital inputs in diagnostic mode*/
@@ -237,6 +245,9 @@ void diagnost_process(struct ecudata_t* d)
  //Diasable unneeded interrupts
  TIMSK&=~(_BV(OCIE2)|_BV(TICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1)|_BV(OCIE0)|_BV(TOIE0));
 #endif
+ 
+ //Disable external interrupts
+ EIMSK&=  ~(_BV(INT0) | _BV(INT1) | _BV(INT2));
 
  //local loop
  while(1)

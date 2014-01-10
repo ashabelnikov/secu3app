@@ -129,7 +129,7 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
 #endif
 
- if (d->knock_use_knock_channel)
+ if (d->param.knock_use_knock_channel)
  {
 #ifdef VREF_5V
   d->sens.knock_k = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));

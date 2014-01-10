@@ -166,11 +166,16 @@ void process_uart_interface(struct ecudata_t* d)
    case KNOCK_PAR:
     //аналогично для контороля детонации, обязательно после CKPS_PAR!
     //инициализируем процессор детонации в случае если он не использовался, а теперь поступила команда его использовать.
-    if (!d->use_knock_channel_prev && d->param.knock_use_knock_channel)
-     if (!knock_module_initialize())
-     {//чип сигнального процессора детонации неисправен - зажигаем СЕ
-      ce_set_error(ECUERROR_KSP_CHIP_FAILED);
-     }
+    if (d->param.knock_use_knock_channel)
+    {
+     if (!d->use_knock_channel_prev)
+      if (!knock_module_initialize())
+      {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+       ce_set_error(ECUERROR_KSP_CHIP_FAILED);
+      }
+    }
+    else //if knock detection has turned off then reset possible error
+     ce_clear_error(ECUERROR_KNOCK_DETECTED);
 
     knock_set_band_pass(d->param.knock_bpf_frequency);
     //gain устанавливается в каждом рабочем цикле

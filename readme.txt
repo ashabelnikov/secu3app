@@ -108,6 +108,16 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
                          Использовать бинарный режим при передаче данных через
                          UART вместо ASCII
 
+    SPEED_SENSOR   *     Include speed sensor support
+                         Включить поддержку датчика скорости
+
+    INTK_HEATING   *     Include support of intake manifold heating control
+                         Включить поддержку управления подогревом впускного коллектора
+
+* means that option is internal and not displayed in the list of options in the SECU-3 Manager
+  означает что опция является внутренней и не отображается в списке опций в SECU-3 Manager
+
+
 Necessary symbols you can define in the preprocessor's options of the compiler
 (edit corresponding Makefile).
 Нужные вам символы вы можете определить в опциях препроцессора компилятора 

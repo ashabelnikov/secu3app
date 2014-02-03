@@ -37,9 +37,6 @@
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
-/**Startup choke closing correction value, 10% */
-#define STARTUP_CORR_VAL  (10*2)
-
 /**Startup choke closing correction time, 3 sec. */
 #define STARTUP_CORR_TIME (3*100)
 
@@ -94,7 +91,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    return 0; //do not use correction
  }
 
- return (((int32_t)d->param.sm_steps) * STARTUP_CORR_VAL) / 200;
+ return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
 }
 
 /** Set choke to initial position. Because we have no position feedback, we

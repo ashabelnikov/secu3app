@@ -80,6 +80,8 @@
 #define COIL_ON_TIME_LOOKUP_TABLE_SIZE  32          //!< number of points in lookup table used for dwell control
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
 #define CHOKE_CLOSING_LOOKUP_TABLE_SIZE 16          //!< Size of lookup table defining choke closing versus coolant temperature
+#define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
+#define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
 
 /** оличество наборов таблиц хранимых в пам€ти программ
  * Number of sets of tables stored in the firmware */
@@ -136,8 +138,23 @@ typedef struct fw_ex_data_t
   /**Voltage corresponding to the end of axis*/
   uint16_t cts_vl_end;
 
-  /*Choke closing versus coolant temperature */
+  /**Choke closing versus coolant temperature */
   uint8_t choke_closing[CHOKE_CLOSING_LOOKUP_TABLE_SIZE];
+
+  /**Air temperature sensor lookup table*/
+  int16_t ats_curve[THERMISTOR_LOOKUP_TABLE_SIZE];
+  /**Voltage corresponding to the beginning of axis*/
+  uint16_t ats_vl_begin;
+  /**Voltage corresponding to the end of axis*/
+  uint16_t ats_vl_end;
+
+  /**Air temperature correction of advance angle*/
+  int8_t ats_corr[ATS_CORR_LOOKUP_TABLE_SIZE];
+
+  /**Points of the RPM grid*/
+  int16_t rpm_grid_points[RPM_GRID_SIZE];
+  /**Sizes of cells in RPM grid (so, we don't need to calculate them at the runtime)*/
+  int16_t rpm_grid_sizes[RPM_GRID_SIZE-1];
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -145,7 +162,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[6];
+  uint8_t reserved[8];
 }fw_ex_data_t;
 
 /**ќписывает параметры системы
@@ -255,13 +272,19 @@ typedef struct params_t
 
   uint8_t hall_flags;                    //!< Hall sensor related flags
 
+  uint16_t choke_rpm[2];                 //!< Values of RPM needed for RPM-based control of choke position
+  uint8_t ibtn_keys[2][6];               //!< iButton keys for immobilizer
+
+  uint8_t choke_startup_corr;            //!< Startup correction value for choke (0...200)
+  uint16_t choke_rpm_if;                 //!< Integral factor for RPM-based control of choke position (factor * 1024)
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[2];
+  uint8_t  reserved[5];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

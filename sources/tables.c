@@ -196,6 +196,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {_CLV(100.0), _CLV(99.0), _CLV(98.0), _CLV(96.0), _CLV(95.0), _CLV(92.0), _CLV(86.0), _CLV(78.0),
    _CLV(69.0),  _CLV(56.0), _CLV(50.0), _CLV(40.0), _CLV(25.0), _CLV(12.0), _CLV(5.0),  _CLV(0)},
 
+  /**Fill air temperature sensor lookup table (temperature vs voltage)*/
+  {_TLV(120.0), _TLV(95.0), _TLV(79.0), _TLV(66.5), _TLV(57.4), _TLV(49.5), _TLV(43.8), _TLV(37.9),
+   _TLV(31.0), _TLV(24.8), _TLV(19.8), _TLV(13.8), _TLV(6.0), _TLV(-1.0), _TLV(-12.5), _TLV(-30.0)},
+   ROUND(0.182 / ADC_DISCRETE), ROUND(4.25 / ADC_DISCRETE),
+
+  /**Fill air temperature lookup table for advance angle correction*/
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+
+  /**Fill RPM grid points lookup table*/
+  {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500},
+  /**Fill PRM grid cell sizes lookup table*/
+  {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140},
+
   /**reserved bytes*/
   {0}
  },
@@ -205,7 +218,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   4,10,392,384,_ACF,_ACC,_ACF,_ACC,_ACF,_ACC, 0, 20, 10, 96, 96, -160,
   320, 066, 1089, 392, 1900, 2100, 0, CBRID_9600, 8, 4, 0, 35, 0, 800, 23, 128,
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
-  _ACF,_ACC, _ACF,_ACC, 160, 0, 0, 984, 200, 0x02, 0x00, {0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  _ACF,_ACC, _ACF,_ACC, 160, 0, 0, 984, 200, 0x02, 0x00, {2000, 1200},
+  {{0,0,0,0,0,0},{0,0,0,0,0,0}}, 20, 256, {0,0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

@@ -552,6 +552,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.sm_steps);
    build_i4h(d->choke_testing);      //fake parameter (actually it is command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
+   build_i8h(d->param.choke_startup_corr);
+   build_i16h(d->param.choke_rpm[0]);
+   build_i16h(d->param.choke_rpm[1]);
+   build_i16h(d->param.choke_rpm_if);
    break;
 
   case SECUR_PAR:
@@ -819,6 +823,10 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.sm_steps = recept_i16h();
    d->choke_testing = recept_i4h(); //fake parameter (actually it is status)
    d->choke_manpos_d = recept_i8h();//fake parameter
+   d->param.choke_startup_corr = recept_i8h();
+   d->param.choke_rpm[0] = recept_i16h();
+   d->param.choke_rpm[1] = recept_i16h();
+   d->param.choke_rpm_if = recept_i16h();
    break;
 
   case SECUR_PAR:

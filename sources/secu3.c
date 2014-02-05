@@ -178,8 +178,9 @@ void init_modules(void)
  knock_set_band_pass(edat.param.knock_bpf_frequency);
  knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
  knock_set_int_time_constant(edat.param.knock_int_time_const);
+#ifdef SECU3T
  knock_set_channel(0);
-
+#endif
  if (edat.param.knock_use_knock_channel)
   if (!knock_module_initialize())
   {//чип сигнального процессора детонации неисправен - зажигаем СЕ

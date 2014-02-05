@@ -31,14 +31,15 @@
 #include "vstimer.h"
 
 /** f(x) liniar interpolation
- * \param x
- * \param a1
- * \param a2
- * \param x_s
- * \param x_l
- * \return interpolated value of function * 16
+ * \param x argument value
+ * \param a1 function value at the beginning of interval
+ * \param a2 function value at the end of interval
+ * \param x_s argument value at the beginning of interval
+ * \param x_l length of interval in x
+ * \param m function multiplier
+ * \return interpolated value of function * m
  */
-int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l);
+int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l, uint8_t m);
 
 /** f(x,y) liniar interpolation
  * \param x
@@ -82,7 +83,7 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only);
  */
 int16_t coolant_function(struct ecudata_t* d);
 
-/**
+/** Knock attenuator look up table function
  * \param d pointer to ECU data structure
  * \return
  */
@@ -91,7 +92,7 @@ uint8_t knock_attenuator_function(struct ecudata_t* d);
 /**Initialization of idling regulator's data structures */
 void idling_regulator_init(void);
 
-/**
+/** Idling RPM Regulator function
  * \param d pointer to ECU data structure
  * \param io_timer
  * \return value of advance angle * 32
@@ -140,6 +141,14 @@ int16_t thermistor_lookup(uint16_t adcvalue);
  * \return choke closing percentage (value * 2)
  */
 uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp);
+
+/** RPM regulator function for choke position
+ * \param d pointer to ECU data structure
+ * \param p_prev_corr pointer to state variable used to store calculated correction between calls of
+ * this function
+ * \return choke closing percentage correction (value * 2)
+ */
+uint8_t choke_rpm_regulator(struct ecudata_t* d, uint8_t* p_prev_corr);
 #endif
 
 #endif //_FUNCONV_H_

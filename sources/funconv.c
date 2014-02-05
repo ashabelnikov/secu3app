@@ -41,12 +41,6 @@
  #define _GB(x) PGM_GET_BYTE(x)
 #endif
 
-//данные массивы констант задают сетку по оси оборотов, дл€ рабочей карты и карты ’’.
-/**Array which contains RPM axis's grid bounds */
-PGM_DECLARE(int16_t f_slots_ranges[16]) = {600,720,840,990,1170,1380,1650,1950,2310,2730,3210,3840,4530,5370,6360,7500};
-/**Array which contains RPM axis's grid sizes */
-PGM_DECLARE(int16_t f_slots_length[15]) = {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140};
-
 // ‘ункци€ билинейной интерпол€ции (поверхность)
 // x, y - значени€ аргументов интерполируемой функции
 // a1,a2,a3,a4 - значение функции в узлах интерпол€ции (углы четырехугольника)
@@ -67,10 +61,11 @@ int16_t bilinear_interpolation(int16_t x, int16_t y, int16_t a1, int16_t a2, int
 // a1,a2 - значени€ функции в узлах интерпол€ции
 // x_s - значение аргумента функции в начальной точке
 // x_l - длина отрезка между точками
-// возвращает интерполированное значение функции * 16
-int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int16_t x_l)
+// m - function multiplier
+// возвращает интерполированное значение функции * m
+int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int16_t x_l, uint8_t m)
 {
- return ((a1 * 16) + (((int32_t)(a2 - a1) * 16) * (x - x_s)) / x_l);
+ return ((a1 * m) + (((int32_t)(a2 - a1) * m) * (x - x_s)) / x_l);
 }
 
 
@@ -83,13 +78,13 @@ int16_t idling_function(struct ecudata_t* d)
 
  //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы
  for(i = 14; i >= 0; i--)
-  if (d->sens.inst_frq >= PGM_GET_WORD(&f_slots_ranges[i])) break;
+  if (d->sens.inst_frq >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i])) break;
 
- if (i < 0)  {i = 0; rpm = 600;}
+ if (i < 0)  {i = 0; rpm = fw_data.exdata.rpm_grid_points[0];}
 
  return simple_interpolation(rpm,
              _GB(&d->fn_dat->f_idl[i]), _GB(&d->fn_dat->f_idl[i+1]),
-             PGM_GET_WORD(&f_slots_ranges[i]), PGM_GET_WORD(&f_slots_length[i]));
+             PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[i]), 16);
 }
 
 
@@ -106,7 +101,7 @@ int16_t start_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
   else i1 = i + 1;
 
- return simple_interpolation(rpm, _GB(&d->fn_dat->f_str[i]), _GB(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40);
+ return simple_interpolation(rpm, _GB(&d->fn_dat->f_str[i]), _GB(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40, 16);
 }
 
 
@@ -140,10 +135,10 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
 
  //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы
  for(f = 14; f >= 0; f--)
-  if (rpm >= PGM_GET_WORD(&f_slots_ranges[f])) break;
+  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
 
- //рабоча€ карта работает на 600-х оборотах и выше
- if (f < 0)  {f = 0; rpm = 600;}
+ //рабоча€ карта работает на rpm_grid_points[0] оборотах и выше
+ if (f < 0)  {f = 0; rpm = fw_data.exdata.rpm_grid_points[0];}
   fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
@@ -151,9 +146,9 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
         _GB(&d->fn_dat->f_wrk[lp1][f]),
         _GB(&d->fn_dat->f_wrk[lp1][fp1]),
         _GB(&d->fn_dat->f_wrk[l][fp1]),
-        PGM_GET_WORD(&f_slots_ranges[f]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
-        PGM_GET_WORD(&f_slots_length[f]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
         gradient);
 }
 
@@ -177,7 +172,7 @@ int16_t coolant_function(struct ecudata_t* d)
  else i1 = i + 1;
 
  return simple_interpolation(t, _GB(&d->fn_dat->f_tmp[i]), _GB(&d->fn_dat->f_tmp[i1]),
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10));
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
 //–егул€тор холостого хода –’’
@@ -289,7 +284,7 @@ uint8_t knock_attenuator_function(struct ecudata_t* d)
   i1 = i + 1;
 
  return simple_interpolation(rpm, PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i]),
-        PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i1]), (i * 60) + 200, 60) >> 4;
+        PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i1]), (i * 60) + 200, 60, 16) >> 4;
 }
 
 #ifdef DWELL_CONTROL
@@ -297,23 +292,23 @@ uint16_t accumulation_time(struct ecudata_t* d)
 {
  int16_t i, i1, voltage = d->sens.voltage;
 
- if (voltage < VOLTAGE_MAGNITUDE(5.4)) 
+ if (voltage < VOLTAGE_MAGNITUDE(5.4))
   voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - минимальное значение напр€жени€ в таблице предусмотренной дл€ 12¬ бортовой сети
 
  i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - шаг по напр€жению
 
  if (i >= COIL_ON_TIME_LOOKUP_TABLE_SIZE-1) i = i1 = COIL_ON_TIME_LOOKUP_TABLE_SIZE-1;
   else i1 = i + 1;
- //divide function points by 2, this will prevent overflow in simple_interpolation()
- return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]) >> 1, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]) >> 1,
-        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4)) >> 3;
+
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]),
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 #endif
 
 #ifdef THERMISTOR_CS
 //Coolant sensor is thermistor (тип датчика температуры - термистор)
 //Note: We assume that voltage on the input of ADC depend on thermistor's resistance linearly.
-//Voltage on the input of ADC can be calculated as following:
+//Voltage on the input of ADC can be calculated as following (divider resistors are used):
 // U3=U1*Rt*R2/(Rp(Rt+R1+R2)+Rt(R1+R2));
 // Rt - thermistor, Rp - pulls up thermistor to voltage U1,
 // R1,R2 - voltage divider resistors.
@@ -337,7 +332,7 @@ int16_t thermistor_lookup(uint16_t adcvalue)
  else i1 = i + 1;
 
  return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.cts_curve[i]), PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]),
-        (i * v_step) + v_start, v_step)) >> 4;
+        (i * v_step) + v_start, v_step, 16)) >> 4;
 }
 #endif
 
@@ -367,6 +362,50 @@ uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp)
  else i1 = i + 1;
 
  return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.choke_closing[i]), PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1]),
- (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5)) >> 4;
+ (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5), 16) >> 4;
+}
+
+/**Describes state data for idling regulator */
+typedef struct
+{
+ int16_t int_state;   //!< regulator's memory (integrated error)
+}chokeregul_state_t;
+
+/**Variable. State data for choke RPM regulator */
+chokeregul_state_t choke_regstate;
+
+//reset of choke RPM regulator state
+void chokerpm_regulator_init(void)
+{
+ choke_regstate.int_state = 0;
+}
+
+uint8_t choke_rpm_regulator(struct ecudata_t* d, uint8_t* p_prev_corr)
+{
+ int16_t corr, error, rpm, t = d->sens.temperat;
+
+ if (0==d->param.choke_rpm[0])
+  return 0; //regulator is turned off, return zero correction
+
+ //-5 - значение температуры cоответствующее оборотам в первой точке
+ //70 - значение температуры соответствующее оборотам во второй точке
+ restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(70));
+
+ //calculate target RPM value for regulator
+ rpm = simple_interpolation(t, d->param.choke_rpm[0], d->param.choke_rpm[1],
+ TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(70), 4) >> 2;
+
+ error = rpm - d->sens.frequen;
+ if (abs(error) <= 25)   //dead band is +/-25 RPM
+  return *p_prev_corr;
+
+ choke_regstate.int_state+= error; //update integrator's state
+ restrict_value_to(&choke_regstate.int_state, -2000, 2000); //restrict integrаtor output
+
+ corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 10;
+ restrict_value_to(&corr, 0, 200); //range must be: 0...100%
+ *p_prev_corr = corr;
+
+ return *p_prev_corr;
 }
 #endif

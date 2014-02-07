@@ -146,9 +146,9 @@ uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp);
  * \param d pointer to ECU data structure
  * \param p_prev_corr pointer to state variable used to store calculated correction between calls of
  * this function
- * \return choke closing percentage correction (value * 2)
+ * \return choke closing correction in SM steps
  */
-uint8_t choke_rpm_regulator(struct ecudata_t* d, uint8_t* p_prev_corr);
+int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr);
 #endif
 
 #endif //_FUNCONV_H_

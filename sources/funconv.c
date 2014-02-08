@@ -380,9 +380,9 @@ void chokerpm_regulator_init(void)
  choke_regstate.int_state = 0;
 }
 
-uint8_t choke_rpm_regulator(struct ecudata_t* d, uint8_t* p_prev_corr)
+int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
 {
- int16_t corr, error, rpm, t = d->sens.temperat;
+ int16_t error, rpm, t = d->sens.temperat;
 
  if (0==d->param.choke_rpm[0])
   return 0; //regulator is turned off, return zero correction
@@ -402,9 +402,8 @@ uint8_t choke_rpm_regulator(struct ecudata_t* d, uint8_t* p_prev_corr)
  choke_regstate.int_state+= error; //update integrator's state
  restrict_value_to(&choke_regstate.int_state, -2000, 2000); //restrict integràtor output
 
- corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 10;
- restrict_value_to(&corr, 0, 200); //range must be: 0...100%
- *p_prev_corr = corr;
+ *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 10;
+ restrict_value_to(*p_prev_corr, -d->param.sm_steps, d->param.sm_steps); //range must be: +/- d->param.sm_steps
 
  return *p_prev_corr;
 }

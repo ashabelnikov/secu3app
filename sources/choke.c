@@ -40,6 +40,9 @@
 /**Startup choke closing correction time, 3 sec. */
 #define STARTUP_CORR_TIME (3*100)
 
+/**RPM regulator call period, 50ms*/
+#define RPMREG_CORR_TIME 5
+
 /**Define state variables*/
 typedef struct
 {
@@ -51,6 +54,10 @@ typedef struct
 
  uint8_t   strt_mode;      //!< state machine state used for starting mode
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
+
+ int16_t   rpmreg_prev;    //!< previous value of RPM regulator
+ uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
+ uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
 }choke_st_t;
 
 /**Instance of state variables */
@@ -68,10 +75,16 @@ void choke_init(void)
  chks.pwdn = 0;
  chks.strt_mode = 0;
  chks.manual = 0;
+ chks.rpmreg_prev = 0;
 }
 
+/** Calculates choke position correction at startup mode and from RPM regulator
+ * Work flow: Start-->Wait 3 sec.-->RPM regul.-->Ready
+ * \param d pointer to ECU data structure
+ */
 int16_t calc_startup_corr(struct ecudata_t* d)
 {
+ int16_t rpm_corr = 0;
  switch(chks.strt_mode)
  {
   case 0:  //starting
@@ -80,15 +93,35 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     chks.strt_t1 = s_timer_gtc();
     chks.strt_mode = 1;
    }
-   break; //use correction
+   break; //use startup correction
   case 1:
    if ((s_timer_gtc() - chks.strt_t1) >= STARTUP_CORR_TIME)
+   {
     chks.strt_mode = 2;
-   break; //use correction
+    chks.rpmreg_prev = 0; //we will enter RPM regulation mode with zero correction
+    chks.rpmval_prev = d->sens.inst_frq;
+    chks.rpmreg_t1 = s_timer_gtc();
+   }
+   break; //use startup correction
   case 2:
+  {
+   uint16_t tmr = s_timer_gtc(); 
+   if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
+   {
+    chks.rpmreg_t1 = tmr;  //reset timer
+    rpm_corr = choke_rpm_regulator(d, &chks.rpmreg_prev);
+    if ((d->sens.inst_frq - chks.rpmval_prev) > 100) //detect fast throttle opening
+     chks.strt_mode = 3; //exit
+    else
+     chks.rpmval_prev = d->sens.inst_frq;
+   }
+   else
+    rpm_corr = chks.rpmreg_prev; 
+  }
+  case 3:
    if (!d->st_block)
     chks.strt_mode = 0; //engine is stopped, so use correction again
-   return 0; //do not use correction
+   return rpm_corr;  //correction from RPM regulator only
  }
 
  return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
@@ -162,8 +195,7 @@ void choke_control(struct ecudata_t* d)
     if (!chks.manual)
     {
      int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200;
-     int16_t rpm_cor = 0; //todo
-     pos = tmp_pos + rpm_cor + calc_startup_corr(d);
+     pos = tmp_pos + calc_startup_corr(d);
      if (d->choke_manpos_d)
       chks.manual = 1; //enter manual mode
     }

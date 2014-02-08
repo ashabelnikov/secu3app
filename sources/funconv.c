@@ -393,7 +393,7 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
 
  //calculate target RPM value for regulator
  rpm = simple_interpolation(t, d->param.choke_rpm[0], d->param.choke_rpm[1],
- TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(70), 4) >> 2;
+ TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(75), 4) >> 2;
 
  error = rpm - d->sens.frequen;
  if (abs(error) <= 25)   //dead band is +/-25 RPM

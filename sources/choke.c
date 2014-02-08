@@ -101,6 +101,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     chks.rpmreg_prev = 0; //we will enter RPM regulation mode with zero correction
     chks.rpmval_prev = d->sens.inst_frq;
     chks.rpmreg_t1 = s_timer_gtc();
+    chokerpm_regulator_init();
    }
    break; //use startup correction
   case 2:

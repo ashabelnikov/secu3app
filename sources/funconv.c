@@ -403,7 +403,7 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
  restrict_value_to(&choke_regstate.int_state, -2000, 2000); //restrict integràtor output
 
  *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 10;
- restrict_value_to(*p_prev_corr, -d->param.sm_steps, d->param.sm_steps); //range must be: +/- d->param.sm_steps
+ restrict_value_to(p_prev_corr, -d->param.sm_steps, d->param.sm_steps); //range must be: +/- d->param.sm_steps
 
  return *p_prev_corr;
 }

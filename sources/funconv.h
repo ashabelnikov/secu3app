@@ -142,6 +142,9 @@ int16_t thermistor_lookup(uint16_t adcvalue);
  */
 uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp);
 
+/**Initialization of regulator's data structures*/
+void chokerpm_regulator_init(void);
+
 /** RPM regulator function for choke position
  * \param d pointer to ECU data structure
  * \param p_prev_corr pointer to state variable used to store calculated correction between calls of

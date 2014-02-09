@@ -53,6 +53,9 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    angle = idling_function(d);             //базовый УОЗ - функция для ХХ
    angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
    angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+#ifdef AIRTEMP_SENS
+   angle+=airtemp_function(d);                  //add air temperature correction
+#endif
    break;
 
   case EM_WORK: //рабочий режим
@@ -63,6 +66,9 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    }
    angle=work_function(d, 0);              //базовый УОЗ - функция рабочего режима
    angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
+#ifdef AIRTEMP_SENS
+   angle+=airtemp_function(d);                  //add air temperature correction
+#endif
    //отнимаем поправку полученную от регулятора по детонации
    angle-=d->knock_retard;
    break;

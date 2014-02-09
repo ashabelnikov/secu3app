@@ -464,6 +464,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(0);
    build_i24h(0);
 #endif
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
+   build_i16h(d->sens.air_temp);
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

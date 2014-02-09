@@ -77,7 +77,7 @@ int16_t idling_function(struct ecudata_t* d);
  */
 int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only);
 
-/** Calculates anvance angle correction using coolant temperature
+/** Calculates advance angle correction using coolant temperature
  * \param d pointer to ECU data structure
  * \return value of advance angle * 32
  */
@@ -152,6 +152,21 @@ void chokerpm_regulator_init(void);
  * \return choke closing correction in SM steps
  */
 int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr);
+#endif
+
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
+/** Calculates advance angle correction using intake air temperature
+ * \param d pointer to ECU data structure
+ * \return value of advance angle * 32
+ */
+int16_t airtemp_function(struct ecudata_t* d);
+
+/**Converts ADC value into phisical magnitude - temperature (given from air temperature sensor)
+ * (переводит значение АЦП в физическую величину - температура воздуха)
+ * \param adcvalue Voltage from sensor (напряжение с датчика - значение в дискретах АЦП))
+ * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ */
+int16_t ats_lookup(uint16_t adcvalue);
 #endif
 
 #endif //_FUNCONV_H_

@@ -76,6 +76,9 @@ typedef struct sensors_t
  uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 4us)
  uint32_t distance;                      //!< Distance expressed by number of speed sensor pulses since last ignition turn on
 #endif
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
+ int16_t air_temp;                       //!< Intake air temperature
+#endif
 
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor

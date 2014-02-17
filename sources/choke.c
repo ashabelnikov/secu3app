@@ -112,7 +112,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     chks.rpmreg_t1 = tmr;  //reset timer
     rpm_corr = choke_rpm_regulator(d, &chks.rpmreg_prev);
     if ((d->sens.temperat > d->param.idlreg_turn_on_temp + 1) ||
-       ((d->sens.frequen > 1000) && (((int16_t)d->sens.inst_frq - (int16_t)chks.rpmval_prev) > 100))) //detect fast throttle opening
+       ((d->sens.frequen > 1000) && (((int16_t)d->sens.inst_frq - (int16_t)chks.rpmval_prev) > 200))) //detect fast throttle opening
      chks.strt_mode = 3; //exit
     else
      chks.rpmval_prev = d->sens.inst_frq;

@@ -400,11 +400,59 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
   return *p_prev_corr;
 
  choke_regstate.int_state+= error; //update integrator's state
- restrict_value_to(&choke_regstate.int_state, -2000, 2000); //restrict integrаtor output
+ restrict_value_to(&choke_regstate.int_state, -8000, 8000); //restrict integrаtor output
 
- *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 10;
+ *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 14; //additional 4 shift bits to reduce regulator's influence
  restrict_value_to(p_prev_corr, -d->param.sm_steps, d->param.sm_steps); //range must be: +/- d->param.sm_steps
 
  return *p_prev_corr;
 }
 #endif
+
+#ifdef AIRTEMP_SENS
+//Реализует функцию коррекции УОЗ по температуре воздуха(°C) 
+// Возвращает значение угла опережения в целом виде * 32
+int16_t airtemp_function(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.air_temp;
+
+ if (0)  //todo: check if input remmaped
+  return 0;   //do not use correcton if air temperature sensor is turned off
+
+ //-30 - minimum temperature value
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= 15) i = i1 = 15;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GB(&fw_data.exdata.ats_corr[i]), _GB(&fw_data.exdata.ats_corr[i1]),
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
+}
+
+int16_t ats_lookup(uint16_t adcvalue)
+{
+ int16_t i, i1;
+
+ //Voltage value at the start of axis in ADC discretes (значение напряжения в начале оси в дискретах АЦП)
+ uint16_t v_start = PGM_GET_WORD(&fw_data.exdata.ats_vl_begin);
+ //Voltage value at the end of axis in ADC discretes (значение напряжения в конце оси в дискретах АЦП)
+ uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.ats_vl_end);
+
+ uint16_t v_step = (v_end - v_start) / (ATS_LOOKUP_TABLE_SIZE - 1);
+
+ if (adcvalue < v_start)
+  adcvalue = v_start;
+
+ i = (adcvalue - v_start) / v_step;
+
+ if (i >= ATS_LOOKUP_TABLE_SIZE-1) i = i1 = ATS_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.ats_curve[i]), PGM_GET_WORD(&fw_data.exdata.ats_curve[i1]),
+        (i * v_step) + v_start, v_step, 16)) >> 4;
+}
+#endif //AIRTEMP_SENS

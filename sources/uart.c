@@ -464,6 +464,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(0);
    build_i24h(0);
 #endif
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
+   build_i16h(d->sens.air_temp);
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:
@@ -562,6 +567,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i4h(0);
    build_i4h(0);
    build_i8h(d->param.bt_flags);
+   build_rb(d->param.ibtn_keys[0], IBTN_KEY_SIZE);  //1st iButton key
+   build_rb(d->param.ibtn_keys[1], IBTN_KEY_SIZE);  //2nd iButton key
    break;
 
 #ifdef REALTIME_TABLES
@@ -843,6 +850,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.bt_flags = recept_i8h();
    if ((old_bt_flags & _BV(BTF_USE_BT)) != (d->param.bt_flags & _BV(BTF_USE_BT)))
     d->param.bt_flags|= _BV(BTF_SET_BBR); //set flag indicating that we have to set bluetooth baud rate on next reset
+   recept_rb(d->param.ibtn_keys[0], IBTN_KEY_SIZE);  //1st iButton key
+   recept_rb(d->param.ibtn_keys[1], IBTN_KEY_SIZE);  //2nd iButton key
   }
   break;
 

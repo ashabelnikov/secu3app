@@ -31,23 +31,18 @@
 #include "onewire.h"
 #include "secu3.h"
 
-#define IBTN_KEYS_NUM     2   //!< Number of iButton keys
-#define IBTN_KEY_SIZE     6   //!< Size of iButton key (except CRC8 and family code)
-
-/**iButton keys database. Write out your own 48-bit key here */
-uint8_t ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE] = {{0xCB,0x60,0x82,0x16, 0, 0}, {0xB7, 0x83, 0xA8, 0, 0, 0}};
-
 /** Key validation function
+ * \param d pointer to ECU data structure
  * \param key Pointer to an array containing key
  * \param size Size of key in array
  * \return 1 - specified key is valid, 0 - not valid
  */
-static uint8_t validate_key(uint8_t* key, uint8_t size)
+static uint8_t validate_key(struct ecudata_t* d, uint8_t* key, uint8_t size)
 {
  uint8_t i = 0;
  for(; i < IBTN_KEYS_NUM; ++i)
  {
-  if (!memcmp(key, ibtn_keys[i], size))
+  if (!memcmp(key, d->param.ibtn_keys[i], size))
    return 1; //valid key
  }
  return 0; //key is not valid
@@ -77,7 +72,7 @@ void immob_check_state(struct ecudata_t* d)
   goto lock_system;    //crc doesn't match, lock the system!
 
  //validate read key, skip family code and CRC8 bytes
- if (!validate_key(key+1, IBTN_KEY_SIZE))
+ if (!validate_key(d, key+1, IBTN_KEY_SIZE))
   goto lock_system;    //read and stored keys don't match, lock the system!
 
  onewire_restore_io_registers();

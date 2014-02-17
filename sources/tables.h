@@ -81,7 +81,10 @@
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
 #define CHOKE_CLOSING_LOOKUP_TABLE_SIZE 16          //!< Size of lookup table defining choke closing versus coolant temperature
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
+#define ATS_LOOKUP_TABLE_SIZE           16          //!< Size of lookup table for air temperature sensor
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
+#define IBTN_KEYS_NUM          2                    //!< Number of iButton keys
+#define IBTN_KEY_SIZE          6                    //!< Size of iButton key (except CRC8 and family code)
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
@@ -273,7 +276,7 @@ typedef struct params_t
   uint8_t hall_flags;                    //!< Hall sensor related flags
 
   uint16_t choke_rpm[2];                 //!< Values of RPM needed for RPM-based control of choke position
-  uint8_t ibtn_keys[2][6];               //!< iButton keys for immobilizer
+  uint8_t ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE]; //!< iButton keys for immobilizer
 
   uint8_t choke_startup_corr;            //!< Startup correction value for choke (0...200)
   uint16_t choke_rpm_if;                 //!< Integral factor for RPM-based control of choke position (factor * 1024)

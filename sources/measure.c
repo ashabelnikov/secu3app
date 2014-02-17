@@ -31,11 +31,15 @@
 #include "adc.h"
 #include "bitmask.h"
 #include "spdsens.h"
-#include "funconv.h"    //thermistor_lookup()
+#include "funconv.h"    //thermistor_lookup(), ats_lookup
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "measure.h"
 #include "secu3.h"
+
+#if defined(AIRTEMP_SENS) && !defined(SECU3T)
+ #error "You must define SECU3T if you want to use air temperature sensor (ATS supported only in SECU3T)"
+#endif
 
 #ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
  /**Special macro for compensating of voltage division*/
@@ -208,6 +212,15 @@ void meas_average_measured_values(struct ecudata_t* d)
   sum+=ai2_circular_buffer[i];
  d->sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d->param.ai2_adc_factor, d->param.ai2_adc_correction);
  d->sens.add_i2 = d->sens.add_i2_raw;
+#endif
+
+#ifdef AIRTEMP_SENS
+ if (0) //todo: check remmaped input
+  d->sens.air_temp = ats_lookup(d->sens.add_i1_raw);   //ADD_IO1 input
+ else if (0) //todo: check remmaped input
+  d->sens.air_temp = ats_lookup(d->sens.add_i2_raw);   //ADD_IO2 input
+ else
+  d->sens.air_temp = 0; //input is not selected
 #endif
 }
 

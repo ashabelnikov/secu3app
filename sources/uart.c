@@ -561,6 +561,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.choke_rpm[0]);
    build_i16h(d->param.choke_rpm[1]);
    build_i16h(d->param.choke_rpm_if);
+   build_i16h(d->param.choke_corr_time);
    break;
 
   case SECUR_PAR:
@@ -834,6 +835,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.choke_rpm[0] = recept_i16h();
    d->param.choke_rpm[1] = recept_i16h();
    d->param.choke_rpm_if = recept_i16h();
+   d->param.choke_corr_time = recept_i16h();
    break;
 
   case SECUR_PAR:

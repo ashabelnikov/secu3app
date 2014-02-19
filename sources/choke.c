@@ -37,9 +37,6 @@
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
-/**Startup choke closing correction time, 3 sec. */
-#define STARTUP_CORR_TIME (3*100)
-
 /**RPM regulator call period, 50ms*/
 #define RPMREG_CORR_TIME 5
 
@@ -95,7 +92,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    }
    break; //use startup correction
   case 1:
-   if ((s_timer_gtc() - chks.strt_t1) >= STARTUP_CORR_TIME)
+   if ((s_timer_gtc() - chks.strt_t1) >= d->param.choke_corr_time)
    {
     chks.strt_mode = 2;
     chks.rpmreg_prev = 0; //we will enter RPM regulation mode with zero correction
@@ -106,7 +103,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    break; //use startup correction
   case 2:
   {
-   uint16_t tmr = s_timer_gtc(); 
+   uint16_t tmr = s_timer_gtc();
    if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
    {
     chks.rpmreg_t1 = tmr;  //reset timer
@@ -118,7 +115,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
      chks.rpmval_prev = d->sens.inst_frq;
    }
    else
-    rpm_corr = chks.rpmreg_prev; 
+    rpm_corr = chks.rpmreg_prev;
   }
   case 3:
    if (!d->st_block)

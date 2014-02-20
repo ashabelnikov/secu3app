@@ -40,6 +40,9 @@
 /**RPM regulator call period, 50ms*/
 #define RPMREG_CORR_TIME 5
 
+/**During this time system can't exit from RPM regulation mode*/
+#define RPMREG_ENEX_TIME (10*100)
+
 /**Define state variables*/
 typedef struct
 {
@@ -55,6 +58,7 @@ typedef struct
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
+ uint8_t   rpmreg_enex;    //!< flag which indicates that it is allowed to exit from RPM regulation mode
 }choke_st_t;
 
 /**Instance of state variables */
@@ -73,6 +77,7 @@ void choke_init(void)
  chks.strt_mode = 0;
  chks.manual = 0;
  chks.rpmreg_prev = 0;
+ chks.rpmreg_enex = 0;
 }
 
 /** Calculates choke position correction at startup mode and from RPM regulator
@@ -96,9 +101,11 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    {
     chks.strt_mode = 2;
     chks.rpmreg_prev = 0; //we will enter RPM regulation mode with zero correction
-    chks.rpmval_prev = d->sens.inst_frq;
+    chks.rpmval_prev = d->sens.frequen;
+    chks.strt_t1 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
     chks.rpmreg_t1 = s_timer_gtc();
     chokerpm_regulator_init();
+    chks.rpmreg_enex = 0;
    }
    break; //use startup correction
   case 2:
@@ -106,13 +113,16 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    uint16_t tmr = s_timer_gtc();
    if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
    {
+    if ((s_timer_gtc() - chks.strt_t1) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
+     chks.rpmreg_enex = 1;
     chks.rpmreg_t1 = tmr;  //reset timer
     rpm_corr = choke_rpm_regulator(d, &chks.rpmreg_prev);
-    if ((d->sens.temperat > d->param.idlreg_turn_on_temp + 1) ||
-       ((d->sens.frequen > 1000) && (((int16_t)d->sens.inst_frq - (int16_t)chks.rpmval_prev) > 200))) //detect fast throttle opening
-     chks.strt_mode = 3; //exit
+    //detect fast throttle opening only if RPM > 1000
+    if (d->sens.temperat > (d->param.idlreg_turn_on_temp + 1) || 
+       (chks.rpmreg_enex && (d->sens.frequen > 1000) && (((int16_t)d->sens.frequen - (int16_t)chks.rpmval_prev) > 180)))
+     chks.strt_mode = 3; //exit          
     else
-     chks.rpmval_prev = d->sens.inst_frq;
+     chks.rpmval_prev = d->sens.frequen;
    }
    else
     rpm_corr = chks.rpmreg_prev;
@@ -123,7 +133,10 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    return rpm_corr;  //correction from RPM regulator only
  }
 
- return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
+ if (d->sens.temperat > d->param.choke_corr_temp)
+  return 0; //Do not use correction if coolant temperature > threshold
+ else
+  return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200; 
 }
 
 /** Set choke to initial position. Because we have no position feedback, we

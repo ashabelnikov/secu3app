@@ -280,6 +280,8 @@ typedef struct params_t
 
   uint8_t choke_startup_corr;            //!< Startup correction value for choke (0...200)
   uint16_t choke_rpm_if;                 //!< Integral factor for RPM-based control of choke position (factor * 1024)
+  uint16_t choke_corr_time;              //!< Time for startup correction will be applied
+  int16_t choke_corr_temp;               //!< Temperature threshold for startup correction
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -287,7 +289,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[5];
+  uint8_t  reserved[1];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

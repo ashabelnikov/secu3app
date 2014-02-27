@@ -59,6 +59,9 @@ typedef struct
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
  uint8_t   rpmreg_enex;    //!< flag which indicates that it is allowed to exit from RPM regulation mode
+ uint8_t   smdirchg;       //!< flag, indicates that stepper motor direction has changed during motion
+ uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
+ int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
 }choke_st_t;
 
 /**Instance of state variables */
@@ -163,6 +166,58 @@ uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
  return (((uint32_t)value) * 200) / steps;
 }
 
+/** Stepper motor control for normal working mode
+ * \param d pointer to ECU data structure
+ * \param pos current calculated (terget) position of stepper motor
+ */
+void sm_motion_control(struct ecudata_t* d, int16_t pos)
+{
+ int16_t diff;
+ restrict_value_to(&pos, 0, d->param.sm_steps);
+ if (1==chks.smdirchg)                                        //direction has changed
+ {
+  if (!stpmot_is_busy())
+  {
+   chks.smpos = chks.smpos_prev + ((chks.cur_dir == SM_DIR_CW) ? -stpmot_stpcnt() : stpmot_stpcnt());
+   chks.smdirchg = 0;
+  }
+ }
+ if (0==chks.smdirchg)                                        //normal operation
+ {
+  diff = pos - chks.smpos;
+  if (!stpmot_is_busy())
+  {
+   if (diff != 0)
+   {
+    chks.cur_dir = diff < 0 ? SM_DIR_CW : SM_DIR_CCW;
+    stpmot_dir(chks.cur_dir);
+    stpmot_run(abs(diff));                                    //start stepper motor
+    chks.smpos_prev = chks.smpos;                             //remember position when SM started motion
+    chks.smpos = pos;                                         //this is a target position
+   }
+  }
+  else //busy
+  {
+   //Check if curent target direction is not match new target direction. If it is not match, then
+   //stop stepper motor and go to the direction changing.
+   if (((chks.smpos - chks.smpos_prev) & 0x8000) != ((pos - chks.smpos_prev) & 0x8000))
+   {
+    stpmot_run(0);                                            //stop stepper motor
+    chks.smdirchg = 1;
+   }
+  }
+ }
+}
+
+/** Calculate stepper motor position for normal mode
+ * \param d pointer to ECU data structure
+ * \return stepper motor position in steps
+ */
+int16_t calc_sm_position(struct ecudata_t* d)
+{
+ return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);
+}
+
 void choke_control(struct ecudata_t* d)
 {
  switch(chks.state)
@@ -186,7 +241,8 @@ void choke_control(struct ecudata_t* d)
      chks.state = 3;                                          //ready to power-down
     else
      chks.state = 5;                                          //normal working
-    chks.smpos = 0;
+    chks.smpos = 0;                                           //initial position (fully opened)
+    chks.smdirchg = 0;
    }
    break;
 
@@ -206,11 +262,10 @@ void choke_control(struct ecudata_t* d)
    }
    else
    {
-    int16_t pos, diff;
+    int16_t pos;
     if (!chks.manual)
     {
-     int16_t tmp_pos = (((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200;
-     pos = tmp_pos + calc_startup_corr(d);
+     pos = calc_sm_position(d);                               //calculate stepper motor position
      if (d->choke_manpos_d)
       chks.manual = 1; //enter manual mode
     }
@@ -220,14 +275,7 @@ void choke_control(struct ecudata_t* d)
      d->choke_manpos_d = 0;
     }
 
-    restrict_value_to(&pos, 0, d->param.sm_steps);
-    diff = pos - chks.smpos;
-    if (!stpmot_is_busy() && diff != 0)
-    {
-     stpmot_dir(diff < 0 ? SM_DIR_CW : SM_DIR_CCW);
-     stpmot_run(abs(diff));                                    //start stepper motor
-     chks.smpos += diff;
-    }
+    sm_motion_control(d, pos);                                //SM command execution
    }
    d->choke_pos = calc_percent_pos(chks.smpos, d->param.sm_steps);//update position value
    goto check_pwr;

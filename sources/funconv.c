@@ -385,7 +385,10 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
  int16_t error, rpm, t = d->sens.temperat;
 
  if (0==d->param.choke_rpm[0])
+ {
+  *p_prev_corr = 0;
   return 0; //regulator is turned off, return zero correction
+ }
 
  //-5 - значение температуры cоответствующее оборотам в первой точке
  //70 - значение температуры соответствующее оборотам во второй точке

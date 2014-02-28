@@ -59,6 +59,11 @@ void stpmot_run(uint16_t steps);
  */
 uint8_t stpmot_is_busy(void);
 
+/** This function returns number of actually processed steps
+ * \return number of actually processed steps
+ */
+uint16_t stpmot_stpcnt(void);
+
 #endif
 
 #endif //_SMCONTROL_H_

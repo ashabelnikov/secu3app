@@ -74,6 +74,7 @@ extern volatile uint16_t sm_steps;
 extern volatile uint8_t sm_latch;
 extern uint16_t sm_steps_b;
 extern uint8_t sm_pulse_state;
+extern volatile uint16_t sm_steps_cnt;
 #endif
 
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
@@ -110,6 +111,7 @@ ISR(TIMER2_OVF_vect)
    IOCFG_SET(IOP_SM_STP, 0); //rising edge
    sm_pulse_state = 0;
    --sm_steps_b;
+   ++sm_steps_cnt; //count processed steps
   }
  }
 #endif

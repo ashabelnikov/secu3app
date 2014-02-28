@@ -37,6 +37,8 @@ volatile uint16_t sm_steps = 0;
 volatile uint8_t sm_latch = 0;
 uint16_t sm_steps_b = 0;
 uint8_t sm_pulse_state = 0;
+volatile uint16_t sm_steps_cnt = 0;
+
 
 void stpmot_init_ports(void)
 {
@@ -58,6 +60,12 @@ void stpmot_dir(uint8_t dir)
 
 void stpmot_run(uint16_t steps)
 {
+ if (steps)
+ {
+  _DISABLE_INTERRUPT();
+  sm_steps_cnt = 0;
+  _ENABLE_INTERRUPT();
+ }
  _DISABLE_INTERRUPT();
   sm_steps = steps;
   sm_latch = 1;
@@ -73,6 +81,15 @@ uint8_t stpmot_is_busy(void)
  latching = sm_latch;
  _ENABLE_INTERRUPT();
  return (current > 0 || latching); //busy?
+}
+
+uint16_t stpmot_stpcnt(void)
+{
+ uint16_t count;
+ _DISABLE_INTERRUPT();
+ count = sm_steps_cnt;
+ _ENABLE_INTERRUPT();
+ return count;
 }
 
 #endif

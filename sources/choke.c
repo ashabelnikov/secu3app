@@ -43,6 +43,10 @@
 /**During this time system can't exit from RPM regulation mode*/
 #define RPMREG_ENEX_TIME (10*100)
 
+#ifdef USE_RPMREG_TURNON_DELAY
+#define RPMREG_ENTO_TIME (3*100)
+#endif
+
 /**Define state variables*/
 typedef struct
 {
@@ -62,6 +66,9 @@ typedef struct
  uint8_t   smdirchg;       //!< flag, indicates that stepper motor direction has changed during motion
  uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
+#ifdef USE_RPMREG_TURNON_DELAY
+ uint8_t   rpmreg_ento;
+#endif
 }choke_st_t;
 
 /**Instance of state variables */
@@ -109,6 +116,9 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     chks.rpmreg_t1 = s_timer_gtc();
     chokerpm_regulator_init();
     chks.rpmreg_enex = 0;
+#ifdef USE_RPMREG_TURNON_DELAY
+    chks.rpmreg_ento = 0;
+#endif
    }
    break; //use startup correction
   case 2:
@@ -116,9 +126,14 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    uint16_t tmr = s_timer_gtc();
    if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
    {
+    chks.rpmreg_t1 = tmr;  //reset timer
     if ((s_timer_gtc() - chks.strt_t1) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
      chks.rpmreg_enex = 1;
-    chks.rpmreg_t1 = tmr;  //reset timer
+#ifdef USE_RPMREG_TURNON_DELAY
+    if ((s_timer_gtc() - chks.strt_t1) >= (d->param.choke_corr_time + RPMREG_ENTO_TIME))
+     chks.rpmreg_ento = 1;
+    if (chks.rpmreg_ento)
+#endif
     rpm_corr = choke_rpm_regulator(d, &chks.rpmreg_prev);
     //detect fast throttle opening only if RPM > 1000
     if (d->sens.temperat > (d->param.idlreg_turn_on_temp + 1) ||

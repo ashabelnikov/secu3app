@@ -24,6 +24,8 @@
  * (Реализация логики связанной с блютузом (установка скорости, имя, пароль))
  */
 
+#ifdef BLUETOOTH_SUPP
+
 #include "port/avrio.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
@@ -269,3 +271,5 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
  uart_begin_send();
  return 0;
 }
+
+#endif //BLUETOOTH_SUPP

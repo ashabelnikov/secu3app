@@ -45,7 +45,7 @@
  */
 #define AT_COMMAND_STRT_TIME 50
 
-//External functions (fro uart.c)
+//External functions (from uart.c)
 void uart_reset_send_buff(void);
 void uart_append_send_buff(uint8_t ch);
 void uart_begin_send(void);
@@ -90,6 +90,20 @@ static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
  else if (baud == CBR_57600) uart_append_send_buff('7');
 }
 
+/** Increments SM state if timer expired */
+void next_state_if_tmr_expired(void)
+{
+ if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
+  ++bts.btbr_mode;
+}
+
+void next_state_with_new_baud(uint16_t baud)
+{
+ SET_BRR(baud);
+ ++bts.btbr_mode;
+ bts.strt_t1 = s_timer_gtc();    //set timer
+}
+
 uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
 {
 #ifdef _PLATFORM_M644_
@@ -113,70 +127,57 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
 
   //Send command on 9600 baud
   case 2:
-   SET_BRR(CBR_9600);
    append_tx_buff_with_at_baud_cmd(baud);
-   ++bts.btbr_mode;
-   bts.strt_t1 = s_timer_gtc();    //set timer
+   next_state_with_new_baud(CBR_9600);
    break;
   case 3:                          //wait some time
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
-    ++bts.btbr_mode;
+   next_state_if_tmr_expired();
    return 0;
 
   //Send command on 19200 baud
   case 4:
    if (!uart_is_sender_busy())
    {
-    SET_BRR(CBR_19200);
     append_tx_buff_with_at_baud_cmd(baud);
-    ++bts.btbr_mode;
-    bts.strt_t1 = s_timer_gtc();   //set timer
+    next_state_with_new_baud(CBR_19200);
     break;
    }
    else return 0;                  //busy
   case 5:                          //wait some time
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
-    ++bts.btbr_mode;
+   next_state_if_tmr_expired();
    return 0;
 
   //Send command on 38400 baud
   case 6:
    if (!uart_is_sender_busy())
    {
-    SET_BRR(CBR_38400);
     append_tx_buff_with_at_baud_cmd(baud);
-    ++bts.btbr_mode;
-    bts.strt_t1 = s_timer_gtc();   //set timer
+    next_state_with_new_baud(CBR_38400);
     break;
    }
    else return 0;                  //busy
   case 7:                          //wait some time
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
-    ++bts.btbr_mode;
+   next_state_if_tmr_expired();
    return 0;
 
   //Send command on 57600 baud
   case 8:
    if (!uart_is_sender_busy())
    {
-    SET_BRR(CBR_57600);
     append_tx_buff_with_at_baud_cmd(baud);
-    ++bts.btbr_mode;
-    bts.strt_t1 = s_timer_gtc();   //set timer
+    next_state_with_new_baud(CBR_57600);
     break;
    }
    else return 0;                  //busy
   case 9:                          //wait some time
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
-    ++bts.btbr_mode;
+   next_state_if_tmr_expired();
    return 0;
 
   //Finishing...
   case 10:
    if (!uart_is_sender_busy())
    {
-    SET_BRR(baud);                 //return old baud rate back
-    ++bts.btbr_mode;
+    next_state_with_new_baud(baud);//return old baud rate back
     //reset flag and save parameters
     d->param.bt_flags&=~(1 << 1);
     sop_set_operation(SOP_SAVE_PARAMETERS);

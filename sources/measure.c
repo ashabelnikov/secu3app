@@ -43,9 +43,10 @@
 #endif
 
 #ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
- /**Special macro for compensating of voltage division*/
+ /**Special macro for compensating of voltage division (without voltage divider)*/
  #define _RESDIV(v, n, d) (v)
 #else //voltage divider is used
+ /**Special macro for compensating of voltage division (with voltage divider)*/
  #define _RESDIV(v, n, d) (((n) * (v)) / (d))
 #endif
 

@@ -30,7 +30,7 @@
 #include <stdint.h>
 #include "vstimer.h"
 
-/** f(x) liniar interpolation
+/** f(x) liniar interpolation for function with single argument
  * \param x argument value
  * \param a1 function value at the beginning of interval
  * \param a2 function value at the end of interval
@@ -41,17 +41,17 @@
  */
 int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l, uint8_t m);
 
-/** f(x,y) liniar interpolation
- * \param x
- * \param y
- * \param a1
- * \param a2
- * \param a3
- * \param a4
- * \param x_s
- * \param y_s
- * \param x_l
- * \param y_l
+/** f(x,y) liniar interpolation for function with two arguments
+ * \param x first argument value
+ * \param y second argument value
+ * \param a1 function value at the beginning of interval (1 corner)
+ * \param a2 function value at the beginning of interval (2 corner)
+ * \param a3 function value at the beginning of interval (3 corner)
+ * \param a4 function value at the beginning of interval (4 corner)
+ * \param x_s first argument value at the beginning of interval
+ * \param y_s second argument value at the beginning of interval
+ * \param x_l length of interval in x
+ * \param y_l length of interval in y
  * \return interpolated value of function * 16
  */
 int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t a3,int16_t a4,int16_t x_s,int16_t y_s,int16_t x_l,int16_t y_l);
@@ -99,11 +99,11 @@ void idling_regulator_init(void);
  */
 int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer);
 
-/**
- * \param new_advance_angle
- * \param ip_prev_state
- * \param intstep_p
- * \param intstep_m
+/** function for restricting of advance angle alternation speed
+ * \param new_advance_angle New value of advance angle (input)
+ * \param ip_prev_state state variable for storing value between calls of function
+ * \param intstep_p Speed limit for increasing
+ * \param intstep_m Speed limit for decreasing
  * \return value of advance angle * 32
  */
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m);

@@ -19,7 +19,7 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file intkheat.h
+/** \file intkheat.c
  * Implementation of intake manifold heating control.
  * (Реализация управления подогревом впускного коллектора).
  */

@@ -55,13 +55,14 @@
 #endif //COOLINGFAN_PWM
 
 #ifdef _PLATFORM_M644_
- /**Warning must be the same as another definition in vstimer.h!*/
+ /** Timer reload value for 20mHz quartz
+  * Warning must be the same as another definition in vstimer.h!*/
  #define TIMER2_RELOAD_VALUE  0
- /**number of PWM discretes for 5kHz */
+ /**number of PWM discretes for 5kHz with 20mHz quartz */
  #define PWM_STEPS 31
 #else
- #define TIMER2_RELOAD_VALUE  6
- #define PWM_STEPS 25
+ #define TIMER2_RELOAD_VALUE  6    //!< Timer reload value for 16mHz quartz
+ #define PWM_STEPS 25              //!< Number of PWM discretes for 16mHz quartz
 #endif
 
 /**will be added to TIMER2_RELOAD_VALUE at the initialization */

@@ -58,9 +58,9 @@
 
 #define SET_KSP_CS(v) WRITEBIT(PORTB, PB4, v) //!< SS controls chip selection
 #ifdef SECU3T /*SECU-3T*/
- #define SET_KSP_INTHOLD(v) WRITEBIT(PORTC, PC4, v) //!< Switches between integration/hold modes
+ #define SET_KSP_INTHOLD(v) WRITEBIT(PORTC, PC4, v) //!< Switches between integration/hold modes (SECU-3T)
 #else         /*SECU-3*/
- #define SET_KSP_INTHOLD(v) WRITEBIT(PORTD, PD3, v)
+ #define SET_KSP_INTHOLD(v) WRITEBIT(PORTD, PD3, v) //!< Switches between integration/hold modes (SECU-3)
 #endif
 #define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode
 

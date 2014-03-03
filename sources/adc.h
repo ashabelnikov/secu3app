@@ -39,13 +39,13 @@
 /**напряжение на выходе датчика температуры при 0 градусов цельсия */
 #define TSENS_ZERO_POINT        2.73
 
-/**константа для выбора источника опорного напряжения */
+//константа для выбора источника опорного напряжения и коэфф. компенсации опорного напряжения
 #ifdef VREF_5V //5V
- #define ADC_VREF_TYPE          0x40
- #define ADC_VREF_FACTOR        1.9531  //!< 5.0V/2.56V
+ #define ADC_VREF_TYPE          0x40    //!< Vref selection constant for 5V
+ #define ADC_VREF_FACTOR        1.9531  //!< Vref compensation factor (5.0V/2.56V)
 #else         //internal 2.56V
- #define ADC_VREF_TYPE          0xC0
- #define ADC_VREF_FACTOR        1.0000
+ #define ADC_VREF_TYPE          0xC0    //!< Vref selection constant for 2.56V
+ #define ADC_VREF_FACTOR        1.0000  //!< Vref compensation factor (2.56V/2.56V)
 #endif
 
 /**дискретность физической величины - ДАД */

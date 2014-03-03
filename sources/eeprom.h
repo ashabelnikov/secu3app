@@ -50,7 +50,7 @@
  * \param opcode some code which will be remembered and can be retrieved when process finishes
  * \param eeaddr address in the EEPROM for write into
  * \param sramaddr address of block of data in RAM
- * \param count number of bytes in RAM to write (size of block)
+ * \param size number of bytes in RAM to write (size of block)
  */
 void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint16_t size);
 
@@ -78,7 +78,7 @@ void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
 
 /**Writes specified block of data from FLASH into EEPROM (without using of interrupts)
  * записывает указанный блок данных в EEPROM (без использования прерываний)
- * \param sram_src address of buffer in the FLASH wich contains data to write
+ * \param pgm_src address of buffer in the FLASH wich contains data to write
  * \param eeaddr address in the EEPROM for write into
  * \param size size of block of data to write
  */

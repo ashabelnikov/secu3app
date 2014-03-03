@@ -36,13 +36,13 @@
 /**Helpful macro used for pointer conversion */
 #define _FNC(a) ((fnptr_t)(a))
 
-/**Helpful macro used pointer conversions of functions which are available in SECU-3T*/
+//Helpful macro used for pointer conversions of functions which are available in SECU-3T
 #ifdef SECU3T
- #define _FNC_S_SECU3T(a) (_FNC(a))
- #define _FNC_G_SECU3T(a) (_FNC(a))
+ #define _FNC_S_SECU3T(a) (_FNC(a))    //!< 'Set' function pointer
+ #define _FNC_G_SECU3T(a) (_FNC(a))    //!< 'Get' function pointer
 #else
- #define _FNC_S_SECU3T(a) (_FNC(iocfg_s_stub))
- #define _FNC_G_SECU3T(a) (_FNC(iocfg_g_stub))
+ #define _FNC_S_SECU3T(a) (_FNC(iocfg_s_stub)) //!< In SECU-3 we have a stub for 'Set' function pointer
+ #define _FNC_G_SECU3T(a) (_FNC(iocfg_g_stub)) //!< In SECU-3 we have a stub for 'Get' function pointer
 #endif
 
 /**Helpful macro for creating of I/O remapping version number*/

@@ -36,9 +36,9 @@
 
 //For use with fn_dat pointer, because it can point either to FLASH or RAM
 #ifdef REALTIME_TABLES
- #define _GB(x) *(x)
+ #define _GB(x) *(x)             //!< Macro for abstraction under getting bytes from RAM or FLASH (RAM version)
 #else
- #define _GB(x) PGM_GET_BYTE(x)
+ #define _GB(x) PGM_GET_BYTE(x)  //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
 #endif
 
 // ‘ункци€ билинейной интерпол€ции (поверхность)

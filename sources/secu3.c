@@ -200,8 +200,10 @@ void init_modules(void)
  //Initialization of UART (инициализируем UART)
  uart_init(edat.param.uart_divisor);
 
+#ifdef BLUETOOTH_SUPP
  //Initialization of Bluetooth related module
  bt_init(edat.param.bt_flags & (1 << 1));
+#endif
 
  //initialization of cam module, must precede ckps initialization
 #if defined(PHASE_SENSOR) || defined(SECU3T)

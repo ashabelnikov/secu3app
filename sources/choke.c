@@ -127,10 +127,10 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
    {
     chks.rpmreg_t1 = tmr;  //reset timer
-    if ((s_timer_gtc() - chks.strt_t1) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
+    if ((tmr - chks.strt_t1) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
      chks.rpmreg_enex = 1;
 #ifdef USE_RPMREG_TURNON_DELAY
-    if ((s_timer_gtc() - chks.strt_t1) >= (d->param.choke_corr_time + RPMREG_ENTO_TIME))
+    if ((tmr - chks.strt_t1) >=  RPMREG_ENTO_TIME)
      chks.rpmreg_ento = 1;
     if (chks.rpmreg_ento)
 #endif

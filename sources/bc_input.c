@@ -19,7 +19,7 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file bc_input.с
+/** \file bc_input.c
  * Implementation of CE errors information output using blink codes
  * (Реализация выдачи информации об ошибках СЕ используя блинк коды).
  */

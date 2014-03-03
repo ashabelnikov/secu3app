@@ -118,6 +118,9 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     AIRTEMP_SENS   *     Include support of intake air temperature sensor
                          Включить поддержку датчика температуры воздуха
 
+    BLUETOOTH_SUPP *     Include functionality for working with Bluetooth
+                         Включить поддержку работы с Bluetooth
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager 
   означает что опция является внутренней и не отображается в списке опций в 

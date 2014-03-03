@@ -46,6 +46,7 @@ void process_uart_interface(struct ecudata_t* d)
 {
  uint8_t descriptor;
 
+#ifdef BLUETOOTH_SUPP
  //Following code executes at start up only if bluetooth is enabled and only 1 time
  if (d->param.bt_flags & _BV(BTF_USE_BT))
  {
@@ -56,6 +57,7 @@ void process_uart_interface(struct ecudata_t* d)
    if (!bt_set_namepass(d))
     return;
  }
+#endif
 
  if (uart_is_packet_received())//приняли новый фрейм ?
  {
@@ -192,8 +194,10 @@ void process_uart_interface(struct ecudata_t* d)
     break;
 
    case SECUR_PAR:
+#ifdef BLUETOOTH_SUPP
     if (d->bt_name[0] && d->bt_pass[0])
      bt_start_set_namepass();
+#endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
   }

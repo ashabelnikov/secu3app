@@ -20,7 +20,7 @@
 */
 
 /** \file compilopt.h
- * Definitions of cimpile-time options (preprocessor directives).
+ * Definitions of compile-time options (preprocessor directives).
  */
 
 #ifndef _COMPILOPT_H_

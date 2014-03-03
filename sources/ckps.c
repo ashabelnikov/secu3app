@@ -189,15 +189,14 @@ typedef struct
 ckpsstate_t ckps;                         //!< instance of state variables
 chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's state variables
 
-/** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
- *  note: may be not effective on other MCUs or even case bugs! Be aware.
- */
+// Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода)
+//  note: may be not effective on other MCUs or even case bugs! Be aware.
 #ifdef _PLATFORM_M644_
-#define flags  GPIOR0                  // ATmega644 has one general purpose I/O register
+#define flags  GPIOR0                 //!< ATmega644 has one general purpose I/O register and we use it for first flags variable
 #else
-#define flags  TWAR
+#define flags  TWAR                   //!< First flags variable in I/O register (ATMega16/32)
 #endif
-#define flags2 TWBR
+#define flags2 TWBR                   //!< Second flags variable in I/O register
 
 /** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
 #ifdef __ICCAVR__
@@ -206,8 +205,9 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
  uint8_t TCNT0_H __attribute__((section (".noinit")));
 #endif
 
-/**Table srtores dividends for calculating of RPM */
+/**Accessor macro for RPM dividents table*/
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
+/**Table srtores dividends for calculating of RPM */
 PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
 #ifdef _PLATFORM_M644_
  //     1          2          3          4         5         6         7         8

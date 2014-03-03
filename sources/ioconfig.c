@@ -19,7 +19,7 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file ioconfig.с
+/** \file ioconfig.c
  * Implementation of I/O configuration. Allows I/O functions remapping
  * (Реализация переназначения выводов).
  */

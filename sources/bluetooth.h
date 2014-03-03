@@ -27,6 +27,8 @@
 #ifndef _BLUETOOTH_H_
 #define _BLUETOOTH_H_
 
+#ifdef BLUETOOTH_SUPP
+
 #include <stdint.h>
 
 struct ecudata_t;
@@ -51,5 +53,7 @@ void bt_start_set_namepass(void);
  * \return value > 0 if name and password are set, 0 if name and password are not set yet
  */
 uint8_t bt_set_namepass(struct ecudata_t* d);
+
+#endif //BLUETOOTH_SUPP
 
 #endif //_BLUETOOTH_H_

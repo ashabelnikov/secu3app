@@ -72,7 +72,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_RESERVED13   30     //!< reserved plug   ()
 #define IOP_RESERVED14   31     //!< reserved plug   ()
 
-//Wrap macro from port/pgmspace.h.
+/**Wrap macro from port/pgmspace.h. for getting function pointers from program memory */
 #define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
 
 /**Init specified I/O

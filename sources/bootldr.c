@@ -94,12 +94,14 @@
 
 #else
 #ifdef _PLATFORM_M644_
- /**Default baud rate for boot loader (if not specified)*/
+ /**Default baud rate for boot loader (if not specified), low byte*/
  #define _LDIINS_L LDIINS(/*0x81*/0x03)
+ /**Default baud rate for boot loader, high byte*/
  #define _LDIINS_H LDIINS(/*0x00*/0x01)
 #else
- /**Default baud rate for boot loader (if not specified)*/
+ /**Default baud rate for boot loader (if not specified), low byte*/
  #define _LDIINS_L LDIINS(/*0x67*/0xCF)
+ /**Default baud rate for boot loader, high byte*/
  #define _LDIINS_H LDIINS(0x00)
 #endif
 #endif

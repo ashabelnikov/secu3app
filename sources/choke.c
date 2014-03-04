@@ -168,7 +168,12 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 static void initial_pos(uint8_t dir, uint16_t steps)
 {
  stpmot_dir(dir);                     //set direction
- stpmot_run(steps + (steps >> 5));    //run using number of steps + 3%
+#ifdef USE_THOROTTLE_POS
+ if (0==d->sens.carb)
+  stpmot_run(steps >> 2);              //run using number of steps = 25%
+ else
+#endif
+  stpmot_run(steps + (steps >> 5));    //run using number of steps + 3%
 }
 
 /** Calculates choke position (%*2) from step value

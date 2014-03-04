@@ -196,7 +196,7 @@ void init_modules(void)
 
  //Take away of starter blocking (снимаем блокировку стартера)
  starter_set_blocking_state(0);
- 
+
  //Initialization of UART (инициализируем UART)
  uart_init(edat.param.uart_divisor);
 
@@ -293,8 +293,10 @@ MAIN()
  //Read all system parameters (читаем все параметры системы)
  load_eeprom_params(&edat);
 
+#ifdef IMMOBILIZER
  //If enabled, reads and checks security keys, performs system lock/unlock
  immob_check_state(&edat);
+#endif
 
 #ifdef REALTIME_TABLES
  //load currently selected tables into RAM

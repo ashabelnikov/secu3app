@@ -24,6 +24,8 @@
  * (Реализация API протокола 1-wire).
  */
 
+#ifdef IMMOBILIZER
+
 #include "port/avrio.h"
 #include "port/intrinsic.h"
 #include "port/port.h"
@@ -123,3 +125,5 @@ uint8_t onewire_read_byte(void)
 
  return data;
 }
+
+#endif //IMMOBILIZER

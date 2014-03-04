@@ -27,6 +27,8 @@
 #ifndef _ONEWIRE_H_
 #define _ONEWIRE_H_
 
+#ifdef IMMOBILIZER
+
 #include <stdint.h>
 
 #define OWCMD_READ_ROM      0x33     //!< Read ROM command
@@ -56,5 +58,7 @@ void onewire_write_byte(uint8_t data);
  * \return Byte read from 1-wire bus
  */
 uint8_t onewire_read_byte(void);
+
+#endif //IMMOBILIZER
 
 #endif //_ONEWIRE_H_

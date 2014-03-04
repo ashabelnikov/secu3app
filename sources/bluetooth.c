@@ -20,7 +20,8 @@
 */
 
 /** \file bluetooth.c
- * Implementation of bluetooth related functionality and logic (baud rate setting, name, password)
+ * Implementation of bluetooth related functionality and logic (baud rate setting, name, password).
+ * Note that current implementation supports Bluetooth with HC-06 firmware.
  * (Реализация логики связанной с блютузом (установка скорости, имя, пароль))
  */
 

@@ -188,7 +188,7 @@ uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 
 /** Stepper motor control for normal working mode
  * \param d pointer to ECU data structure
- * \param pos current calculated (terget) position of stepper motor
+ * \param pos current calculated (target) position of stepper motor
  */
 void sm_motion_control(struct ecudata_t* d, int16_t pos)
 {

@@ -248,6 +248,8 @@ void init_modules(void)
 #endif
 #ifdef HALL_SYNC
  ckps_select_input(edat.param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
+ ckps_set_shutter_wnd_width(edat.param.hall_wnd_width);
+ ckps_set_advance_angle(0);
 #endif
 
  s_timer_init();
@@ -364,7 +366,7 @@ MAIN()
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(&edat, 0);
   }
-  
+
   //----------непрерывное выполнение-----------------------------------------
   //выполнение отложенных операций
   sop_execute_operations(&edat);
@@ -406,7 +408,7 @@ MAIN()
    else
     ckps_enable_ignition(1);
   }
- 
+
 #ifdef DIAGNOSTICS
   diagnost_process(&edat);
 #endif
@@ -465,7 +467,7 @@ MAIN()
    if (turnout_low_priority_errors_counter > 0)
     turnout_low_priority_errors_counter--;
   }
-  
+
   wdt_reset_timer();
  }//main loop
  //------------------------------------------------------------------------

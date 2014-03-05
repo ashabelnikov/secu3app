@@ -137,36 +137,29 @@ PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 
 //--------вспомогательные функции для построения пакетов-------------
 
-/**Appends sender's buffer by sequence of bytes from program memory 
+/**Appends sender's buffer by sequence of bytes from program memory. This function is also used in the bluetooth module
  * note! can NOT be used for binary data! */
-#ifdef UART_BINARY
-static void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
+void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
 {
+#ifdef UART_BINARY
  while(size--) append_tx_buff(PGM_GET_BYTE(romBuffer++));
-}
 #else
-#define build_fs(src, size) \
-{ \
- memcpy_P(&uart.send_buf[uart.send_size],(src),(size)); \
- uart.send_size+=(size); \
-}
+ memcpy_P(&uart.send_buf[uart.send_size], romBuffer, size);
+ uart.send_size+=size;
 #endif
+}
 
-
-/**Appends sender's buffer by sequence of bytes from RAM 
+/**Appends sender's buffer by sequence of bytes from RAM. This function is also used in the bluetooth module
  * note! can NOT be used for binary data! */
-#ifdef UART_BINARY
-static void build_rs(const uint8_t* ramBuffer, uint8_t size)
+void build_rs(const uint8_t* ramBuffer, uint8_t size)
 {
+#ifdef UART_BINARY
  while(size--) append_tx_buff(*ramBuffer++);
-}
 #else
-#define build_rs(src, size) \
-{ \
- memcpy(&uart.send_buf[uart.send_size],(src),(size)); \
- uart.send_size+=(size); \
-}
+ memcpy(&uart.send_buf[uart.send_size], ramBuffer, size);
+ uart.send_size+=size;
 #endif
+}
 
 /**Appends sender's buffer by one HEX byte */
 #ifdef UART_BINARY
@@ -507,6 +500,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.ckps_cogs_num);
    build_i8h(d->param.ckps_miss_num);
    build_i8h(d->param.hall_flags);
+   build_i16h(d->param.hall_wnd_width);
    break;
 
   case OP_COMP_NC:
@@ -790,6 +784,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ckps_cogs_num = recept_i8h();
    d->param.ckps_miss_num = recept_i8h();
    d->param.hall_flags = recept_i8h();
+   d->param.hall_wnd_width = recept_i16h();
    break;
 
   case OP_COMP_NC:

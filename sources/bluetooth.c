@@ -52,6 +52,8 @@
 void uart_reset_send_buff(void);
 void uart_append_send_buff(uint8_t ch);
 void uart_begin_send(void);
+void build_fs(uint8_t _PGM *romBuffer, uint8_t size);
+void build_rs(const uint8_t *ramBuffer, uint8_t size);
 
 /**Template for AT+BAUDx command */
 PGM_DECLARE(uint8_t AT_BAUD[]) = "AT+BAUD";
@@ -84,20 +86,26 @@ void bt_init(uint8_t en_set_baud)
  */
 static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
 {
- uint8_t i = 0;
  uart_reset_send_buff();
- for(; i < 7; ++i) uart_append_send_buff(PGM_GET_BYTE(&AT_BAUD[i]));
+ build_fs(AT_BAUD, 7);
  if (baud == CBR_9600) uart_append_send_buff('4');
  else if (baud == CBR_19200) uart_append_send_buff('5');
  else if (baud == CBR_38400) uart_append_send_buff('6');
  else if (baud == CBR_57600) uart_append_send_buff('7');
 }
 
-/** Increments SM state if timer expired */
-void next_state_if_tmr_expired(void)
+/** Increments SM state if timer expired (baud rate setting)*/
+void next_state_if_tmr_expired_br(void)
 {
  if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
   ++bts.btbr_mode;
+}
+
+/** Increments SM state if timer expired (name & password setting)*/
+void next_state_if_tmr_expired_np(void)
+{
+ if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
+  ++bts.btnp_mode;
 }
 
 void next_state_with_new_baud(uint16_t baud)
@@ -134,7 +142,7 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
    next_state_with_new_baud(CBR_9600);
    break;
   case 3:                          //wait some time
-   next_state_if_tmr_expired();
+   next_state_if_tmr_expired_br();
    return 0;
 
   //Send command on 19200 baud
@@ -147,7 +155,7 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
    }
    else return 0;                  //busy
   case 5:                          //wait some time
-   next_state_if_tmr_expired();
+   next_state_if_tmr_expired_br();
    return 0;
 
   //Send command on 38400 baud
@@ -160,7 +168,7 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
    }
    else return 0;                  //busy
   case 7:                          //wait some time
-   next_state_if_tmr_expired();
+   next_state_if_tmr_expired_br();
    return 0;
 
   //Send command on 57600 baud
@@ -173,7 +181,7 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
    }
    else return 0;                  //busy
   case 9:                          //wait some time
-   next_state_if_tmr_expired();
+   next_state_if_tmr_expired_br();
    return 0;
 
   //Finishing...
@@ -207,10 +215,9 @@ void bt_start_set_namepass(void)
  */
 static void append_tx_buff_with_at_name_cmd(uint8_t* name)
 {
- uint8_t i = 0;
  uart_reset_send_buff();
- for(; i < 7; ++i) uart_append_send_buff(PGM_GET_BYTE(&AT_NAME[i]));
- for(i = 0; i < name[0]; ++i) uart_append_send_buff(name[i+1]);
+ build_fs(AT_NAME, 7);
+ build_rs(&name[1], name[0]);
 }
 
 /** Builds AT+PINx command in the sender's buffer
@@ -218,10 +225,9 @@ static void append_tx_buff_with_at_name_cmd(uint8_t* name)
  */
 static void append_tx_buff_with_at_pass_cmd(uint8_t* pass)
 {
- uint8_t i = 0;
  uart_reset_send_buff();
- for(; i < 6; ++i) uart_append_send_buff(PGM_GET_BYTE(&AT_PIN[i]));
- for(i = 0; i < pass[0]; ++i) uart_append_send_buff(pass[i+1]);
+ build_fs(AT_PIN, 6);
+ build_rs(&pass[1], pass[0]);
 }
 
 uint8_t bt_set_namepass(struct ecudata_t *d)
@@ -234,8 +240,7 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
    bts.strt_t1 = s_timer_gtc();    //set timer
    return 0;
   case 1:
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
-    ++bts.btnp_mode;
+   next_state_if_tmr_expired_np();
    return 0;
 
   //Send command to change name
@@ -245,8 +250,7 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
    bts.strt_t1 = s_timer_gtc();    //set timer
    break;                          //send!
   case 3:                          //wait some time
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
-    ++bts.btnp_mode;
+   next_state_if_tmr_expired_np();
    return 0;
 
   //Send command to change password (pin)
@@ -256,9 +260,9 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
    bts.strt_t1 = s_timer_gtc();    //set timer
    break;                          //send!
   case 5:                          //wait some time
-   if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_TIME)
+   next_state_if_tmr_expired_np();
+   if (bts.btnp_mode > 5)
    {
-    ++bts.btnp_mode;
     d->bt_name[0] = 0, d->bt_pass[0] = 0;
     return 1; //finished!
    }

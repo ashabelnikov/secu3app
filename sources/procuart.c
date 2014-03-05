@@ -162,6 +162,7 @@ void process_uart_interface(struct ecudata_t* d)
 
 #ifdef HALL_SYNC
     ckps_select_input(d->param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
+    ckps_set_shutter_wnd_width(d->param.hall_wnd_width);
 #endif
     break;
 

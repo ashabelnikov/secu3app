@@ -80,7 +80,7 @@ int16_t idling_function(struct ecudata_t* d)
  for(i = 14; i >= 0; i--)
   if (d->sens.inst_frq >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i])) break;
 
- if (i < 0)  {i = 0; rpm = fw_data.exdata.rpm_grid_points[0];}
+ if (i < 0)  {i = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
 
  return simple_interpolation(rpm,
              _GB(&d->fn_dat->f_idl[i]), _GB(&d->fn_dat->f_idl[i+1]),
@@ -138,7 +138,7 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
 
  //рабочая карта работает на rpm_grid_points[0] оборотах и выше
- if (f < 0)  {f = 0; rpm = fw_data.exdata.rpm_grid_points[0];}
+ if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
   fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,

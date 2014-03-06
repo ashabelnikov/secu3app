@@ -27,11 +27,15 @@
 #ifndef _IMMOBILIZ_H_
 #define _IMMOBILIZ_H_
 
+#ifdef IMMOBILIZER
+
 struct ecudata_t;
 
 /** Performs security keys reading, checks and locks the system depending on keys
  * \param d Pointer to ECU data structure
  */
 void immob_check_state(struct ecudata_t* d);
+
+#endif //IMMOBILIZER
 
 #endif //_IMMOBILIZ_H_

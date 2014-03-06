@@ -85,9 +85,6 @@
 #define F_SELEDGE_P 3                 //!< indicates selected edge type for PS input, falling edge is default
 #define F_SELINP    4                 //!< indicates selected input type (either CKPS or PS can be used), PS is default
 
-/**Advance value of distributor (angle * ANGLE_MULTIPLAYER)*/
-#define HALL_ADVANCE (60*ANGLE_MULTIPLAYER)
-
 /** State variables */
 typedef struct
 {
@@ -105,7 +102,9 @@ typedef struct
 #endif
  volatile uint8_t knkwnd_mode;        //!< used to indicate that knock measuring window is opened
  volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, relatively to TDC (начало окна фазовой селекции детонации в градусах относительно в.м.т)
- volatile int16_t knock_wnd_end;      //!< width of the  phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, (ширина окна фазовой селекции детонации в градусах)
+ volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, (ширина окна фазовой селекции детонации в градусах)
+ int16_t shutter_wnd_width;           //!< Window width (in degrees of cranckshaft) in trigger shutter
+ int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -157,7 +156,7 @@ void ckps_init_state_variables(void)
  _BEGIN_ATOMIC_BLOCK();
 
  hall.stroke_period = 0xFFFF;
- hall.advance_angle = HALL_ADVANCE; //=0
+ hall.advance_angle = hall.shutter_wnd_width; //=0
 
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_VHTPER);
@@ -228,7 +227,7 @@ void ckps_init_state(void)
 
 void ckps_set_advance_angle(int16_t angle)
 {
- int16_t aad = (HALL_ADVANCE - angle);
+ int16_t aad = (hall.shutter_wnd_width - angle);
  _BEGIN_ATOMIC_BLOCK();
  hall.advance_angle = aad;
  _END_ATOMIC_BLOCK();
@@ -382,8 +381,9 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
 void ckps_set_knock_window(int16_t begin, int16_t end)
 {
- int16_t begin_d = (HALL_ADVANCE + begin); //start of window
+ int16_t begin_d = (hall.shutter_wnd_width + begin); //start of window
  int16_t end_d = (end - begin); //width of window
+ hall.knock_wnd_begin_v = begin; //save begin value to use in other setters
  _BEGIN_ATOMIC_BLOCK();
  hall.knock_wnd_begin = begin_d;
  hall.knock_wnd_end = end_d;
@@ -459,6 +459,15 @@ void ckps_select_input(uint8_t i_type)
   _END_ATOMIC_BLOCK();
  }
  WRITEBIT(flags2, F_SELINP, i_type); //save selected value
+}
+
+void ckps_set_shutter_wnd_width(int16_t width)
+{
+ int16_t begin_d = (width + hall.knock_wnd_begin_v); //start of window
+ hall.shutter_wnd_width = width; //save it to use in other setters
+ _BEGIN_ATOMIC_BLOCK();
+ hall.knock_wnd_begin = begin_d;
+ _END_ATOMIC_BLOCK();
 }
 
 /** Turn OFF specified ignition channel

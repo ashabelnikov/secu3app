@@ -18,11 +18,12 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     Under Linux:      Run configure.sh with option - type of MCU, it will create
                       Makefile and start building.
 
-    Проект можно скомпилировать под ATMega16, ATMega32, ATMega64. Для ATMega64
+    Проект можно скомпилировать для ATMega16, ATMega32, ATMega64. Для ATMega64
 код компилируется, но работать он не будет! Вы можете компилировать проект
 используя IAR или GCC. Запустите configure.bat c соответствующими опциями (тип
 микроконтроллера и тип компилятора), будет создан Makefile и начнется сборка
-проекта.
+проекта. Ниже представлен список возможных опций компиляции. Исключение ненужных
+опций позволит вам экономить память и ресурсы МК.
 
     List of symbols which affects compilation:
     Список символов управляющих компиляцией:
@@ -59,10 +60,6 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     FUEL_PUMP            Electric fuel pump control
                          (Управление электробензонасосом)
 
-    BL_BAUD_RATE         Baud rate for boot loader. Can be set to 9600, 14400,
-                         19200, 28800, 38400, 57600. Note! Will not take effect
-                         without reprogramming using ISP programmator.
-                         (Скорость передачи данных для загрузчика)
 
     THERMISTOR_CS        Use a resistive temperature sensor
                          (Используется датчик температуры охлаждающей жидкости
@@ -108,6 +105,11 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
                          Использовать бинарный режим при передаче данных через
                          UART вместо ASCII
 
+    BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
+                         19200, 28800, 38400, 57600. Note! Will not take effect
+                         without reprogramming using ISP programmator.
+                         (Скорость передачи данных для загрузчика)
+
     SPEED_SENSOR   *     Include speed sensor support
                          Включить поддержку датчика скорости
 
@@ -121,8 +123,11 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     BLUETOOTH_SUPP *     Include functionality for working with Bluetooth
                          Включить поддержку работы с Bluetooth
 
+    IMMOBILIZER    *     Include immobilizer and iButton functionality
+                         Включить поддержку иммобилайзера и iButton
+
 * means that option is internal and not displayed in the list of options in the
-  SECU-3 Manager 
+  SECU-3 Manager
   означает что опция является внутренней и не отображается в списке опций в 
   SECU-3 Manager
 

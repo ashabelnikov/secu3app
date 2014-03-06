@@ -162,13 +162,18 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 
 /** Set choke to initial position. Because we have no position feedback, we
  * must use number of steps more than stepper actually has.
+ * \param d pointer to ECU data structure
  * \param dir Direction (see description on stpmot_dir() function)
- * \param steps Total number of steps of stepper motor
  */
-static void initial_pos(uint8_t dir, uint16_t steps)
+static void initial_pos(struct ecudata_t* d, uint8_t dir)
 {
- stpmot_dir(dir);                     //set direction
- stpmot_run(steps + (steps >> 5));    //run using number of steps + 3%
+ stpmot_dir(dir);                                             //set direction
+#ifdef USE_THOROTTLE_POS
+ if (0==d->sens.carb)
+  stpmot_run(d->param.sm_steps >> 2);                         //run using number of steps = 25%
+ else
+#endif
+  stpmot_run(d->param.sm_steps + (d->param.sm_steps >> 5));   //run using number of steps + 3%
 }
 
 /** Calculates choke position (%*2) from step value
@@ -183,7 +188,7 @@ uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 
 /** Stepper motor control for normal working mode
  * \param d pointer to ECU data structure
- * \param pos current calculated (terget) position of stepper motor
+ * \param pos current calculated (target) position of stepper motor
  */
 void sm_motion_control(struct ecudata_t* d, int16_t pos)
 {
@@ -239,13 +244,13 @@ void choke_control(struct ecudata_t* d)
  {
   case 0:                                                     //Initialization of choke position
    if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
-    initial_pos(INIT_POS_DIR, d->param.sm_steps);
+    initial_pos(d, INIT_POS_DIR);
    chks.state = 2;
    chks.prev_temp = d->sens.temperat;
    break;
 
   case 1:                                                     //system is being preparing to power-down
-   initial_pos(INIT_POS_DIR, d->param.sm_steps);
+   initial_pos(d, INIT_POS_DIR);
    chks.state = 2;
    break;
 
@@ -272,7 +277,7 @@ void choke_control(struct ecudata_t* d)
   case 5:                                                     //normal working mode
    if (d->choke_testing)
    {
-    initial_pos(INIT_POS_DIR, d->param.sm_steps);
+    initial_pos(d, INIT_POS_DIR);
     chks.state = 6;                                           //start testing
    }
    else

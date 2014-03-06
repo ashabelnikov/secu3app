@@ -24,6 +24,8 @@
  * (Реализация логики иммобилайзера).
  */
 
+#ifdef IMMOBILIZER
+
 #include "port/port.h"
 #include <string.h>
 #include "bitmask.h"
@@ -82,3 +84,5 @@ lock_system:
  onewire_restore_io_registers();
  d->sys_locked = 1;    //set locking flag
 }
+
+#endif //IMMOBILIZER

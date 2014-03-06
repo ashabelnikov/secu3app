@@ -220,7 +220,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
   _ACF,_ACC, _ACF,_ACC, 160, 0, 0, 984, 200, 0x02, 0x00, {2000, 1200},
   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
-  20, 1024, 300, 40, {0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  20, 1024, 300, 40, 1920, {0,0,0,0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

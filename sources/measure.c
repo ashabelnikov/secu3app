@@ -175,8 +175,11 @@ void meas_average_measured_values(struct ecudata_t* d)
  {
   for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
   { //filter noisy samples by comparing each sample with averaged value (threshold is 6.25%)
-   if (temp_avr && (abs((int16_t)temp_avr - (int16_t)temp_circular_buffer[i]) > (temp_avr >> 4)))
-    sum+=temp_avr;
+   uint16_t t = (temp_avr >> 4);
+   if (temp_avr && (temp_circular_buffer[i] > (temp_avr + t)))
+    sum+=(temp_avr + t);
+   else if (temp_avr && (temp_circular_buffer[i] < ((int16_t)temp_avr - t)))
+    sum+=(temp_avr - t);
    else
     sum+=temp_circular_buffer[i];
   }

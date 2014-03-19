@@ -402,10 +402,10 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
  if (abs(error) <= 25)   //dead band is +/-25 RPM
   return *p_prev_corr;
 
- choke_regstate.int_state+= error; //update integrator's state
+ choke_regstate.int_state+= error >> 1; //update integrator's state
  restrict_value_to(&choke_regstate.int_state, -28000, 28000); //restrict integràtor output
 
- *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 14; //additional 4 shift bits to reduce regulator's influence
+ *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 13; //additional 4 shift bits to reduce regulator's influence
  if (0)
  {
   #define _PROPFACT(x) ((int16_t)(x * 8))

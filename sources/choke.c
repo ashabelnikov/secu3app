@@ -34,11 +34,13 @@
 #include "smcontrol.h"
 #include "pwrrelay.h"
 
+#define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
+
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
 /**RPM regulator call period, 50ms*/
-#define RPMREG_CORR_TIME 5
+#define RPMREG_CORR_TIME 10
 
 /**During this time system can't exit from RPM regulation mode*/
 #define RPMREG_ENEX_TIME (10*100)

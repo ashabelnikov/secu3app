@@ -141,6 +141,7 @@ void init_ecu_data(struct ecudata_t* d)
  edat.choke_testing = 0;
  edat.choke_pos = 0;
  edat.choke_manpos_d = 0;
+ edat.choke_rpm_reg = 0;
  edat.bt_name[0] = 0;
  edat.bt_pass[0] = 0;
  edat.sys_locked = 0; //unlocked

@@ -121,6 +121,8 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 #ifdef USE_RPMREG_TURNON_DELAY
     chks.rpmreg_ento = 0;
 #endif
+    //set choke RPM regulation flag
+    d->choke_rpm_reg = (0!=d->param.choke_rpm[0]);
    }
    break; //use startup correction
   case 2:
@@ -143,6 +145,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     {
      chks.strt_mode = 3; //exit
      rpm_corr = 0;
+     d->choke_rpm_reg = 0;
     }
     else
      chks.rpmval_prev = d->sens.frequen;

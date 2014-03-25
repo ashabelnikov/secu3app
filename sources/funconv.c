@@ -115,6 +115,12 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
  discharge = (d->param.map_upper_pressure - d->sens.map);
  if (discharge < 0) discharge = 0;
 
+#ifdef SM_CONTROL
+ //air flow will be always 1 if choke RPM regulator is active
+ if (d->choke_rpm_reg)
+  discharge = d->param.map_lower_pressure;
+#endif
+
  //map_upper_pressure - верхнее значение давления
  //map_lower_pressure - нижнее значение давления
  gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / 16; //делим на количество узлов интерполяции по оси давления
@@ -361,8 +367,14 @@ uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.choke_closing[i]), PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1]),
- (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5), 16) >> 4;
+ if ((t > TEMPERATURE_MAGNITUDE(70)) || (0==PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1])))
+  return 0;
+ else
+ {
+  uint8_t pos = simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.choke_closing[i]), PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1]),
+  (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5), 16) >> 4;
+  return (pos==1) ? 0 : pos; //0.5% is same as zero
+ }
 }
 
 /**Describes state data for idling regulator */

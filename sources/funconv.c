@@ -115,12 +115,6 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
  discharge = (d->param.map_upper_pressure - d->sens.map);
  if (discharge < 0) discharge = 0;
 
-#ifdef SM_CONTROL
- //air flow will be always 1 if choke RPM regulator is active
- if (d->choke_rpm_reg)
-  discharge = d->param.map_lower_pressure;
-#endif
-
  //map_upper_pressure - верхнее значение давления
  //map_lower_pressure - нижнее значение давления
  gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / 16; //делим на количество узлов интерполяции по оси давления

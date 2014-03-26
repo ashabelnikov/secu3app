@@ -64,7 +64,20 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
    }
-   angle=work_function(d, 0);              //базовый УОЗ - функция рабочего режима
+
+#ifdef SM_CONTROL
+   //air flow will be always 1 if choke RPM regulator is active
+   if (d->choke_rpm_reg)
+   {
+    work_function(d, 1);                    //обновляем значение расхода воздуха
+    angle = idling_function(d);             //базовый УОЗ - функция для ХХ
+   }
+   else
+    angle=work_function(d, 0);               //базовый УОЗ - функция рабочего режима
+#else
+   angle=work_function(d, 0);               //базовый УОЗ - функция рабочего режима
+#endif
+
    angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
 #ifdef AIRTEMP_SENS
    angle+=airtemp_function(d);                  //add air temperature correction

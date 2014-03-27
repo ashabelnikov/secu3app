@@ -28,12 +28,15 @@
 
 #include "port/port.h"
 #include <stdlib.h>
+#include "adc.h"
 #include "ioconfig.h"
 #include "funconv.h"
+#include "magnitude.h"
 #include "secu3.h"
 #include "smcontrol.h"
 #include "pwrrelay.h"
 
+#define USE_THROTTLE_POS 1        //undefine this constant if you don't need to use throttle limit switch in choke initialization
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
 
 /**Direction used to set choke to the initial position */
@@ -161,6 +164,8 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 
  if (d->sens.temperat > d->param.choke_corr_temp)
   return 0; //Do not use correction if coolant temperature > threshold
+ else if (d->sens.temperat < TEMPERATURE_MAGNITUDE(0))
+  return d->param.sm_steps; //if temperature  < 0, then choke must be fully closed
  else
   return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
 }
@@ -173,7 +178,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 static void initial_pos(struct ecudata_t* d, uint8_t dir)
 {
  stpmot_dir(dir);                                             //set direction
-#ifdef USE_THOROTTLE_POS
+#ifdef USE_THROTTLE_POS
  if (0==d->sens.carb)
   stpmot_run(d->param.sm_steps >> 2);                         //run using number of steps = 25%
  else

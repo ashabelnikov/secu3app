@@ -36,8 +36,9 @@
 #include "smcontrol.h"
 #include "pwrrelay.h"
 
-#define USE_THROTTLE_POS 1        //undefine this constant if you don't need to use throttle limit switch in choke initialization
+#define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle limit switch in choke initialization
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
+//#define STARTUP_ON_GAS           //define this option if you start engine on gas
 
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
@@ -73,6 +74,9 @@ typedef struct
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
 #ifdef USE_RPMREG_TURNON_DELAY
  uint8_t   rpmreg_ento;
+#endif
+#ifdef STARTUP_ON_GAS
+ uint8_t   gas_v_state;    //!< GAS_V state before startup
 #endif
 }choke_st_t;
 
@@ -167,7 +171,16 @@ int16_t calc_startup_corr(struct ecudata_t* d)
  else if (d->sens.temperat < TEMPERATURE_MAGNITUDE(0))
   return d->param.sm_steps; //if temperature  < 0, then choke must be fully closed
  else
+#ifdef STARTUP_ON_GAS
+ {
+  if (chks.gas_v_state)
+   return 0;
+  else
+   return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
+ }
+#else
   return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
+#endif
 }
 
 /** Set choke to initial position. Because we have no position feedback, we
@@ -257,6 +270,9 @@ void choke_control(struct ecudata_t* d)
     initial_pos(d, INIT_POS_DIR);
    chks.state = 2;
    chks.prev_temp = d->sens.temperat;
+#ifdef STARTUP_ON_GAS
+   chks.gas_v_state = d->sens.gas;                            //Remember state of gas valve
+#endif
    break;
 
   case 1:                                                     //system is being preparing to power-down

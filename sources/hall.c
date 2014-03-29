@@ -52,10 +52,6 @@
 #ifndef SECU3T
  #error "Hall sensor synchronization is not supported by SECU-3, please define SECU3T if you use SECU-3T"
 #endif
-//Dwell control, is not supported when synchronization from a Hall sensor is selected!
-#ifdef DWELL_CONTROL
- #error "Dwell control is not supported when synchronization from Hall sensor is selected!"
-#endif
 
 /**Maximum number of ignition channels (cylinders) */
 #define IGN_CHANNELS_MAX      8
@@ -105,6 +101,9 @@ typedef struct
  volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, (ширина окна фазовой селекции детонации в градусах)
  int16_t shutter_wnd_width;           //!< Window width (in degrees of cranckshaft) in trigger shutter
  int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
+#ifdef DWELL_CONTROL
+ volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
+#endif
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -192,6 +191,9 @@ void ckps_init_state_variables(void)
 #endif
 
  hall.knkwnd_mode = 0;
+#ifdef DWELL_CONTROL
+ hall.cr_acc_time = 0;
+#endif
  _END_ATOMIC_BLOCK();
 }
 
@@ -318,10 +320,19 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  //not supported by Hall sensor
 }
 
+#ifndef DWELL_CONTROL
 void ckps_set_ignition_cogs(uint8_t cogs)
 {
  //not supported by Hall sensor
 }
+#else
+void ckps_set_acc_time(uint16_t i_acc_time)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ hall.cr_acc_time = i_acc_time;
+ _END_ATOMIC_BLOCK();
+}
+#endif
 
 uint8_t ckps_is_error(void)
 {
@@ -506,12 +517,23 @@ ISR(TIMER1_COMPA_vect)
 #endif
  //-----------------------------------------------------
 
+#ifndef DWELL_CONTROL
  //set timer for pulse completion, use fast division by 3
  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
 //OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
   OCR1B = tmr + hall.stroke_period / 3;
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
+#else
+ if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
+ {
+  if (hall.cr_acc_time > hall.stroke_period-120)
+   hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+  OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
+ }
+ else
+  OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
+#endif
 
 #ifdef COOLINGFAN_PWM
  _DISABLE_INTERRUPT();

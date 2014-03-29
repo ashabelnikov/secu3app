@@ -396,8 +396,13 @@ MAIN()
    calc_adv_ang = 0;
 
 #ifdef DWELL_CONTROL
+#ifdef HALL_SYNC
+  //Double dwell time if RPM is low and non-stable
+  ckps_set_acc_time(edat.st_block ? accumulation_time(&edat) : accumulation_time(&edat) << 1);
+#else
   //calculate and update accumulation time (dwell control)
   ckps_set_acc_time(accumulation_time(&edat));
+#endif
 #endif
   if (edat.sys_locked)
    ckps_enable_ignition(0);

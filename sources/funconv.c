@@ -443,7 +443,7 @@ int16_t airtemp_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, _GB(&fw_data.exdata.ats_corr[i]), _GB(&fw_data.exdata.ats_corr[i1]),
+ return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.ats_corr[i]), PGM_GET_BYTE(&fw_data.exdata.ats_corr[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 

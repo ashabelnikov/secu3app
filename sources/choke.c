@@ -29,6 +29,7 @@
 #include "port/port.h"
 #include <stdlib.h>
 #include "adc.h"
+#include "bitmask.h"
 #include "ioconfig.h"
 #include "funconv.h"
 #include "magnitude.h"
@@ -53,14 +54,24 @@
 #define RPMREG_ENTO_TIME (3*100)
 #endif
 
+//See flags variable in choke_st_t
+#define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
+#define CF_MAN_CNTR     1  //!< manual control mode flag
+#define CF_RPMREG_ENEX  2  //!< flag which indicates that it is allowed to exit from RPM regulation mode
+#define CF_SMDIR_CHG    3  //!< flag, indicates that stepper motor direction has changed during motion
+#ifdef USE_RPMREG_TURNON_DELAY
+#define CF_PRMREG_ENTO  4  //!< indicates that system is entered to RPM regulation mode
+#endif
+#ifdef STARTUP_ON_GAS
+#define CF_GASV_STATE   5  //!< GAS_V state before startup
+#endif
+
 /**Define state variables*/
 typedef struct
 {
  uint8_t   state;          //!< state machine state
- uint8_t   pwdn;           //!< powerdown flag (used if power management is enabled)
  uint16_t  smpos;          //!< current position of stepper motor in steps
  int16_t   prev_temp;      //!< used for choke_closing_lookup()
- uint8_t   manual;         //!< manual control mode
 
  uint8_t   strt_mode;      //!< state machine state used for starting mode
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
@@ -68,16 +79,10 @@ typedef struct
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
- uint8_t   rpmreg_enex;    //!< flag which indicates that it is allowed to exit from RPM regulation mode
- uint8_t   smdirchg;       //!< flag, indicates that stepper motor direction has changed during motion
  uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
-#ifdef USE_RPMREG_TURNON_DELAY
- uint8_t   rpmreg_ento;
-#endif
-#ifdef STARTUP_ON_GAS
- uint8_t   gas_v_state;    //!< GAS_V state before startup
-#endif
+
+ uint8_t   flags;          //!< state flags (see CF_ definitions)
 }choke_st_t;
 
 /**Instance of state variables */
@@ -92,11 +97,11 @@ void choke_init(void)
 {
  stpmot_init();
  chks.state = 0;
- chks.pwdn = 0;
+ CLEARBIT(chks.flags, CF_POWERDOWN);
  chks.strt_mode = 0;
- chks.manual = 0;
+ CLEARBIT(chks.flags, CF_MAN_CNTR);
  chks.rpmreg_prev = 0;
- chks.rpmreg_enex = 0;
+ CLEARBIT(chks.flags, CF_RPMREG_ENEX);
 }
 
 /** Calculates choke position correction at startup mode and from RPM regulator
@@ -124,9 +129,9 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     chks.strt_t1 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
     chks.rpmreg_t1 = s_timer_gtc();
     chokerpm_regulator_init();
-    chks.rpmreg_enex = 0;
+    CLEARBIT(chks.flags, CF_RPMREG_ENEX);
 #ifdef USE_RPMREG_TURNON_DELAY
-    chks.rpmreg_ento = 0;
+    CLEARBIT(chks.flags, CF_PRMREG_ENTO);
 #endif
     //set choke RPM regulation flag
     d->choke_rpm_reg = (0!=d->param.choke_rpm[0]);
@@ -139,16 +144,16 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    {
     chks.rpmreg_t1 = tmr;  //reset timer
     if ((tmr - chks.strt_t1) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
-     chks.rpmreg_enex = 1;
+     SETBIT(chks.flags, CF_RPMREG_ENEX);
 #ifdef USE_RPMREG_TURNON_DELAY
     if ((tmr - chks.strt_t1) >=  RPMREG_ENTO_TIME)
-     chks.rpmreg_ento = 1;
-    if (chks.rpmreg_ento)
+     SETBIT(chks.flags, CF_PRMREG_ENTO);
+    if (CHECKBIT(chks.flags, CF_PRMREG_ENTO))
 #endif
     rpm_corr = choke_rpm_regulator(d, &chks.rpmreg_prev);
     //detect fast throttle opening only if RPM > 1000
     if (d->sens.temperat >= (d->param.idlreg_turn_on_temp /*+ 1*/) ||
-       (chks.rpmreg_enex && (d->sens.frequen > 1000) && (((int16_t)d->sens.frequen - (int16_t)chks.rpmval_prev) > 180)))
+       (CHECKBIT(chks.flags, CF_RPMREG_ENEX) && (d->sens.frequen > 1000) && (((int16_t)d->sens.frequen - (int16_t)chks.rpmval_prev) > 180)))
     {
      chks.strt_mode = 3; //exit
      rpm_corr = 0;
@@ -173,7 +178,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
  else
 #ifdef STARTUP_ON_GAS
  {
-  if (chks.gas_v_state)
+  if (CHECKBIT(chks.flags, CF_GASV_STATE))
    return 0;
   else
    return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
@@ -217,15 +222,15 @@ void sm_motion_control(struct ecudata_t* d, int16_t pos)
 {
  int16_t diff;
  restrict_value_to(&pos, 0, d->param.sm_steps);
- if (1==chks.smdirchg)                                        //direction has changed
+ if (CHECKBIT(chks.flags, CF_SMDIR_CHG))                      //direction has changed
  {
   if (!stpmot_is_busy())
   {
    chks.smpos = chks.smpos_prev + ((chks.cur_dir == SM_DIR_CW) ? -stpmot_stpcnt() : stpmot_stpcnt());
-   chks.smdirchg = 0;
+   CLEARBIT(chks.flags, CF_SMDIR_CHG);
   }
  }
- if (0==chks.smdirchg)                                        //normal operation
+ if (!CHECKBIT(chks.flags, CF_SMDIR_CHG))                     //normal operation
  {
   diff = pos - chks.smpos;
   if (!stpmot_is_busy())
@@ -246,7 +251,7 @@ void sm_motion_control(struct ecudata_t* d, int16_t pos)
    if (((chks.smpos - chks.smpos_prev) & 0x8000) != ((pos - chks.smpos_prev) & 0x8000))
    {
     stpmot_run(0);                                            //stop stepper motor
-    chks.smdirchg = 1;
+    SETBIT(chks.flags, CF_SMDIR_CHG);
    }
   }
  }
@@ -271,7 +276,7 @@ void choke_control(struct ecudata_t* d)
    chks.state = 2;
    chks.prev_temp = d->sens.temperat;
 #ifdef STARTUP_ON_GAS
-   chks.gas_v_state = d->sens.gas;                            //Remember state of gas valve
+   WRITEBIT(chks.flags, CF_GASV_STATE, d->sens.gas);          //Remember state of gas valve
 #endif
    break;
 
@@ -283,19 +288,19 @@ void choke_control(struct ecudata_t* d)
   case 2:                                                     //wait while choke is being initialized
    if (!stpmot_is_busy())                                     //ready?
    {
-    if (chks.pwdn)
+    if (CHECKBIT(chks.flags, CF_POWERDOWN))
      chks.state = 3;                                          //ready to power-down
     else
      chks.state = 5;                                          //normal working
     chks.smpos = 0;                                           //initial position (fully opened)
-    chks.smdirchg = 0;
+    CLEARBIT(chks.flags, CF_SMDIR_CHG);
    }
    break;
 
   case 3:                                                     //power-down
    if (pwrrelay_get_state())
    {
-    chks.pwdn = 0;
+    CLEARBIT(chks.flags, CF_POWERDOWN);
     chks.state = 5;
    }
    break;
@@ -309,11 +314,11 @@ void choke_control(struct ecudata_t* d)
    else
    {
     int16_t pos;
-    if (!chks.manual)
+    if (!CHECKBIT(chks.flags, CF_MAN_CNTR))
     {
      pos = calc_sm_position(d);                               //calculate stepper motor position
      if (d->choke_manpos_d)
-      chks.manual = 1; //enter manual mode
+      SETBIT(chks.flags, CF_MAN_CNTR); //enter manual mode
     }
     else
     { //manual control
@@ -354,7 +359,7 @@ void choke_control(struct ecudata_t* d)
   check_pwr:
    if (!pwrrelay_get_state())
    {                                                          //power-down
-    chks.pwdn = 1;
+    SETBIT(chks.flags, CF_POWERDOWN);
     chks.state = 1;
    }
    break;

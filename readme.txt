@@ -29,7 +29,7 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     —писок символов управл€ющих компил€цией:
 
     VPSEM                For using of starter blocking output for indication of
-                         idle economizer valve's state
+                         idle cut off valve's state
                          дл€ индикации состо€ни€ клапана Ёѕ’’ используетс€ выход
                          блокировки стартера
 

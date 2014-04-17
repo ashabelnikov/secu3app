@@ -123,8 +123,8 @@ void init_ecu_data(struct ecudata_t* d)
  edat.op_comp_code = 0;
  edat.op_actn_code = 0;
  edat.sens.inst_frq = 0;
- edat.curr_angle = 0;
- edat.knock_retard = 0;
+ edat.corr.curr_angle = 0;
+ edat.corr.knock_retard = 0;
  edat.ecuerrors_for_transfer = 0;
  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
  edat.engine_mode = EM_START;
@@ -334,7 +334,7 @@ MAIN()
    if (edat.param.knock_use_knock_channel)
     knock_start_settings_latching();
 
-   edat.curr_angle = calc_adv_ang;
+   edat.corr.curr_angle = calc_adv_ang;
    meas_update_values_buffers(&edat, 1);  //<-- update RPM only
   }
 
@@ -389,6 +389,9 @@ MAIN()
   calc_adv_ang = advance_angle_state_machine(&edat);
   //добавляем к УОЗ октан-коррекцию
   calc_adv_ang+=edat.param.angle_corr;
+  //------------------------------
+  edat.corr.octan_aac = edat.param.angle_corr;
+  //------------------------------
   //ограничиваем получившийся УОЗ установленными пределами
   restrict_value_to(&calc_adv_ang, edat.param.min_angle, edat.param.max_angle);
   //Если стоит режим нулевого УОЗ, то 0
@@ -433,9 +436,9 @@ MAIN()
 #ifdef HALL_SYNC
     int16_t strt_map_angle = start_function(&edat);
     ckps_set_shutter_spark(0==strt_map_angle);
-    edat.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
+    edat.corr.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
 #else
-    edat.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
+    edat.corr.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
 #endif
    }
    else
@@ -443,7 +446,7 @@ MAIN()
 #ifdef HALL_SYNC
     ckps_set_shutter_spark(edat.sens.frequen < 200);
 #endif
-    edat.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
+    edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
   }
 
    //----------------------------------------------
@@ -453,11 +456,11 @@ MAIN()
     knklogic_retard(&edat, &retard_state);
    }
    else
-    edat.knock_retard = 0;
+    edat.corr.knock_retard = 0;
    //----------------------------------------------
 
    //сохраняем УОЗ для реализации в ближайшем по времени такте зажигания
-   ckps_set_advance_angle(edat.curr_angle);
+   ckps_set_advance_angle(edat.corr.curr_angle);
 
    //управляем усилением аттенюатора в зависимости от оборотов
    if (edat.param.knock_use_knock_channel)

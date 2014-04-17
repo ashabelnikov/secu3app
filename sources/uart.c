@@ -165,7 +165,10 @@ void build_rs(const uint8_t* ramBuffer, uint8_t size)
 #ifdef UART_BINARY
 #define build_i4h(i) {append_tx_buff((i));}
 #else
-#define build_i4h(i) {uart.send_buf[uart.send_size++] = ((i)+0x30);}
+static void build_i4h(uint8_t i)
+{
+ uart.send_buf[uart.send_size++] = ((i)+0x30);
+}
 #endif
 
 /**Appends sender's buffer by two HEX bytes
@@ -246,7 +249,10 @@ static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 #ifdef UART_BINARY
 #define recept_i4h() (takeout_rx_buff())
 #else
-#define recept_i4h() (uart.recv_buf[uart.recv_index++] - 0x30)
+static uint8_t recept_i4h(void)
+{
+ return uart.recv_buf[uart.recv_index++] - 0x30;
+}
 #endif
 
 /**Retrieves from receiver's buffer 8-bit value
@@ -433,9 +439,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.map);               // MAP pressure
    build_i16h(d->sens.voltage);           // voltage
    build_i16h(d->sens.temperat);          // coolant temperature
-   build_i16h(d->curr_angle);             // advance angle
+   build_i16h(d->corr.curr_angle);        // advance angle
    build_i16h(d->sens.knock_k);           // knock value
-   build_i16h(d->knock_retard);           // knock retard
+   build_i16h(d->corr.knock_retard);      // knock retard
    build_i8h(d->airflow);                 // index of the map axis curve
    //boolean values
    build_i8h((d->ie_valve   << 0) |       // IE flag
@@ -462,6 +468,15 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+   //corrections
+   build_i16h(d->corr.strt_aalt);         // advance angle from start map
+   build_i16h(d->corr.idle_aalt);         // advance angle from idle map
+   build_i16h(d->corr.work_aalt);         // advance angle from work map
+   build_i16h(d->corr.temp_aalt);         // advance angle from coolant temperature correction map
+   build_i16h(d->corr.airt_aalt);         // advance angle from air temperature correction map
+   build_i16h(d->corr.idlreg_aac);        // advance angle correction from idling RPM regulator
+   build_i16h(d->corr.octan_aac);         // octane correction value
    break;
 
   case ADCCOR_PAR:

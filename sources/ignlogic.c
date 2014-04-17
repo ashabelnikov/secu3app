@@ -41,6 +41,10 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
     idling_regulator_init();
    }
    angle=start_function(d);                //базовый УОЗ - функция для пуска
+   //------------------------------
+   d->corr.strt_aalt = angle;
+   d->corr.idle_aalt = d->corr.work_aalt = d->corr.temp_aalt = d->corr.airt_aalt = d->corr.idlreg_aac = 0;
+   //------------------------------
    d->airflow = 0;                         //в режиме пуска нет расхода
    break;
 
@@ -50,12 +54,18 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
     d->engine_mode = EM_WORK;
    }
    work_function(d, 1);                    //обновляем значение расхода воздуха
-   angle = idling_function(d);             //базовый УОЗ - функция для ХХ
-   angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
-   angle+=idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+   //------------------------------
+   d->corr.strt_aalt = d->corr.work_aalt = 0;
+   d->corr.idle_aalt = idling_function(d); //базовый УОЗ - функция для ХХ
+   d->corr.temp_aalt = coolant_function(d);//добавляем к УОЗ температурную коррекцию
 #ifdef AIRTEMP_SENS
-   angle+=airtemp_function(d);                  //add air temperature correction
+   d->corr.airt_aalt = airtemp_function(d);//add air temperature correction
+#else
+   d->corr.airt_aalt = 0;
 #endif
+   d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+   //------------------------------
+   angle = d->corr.idle_aalt + d->corr.temp_aalt + d->corr.idlreg_aac + d->corr.airt_aalt; 
    break;
 
   case EM_WORK: //рабочий режим
@@ -71,19 +81,40 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    {
     work_function(d, 1);                    //обновляем значение расхода воздуха
     angle = idling_function(d);             //базовый УОЗ - функция для ХХ
+    //------------------------------
+    d->corr.idle_aalt = angle;
+    d->corr.work_aalt = 0;  
+    //------------------------------
    }
    else
+   {
     angle=work_function(d, 0);               //базовый УОЗ - функция рабочего режима
+    //------------------------------
+    d->corr.idle_aalt = 0;
+    d->corr.work_aalt = angle;
+    //------------------------------
+   }
 #else
    angle=work_function(d, 0);               //базовый УОЗ - функция рабочего режима
+   //------------------------------
+   d->corr.idle_aalt = 0;
+   d->corr.work_aalt = angle;
+   //------------------------------
 #endif
 
-   angle+=coolant_function(d);             //добавляем к УОЗ температурную коррекцию
+   //------------------------------
+   d->corr.strt_aalt = d->corr.idlreg_aac = 0;
+   d->corr.temp_aalt = coolant_function(d);//добавляем к УОЗ температурную коррекцию;
 #ifdef AIRTEMP_SENS
-   angle+=airtemp_function(d);                  //add air temperature correction
+   d->corr.airt_aalt = airtemp_function(d);//add air temperature correction;
+#else
+   d->corr.airt_aalt = 0;
 #endif
+   //------------------------------
+   angle+= (d->corr.temp_aalt + d->corr.airt_aalt);
+
    //отнимаем поправку полученную от регулятора по детонации
-   angle-=d->knock_retard;
+   angle-=d->corr.knock_retard;
    break;
 
   default:  //непонятная ситуация - угол в ноль

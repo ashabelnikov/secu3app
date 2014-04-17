@@ -89,6 +89,19 @@ typedef struct sensors_t
  int16_t  add_i2_raw;                    //!< raw ADC value from ADD_I2 input
 }sensors_t;
 
+typedef struct correct_t
+{
+ int16_t curr_angle;                     //!< Current advance angle (текущий угол опережения)
+ int16_t knock_retard;                   //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
+ int16_t idlreg_aac;                     //!< Idle regulator advance angle correction
+ int16_t octan_aac;                      //!< Octane advance angle correction
+ int16_t strt_aalt;                      //!< Advance angle from start map
+ int16_t idle_aalt;                      //!< Advance angle from idle map
+ int16_t work_aalt;                      //!< Advance angle from work map
+ int16_t temp_aalt;                      //!< Advance angle from coolant temp. corr. map
+ int16_t airt_aalt;                      //!< Advance angle from air temp. corr. map
+}correct_t;
+ 
 /**Describes system's data (main ECU data structure)
  * описывает данные системы, обеспечивает единый интерфейс данных
  */
@@ -96,6 +109,7 @@ typedef struct ecudata_t
 {
  struct params_t  param;                 //!< --parameters (параметры)
  struct sensors_t sens;                  //!< --sensors (сенсоры)
+ struct correct_t corr;                  //!< --calculated corrections and lookup tables' values                   
 
  uint8_t  ie_valve;                      //!< State of Idle Economizer valve (состояние клапана ЭПХХ)
  uint8_t  fe_valve;                      //!< State of Fuel Economizer valve (состояние клапана ЭМР)
@@ -103,8 +117,6 @@ typedef struct ecudata_t
  uint8_t  st_block;                      //!< State of the starter blocking output (состояние выхода блокировки стартера)
  uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
  uint8_t  airflow;                       //!< Air flow (расход воздуха)
- int16_t  curr_angle;                    //!< Current advance angle (текущий угол опережения)
- int16_t  knock_retard;                  //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
  uint8_t  choke_pos;                     //!< Choke position in % * 2
 
 #ifndef REALTIME_TABLES

@@ -38,26 +38,38 @@
 #include "wdt.h"
 
 /**Maximum allowed number of suspended operations */
-#define SUSPENDED_OPERATIONS_SIZE 17
+//#define SUSPENDED_OPERATIONS_SIZE 17
 
 /**Contains queue of suspended operations. Each operation can appear one time */
-uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
+//uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
+uint32_t suspended_opcodes;
 
-/*#pragma inline*/
+/*INLINE*/
 void sop_set_operation(uint8_t opcode)
 {
- suspended_opcodes[(opcode)] = (opcode);
+//suspended_opcodes[(opcode)] = (opcode);
+//suspended_opcodes |= _BV32(opcode);
+ _AB(suspended_opcodes, (opcode >> 3))|= (1 << (opcode % 8));
+}
+
+INLINE
+void sop_reset_operation(uint8_t opcode)
+{
+//suspended_opcodes[opcode] = SOP_NA;
+ suspended_opcodes &= ~_BV32(opcode);
 }
 
 INLINE
 uint8_t sop_is_operation_active(uint8_t opcode)
 {
- return (suspended_opcodes[(opcode)] == (opcode));
+//return (suspended_opcodes[(opcode)] == (opcode));
+ return 0 != (suspended_opcodes & _BV32(opcode));
 }
 
 void sop_init_operations(void)
 {
- memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE);
+//memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE);
+ suspended_opcodes = 0;
 }
 
 /**Delay 25ms*/
@@ -91,7 +103,7 @@ void sop_execute_operations(struct ecudata_t* d)
    ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SAVE_PARAMETERS] = SOP_NA;
+   sop_reset_operation(SOP_SAVE_PARAMETERS);
   }
  }
 
@@ -105,7 +117,7 @@ void sop_execute_operations(struct ecudata_t* d)
    ce_save_merged_errors(0);
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SAVE_CE_MERGED_ERRORS] = SOP_NA;
+   sop_reset_operation(SOP_SAVE_CE_MERGED_ERRORS);
   }
  }
 
@@ -118,7 +130,7 @@ void sop_execute_operations(struct ecudata_t* d)
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SEND_NC_PARAMETERS_SAVED] = SOP_NA;
+   sop_reset_operation(SOP_SEND_NC_PARAMETERS_SAVED);
   }
  }
 
@@ -129,7 +141,7 @@ void sop_execute_operations(struct ecudata_t* d)
    ce_save_merged_errors(&d->ecuerrors_saved_transfer);
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SAVE_CE_ERRORS] = SOP_NA;
+   sop_reset_operation(SOP_SAVE_CE_ERRORS);
   }
  }
 
@@ -142,7 +154,7 @@ void sop_execute_operations(struct ecudata_t* d)
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SEND_NC_CE_ERRORS_SAVED] = SOP_NA;
+   sop_reset_operation(SOP_SEND_NC_CE_ERRORS_SAVED);
   }
  }
 
@@ -153,7 +165,7 @@ void sop_execute_operations(struct ecudata_t* d)
    eeprom_read(&d->ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint16_t));
    sop_set_operation(SOP_TRANSMIT_CE_ERRORS);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_READ_CE_ERRORS] = SOP_NA;
+   sop_reset_operation(SOP_READ_CE_ERRORS);
   }
  }
 
@@ -164,7 +176,7 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    uart_send_packet(d, CE_SAVED_ERR);    //теперь передатчик озабочен передачей данных
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_TRANSMIT_CE_ERRORS] = SOP_NA;
+   sop_reset_operation(SOP_TRANSMIT_CE_ERRORS);
   }
  }
 
@@ -175,7 +187,7 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    uart_send_packet(d, FWINFO_DAT);    //теперь передатчик озабочен передачей данных
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SEND_FW_SIG_INFO] = SOP_NA;
+   sop_reset_operation(SOP_SEND_FW_SIG_INFO);
   }
  }
 
@@ -193,7 +205,7 @@ void sop_execute_operations(struct ecudata_t* d)
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SEND_NC_TABLSET_LOADED] = SOP_NA;
+   sop_reset_operation(SOP_SEND_NC_TABLSET_LOADED);
   } 
  }
 
@@ -203,7 +215,7 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    load_selected_tables_into_ram(d);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SELECT_TABLSET] = SOP_NA;
+   sop_reset_operation(SOP_SELECT_TABLSET);
   }
  }
 
@@ -219,7 +231,7 @@ void sop_execute_operations(struct ecudata_t* d)
    uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
    load_specified_tables_into_ram(d, fuel_type, index);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_LOAD_TABLSET] = SOP_NA;
+   sop_reset_operation(SOP_LOAD_TABLSET);
   }
  }
 
@@ -233,7 +245,7 @@ void sop_execute_operations(struct ecudata_t* d)
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SEND_NC_TABLSET_SAVED] = SOP_NA;
+   sop_reset_operation(SOP_SEND_NC_TABLSET_SAVED);
   }
  }
 
@@ -250,7 +262,7 @@ void sop_execute_operations(struct ecudata_t* d)
    eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START + sizeof(f_data_t) * index, &d->tables_ram[fuel_type], sizeof(f_data_t));
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
-   suspended_opcodes[SOP_SAVE_TABLSET] = SOP_NA;
+   sop_reset_operation(SOP_SAVE_TABLSET);
   }
  }
 
@@ -264,7 +276,7 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    uart_send_packet(d, DBGVAR_DAT);    //send packet with debug information
    //"delete" this operation from list because it has already completed
-   suspended_opcodes[SOP_DBGVAR_SENDING] = SOP_NA;
+   sop_reset_operation(SOP_DBGVAR_SENDING);
   }
  }
 #endif
@@ -278,7 +290,7 @@ void sop_execute_operations(struct ecudata_t* d)
    _AB(d->op_comp_code, 0) = OPCODE_DIAGNOST_ENTER;
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
    //"delete" this operation from list because it has already completed
-   suspended_opcodes[SOP_SEND_NC_ENTER_DIAG] = SOP_NA;
+   sop_reset_operation(SOP_SEND_NC_ENTER_DIAG);
   }
  }
  if (sop_is_operation_active(SOP_SEND_NC_LEAVE_DIAG))

@@ -29,7 +29,7 @@
 
 #include <stdint.h>
 
-#define SOP_NA                       255  //!< not defined
+//#define SOP_NA                     255  //!< not defined
 #define SOP_SAVE_PARAMETERS          0    //!< save parameters
 #define SOP_SAVE_CE_MERGED_ERRORS    1    //!< save merged bits of CE errors
 #define SOP_SEND_NC_PARAMETERS_SAVED 2    //!< notify that parameters has been saved

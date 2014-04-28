@@ -29,6 +29,9 @@
 #include "ignlogic.h"
 #include "secu3.h"
 
+/**Reserved value used to indicate that value is not used in corresponding mode*/
+#define AAV_NOTUSED 0x7FFF
+
 int16_t advance_angle_state_machine(struct ecudata_t* d)
 {
  int16_t angle;
@@ -40,11 +43,8 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
    }
-   angle=start_function(d);                //базовый УОЗ - функция для пуска
-   //------------------------------
-   d->corr.strt_aalt = angle;
-   d->corr.idle_aalt = d->corr.work_aalt = d->corr.temp_aalt = d->corr.airt_aalt = d->corr.idlreg_aac = 0;
-   //------------------------------
+   angle = d->corr.strt_aalt = start_function(d);//базовый УОЗ - функция для пуска
+   d->corr.idle_aalt = d->corr.work_aalt = d->corr.temp_aalt = d->corr.airt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
    d->airflow = 0;                         //в режиме пуска нет расхода
    break;
 
@@ -54,18 +54,18 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
     d->engine_mode = EM_WORK;
    }
    work_function(d, 1);                    //обновляем значение расхода воздуха
-   //------------------------------
-   d->corr.strt_aalt = d->corr.work_aalt = 0;
-   d->corr.idle_aalt = idling_function(d); //базовый УОЗ - функция для ХХ
+   angle = d->corr.idle_aalt = idling_function(d); //базовый УОЗ - функция для ХХ
    d->corr.temp_aalt = coolant_function(d);//добавляем к УОЗ температурную коррекцию
+   angle+=d->corr.temp_aalt;
 #ifdef AIRTEMP_SENS
    d->corr.airt_aalt = airtemp_function(d);//add air temperature correction
+   angle+=d->corr.airt_aalt;
 #else
    d->corr.airt_aalt = 0;
 #endif
    d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
-   //------------------------------
-   angle = d->corr.idle_aalt + d->corr.temp_aalt + d->corr.idlreg_aac + d->corr.airt_aalt; 
+   angle+=d->corr.idlreg_aac;
+   d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
    break;
 
   case EM_WORK: //рабочий режим
@@ -80,41 +80,30 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    if (d->choke_rpm_reg)
    {
     work_function(d, 1);                    //обновляем значение расхода воздуха
-    angle = idling_function(d);             //базовый УОЗ - функция для ХХ
-    //------------------------------
-    d->corr.idle_aalt = angle;
-    d->corr.work_aalt = 0;  
-    //------------------------------
+    angle = d->corr.idle_aalt = idling_function(d);//базовый УОЗ - функция для ХХ
+    d->corr.work_aalt = AAV_NOTUSED;
    }
    else
    {
-    angle=work_function(d, 0);               //базовый УОЗ - функция рабочего режима
-    //------------------------------
-    d->corr.idle_aalt = 0;
-    d->corr.work_aalt = angle;
-    //------------------------------
+    angle = d->corr.work_aalt = work_function(d, 0);//базовый УОЗ - функция рабочего режима
+    d->corr.idle_aalt = AAV_NOTUSED;
    }
 #else
-   angle=work_function(d, 0);               //базовый УОЗ - функция рабочего режима
-   //------------------------------
-   d->corr.idle_aalt = 0;
-   d->corr.work_aalt = angle;
-   //------------------------------
+   angle = d->corr.work_aalt = work_function(d, 0);//базовый УОЗ - функция рабочего режима
+   d->corr.idle_aalt = AAV_NOTUSED;
 #endif
 
-   //------------------------------
-   d->corr.strt_aalt = d->corr.idlreg_aac = 0;
    d->corr.temp_aalt = coolant_function(d);//добавляем к УОЗ температурную коррекцию;
+   angle+=d->corr.temp_aalt;
 #ifdef AIRTEMP_SENS
    d->corr.airt_aalt = airtemp_function(d);//add air temperature correction;
+   angle+=d->corr.airt_aalt;
 #else
    d->corr.airt_aalt = 0;
 #endif
-   //------------------------------
-   angle+= (d->corr.temp_aalt + d->corr.airt_aalt);
-
    //отнимаем поправку полученную от регулятора по детонации
    angle-=d->corr.knock_retard;
+   d->corr.strt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
    break;
 
   default:  //непонятная ситуация - угол в ноль

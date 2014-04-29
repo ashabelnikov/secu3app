@@ -55,8 +55,8 @@
 #define   MISCEL_PAR   'z'   //!< miscellaneous parameters
 #define   EDITAB_PAR   '{'   //!< used for transferring of data for realtime tables editing
 #define   ATTTAB_PAR   '}'   //!< used for transferring of attenuator map (knock detection related)
+#define   RPMGRD_PAR   '"'   //!< used for transferring of RPM grid
 #define   DBGVAR_DAT   ':'   //!< for watching of firmware variables (used for debug purposes)
-
 #define   DIAGINP_DAT  '='   //!< diagnostics: send input values (analog & digital values)
 #define   DIAGOUT_DAT  '^'   //!< diagnostics: receive output states (bits)
 

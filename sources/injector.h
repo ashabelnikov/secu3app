@@ -29,6 +29,24 @@
 
 #ifdef FUEL_INJECT
 
+#include <stdint.h>
+
+/**Initialization of injector module (hardware & variables)*/
+void inject_init_state(void);
+
+/** Initialization of used I/O ports */
+void inject_init_ports(void);
+
+/**Set injection time
+ * \param time Injection time, one tick = 6.4us
+ */
+void inject_set_inj_time(uint16_t time);
+
+/**Start injection (open injector for specified time).
+ * This function must be called synchronously with crankshaft
+ */
+void inject_start_inj(void);
+
 #endif //FUEL_INJECT
 
 #endif //_INJECTOR_H_

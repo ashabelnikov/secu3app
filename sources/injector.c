@@ -28,10 +28,40 @@
 
 #include "port/port.h"
 #include "bitmask.h"
+#include "injector.h"
 
 #ifndef _PLATFORM_M644_
  #error "You can not use FUEL_INJECT option without _PLATFORM_M644_"
 #endif
+
+/***/
+typedef struct
+{
+ volatile uint16_t inj_time;              //!< Current injection time, used in interrupts
+}inj_state_t;
+
+/***/
+inj_state_t inj;
+
+
+void inject_init_state(void)
+{
+}
+
+void inject_init_ports(void)
+{
+}
+
+void inject_set_inj_time(uint16_t time)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ inj.inj_time = time;
+ _END_ATOMIC_BLOCK();
+}
+
+void inject_start_inj(void)
+{
+}
 
 /***/
 ISR(TIMER2_COMPB_VECT)

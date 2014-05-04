@@ -210,4 +210,11 @@
  #define COPT_CKPS_2CHIGN 0
 #endif
 
+/** Include support of fuel injection */
+#ifdef FUEL_INJECT
+ #define COPT_FUEL_INJECT 1
+#else
+ #define COPT_FUEL_INJECT 0
+#endif
+
 #endif //_COMPILOPT_H_

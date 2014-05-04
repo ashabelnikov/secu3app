@@ -105,6 +105,9 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
                          Использовать бинарный режим при передаче данных через
                          UART вместо ASCII
 
+    FUEL_INJECT          Include support of fuel injection
+                         Включить поддержку управления впрыском топлива
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600. Note! Will not take effect
                          without reprogramming using ISP programmator.

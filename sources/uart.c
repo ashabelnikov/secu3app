@@ -222,14 +222,12 @@ static void build_fb(uint8_t _PGM *romBuffer, uint8_t size)
  while(size--) build_i8h(PGM_GET_BYTE(romBuffer++));
 }
 
-#ifdef REALTIME_TABLES
 /**Appends sender's buffer by sequence of bytes from RAM buffer
  * can be used for binary data */
 static void build_rb(const uint8_t* ramBuffer, uint8_t size)
 {
  while(size--) build_i8h(*ramBuffer++);
 }
-#endif
 
 //----------вспомагательные функции для распознавания пакетов---------
 /**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
@@ -306,7 +304,6 @@ static uint32_t recept_i32h(void)
  return i;
 }
 
-#ifdef REALTIME_TABLES
 /**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
  * can be used for binary data */
 static void recept_rb(uint8_t* ramBuffer, uint8_t size)
@@ -320,7 +317,6 @@ static void recept_rb(uint8_t* ramBuffer, uint8_t size)
   size = rcvsize;
  while(size--) *ramBuffer++ = recept_i8h();
 }
-#endif
 //--------------------------------------------------------------------
 
 /**Makes sender to start sending */

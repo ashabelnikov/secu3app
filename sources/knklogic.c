@@ -60,23 +60,23 @@ void knklogic_init(retard_state_t* p_rs)
 
 void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs)
 {
+ if (p_rs->knock_flag)
+ { //detonation is present
+  d->corr.knock_retard+= d->param.knock_retard_step;//retard
+  p_rs->knock_flag = 0;
+  p_rs->delay_counter = d->param.knock_recovery_delay; //reset delay
+ }
+ else
+ { //detonation is absent
+  if (p_rs->delay_counter == 0)
+  {
+   d->corr.knock_retard-= d->param.knock_advance_step;//advance
+   p_rs->delay_counter = d->param.knock_recovery_delay;
+  }
+ }
+ //restrict knock retard value
+ restrict_value_to(&d->corr.knock_retard, 0, d->param.knock_max_retard);
+
  if (p_rs->delay_counter != 0)
   p_rs->delay_counter--;
- else
- {
-  if (p_rs->knock_flag)
-  { //detonation present
-   d->corr.knock_retard+= d->param.knock_retard_step;//retard
-   p_rs->knock_flag = 0;
-  }
-  else
-  {//detonation is absent
-   d->corr.knock_retard-= d->param.knock_advance_step;//advance
-  }
-  restrict_value_to(&d->corr.knock_retard, 0, d->param.knock_max_retard);
-
-  p_rs->delay_counter = d->param.knock_recovery_delay;
-  if (0!=(p_rs->delay_counter))
-    --(p_rs->delay_counter);
- }
 }

@@ -79,8 +79,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
 
-   //Version of this structure - 1.6
-   IOREMVER(1,6),
+   //Version of this structure - 2.0
+   IOREMVER(2,0),
 
    //normal slots (initialization)
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
@@ -89,7 +89,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_ps),              //PS input initialization
     _FNC_S_SECU3T(iocfg_i_add_i1), //ADD_IO1 input initialization
     _FNC_S_SECU3T(iocfg_i_add_i2), //ADD_IO2 input initialization
-    _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de)
+    _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de),
+    _FNC(iocfg_i_gas_v), _FNC_S_SECU3T(iocfg_i_ref_s),
+    0,0,0,0,0                      //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (initialization)
    {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
     _FNC_S_SECU3T(iocfg_i_add_io1i), _FNC_S_SECU3T(iocfg_i_add_io2i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_st_blocki),
@@ -97,7 +99,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_psi),              //PS input initialization
     _FNC_S_SECU3T(iocfg_i_add_i1i), //ADD_IO1 input initialization
     _FNC_S_SECU3T(iocfg_i_add_i2i), //ADD_IO2 input initialization
-    _FNC(iocfg_i_cei), _FNC(iocfg_i_bli), _FNC(iocfg_i_dei)
+    _FNC(iocfg_i_cei), _FNC(iocfg_i_bli), _FNC(iocfg_i_dei),
+    _FNC(iocfg_i_gas_vi), _FNC_S_SECU3T(iocfg_i_ref_si),
+    0,0,0,0,0                      //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
@@ -105,7 +109,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_ps),              //PS input get value
     _FNC_G_SECU3T(iocfg_g_add_i1), //ADD_IO1 input get value
     _FNC_G_SECU3T(iocfg_g_add_i2), //ADD_IO2 input get value
-    _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de)
+    _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de),
+    _FNC(iocfg_g_gas_v), _FNC_G_SECU3T(iocfg_g_ref_s),
+    0,0,0,0,0                      //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
     _FNC_S_SECU3T(iocfg_s_add_io1i), _FNC_S_SECU3T(iocfg_s_add_io2i), _FNC(iocfg_s_ecfi), _FNC(iocfg_s_st_blocki),
@@ -113,26 +119,36 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_psi),              //PS input get value
     _FNC_G_SECU3T(iocfg_g_add_i1i), //ADD_IO1 input get value
     _FNC_G_SECU3T(iocfg_g_add_i2i), //ADD_IO2 input get value
-    _FNC(iocfg_s_cei), _FNC(iocfg_s_bli), _FNC(iocfg_s_dei)
+    _FNC(iocfg_s_cei), _FNC(iocfg_s_bli), _FNC(iocfg_s_dei),
+    _FNC(iocfg_g_gas_vi), _FNC_G_SECU3T(iocfg_g_ref_si),
+    0,0,0,0,0                       //<-- zero means that these slots are not implemented in this firmware
    },
    //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC_S_SECU3T(iocfg_i_add_io1), _FNC_S_SECU3T(iocfg_i_add_io2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
     _FNC(iocfg_i_ie), _FNC(iocfg_i_fe), _FNC(iocfg_i_ps), _FNC_S_SECU3T(iocfg_i_add_i1),
-    _FNC_S_SECU3T(iocfg_i_add_i2), _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de), //<-- mapped to slots by default
+    _FNC_S_SECU3T(iocfg_i_add_i2), _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de),
+    _FNC(iocfg_i_gas_v), _FNC_S_SECU3T(iocfg_i_ref_s), 0, 0, 0, 0, 0,  //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC_S_SECU3T(iocfg_s_add_io1), _FNC_S_SECU3T(iocfg_s_add_io2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
     _FNC(iocfg_s_ie), _FNC(iocfg_s_fe), _FNC(iocfg_g_ps), _FNC_G_SECU3T(iocfg_g_add_i1),
-    _FNC_G_SECU3T(iocfg_g_add_i2), _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de), //<-- mapped to slots by default
+    _FNC_G_SECU3T(iocfg_g_add_i2), _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de),
+    _FNC(iocfg_g_gas_v), _FNC_G_SECU3T(iocfg_g_ref_s), 0, 0, 0, 0, 0,  //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
@@ -221,7 +237,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
   _ACF,_ACC, _ACF,_ACC, 160, 0, 0, 984, 200, 0x02, 0x00, {2000, 1200},
   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
-  20, 1024, 300, 40, 1920, {0,0,0,0,0,0,0}, /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
+  20, 1024, 300, 40, 1920, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },
 
  /**Данные в таблицах по умолчанию Fill tables with default data */

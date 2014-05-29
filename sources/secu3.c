@@ -152,6 +152,9 @@ void init_ecu_data(struct ecudata_t* d)
 void init_ports(void)
 {
  ckps_init_ports();
+#if defined(PHASE_SENSOR) || defined(SECU3T)
+ cams_init_ports();
+#endif
  vent_init_ports();
  fuelecon_init_ports();
 #ifdef FUEL_PUMP
@@ -169,6 +172,7 @@ void init_ports(void)
 #ifdef INTK_HEATING
  intkheat_init_ports();
 #endif
+ meas_init_ports();
 }
 
 /**Initialization of system modules
@@ -188,7 +192,7 @@ void init_modules(void)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
- 
+
  //Initialization of ADC
  adc_init();
 

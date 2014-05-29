@@ -79,6 +79,14 @@ typedef struct
 /** Global instance of cam sensor state variables */
 camstate_t camstate;
 
+void cams_init_ports()
+{
+#ifdef SECU3T
+ IOCFG_INIT(IOP_REF_S, 1);   //use pullup resistor
+#endif
+ IOCFG_INIT(IOP_PS, 1);      //use pullup resistor
+}
+
 void cams_init_state_variables(void)
 {
 #ifndef SECU3T /*SECU-3*/
@@ -118,12 +126,10 @@ void cams_init_state(void)
  EICRA|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
  if (CHECKBIT(flags, F_CAMSIA))
-  EIMSK|=  _BV(INT0) | _BV(INT1); //INT1 enabled only when cam sensor is utilized in the firmware or input is available
- else
-  EIMSK|=  _BV(INT0);
-#else
- EIMSK|=  _BV(INT0);              //это нам нужно для ДНО
+  EIMSK|= _BV(INT1);              //INT1 enabled only when cam sensor is utilized in the firmware or input is available
 #endif
+ if (IOCFG_CHECK(IOP_REF_S))
+  EIMSK|= _BV(INT0);              //INT0 enabled only when REF_S input not remapped to alternative function
 #endif
 
 #ifdef SPEED_SENSOR

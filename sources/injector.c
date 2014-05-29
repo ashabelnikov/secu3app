@@ -27,6 +27,7 @@
 #ifdef FUEL_INJECT
 
 #include "port/port.h"
+#include "port/interrupt.h"
 #include "bitmask.h"
 #include "injector.h"
 

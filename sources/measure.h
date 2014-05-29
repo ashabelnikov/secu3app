@@ -31,6 +31,9 @@
 
 struct ecudata_t;
 
+/**Initialization of used input ports*/
+void meas_init_ports(void);
+
 /**Update ring buffers with new data given from sensors and ADC
  * \param d pointer to ECU data structure
  * \param rpm_only if != 0, then only RPM related buffers will be updated

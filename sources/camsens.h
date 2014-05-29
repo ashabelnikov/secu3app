@@ -30,6 +30,9 @@
 #include <stdint.h>
 
 #if defined(PHASE_SENSOR) || defined(SECU3T)
+/**Initialization of used input ports*/
+void cams_init_ports(void);
+
 /** Initialization of state variables */
 void cams_init_state_variables(void);
 

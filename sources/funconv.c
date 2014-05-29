@@ -430,7 +430,7 @@ int16_t airtemp_function(struct ecudata_t* d)
 {
  int16_t i, i1, t = d->sens.air_temp;
 
- if (0)  //todo: check if input remmaped
+ if (!IOCFG_CHECK(IOP_AIR_TEMP))
   return 0;   //do not use correcton if air temperature sensor is turned off
 
  //-30 - minimum temperature value

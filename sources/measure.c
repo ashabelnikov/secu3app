@@ -50,9 +50,6 @@
  #define _RESDIV(v, n, d) (((n) * (v)) / (d))
 #endif
 
-/**Reads state of gas valve (считывает состояние газового клапана) */
-#define GET_GAS_VALVE_STATE(s) (CHECKBIT(PINC, PINC6) > 0)
-
 /**Reads state of throttle gate (only the value, without inversion)
  * считывает состояние дроссельной заслонки (только значение, без инверсии)
  */
@@ -92,6 +89,12 @@ uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaring
 uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging of speed sensor periods
 #endif
 
+void meas_init_ports(void)
+{
+ IOCFG_INIT(IOP_GAS_V, 0);    //don't use internal pullup resistor
+ //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB) because they are initialised by default
+ //and we don't need pullup resistors for them
+}
 
 //обновление буферов усреднения (частота вращения, датчики...)
 void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
@@ -227,9 +230,7 @@ void meas_average_measured_values(struct ecudata_t* d)
 #endif
 
 #ifdef AIRTEMP_SENS
- if (0) //todo: check remmaped input
-  d->sens.air_temp = ats_lookup(d->sens.add_i1_raw);   //ADD_IO1 input
- else if (0) //todo: check remmaped input
+ if (IOCFG_CHECK(IOP_AIR_TEMP))
   d->sens.air_temp = ats_lookup(d->sens.add_i2_raw);   //ADD_IO2 input
  else
   d->sens.air_temp = 0; //input is not selected
@@ -264,8 +265,9 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
   d->sens.carb=d->param.carb_invers^(d->sens.tps > d->param.tps_threshold);
  }
 
- //считываем и сохраняем состояние газового клапана
- d->sens.gas = GET_GAS_VALVE_STATE();
+ //read state of gas valve input (считываем и сохраняем состояние газового клапана)
+ //if GAS_V input remapped to other function, then petrol
+ d->sens.gas = IOCFG_GET(IOP_GAS_V);
 
  //переключаем тип топлива в зависимости от состояния газового клапана
 #ifndef REALTIME_TABLES

@@ -427,8 +427,8 @@ void iocfg_s_dei(uint8_t value)        //inverted version
 void iocfg_i_ps(uint8_t value)
 {
 #ifdef SECU3T
- WRITEBIT(PORTD, PD3, value);  //controlls pullup resistor
- DDRD &= ~_BV(DDD3);           //input
+ WRITEBIT(PORTD, PD3, value);          //controls pullup resistor
+ DDRD &= ~_BV(DDD3);                   //input
 #else /*SECU-3*/
  WRITEBIT(PORTC, PC4, value);
  DDRC &= ~_BV(DDC4);
@@ -438,8 +438,8 @@ void iocfg_i_ps(uint8_t value)
 void iocfg_i_psi(uint8_t value)
 {
 #ifdef SECU3T
- WRITEBIT(PORTD, PD3, value);  //controlls pullup resistor
- DDRD &= ~_BV(DDD3);           //input
+ WRITEBIT(PORTD, PD3, value);          //controlls pullup resistor
+ DDRD &= ~_BV(DDD3);                   //input
 #else /*SECU-3*/
  WRITEBIT(PORTC, PC4, value);
  DDRC &= ~_BV(DDC4);
@@ -465,23 +465,16 @@ uint8_t iocfg_g_psi(void)              //inverted version
 }
 
 #ifdef SECU3T
-//value bits: xxxx xxoi
-//o - point than pullup resistor must be connected (1), or disconnected (0)
-//i - point than linked output must be set to 1, or 0 (this bit applicable only for ADD_IOx lines)
 void iocfg_i_add_i1(uint8_t value)
 {
- WRITEBIT(PORTA, PA6, (value & _BV(0))); //controlls pullup resistor
- CLEARBIT(DDRA, DDA6);                   //input
- WRITEBIT(PORTC, PC5, (value & _BV(1))); //set output value
- DDRC |= _BV(DDC5);                      //output
+ WRITEBIT(PORTA, PA6, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA6);                 //input
 }
 
 void iocfg_i_add_i1i(uint8_t value)
 {
- WRITEBIT(PORTA, PA6, (value & _BV(0))); //controlls pullup resistor
- CLEARBIT(DDRA, DDA6);                   //input
- WRITEBIT(PORTC, PC5, (value & _BV(1))); //set output value
- DDRC |= _BV(DDC5);                      //output
+ WRITEBIT(PORTA, PA6, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA6);                 //input
 }
 
 uint8_t iocfg_g_add_i1(void)
@@ -494,23 +487,16 @@ uint8_t iocfg_g_add_i1i(void)          //inverted version
  return !CHECKBIT(PINA, PINA6);
 }
 
-//value bits: xxxx xxoi
-//o - point than pullup resistor must be connected (1), or disconnected (0)
-//i - point than linked output must be set to 1, or 0 (this bit applicable only for ADD_IOx lines)
 void iocfg_i_add_i2(uint8_t value)
 {
- WRITEBIT(PORTA, PA5, (value & _BV(0))); //controlls pullup resistor
- CLEARBIT(DDRA, DDA5);                   //input
- WRITEBIT(PORTA, PA4, (value & _BV(1))); //set output value
- DDRA |= _BV(DDA4);                      //output
+ WRITEBIT(PORTA, PA5, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA5);                 //input
 }
 
 void iocfg_i_add_i2i(uint8_t value)
 {
- WRITEBIT(PORTA, PA5, (value & _BV(0))); //controlls pullup resistor
- CLEARBIT(DDRA, DDA5);                   //input
- WRITEBIT(PORTA, PA4, (value & _BV(1))); //set output value
- DDRA |= _BV(DDA4);                      //output
+ WRITEBIT(PORTA, PA5, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA5);                 //input
 }
 
 uint8_t iocfg_g_add_i2(void)
@@ -522,7 +508,52 @@ uint8_t iocfg_g_add_i2i(void)          //inverted version
 {
  return !CHECKBIT(PINA, PINA5);
 }
+
+void iocfg_i_ref_s(uint8_t value)
+{
+ WRITEBIT(PORTD, PD2, value);          //controlls pullup resistor
+ CLEARBIT(DDRD, DDD2);                 //input
+}
+
+void iocfg_i_ref_si(uint8_t value)     //inverted version
+{
+ WRITEBIT(PORTD, PD2, value);          //controlls pullup resistor
+ CLEARBIT(DDRD, DDD2);                 //input
+}
+
+uint8_t iocfg_g_ref_s(void)
+{
+ return !!CHECKBIT(PIND, PIND2);
+}
+
+uint8_t iocfg_g_ref_si(void)           //inverted version
+{
+ return !CHECKBIT(PIND, PIND2);
+}
+
 #endif
+
+void iocfg_i_gas_v(uint8_t value)
+{
+ WRITEBIT(PORTC, PC6, value);          //controlls pullup resistor
+ CLEARBIT(DDRC, DDC6);                 //input
+}
+
+void iocfg_i_gas_vi(uint8_t value)     //inverted version
+{
+ WRITEBIT(PORTC, PC6, value);          //controlls pullup resistor
+ CLEARBIT(DDRC, DDC6);                 //input
+}
+
+uint8_t iocfg_g_gas_v(void)
+{
+ return !!CHECKBIT(PINC, PINC6);
+}
+
+uint8_t iocfg_g_gas_vi(void)           //inverted version
+{
+ return !CHECKBIT(PINC, PINC6);
+}
 
 uint8_t iocfg_g_stub(void)
 {

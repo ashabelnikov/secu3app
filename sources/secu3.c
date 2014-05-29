@@ -60,6 +60,7 @@
 #include "suspendop.h"
 #include "tables.h"
 #include "uart.h"
+#include "uni_out.h"
 #include "ventilator.h"
 #include "vstimer.h"
 #include "wdt.h"
@@ -104,6 +105,11 @@ void control_engine_units(struct ecudata_t *d)
 
 #ifdef INTK_HEATING
  intkheat_control(d);
+#endif
+
+#ifdef UNI_OUTPUT
+ //Universal programmable output control
+ uniout_control(d);
 #endif
 }
 
@@ -173,6 +179,9 @@ void init_ports(void)
  intkheat_init_ports();
 #endif
  meas_init_ports();
+#ifdef UNI_OUTPUT
+ uniout_init_ports();
+#endif
 }
 
 /**Initialization of system modules
@@ -230,6 +239,11 @@ void init_modules(void)
  //initialization of intake manifold heating unit
 #ifdef INTK_HEATING
  intkheat_init();
+#endif
+
+ //initialization of an universal programmable output
+#ifdef UNI_OUTPUT
+ uniout_init();
 #endif
 
  //инициализируем модуль ДПКВ

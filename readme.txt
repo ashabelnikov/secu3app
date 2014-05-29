@@ -117,7 +117,7 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
                          Включить поддержку датчика скорости
 
     INTK_HEATING   *     Include support of intake manifold heating control
-                         Включить поддержку управления подогревом впускного 
+                         Включить поддержку управления подогревом впускного
                          коллектора
 
     AIRTEMP_SENS   *     Include support of intake air temperature sensor
@@ -129,9 +129,13 @@ the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
     IMMOBILIZER    *     Include immobilizer and iButton functionality
                          Включить поддержку иммобилайзера и iButton
 
+    UNI_OUTPUT     *     Include support of an universal programmable output
+                         Включить поддержку универсального программируемого
+                         выхода
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager
-  означает что опция является внутренней и не отображается в списке опций в 
+  означает что опция является внутренней и не отображается в списке опций в
   SECU-3 Manager
 
 Necessary symbols you can define in the preprocessor's options of the compiler

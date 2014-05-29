@@ -20,7 +20,7 @@ LD = "$(IAR_HOME)/avr/bin/xlink.exe"
 CFLAGS = --cpu $(MCU)
 CFLAGS += -DREALTIME_TABLES -DSECU3T -DTHERMISTOR_CS -DCOOLINGFAN_PWM -DDIAGNOSTICS -DHALL_OUTPUT -DFUEL_PUMP -DREV9_BOARD
 CFLAGS += -DSM_CONTROL -DSTROBOSCOPE -DUART_BINARY -DDWELL_CONTROL -DVREF_5V
-CFLAGS += -DBL_BAUD_RATE=57600 -DSPEED_SENSOR -DINTK_HEATING -DBLUETOOTH_SUPP -DIMMOBILIZER
+CFLAGS += -DBL_BAUD_RATE=57600 -DSPEED_SENSOR -DINTK_HEATING -DBLUETOOTH_SUPP -DIMMOBILIZER -DUNI_OUTPUT
 CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DENABLE_BIT_DEFINITIONS
 CFLAGS += -ms -e --initializers_in_flash
 CFLAGS += -s9
@@ -49,7 +49,7 @@ SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
 	uart.c ventilator.c vstimer.c camsens.c fuelpump.c \
 	diagnost.c wdt.c ioconfig.c pwrrelay.c bc_input.c \
 	smcontrol.c choke.c hall.c bluetooth.c onewire.c \
-	immobiliz.c ckps2ch.c intkheat.c injector.c
+	immobiliz.c ckps2ch.c intkheat.c injector.c uni_out.c
 
 # Define all object files and dependencies
 OBJECTS = $(SRC:%.c=$(OBJDIR)/%.r90)

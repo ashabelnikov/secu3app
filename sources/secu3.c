@@ -47,6 +47,7 @@
 #include "idlecon.h"
 #include "ignlogic.h"
 #include "immobiliz.h"
+#include "injector.h"
 #include "intkheat.h"
 #include "knklogic.h"
 #include "knock.h"
@@ -182,6 +183,9 @@ void init_ports(void)
 #ifdef UNI_OUTPUT
  uniout_init_ports();
 #endif
+#ifdef FUEL_INJECT
+ inject_init_ports();
+#endif
 }
 
 /**Initialization of system modules
@@ -269,6 +273,10 @@ void init_modules(void)
  ckps_select_input(edat.param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
  ckps_set_shutter_wnd_width(edat.param.hall_wnd_width);
  ckps_set_advance_angle(0);
+#endif
+
+#ifdef FUEL_INJECT
+ inject_init_state();
 #endif
 
  s_timer_init();

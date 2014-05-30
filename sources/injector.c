@@ -27,34 +27,47 @@
 #ifdef FUEL_INJECT
 
 #include "port/port.h"
+#include "port/avrio.h"
 #include "port/interrupt.h"
+#include "port/intrinsic.h"
+#include "port/pgmspace.h"
 #include "bitmask.h"
 #include "injector.h"
+#include "ioconfig.h"
+#include "tables.h"
 
 #ifndef _PLATFORM_M644_
  #error "You can not use FUEL_INJECT option without _PLATFORM_M644_"
 #endif
 
-/***/
+/**COMPB interrupt calibration*/
+#define INJ_COMPB_CALIB 2
+
+/** Define injector state variables structure*/
 typedef struct
 {
- volatile uint16_t inj_time;              //!< Current injection time, used in interrupts
+ volatile uint16_t inj_time;     //!< Current injection time, used in interrupts
+ volatile uint8_t tmr2b_h;       //!< used in timer2 COMPB interrupt to perform 16 timing
 }inj_state_t;
 
-/***/
+/** Global instance of injector state variable structure*/
 inj_state_t inj;
-
 
 void inject_init_state(void)
 {
+ inj.inj_time = 0xFFFF;
 }
 
 void inject_init_ports(void)
 {
+ IOCFG_INIT(IOP_INJ_OUT0, 0);                //injector is turned off
 }
 
 void inject_set_inj_time(uint16_t time)
 {
+ if (time < 16)                              //restrict minimum injection time to 50uS
+  time = 16;
+ time = (time >> 1) - INJ_COMPB_CALIB - 1;   //calibration ticks and 1 tick to ensure correct behaviour when low byte is 0
  _BEGIN_ATOMIC_BLOCK();
  inj.inj_time = time;
  _END_ATOMIC_BLOCK();
@@ -62,13 +75,33 @@ void inject_set_inj_time(uint16_t time)
 
 void inject_start_inj(void)
 {
+ //interrupts must be disabled!
+ _BEGIN_ATOMIC_BLOCK();
+ OCR2B = TCNT2 + _AB(inj.inj_time, 0) + 1;
+ inj.tmr2b_h = _AB(inj.inj_time, 1);
+ IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector
+ SETBIT(TIMSK2, OCIE2B);
+ SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
+ _END_ATOMIC_BLOCK();
 }
 
-/***/
-ISR(TIMER2_COMPB_VECT)
+/**Interrupt fo controlling of first injector*/
+ISR(TIMER2_COMPB_vect)
 {
+ if (inj.tmr2b_h)
+ {
+  --inj.tmr2b_h;
+ }
+ else
+ {
+  IOCFG_SET(IOP_INJ_OUT0, 0);                //turn off injector
+  CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
+ }
 }
 
 //todo: we can try to free TIMER2_COMPA_VECT for second injector by switching cooling fan PWM to TIMER0_COMPB
+//ISR(TIMER2_COMPA_vect)
+//{
+//}
 
 #endif

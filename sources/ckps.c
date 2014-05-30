@@ -36,6 +36,7 @@
 #include "camsens.h"
 #include "ckps.h"
 #include "ioconfig.h"
+#include "injector.h"   //inject_start_inj()
 #include "magnitude.h"
 
 #include "secu3.h"
@@ -985,6 +986,9 @@ static void process_ckps_cogs(void)
    ckps.measure_start_value = GetICR();
    SETBIT(flags, F_VHTPER);
    SETBIT(flags, F_STROKE); //set the stroke-synchronozation event (устанавливаем событие тактовой синхронизации)
+#ifdef FUEL_INJECT
+   inject_start_inj();      //start fuel injection
+#endif
   }
 
 #ifdef HALL_OUTPUT
@@ -1162,7 +1166,7 @@ sync_enter:
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedure
  * for processing teeth when set 16 bit timer expires
  * (Задача этого обработчика дополнять таймер до 16-ти разрядов и вызывать процедуру
- * обработки зубьев по истечении установленного 16-ти разряюного таймера). */
+ * обработки зубьев по истечении установленного 16-ти разрядного таймера). */
 ISR(TIMER0_OVF_vect)
 {
  if (TCNT0_H!=0)  //Did high byte exhaust (старший байт не исчерпан) ?

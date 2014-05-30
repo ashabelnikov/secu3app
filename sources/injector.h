@@ -38,7 +38,7 @@ void inject_init_state(void);
 void inject_init_ports(void);
 
 /**Set injection time
- * \param time Injection time, one tick = 6.4us
+ * \param time Injection time, one tick = 3.2us
  */
 void inject_set_inj_time(uint16_t time);
 

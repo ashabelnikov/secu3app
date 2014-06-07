@@ -30,6 +30,7 @@
 #include "adc.h"
 #include "ckps.h"
 #include "funconv.h"
+#include "ioconfig.h"
 #include "magnitude.h"
 #include "secu3.h"
 #include "vstimer.h"

@@ -169,4 +169,25 @@ int16_t airtemp_function(struct ecudata_t* d);
 int16_t ats_lookup(uint16_t adcvalue);
 #endif
 
+#ifdef FUEL_INJECT
+/** Calculates basic injection time using VE and AFR lookup tables
+ * \param d pointer to ECU data structure
+ * \return Base injection time in ticks of timer (1 tick = 3.2uS)
+ */
+uint16_t inj_base_pw(struct ecudata_t* d);
+
+/** Calculates injector dead time using lookup table
+ * \param d pointer to ECU data structure
+ * \return Injector dead time in tics of timer
+ */
+uint16_t inj_dead_time(struct ecudata_t* d);
+
+/** Calculates pulse width used when engine is stating up
+ * \param d pointer to ECU data structure
+ * \return Cranking pulse width in ticks of timer (1 tick = 3.2uS)
+ */
+uint16_t inj_cranking_pw(struct ecudata_t* d);
+
+#endif
+
 #endif //_FUNCONV_H_

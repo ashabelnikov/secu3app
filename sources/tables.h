@@ -86,6 +86,11 @@
 #define IBTN_KEYS_NUM          2                    //!< Number of iButton keys
 #define IBTN_KEY_SIZE          6                    //!< Size of iButton key (except CRC8 and family code)
 
+#define INJ_VE_POINTS_L        16                   //!< number of points on MAP axis in VE lookup table
+#define INJ_VE_POINTS_F        16                   //!< number of points on RPM axis in VE lookup table
+#define INJ_DT_LOOKUP_TABLE_SIZE        32          //!< number of points in the injector dead-time lookup table
+#define INJ_CRANKING_LOOKUP_TABLE_SIZE  16          //!< number of points in the cranking lookup table
+
 /** оличество наборов таблиц хранимых в пам€ти программ
  * Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER          8
@@ -130,9 +135,6 @@ typedef struct fw_ex_data_t
   /**Used for checking compatibility with management software. Holds size of all data stored in the firmware. */
   uint16_t fw_data_size;
 
-  /**A reserved 32-bit value*/
-  uint32_t reserv32;
-
   /**Coolant temperature sensor lookup table 
    * (таблица значений температуры с шагом по напр€жению) */
   int16_t cts_curve[THERMISTOR_LOOKUP_TABLE_SIZE];
@@ -159,13 +161,22 @@ typedef struct fw_ex_data_t
   /**Sizes of cells in RPM grid (so, we don't need to calculate them at the runtime)*/
   int16_t rpm_grid_sizes[RPM_GRID_SIZE-1];
 
+  /**Volumetric efficiency lookup table, value * 128 */
+  uint8_t inj_ve[INJ_VE_POINTS_L][INJ_VE_POINTS_F];
+  /**Air-Fuel ratio lookup table, (1/value) * 2048, e.g. 1/14.7 * 2048 = 139 */
+  uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];
+  /**Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS*/
+  uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE];
+  /**Injector pulse width used when engine is starting up (cranking)*/
+  uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[2048];
+  uint8_t reserved[1444];
 }fw_ex_data_t;
 
 /**ќписывает параметры системы
@@ -283,7 +294,14 @@ typedef struct params_t
   uint16_t choke_corr_time;              //!< Time for startup correction will be applied
   int16_t choke_corr_temp;               //!< Temperature threshold for startup correction
 
-  int16_t hall_wnd_width;               //!< Hall sensor's shutter window width in degrees of crankshaft (advance value of distributor)
+  int16_t hall_wnd_width;                //!< Hall sensor's shutter window width in degrees of crankshaft (advance value of distributor)
+
+  uint8_t  inj_config;                   //!< Configuration of injection
+  uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
+  uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
+  uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Pf ) * (Ncyl / (Nsq * Ninj))
+  uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment * 4
+  uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -291,7 +309,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[96];
+  uint8_t  reserved[85];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

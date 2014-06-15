@@ -105,7 +105,6 @@ int16_t start_function(struct ecudata_t* d)
  return simple_interpolation(rpm, _GB(&d->fn_dat->f_str[i]), _GB(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40, 16);
 }
 
-
 // Реализует функцию УОЗ от оборотов(мин-1) и нагрузки(кПа) для рабочего режима двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
 int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
@@ -471,3 +470,101 @@ int16_t ats_lookup(uint16_t adcvalue)
         (i * v_step) + v_start, v_step, 16)) >> 4;
 }
 #endif //AIRTEMP_SENS
+
+
+#ifdef FUEL_INJECT
+uint16_t inj_base_pw(struct ecudata_t* d)
+{
+ int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
+ int8_t f, fp1, lp1;
+
+ //calculate lookup table indexes. VE and AFR tables have same size
+ discharge = (d->param.map_upper_pressure - d->sens.map);
+ if (discharge < 0) discharge = 0;
+
+ gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / INJ_VE_POINTS_L;
+ if (gradient < 1)
+  gradient = 1;
+ l = (discharge / gradient);
+
+ if (l >= (INJ_VE_POINTS_F - 1))
+  lp1 = l = INJ_VE_POINTS_F - 1;
+ else
+  lp1 = l + 1;
+
+ for(f = 14; f >= 0; f--)
+  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+
+ if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
+  fp1 = f + 1;
+
+ //Calculate basic pulse width. Calculations are based on the ideal gas law and precalulated constant
+ //Note that inj_sd_igl_const constant must not exceed 131072
+ uint32_t pw32 = ((uint32_t)d->sens.map * d->param.inj_sd_igl_const) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
+
+ //apply VE table
+ pw32*= bilinear_interpolation(rpm, discharge,
+        PGM_GET_BYTE(&fw_data.exdata.inj_ve[l][f]),
+        PGM_GET_BYTE(&fw_data.exdata.inj_ve[lp1][f]),
+        PGM_GET_BYTE(&fw_data.exdata.inj_ve[lp1][fp1]),
+        PGM_GET_BYTE(&fw_data.exdata.inj_ve[l][fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
+        (gradient * l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
+        gradient);
+ pw32>>=7;
+
+ //apply AFR table
+ pw32*= bilinear_interpolation(rpm, discharge,
+        PGM_GET_BYTE(&fw_data.exdata.inj_afr[l][f]),
+        PGM_GET_BYTE(&fw_data.exdata.inj_afr[lp1][f]),
+        PGM_GET_BYTE(&fw_data.exdata.inj_afr[lp1][fp1]),
+        PGM_GET_BYTE(&fw_data.exdata.inj_afr[l][fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
+        (gradient * l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
+        gradient);
+ pw32>>=(11+4);
+
+ if (pw32 > 65535) pw32 = 65535;
+ return pw32;
+}
+
+uint16_t inj_dead_time(struct ecudata_t* d)
+{
+ int16_t i, i1, voltage = d->sens.voltage;
+
+ if (voltage < VOLTAGE_MAGNITUDE(5.4))
+  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - minimum voltage value corresponding to 1st value in table for 12V board voltage
+
+ i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - voltage step
+
+ if (i >= INJ_DT_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_DT_LOOKUP_TABLE_SIZE-1;
+  else i1 = i + 1;
+
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.inj_dead_time[i]), PGM_GET_WORD(&fw_data.exdata.inj_dead_time[i1]),
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 64) >> 6;
+}
+
+uint16_t inj_cranking_pw(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 1000;   //coolant temperature sensor is not enabled, default is 3.2uS
+
+ //-30 - minimum value of temperature corresponding to the first point in table
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points in table
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= 15) i = i1 = 15;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, PGM_GET_WORD(&fw_data.exdata.inj_cranking[i]), PGM_GET_WORD(&fw_data.exdata.inj_cranking[i1]),
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 8) >> 3;
+}
+
+#endif //FUEL_INJECT

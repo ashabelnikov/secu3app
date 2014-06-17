@@ -90,6 +90,7 @@
 #define INJ_VE_POINTS_F        16                   //!< number of points on RPM axis in VE lookup table
 #define INJ_DT_LOOKUP_TABLE_SIZE        32          //!< number of points in the injector dead-time lookup table
 #define INJ_CRANKING_LOOKUP_TABLE_SIZE  16          //!< number of points in the cranking lookup table
+#define INJ_WARMUP_LOOKUP_TABLE_SIZE    16          //!< number of points in the warmup enrichment lookup table
 
 /** оличество наборов таблиц хранимых в пам€ти программ
  * Number of sets of tables stored in the firmware */
@@ -169,6 +170,8 @@ typedef struct fw_ex_data_t
   uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE];
   /**Injector pulse width used when engine is starting up (cranking)*/
   uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];
+  /**Warmup enrichment lookup table, value * 128 */
+  uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE];
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -176,7 +179,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1444];
+  uint8_t reserved[1428];
 }fw_ex_data_t;
 
 /**ќписывает параметры системы

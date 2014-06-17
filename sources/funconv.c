@@ -567,4 +567,26 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 8) >> 3;
 }
 
+uint8_t inj_warmup_en(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 128;   //coolant temperature sensor is not enabled (or not installed), no correction
+
+ //-30 - минимальное значение температуры
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - шаг между узлами интерпол€ции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= 15) i = i1 = 15;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_warmup[i]), PGM_GET_BYTE(&fw_data.exdata.inj_warmup[i1]),
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+
+}
+
 #endif //FUEL_INJECT

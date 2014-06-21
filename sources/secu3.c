@@ -152,6 +152,9 @@ void init_ecu_data(struct ecudata_t* d)
  edat.bt_name[0] = 0;
  edat.bt_pass[0] = 0;
  edat.sys_locked = 0; //unlocked
+#ifdef FUEL_INJECT
+ edat.inj_pw = 0;
+#endif
 }
 
 /**Initialization of I/O ports

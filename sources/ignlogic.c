@@ -32,7 +32,25 @@
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
 
-int16_t advance_angle_state_machine(struct ecudata_t* d)
+typedef struct
+{
+#ifdef FUEL_INJECT
+ uint16_t aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment implementation
+#endif
+}logic_state_t;
+
+/**Instance of internal state variables structure*/
+static logic_state_t lgs;
+
+
+void ignlogic_init(void)
+{
+#ifdef FUEL_INJECT
+ lgs.aftstr_enrich_counter = 0;
+#endif
+}
+
+int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 {
  int16_t angle;
  switch(d->engine_mode)
@@ -42,10 +60,20 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    {
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
+#ifdef FUEL_INJECT
+    lgs.aftstr_enrich_counter = d->param.inj_aftstr_strokes; //init engine strokes counter
+#endif
    }
    angle = d->corr.strt_aalt = start_function(d);//базовый УОЗ - функция для пуска
    d->corr.idle_aalt = d->corr.work_aalt = d->corr.temp_aalt = d->corr.airt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
    d->airflow = 0;                         //в режиме пуска нет расхода
+
+#ifdef FUEL_INJECT
+   { //PW = CRANKING + DEADTIME
+   uint32_t pw = inj_cranking_pw(d);
+   pw+= inj_dead_time(d);
+   }
+#endif
    break;
 
   case EM_IDLE: //режим холостого хода
@@ -66,6 +94,18 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
    angle+=d->corr.idlreg_aac;
    d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
+
+#ifdef FUEL_INJECT
+   {//PW = BASE + WARMUP + AFTSTR_ENRICH + DEADTIME
+   uint32_t pw = inj_base_pw(d);
+   pw = (pw * inj_warmup_en(d)) >> 7;
+   if (lgs.aftstr_enrich_counter)
+    pw = (pw * d->param.inj_aftstr_enrich) >> 2;
+   pw+= inj_dead_time(d);
+   d->inj_pw = pw > 65535 ? 65535 : pw;
+   }
+#endif
+
    break;
 
   case EM_WORK: //рабочий режим
@@ -104,11 +144,34 @@ int16_t advance_angle_state_machine(struct ecudata_t* d)
    //отнимаем поправку полученную от регулятора по детонации
    angle-=d->corr.knock_retard;
    d->corr.strt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
+
+#ifdef FUEL_INJECT
+   {//PW = BASE + WARMUP + AFTSTR_ENRICH + DEADTIME
+   uint32_t pw = inj_base_pw(d);
+   pw = (pw * inj_warmup_en(d)) >> 7;
+   if (lgs.aftstr_enrich_counter)
+    pw = (pw * d->param.inj_aftstr_enrich) >> 2;
+   pw+= inj_dead_time(d);
+   d->inj_pw = pw > 65535 ? 65535 : pw;
+   }
+#endif
+
    break;
 
   default:  //непонятная ситуация - угол в ноль
    angle = 0;
+#ifdef FUEL_INJECT
+   d->inj_pw = 0;
+#endif
    break;
  }
  return angle; //return calculated advance angle
+}
+
+void ignlogic_stroke_event_notification(void)
+{
+#ifdef FUEL_INJECT
+ if (lgs.aftstr_enrich_counter)
+  --lgs.aftstr_enrich_counter;
+#endif
 }

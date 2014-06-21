@@ -279,6 +279,8 @@ void init_modules(void)
  inject_init_state();
 #endif
 
+ ignlogic_init();
+
  s_timer_init();
  vent_init_state();
 
@@ -412,7 +414,7 @@ MAIN()
   //управление периферией
   control_engine_units(&edat);
   //КА состояний системы (диспетчер режимов - сердце основного цикла)
-  calc_adv_ang = advance_angle_state_machine(&edat);
+  calc_adv_ang = ignlogic_system_state_machine(&edat);
   //добавляем к УОЗ октан-коррекцию
   calc_adv_ang+=edat.param.angle_corr;
   //------------------------------
@@ -455,7 +457,7 @@ MAIN()
    meas_update_values_buffers(&edat, 0);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
-   //Ограничиваем быстрые изменения УОЗ, он не может изменится больше чем на определенную величину
+   //Ограничиваем быстрые изменения УОЗ, он не может измениться больше чем на определенную величину
    //за один рабочий такт. В режиме пуска фильтр УОЗ отключен.
    if (EM_START == edat.engine_mode)
    {
@@ -468,12 +470,12 @@ MAIN()
 #endif
    }
    else
-  {
+   {
 #ifdef HALL_SYNC
     ckps_set_shutter_spark(edat.sens.frequen < 200);
 #endif
     edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
-  }
+   }
 
    //----------------------------------------------
    if (edat.param.knock_use_knock_channel)
@@ -487,6 +489,13 @@ MAIN()
 
    //сохраняем УОЗ для реализации в ближайшем по времени такте зажигания
    ckps_set_advance_angle(edat.corr.curr_angle);
+
+#ifdef FUEL_INJECT
+   //set current injection time
+   inject_set_inj_time(edat.inj_pw);
+#endif
+
+   ignlogic_stroke_event_notification();
 
    //управляем усилением аттенюатора в зависимости от оборотов
    if (edat.param.knock_use_knock_channel)

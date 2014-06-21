@@ -170,7 +170,7 @@ int16_t ats_lookup(uint16_t adcvalue);
 #endif
 
 #ifdef FUEL_INJECT
-/** Calculates basic injection time using VE and AFR lookup tables
+/** Calculates basic injection time using Ideal gas law, VE and AFR lookup tables
  * \param d pointer to ECU data structure
  * \return Base injection time in ticks of timer (1 tick = 3.2uS)
  */

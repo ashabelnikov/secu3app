@@ -40,10 +40,16 @@ struct ecudata_t;
 /** Work mode of engine (used by state machine) */
 #define EM_WORK  2
 
+/**Initialization of state variables */
+void ignlogic_init(void);
+
 /**Implements state machine of engine's modes (конечный автомат режимов двигателя)
  * \param d pointer to ECU data structure
  * \return advance angle
  */
-int16_t advance_angle_state_machine(struct ecudata_t* d);
+int16_t ignlogic_system_state_machine(struct ecudata_t* d);
+
+/** Must be called from main loop to notify about stroke events */
+void ignlogic_stroke_event_notification(void);
 
 #endif //_IGNLOGIC_H_

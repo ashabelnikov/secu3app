@@ -499,6 +499,7 @@ uint16_t inj_base_pw(struct ecudata_t* d)
   fp1 = f + 1;
 
  //Calculate basic pulse width. Calculations are based on the ideal gas law and precalulated constant
+ //All Ideal gas law arguments except MAP and air temperature were drove in to the constant, this dramatically increases performance
  //Note that inj_sd_igl_const constant must not exceed 131072
  uint32_t pw32 = ((uint32_t)d->sens.map * d->param.inj_sd_igl_const) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
 

@@ -19,39 +19,32 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file ignlogic.h
- * Logic determining calculation and regulation of anvance angle
- * (Ћогика определ€юща€ вычисление и регулирование угла опережени€).
+/** \file lambda.h
+ * Correction algorithms using an exhaust gas oxygen sensor
+ * ( орректировка состава смеси использу€ датчик кислорода).
  */
 
-#ifndef _IGNLOGIC_H_
-#define _IGNLOGIC_H_
+#ifndef _LAMBDA_H_
+#define _LAMBDA_H_
 
-#include <stdint.h>
+#ifdef FUEL_INJECT
 
 struct ecudata_t;
 
-/** Start mode of engine (used by state machine) */
-#define EM_START 0
-
-/** Idle mode of engine (used by state machine) */
-#define EM_IDLE  1
-
-/** Work mode of engine (used by state machine) */
-#define EM_WORK  2
-
-/**Initialization of state variables */
-void ignlogic_init(void);
-
-/**Implements state machine of engine's modes (конечный автомат режимов двигател€)
- * \param d pointer to ECU data structure
- * \return advance angle
+/** Initialization of state variables
  */
-int16_t ignlogic_system_state_machine(struct ecudata_t* d);
+void lambda_init_state(void);
 
-/** Must be called from main loop to notify about stroke events
+/**Control of lambda correction
  * \param d pointer to ECU data structure
  */
-void ignlogic_stroke_event_notification(struct ecudata_t* d);
+void lambda_control(struct ecudata_t* d);
 
-#endif //_IGNLOGIC_H_
+/** Must be called from the main loop to notify about stroke events
+ * \param d pointer to ECU data structure
+ */
+void lambda_stroke_event_notification(struct ecudata_t* d);
+
+#endif
+
+#endif //_LAMBDA_H_

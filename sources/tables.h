@@ -91,6 +91,7 @@
 #define INJ_DT_LOOKUP_TABLE_SIZE        32          //!< number of points in the injector dead-time lookup table
 #define INJ_CRANKING_LOOKUP_TABLE_SIZE  16          //!< number of points in the cranking lookup table
 #define INJ_WARMUP_LOOKUP_TABLE_SIZE    16          //!< number of points in the warmup enrichment lookup table
+#define INJ_IAC_POS_TABLE_SIZE          16          //!< number of points in the IAC/PWM position lookup table
 
 /** оличество наборов таблиц хранимых в пам€ти программ
  * Number of sets of tables stored in the firmware */
@@ -170,8 +171,14 @@ typedef struct fw_ex_data_t
   uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE];
   /**Injector pulse width used when engine is starting up (cranking)*/
   uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];
-  /**Warmup enrichment lookup table, value * 128 */
+  /**Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00 */
   uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE];
+  /**Position of the IAC/PWM vs coolant temperature for run mode (used in open-loop idle control)
+   * value in % * 2, e.g. 200 = 100.0% */
+  uint8_t inj_iac_run_pos[INJ_IAC_POS_TABLE_SIZE];
+  /**Position of the IAC/PWM vs coolant temperature for cranking mode (used by both in open and close-loop idle control)
+   * value in % * 2, e.g. 200 = 100.0% */
+  uint8_t inj_iac_crank_pos[INJ_IAC_POS_TABLE_SIZE];
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -179,7 +186,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1428];
+  uint8_t reserved[1396];
 }fw_ex_data_t;
 
 /**ќписывает параметры системы
@@ -303,8 +310,19 @@ typedef struct params_t
   uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Pf ) * (Ncyl / (Nsq * Ninj))
-  uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment * 4
+  uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment * 4, additive % value
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
+
+  uint8_t inj_lambda_str_per_stp;        //!< Number of strokes per step for lambda control
+  uint8_t inj_lambda_step_size;          //!< Step size in % * 512, max 50%
+  uint16_t inj_lambda_corr_limit;        //!< +/- limit in % * 512
+  uint16_t inj_lambda_swt_point;         //!< lambda switch point in volts
+  int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
+  uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
+
+  uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
+
+  uint8_t inj_flags;                     //!< Fuel injection related flags
 
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
@@ -312,7 +330,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[85];
+  uint8_t  reserved[72];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

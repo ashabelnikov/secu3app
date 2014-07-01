@@ -590,4 +590,36 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
 
 }
 
+uint8_t iac_position_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 0;   //блок не укомплектован ДТОЖ-ом
+
+ //if difference between current and previous temperature values is less than +/-0.5,
+ //then previous value will be used for calculations.
+ if (abs(*p_prev_temp - t) < TEMPERATURE_MAGNITUDE(0.5))
+  t = *p_prev_temp;
+ else
+  *p_prev_temp = t; //make it current
+
+ //-30 - минимальное значение температуры
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - шаг между узлами интерполяции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= 15) i = i1 = 15;
+ else i1 = i + 1;
+
+ if (mode) //run
+  return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_iac_run_pos[i]), PGM_GET_BYTE(&fw_data.exdata.inj_iac_run_pos[i1]),
+   (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+ else //cranking
+  return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_iac_crank_pos[i]), PGM_GET_BYTE(&fw_data.exdata.inj_iac_crank_pos[i1]),
+   (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+}
+
 #endif //FUEL_INJECT

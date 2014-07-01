@@ -42,7 +42,6 @@ typedef struct
 /**Instance of internal state variables structure*/
 static logic_state_t lgs;
 
-
 void ignlogic_init(void)
 {
 #ifdef FUEL_INJECT
@@ -96,11 +95,12 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
-   {//PW = BASE + WARMUP + AFTSTR_ENRICH + DEADTIME
+   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + DEADTIME
    uint32_t pw = inj_base_pw(d);
-   pw = (pw * inj_warmup_en(d)) >> 7;
+   pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichemnt factor
    if (lgs.aftstr_enrich_counter)
-    pw = (pw * d->param.inj_aftstr_enrich) >> 2;
+    pw+= (pw * d->param.inj_aftstr_enrich) >> 2;  //apply afterstart enrichment additive factor
+   pw+= (pw * d->corr.lambda) >> 9;               //apply lambda correction additive factor
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
    }
@@ -146,11 +146,12 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.strt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
-   {//PW = BASE + WARMUP + AFTSTR_ENRICH + DEADTIME
+   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + DEADTIME
    uint32_t pw = inj_base_pw(d);
-   pw = (pw * inj_warmup_en(d)) >> 7;
+   pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichment factor
    if (lgs.aftstr_enrich_counter)
-    pw = (pw * d->param.inj_aftstr_enrich) >> 2;
+    pw+= (pw * d->param.inj_aftstr_enrich) >> 2;  //apply afterstart enrichment additive factor
+   pw+= (pw * d->corr.lambda) >> 9;               //apply lambda correction additive factor
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
    }
@@ -168,9 +169,10 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
  return angle; //return calculated advance angle
 }
 
-void ignlogic_stroke_event_notification(void)
+void ignlogic_stroke_event_notification(struct ecudata_t* d)
 {
 #ifdef FUEL_INJECT
+ //update afterstart enrichemnt counter
  if (lgs.aftstr_enrich_counter)
   --lgs.aftstr_enrich_counter;
 #endif

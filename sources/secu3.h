@@ -100,6 +100,9 @@ typedef struct correct_t
  int16_t work_aalt;                      //!< Advance angle from work map
  int16_t temp_aalt;                      //!< Advance angle from coolant temp. corr. map
  int16_t airt_aalt;                      //!< Advance angle from air temp. corr. map
+#ifdef FUEL_INJECT
+ int16_t lambda;                         //!< Current value of lambda (EGO) correction, can be negative
+#endif
 }correct_t;
  
 /**Describes system's data (main ECU data structure)
@@ -109,7 +112,7 @@ typedef struct ecudata_t
 {
  struct params_t  param;                 //!< --parameters (параметры)
  struct sensors_t sens;                  //!< --sensors (сенсоры)
- struct correct_t corr;                  //!< --calculated corrections and lookup tables' values                   
+ struct correct_t corr;                  //!< --calculated corrections and lookup tables' values
 
  uint8_t  ie_valve;                      //!< State of Idle Economizer valve (состо€ние клапана Ёѕ’’)
  uint8_t  fe_valve;                      //!< State of Fuel Economizer valve (состо€ние клапана Ёћ–)

@@ -272,6 +272,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill warmup enrichment lookup table*/
   {0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 
+  /**Fill IAC/PWM open-loop position lookup table (run mode)*/
+  {_CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0),
+   _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0)},
+
+  /**Fill IAC/PWM open-loop position lookup table (cranking mode)*/
+  {_CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0),
+   _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0)},
+
   /**reserved bytes*/
   {0}
  },
@@ -283,8 +291,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   8, 512, 1000, 2, 0, 0, 7500, 0, 0, 0, 10, 0, 60, 2, 0, _ACF, _ACC,
   _ACF,_ACC, _ACF,_ACC, 160, 0, 0, 984, 200, 0x02, 0x00, {2000, 1200},
   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
-  20, 1024, 300, 40, 1920, 0, 12800, 24576, 0, 40, 150, {0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  20, 1024, 300, 40, 1920, 0, 12800, 24576, 0, 40, 150, 8, 13, 154, 200, 240,
+  1200, 0, 300,
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
   /*crc*/(sizeof(fw_data_t) - sizeof(cd_data_t))
  },

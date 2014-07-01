@@ -51,6 +51,7 @@
 #include "intkheat.h"
 #include "knklogic.h"
 #include "knock.h"
+#include "lambda.h"
 #include "magnitude.h"
 #include "measure.h"
 #include "params.h"
@@ -112,6 +113,10 @@ void control_engine_units(struct ecudata_t *d)
  //Universal programmable output control
  uniout_control(d);
 #endif
+
+#ifdef FUEL_INJECT
+ lambda_control(d);
+#endif
 }
 
 /** Check firmware integrity (CRC) and set error indication if code or data is damaged
@@ -154,6 +159,7 @@ void init_ecu_data(struct ecudata_t* d)
  edat.sys_locked = 0; //unlocked
 #ifdef FUEL_INJECT
  edat.inj_pw = 0;
+ edat.corr.lambda = 0;
 #endif
 }
 
@@ -280,6 +286,7 @@ void init_modules(void)
 
 #ifdef FUEL_INJECT
  inject_init_state();
+ lambda_init_state();
 #endif
 
  ignlogic_init();
@@ -496,9 +503,11 @@ MAIN()
 #ifdef FUEL_INJECT
    //set current injection time
    inject_set_inj_time(edat.inj_pw);
+
+   lambda_stroke_event_notification(&edat);
 #endif
 
-   ignlogic_stroke_event_notification();
+   ignlogic_stroke_event_notification(&edat);
 
    //управляем усилением аттенюатора в зависимости от оборотов
    if (edat.param.knock_use_knock_channel)

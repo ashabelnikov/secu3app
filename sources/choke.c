@@ -37,12 +37,21 @@
 #include "smcontrol.h"
 #include "pwrrelay.h"
 
+/**Direction used to set choke to the initial position */
+#define INIT_POS_DIR SM_DIR_CW
+
+#ifdef FUEL_INJECT
+//#define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle position in IAC stepper initialization
+
+//See flags variable in choke_st_t
+#define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
+#define CF_MAN_CNTR     1  //!< manual control mode flag
+#define CF_SMDIR_CHG    2  //!< flag, indicates that stepper motor direction has changed during motion
+
+#else // Carburetor's choke stuff
 #define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle limit switch in choke initialization
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
 //#define STARTUP_ON_GAS           //define this option if you start engine on gas
-
-/**Direction used to set choke to the initial position */
-#define INIT_POS_DIR SM_DIR_CW
 
 /**RPM regulator call period, 50ms*/
 #define RPMREG_CORR_TIME 10
@@ -66,23 +75,27 @@
 #define CF_GASV_STATE   5  //!< GAS_V state before startup
 #endif
 
+#endif //FUEL_INJECT
+
 /**Define state variables*/
 typedef struct
 {
  uint8_t   state;          //!< state machine state
  uint16_t  smpos;          //!< current position of stepper motor in steps
  int16_t   prev_temp;      //!< used for choke_closing_lookup()
-
+ uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
+ int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
  uint8_t   strt_mode;      //!< state machine state used for starting mode
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
+ uint8_t   flags;          //!< state flags (see CF_ definitions)
 
+#ifdef FUEL_INJECT
+#else
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
- uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
- int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
+#endif
 
- uint8_t   flags;          //!< state flags (see CF_ definitions)
 }choke_st_t;
 
 /**Instance of state variables */
@@ -100,10 +113,16 @@ void choke_init(void)
  CLEARBIT(chks.flags, CF_POWERDOWN);
  chks.strt_mode = 0;
  CLEARBIT(chks.flags, CF_MAN_CNTR);
+#ifdef FUEL_INJECT
+#else
  chks.rpmreg_prev = 0;
  CLEARBIT(chks.flags, CF_RPMREG_ENEX);
+#endif
 }
 
+
+#ifdef FUEL_INJECT
+#else
 /** Calculates choke position correction at startup mode and from RPM regulator
  * Work flow: Start-->Wait 3 sec.-->RPM regul.-->Ready
  * \param d pointer to ECU data structure
@@ -187,6 +206,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
   return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
 #endif
 }
+#endif
 
 /** Set choke to initial position. Because we have no position feedback, we
  * must use number of steps more than stepper actually has.
@@ -263,7 +283,32 @@ void sm_motion_control(struct ecudata_t* d, int16_t pos)
  */
 int16_t calc_sm_position(struct ecudata_t* d)
 {
+#ifdef FUEL_INJECT
+ uint8_t mode = 0;
+ switch(chks.strt_mode)
+ {
+  case 0:  //cranking mode
+   if (d->st_block)
+   {
+    chks.strt_t1 = s_timer_gtc();
+    chks.strt_mode = 1;
+   }
+   break;
+  case 1: //wait specified crank-to-run time
+   if ((s_timer_gtc() - chks.strt_t1) >= d->param.inj_cranktorun_time)
+    chks.strt_mode = 2;
+   else
+    break;
+  case 2: //run mode
+   mode = 1;
+   if (!d->st_block)
+    chks.strt_mode = 0; //engine is stopped, so go into the cranking mode again
+   break;
+ }
+ return ((((int32_t)d->param.sm_steps) * inj_iac_pos_lookup(d, &chks.prev_temp, mode)) / 200);
+#else //carburetor
  return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);
+#endif
 }
 
 void choke_control(struct ecudata_t* d)

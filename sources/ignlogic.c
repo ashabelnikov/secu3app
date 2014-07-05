@@ -32,15 +32,15 @@
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
 
+#ifdef FUEL_INJECT
 typedef struct
 {
-#ifdef FUEL_INJECT
  uint16_t aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment implementation
-#endif
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
 static logic_state_t lgs;
+#endif
 
 void ignlogic_init(void)
 {

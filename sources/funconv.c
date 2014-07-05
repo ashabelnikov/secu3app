@@ -590,7 +590,7 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
 
 }
 
-uint8_t iac_position_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode)
+uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode)
 {
  int16_t i, i1, t = d->sens.temperat;
 

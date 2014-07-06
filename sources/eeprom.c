@@ -1,5 +1,5 @@
 /* SECU-3  - An open source, free engine control unit
-   Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Gorlovka
+   Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Kiev
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 
     SECU-3 Application software. Distributed under GPL license
 
-    Designed by Alexey A. Shabelnikov 2007. Ukraine, Gorlovka.
+    Designed by Alexey A. Shabelnikov 2007. Ukraine, Kiev.
     Microprocessor systems - design & programming.
     http://secu-3.org e-mail: shabelnikov@secu-3.org
 

@@ -484,7 +484,7 @@ MAIN()
 #ifdef HALL_SYNC
     ckps_set_shutter_spark(edat.sens.frequen < 200);
 #endif
-    edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_spead, edat.param.angle_dec_spead);
+    edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_speed, edat.param.angle_dec_speed);
    }
 
    //----------------------------------------------

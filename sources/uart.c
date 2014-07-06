@@ -31,11 +31,21 @@
 #include "port/port.h"
 #include <string.h>
 #include "bitmask.h"
+#include "dbgvar.h"
 #include "eeprom.h"
 #include "secu3.h"
 #include "uart.h"
 #include "ufcodes.h"
 #include "wdt.h"
+
+//User's debug variables. See also dbgvar.h header file.
+//Default values are zero.
+#ifdef DEBUG_VARIABLES
+uint16_t dbg_var1 = 0;   /**User's debug variable 1*/
+uint16_t dbg_var2 = 0;   /**User's debug variable 2*/
+uint16_t dbg_var3 = 0;   /**User's debug variable 3*/
+uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
+#endif
 
 //Idenfifiers used in EDITAB_PAR
 #define ETTS_GASOLINE_SET 0 //!< tables's set: gasoline id
@@ -378,8 +388,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.max_angle);
    build_i16h(d->param.min_angle);
    build_i16h(d->param.angle_corr);
-   build_i16h(d->param.angle_dec_spead);
-   build_i16h(d->param.angle_inc_spead);
+   build_i16h(d->param.angle_dec_speed);
+   build_i16h(d->param.angle_inc_speed);
    build_i4h(d->param.zero_adv_ang);
    break;
 
@@ -659,10 +669,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 
 #ifdef DEBUG_VARIABLES
   case DBGVAR_DAT:
-   build_i16h(/*Your variable here*/0);
-   build_i16h(/*Your variable here*/0);
-   build_i16h(/*Your variable here*/0);
-   build_i16h(/*Your variable here*/0);
+   build_i16h(dbg_var1);
+   build_i16h(dbg_var2);
+   build_i16h(dbg_var3);
+   build_i16h(dbg_var4);
    break;
 #endif
 #ifdef DIAGNOSTICS
@@ -756,8 +766,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.max_angle = recept_i16h();
    d->param.min_angle = recept_i16h();
    d->param.angle_corr= recept_i16h();
-   d->param.angle_dec_spead = recept_i16h();
-   d->param.angle_inc_spead = recept_i16h();
+   d->param.angle_dec_speed = recept_i16h();
+   d->param.angle_inc_speed = recept_i16h();
    d->param.zero_adv_ang = recept_i4h();
    break;
 

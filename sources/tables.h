@@ -226,8 +226,8 @@ typedef struct params_t
   uint8_t  ckps_cogs_btdc;               //!< Teeth before TDC
   uint8_t  ckps_ignit_cogs;              //!< Duration of ignition driver's pulse countable in teeth of wheel
 
-  int16_t  angle_dec_spead;              //!< limitation of alternation speed of advance angle (when decreasing)
-  int16_t  angle_inc_spead;              //!< limitation of alternation speed of advance angle (when increasing)
+  int16_t  angle_dec_speed;              //!< limitation of alternation speed of advance angle (when decreasing)
+  int16_t  angle_inc_speed;              //!< limitation of alternation speed of advance angle (when increasing)
   int16_t  idlreg_min_angle;             //!< minimum advance angle correction which can be produced by idling regulator
   int16_t  idlreg_max_angle;             //!< maximum advance angle correction which can be produced by idling regulator
   int16_t  map_curve_offset;             //!< offset of curve in volts, can be negative
@@ -309,7 +309,7 @@ typedef struct params_t
   uint8_t  inj_config;                   //!< Configuration of injection
   uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
-  uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Pf ) * (Ncyl / (Nsq * Ninj))
+  uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * (Ncyl / (Nsq * Ninj))
   uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment * 4, additive % value
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 

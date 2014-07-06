@@ -194,88 +194,65 @@ typedef struct fw_ex_data_t
  * in the FLASH (program memory) */
 typedef struct params_t
 {
-  uint8_t  tmp_use;                      //!< признак комплектации ДТОЖ-ом (flag of using coolant sensor)
-  uint8_t  carb_invers;                  //!< инверсия концевика на карбюраторе (flag of inversion of carburetor's limit switch)
-  uint8_t  idl_regul;                    //!< поддерживать заданные обороты ХХ регулированием УОЗ (keep selected idling RPM by alternating advance angle)
-  uint8_t  fn_gasoline;                  //!< номер набора характеристик используемый для бензина (index of set of characteristics used for gasoline)
-  uint8_t  fn_gas;                       //!< номер набора характеристик используемый для газа (index of set of characteristics used for gas)
+  // Cranking
+  uint16_t starter_off;                  //!< порог выключения стартера (мин-1) (RPM when starter will be turned off)
+  uint16_t smap_abandon;                 //!< обороты перехода с пусковой карты на рабочую  (мин-1) (RPM when switching from start map(min-1))
+
+  // MAP sensor
   uint16_t map_lower_pressure;           //!< нижнее значене ДАД по оси таблицы (кПа) (lower value of MAP at the axis of table(work map) (kPa))
+  int16_t  map_upper_pressure;           //!< верхнее значение ДАД по оси таблицы (кПа) (upper value of MAP at the axis of table(work map) (kPa))
+  int16_t  map_curve_offset;             //!< offset of curve in volts, can be negative
+  int16_t  map_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
+
+  // TPS sensor/limit switch
+  uint8_t  carb_invers;                  //!< инверсия концевика на карбюраторе (flag of inversion of carburetor's limit switch)
+  int16_t  tps_curve_offset;             //!< offset of curve in volts
+  int16_t  tps_curve_gradient;           //!< gradient of curve in Percentage/V
+  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
+
+  // Idle cut-off valve and power valve
   uint16_t ie_lot;                       //!< нижний порог ЭПХХ (мин-1) (lower threshold for idle economizer valve(min-1) for gasiline)
   uint16_t ie_hit;                       //!< верхний порог ЭПХХ (мин-1) (upper threshold for idle economizer valve(min-1) for gasoline)
-  uint16_t starter_off;                  //!< порог выключения стартера (мин-1) (RPM when starter will be turned off)
-  int16_t  map_upper_pressure;           //!< верхнее значение ДАД по оси таблицы (кПа) (upper value of MAP at the axis of table(work map) (kPa))
-  uint16_t smap_abandon;                 //!< обороты перехода с пусковой карты на рабочую  (мин-1) (RPM when switching from start map(min-1))
+  uint16_t ie_lot_g;                     //!< нижний порог ЭПХХ (газ) (lower threshold for idle economizer valve(min-1) for gas)
+  uint16_t ie_hit_g;                     //!< верхний порог ЭПХХ (газ) (upper threshold for idle economizer valve(min-1) for gas)
+  int16_t  fe_on_threshold;              //!< порог включения экономайзера мощностных режимов (switch on threshold of FE)
+  uint8_t  shutoff_delay;                //!< задержка выключения клапана (idle economizer valve's turn off delay)
+
+  // Advance angle control
+  int16_t  angle_dec_speed;              //!< limitation of alternation speed of advance angle (when decreasing)
+  int16_t  angle_inc_speed;              //!< limitation of alternation speed of advance angle (when increasing)
   int16_t  max_angle;                    //!< ограничение максимального УОЗ (system's maximum advance angle limit)
   int16_t  min_angle;                    //!< ограничение минимального УОЗ (system's minimum advance angle limit)
   int16_t  angle_corr;                   //!< октан-коррекция УОЗ (octane correction of advance angle)
+  uint8_t  zero_adv_ang;                 //!< Zero advance angle flag
+
+  uint8_t  fn_gasoline;                  //!< номер набора характеристик используемый для бензина (index of set of characteristics used for gasoline)
+  uint8_t  fn_gas;                       //!< номер набора характеристик используемый для газа (index of set of characteristics used for gas)
+
+  // Idling regulator (via advance angle)
+  uint8_t  idl_regul;                    //!< поддерживать заданные обороты ХХ регулированием УОЗ (keep selected idling RPM by alternating advance angle)
   uint16_t idling_rpm;                   //!< заданные обороты ХХ для поддержания регулмрованием УОЗ (selected idling RPM regulated by using advance angle)
   int16_t  ifac1;                        //!< коэффициенты регулятора оборотов ХХ, для положительной и
   int16_t  ifac2;                        //!< отрицательной ошибок соответственно. (Idling regulator's factors for positive and negative errors correspondingly)
   int16_t  MINEFR;                       //!< зона нечувствительности регулятора (обороты) (dead band of idling regulator (min-1))
+  int16_t  idlreg_min_angle;             //!< minimum advance angle correction which can be produced by idling regulator
+  int16_t  idlreg_max_angle;             //!< maximum advance angle correction which can be produced by idling regulator
+  int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
+
+  // Temperature and cooling fan control
+  uint8_t  tmp_use;                      //!< признак комплектации ДТОЖ-ом (flag of using coolant sensor)
   int16_t  vent_on;                      //!< температура включения вентилятора (cooling fan's turn on temperature)
   int16_t  vent_off;                     //!< температура выключения вентилятора (cooling fan's turn off temperature)
+  uint8_t  vent_pwm;                     //!< flag - control cooling fan by using PWM
+  uint8_t  cts_use_map;                  //!< Flag which indicates using of lookup table for coolant temperature sensor
 
+  // ADC corrections/compensations
   int16_t  map_adc_factor;               //!< Поправки для коррекции погрешностей АЦП (ДАД)
   int32_t  map_adc_correction;           //!< (correction values (factors and additions) for ADC) - error compensations
   int16_t  ubat_adc_factor;              //!< Поправки для коррекции погрешностей АЦП (напряжение)
   int32_t  ubat_adc_correction;          //!< (correction values (factors and additions) for ADC) - error compensations
   int16_t  temp_adc_factor;              //!< Поправки для коррекции погрешностей АЦП (температура)
   int32_t  temp_adc_correction;          //!< (correction values (factors and additions) for ADC) - error compensations
-
-  uint8_t  ckps_edge_type;               //!< Edge type for interrupt from CKP sensor (rising or falling edge). Depends on polarity of sensor
-  uint8_t  ckps_cogs_btdc;               //!< Teeth before TDC
-  uint8_t  ckps_ignit_cogs;              //!< Duration of ignition driver's pulse countable in teeth of wheel
-
-  int16_t  angle_dec_speed;              //!< limitation of alternation speed of advance angle (when decreasing)
-  int16_t  angle_inc_speed;              //!< limitation of alternation speed of advance angle (when increasing)
-  int16_t  idlreg_min_angle;             //!< minimum advance angle correction which can be produced by idling regulator
-  int16_t  idlreg_max_angle;             //!< maximum advance angle correction which can be produced by idling regulator
-  int16_t  map_curve_offset;             //!< offset of curve in volts, can be negative
-  int16_t  map_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
-
-  int16_t  fe_on_threshold;              //!< порог включения экономайзера мощностных режимов (switch on threshold of FE)
-
-  uint16_t ie_lot_g;                     //!< нижний порог ЭПХХ (газ) (lower threshold for idle economizer valve(min-1) for gas)
-  uint16_t ie_hit_g;                     //!< верхний порог ЭПХХ (газ) (upper threshold for idle economizer valve(min-1) for gas)
-  uint8_t  shutoff_delay;                //!< задержка выключения клапана (idle economizer valve's turn off delay)
-
-  uint16_t uart_divisor;                 //!< делитель для соответствующей скорости UART-a (divider which corresponds to selected baud rate)
-  uint8_t  uart_period_t_ms;             //!< период посылки пакетов в десятках миллисекунд (transmition period of data packets which SECU-3 sends, one discrete = 10ms)
-
-  uint8_t  ckps_engine_cyl;              //!< кол-во цилиндров двигателя (number of engine's cylinders)
-
-  //--knock
-  uint8_t  knock_use_knock_channel;      //!< признак использования канала детенации (flag of using knock channel)
-  uint8_t  knock_bpf_frequency;          //!< центральная частота полосового фильтра (Band pass filter frequency)
-  int16_t  knock_k_wnd_begin_angle;      //!< начало детонационного окна (градусы) (Opening angle of knock phase window)
-  int16_t  knock_k_wnd_end_angle;        //!< конец детонационного окна (градусы)  (Closing angle of knock phase window)
-  uint8_t  knock_int_time_const;         //!< постоянная времени интегрирования (код) (Integration time constant)
-  //--
-  int16_t  knock_retard_step;            //!< шаг смещения УОЗ при детонации (Displacement step of angle)
-  int16_t  knock_advance_step;           //!< шаг восстановления УОЗ (Recovery step of angle)
-  int16_t  knock_max_retard;             //!< максимальное смещение УОЗ (Maximum displacement of angle)
-  uint16_t knock_threshold;              //!< порог детонации - напряжение (detonation threshold - voltage)
-  uint8_t  knock_recovery_delay;         //!< задержка восстановления УОЗ в рабочих циклах двигателя (Recovery delay of angle countable in engine's cycles)
-  //--/knock
-
-  uint8_t  vent_pwm;                     //!< flag - control cooling fan by using PWM
-
-  uint8_t  ign_cutoff;                   //!< Cutoff ignition when RPM reaches specified threshold
-  uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
-
-  uint8_t  zero_adv_ang;                 //!< Zero advance angle flag
-  uint8_t  merge_ign_outs;               //!< Merge ignition sugnals to single output flag
-
-  int8_t   hop_start_cogs;               //!< Hall output: start of pulse in teeth relatively to TDC 
-  uint8_t  hop_durat_cogs;               //!< Hall output: duration of pulse in teeth
-
-  uint8_t  cts_use_map;                  //!< Flag which indicates using of lookup table for coolant temperature sensor
-
-  uint8_t  ckps_cogs_num;                //!< number of crank wheel's teeth 
-  uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
-
-  uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input (тип фронта ДНО)
-
   int16_t  tps_adc_factor;               //!< ADC error compensation factor for TPS
   int32_t  tps_adc_correction;           //!< ADC error compensation correction for TPS
   int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input
@@ -283,46 +260,71 @@ typedef struct params_t
   int16_t  ai2_adc_factor;               //!< ADC error compensation factor for ADD_IO2 input
   int32_t  ai2_adc_correction;           //!< ADC error compensation correction for ADD_IO2 input
 
-  int16_t  tps_curve_offset;             //!< offset of curve in volts
-  int16_t  tps_curve_gradient;           //!< gradient of curve in Percentage/V
+  // Synchronization
+  uint8_t  ckps_edge_type;               //!< Edge type for interrupt from CKP sensor (rising or falling edge). Depends on polarity of sensor
+  uint8_t  ckps_cogs_btdc;               //!< Teeth before TDC
+  uint8_t  ckps_ignit_cogs;              //!< Duration of ignition driver's pulse countable in teeth of wheel
+  uint8_t  ckps_engine_cyl;              //!< кол-во цилиндров двигателя (number of engine's cylinders)
+  uint8_t  ckps_cogs_num;                //!< number of crank wheel's teeth
+  uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
+  uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input (тип фронта ДНО)
+  uint8_t  hall_flags;                   //!< Hall sensor related flags
+  int16_t  hall_wnd_width;               //!< Hall sensor's shutter window width in degrees of crankshaft (advance value of distributor)
 
-  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
+  // Ignition outputs control
+  uint8_t  ign_cutoff;                   //!< Cutoff ignition when RPM reaches specified threshold
+  uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
+  uint8_t  merge_ign_outs;               //!< Merge ignition signals to single output flag
 
+  // Hall emulation output
+  int8_t   hop_start_cogs;               //!< Hall output: start of pulse in teeth relatively to TDC 
+  uint8_t  hop_durat_cogs;               //!< Hall output: duration of pulse in teeth
+
+  // Communication
+  uint16_t uart_divisor;                 //!< делитель для соответствующей скорости UART-a (divider which corresponds to selected baud rate)
+  uint8_t  uart_period_t_ms;             //!< период посылки пакетов в десятках миллисекунд (transmition period of data packets which SECU-3 sends, one discrete = 10ms)
+
+  // Knock control
+  uint8_t  knock_use_knock_channel;      //!< признак использования канала детенации (flag of using knock channel)
+  uint8_t  knock_bpf_frequency;          //!< центральная частота полосового фильтра (Band pass filter frequency)
+  int16_t  knock_k_wnd_begin_angle;      //!< начало детонационного окна (градусы) (Opening angle of knock phase window)
+  int16_t  knock_k_wnd_end_angle;        //!< конец детонационного окна (градусы)  (Closing angle of knock phase window)
+  uint8_t  knock_int_time_const;         //!< постоянная времени интегрирования (код) (Integration time constant)
+  int16_t  knock_retard_step;            //!< шаг смещения УОЗ при детонации (Displacement step of angle)
+  int16_t  knock_advance_step;           //!< шаг восстановления УОЗ (Recovery step of angle)
+  int16_t  knock_max_retard;             //!< максимальное смещение УОЗ (Maximum displacement of angle)
+  uint16_t knock_threshold;              //!< порог детонации - напряжение (detonation threshold - voltage)
+  uint8_t  knock_recovery_delay;         //!< задержка восстановления УОЗ в рабочих циклах двигателя (Recovery delay of angle countable in engine's cycles)
+
+  // Choke control
   uint16_t sm_steps;                     //!< Number of steps of choke stepper motor
-
-  int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
-
-  uint8_t bt_flags;                      //!< Bluetooth and security related flags
-
-  uint8_t hall_flags;                    //!< Hall sensor related flags
-
   uint16_t choke_rpm[2];                 //!< Values of RPM needed for RPM-based control of choke position
-  uint8_t ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE]; //!< iButton keys for immobilizer
-
-  uint8_t choke_startup_corr;            //!< Startup correction value for choke (0...200)
+  uint8_t  choke_startup_corr;           //!< Startup correction value for choke (0...200)
   uint16_t choke_rpm_if;                 //!< Integral factor for RPM-based control of choke position (factor * 1024)
   uint16_t choke_corr_time;              //!< Time for startup correction will be applied
-  int16_t choke_corr_temp;               //!< Temperature threshold for startup correction
+  int16_t  choke_corr_temp;              //!< Temperature threshold for startup correction
 
-  int16_t hall_wnd_width;                //!< Hall sensor's shutter window width in degrees of crankshaft (advance value of distributor)
+  // Bluetooth and security
+  uint8_t  bt_flags;                     //!< Bluetooth and security related flags
+  uint8_t  ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE]; //!< iButton keys for immobilizer
 
+  // Fuel injection
+  uint8_t  inj_flags;                    //!< Fuel injection related flags
   uint8_t  inj_config;                   //!< Configuration of injection
   uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * (Ncyl / (Nsq * Ninj))
+
+  uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
   uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment * 4, additive % value
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
-  uint8_t inj_lambda_str_per_stp;        //!< Number of strokes per step for lambda control
-  uint8_t inj_lambda_step_size;          //!< Step size in % * 512, max 50%
+  uint8_t  inj_lambda_str_per_stp;       //!< Number of strokes per step for lambda control
+  uint8_t  inj_lambda_step_size;         //!< Step size in % * 512, max 50%
   uint16_t inj_lambda_corr_limit;        //!< +/- limit in % * 512
   uint16_t inj_lambda_swt_point;         //!< lambda switch point in volts
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
-
-  uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
-
-  uint8_t inj_flags;                     //!< Fuel injection related flags
 
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
@@ -337,7 +339,6 @@ typedef struct params_t
    * прошивки.
    * CRC of data of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;
-
 }params_t;
 
 //Define data structures are related to code area data and IO remapping data

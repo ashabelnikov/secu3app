@@ -93,6 +93,8 @@
 #define INJ_WARMUP_LOOKUP_TABLE_SIZE    16          //!< number of points in the warmup enrichment lookup table
 #define INJ_IAC_POS_TABLE_SIZE          16          //!< number of points in the IAC/PWM position lookup table
 
+#define UNI_OUTPUT_NUMBER      3                    //!< number of universal programmable outputs
+
 /** оличество наборов таблиц хранимых в пам€ти программ
  * Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER          8
@@ -188,6 +190,19 @@ typedef struct fw_ex_data_t
    * this structure. */
   uint8_t reserved[1396];
 }fw_ex_data_t;
+
+/**Describes a unirersal programmable output*/
+typedef struct uni_output_t
+{
+ uint8_t flags;                          //!< MS Nibble - logic function, LS Nibble - flags (inversion)
+ uint8_t condition1;                     //!< code of condition 1
+ uint8_t condition2;                     //!< code of condition 2
+ uint16_t on_thrd_1;                     //!< ON threshold (if value > on_thrd_1)
+ uint16_t off_thrd_1;                    //!< OFF threshold (if value < off_thrd_1)
+ uint16_t on_thrd_2;                     //!< same as on_thrd_1
+ uint16_t off_thrd_2;                    //!< same as off_thrd_1
+}uni_output_t;
+
 
 /**ќписывает параметры системы
  * Describes system's parameters. One instance of this structure stored in the EEPROM and one
@@ -326,13 +341,15 @@ typedef struct params_t
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
 
+  uni_output_t uni_output[UNI_OUTPUT_NUMBER]; //!< parameters for versatile outputs
+
   /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
    * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[72];
+  uint8_t  reserved[39];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

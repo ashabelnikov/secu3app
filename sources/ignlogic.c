@@ -71,6 +71,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    { //PW = CRANKING + DEADTIME
    uint32_t pw = inj_cranking_pw(d);
    pw+= inj_dead_time(d);
+   d->inj_pw = pw > 65535 ? 65535 : pw;
    }
 #endif
    break;

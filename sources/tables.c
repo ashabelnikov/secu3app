@@ -67,6 +67,9 @@
 /**ADC compensation correction, see magnitude.h for more information*/
 #define _ACC ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0)
 
+/**For specifying values in the warmup enrichment and VE lookup tables*/
+#define _WLV(v) ROUND(((v)*128.0))
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -192,10 +195,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   },
 
   /**Lookup table for controlling coil's accumulation time (dwell control) */
-  {_DLV(15.0),_DLV(13.6),_DLV(12.5),_DLV(11.4),_DLV(10.2),_DLV(9.25),_DLV(8.30),_DLV(7.55),
-   _DLV(6.80),_DLV(6.30),_DLV(5.80),_DLV(5.34),_DLV(4.88),_DLV(4.53),_DLV(4.19),_DLV(3.94),
-   _DLV(3.69),_DLV(3.44),_DLV(3.19),_DLV(3.03),_DLV(2.90),_DLV(2.70),_DLV(2.55),_DLV(2.43),
-   _DLV(2.30),_DLV(2.22),_DLV(2.13),_DLV(2.00),_DLV(1.88),_DLV(1.85),_DLV(1.82),_DLV(1.80),
+  {//  5.4         5.8         6.2         6.6         7.0        7.4        7.8         8.2
+   _DLV(15.00),_DLV(13.60),_DLV(12.50),_DLV(11.40),_DLV(10.20),_DLV(9.25),_DLV(8.30),_DLV(7.55),
+   //  8.6         9.0         9.4         9.8        10.2       10.6       11.0        11.4
+   _DLV(6.80), _DLV(6.30), _DLV(5.80), _DLV(5.34), _DLV(4.88), _DLV(4.53),_DLV(4.19),_DLV(3.94),
+   // 11.8        12.2        12.6        13.0        13.4       13.8       14.2        14.6
+   _DLV(3.69), _DLV(3.44), _DLV(3.19), _DLV(3.03), _DLV(2.90), _DLV(2.70),_DLV(2.55),_DLV(2.43),
+   // 15.0        15.4        15.8        16.2        16.6       17.0       17.4        17.8
+   _DLV(2.30), _DLV(2.22), _DLV(2.13), _DLV(2.00), _DLV(1.88), _DLV(1.85),_DLV(1.82),_DLV(1.80),
   },
 
   /**Size of all data for checking */
@@ -263,22 +270,39 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B,0x8B}
   },
 
-  /**Fill injector dead time lookup table*/
-  {0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF},
+  /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage */
+  {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
+   _DLV(5.80),_DLV(4.50),_DLV(3.80),_DLV(3.30),_DLV(3.00),_DLV(2.75),_DLV(2.50),_DLV(2.30),
+   //  8.6       9.0        9.4        9.8        10.2       10.6       11.0       11.4
+   _DLV(2.12),_DLV(2.00),_DLV(1.90),_DLV(1.82),_DLV(1.75),_DLV(1.67),_DLV(1.60),_DLV(1.50),
+   // 11.8      12.2       12.6       13.0        13.4       13.8       14.2       14.6
+   _DLV(1.45),_DLV(1.40),_DLV(1.34),_DLV(1.30),_DLV(1.26),_DLV(1.22),_DLV(1.18),_DLV(1.16),
+   // 15.0      15.4       15.8        16.2       16.6        17.0      17.4       17.8
+   _DLV(1.12),_DLV(1.10),_DLV(1.06),_DLV(1.04),_DLV(1.02),_DLV(0.99),_DLV(0.97),_DLV(0.96)},
 
-  /**Fill cranking pulse width lookup table*/
-  {0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8},
+  /**Fill cranking pulse width lookup table, time in ms vs coolant temperature */
+  {// -30           -20        -10           0        10            20         30          40
+   _DLV(10.20), _DLV(9.30), _DLV(8.60), _DLV(8.00), _DLV(7.25), _DLV(6.65), _DLV(6.00), _DLV(5.4),
+   //  50            60         70          80        90           100        110         120
+   _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)},
 
-  /**Fill warmup enrichment lookup table*/
-  {0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+  /**Fill warmup enrichment lookup table, factor(0...2.0) vs coolant temperature*/
+  {// -30           -20        -10           0        10            20         30          40
+   _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
+   //  50            60         70          80        90           100        110         120
+   _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)},
 
   /**Fill IAC/PWM open-loop position lookup table (run mode)*/
-  {_CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0),
-   _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0)},
+  {// -30           -20        -10           0        10            20         30          40
+   _CLV(46.0), _CLV(41.0), _CLV(38.0), _CLV(35.0), _CLV(33.0), _CLV(31.5), _CLV(30.4), _CLV(29.0),
+   //  50            60         70          80        90           100        110         120
+   _CLV(28.0), _CLV(26.7), _CLV(25.5), _CLV(24.4), _CLV(23.4), _CLV(22.2), _CLV(21.0), _CLV(20.0)},
 
   /**Fill IAC/PWM open-loop position lookup table (cranking mode)*/
-  {_CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0),
-   _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0), _CLV(50.0)},
+  {// -30           -20        -10           0        10            20         30          40
+   _CLV(65.0), _CLV(60.0), _CLV(55.0), _CLV(50.0), _CLV(46.0), _CLV(42.0), _CLV(38.2), _CLV(36.0),
+   //  50            60         70          80        90           100        110         120
+   _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)},
 
   /**reserved bytes*/
   {0}

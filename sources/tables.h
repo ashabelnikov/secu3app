@@ -178,7 +178,7 @@ typedef struct fw_ex_data_t
   /**Position of the IAC/PWM vs coolant temperature for run mode (used in open-loop idle control)
    * value in % * 2, e.g. 200 = 100.0% */
   uint8_t inj_iac_run_pos[INJ_IAC_POS_TABLE_SIZE];
-  /**Position of the IAC/PWM vs coolant temperature for cranking mode (used by both in open and close-loop idle control)
+  /**Position of the IAC/PWM vs coolant temperature for cranking mode (used by both in open and closed-loop idle control)
    * value in % * 2, e.g. 200 = 100.0% */
   uint8_t inj_iac_crank_pos[INJ_IAC_POS_TABLE_SIZE];
 

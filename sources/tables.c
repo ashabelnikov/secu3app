@@ -67,7 +67,6 @@
 /**ADC compensation correction, see magnitude.h for more information*/
 #define _ACC ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0)
 
-#ifdef FUEL_INJECT
 /**For specifying values in the warmup enrichment lookup table*/
 #define _WLV(v) ROUND(((v)*128.0))
 
@@ -76,7 +75,18 @@
 
 /**For specifying values in AFR table*/
 #define _FR(v) ROUND((1.0/(v)*2048.0))
-#endif
+
+/**For setting cylinder displacement value*/
+#define CYL_DISP(v) ROUND(((v)*16384.0))
+
+/**For setting injector flow rate value*/
+#define INJ_FLRT(v) ROUND(((v)*64.0))
+
+/**For setting system time values, v in seconds*/
+#define SYS_TIME_S(v) ROUND(((v)*100.0))
+
+/**For setting lambda correction values*/
+#define EGO_CORR(v) ROUND((((v)/100.0)*512.0))
 
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
@@ -417,22 +427,22 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .bt_flags =                    0x02,
   .ibtn_keys =                   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
 
-  .inj_flags =                   0,
-  .inj_config =                  0,
-  .inj_flow_rate =               12800,
-  .inj_cyl_disp =                24576,
-  .inj_sd_igl_const =            122414,
+  .inj_flags =                   0,                    //
+  .inj_config =                  0,                    //
+  .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min
+  .inj_cyl_disp =                CYL_DISP(0.375),      //0.375L (1.5/4)
+  .inj_sd_igl_const =            43104,                //((0.375L * 3.482 * 18750000) / 142g) * (4 / (4 * 4)), petrol density is 0.71 g/cc
 
-  .inj_cranktorun_time =         300,
-  .inj_aftstr_enrich =           40,
-  .inj_aftstr_strokes =          150,
+  .inj_cranktorun_time =         SYS_TIME_S(3.0),      //3 seconds
+  .inj_aftstr_enrich =           4*10.0,               //10%
+  .inj_aftstr_strokes =          150,                  //150 strokes
 
-  .inj_lambda_str_per_stp =      8,
-  .inj_lambda_step_size =        13,
-  .inj_lambda_corr_limit =       154,
-  .inj_lambda_swt_point =        200,
-  .inj_lambda_temp_thrd =        240,
-  .inj_lambda_rpm_thrd =         1200,
+  .inj_lambda_str_per_stp =      8,                    //8 strokes
+  .inj_lambda_step_size =        EGO_CORR(2.5),        //2.5%
+  .inj_lambda_corr_limit =       EGO_CORR(30.0),       //30% max
+  .inj_lambda_swt_point =        VOLTAGE_MAGNITUDE(0.5), //0.5V
+  .inj_lambda_temp_thrd =        TEMPERATURE_MAGNITUDE(60.0), //60°C
+  .inj_lambda_rpm_thrd =         1200,                 //1200 min-1
 
   .uni_output =                  {{0,0,0,220,200,220,200},{0,0,0,220,200,220,200},{0,0,0,220,200,220,200}},
 

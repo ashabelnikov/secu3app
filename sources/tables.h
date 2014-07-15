@@ -335,8 +335,8 @@ typedef struct params_t
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
   uint8_t  inj_lambda_str_per_stp;       //!< Number of strokes per step for lambda control
-  uint8_t  inj_lambda_step_size;         //!< Step size in % * 512, max 50%
-  uint16_t inj_lambda_corr_limit;        //!< +/- limit in % * 512
+  uint8_t  inj_lambda_step_size;         //!< Step size, value * 512, max 0.49
+  uint16_t inj_lambda_corr_limit;        //!< +/- limit, value * 512
   uint16_t inj_lambda_swt_point;         //!< lambda switch point in volts
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold

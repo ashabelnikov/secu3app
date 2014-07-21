@@ -331,7 +331,7 @@ typedef struct params_t
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * (Ncyl / (Nsq * Ninj))
 
   uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
-  uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment * 4, additive % value
+  uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment factor * 128, e.g. 128 = 1.00
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
   uint8_t  inj_lambda_str_per_stp;       //!< Number of strokes per step for lambda control

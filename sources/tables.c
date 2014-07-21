@@ -88,6 +88,9 @@
 /**For setting lambda correction values*/
 #define EGO_CORR(v) ROUND((((v)/100.0)*512.0))
 
+/**For setting afterstart enrichment value */
+#define AFTSTR_ENR(v) ROUND(((v)*128.0))
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -248,7 +251,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill PRM grid cell sizes lookup table*/
   {120,120,150,180, 210, 270, 300, 360, 420, 480, 630, 690, 840, 990, 1140},
 
-  /**Fill VE lookup table, value can be in range 0...1.99 */
+  //Таблицы связанные с впрыском топлива
+
+  /**Fill VE lookup table, value can be in range 0...1.99 / Таблица задающая коэффициент наполнения цилиндра */
   {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00)}, //16
    {_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00)}, //15
@@ -268,7 +273,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00)}  // 1
   },
 
-  /**Fill AFR lookup table, value can be in range 8.1...22.0 */
+  /**Fill AFR lookup table, value can be in range 8.1...22.0 / Таблица задающая соотношение воздух : топливо */
   {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //16
    {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //15
@@ -288,7 +293,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}  // 1
   },
 
-  /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage */
+  /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage / время открытия форсунки (динам. производ.)*/
   {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
    _DLV(5.80),_DLV(4.50),_DLV(3.80),_DLV(3.30),_DLV(3.00),_DLV(2.75),_DLV(2.50),_DLV(2.30),
    //  8.6       9.0        9.4        9.8        10.2       10.6       11.0       11.4
@@ -298,25 +303,25 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    // 15.0      15.4       15.8        16.2       16.6        17.0      17.4       17.8
    _DLV(1.12),_DLV(1.10),_DLV(1.06),_DLV(1.04),_DLV(1.02),_DLV(0.99),_DLV(0.97),_DLV(0.96)},
 
-  /**Fill cranking pulse width lookup table, time in ms vs coolant temperature */
+  /**Fill cranking pulse width lookup table, time in ms vs coolant temperature / длительность впрыска на пуске */
   {// -30           -20        -10           0        10            20         30          40
    _DLV(10.20), _DLV(9.30), _DLV(8.60), _DLV(8.00), _DLV(7.25), _DLV(6.65), _DLV(6.00), _DLV(5.4),
    //  50            60         70          80        90           100        110         120
    _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)},
 
-  /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature*/
+  /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature / обогащение при прогреве */
   {// -30           -20        -10           0        10            20         30          40
    _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
    //  50            60         70          80        90           100        110         120
    _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)},
 
-  /**Fill IAC/PWM open-loop position lookup table (run mode)*/
+  /**Fill IAC/PWM open-loop position lookup table (run mode) / положение ШД РХХ при работе*/
   {// -30           -20        -10           0        10            20         30          40
    _CLV(46.0), _CLV(41.0), _CLV(38.0), _CLV(35.0), _CLV(33.0), _CLV(31.5), _CLV(30.4), _CLV(29.0),
    //  50            60         70          80        90           100        110         120
    _CLV(28.0), _CLV(26.7), _CLV(25.5), _CLV(24.4), _CLV(23.4), _CLV(22.2), _CLV(21.0), _CLV(20.0)},
 
-  /**Fill IAC/PWM open-loop position lookup table (cranking mode)*/
+  /**Fill IAC/PWM open-loop position lookup table (cranking mode) / положение ШД РХХ на пуске*/
   {// -30           -20        -10           0        10            20         30          40
    _CLV(65.0), _CLV(60.0), _CLV(55.0), _CLV(50.0), _CLV(46.0), _CLV(42.0), _CLV(38.2), _CLV(36.0),
    //  50            60         70          80        90           100        110         120
@@ -429,12 +434,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_flags =                   0,                    //
   .inj_config =                  0,                    //
-  .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min
-  .inj_cyl_disp =                CYL_DISP(0.375),      //0.375L (1.5/4)
-  .inj_sd_igl_const =            43104,                //((0.375L * 3.482 * 18750000) / 142g) * (4 / (4 * 4)), petrol density is 0.71 g/cc
+  .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min          (for management software only)
+  .inj_cyl_disp =                CYL_DISP(0.375),      //0.375L (1.5/4)      (for management software only)
+  .inj_sd_igl_const =            43104,                //((0.375L * 3.482 * 18750000) / 142g) * (4 / (4 * 4)), petrol density is 0.71 g/cc, 4cyl,4squirts,4injectors
 
-  .inj_cranktorun_time =         SYS_TIME_S(3.0),      //3 seconds
-  .inj_aftstr_enrich =           4*10.0,               //10%
+  .inj_cranktorun_time =         SYS_TIME_S(3.00),     //3 seconds
+  .inj_aftstr_enrich =           AFTSTR_ENR(1.10),     //10%
   .inj_aftstr_strokes =          150,                  //150 strokes
 
   .inj_lambda_str_per_stp =      8,                    //8 strokes

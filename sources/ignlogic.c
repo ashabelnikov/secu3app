@@ -100,7 +100,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichemnt factor
    if (lgs.aftstr_enrich_counter)
-    pw+= (pw * d->param.inj_aftstr_enrich) >> 2;  //apply afterstart enrichment additive factor
+    pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment additive factor
    pw+= (pw * d->corr.lambda) >> 9;               //apply lambda correction additive factor
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
@@ -151,7 +151,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichment factor
    if (lgs.aftstr_enrich_counter)
-    pw+= (pw * d->param.inj_aftstr_enrich) >> 2;  //apply afterstart enrichment additive factor
+    pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment additive factor
    pw+= (pw * d->corr.lambda) >> 9;               //apply lambda correction additive factor
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;

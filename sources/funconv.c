@@ -61,14 +61,13 @@ int16_t bilinear_interpolation(int16_t x, int16_t y, int16_t a1, int16_t a2, int
 // x - значение аргумента интерполируемой функции
 // a1,a2 - значения функции в узлах интерполяции
 // x_s - значение аргумента функции в начальной точке
-// x_l - длина отрезка между точками
+// x_l - длина отрезка(проекции на ось х) между точками
 // m - function multiplier
 // возвращает интерполированное значение функции * m
 int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int16_t x_l, uint8_t m)
 {
  return ((a1 * m) + (((int32_t)(a2 - a1) * m) * (x - x_s)) / x_l);
 }
-
 
 // Реализует функцию УОЗ от оборотов для холостого хода
 // Возвращает значение угла опережения в целом виде * 32. 2 * 16 = 32.
@@ -301,7 +300,7 @@ uint16_t accumulation_time(struct ecudata_t* d)
   else i1 = i + 1;
 
  return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]),
-        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 4) >> 2;
 }
 #endif
 
@@ -424,7 +423,7 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
 #endif
 
 #ifdef AIRTEMP_SENS
-//Реализует функцию коррекции УОЗ по температуре воздуха(°C) 
+//Реализует функцию коррекции УОЗ по температуре воздуха(°C)
 // Возвращает значение угла опережения в целом виде * 32
 int16_t airtemp_function(struct ecudata_t* d)
 {
@@ -503,7 +502,9 @@ uint16_t inj_base_pw(struct ecudata_t* d)
  //Note that inj_sd_igl_const constant must not exceed 131072
  uint32_t pw32 = ((uint32_t)d->sens.map * d->param.inj_sd_igl_const) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
 
- //apply VE table
+ pw32>>=2;     //after this shift pw32 value is basic pulse width * 4
+
+ //apply VE table, bilinear_interpolation() returns value * 16, we additionally divide it by 4 to avoid oveflow
  pw32*= bilinear_interpolation(rpm, discharge,
         PGM_GET_BYTE(&fw_data.exdata.inj_ve[l][f]),
         PGM_GET_BYTE(&fw_data.exdata.inj_ve[lp1][f]),
@@ -512,8 +513,8 @@ uint16_t inj_base_pw(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient);
- pw32>>=7;
+        gradient) >> 2;
+ pw32>>=(7+4);
 
  //apply AFR table
  pw32*= bilinear_interpolation(rpm, discharge,
@@ -524,11 +525,11 @@ uint16_t inj_base_pw(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient);
- pw32>>=(11+4);
+        gradient) >> 2;
+ pw32>>=(11+2);
 
- if (pw32 > 65535) pw32 = 65535;
- return pw32;
+ //return restricted value (16 bit)
+ return ((pw32 > 65535) ? 65535 : pw32);
 }
 
 uint16_t inj_dead_time(struct ecudata_t* d)
@@ -544,7 +545,7 @@ uint16_t inj_dead_time(struct ecudata_t* d)
   else i1 = i + 1;
 
  return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.inj_dead_time[i]), PGM_GET_WORD(&fw_data.exdata.inj_dead_time[i1]),
-        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 64) >> 6;
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
 uint16_t inj_cranking_pw(struct ecudata_t* d)
@@ -587,7 +588,6 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
 
  return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_warmup[i]), PGM_GET_BYTE(&fw_data.exdata.inj_warmup[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
-
 }
 
 uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode)

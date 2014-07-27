@@ -307,7 +307,10 @@ int16_t calc_sm_position(struct ecudata_t* d)
  }
  return ((((int32_t)d->param.sm_steps) * inj_iac_pos_lookup(d, &chks.prev_temp, mode)) / 200);
 #else //carburetor
- return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);
+ if (d->param.tmp_use)
+  return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);
+ else
+  return 0; //fully opened
 #endif
 }
 

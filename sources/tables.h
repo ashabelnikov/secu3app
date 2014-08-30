@@ -323,6 +323,8 @@ typedef struct params_t
   uint8_t  bt_flags;                     //!< Bluetooth and security related flags
   uint8_t  ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE]; //!< iButton keys for immobilizer
 
+  uni_output_t uni_output[UNI_OUTPUT_NUMBER]; //!< parameters for versatile outputs
+
   // Fuel injection
   uint8_t  inj_flags;                    //!< Fuel injection related flags
   uint8_t  inj_config;                   //!< Configuration of injection
@@ -340,8 +342,6 @@ typedef struct params_t
   uint16_t inj_lambda_swt_point;         //!< lambda switch point in volts
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
-
-  uni_output_t uni_output[UNI_OUTPUT_NUMBER]; //!< parameters for versatile outputs
 
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных

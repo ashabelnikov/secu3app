@@ -62,5 +62,7 @@
 
 #define   CHOKE_PAR    '%'   //!< parameters  related to choke control
 #define   SECUR_PAR    '#'   //!< security parameters
+#define   UNIOUT_PAR   '&'   //!< universal tunable outputs' parameters
+
 
 #endif //_UFCODES_H_

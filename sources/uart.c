@@ -596,6 +596,22 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_rb(d->param.ibtn_keys[1], IBTN_KEY_SIZE);  //2nd iButton key
    break;
 
+  case UNIOUT_PAR:
+  { //3 tunable outputs' parameters
+   uint8_t oi = 0;
+   for(; oi < UNI_OUTPUT_NUMBER; ++oi)
+   {
+    build_i8h(d->param.uni_output[oi].flags);
+    build_i8h(d->param.uni_output[oi].condition1);
+    build_i8h(d->param.uni_output[oi].condition2);
+    build_i16h(d->param.uni_output[oi].on_thrd_1);
+    build_i16h(d->param.uni_output[oi].off_thrd_1);
+    build_i16h(d->param.uni_output[oi].on_thrd_2);
+    build_i16h(d->param.uni_output[oi].off_thrd_2);
+   }
+   break;
+  }
+
 #ifdef REALTIME_TABLES
 //Following finite state machine will transfer all table's data
   case EDITAB_PAR:
@@ -888,6 +904,22 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    recept_rb(d->param.ibtn_keys[1], IBTN_KEY_SIZE);  //2nd iButton key
   }
   break;
+
+  case UNIOUT_PAR:
+  { //3 tunable outputs' parameters
+   uint8_t oi = 0;
+   for(; oi < UNI_OUTPUT_NUMBER; ++oi)
+   {
+    d->param.uni_output[oi].flags = recept_i8h();
+    d->param.uni_output[oi].condition1 = recept_i8h();
+    d->param.uni_output[oi].condition2 = recept_i8h();
+    d->param.uni_output[oi].on_thrd_1 = recept_i16h();
+    d->param.uni_output[oi].off_thrd_1 = recept_i16h();
+    d->param.uni_output[oi].on_thrd_2 = recept_i16h();
+    d->param.uni_output[oi].off_thrd_2 = recept_i16h();
+   }
+   break;
+  }
 
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:

@@ -64,6 +64,15 @@
 /**Calibration constant used to compensate delay in interrupts (ticks of timer 1) */
 #define CALIBRATION_DELAY    2
 
+/**How many cogs must be skipped during start up*/
+#define HALL_ON_START_SKIP_COGS 2
+
+/**Synchronization contition. Plinomial is equal to v / 2.66 */
+#define HALL_SYNCCOND(v) (((v) >> 2) + ((v) >> 3))
+
+/**Number of cogs including small one, so 2+1 */
+#define HALL_COGS_NUM 3
+
 //Flags (see flags variable)
 #define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing (признак ошибки ДХ, устанавливается в прерывании от ДХ, сбрасывается после обработки)
 #define F_HALLSIA   1                 //!< Indicates that Hall sensor(input) is available
@@ -75,8 +84,8 @@
 #define F_SPSIGN    7                 //!< Sign of the measured stroke period (time between TDCs)
 
 //Additional flags (see flags2 variable)
-#define F_SHUTTER   0                 //!< indicates using of shutter entering for spark generation (used at startup)
-#define F_SHUTTER_S 1                 //!< synchronized value of F_SHUTTER
+#define F_STRMOD    0                 //!< used for synchronization during cranking
+#define F_ISSYNC    1                 //!< used to indicate that system has already synchronized
 #define F_SELEDGE_C 2                 //!< indicates selected edge type for CKPS input, falling edge is default
 #define F_SELEDGE_P 3                 //!< indicates selected edge type for PS input, falling edge is default
 #define F_SELINP    4                 //!< indicates selected input type (either CKPS or PS can be used), PS is default
@@ -85,13 +94,19 @@
 typedef struct
 {
  uint16_t measure_start_value;        //!< previous value if timer 1 used for calculation of stroke period
+ uint16_t tmr_prev;                   //!< same as measure_start_value but used for determining cog period
  volatile uint16_t stroke_period;     //!< stores the last measurement of 1 stoke (Хранит последнее измерение периода такта двигателя)
+ uint8_t cog;                         //!< current cog
+ uint16_t cog_period;                 //!< same as stroke period, but may also contain period value of small tooth
+ uint16_t cog_period_prev;            //!< previous value of cog_period
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
  uint32_t frq_calc_dividend;          //!< divident for calculating of RPM (делимое для расчета частоты вращения)
  volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
- volatile fnptr_t io_callback;        //!< Callback used to set state of ignition channel (we use single channel)
+ volatile fnptr_t io_callback[HALL_COGS_NUM-1]; //!< Callbacks used to set state of corresponding ignition channel
+ uint8_t channel_mode_b;              //!< channel index for use in COMPB interrupt
+ uint8_t channel_mode_a;              //!< channel index for use in COMPA interrupt
  volatile uint16_t degrees_per_stroke;//!< Number of degrees which corresponds to the 1 stroke (количество градусов приходящееся на 1 такт двигателя)
 #ifdef STROBOSCOPE
  uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
@@ -156,14 +171,15 @@ void ckps_init_state_variables(void)
 
  hall.stroke_period = 0xFFFF;
  hall.advance_angle = hall.shutter_wnd_width; //=0
+ hall.cog = 1;
 
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_VHTPER);
  CLEARBIT(flags, F_HALLEV);
  CLEARBIT(flags, F_SPSIGN);
+ CLEARBIT(flags2, F_STRMOD);
+ CLEARBIT(flags2, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
- SETBIT(flags2, F_SHUTTER);
- SETBIT(flags2, F_SHUTTER_S);
 
 #ifdef _PLATFORM_M644_
  TCCR0B = 0;
@@ -286,7 +302,6 @@ uint16_t ckps_calculate_instant_freq(void)
   return hall.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
-
 void ckps_set_edge_type(uint8_t edge_type)
 {
  uint8_t _t;
@@ -369,25 +384,36 @@ uint8_t ckps_is_cog_changed(void)
  return result;
 }
 
+/**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
+static void set_channels_ss(void)
+{
+ uint8_t _t, i = 0, chan = hall.chan_number / 2;
+ for(; i < chan; ++i)
+ {
+  fnptr_t value = IOCFG_CB(i);
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  hall.io_callback[i] = value;
+  _RESTORE_INTERRUPT(_t);
+ }
+}
+
 void ckps_set_cyl_number(uint8_t i_cyl_number)
 {
  uint16_t degrees_per_stroke;
  uint8_t _t;
- _t = _SAVE_INTERRUPT();
- _DISABLE_INTERRUPT();
- hall.chan_number = i_cyl_number; //set new value
- _RESTORE_INTERRUPT(_t);
 
  hall.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
-
  //precalculate value of degrees per 1 engine stroke (value * ANGLE_MULTIPLAYER)
  degrees_per_stroke = (720 * ANGLE_MULTIPLAYER) / i_cyl_number;
 
  _t = _SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
- hall.io_callback = IOCFG_CB(IOP_IGN_OUT1); //use single output
+ hall.chan_number = i_cyl_number; //set new value
  hall.degrees_per_stroke = degrees_per_stroke;
  _RESTORE_INTERRUPT(_t);
+
+ set_channels_ss();
 }
 
 void ckps_set_knock_window(int16_t begin, int16_t end)
@@ -420,18 +446,12 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
 
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
- //not supported by Hall sensor
+ //not supported in this implementation, because number of cogs must be equal to number of cylinders
 }
 
 void ckps_set_shutter_spark(uint8_t i_shutter)
 {
-#ifdef _PLATFORM_M644_
- _BEGIN_ATOMIC_BLOCK(); //we need this because in ATmega644 this flag is not in I/O register
-#endif
- WRITEBIT(flags2, F_SHUTTER, i_shutter);
-#ifdef _PLATFORM_M644_
- _END_ATOMIC_BLOCK();
-#endif
+ //not supported in this implementation
 }
 
 void ckps_select_input(uint8_t i_type)
@@ -466,7 +486,7 @@ void ckps_select_input(uint8_t i_type)
   TIMSK|=_BV(TICIE1);   //enable input capture interrupt
 #endif
   if (CHECKBIT(flags, F_HALLSIA))
-   EIMSK&= ~_BV(INT1);   //diable INT1 interrupt (PS input)
+   EIMSK&= ~_BV(INT1);   //disable INT1 interrupt (PS input)
   _END_ATOMIC_BLOCK();
  }
  WRITEBIT(flags2, F_SELINP, i_type); //save selected value
@@ -485,7 +505,7 @@ void ckps_set_shutter_wnd_width(int16_t width)
  * \param i_channel number of ignition channel to turn off
  */
 INLINE
-void turn_off_ignition_channel(void)
+void turn_off_ignition_channel(uint8_t i_channel)
 {
  if (!CHECKBIT(flags, F_IGNIEN))
   return; //ignition disabled
@@ -493,7 +513,7 @@ void turn_off_ignition_channel(void)
  //the igniter go to the regime of energy accumulation
  //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
  //коммутатор перейти в режим накопления энергии
- ((iocfg_pfn_set)hall.io_callback)(IGN_OUTPUTS_OFF_VAL);
+ ((iocfg_pfn_set)hall.io_callback[i_channel])(IGN_OUTPUTS_OFF_VAL);
 }
 
 /**Interrupt handler for Compare/Match channel A of timer T1
@@ -502,7 +522,7 @@ void turn_off_ignition_channel(void)
 ISR(TIMER1_COMPA_vect)
 {
  uint16_t tmr = TCNT1;
- ((iocfg_pfn_set)hall.io_callback)(IGN_OUTPUTS_ON_VAL);
+ ((iocfg_pfn_set)hall.io_callback[hall.channel_mode_a])(IGN_OUTPUTS_ON_VAL);
 #ifdef _PLATFORM_M644_
  TIMSK1&= ~_BV(OCIE1A);
 #else
@@ -518,6 +538,7 @@ ISR(TIMER1_COMPA_vect)
  //-----------------------------------------------------
 
 #ifndef DWELL_CONTROL
+ hall.channel_mode_b = hall.channel_mode_a;
  //set timer for pulse completion, use fast division by 3
  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
 //OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
@@ -525,6 +546,7 @@ ISR(TIMER1_COMPA_vect)
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
 #else
+ hall.channel_mode_b = (hall.channel_mode_a < (hall.chan_number>>1)-1) ? hall.channel_mode_a + 1 : 0;
  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
  {
   if (hall.cr_acc_time > hall.stroke_period-120)
@@ -578,7 +600,7 @@ ISR(TIMER1_COMPA_vect)
  */
 ISR(TIMER1_COMPB_vect)
 {
- turn_off_ignition_channel();//finish ignition pulse
+ turn_off_ignition_channel(hall.channel_mode_b);//finish ignition pulse
 #ifdef _PLATFORM_M644_
  TIMSK1&= ~_BV(OCIE1B);
 #else
@@ -608,13 +630,49 @@ void set_timer0(uint16_t value)
 #endif
 }
 
-/** Special function for processing falling edge,
- * must be called from ISR
+/** Special function for processing falling edge, must be called from ISR
  * \param tmr Timer value at the moment of falling edge
  */
 INLINE
-void ProcessFallingEdge(uint16_t tmr)
+void ProcessCogEdge(uint16_t tmr)
 {
+ //calculate stroke period
+ hall.cog_period = tmr - hall.tmr_prev;
+
+ //Do additional steps during cranking
+ if (!CHECKBIT(flags2, F_ISSYNC))
+ {
+  if (!CHECKBIT(flags2, F_STRMOD))
+  {
+   if (hall.cog >= HALL_ON_START_SKIP_COGS)
+    SETBIT(flags2, F_STRMOD);
+   goto sync_skip;
+  }
+  else
+  {
+   if (HALL_SYNCCOND(hall.cog_period_prev) > hall.cog_period)
+   {
+    SETBIT(flags2, F_ISSYNC);                //synchronized!
+    hall.cog = 1;
+    goto sync_enter;
+   }
+  }
+ }
+
+ //Check synchronization
+ if (HALL_SYNCCOND(hall.cog_period_prev) > hall.cog_period)
+ {
+  if (hall.cog != HALL_COGS_NUM+1) //check for error
+   SETBIT(flags, F_ERROR);
+  hall.cog = 1;
+ }
+
+ //skip small tooth
+ if (hall.cog == HALL_COGS_NUM)
+  goto sync_skip;
+
+sync_enter:
+
  //save period value if it is correct. We need to do it forst of all to have fresh stroke_period value
  if (CHECKBIT(flags, F_VHTPER))
  {
@@ -627,127 +685,70 @@ void ProcessFallingEdge(uint16_t tmr)
  SETBIT(flags, F_STROKE); //set the stroke-synchronization event (устанавливаем событие тактовой синхронизации)
  hall.measure_start_value = tmr;
 
- if (!CHECKBIT(flags2, F_SHUTTER_S))
- {
-  uint16_t delay;
+ uint16_t delay;
 #ifdef STROBOSCOPE
-  hall.strobe = 1; //strobe!
+ hall.strobe = 1; //strobe!
 #endif
 
-  //-----------------------------------------------------
-  //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
-  //interrupts occur during processing of this handler.
+ //-----------------------------------------------------
+ //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
+ //interrupts occur during processing of this handler.
+#ifdef COOLINGFAN_PWM
+ _ENABLE_INTERRUPT();
+#endif
+ //-----------------------------------------------------
+
+ //start timer for counting out of advance angle (spark)
+ delay = (((uint32_t)hall.advance_angle * hall.stroke_period) / hall.degrees_per_stroke);
+#ifdef COOLINGFAN_PWM
+ _DISABLE_INTERRUPT();
+#endif
+
+ hall.channel_mode_a = hall.cog-1;
+
+ OCR1A = tmr + ((delay < 15) ? 15 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
+#ifdef _PLATFORM_M644_
+ TIFR1 = _BV(OCF1A);
+ TIMSK1|= _BV(OCIE1A);
+#else
+ TIFR = _BV(OCF1A);
+ TIMSK|= _BV(OCIE1A);
+#endif
+
+ //start timer for countiong out of knock window opening
+ if (CHECKBIT(flags, F_USEKNK))
+ {
 #ifdef COOLINGFAN_PWM
   _ENABLE_INTERRUPT();
 #endif
-  //-----------------------------------------------------
-
-  //start timer for counting out of advance angle (spark)
-  delay = (((uint32_t)hall.advance_angle * hall.stroke_period) / hall.degrees_per_stroke);
+  delay = ((uint32_t)hall.knock_wnd_begin * hall.stroke_period) / hall.degrees_per_stroke;
 #ifdef COOLINGFAN_PWM
   _DISABLE_INTERRUPT();
 #endif
-
-  OCR1A = tmr + ((delay < 15) ? 15 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
-#ifdef _PLATFORM_M644_
-  TIFR1 = _BV(OCF1A);
-  TIMSK1|= _BV(OCIE1A);
-#else
-  TIFR = _BV(OCF1A);
-  TIMSK|= _BV(OCIE1A);
-#endif
-
-  //start timer for countiong out of knock window opening
-  if (CHECKBIT(flags, F_USEKNK))
-  {
-#ifdef COOLINGFAN_PWM
-   _ENABLE_INTERRUPT();
-#endif
-   delay = ((uint32_t)hall.knock_wnd_begin * hall.stroke_period) / hall.degrees_per_stroke;
-#ifdef COOLINGFAN_PWM
-   _DISABLE_INTERRUPT();
-#endif
-   set_timer0(delay);
-   hall.knkwnd_mode = 0;
-  }
-
-  knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
-  adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+  set_timer0(delay);
+  hall.knkwnd_mode = 0;
  }
-}
 
-/** Special function for processing rising edge,
- * must be called from ISR
- */
-INLINE
-void ProcessRisingEdge(void)
-{
- //spark on rising at the startup, force COMPA interrupt
- if (CHECKBIT(flags2, F_SHUTTER_S))
- {
-#ifdef STROBOSCOPE
-   hall.strobe = 1; //strobe!
-#endif
+ knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
+ adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
 
-  OCR1A = TCNT1 + 2;
-#ifdef _PLATFORM_M644_
-  TIFR1 = _BV(OCF1A);
-  TIMSK1|= _BV(OCIE1A);
-#else
-  TIFR = _BV(OCF1A);
-  TIMSK|= _BV(OCIE1A);
-#endif
- }
+sync_skip:
+ ++hall.cog;
+ hall.tmr_prev = tmr;
+ hall.cog_period_prev = hall.cog_period;
 }
 
 /**Input capture interrupt of timer 1 (прерывание по захвату таймера 1) */
 ISR(TIMER1_CAPT_vect)
 {
- //toggle edge
- if (!(TCCR1B & _BV(ICES1)))
- { //falling
-  if (CHECKBIT(flags2, F_SELEDGE_C))
-   ProcessRisingEdge();
-  else
-   ProcessFallingEdge(ICR1);
-  TCCR1B|= _BV(ICES1);  //next edge will be rising
- }
- else
- { //rising
-  if (CHECKBIT(flags2, F_SELEDGE_C))
-   ProcessFallingEdge(ICR1);
-  else
-   ProcessRisingEdge();
-  TCCR1B&= ~_BV(ICES1); //next will be falling
- }
-
- WRITEBIT(flags2, F_SHUTTER_S, CHECKBIT(flags2, F_SHUTTER)); //synchronize
+ ProcessCogEdge(ICR1);
  SETBIT(flags, F_HALLEV); //set event flag
 }
 
 /**Interrupt from a Hall sensor (external)*/
 ISR(INT1_vect)
 {
- uint16_t tmr = TCNT1;
- //toggle edge
- if (EICRA & _BV(ISC10))
- { //falling
-  if (CHECKBIT(flags2, F_SELEDGE_P))
-   ProcessRisingEdge();
-  else
-   ProcessFallingEdge(tmr);
-  EICRA&= ~(_BV(ISC10));  //next edge will be rising
- }
- else
- { //rising
-  if (CHECKBIT(flags2, F_SELEDGE_P))
-   ProcessFallingEdge(tmr);
-  else
-   ProcessRisingEdge();
-  EICRA|=_BV(ISC10); //next will be falling
- }
-
- WRITEBIT(flags2, F_SHUTTER_S, CHECKBIT(flags2, F_SHUTTER)); //synchronize
+ ProcessCogEdge(TCNT1);
  SETBIT(flags, F_HALLEV); //set event flag
 }
 

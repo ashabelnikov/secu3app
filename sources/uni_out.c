@@ -360,16 +360,27 @@ static uint8_t cond_ipw(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  return p_ctx->state;
 }
 
+/**Condition function for CE state */
+static uint8_t cond_ce(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+ if (d->ce_state >= on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->ce_state <= off_thrd)
+  p_ctx->state = 0; //OFF
+ return p_ctx->state;
+}
+
 /**Function pointer type used in function pointers tables (conditions)*/
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 19
+#define COND_FPTR_TABLE_SIZE 20
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
  {&cond_cts, &cond_rpm, &cond_map, &cond_volt, &cond_carb, &cond_vspd, &cond_airfl, &cond_tmr, &cond_ittmr,
-  &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv, &cond_ipw};
+  &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
+  &cond_ipw, &cond_ce};
 
 void uniout_init_ports(void)
 {

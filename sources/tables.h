@@ -188,7 +188,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1396];
+  uint8_t reserved[7000];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -349,7 +349,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[39];
+  uint8_t  reserved[100];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных
@@ -360,8 +360,8 @@ typedef struct params_t
 
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
-#define IOREM_SLOTS 23                   //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS 50                   //!< Number of plugs used in I/O remapping
+#define IOREM_SLOTS 25                   //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS 56                   //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t

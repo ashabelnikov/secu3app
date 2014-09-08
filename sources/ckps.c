@@ -450,7 +450,7 @@ uint8_t ckps_is_cog_changed(void)
 INLINE
 static fnptr_t get_callback(uint8_t index)
 {
- return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + 22);
+ return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + 24);
 }
 
 #ifndef PHASED_IGNITION

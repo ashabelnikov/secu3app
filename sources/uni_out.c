@@ -26,6 +26,7 @@
 #ifdef UNI_OUTPUT
 
 #include "port/port.h"
+#include <string.h>
 #include "ioconfig.h"
 #include "secu3.h"
 #include "vstimer.h"
@@ -298,6 +299,7 @@ static uint8_t cond_tps(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  */
 static uint8_t cond_ats(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
  if ((int16_t)on_thrd > (int16_t)off_thrd)
  {
   if (d->sens.air_temp >= (int16_t)on_thrd)
@@ -312,6 +314,7 @@ static uint8_t cond_ats(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
   if (d->sens.air_temp >= (int16_t)off_thrd)
    p_ctx->state = 0; //OFF
  }
+#endif
  return p_ctx->state;
 }
 

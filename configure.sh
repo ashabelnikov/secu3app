@@ -5,7 +5,7 @@
 # Created by Alexey A. Shabelnikov, Kiev 24 July 2011.
 # Note: It requires AVR-GCC toolchain
 
-USAGE="USAGE: configure.sh <platform> <toolchain> \n Supported platforms: M16,M32,M64,M644, Supported toolchains: IAR, GCC"
+USAGE="USAGE: configure.sh <platform> <toolchain> \n Supported platforms: M32,M64,M644, Supported toolchains: IAR, GCC"
 PLATFORM=Undefined
 CFGFILE="platform_cfg"
 MAKEFILE="Makefile_gcc"
@@ -31,28 +31,22 @@ else
 fi
 
 # Check validity of command line option
-if [ $1 = "M16" ]
-then
- CFG_BL_START="3E00"
- CFG_FWD_START="27D1"
- CFG_EE_SIZE="512"
- CFG_LNKXCL="lnkm16s.xcl"
-elif [ $1 = "M32" ]
+if [ $1 = "M32" ]
 then
  CFG_BL_START="7C00"
- CFG_FWD_START="65D1"
+ CFG_FWD_START="4F88"
  CFG_EE_SIZE="1024"
  CFG_LNKXCL="lnkm32s.xcl"
 elif [ $1 = "M64" ]
 then
  CFG_BL_START="F800"
- CFG_FWD_START="E1D1"
+ CFG_FWD_START="CB88"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm64s.xcl"
 elif [ $1 = "M644" ]
 then
  CFG_BL_START="F800"
- CFG_FWD_START="E1D1"
+ CFG_FWD_START="CB88"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm644s.xcl"
 else
@@ -63,10 +57,7 @@ fi
 
 if [ $TC = "IAR" ]
 then
- if [ $1 = M16
- then
-  CFG_MCU="m16"
- elif [ $1 = "M32" ]
+ if [ $1 = "M32" ]
  then
   CFG_MCU="m32"
  elif [ $1 = "M64" ]
@@ -79,10 +70,7 @@ then
  MAKEFILE="Makefile_iar"
 elif [ $TC = "GCC" ]
  then
- if [ $1 = M16 ]
- then
-  CFG_MCU="atmega16"
- elif [ $1 = "M32" ]
+ if [ $1 = "M32" ]
  then
   CFG_MCU="atmega32"
  elif [ $1 = "M64" ]

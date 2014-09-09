@@ -746,7 +746,13 @@ ISR(TIMER1_CAPT_vect)
 }
 
 /**Interrupt from a Hall sensor (external)*/
+#ifdef SPEED_SENSOR
+/**INT1 handler function */
+void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
+#else
+/**Interrupt from a Hall sensor (external)*/
 ISR(INT1_vect)
+#endif
 {
  ProcessCogEdge(TCNT1);
  SETBIT(flags, F_HALLEV); //set event flag

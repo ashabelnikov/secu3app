@@ -283,9 +283,15 @@ uint8_t cams_is_event_r(void)
 /**Interrupt from CAM sensor (Hall)*/
 ISR(INT1_vect)
 {
+#ifdef HALL_SYNC
+ void ProcessInterrupt1(void); //see hall.c for more information about this functions
+ if (CHECKBIT(flags, F_CAMSIA))
+  ProcessInterrupt1(); //call INT1 handler if PS input not remapped to other function
+#else
  camstate.cam_ok = 1;
  camstate.err_counter = 0;
  camstate.event = 1;          //set event flag
+#endif
 #ifdef SPEED_SENSOR
  if (!CHECKBIT(flags, F_SPDSIA))
   return;

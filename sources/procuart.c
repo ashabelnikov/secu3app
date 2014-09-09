@@ -148,6 +148,10 @@ void process_uart_interface(struct ecudata_t* d)
     //если были изменены параметры ДПКВ, то немедленно применяем их на работающем двигателе и сбрасываем счетчик времени
     ckps_set_cyl_number(d->param.ckps_engine_cyl);  //<--обязательно в первую очередь!
     ckps_set_cogs_num(d->param.ckps_cogs_num, d->param.ckps_miss_num);
+#ifdef HALL_SYNC
+    //note: we must select input before setting edge type
+    ckps_select_input(d->param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
+#endif
     ckps_set_edge_type(d->param.ckps_edge_type);
 #ifdef SECU3T
     cams_vr_set_edge_type(d->param.ref_s_edge_type); //REF_S (ДНО)
@@ -161,7 +165,6 @@ void process_uart_interface(struct ecudata_t* d)
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
 
 #ifdef HALL_SYNC
-    ckps_select_input(d->param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
     ckps_set_shutter_wnd_width(d->param.hall_wnd_width);
 #endif
     break;

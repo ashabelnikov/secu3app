@@ -46,11 +46,11 @@
  #define GET_CAMSTATE() (CHECKBIT(PINC, PINC4) > 0)
 #endif
 
-#define F_CAMSIA 0  //cam sensor input is available (not remmaped to other function)
+#define F_CAMSIA 0   //PS (cam sensor input) is available (not remapped to other function)
 #ifdef SPEED_SENSOR
-#define F_SPDSIA 1  //cam sensor input is remmaped to speed sensor
+#define F_REFSIA 1   //REF_S (reference sensor input) is available (not remapped to other function)
 #endif
-#define flags TWSR  //only 2 bits are allowed to be used as R/W
+#define flags TWSR   //only 2 bits are allowed to be used as R/W
 
 /** Defines state variables */
 typedef struct
@@ -73,6 +73,7 @@ typedef struct
  volatile uint32_t spdsens_counter;   //!< number of speed sensor pulses since last ignition turn on
  volatile uint8_t spdsens_event;      //!< indicates pending event from speed sensor
  uint8_t spdsens_state;               //!< Used in special state machine to filter overflows
+ volatile uint8_t vss_input;          //!< variable indicating to which input VSS is remapped (PS or REF_S)
 #endif
 }camstate_t;
 
@@ -114,10 +115,18 @@ void cams_init_state(void)
  camstate.spdsens_state = 0;
 #endif
 
- //set flag indicating that cam sensor input is available
+ //set flag indicating that PS (cam sensor input) is available
  WRITEBIT(flags, F_CAMSIA, IOCFG_CHECK(IOP_PS));
 #ifdef SPEED_SENSOR
- WRITEBIT(flags, F_SPDSIA, IOCFG_CHECK(IOP_SPDSENS));
+ //set flag indicating that REF_S (reference sensor input) is available
+ WRITEBIT(flags, F_REFSIA, IOCFG_CHECK(IOP_REF_S));
+ //set variable indicating to which input VSS is remapped (PS or REF_S)
+ if ((IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_s) || (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_si))
+  camstate.vss_input = 1; // remapped to REF_S
+ else if ((IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ps) || (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_psi))
+  camstate.vss_input = 2; // remapped to PS
+ else
+  camstate.vss_input = 0; // not mapped to real IO
 #endif
 
 #ifdef SECU3T /*SECU-3T*/
@@ -133,8 +142,10 @@ void cams_init_state(void)
 #endif
 
 #ifdef SPEED_SENSOR
- if (CHECKBIT(flags, F_SPDSIA))
-  EIMSK|= _BV(INT1);              //enable spped sensor interrupt also, because cam sensor input remmaped as speed sensor
+ if (1==camstate.vss_input)
+  EIMSK|= _BV(INT0);              //VSS remapped to INT0 (REF_S)
+ else if (2==camstate.vss_input)
+  EIMSK|= _BV(INT1);              //VSS remapped to INT1 (PS)
 #endif
 
  _END_ATOMIC_BLOCK();
@@ -145,7 +156,7 @@ void cams_control(void)
 #ifdef SPEED_SENSOR
  uint16_t t1_curr, t1_prev, period;
  uint8_t _t, event;
- if (!CHECKBIT(flags, F_SPDSIA))
+ if (0==camstate.vss_input)
   return;                                //speed sensor is not enabled
  _t = _SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
@@ -191,7 +202,24 @@ uint8_t cams_vr_is_event_r(void)
 /**Interrupt from CAM sensor (VR). Marked as REF_S on the schematics */
 ISR(INT0_vect)
 {
- camstate.vr_event = 1; //set event flag 
+#ifdef SPEED_SENSOR
+ if (CHECKBIT(flags, F_REFSIA))
+ {//normal INT0 operation
+  camstate.vr_event = 1; //set event flag
+ }
+ else
+ {
+  if (1==camstate.vss_input)
+  { //INT0 used for VSS
+   ++camstate.spdsens_counter;
+   camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;
+   camstate.spdsens_period_prev = TCNT1;
+   camstate.spdsens_event = 1;  //set event flag
+  }
+ }
+#else
+ camstate.vr_event = 1; //set event flag
+#endif
 }
 
 void cams_vr_set_edge_type(uint8_t edge_type)
@@ -293,8 +321,8 @@ ISR(INT1_vect)
  camstate.event = 1;          //set event flag
 #endif
 #ifdef SPEED_SENSOR
- if (!CHECKBIT(flags, F_SPDSIA))
-  return;
+ if (2!=camstate.vss_input)
+  return;                     //not remapped to PS input
  ++camstate.spdsens_counter;
  camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;
  camstate.spdsens_period_prev = TCNT1;
@@ -308,7 +336,7 @@ ISR(INT1_vect)
 #ifdef SPEED_SENSOR
 uint16_t spdsens_get_period(void)
 {
- return CHECKBIT(flags, F_SPDSIA) ? camstate.spdsens_period_buff : 0;
+ return (camstate.vss_input) ? camstate.spdsens_period_buff : 0;
 }
 
 uint32_t spdsens_get_pulse_count(void)
@@ -317,6 +345,6 @@ uint32_t spdsens_get_pulse_count(void)
  _BEGIN_ATOMIC_BLOCK();
  value = camstate.spdsens_counter;
  _END_ATOMIC_BLOCK();
- return CHECKBIT(flags, F_SPDSIA) ? value : 0;
+ return (camstate.vss_input) ? value : 0;
 }
 #endif

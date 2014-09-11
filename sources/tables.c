@@ -434,6 +434,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .bt_flags =                    0x02,
   .ibtn_keys =                   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
 
+  .uni_output =                  {{0,0,0,220,200,220,200},{0,0,0,220,200,220,200},{0,0,0,220,200,220,200}},
+  .uniout_12lf =                 0,                    //logic function between 1st and 2nd outputs
+
   .inj_flags =                   0,                    //
   .inj_config =                  0,                    //
   .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min          (for management software only)
@@ -451,7 +454,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_lambda_temp_thrd =        TEMPERATURE_MAGNITUDE(60.0), //60°C
   .inj_lambda_rpm_thrd =         1200,                 //1200 min-1
 
-  .uni_output =                  {{0,0,0,220,200,220,200},{0,0,0,220,200,220,200},{0,0,0,220,200,220,200}},
 
   .reserved =                    {0},
   .crc =                         (sizeof(fw_data_t) - sizeof(cd_data_t))

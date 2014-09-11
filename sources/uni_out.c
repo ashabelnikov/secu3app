@@ -395,16 +395,36 @@ void uniout_init(void)
  memset(&uni.states, 0, sizeof(uni.states));
 }
 
+/** Calculates specified logic function
+ * \param lf Id of logic function
+ * \param state1 Function argument 1 (Boolean value)
+ * \param state2 Function argument 2 (Boolean value)
+ * \return Calculated logic value (Boolean value)
+ */
+static uint8_t logic_function(uint8_t lf, uint8_t state1, uint8_t state2)
+{
+ switch(lf)
+ {
+  case 0:  return (state1 | state2); //OR
+  case 1:  return (state1 & state2); //AND
+  case 2:  return (state1 ^ state2); //XOR
+  default:
+  case 15: return (state1);          //first condition only
+ }
+}
+
 /** Processes (executes assigned conditions and updates state) specified output
  * \param d pointer to ECU data structure
  * \param index output index
+ * \param action 1 - set oputput, 0 - do not set output
+ * \return Logic state of output
  */
-static void process_output(struct ecudata_t *d, uint8_t index)
+static uint8_t process_output(struct ecudata_t *d, uint8_t index, uint8_t action)
 {
  uni_output_t* p_out_param = &d->param.uni_output[index];
  uint8_t cond_1 = (p_out_param->condition1 < COND_FPTR_TABLE_SIZE) ? p_out_param->condition1 : 0;
  uint8_t cond_2 = (p_out_param->condition2 < COND_FPTR_TABLE_SIZE) ? p_out_param->condition2 : 0;
- uint8_t state1, state2;
+ uint8_t state1, state2 = 0;
 
  //execute specified conditions
  state1 = cond_fptr[cond_1](d, p_out_param->on_thrd_1, p_out_param->off_thrd_1, &uni.states[index].ctx1);
@@ -419,22 +439,27 @@ static void process_output(struct ecudata_t *d, uint8_t index)
  state2^=(p_out_param->flags >> 1) & 0x2;
 
  //apply specified logic function and update output state
- switch(p_out_param->flags >> 4)
- {
-  case 0:  IOCFG_SET(index + IOP_UNI_OUT0, state1 | state2); break; //OR
-  case 1:  IOCFG_SET(index + IOP_UNI_OUT0, state1 & state2); break; //AND
-  case 2:  IOCFG_SET(index + IOP_UNI_OUT0, state1 ^ state2); break; //XOR
-  case 15: IOCFG_SET(index + IOP_UNI_OUT0, state1); break; //first condition only
- }
+ state1 = logic_function(p_out_param->flags >> 4, state1, state2);
+ if (action)
+  IOCFG_SET(index + IOP_UNI_OUT0, state1);
+ return state1;
 }
 
 void uniout_control(struct ecudata_t *d)
 {
  uint8_t i = 0;
  //Process 3 outputs, we process them only if they are active (remapped to real I/O)
+ if (d->param.uniout_12lf != 15)
+ { //special processing for 1st and 2nd outputs
+  uint8_t state1 = process_output(d, i++, 0);
+  uint8_t state2 = process_output(d, i++, 0);
+  state1 = logic_function(d->param.uniout_12lf, state1, state2);
+  if (IOCFG_CHECK(IOP_UNI_OUT0))
+   IOCFG_SET(IOP_UNI_OUT0, state1);
+ }
  for(; i < UNI_OUTPUT_NUMBER; ++i)
   if (IOCFG_CHECK(IOP_UNI_OUT0 + i))
-   process_output(d, i);
+   process_output(d, i, 1);
 }
 
 #endif //UNI_OUTPUT

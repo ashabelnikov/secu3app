@@ -324,6 +324,7 @@ typedef struct params_t
   uint8_t  ibtn_keys[IBTN_KEYS_NUM][IBTN_KEY_SIZE]; //!< iButton keys for immobilizer
 
   uni_output_t uni_output[UNI_OUTPUT_NUMBER]; //!< parameters for versatile outputs
+  uint8_t uniout_12lf;                   //!< logic function between 1st and 2nd outputs
 
   // Fuel injection
   uint8_t  inj_flags;                    //!< Fuel injection related flags
@@ -349,7 +350,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[100];
+  uint8_t  reserved[99];
 
   /** онтрольна€ сумма данных этой структуры (дл€ проверки корректности данных после считывани€ из EEPROM)
    * ƒл€ данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных

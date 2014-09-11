@@ -224,10 +224,11 @@ ISR(INT0_vect)
 
 void cams_vr_set_edge_type(uint8_t edge_type)
 {
+#ifdef SPEED_SENSOR
  //if REF_S remapped to VSS, then edge depends on inversion flag
  if (camstate.vss_input == 1)
   edge_type = (IOCFG_CB(IOP_SPDSENS) != (fnptr_t)iocfg_g_ref_si);
-
+#endif
  _BEGIN_ATOMIC_BLOCK();
  if (edge_type)
   EICRA|= _BV(ISC00); //rising

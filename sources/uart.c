@@ -609,6 +609,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     build_i16h(d->param.uni_output[oi].on_thrd_2);
     build_i16h(d->param.uni_output[oi].off_thrd_2);
    }
+   build_i4h(d->param.uniout_12lf);
    break;
   }
 
@@ -918,6 +919,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
     d->param.uni_output[oi].on_thrd_2 = recept_i16h();
     d->param.uni_output[oi].off_thrd_2 = recept_i16h();
    }
+   d->param.uniout_12lf = recept_i4h();
    break;
   }
 

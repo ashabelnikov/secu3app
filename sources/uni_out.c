@@ -451,11 +451,13 @@ void uniout_control(struct ecudata_t *d)
  //Process 3 outputs, we process them only if they are active (remapped to real I/O)
  if (d->param.uniout_12lf != 15)
  { //special processing for 1st and 2nd outputs
-  uint8_t state1 = process_output(d, i++, 0);
-  uint8_t state2 = process_output(d, i++, 0);
-  state1 = logic_function(d->param.uniout_12lf, state1, state2);
   if (IOCFG_CHECK(IOP_UNI_OUT0))
+  {
+   uint8_t state1 = process_output(d, i++, 0);
+   uint8_t state2 = process_output(d, i++, 0);
+   state1 = logic_function(d->param.uniout_12lf, state1, state2);
    IOCFG_SET(IOP_UNI_OUT0, state1);
+  }
  }
  for(; i < UNI_OUTPUT_NUMBER; ++i)
   if (IOCFG_CHECK(IOP_UNI_OUT0 + i))

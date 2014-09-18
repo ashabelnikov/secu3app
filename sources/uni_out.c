@@ -123,9 +123,9 @@ static uint8_t cond_carb(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thr
 static uint8_t cond_vspd(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
 #ifdef SPEED_SENSOR
- if (d->sens.speed >= on_thrd)
+ if (d->sens.speed <= on_thrd)
   p_ctx->state = 1; //ON
- if (d->sens.speed <= off_thrd)
+ if (d->sens.speed >= off_thrd)
   p_ctx->state = 0; //OFF
 #endif
  return p_ctx->state;

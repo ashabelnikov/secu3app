@@ -31,13 +31,21 @@
 #include "knklogic.h"
 #include "secu3.h"
 
+/**Delay in strokes*/
+#define KNK_STRT_DELAY 150
+
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
 {
  if (d->sens.frequen > d->param.starter_off)
  {
-  //This is very simple algorithm to determine is knock present. We must
-  //improve it in the nearest future.
-  p_rs->knock_flag = (d->sens.knock_k > d->param.knock_threshold);
+  if (0==p_rs->sd_counter)
+  {
+   //This is a very simple algorithm to determine is knock present. We must
+   //improve it in the nearest future.
+   p_rs->knock_flag = (d->sens.knock_k > d->param.knock_threshold);
+  }
+  else
+   --p_rs->sd_counter;
  }
  else
   p_rs->knock_flag = 0; //Do not detect knock at the startup of engine
@@ -56,6 +64,7 @@ void knklogic_init(retard_state_t* p_rs)
 {
  p_rs->delay_counter = 0;
  p_rs->knock_flag = 0;
+ p_rs->sd_counter = KNK_STRT_DELAY;
 }
 
 void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs)

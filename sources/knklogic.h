@@ -34,6 +34,7 @@ typedef struct retard_state_t
 {
  uint8_t delay_counter; //!< used to count time in retard algorithm
  uint8_t knock_flag;    //!< indicates that detonation is present
+ uint8_t sd_counter;    //!< used to count time after engine startup
 }retard_state_t;
 
 struct ecudata_t;

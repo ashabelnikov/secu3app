@@ -372,6 +372,8 @@ MAIN()
 #endif
    edat.engine_mode = EM_START; //режим пуска
 
+   knklogic_init(&retard_state);
+
    if (edat.param.knock_use_knock_channel)
     knock_start_settings_latching();
 

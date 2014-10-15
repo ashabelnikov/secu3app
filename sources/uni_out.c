@@ -370,17 +370,66 @@ static uint8_t cond_ce(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd,
  return p_ctx->state;
 }
 
+/**Condition function for timer (starts to run in both cases: after first condition triggers to ON state,
+ * and after first condition triggers to OFF state).
+ * This function is used only as second condition */
+static uint8_t cond_oftmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+ switch(p_ctx->sm)
+ {
+  case 0:
+   if (p_ctx->other)
+   {
+    p_ctx->tmr = s_timer_gtc();
+    p_ctx->sm = 1;
+   }
+   p_ctx->state = 0;
+   break;
+  case 1:
+   if ((s_timer_gtc() - p_ctx->tmr) >= on_thrd)
+   {
+    p_ctx->state = 1;  //ON
+    p_ctx->sm = 2;
+    break;
+   }
+   if (!p_ctx->other)
+    p_ctx->sm = 0;       //return to OFF state without changing of condition's state
+   break;
+
+  case 2:
+   if (!p_ctx->other)
+   {
+    p_ctx->tmr = s_timer_gtc();
+    p_ctx->sm = 3;
+   }
+   break;
+
+  case 3:
+   if ((s_timer_gtc() - p_ctx->tmr) >= off_thrd)
+   {
+    p_ctx->state = 0;  //OFF
+    p_ctx->sm = 0;
+    break;
+   }
+   if (p_ctx->other)
+    p_ctx->sm = 2;    //return to ON state without changing of condition's state
+   break;
+ }
+
+ return p_ctx->state;
+}
+
 /**Function pointer type used in function pointers tables (conditions)*/
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 20
+#define COND_FPTR_TABLE_SIZE 21
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
  {&cond_cts, &cond_rpm, &cond_map, &cond_volt, &cond_carb, &cond_vspd, &cond_airfl, &cond_tmr, &cond_ittmr,
   &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
-  &cond_ipw, &cond_ce};
+  &cond_ipw, &cond_ce, &cond_oftmr};
 
 void uniout_init_ports(void)
 {
@@ -408,6 +457,7 @@ static uint8_t logic_function(uint8_t lf, uint8_t state1, uint8_t state2)
   case 0:  return (state1 | state2); //OR
   case 1:  return (state1 & state2); //AND
   case 2:  return (state1 ^ state2); //XOR
+  case 3:  return (state2);          //Projection state2
   default:
   case 15: return (state1);          //first condition only
  }

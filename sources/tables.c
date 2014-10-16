@@ -427,7 +427,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .sm_steps =                    800,
   .choke_rpm =                   {2000, 1200},
   .choke_startup_corr =          20,
-  .choke_rpm_if =                1024,
+  .choke_rpm_if =                51,
   .choke_corr_time =             300,
   .choke_corr_temp =             40,
 

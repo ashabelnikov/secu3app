@@ -26,9 +26,11 @@
 
 #include "port/avrio.h"
 #include "port/port.h"
+#include "adc.h"
 #include "ce_errors.h"
 #include "funconv.h"
 #include "knklogic.h"
+#include "magnitude.h"
 #include "secu3.h"
 
 /**Delay in strokes*/
@@ -36,7 +38,7 @@
 
 uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
 {
- if (d->sens.frequen > d->param.starter_off)
+ if (d->sens.frequen > d->param.starter_off && d->sens.temperat > TEMPERATURE_MAGNITUDE(70.0))
  {
   if (0==p_rs->sd_counter)
   {

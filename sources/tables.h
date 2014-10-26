@@ -97,7 +97,16 @@
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
-#define TABLES_NUMBER          8
+#define TABLES_NUMBER_PGM      4
+
+/**Общее количество наборов таблиц (хранимые в памяти программ + хранимые в EEPROM с загрузкой в ОЗУ)
+ * Total number of tables' sets (stored in program memory + stored in EEPROM with loading to RAM) */
+#ifdef REALTIME_TABLES
+ #define TABLES_NUMBER (TABLES_NUMBER_PGM + 1)
+#else
+ #define TABLES_NUMBER TABLES_NUMBER_PGM
+#endif
+
 
 //Bluetooth and security flags (bit numbers)
 #define BTF_USE_BT             0                   //!< Bluetooth and security flags: specifies to use or not to use bluetooth
@@ -107,7 +116,7 @@
 //Hall sensor flags
 #define HSF_USECKPINP          0                   //!< Specifies which input to use for Hall sensor (CKPS or PS)
 
-/**Describes one set(family) of chracteristics (maps), descrete = 0.5 degr.
+/**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */
 typedef struct f_data_t
@@ -188,7 +197,7 @@ typedef struct fw_ex_data_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[7000];
+  uint8_t reserved[8280];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -404,7 +413,7 @@ typedef struct fw_data_t
  //following fields are belong to data area, not to the code area:
  fw_ex_data_t exdata;                    //!< Дополнительные данные Additional data in the firmware
  params_t def_param;                     //!< Резервные параметры Reserve parameters (loaded when instance in EEPROM is broken)
- f_data_t tables[TABLES_NUMBER];         //!< Таблицы УОЗ Array of tables of advance angle
+ f_data_t tables[TABLES_NUMBER_PGM];     //!< Таблицы УОЗ Array of tables of advance angle
  uint16_t code_crc;                      //!< Check sum of the whole firmware (except this check sum and boot loader)
 }fw_data_t;
 
@@ -424,15 +433,6 @@ typedef struct fw_data_t
  * Size of application's section without taking into account its CRC */
 #define CODE_SIZE (SECU3BOOTSTART-CODE_CRC_SIZE)
 
-/**Количество наборов таблиц которые можно редактировать в реальном времени
- * Эти таблицы сохраняются в EEPROM.
- * Number of sets of tables allowed to be tuned in the real time */
-#ifdef REALTIME_TABLES
- #define TUNABLE_TABLES_NUMBER 2
-#else
- #define TUNABLE_TABLES_NUMBER 0
-#endif
-
 /** Адрес данных в прошивке
  * Address of data in the firmware */
 #define FIRMWARE_DATA_START (SECU3BOOTSTART-sizeof(fw_data_section_t))
@@ -444,7 +444,7 @@ PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
 
 #ifdef REALTIME_TABLES
 /**Default data for tunable tables stored in the EEPROM */
-PGM_DECLARE(extern f_data_t tt_def_data[]);
+PGM_DECLARE(extern f_data_t tt_def_data);
 #endif
 
 #endif //_TABLES_H_

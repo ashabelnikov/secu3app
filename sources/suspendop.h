@@ -39,7 +39,6 @@
 #define SOP_TRANSMIT_CE_ERRORS       6    //!< transmit CE errors
 #define SOP_SEND_FW_SIG_INFO         7    //!< send signature information about firmware
 #ifdef REALTIME_TABLES
-#define SOP_SELECT_TABLSET           8    //!< select new set of tables (when selected in parameters)
 #define SOP_LOAD_TABLSET             9    //!< load new set of tables
 #define SOP_SEND_NC_TABLSET_LOADED  10    //!< notify that new tables set has being selected
 #define SOP_SAVE_TABLSET            11    //!< save table set for selected fuel from RAM to EEPROM

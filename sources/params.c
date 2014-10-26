@@ -89,7 +89,7 @@ void reset_eeprom_params(struct ecudata_t* d)
  ce_clear_errors(); //сбрасываем сохраненные ошибки
  wdt_reset_timer();
 #ifdef REALTIME_TABLES
- eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
+ eeprom_write_P(&tt_def_data, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 #endif
  wdt_reset_device(); //reboot!
 }
@@ -119,7 +119,7 @@ void load_eeprom_params(struct ecudata_t* d)
   memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
   ce_clear_errors(); //сбрасываем сохраненные ошибки
 #ifdef REALTIME_TABLES
-  eeprom_write_P(&tt_def_data[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t) * TUNABLE_TABLES_NUMBER);
+  eeprom_write_P(&tt_def_data, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 #endif
   //write 4 bytes of magic number identifying platform
   eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
@@ -127,30 +127,13 @@ void load_eeprom_params(struct ecudata_t* d)
 }
 
 #ifdef REALTIME_TABLES
-void load_selected_tables_into_ram(struct ecudata_t* d)
+void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t index)
 {
- if (d->fn_gasoline_prev != d->param.fn_gasoline)
- {
-  //load gasoline tables
-  load_specified_tables_into_ram(d, 0, d->param.fn_gasoline);
-  d->fn_gasoline_prev = d->param.fn_gasoline;
- }
-
- if (d->fn_gas_prev != d->param.fn_gas)
- {
-  //load gas tables
-  load_specified_tables_into_ram(d, 1, d->param.fn_gas);
-  d->fn_gas_prev = d->param.fn_gas;
- }
-}
-
-void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t fuel_type, uint8_t index)
-{
- //load tables depending on type of fuel
- if (index < TABLES_NUMBER)
-  memcpy_P(&d->tables_ram[fuel_type], &fw_data.tables[index], sizeof(f_data_t));
+ //load tables depending on index, if index is FLASH, then load from FLASH, if index is EEPROM, then load from EEPROM
+ if (index < TABLES_NUMBER_PGM)
+  memcpy_P(&d->tables_ram, &fw_data.tables[index], sizeof(f_data_t));
  else
-  eeprom_read(&d->tables_ram[fuel_type], EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)*(index-TABLES_NUMBER)), sizeof(f_data_t));
+  eeprom_read(&d->tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 
  //будет послано уведомление о том, что загружен новый набор таблиц
  //notification will be sent about that new set of tables has been loaded

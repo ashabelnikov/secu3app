@@ -83,9 +83,6 @@ void process_uart_interface(struct ecudata_t* d)
     break;
 
    case FUNSET_PAR:
-#ifdef REALTIME_TABLES
-    sop_set_operation(SOP_SELECT_TABLSET);
-#endif
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;

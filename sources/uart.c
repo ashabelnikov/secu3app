@@ -47,10 +47,6 @@ uint16_t dbg_var3 = 0;   /**User's debug variable 3*/
 uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #endif
 
-//Idenfifiers used in EDITAB_PAR
-#define ETTS_GASOLINE_SET 0 //!< tables's set: gasoline id
-#define ETTS_GAS_SET      1 //!< tables's set: gas id
-
 #define ETMT_STRT_MAP 0     //!< start map id
 #define ETMT_IDLE_MAP 1     //!< idle map id
 #define ETMT_WORK_MAP 2     //!< work map id
@@ -410,9 +406,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
 
   case FNNAME_DAT:
-   build_i8h(TABLES_NUMBER + TUNABLE_TABLES_NUMBER);
+   build_i8h(TABLES_NUMBER);
 #ifdef REALTIME_TABLES
-   if (index < TABLES_NUMBER) //from FLASH
+   if (index < TABLES_NUMBER_PGM) //from FLASH
    {
     build_i8h(index);
     build_fs(fw_data.tables[index].name, F_NAME_SIZE);
@@ -422,12 +418,12 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     if (eeprom_is_idle())
     {
      build_i8h(index);
-     eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))[index - TABLES_NUMBER].name, F_NAME_SIZE);
+     eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))->name, F_NAME_SIZE);
      uart.send_size+=F_NAME_SIZE;
     }
     else //skip this item - will be transferred next time
     {
-     index = TABLES_NUMBER - 1;
+     index = TABLES_NUMBER_PGM - 1;
      build_i8h(index);
      build_fs(fw_data.tables[index].name, F_NAME_SIZE);
     }
@@ -437,7 +433,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_fs(fw_data.tables[index].name, F_NAME_SIZE);
 #endif
    ++index;
-   if (index>=(TABLES_NUMBER + TUNABLE_TABLES_NUMBER)) index = 0;
+   if (index>=(TABLES_NUMBER)) index = 0;
     break;
 
   case SENSOR_DAT:
@@ -617,24 +613,24 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 //Following finite state machine will transfer all table's data
   case EDITAB_PAR:
   {
-   static uint8_t fuel = 0, state = 0, wrk_index = 0;
-   build_i4h(fuel);
+   static uint8_t state = 0, wrk_index = 0;
+   build_i4h(0); //not needed, reserved for future
    build_i4h(state);
    switch(state)
    {
     case ETMT_STRT_MAP: //start map
      build_i8h(0); //<--not used
-     build_rb((uint8_t*)&d->tables_ram[fuel].f_str, F_STR_POINTS);
+     build_rb((uint8_t*)&d->tables_ram.f_str, F_STR_POINTS);
      state = ETMT_IDLE_MAP;
      break;
     case ETMT_IDLE_MAP: //idle map
      build_i8h(0); //<--not used
-     build_rb((uint8_t*)&d->tables_ram[fuel].f_idl, F_IDL_POINTS);
+     build_rb((uint8_t*)&d->tables_ram.f_idl, F_IDL_POINTS);
      state = ETMT_WORK_MAP, wrk_index = 0;
      break;
     case ETMT_WORK_MAP: //work map
      build_i8h(wrk_index*F_WRK_POINTS_L);
-     build_rb((uint8_t*)&d->tables_ram[fuel].f_wrk[wrk_index][0], F_WRK_POINTS_F);
+     build_rb((uint8_t*)&d->tables_ram.f_wrk[wrk_index][0], F_WRK_POINTS_F);
      if (wrk_index >= F_WRK_POINTS_L-1 )
      {
       wrk_index = 0;
@@ -645,16 +641,12 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      break;
     case ETMT_TEMP_MAP: //temper. correction.
      build_i8h(0); //<--not used
-     build_rb((uint8_t*)&d->tables_ram[fuel].f_tmp, F_TMP_POINTS);
+     build_rb((uint8_t*)&d->tables_ram.f_tmp, F_TMP_POINTS);
      state = ETMT_NAME_STR;
      break;
     case ETMT_NAME_STR:
      build_i8h(0); //<--not used
-     build_rs(d->tables_ram[fuel].name, F_NAME_SIZE);
-     if (fuel >= ETTS_GAS_SET)  //last
-      fuel = ETTS_GASOLINE_SET; //first
-     else
-      ++fuel;
+     build_rs(d->tables_ram.name, F_NAME_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -790,11 +782,11 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 
   case FUNSET_PAR:
    temp = recept_i8h();
-   if (temp < TABLES_NUMBER + TUNABLE_TABLES_NUMBER)
+   if (temp < TABLES_NUMBER)
     d->param.fn_gasoline = temp;
 
    temp = recept_i8h();
-   if (temp < TABLES_NUMBER + TUNABLE_TABLES_NUMBER)
+   if (temp < TABLES_NUMBER)
     d->param.fn_gas = temp;
 
    d->param.map_lower_pressure = recept_i16h();
@@ -926,26 +918,26 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
   {
-   uint8_t fuel = recept_i4h();
+   recept_i4h();   //not used, reserved for future use
    uint8_t state = recept_i4h();
    uint8_t addr = recept_i8h();
    uart.recv_size-=(1+1+1+PACKET_BYTE_SIZE); //[d][x][x][xx]
    switch(state)
    {
     case ETMT_STRT_MAP: //start map
-     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_str) + addr, F_STR_POINTS); /*F_STR_POINTS max*/
+     recept_rb(((uint8_t*)&d->tables_ram.f_str) + addr, F_STR_POINTS); /*F_STR_POINTS max*/
      break;
     case ETMT_IDLE_MAP: //idle map
-     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_idl) + addr, F_IDL_POINTS); /*F_IDL_POINTS max*/
+     recept_rb(((uint8_t*)&d->tables_ram.f_idl) + addr, F_IDL_POINTS); /*F_IDL_POINTS max*/
      break;
     case ETMT_WORK_MAP: //work map
-     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_wrk[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
+     recept_rb(((uint8_t*)&d->tables_ram.f_wrk[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
      break;
     case ETMT_TEMP_MAP: //temper. correction map
-     recept_rb(((uint8_t*)&d->tables_ram[fuel].f_tmp) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
+     recept_rb(((uint8_t*)&d->tables_ram.f_tmp) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
      break;
     case ETMT_NAME_STR: //name
-     recept_rs((d->tables_ram[fuel].name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/
+     recept_rs((d->tables_ram.name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/
      break;
    }
   }

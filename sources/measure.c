@@ -255,6 +255,25 @@ void meas_initial_measure(struct ecudata_t* d)
  meas_average_measured_values(d);
 }
 
+
+#ifdef REALTIME_TABLES
+/** Selects set of tables specified by index, sets corresponding flag depending on where tables' set resides: RAM or FLASH
+ * \param d Pointer to ECU data structure
+ * \param set_index Index of tables' set to be selected
+ */
+static void select_table_set(struct ecudata_t *d, uint8_t set_index)
+{
+ if (set_index > (TABLES_NUMBER_PGM-1))
+  d->mm_ram = 1;
+ else
+ {
+  d->fn_dat = &fw_data.tables[set_index];
+  d->mm_ram = 0;
+ }
+}
+#endif
+
+
 void meas_take_discrete_inputs(struct ecudata_t *d)
 {
  //--инверсия концевика карбюратора если необходимо
@@ -269,7 +288,7 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
  //if GAS_V input remapped to other function, then petrol
  d->sens.gas = IOCFG_GET(IOP_GAS_V);
 
- //переключаем тип топлива в зависимости от состояния газового клапана
+ //переключаем тип топлива в зависимости от состояния газового клапана и дополнительного входа (если переназначен)
 #ifndef REALTIME_TABLES
  if (!IOCFG_CHECK(IOP_MAPSEL0))
  { //without additioanl selection input
@@ -279,7 +298,7 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
    d->fn_dat = &fw_data.tables[d->param.fn_gasoline];//на бензине
  }
  else
- {
+ { //use! additional selection input
   uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
   if (d->sens.gas) //на газе
    d->fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d->param.fn_gas];
@@ -287,10 +306,18 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
    d->fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d->param.fn_gasoline];
  }
 #else //use tables from RAM
- if (d->sens.gas)
-  d->fn_dat = &d->tables_ram[1]; //using gas(на газе)
+
+ if (!IOCFG_CHECK(IOP_MAPSEL0))
+ { //without additioanl selection input
+   select_table_set(d, d->sens.gas ? d->param.fn_gas : d->param.fn_gasoline);   //gas/petrol
+ }
  else
-  d->fn_dat = &d->tables_ram[0]; //using petrol(на бензине)
+ { //use! additional selection input
+  uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
+  if (d->sens.gas)
+   select_table_set(d, mapsel0 ? 1 : d->param.fn_gas);          //on gas
+  else
+   select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
+ }
 #endif
 }
-

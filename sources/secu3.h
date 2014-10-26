@@ -122,14 +122,11 @@ typedef struct ecudata_t
  uint8_t  airflow;                       //!< Air flow (расход воздуха)
  uint8_t  choke_pos;                     //!< Choke position in % * 2
 
-#ifndef REALTIME_TABLES
- f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
-#else
- f_data_t tables_ram[2];                 //!< set of tables in RAM for petrol(0) and gas(1)
- f_data_t* fn_dat;                       //!< pointer to current set of tables in RAM
- uint8_t  fn_gas_prev;                   //!< previous index of tables set used for gas
- uint8_t  fn_gasoline_prev;              //!< previous index of tables set used for petrol
+#ifdef REALTIME_TABLES
+ f_data_t tables_ram;                    //!< set of tables in RAM
+ uint8_t mm_ram;                         //!< flag indicated that selected set of tables is in RAM
 #endif
+ f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
 
  uint16_t op_comp_code;                  //!< Contains code of operation for packet being sent - OP_COMP_NC (содержит код который посылается через UART (пакет OP_COMP_NC))
  uint16_t op_actn_code;                  //!< Contains code of operation for packet being received - OP_COMP_NC (содержит код который принимается через UART (пакет OP_COMP_NC))

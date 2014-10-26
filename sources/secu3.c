@@ -141,10 +141,6 @@ void init_ecu_data(struct ecudata_t* d)
  edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
  edat.engine_mode = EM_START;
  edat.ce_state = 0;
-#ifdef REALTIME_TABLES
- edat.fn_gasoline_prev = 255;
- edat.fn_gas_prev = 255;
-#endif
  edat.cool_fan = 0;
  edat.st_block = 0; //стартер не заблокирован
  edat.sens.tps = edat.sens.tps_raw = 0;
@@ -343,8 +339,8 @@ MAIN()
 #endif
 
 #ifdef REALTIME_TABLES
- //load currently selected tables into RAM
- load_selected_tables_into_ram(&edat);
+ //load tables' set from EEPROM into RAM
+ load_specified_tables_into_ram(&edat, TABLES_NUMBER - 1);
 #endif
 
  //perform initialization of all system modules

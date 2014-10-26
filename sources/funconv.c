@@ -35,11 +35,19 @@
 #include "secu3.h"
 #include "vstimer.h"
 
+
 //For use with fn_dat pointer, because it can point either to FLASH or RAM
 #ifdef REALTIME_TABLES
- #define _GB(x) *(x)             //!< Macro for abstraction under getting bytes from RAM or FLASH (RAM version)
+ #define secu3_offsetof(type,member)   ((size_t)(&((type *)0)->member))
+ /**Macro for abstraction under getting bytes from RAM or FLASH (RAM version) */
+ #define _GB(x) mm_get_byte(d, secu3_offsetof(struct f_data_t, x))
+ static /*INLINE*/ uint8_t mm_get_byte(struct ecudata_t* d, uint16_t offset)
+ {
+  return d->mm_ram ? *(((uint8_t*)&d->tables_ram) + offset) : PGM_GET_BYTE(((uint8_t*)d->fn_dat) + offset);
+ }
+
 #else
- #define _GB(x) PGM_GET_BYTE(x)  //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
+ #define _GB(x) PGM_GET_BYTE(&d->fn_dat->x)  //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
 #endif
 
 // ‘ункци€ билинейной интерпол€ции (поверхность)
@@ -83,7 +91,7 @@ int16_t idling_function(struct ecudata_t* d)
  if (i < 0)  {i = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
 
  return simple_interpolation(rpm,
-             _GB(&d->fn_dat->f_idl[i]), _GB(&d->fn_dat->f_idl[i+1]),
+             _GB(f_idl[i]), _GB(f_idl[i+1]),
              PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[i]), 16);
 }
 
@@ -101,7 +109,7 @@ int16_t start_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
   else i1 = i + 1;
 
- return simple_interpolation(rpm, _GB(&d->fn_dat->f_str[i]), _GB(&d->fn_dat->f_str[i1]), (i * 40) + 200, 40, 16);
+ return simple_interpolation(rpm, _GB(f_str[i]), _GB(f_str[i1]), (i * 40) + 200, 40, 16);
 }
 
 // –еализует функцию ”ќ« от оборотов(мин-1) и нагрузки(кѕа) дл€ рабочего режима двигател€
@@ -141,10 +149,10 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
-        _GB(&d->fn_dat->f_wrk[l][f]),
-        _GB(&d->fn_dat->f_wrk[lp1][f]),
-        _GB(&d->fn_dat->f_wrk[lp1][fp1]),
-        _GB(&d->fn_dat->f_wrk[l][fp1]),
+        _GB(f_wrk[l][f]),
+        _GB(f_wrk[lp1][f]),
+        _GB(f_wrk[lp1][fp1]),
+        _GB(f_wrk[l][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
@@ -170,7 +178,7 @@ int16_t coolant_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, _GB(&d->fn_dat->f_tmp[i]), _GB(&d->fn_dat->f_tmp[i1]),
+ return simple_interpolation(t, _GB(f_tmp[i]), _GB(f_tmp[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 

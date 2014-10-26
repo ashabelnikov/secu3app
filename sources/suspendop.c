@@ -197,25 +197,12 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   //bits: aaaabbbb
-   // aaaa - index of tables set for gas(газ)
-   // bbbb   index of tables set for gasoline(бензин)
    _AB(d->op_comp_code, 0) = OPCODE_LOAD_TABLSET;
    _AB(d->op_comp_code, 1) = 0; //not used
    uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SEND_NC_TABLSET_LOADED);
-  } 
- }
-
- if (sop_is_operation_active(SOP_SELECT_TABLSET))
- {
-  if (eeprom_is_idle())
-  {
-   load_selected_tables_into_ram(d);
-   //"удаляем" эту операцию из списка так как она уже выполнилась.
-   sop_reset_operation(SOP_SELECT_TABLSET);
   }
  }
 
@@ -225,11 +212,10 @@ void sop_execute_operations(struct ecudata_t* d)
   if (eeprom_is_idle())
   {
    //bits: aaaabbbb
-   // aaaa - fuel type (0, 1)
-   // bbbb - index of tables set to save to, begins from FLASH's indexes
+   // aaaa - not used
+   // bbbb - index of tables set to load from, begins from FLASH's indexes
    uint8_t index = (_AB(d->op_actn_code, 1) & 0xF);
-   uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
-   load_specified_tables_into_ram(d, fuel_type, index);
+   load_specified_tables_into_ram(d, index);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_LOAD_TABLSET);
   }
@@ -254,12 +240,7 @@ void sop_execute_operations(struct ecudata_t* d)
   //TODO: d->op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
-   //bits: aaaabbbb
-   // aaaa - fuel type (0, 1)
-   // bbbb - index of tables set to save to, begins from FLASH's indexes
-   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF) - TABLES_NUMBER;
-   uint8_t fuel_type = (_AB(d->op_actn_code, 1) >> 4);
-   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START + sizeof(f_data_t) * index, &d->tables_ram[fuel_type], sizeof(f_data_t));
+   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START, &d->tables_ram, sizeof(f_data_t));
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SAVE_TABLSET);

@@ -52,19 +52,12 @@ void save_param_if_need(struct ecudata_t* d);
 void load_eeprom_params(struct ecudata_t* d);
 
 #ifdef REALTIME_TABLES
-/** Loads tables into RAM depending on current fuel type and index of selected table (selected in parameters).
+/** Loads tables into RAM depending on specified index
  *  Call this function only when EEPROM is idle!
  * \param d pointer to ECU data structure
- */
-void load_selected_tables_into_ram(struct ecudata_t* d);
-
-/** Loads tables into RAM depending on specified fuel type and index
- *  Call this function only when EEPROM is idle!
- * \param d pointer to ECU data structure
- * \param fuel_type type of fuel (0 - gasoline, 1 - gas)
  * \param index index of tables set to load into RAM
  */
-void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t fuel_type, uint8_t index);
+void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t index);
 #endif
 
 /** Cache for buffering parameters used during suspended EEPROM operations */

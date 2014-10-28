@@ -34,19 +34,19 @@ fi
 if [ $1 = "M32" ]
 then
  CFG_BL_START="7C00"
- CFG_FWD_START="4F88"
+ CFG_FWD_START="5494"
  CFG_EE_SIZE="1024"
  CFG_LNKXCL="lnkm32s.xcl"
 elif [ $1 = "M64" ]
 then
  CFG_BL_START="F800"
- CFG_FWD_START="CB88"
+ CFG_FWD_START="D094"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm64s.xcl"
 elif [ $1 = "M644" ]
 then
  CFG_BL_START="F800"
- CFG_FWD_START="CB88"
+ CFG_FWD_START="D094"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm644s.xcl"
 else

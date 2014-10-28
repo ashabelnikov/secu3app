@@ -30,31 +30,26 @@
  *  c |  |                        |
  *  o |  |       код              |
  *  d |  |       code             |
- *  e |  |------------------------|
- *    |  | свободное пространство |
+ *  e |  |------------------------|<--- свободное пространство между кодом и данными (обычно FF)
+ *    |  | свободное пространство |     free space between code and data (usually FF)
  *  a |  |   free space           |
  *  r |  |                        |
  *  e |  |------------------------|<--- данные жестко связанные с кодом (хранятся в области кода)
  *  a |  |                        |     data which is strongly coupled with code (stored in code area)
+ *    |  |      code data         |
  *    |  |                        |
- *    |  |                        |
- *    |_ |------------------------|<--- новые данные и структуры добавлять с этого адреса
- *       |                        |     place new data from here going to code
- *       | дополнительные парам.  |
- *       |additional data (param.)|
- *       |------------------------|
- *       |  резервные  параметры  |<--- loaded when instace in the EEPROM is broken
- *       |   reserve parameters   |
- *       |------------------------|
- *       |   массив таблиц        |
- *       |   array of tables      |
+ *    |_ |------------------------|<--- данные хранимые в проживке, но не связаные жестко с кодом
+ *       |                        |     data which is not strongly coupled with code
+ *       |      firmware data     |
  *       |                        |
- *       |------------------------|     контрольная сумма прошивки без учета байт этой
+ *       |------------------------|     контрольная сумма прошивки без учета байтов этой
  *       |     CRC16              |<--- контрольной суммы и байтов бутлоадера.
  *       |________________________|     (CRC of firmware without 2 bytes of this CRC and boot loader)
  *       |                        |
- *       |  boot loader           |
+ *       |     boot loader        |
  *        ------------------------
+ *
+ *       See struct fw_data_t for more information about data layout
  */
 
 #ifndef _TABLES_H_
@@ -64,16 +59,16 @@
 #include <stdint.h>
 #include "bootldr.h"   //to know value of SECU3BOOTSTART, and only
 
-//Определяем количество узлов интерполяции для каждой функции
-//Define number of interpolation nodes for lookup tables
-#define F_WRK_POINTS_F         16                   //!< number of points on RPM axis - work map
-#define F_WRK_POINTS_L         16                   //!< number of points on Pressure axis - work map
-#define F_TMP_POINTS           16                   //!< number of points in temperature map
-#define F_STR_POINTS           16                   //!< number of points in start map
-#define F_IDL_POINTS           16                   //!< number of points in idle map
+//Определяем количество узлов интерполяции для каждой функции и другие константы
+//Define number of interpolation nodes for lookup tables and othe constants
+#define F_WRK_POINTS_F                  16          //!< number of points on RPM axis - work map
+#define F_WRK_POINTS_L                  16          //!< number of points on Pressure axis - work map
+#define F_TMP_POINTS                    16          //!< number of points in temperature map
+#define F_STR_POINTS                    16          //!< number of points in start map
+#define F_IDL_POINTS                    16          //!< number of points in idle map
 #define F_WRK_TOTAL (F_WRK_POINTS_L*F_WRK_POINTS_F) //!< total size of work map
 
-#define F_NAME_SIZE            16                   //!< number of symbols in names of families of characteristics
+#define F_NAME_SIZE                     16          //!< number of symbols in names of tables' sets
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128         //!< number of points in attenuator's lookup table
 #define FW_SIGNATURE_INFO_SIZE          48          //!< number of bytes reserved for firmware's signature information
@@ -83,60 +78,74 @@
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
 #define ATS_LOOKUP_TABLE_SIZE           16          //!< Size of lookup table for air temperature sensor
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
-#define IBTN_KEYS_NUM          2                    //!< Number of iButton keys
-#define IBTN_KEY_SIZE          6                    //!< Size of iButton key (except CRC8 and family code)
+#define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
+#define IBTN_KEY_SIZE                   6           //!< Size of iButton key (except CRC8 and family code)
 
-#define INJ_VE_POINTS_L        16                   //!< number of points on MAP axis in VE lookup table
-#define INJ_VE_POINTS_F        16                   //!< number of points on RPM axis in VE lookup table
+#define INJ_VE_POINTS_L                 16          //!< number of points on MAP axis in VE lookup table
+#define INJ_VE_POINTS_F                 16          //!< number of points on RPM axis in VE lookup table
 #define INJ_DT_LOOKUP_TABLE_SIZE        32          //!< number of points in the injector dead-time lookup table
 #define INJ_CRANKING_LOOKUP_TABLE_SIZE  16          //!< number of points in the cranking lookup table
 #define INJ_WARMUP_LOOKUP_TABLE_SIZE    16          //!< number of points in the warmup enrichment lookup table
 #define INJ_IAC_POS_TABLE_SIZE          16          //!< number of points in the IAC/PWM position lookup table
 
-#define UNI_OUTPUT_NUMBER      3                    //!< number of universal programmable outputs
+#define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
 /**Количество наборов таблиц хранимых в памяти программ
  * Number of sets of tables stored in the firmware */
-#define TABLES_NUMBER_PGM      4
+#define TABLES_NUMBER_PGM               4
 
 /**Общее количество наборов таблиц (хранимые в памяти программ + хранимые в EEPROM с загрузкой в ОЗУ)
  * Total number of tables' sets (stored in program memory + stored in EEPROM with loading to RAM) */
 #ifdef REALTIME_TABLES
- #define TABLES_NUMBER (TABLES_NUMBER_PGM + 1)
+ #define TABLES_NUMBER          (TABLES_NUMBER_PGM + 1)
 #else
- #define TABLES_NUMBER TABLES_NUMBER_PGM
+ #define TABLES_NUMBER           TABLES_NUMBER_PGM
 #endif
 
 
 //Bluetooth and security flags (bit numbers)
-#define BTF_USE_BT             0                   //!< Bluetooth and security flags: specifies to use or not to use bluetooth
-#define BTF_SET_BBR            1                   //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
-#define BTF_USE_IMM            2                   //!< Bluetooth and security flags: specifies to use or not to use immobilizer
+#define BTF_USE_BT                      0          //!< Bluetooth and security flags: specifies to use or not to use bluetooth
+#define BTF_SET_BBR                     1          //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
+#define BTF_USE_IMM                     2          //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 
 //Hall sensor flags
-#define HSF_USECKPINP          0                   //!< Specifies which input to use for Hall sensor (CKPS or PS)
+#define HSF_USECKPINP                   0          //!< Specifies which input to use for Hall sensor (CKPS or PS)
 
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */
 typedef struct f_data_t
 {
+  uint8_t name[F_NAME_SIZE];                        //!< ассоциированное имя (имя семейства) (assosiated name, displayed in user interface)
+  //ignition maps
   int8_t f_str[F_STR_POINTS];                       //!< функция УОЗ на старте (function of advance angle at start)
   int8_t f_idl[F_IDL_POINTS];                       //!< функция УОЗ для ХХ (function of advance angle at idling)
   int8_t f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     //!< основная функция УОЗ (3D) (working function of advance angle)
   int8_t f_tmp[F_TMP_POINTS];                       //!< функция коррект. УОЗ по температуре (coolant temper. correction of advance angle)
-  uint8_t name[F_NAME_SIZE];                        //!< ассоциированное имя (имя семейства) (assosiated name, displayed in user interface)
+  //fuel injection maps
+  uint8_t inj_ve[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Volumetric efficiency lookup table, value * 128
+  uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];//!< Air-Fuel ratio lookup table, (1/value) * 2048, e.g. 1/14.7 * 2048 = 139
+  uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];//!< Injector pulse width used when engine is starting up (cranking)
+  uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE]; //!< Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00
+  uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE]; //!< Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS
+  /**Position of the IAC/PWM vs coolant temperature for run mode (used in open-loop idle control)
+   * value in % * 2, e.g. 200 = 100.0% */
+  uint8_t inj_iac_run_pos[INJ_IAC_POS_TABLE_SIZE];
+  /**Position of the IAC/PWM vs coolant temperature for cranking mode (used by both in open and closed-loop idle control)
+   * value in % * 2, e.g. 200 = 100.0% */
+  uint8_t inj_iac_crank_pos[INJ_IAC_POS_TABLE_SIZE];
+
+  /* Following reserved bytes required for keeping binary compatibility between
+   * different versions of firmware. Useful when you add/remove members to/from
+   * this structure. */
+  uint8_t reserved[742];
 }f_data_t;
 
 
-/**Describes additional data stored in the firmware
- * Описывает дополнительные данные хранимые в прошивке
+/**Describes separate tables stored in the firmware
  */
 typedef struct fw_ex_data_t
 {
-  /**Signature information (contains information about firmware) */
-  uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];
-
   /**Таблица усиления аттенюатора (зависимость от оборотов).
    * Knock. table of attenuator's gain factors (contains codes of gains, gain depends on RPM) */
   uint8_t attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE];
@@ -144,9 +153,6 @@ typedef struct fw_ex_data_t
   /**Таблица времени накопления энергии в катушках зажигания (зависимость от напряжения)
    * Table for dwell control. Accumulation time depends on board voltage */
   uint16_t coil_on_time[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
-
-  /**Used for checking compatibility with management software. Holds size of all data stored in the firmware. */
-  uint16_t fw_data_size;
 
   /**Coolant temperature sensor lookup table 
    * (таблица значений температуры с шагом по напряжению) */
@@ -174,30 +180,13 @@ typedef struct fw_ex_data_t
   /**Sizes of cells in RPM grid (so, we don't need to calculate them at the runtime)*/
   int16_t rpm_grid_sizes[RPM_GRID_SIZE-1];
 
-  /**Volumetric efficiency lookup table, value * 128 */
-  uint8_t inj_ve[INJ_VE_POINTS_L][INJ_VE_POINTS_F];
-  /**Air-Fuel ratio lookup table, (1/value) * 2048, e.g. 1/14.7 * 2048 = 139 */
-  uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];
-  /**Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS*/
-  uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE];
-  /**Injector pulse width used when engine is starting up (cranking)*/
-  uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];
-  /**Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00 */
-  uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE];
-  /**Position of the IAC/PWM vs coolant temperature for run mode (used in open-loop idle control)
-   * value in % * 2, e.g. 200 = 100.0% */
-  uint8_t inj_iac_run_pos[INJ_IAC_POS_TABLE_SIZE];
-  /**Position of the IAC/PWM vs coolant temperature for cranking mode (used by both in open and closed-loop idle control)
-   * value in % * 2, e.g. 200 = 100.0% */
-  uint8_t inj_iac_crank_pos[INJ_IAC_POS_TABLE_SIZE];
-
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[8280];
+  uint8_t reserved[3340];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -362,22 +351,18 @@ typedef struct params_t
   uint8_t  reserved[99];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
-   * Для данных этой структуры хранимых в прошивке данное поле хранит не контрольную сумму, а размер данных
-   * прошивки.
-   * CRC of data of this structure (for checking correctness of data after loading from EEPROM) */
+   * CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;
 }params_t;
 
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
-#define IOREM_SLOTS 25                   //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS 56                   //!< Number of plugs used in I/O remapping
+#define IOREM_SLOTS  25                  //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS  56                  //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t
 {
- uint16_t size;                          //!< size of this structure
- uint8_t version;                        //!< version of this structure
  fnptr_t i_slots[IOREM_SLOTS];           //!< initialization slots
  fnptr_t i_slotsi[IOREM_SLOTS];          //!< initialization slots (inverted)
  fnptr_t v_slots[IOREM_SLOTS];           //!< data slots
@@ -386,6 +371,8 @@ typedef struct iorem_slots_t
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
  fnptr_t s_stub;                         //!< special pointer used as stub
  fnptr_t g_stub;                         //!< reserved
+ uint8_t version;                        //!< version of this structure (used for compatibility checkings)
+ uint16_t size;                          //!< size of this structure (used for compatibility checkings)
 }iorem_slots_t;
 
 /**Describes all the data residing directly in the code area.*/
@@ -399,9 +386,9 @@ typedef struct cd_data_t
   * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
  uint32_t config;
 
- uint8_t reserved;                       //!< A reserved byte
+ uint8_t reserved[4];                    //!< A reserved bytes
 
- uint16_t size;                          //!< size of this structure
+ uint16_t size;                          //!< size of this structure (used for compatibility checkings)
 }cd_data_t;
 
 
@@ -410,32 +397,41 @@ typedef struct cd_data_t
 typedef struct fw_data_t
 {
  cd_data_t cddata;                       //!< All data which is strongly coupled with code (Эти данные жестко связаны с кодом прошивки)
+
  //following fields are belong to data area, not to the code area:
- fw_ex_data_t exdata;                    //!< Дополнительные данные Additional data in the firmware
  params_t def_param;                     //!< Резервные параметры Reserve parameters (loaded when instance in EEPROM is broken)
- f_data_t tables[TABLES_NUMBER_PGM];     //!< Таблицы УОЗ Array of tables of advance angle
+
+ fw_ex_data_t exdata;                    //!< Additional data containing separate tables
+
+ f_data_t tables[TABLES_NUMBER_PGM];     //!< Tables' sets for advance angle and fuel injection
+
+ uint8_t fw_signature_info[FW_SIGNATURE_INFO_SIZE];//!< Signature information (contains information about firmware)
+
+ uint8_t version;                        //!< version of this structure
+
+ uint16_t fw_data_size;                  //!< Used for checking compatibility with mngmt software. Holds size of all data stored in the firmware.
+
  uint16_t code_crc;                      //!< Check sum of the whole firmware (except this check sum and boot loader)
 }fw_data_t;
 
 //================================================================================
-//Определяем адрес данных в прошивке отталкиваясь от бутлоадера
-//Define address of data in the firmware starting from boot loader's address
-
 /**Размер переменной контрольной суммы параметров в байтах
  * Size of variable of CRC of parameters in bytes (used in params_t structure) */
 #define PAR_CRC_SIZE   sizeof(uint16_t)
 
 /**Размер переменной контрольной суммы прошивки в байтах
  * Size of variable of CRC of whole firmware in bytes */
-#define CODE_CRC_SIZE   sizeof(uint16_t)
+#define CODE_CRC_SIZE  sizeof(uint16_t)
 
 /**Размер секции приложения без учета контрольной суммы
  * Size of application's section without taking into account its CRC */
 #define CODE_SIZE (SECU3BOOTSTART-CODE_CRC_SIZE)
 
-/** Адрес данных в прошивке
- * Address of data in the firmware */
+/*Определяем адрес данных в прошивке отталкиваясь от бутлоадера
+ *Define address of data in the firmware starting from the boot loader's address
+ */
 #define FIRMWARE_DATA_START (SECU3BOOTSTART-sizeof(fw_data_section_t))
+
 //================================================================================
 //Variables:
 

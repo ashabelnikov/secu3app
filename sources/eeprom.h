@@ -32,13 +32,13 @@
 #include <stdint.h>
 
 /**Address of parameters structure in EEPROM (адрес структуры параметров в EEPROM) */
-#define EEPROM_PARAM_START     0x002
+#define EEPROM_PARAM_START     0x001
 
 /**Address of errors's array (Check Engine) in EEPROM (адрес массива ошибок (Check Engine) в EEPROM) */
 #define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
 
 /**Address of tables which can be edited in real time */
-#define EEPROM_REALTIME_TABLES_START (EEPROM_ECUERRORS_START + 16)
+#define EEPROM_REALTIME_TABLES_START (EEPROM_ECUERRORS_START + 5)
 
 /**Address of magic number in EEPROM (last 4 bytes) */
 #define EEPROM_MAGIC_START (E2END-3)

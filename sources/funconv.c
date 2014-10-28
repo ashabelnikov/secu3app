@@ -41,9 +41,14 @@
  #define secu3_offsetof(type,member)   ((size_t)(&((type *)0)->member))
  /**Macro for abstraction under getting bytes from RAM or FLASH (RAM version) */
  #define _GB(x) mm_get_byte(d, secu3_offsetof(struct f_data_t, x))
+ #define _GW(x) mm_get_word(d, secu3_offsetof(struct f_data_t, x))
  static /*INLINE*/ uint8_t mm_get_byte(struct ecudata_t* d, uint16_t offset)
  {
   return d->mm_ram ? *(((uint8_t*)&d->tables_ram) + offset) : PGM_GET_BYTE(((uint8_t*)d->fn_dat) + offset);
+ }
+ static /*INLINE*/ uint8_t mm_get_word(struct ecudata_t* d, uint16_t offset)
+ {
+  return d->mm_ram ? *(((uint8_t*)&d->tables_ram) + offset) : PGM_GET_WORD(((uint8_t*)d->fn_dat) + offset);
  }
 
 #else
@@ -514,10 +519,10 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  //apply VE table, bilinear_interpolation() returns value * 16, we additionally divide it by 4 to avoid oveflow
  pw32*= bilinear_interpolation(rpm, discharge,
-        PGM_GET_BYTE(&fw_data.exdata.inj_ve[l][f]),
-        PGM_GET_BYTE(&fw_data.exdata.inj_ve[lp1][f]),
-        PGM_GET_BYTE(&fw_data.exdata.inj_ve[lp1][fp1]),
-        PGM_GET_BYTE(&fw_data.exdata.inj_ve[l][fp1]),
+        _GB(inj_ve[l][f]),
+        _GB(inj_ve[lp1][f]),
+        _GB(inj_ve[lp1][fp1]),
+        _GB(inj_ve[l][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
@@ -526,10 +531,10 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  //apply AFR table
  pw32*= bilinear_interpolation(rpm, discharge,
-        PGM_GET_BYTE(&fw_data.exdata.inj_afr[l][f]),
-        PGM_GET_BYTE(&fw_data.exdata.inj_afr[lp1][f]),
-        PGM_GET_BYTE(&fw_data.exdata.inj_afr[lp1][fp1]),
-        PGM_GET_BYTE(&fw_data.exdata.inj_afr[l][fp1]),
+        _GB(inj_afr[l][f]),
+        _GB(inj_afr[lp1][f]),
+        _GB(inj_afr[lp1][fp1]),
+        _GB(inj_afr[l][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
@@ -552,7 +557,7 @@ uint16_t inj_dead_time(struct ecudata_t* d)
  if (i >= INJ_DT_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_DT_LOOKUP_TABLE_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.inj_dead_time[i]), PGM_GET_WORD(&fw_data.exdata.inj_dead_time[i1]),
+ return simple_interpolation(voltage, _GW(inj_dead_time[i]), _GW(inj_dead_time[i1]),
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
@@ -573,7 +578,7 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, PGM_GET_WORD(&fw_data.exdata.inj_cranking[i]), PGM_GET_WORD(&fw_data.exdata.inj_cranking[i1]),
+ return simple_interpolation(t, _GW(inj_cranking[i]), _GW(inj_cranking[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 8) >> 3;
 }
 
@@ -594,7 +599,7 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_warmup[i]), PGM_GET_BYTE(&fw_data.exdata.inj_warmup[i1]),
+ return simple_interpolation(t, _GB(inj_warmup[i]), _GB(inj_warmup[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
@@ -623,10 +628,10 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
  else i1 = i + 1;
 
  if (mode) //run
-  return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_iac_run_pos[i]), PGM_GET_BYTE(&fw_data.exdata.inj_iac_run_pos[i1]),
+  return simple_interpolation(t, _GB(inj_iac_run_pos[i]), _GB(inj_iac_run_pos[i1]),
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
  else //cranking
-  return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.inj_iac_crank_pos[i]), PGM_GET_BYTE(&fw_data.exdata.inj_iac_crank_pos[i1]),
+  return simple_interpolation(t, _GB(inj_iac_crank_pos[i]), _GB(inj_iac_crank_pos[i1]),
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 

@@ -559,7 +559,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE+8)
  #error "Out of buffer!"
 #endif
-   build_fs(fw_data.exdata.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
+   build_fs(fw_data.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
    build_i32h(PGM_GET_DWORD(&fw_data.cddata.config)); //<--compile-time options
    break;
 

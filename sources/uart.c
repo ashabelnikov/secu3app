@@ -47,11 +47,21 @@ uint16_t dbg_var3 = 0;   /**User's debug variable 3*/
 uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #endif
 
-#define ETMT_STRT_MAP 0     //!< start map id
-#define ETMT_IDLE_MAP 1     //!< idle map id
-#define ETMT_WORK_MAP 2     //!< work map id
-#define ETMT_TEMP_MAP 3     //!< temp.corr. map id
-#define ETMT_NAME_STR 4     //!< name of tables's set id
+#define ETMT_NAME_STR 0     //!< name of tables's set id
+//ignition maps
+#define ETMT_STRT_MAP 1     //!< start map id
+#define ETMT_IDLE_MAP 2     //!< idle map id
+#define ETMT_WORK_MAP 3     //!< work map id
+#define ETMT_TEMP_MAP 4     //!< temp.corr. map id
+//fuel injection maps
+#define ETMT_VE_MAP   5     //!< VE
+#define ETMT_AFR_MAP  6     //!< AFR
+#define ETMT_CRNK_MAP 7     //!< Cranking PW
+#define ETMT_WRMP_MAP 8     //!< Warmup enrichment
+#define ETMT_DEAD_MAP 9     //!< Injector's dead time
+#define ETMT_IDLR_MAP 10    //!< IAC/PWM position on run
+#define ETMT_IDLC_MAP 11    //!< IAC_PWM position on cranking
+
 
 /**Define internal state variables */
 typedef struct
@@ -233,6 +243,16 @@ static void build_fb(uint8_t _PGM *romBuffer, uint8_t size)
 static void build_rb(const uint8_t* ramBuffer, uint8_t size)
 {
  while(size--) build_i8h(*ramBuffer++);
+}
+
+/**Appends sender's buffer by sequence of words from RAM buffer
+ * can be used for binary data
+ * \param ramBuffer Points to block of data in RAM
+ * \param size Number of words
+ */
+static void build_rw(const uint16_t* ramBuffer, uint8_t size)
+{
+ while(size--) build_i16h(*ramBuffer++);
 }
 
 //----------вспомагательные функции для распознавания пакетов---------
@@ -614,8 +634,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case EDITAB_PAR:
   {
    static uint8_t state = 0, wrk_index = 0;
-   build_i4h(0); //not needed, reserved for future
-   build_i4h(state);
+   build_i8h(state);  //map Id
    switch(state)
    {
     case ETMT_STRT_MAP: //start map
@@ -647,6 +666,60 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     case ETMT_NAME_STR:
      build_i8h(0); //<--not used
      build_rs(d->tables_ram.name, F_NAME_SIZE);
+     state = ETMT_VE_MAP, wrk_index = 0;
+     break;
+
+    case ETMT_VE_MAP:
+     build_i8h(wrk_index*INJ_VE_POINTS_L);
+     build_rb((uint8_t*)&d->tables_ram.inj_ve[wrk_index][0], INJ_VE_POINTS_F);
+     if (wrk_index >= INJ_VE_POINTS_L-1 )
+     {
+      wrk_index = 0;
+      state = ETMT_AFR_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_AFR_MAP:
+     build_i8h(wrk_index*INJ_VE_POINTS_L);
+     build_rb((uint8_t*)&d->tables_ram.inj_afr[wrk_index][0], INJ_VE_POINTS_F);
+     if (wrk_index >= INJ_VE_POINTS_L-1 )
+     {
+      wrk_index = 0;
+      state = ETMT_CRNK_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_CRNK_MAP:
+     build_i8h(0); //<--not used
+     build_rw((uint16_t*)&d->tables_ram.inj_cranking, INJ_CRANKING_LOOKUP_TABLE_SIZE);
+     state = ETMT_WRMP_MAP;
+     break;
+    case ETMT_WRMP_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_warmup, INJ_WARMUP_LOOKUP_TABLE_SIZE);
+     state = ETMT_DEAD_MAP, wrk_index = 0;
+     break;
+    case ETMT_DEAD_MAP:
+     build_i8h(wrk_index*(INJ_DT_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&d->tables_ram.inj_dead_time[wrk_index*(INJ_DT_LOOKUP_TABLE_SIZE/2)], (INJ_DT_LOOKUP_TABLE_SIZE/2));
+     if (wrk_index >= 1)
+     {
+      wrk_index = 0;
+      state = ETMT_IDLR_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_IDLR_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_iac_run_pos, INJ_IAC_POS_TABLE_SIZE);
+     state = ETMT_IDLC_MAP;
+     break;
+    case ETMT_IDLC_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_iac_crank_pos, INJ_IAC_POS_TABLE_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -918,10 +991,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
   {
-   recept_i4h();   //not used, reserved for future use
-   uint8_t state = recept_i4h();
-   uint8_t addr = recept_i8h();
-   uart.recv_size-=(1+1+1+PACKET_BYTE_SIZE); //[d][x][x][xx]
+   uint8_t state = recept_i8h();  //map type
+   uint8_t addr = recept_i8h();   //address
+   uart.recv_size-=(1+(2*PACKET_BYTE_SIZE)); //[d][x][x][xx]
    switch(state)
    {
     case ETMT_STRT_MAP: //start map

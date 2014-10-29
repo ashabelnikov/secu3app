@@ -692,9 +692,15 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
       ++wrk_index;
      break;
     case ETMT_CRNK_MAP:
-     build_i8h(0); //<--not used
-     build_rw((uint16_t*)&d->tables_ram.inj_cranking, INJ_CRANKING_LOOKUP_TABLE_SIZE);
-     state = ETMT_WRMP_MAP;
+     build_i8h(wrk_index*(INJ_CRANKING_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&d->tables_ram.inj_cranking[wrk_index*(INJ_CRANKING_LOOKUP_TABLE_SIZE/2)], INJ_CRANKING_LOOKUP_TABLE_SIZE/2);
+     if (wrk_index >= 1)
+     {
+      wrk_index = 0;
+      state = ETMT_WRMP_MAP;
+     }
+     else
+      ++wrk_index;
      break;
     case ETMT_WRMP_MAP:
      build_i8h(0); //<--not used
@@ -702,9 +708,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      state = ETMT_DEAD_MAP, wrk_index = 0;
      break;
     case ETMT_DEAD_MAP:
-     build_i8h(wrk_index*(INJ_DT_LOOKUP_TABLE_SIZE/2));
-     build_rw((uint16_t*)&d->tables_ram.inj_dead_time[wrk_index*(INJ_DT_LOOKUP_TABLE_SIZE/2)], (INJ_DT_LOOKUP_TABLE_SIZE/2));
-     if (wrk_index >= 1)
+     build_i8h(wrk_index*(INJ_DT_LOOKUP_TABLE_SIZE/4));
+     build_rw((uint16_t*)&d->tables_ram.inj_dead_time[wrk_index*(INJ_DT_LOOKUP_TABLE_SIZE/4)], (INJ_DT_LOOKUP_TABLE_SIZE/4));
+     if (wrk_index >= 3)
      {
       wrk_index = 0;
       state = ETMT_IDLR_MAP;

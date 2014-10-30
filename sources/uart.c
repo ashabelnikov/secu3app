@@ -343,6 +343,24 @@ static void recept_rb(uint8_t* ramBuffer, uint8_t size)
   size = rcvsize;
  while(size--) *ramBuffer++ = recept_i8h();
 }
+
+/**Recepts sequence of words from receiver's buffer and places it into the RAM buffer
+ * can be used for binary data
+ * \param ramBuffer Pointer to block of data in RAM
+ * \param size Number of words
+ */
+static void recept_rw(uint16_t* ramBuffer, uint8_t size)
+{
+#ifdef UART_BINARY
+ uint8_t rcvsize = uart.recv_size >> 1; //convert to size in words
+#else
+ uint8_t rcvsize = uart.recv_size >> 2; //two hex symbols per byte, convert to size in words
+#endif
+ if (size > rcvsize)
+  size = rcvsize;
+ while(size--) *ramBuffer++ = recept_i16h();
+}
+
 //--------------------------------------------------------------------
 
 /**Makes sender to start sending */
@@ -1016,6 +1034,27 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
      break;
     case ETMT_NAME_STR: //name
      recept_rs((d->tables_ram.name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/
+     break;
+    case ETMT_VE_MAP:   //VE
+     recept_rb(((uint8_t*)&d->tables_ram.inj_ve[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
+     break;
+    case ETMT_AFR_MAP:  //AFR
+     recept_rb(((uint8_t*)&d->tables_ram.inj_afr[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
+     break;
+    case ETMT_CRNK_MAP: //PW on cranking
+     recept_rw(((uint16_t*)&d->tables_ram.inj_cranking) + addr, INJ_CRANKING_LOOKUP_TABLE_SIZE/2); /*INJ_CRANKING_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_WRMP_MAP: //Warmup enrichment
+     recept_rb(((uint8_t*)&d->tables_ram.inj_warmup) + addr, INJ_WARMUP_LOOKUP_TABLE_SIZE); /*INJ_WARMUP_LOOKUP_TABLE_SIZE max*/
+     break;
+    case ETMT_DEAD_MAP: //Injector dead time
+     recept_rw(((uint16_t*)&d->tables_ram.inj_dead_time) + addr, INJ_DT_LOOKUP_TABLE_SIZE/4); /*INJ_DT_LOOKUP_TABLE_SIZE/4 max*/
+     break;
+    case ETMT_IDLR_MAP: //IAC/PWM position on run
+     recept_rb(((uint8_t*)&d->tables_ram.inj_iac_run_pos) + addr, INJ_IAC_POS_TABLE_SIZE); /*INJ_IAC_POS_TABLE_SIZE max*/
+     break;
+    case ETMT_IDLC_MAP: //IAC/PWM position on cranking
+     recept_rb(((uint8_t*)&d->tables_ram.inj_iac_crank_pos) + addr, INJ_IAC_POS_TABLE_SIZE); /*INJ_IAC_POS_TABLE_SIZE max*/
      break;
    }
   }

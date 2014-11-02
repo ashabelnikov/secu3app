@@ -76,7 +76,6 @@
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
 #define CHOKE_CLOSING_LOOKUP_TABLE_SIZE 16          //!< Size of lookup table defining choke closing versus coolant temperature
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
-#define ATS_LOOKUP_TABLE_SIZE           16          //!< Size of lookup table for air temperature sensor
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
 #define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
 #define IBTN_KEY_SIZE                   6           //!< Size of iButton key (except CRC8 and family code)

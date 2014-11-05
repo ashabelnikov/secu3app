@@ -468,14 +468,14 @@ int16_t ats_lookup(uint16_t adcvalue)
  //Voltage value at the end of axis in ADC discretes (значение напряжения в конце оси в дискретах АЦП)
  uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.ats_vl_end);
 
- uint16_t v_step = (v_end - v_start) / (ATS_LOOKUP_TABLE_SIZE - 1);
+ uint16_t v_step = (v_end - v_start) / (THERMISTOR_LOOKUP_TABLE_SIZE - 1);
 
  if (adcvalue < v_start)
   adcvalue = v_start;
 
  i = (adcvalue - v_start) / v_step;
 
- if (i >= ATS_LOOKUP_TABLE_SIZE-1) i = i1 = ATS_LOOKUP_TABLE_SIZE-1;
+ if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
  return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.ats_curve[i]), PGM_GET_WORD(&fw_data.exdata.ats_curve[i1]),

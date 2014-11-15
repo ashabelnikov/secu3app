@@ -64,5 +64,7 @@
 #define   SECUR_PAR    '#'   //!< security parameters
 #define   UNIOUT_PAR   '&'   //!< universal tunable outputs' parameters
 
+#define   INJCTR_PAR   ';'   //!< fuel injection configuration parameters
+#define   LAMBDA_PAR   '-'   //!< lambda correction parameters
 
 #endif //_UFCODES_H_

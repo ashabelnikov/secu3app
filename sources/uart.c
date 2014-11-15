@@ -441,6 +441,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   case STARTR_PAR:
    build_i16h(d->param.starter_off);
    build_i16h(d->param.smap_abandon);
+   build_i16h(d->param.inj_cranktorun_time); //fuel injection
+   build_i8h(d->param.inj_aftstr_enrich);    //fuel injection
+   build_i8h(d->param.inj_aftstr_strokes);   //fuel injection
    break;
 
   case FNNAME_DAT:
@@ -646,6 +649,24 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i4h(d->param.uniout_12lf);
    break;
   }
+
+ case INJCTR_PAR:
+  build_i8h(d->param.inj_flags);
+  build_i8h(d->param.inj_config);
+  build_i16h(d->param.inj_flow_rate);
+  build_i16h(d->param.inj_cyl_disp);
+  build_i32h(d->param.inj_sd_igl_const);
+  build_i8h(d->param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
+  break;
+
+ case LAMBDA_PAR:
+  build_i8h(d->param.inj_lambda_str_per_stp);
+  build_i8h(d->param.inj_lambda_step_size);
+  build_i16h(d->param.inj_lambda_corr_limit);
+  build_i16h(d->param.inj_lambda_swt_point);
+  build_i16h(d->param.inj_lambda_temp_thrd);
+  build_i16h(d->param.inj_lambda_rpm_thrd);
+  break;
 
 #ifdef REALTIME_TABLES
 //Following finite state machine will transfer all table's data
@@ -897,6 +918,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   case STARTR_PAR:
    d->param.starter_off = recept_i16h();
    d->param.smap_abandon= recept_i16h();
+   d->param.inj_cranktorun_time = recept_i16h(); //fuel injection
+   d->param.inj_aftstr_enrich = recept_i8h();    //fuel injection
+   d->param.inj_aftstr_strokes = recept_i8h();   //fuel injection
    break;
 
   case ADCCOR_PAR:
@@ -1011,6 +1035,24 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.uniout_12lf = recept_i4h();
    break;
   }
+
+ case INJCTR_PAR:
+  d->param.inj_flags = recept_i8h();
+  d->param.inj_config = recept_i8h();
+  d->param.inj_flow_rate = recept_i16h();
+  d->param.inj_cyl_disp = recept_i16h();
+  d->param.inj_sd_igl_const = recept_i32h();
+  recept_i8h();      //stub
+  break;
+
+ case LAMBDA_PAR:
+  d->param.inj_lambda_str_per_stp = recept_i8h();
+  d->param.inj_lambda_step_size = recept_i8h();
+  d->param.inj_lambda_corr_limit = recept_i16h();
+  d->param.inj_lambda_swt_point = recept_i16h();
+  d->param.inj_lambda_temp_thrd = recept_i16h();
+  d->param.inj_lambda_rpm_thrd = recept_i16h();
+  break;
 
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:

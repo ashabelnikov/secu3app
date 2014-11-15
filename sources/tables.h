@@ -325,7 +325,7 @@ typedef struct params_t
 
   // Fuel injection
   uint8_t  inj_flags;                    //!< Fuel injection related flags
-  uint8_t  inj_config;                   //!< Configuration of injection
+  uint8_t  inj_config;                   //!< Configuration of injection (7-4 bits: inj. config., 3-0 bits: num of squitrs)
   uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * (Ncyl / (Nsq * Ninj))

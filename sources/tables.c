@@ -302,7 +302,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .uniout_12lf =                 15,                   //logic function between 1st and 2nd outputs
 
   .inj_flags =                   0,                    //
-  .inj_config =                  0,                    //
+  .inj_config =                  0x14,                 //multi-point simultaneous injection, 4 squirts per cycle
   .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min          (for management software only)
   .inj_cyl_disp =                CYL_DISP(0.375),      //0.375L (1.5/4)      (for management software only)
   .inj_sd_igl_const =            43104,                //((0.375L * 3.482 * 18750000) / 142g) * (4 / (4 * 4)), petrol density is 0.71 g/cc, 4cyl,4squirts,4injectors

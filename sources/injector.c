@@ -60,7 +60,10 @@ void inject_init_state(void)
 
 void inject_init_ports(void)
 {
- IOCFG_INIT(IOP_INJ_OUT0, 0);                //injector is turned off
+ IOCFG_INIT(IOP_INJ_OUT0, 0);                //injector 1 is turned off
+ IOCFG_INIT(IOP_INJ_OUT1, 0);                //injector 2 is turned off
+ IOCFG_INIT(IOP_INJ_OUT2, 0);                //injector 3 is turned off
+ IOCFG_INIT(IOP_INJ_OUT3, 0);                //injector 4 is turned off
 }
 
 void inject_set_inj_time(uint16_t time)
@@ -79,7 +82,11 @@ void inject_start_inj(void)
  _BEGIN_ATOMIC_BLOCK();
  OCR2B = TCNT2 + _AB(inj.inj_time, 0) + 1;
  inj.tmr2b_h = _AB(inj.inj_time, 1);
- IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector
+ IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector 1
+ IOCFG_SET(IOP_INJ_OUT1, 1);                 //turn on injector 2
+ IOCFG_SET(IOP_INJ_OUT2, 1);                 //turn on injector 3
+ IOCFG_SET(IOP_INJ_OUT3, 1);                 //turn on injector 4
+
  SETBIT(TIMSK2, OCIE2B);
  SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
  _END_ATOMIC_BLOCK();
@@ -94,7 +101,10 @@ ISR(TIMER2_COMPB_vect)
  }
  else
  {
-  IOCFG_SET(IOP_INJ_OUT0, 0);                //turn off injector
+  IOCFG_SET(IOP_INJ_OUT0, 0);                //turn off injector 1
+  IOCFG_SET(IOP_INJ_OUT1, 0);                //turn off injector 2
+  IOCFG_SET(IOP_INJ_OUT2, 0);                //turn off injector 3
+  IOCFG_SET(IOP_INJ_OUT3, 0);                //turn off injector 4
   CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
  }
 }

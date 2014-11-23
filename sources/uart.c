@@ -650,6 +650,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
   }
 
+#ifdef FUEL_INJECT
  case INJCTR_PAR:
   build_i8h(d->param.inj_flags);
   build_i8h(d->param.inj_config);
@@ -667,6 +668,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   build_i16h(d->param.inj_lambda_temp_thrd);
   build_i16h(d->param.inj_lambda_rpm_thrd);
   break;
+
+ case ACCEL_PAR:
+  break;
+#endif
 
 #ifdef REALTIME_TABLES
 //Following finite state machine will transfer all table's data
@@ -1036,6 +1041,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    break;
   }
 
+#ifdef FUEL_INJECT
  case INJCTR_PAR:
   d->param.inj_flags = recept_i8h();
   d->param.inj_config = recept_i8h();
@@ -1053,6 +1059,10 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   d->param.inj_lambda_temp_thrd = recept_i16h();
   d->param.inj_lambda_rpm_thrd = recept_i16h();
   break;
+
+ case ACCEL_PAR:
+  break;
+#endif
 
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:

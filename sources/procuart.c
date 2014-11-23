@@ -34,6 +34,7 @@
 #include "ce_errors.h"
 #include "ckps.h"
 #include "diagnost.h"
+#include "injector.h"
 #include "knock.h"
 #include "procuart.h"
 #include "secu3.h"
@@ -71,11 +72,19 @@ void process_uart_interface(struct ecudata_t* d)
    case STARTR_PAR:
    case ADCCOR_PAR:
    case CHOKE_PAR:
-   case INJCTR_PAR:
-   case LAMBDA_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
+
+#ifdef FUEL_INJECT
+   case INJCTR_PAR:
+    inject_set_num_squirts(d->param.inj_config & 0xF);
+   case LAMBDA_PAR:
+   case ACCEL_PAR:
+    //если были изменены параметры то сбрасываем счетчик времени
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
+#endif
 
    case MISCEL_PAR:
 #ifdef HALL_OUTPUT
@@ -165,6 +174,10 @@ void process_uart_interface(struct ecudata_t* d)
 
 #ifdef HALL_SYNC
     ckps_set_shutter_wnd_width(d->param.hall_wnd_width);
+#endif
+
+#ifdef FUEL_INJECT
+    inject_set_cyl_number(d->param.ckps_engine_cyl);
 #endif
     break;
 

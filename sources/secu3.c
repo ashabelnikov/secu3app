@@ -285,6 +285,8 @@ void init_modules(void)
 
 #ifdef FUEL_INJECT
  inject_init_state();
+ inject_set_cyl_number(edat.param.ckps_engine_cyl);
+ inject_set_num_squirts(edat.param.inj_config & 0xF);
  lambda_init_state();
 #endif
 

@@ -48,6 +48,11 @@ typedef struct
 {
  volatile uint16_t inj_time;     //!< Current injection time, used in interrupts
  volatile uint8_t tmr2b_h;       //!< used in timer2 COMPB interrupt to perform 16 timing
+ volatile uint8_t cyl_number;    //!< number of engine cylinders
+ uint8_t  num_squirts;           //!< number of squirts per cycle
+ uint8_t  cur_cyl;               //!< current cylinder
+ uint8_t  sqr_cyl;               //!< current cylinder for squirt
+ volatile uint8_t cyl_inc;       //!< used to calculate next number of cylinder for squirt
 }inj_state_t;
 
 /** Global instance of injector state variable structure*/
@@ -56,6 +61,8 @@ inj_state_t inj;
 void inject_init_state(void)
 {
  inj.inj_time = 0xFFFF;
+ inj.sqr_cyl = 0;
+ inj.cur_cyl = 0;
 }
 
 void inject_init_ports(void)
@@ -64,6 +71,20 @@ void inject_init_ports(void)
  IOCFG_INIT(IOP_INJ_OUT1, 0);                //injector 2 is turned off
  IOCFG_INIT(IOP_INJ_OUT2, 0);                //injector 3 is turned off
  IOCFG_INIT(IOP_INJ_OUT3, 0);                //injector 4 is turned off
+}
+
+void inject_set_cyl_number(uint8_t cylnum)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ inj.cyl_number = cylnum;
+ inj.cyl_inc = cylnum / inj.num_squirts;
+ _END_ATOMIC_BLOCK();
+}
+
+void inject_set_num_squirts(uint8_t numsqr)
+{
+ inj.num_squirts = numsqr;
+ inj.cyl_inc = inj.cyl_number / numsqr;
 }
 
 void inject_set_inj_time(uint16_t time)
@@ -78,21 +99,29 @@ void inject_set_inj_time(uint16_t time)
 
 void inject_start_inj(void)
 {
- //interrupts must be disabled!
- _BEGIN_ATOMIC_BLOCK();
- OCR2B = TCNT2 + _AB(inj.inj_time, 0) + 1;
- inj.tmr2b_h = _AB(inj.inj_time, 1);
- IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector 1
- IOCFG_SET(IOP_INJ_OUT1, 1);                 //turn on injector 2
- IOCFG_SET(IOP_INJ_OUT2, 1);                 //turn on injector 3
- IOCFG_SET(IOP_INJ_OUT3, 1);                 //turn on injector 4
+ if (inj.cur_cyl == inj.sqr_cyl)
+ {
+  //interrupts must be disabled!
+  _BEGIN_ATOMIC_BLOCK();
+  OCR2B = TCNT2 + _AB(inj.inj_time, 0) + 1;
+  inj.tmr2b_h = _AB(inj.inj_time, 1);
+  IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector 1
+  IOCFG_SET(IOP_INJ_OUT1, 1);                 //turn on injector 2
+  IOCFG_SET(IOP_INJ_OUT2, 1);                 //turn on injector 3
+  IOCFG_SET(IOP_INJ_OUT3, 1);                 //turn on injector 4
 
- SETBIT(TIMSK2, OCIE2B);
- SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
- _END_ATOMIC_BLOCK();
+  SETBIT(TIMSK2, OCIE2B);
+  SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
+  _END_ATOMIC_BLOCK();
+  inj.sqr_cyl+= inj.cyl_inc;
+  if (inj.sqr_cyl >= inj.cyl_number)
+   inj.sqr_cyl = 0;
+ }
+ if (++inj.cur_cyl == inj.cyl_number)
+  inj.cur_cyl = 0;
 }
 
-/**Interrupt fo controlling of first injector*/
+/**Interrupt for controlling of first injector*/
 ISR(TIMER2_COMPB_vect)
 {
  if (inj.tmr2b_h)

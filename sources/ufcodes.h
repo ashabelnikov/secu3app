@@ -66,5 +66,6 @@
 
 #define   INJCTR_PAR   ';'   //!< fuel injection configuration parameters
 #define   LAMBDA_PAR   '-'   //!< lambda correction parameters
+#define   ACCEL_PAR    '|'   //!< acceleration enrichment parameters
 
 #endif //_UFCODES_H_

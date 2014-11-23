@@ -37,6 +37,16 @@ void inject_init_state(void);
 /** Initialization of used I/O ports */
 void inject_init_ports(void);
 
+/** Set number of engine cylinders
+ * \param cylnum Nymber of engine cylinders to set
+ */
+void inject_set_cyl_number(uint8_t cylnum);
+
+/** Set number of squirts per 1 cycle
+ * numsqr Number of squirts per cycle
+ */
+void inject_set_num_squirts(uint8_t numsqr);
+
 /**Set injection time
  * \param time Injection time, one tick = 3.2us
  */

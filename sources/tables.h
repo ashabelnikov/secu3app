@@ -385,7 +385,9 @@ typedef struct cd_data_t
   * (хранит флаги дающие информацию о том с какими опциями была скомпилирована прошивка) */
  uint32_t config;
 
- uint8_t reserved[4];                    //!< A reserved bytes
+ uint8_t reserved[3];                    //!< reserved bytes
+
+ uint8_t fw_version;                     //!< version of the firmware
 
  uint16_t size;                          //!< size of this structure (used for compatibility checkings)
 }cd_data_t;

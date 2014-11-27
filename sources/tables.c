@@ -191,7 +191,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_FUEL_INJECT, 28),
 
   /**Reserved bytes*/
-  {0,0,0,0},
+  {0,0,0},
+
+  /**Version of the firmware. Do not forget to write out same value into the signature info! */
+  0x43,
 
   /**2 bytes - size of this structure. */
   sizeof(cd_data_t)
@@ -786,11 +789,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  /**Длина этой строки должна быть равна FW_SIGNATURE_INFO_SIZE.
   * Дата в формате Mmm dd yyyy.
   * Size of this string must be equal to FW_SIGNATURE_INFO_SIZE!
-  * Date in format Mmm dd yyyy. */
+  * Date in format Mmm dd yyyy.
+  * Do not forget to write out same value of version into to the fw_version field of cd_data_t!
+  */
  {"SECU-3 firmware v4.3. Build ["__DATE__"]       "},
 
- /**Version of this structure - 0.1*/
- 0x01,
+ /**Version of this structure - 0.0*/
+ 0x00,
 
  /**Size of all data for checking */
  (sizeof(fw_data_t) - sizeof(cd_data_t)),

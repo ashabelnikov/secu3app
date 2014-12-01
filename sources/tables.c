@@ -91,6 +91,15 @@
 /**For setting afterstart enrichment value */
 #define AFTSTR_ENR(v) ROUND(((v)*128.0))
 
+/**For filling bins of the AE's TPS lookup table*/
+#define AE_TPS_B(v) ROUND(((v)*2.0) / 10.0)
+/**For filling values of the AE's TPS lookup table*/
+#define AE_TPS_V(v) ROUND((((v)/100.0)*128.0))
+/**For filling bins of the AE's RPM lookup table*/
+#define AE_RPM_B(v) ROUND((v) / 100.0)
+/**For filling values of the AE's RPM lookup table*/
+#define AE_RPM_V(v) ROUND(((v)/100.0)*128.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -477,6 +486,23 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)
    },
+   /**Fill bins of the AE's TPS lookup table, range is 0...1000% / 1s */
+   {
+    AE_TPS_B(20.0), AE_TPS_B(40.0), AE_TPS_B(160.0), AE_TPS_B(600.0)
+   },
+   /**Fill values of the AE's TPS lookup table, range is 0...199% */
+   {
+    AE_TPS_V(1.0), AE_TPS_V(2.0), AE_TPS_V(6.0), AE_TPS_V(15.0)
+   },
+   /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
+   {
+    AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+   },
+   /**Fill values of the AE's RPM lookup table, %, range is 0...199% */
+   {
+    AE_RPM_V(100.0), AE_RPM_V(70.0), AE_RPM_V(40.0), AE_RPM_V(30.0)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -579,6 +605,23 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)
    },
+   /**Fill bins of the AE's TPS lookup table, range is 0...1000% / 1s */
+   {
+    AE_TPS_B(20.0), AE_TPS_B(40.0), AE_TPS_B(160.0), AE_TPS_B(600.0)
+   },
+   /**Fill values of the AE's TPS lookup table, range is 0...199% */
+   {
+    AE_TPS_V(1.0), AE_TPS_V(2.0), AE_TPS_V(6.0), AE_TPS_V(15.0)
+   },
+   /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
+   {
+    AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+   },
+   /**Fill values of the AE's RPM lookup table, %, range is 0...199% */
+   {
+    AE_RPM_V(100.0), AE_RPM_V(70.0), AE_RPM_V(40.0), AE_RPM_V(30.0)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -680,6 +723,23 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)
    },
+   /**Fill bins of the AE's TPS lookup table, range is 0...1000% / 1s */
+   {
+    AE_TPS_B(20.0), AE_TPS_B(40.0), AE_TPS_B(160.0), AE_TPS_B(600.0)
+   },
+   /**Fill values of the AE's TPS lookup table, range is 0...199% */
+   {
+    AE_TPS_V(1.0), AE_TPS_V(2.0), AE_TPS_V(6.0), AE_TPS_V(15.0)
+   },
+   /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
+   {
+    AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+   },
+   /**Fill values of the AE's RPM lookup table, %, range is 0...199% */
+   {
+    AE_RPM_V(100.0), AE_RPM_V(70.0), AE_RPM_V(40.0), AE_RPM_V(30.0)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -781,6 +841,23 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)
    },
+   /**Fill bins of the AE's TPS lookup table, range is 0...1000% / 1s */
+   {
+    AE_TPS_B(20.0), AE_TPS_B(40.0), AE_TPS_B(160.0), AE_TPS_B(600.0)
+   },
+   /**Fill values of the AE's TPS lookup table, range is 0...199% */
+   {
+    AE_TPS_V(1.0), AE_TPS_V(2.0), AE_TPS_V(6.0), AE_TPS_V(15.0)
+   },
+   /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
+   {
+    AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+   },
+   /**Fill values of the AE's RPM lookup table, %, range is 0...199% */
+   {
+    AE_RPM_V(100.0), AE_RPM_V(70.0), AE_RPM_V(40.0), AE_RPM_V(30.0)
+   },
+
    /**reserved bytes */
    {0}
   }
@@ -905,6 +982,23 @@ PGM_DECLARE(f_data_t tt_def_data) =
   //  50            60         70          80        90           100        110         120
   _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)
  },
+ /**Fill bins of the AE's TPS lookup table, range is 0...1000% / 1s */
+ {
+  AE_TPS_B(20.0), AE_TPS_B(40.0), AE_TPS_B(160.0), AE_TPS_B(600.0)
+ },
+ /**Fill values of the AE's TPS lookup table, range is 0...199% */
+ {
+  AE_TPS_V(1.0), AE_TPS_V(2.0), AE_TPS_V(6.0), AE_TPS_V(15.0)
+ },
+ /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
+ {
+  AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+ },
+ /**Fill values of the AE's RPM lookup table, %, range is 0...199% */
+ {
+  AE_RPM_V(100.0), AE_RPM_V(70.0), AE_RPM_V(40.0), AE_RPM_V(30.0)
+ },
+
  /**reserved bytes */
  {0}
 };

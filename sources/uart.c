@@ -61,7 +61,8 @@ uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #define ETMT_DEAD_MAP 9     //!< Injector's dead time
 #define ETMT_IDLR_MAP 10    //!< IAC/PWM position on run
 #define ETMT_IDLC_MAP 11    //!< IAC_PWM position on cranking
-
+#define ETMT_AETPS_MAP 12   //!< AE TPS map
+#define ETMT_AERPM_MAP 13   //!< AE RPM map
 
 /**Define internal state variables */
 typedef struct
@@ -771,6 +772,18 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     case ETMT_IDLC_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d->tables_ram.inj_iac_crank_pos, INJ_IAC_POS_TABLE_SIZE);
+     state = ETMT_AETPS_MAP;
+     break;
+    case ETMT_AETPS_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_ae_tps_bins, INJ_AE_TPS_LOOKUP_TABLE_SIZE);
+     build_rb((uint8_t*)&d->tables_ram.inj_ae_tps_enr,  INJ_AE_TPS_LOOKUP_TABLE_SIZE);
+     state = ETMT_AERPM_MAP;
+     break;
+    case ETMT_AERPM_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_ae_rpm_bins, INJ_AE_RPM_LOOKUP_TABLE_SIZE);
+     build_rb((uint8_t*)&d->tables_ram.inj_ae_rpm_enr,  INJ_AE_RPM_LOOKUP_TABLE_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -1109,6 +1122,12 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
     case ETMT_IDLC_MAP: //IAC/PWM position on cranking
      recept_rb(((uint8_t*)&d->tables_ram.inj_iac_crank_pos) + addr, INJ_IAC_POS_TABLE_SIZE); /*INJ_IAC_POS_TABLE_SIZE max*/
      break;
+    case ETMT_AETPS_MAP: //AE TPS, Note! Here we consider inj_ae_tps_bins and inj_ae_tps_enr as single table
+     recept_rb(((uint8_t*)&d->tables_ram.inj_ae_tps_bins) + addr, INJ_AE_TPS_LOOKUP_TABLE_SIZE*2); /*INJ_AE_TPS_LOOKUP_TABLE_SIZE*2 max*/
+     break;
+    case ETMT_AERPM_MAP: //AE RPM, Note! Here we consider inj_ae_rpm_bins and inj_ae_rpm_enr as single table
+     recept_rb(((uint8_t*)&d->tables_ram.inj_ae_rpm_bins) + addr, INJ_AE_RPM_LOOKUP_TABLE_SIZE*2); /*INJ_AE_RPM_LOOKUP_TABLE_SIZE*2 max*/
+     break;
    }
   }
   break;
@@ -1167,7 +1186,7 @@ void uart_append_send_buff(uint8_t ch)
 #ifdef _PLATFORM_M644_
 /**Used to convert baud rate ID to baud rate value*/
 PGM_DECLARE(uint16_t brtoid[CBRID_NUM][2]) = {
-      {CBR_2400, CBRID_2400},   {CBR_4800, CBRID_4800},   {CBR_9600, CBRID_9600},   {CBR_14400, CBRID_14400}, 
+      {CBR_2400, CBRID_2400},   {CBR_4800, CBRID_4800},   {CBR_9600, CBRID_9600},   {CBR_14400, CBRID_14400},
       {CBR_19200, CBRID_19200}, {CBR_28800, CBRID_28800}, {CBR_38400, CBRID_38400}, {CBR_57600, CBRID_57600}};
 
 uint16_t convert_id_to_br(uint16_t id)
@@ -1176,7 +1195,7 @@ uint16_t convert_id_to_br(uint16_t id)
  for(; i < CBRID_NUM; ++i)
   if (brtoid[i][1] == id)
    return brtoid[i][0];
- return CBR_9600; 
+ return CBR_9600;
 }
 #endif
 

@@ -86,7 +86,7 @@
 #define INJ_CRANKING_LOOKUP_TABLE_SIZE  16          //!< number of points in the cranking lookup table
 #define INJ_WARMUP_LOOKUP_TABLE_SIZE    16          //!< number of points in the warmup enrichment lookup table
 #define INJ_IAC_POS_TABLE_SIZE          16          //!< number of points in the IAC/PWM position lookup table
-#define INJ_AE_TPS_LOOKUP_TABLE_SIZE    4           //!< number of points in AE TPS (d%/dt) lookup table
+#define INJ_AE_TPS_LOOKUP_TABLE_SIZE    8           //!< number of points in AE TPS (d%/dt) lookup table
 #define INJ_AE_RPM_LOOKUP_TABLE_SIZE    4           //!< number of points in AE RPM lookup table size
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
@@ -137,15 +137,15 @@ typedef struct f_data_t
    * value in % * 2, e.g. 200 = 100.0% */
   uint8_t inj_iac_crank_pos[INJ_IAC_POS_TABLE_SIZE];
   //note! inj_ae_tps_bins must be followed by inj_ae_tps_enr, inj_ae_rpm_bins must be followed by inj_ae_rpm_enr
-  uint8_t inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE]; //!< bins of the AE's TPS lookup table (d%/dt, (value in % * 2) / 100ms)
-  uint8_t inj_ae_tps_enr[INJ_AE_TPS_LOOKUP_TABLE_SIZE];  //!< values of the AE's TPS lookup table (additive factor), value * 128.0, e.g. 128 = 1.00, this means AE = 100% (so PW will be increased by 100%))
+  int8_t  inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE]; //!< bins of the AE's TPS lookup table (d%/dt, (signed value in %) / 100ms)
+  uint8_t inj_ae_tps_enr[INJ_AE_TPS_LOOKUP_TABLE_SIZE];  //!< values of the AE's TPS lookup table (additive factor), value + 55, e.g. 155 = 1.00, this means AE = 100% (so PW will be increased by 100%))
   uint8_t inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE]; //!< bins of the AE's RPM lookup table (value / 100, e.g. value=25 means 2500min-1)
   uint8_t inj_ae_rpm_enr[INJ_AE_RPM_LOOKUP_TABLE_SIZE];  //!< values of the AE's RPM lookup table (factor), value * 128.0, e.g. 128 = 1.00, this means to use 100% of AE)
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[726];
+  uint8_t reserved[718];
 }f_data_t;
 
 

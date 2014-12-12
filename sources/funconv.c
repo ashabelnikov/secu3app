@@ -635,4 +635,19 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
+int16_t inj_ae_tps_lookup(struct ecudata_t* d)
+{
+ int8_t i;
+ int16_t tpsdot = d->sens.tpsdot;
+
+ for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-1; i >= 0; i--)
+  if (d->sens.tpsdot >= _GB(&inj_ae_tps_bins[i])) break;
+
+ if (i < 0)  {i = 0; tpsdot = _GB(&inj_ae_tps_bins[0]);}
+
+ return simple_interpolation(tpsdot,
+             _GB(inj_ae_tps_enr[i]), _GB(inj_ae_tps_enr[i+1]),
+             _GB(inj_ae_tps_bins[i]),_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]), 16);
+}
+
 #endif //FUEL_INJECT

@@ -136,11 +136,11 @@ typedef struct f_data_t
   /**Position of the IAC/PWM vs coolant temperature for cranking mode (used by both in open and closed-loop idle control)
    * value in % * 2, e.g. 200 = 100.0% */
   uint8_t inj_iac_crank_pos[INJ_IAC_POS_TABLE_SIZE];
-  //note! inj_ae_tps_bins must be followed by inj_ae_tps_enr, inj_ae_rpm_bins must be followed by inj_ae_rpm_enr
-  int8_t  inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE]; //!< bins of the AE's TPS lookup table (d%/dt, (signed value in %) / 100ms)
+  //note! inj_ae_tps_enr must be followed by inj_ae_tps_bins, inj_ae_rpm_enr must be followed by inj_ae_rpm_bins
   uint8_t inj_ae_tps_enr[INJ_AE_TPS_LOOKUP_TABLE_SIZE];  //!< values of the AE's TPS lookup table (additive factor), value + 55, e.g. 155 = 1.00, this means AE = 100% (so PW will be increased by 100%))
-  uint8_t inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE]; //!< bins of the AE's RPM lookup table (value / 100, e.g. value=25 means 2500min-1)
+  int8_t  inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE]; //!< bins of the AE's TPS lookup table (d%/dt, (signed value in %) / 100ms)
   uint8_t inj_ae_rpm_enr[INJ_AE_RPM_LOOKUP_TABLE_SIZE];  //!< values of the AE's RPM lookup table (factor), value * 128.0, e.g. 128 = 1.00, this means to use 100% of AE)
+  uint8_t inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE]; //!< bins of the AE's RPM lookup table (value / 100, e.g. value=25 means 2500min-1)
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
@@ -349,13 +349,16 @@ typedef struct params_t
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
 
+  uint8_t  inj_ae_tpsdot_thrd;           //!< TPS %/sec threshold, max rate is 255%/sec
+  uint8_t  inj_ae_coldacc_mult;          //!< Cold acceleration multiplier (-30°C), (value - 1.0) * 128
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[99];
+  uint8_t  reserved[97];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

@@ -196,12 +196,20 @@ uint8_t inj_warmup_en(struct ecudata_t* d);
 
 /** Calculates IAC/PWM position vs coolant temperature using a lookup table.
  * This function is used in open-loop idle control algorithm.
+ * \param d pointer to ECU data structure
  * \param p_prev_temp pointer to state variable used to store temperature value between calls of
  * this function
  * \param mode 1 - run, 0 - cranking
  * \return position percentage (value * 2)
  */
 uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode);
+
+/** Calculates TPS based acceleration value
+ * \param d pointer to ECU data structure
+ * \return acceleration factor * 128, value can be negative
+ */
+int16_t inj_ae_tps_lookup(struct ecudata_t* d);
+
 #endif
 
 #endif //_FUNCONV_H_

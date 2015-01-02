@@ -638,16 +638,48 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
 int16_t inj_ae_tps_lookup(struct ecudata_t* d)
 {
  int8_t i;
- int16_t tpsdot = d->sens.tpsdot;
+ int16_t tpsdot = d->sens.tpsdot;  //%/s
 
- for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-1; i >= 0; i--)
-  if (d->sens.tpsdot >= _GB(&inj_ae_tps_bins[i])) break;
+ for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
+  if (d->sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
 
- if (i < 0)  {i = 0; tpsdot = _GB(&inj_ae_tps_bins[0]);}
+ if (i < 0)  {i = 0; tpsdot = (int16_t)_GB(inj_ae_tps_bins[0])*10;}
 
  return simple_interpolation(tpsdot,
-             _GB(inj_ae_tps_enr[i]), _GB(inj_ae_tps_enr[i+1]),
-             _GB(inj_ae_tps_bins[i]),_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]), 16);
+             ((int16_t)_GB(inj_ae_tps_enr[i]))-55, ((int16_t)_GB(inj_ae_tps_enr[i+1]))-55,
+             (int16_t)_GB(inj_ae_tps_bins[i])*10,(int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]))*10, 164) >> 7; //*1.28
+}
+
+uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
+{
+ int8_t i;
+ int16_t rpm = d->sens.inst_frq; //min-1
+
+ for(i = INJ_AE_RPM_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
+  if (d->sens.inst_frq >= _GB(inj_ae_rpm_bins[i])*100) break;
+
+ if (i < 0)  {i = 0; rpm = _GB(inj_ae_rpm_bins[0])*100;}
+
+ return simple_interpolation(rpm,
+             ((int16_t)_GB(inj_ae_rpm_enr[i])), ((int16_t)_GB(inj_ae_rpm_enr[i+1])),
+             _GB(inj_ae_rpm_bins[i])*100,(_GB(inj_ae_rpm_bins[i+1])-_GB(inj_ae_rpm_bins[i]))*100, 16) >> 4;
+}
+
+uint16_t inj_ae_clt_corr(struct ecudata_t* d)
+{
+ int16_t t = d->sens.temperat; //clt
+
+ if (!d->param.tmp_use)
+  return 128;   //coolant temperature sensor is not enabled (or not installed), no correction
+
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+ if (t > TEMPERATURE_MAGNITUDE(70))
+  t = TEMPERATURE_MAGNITUDE(70);
+
+ return simple_interpolation(t,
+             ((int16_t)(d->param.inj_ae_coldacc_mult))+128, 128,
+             TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 32) >> 5;
 }
 
 #endif //FUEL_INJECT

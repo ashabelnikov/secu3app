@@ -47,16 +47,16 @@
 #define ANGLE_MAGNITUDE(a) ROUND ((a) * ANGLE_MULTIPLAYER)
 
 /** Transforms floating point value of temperature to fixed point value */
-#define TEMPERATURE_MAGNITUDE(t) ROUND ((t) * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+#define TEMPERATURE_MAGNITUDE(t) ROUND ((t) * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
 /** Transforms floating point value of voltage to fixed point value */
-#define VOLTAGE_MAGNITUDE(t) ROUND ((t) * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+#define VOLTAGE_MAGNITUDE(t) ROUND ((t) * UBAT_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
 /** Transforms floating point value of pressure(MAP) to fixed point value */
-#define PRESSURE_MAGNITUDE(t) ROUND ((t) * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+#define PRESSURE_MAGNITUDE(t) ROUND ((t) * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
 /** Transforms floating point value of percentage of opening (TPS) to fixed point value */
-#define TPS_MAGNITUDE(t) ROUND ((t) * TPS_PHYSICAL_MAGNITUDE_MULTIPLAYER)
+#define TPS_MAGNITUDE(t) ROUND ((t) * TPS_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
 /** Transforms ADC compensation factor to fixed point value */
 #define ADC_COMP_FACTOR(f) ROUND((f) * 16384)

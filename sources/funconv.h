@@ -210,6 +210,18 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
  */
 int16_t inj_ae_tps_lookup(struct ecudata_t* d);
 
+/** Calculates RPM correction factor for AE
+ * \param d pointer to ECU data structure
+ * \return factor * 128, positive value
+ */
+uint8_t inj_ae_rpm_lookup(struct ecudata_t* d);
+
+/** Calculates CLT correction factor for AE
+ * \param d pointer to ECU data structure
+ * \return factor * 128, positive value (1.0...2.99)
+ */
+uint16_t inj_ae_clt_corr(struct ecudata_t* d);
+
 #endif
 
 #endif //_FUNCONV_H_

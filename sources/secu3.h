@@ -80,6 +80,10 @@ typedef struct sensors_t
  int16_t air_temp;                       //!< Intake air temperature
 #endif
 
+#ifdef FUEL_INJECT
+ int16_t tpsdot;                         //!< Speed of TPS movement (d%/dt = %/s), positive when acceleration, negative when deceleration
+#endif
+
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor
  int16_t  voltage_raw;                   //!< raw ADC value from voltage

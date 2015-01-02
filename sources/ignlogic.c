@@ -25,8 +25,10 @@
  */
 
 #include "port/port.h"
+#include "adc.h"        //MAP_PHYSICAL_MAGNITUDE_MULTIPLIER
 #include "funconv.h"
 #include "ignlogic.h"
+#include "magnitude.h"
 #include "secu3.h"
 
 /**Reserved value used to indicate that value is not used in corresponding mode*/
@@ -47,6 +49,25 @@ void ignlogic_init(void)
 #ifdef FUEL_INJECT
  lgs.aftstr_enrich_counter = 0;
 #endif
+}
+
+
+/** Calculates AE value.
+ * \param d Pointer to ECU data structure
+ * \return AE value in PW units
+ */
+static int32_t calc_acc_enrich(struct ecudata_t* d)
+{
+ //calculate normal conditions PW, MAP=100kPa, IAT=20°C
+ int32_t pwnc = ROUND(((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*4) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d->param.inj_sd_igl_const) >> 6;
+ int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
+
+ if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd)
+  return 0;                                        //no acceleration or deceleration
+
+ aef = ((int32_t)aef * inj_ae_clt_corr(d)) >> 7;   //apply CLT correction factor to AE factor
+ aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
+ return (pwnc * aef) >> 7;                         //apply AE factor to the normal conditions PW
 }
 
 int16_t ignlogic_system_state_machine(struct ecudata_t* d)
@@ -102,6 +123,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    if (lgs.aftstr_enrich_counter)
     pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;        //apply lambda correction additive factor (signed)
+   
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
    }

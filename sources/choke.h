@@ -29,6 +29,8 @@
 
 #ifdef SM_CONTROL
 
+#include <stdint.h>
+
 struct ecudata_t;
 
 /** Initialization of used I/O ports */

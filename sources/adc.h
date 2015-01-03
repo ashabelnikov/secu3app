@@ -48,18 +48,6 @@
  #define ADC_VREF_FACTOR        1.0000  //!< Vref compensation factor (2.56V/2.56V)
 #endif
 
-/**дискретность физической величины - ДАД */
-#define MAP_PHYSICAL_MAGNITUDE_MULTIPLIER  64
-
-/**дискретность физической величины - напряжения */
-#define UBAT_PHYSICAL_MAGNITUDE_MULTIPLIER (1.0/ADC_DISCRETE) //=400
-
-/**дискретность физической величины - ДТОЖ */
-#define TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER (TSENS_SLOPP / ADC_DISCRETE) //=4
-
-/**дискретность представления % открытия дроссельной заслонки (ДПДЗ)*/
-#define TPS_PHYSICAL_MAGNITUDE_MULTIPLIER 2
-
 /** Получение последнего измеренного значения с ДАД
  * \return значение в дискретах АЦП
  */

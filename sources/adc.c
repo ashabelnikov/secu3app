@@ -329,7 +329,7 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
  t = adcvalue + offset;
  if (t < 0)
   t = 0;
- 
+
  t = (((int32_t)t) * gradient) >> (7+6);
  if (t > TPS_MAGNITUDE(100)) //restrict to 100%
   t = TPS_MAGNITUDE(100);

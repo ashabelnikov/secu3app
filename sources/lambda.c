@@ -27,8 +27,8 @@
 #ifdef FUEL_INJECT
 
 #include "port/port.h"
+#include "eculogic.h"
 #include "funconv.h"
-#include "ignlogic.h"
 #include "ioconfig.h"
 #include "secu3.h"
 #include "vstimer.h"

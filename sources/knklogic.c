@@ -26,7 +26,6 @@
 
 #include "port/avrio.h"
 #include "port/port.h"
-#include "adc.h"
 #include "ce_errors.h"
 #include "funconv.h"
 #include "knklogic.h"

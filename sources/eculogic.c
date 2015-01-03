@@ -19,15 +19,15 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file ignlogic.c
- * Implementation of logic determining calculation and regulation of anvance angle
- * (–еализаци€ логики определ€ющей вычисление и регулирование угла опережени€).
+/** \file eculogic.c
+ * Implementation of logic for calculation and regulation of ignition timing and fuel injection
+ * (–еализаци€ логики определ€ющей вычисление и регулирование угла опережени€ и впрыск топлива).
  */
 
 #include "port/port.h"
-#include "adc.h"        //MAP_PHYSICAL_MAGNITUDE_MULTIPLIER
+#include <stdlib.h>
+#include "eculogic.h"
 #include "funconv.h"
-#include "ignlogic.h"
 #include "magnitude.h"
 #include "secu3.h"
 
@@ -59,7 +59,7 @@ void ignlogic_init(void)
 static int32_t calc_acc_enrich(struct ecudata_t* d)
 {
  //calculate normal conditions PW, MAP=100kPa, IAT=20∞C
- int32_t pwnc = ROUND(((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*4) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d->param.inj_sd_igl_const) >> 6;
+ int32_t pwnc = (ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*4) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d->param.inj_sd_igl_const) >> 6;
  int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
 
  if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd)
@@ -117,13 +117,15 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
-   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + DEADTIME
+   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichemnt factor
    if (lgs.aftstr_enrich_counter)
     pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;        //apply lambda correction additive factor (signed)
-   
+   pw+= calc_acc_enrich(d);                       //add acceleration enrichment
+   if (((int32_t)pw) < 0)
+    pw = 0;
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
    }
@@ -169,12 +171,15 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.strt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
-   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + DEADTIME
+   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichment factor
    if (lgs.aftstr_enrich_counter)
     pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;        //apply lambda correction additive factor (signed)
+   pw+= calc_acc_enrich(d);                       //add acceleration enrichment
+   if (((int32_t)pw) < 0)
+    pw = 0;
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
    }

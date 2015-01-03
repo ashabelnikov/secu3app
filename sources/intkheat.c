@@ -27,7 +27,6 @@
 #ifdef INTK_HEATING
 
 #include "port/port.h"
-#include "adc.h"
 #include "ckps.h"
 #include "ioconfig.h"
 #include "magnitude.h"

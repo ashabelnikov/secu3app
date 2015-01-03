@@ -27,7 +27,6 @@
 #include "port/pgmspace.h"
 #include "port/port.h"
 #include <stdlib.h>
-#include "adc.h"
 #include "ckps.h"
 #include "funconv.h"
 #include "ioconfig.h"

@@ -108,7 +108,7 @@ typedef struct correct_t
  int16_t lambda;                         //!< Current value of lambda (EGO) correction, can be negative
 #endif
 }correct_t;
- 
+
 /**Describes system's data (main ECU data structure)
  * описывает данные системы, обеспечивает единый интерфейс данных
  */

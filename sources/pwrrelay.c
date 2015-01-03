@@ -26,7 +26,6 @@
  */
 
 #include "port/port.h"
-#include "adc.h"
 #include "bitmask.h"
 #include "choke.h"
 #include "eeprom.h"

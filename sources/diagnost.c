@@ -28,7 +28,6 @@
 
 #include "port/avrio.h"
 #include "port/intrinsic.h"
-#include "adc.h"
 #include "bitmask.h"
 #include "diagnost.h"
 #include "knock.h"

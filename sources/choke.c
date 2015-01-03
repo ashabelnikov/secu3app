@@ -28,7 +28,6 @@
 
 #include "port/port.h"
 #include <stdlib.h>
-#include "adc.h"
 #include "bitmask.h"
 #include "ioconfig.h"
 #include "funconv.h"

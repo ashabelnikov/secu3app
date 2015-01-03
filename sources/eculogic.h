@@ -19,7 +19,7 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file ignlogic.h
+/** \file eculogic.h
  * Logic determining calculation and regulation of anvance angle
  * (Логика определяющая вычисление и регулирование угла опережения).
  */

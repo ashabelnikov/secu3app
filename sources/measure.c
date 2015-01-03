@@ -29,7 +29,6 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include <stdlib.h>
-#include "adc.h"
 #include "bitmask.h"
 #include "spdsens.h"
 #include "funconv.h"    //thermistor_lookup(), ats_lookup

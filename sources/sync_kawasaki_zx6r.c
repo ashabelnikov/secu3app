@@ -34,7 +34,6 @@
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
 #include "port/port.h"
-#include "adc.h"
 #include "bitmask.h"
 #include "ckps.h"
 #include "ioconfig.h"

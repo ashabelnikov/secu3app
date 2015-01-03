@@ -36,6 +36,7 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "ckps.h"
+#include "injector.h"   //inject_start_inj()
 #include "ioconfig.h"
 #include "magnitude.h"
 
@@ -697,6 +698,10 @@ void ProcessRisingEdge(void)
   TIMSK|= _BV(OCIE1A);
 #endif
  }
+
+#ifdef FUEL_INJECT
+ inject_start_inj();      //start fuel injection
+#endif
 }
 
 /**Input capture interrupt of timer 1 (прерывание по захвату таймера 1) */

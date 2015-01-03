@@ -37,6 +37,7 @@
 #include "bitmask.h"
 #include "camsens.h"
 #include "ckps.h"
+#include "injector.h"   //inject_start_inj()
 #include "ioconfig.h"
 #include "magnitude.h"
 
@@ -808,6 +809,10 @@ static void process_ckps_cogs(void)
    ckps.measure_start_value = GetICR();
    SETBIT(flags, F_VHTPER);
    SETBIT(flags, F_STROKE); //set the stroke-synchronozation event (устанавливаем событие тактовой синхронизации)
+
+#ifdef FUEL_INJECT
+   inject_start_inj();      //start fuel injection
+#endif
   }
 
 #ifdef HALL_OUTPUT

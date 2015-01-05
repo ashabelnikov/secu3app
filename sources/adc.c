@@ -29,6 +29,7 @@
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
 #include "port/port.h"
+#include <stdlib.h>
 #include "adc.h"
 #include "bitmask.h"
 #include "magnitude.h"
@@ -53,6 +54,26 @@
 /**заглушка, используется для ADCI_KNOCK чтобы сформировать задержку */
 #define ADCI_STUB               4
 
+#ifdef SECU3T
+
+#ifdef _PLATFORM_M644_
+/**Value of the time differential for TPSdot calculation, ticks of timer*/
+#define TPSDOT_TIME_DELTA 10000
+/**Tics of TCNT1 timer per 1 second */
+#define TMR_TICKS_PER_SEC 312500L
+#else //ATmega32
+#define TPSDOT_TIME_DELTA 8000
+#define TMR_TICKS_PER_SEC 250000L
+#endif
+
+/**Used for TPSdot calculations*/
+typedef struct
+{
+ int16_t tps_volt;              //!< Voltage
+ uint16_t tps_tmr;              //!< Timer value
+}tpsval_t;
+#endif
+
 /**Cтруктура данных состояния АЦП */
 typedef struct
 {
@@ -64,6 +85,7 @@ typedef struct
  volatile uint16_t add_io1_value;//!< last measured value od ADD_IO1
  volatile uint16_t add_io2_value;//!< last measured value of ADD_IO2
  volatile uint16_t carb_value;   //!< last measured value of TPS
+ volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;           //!< если 1, то производится измерение всех значений
@@ -123,6 +145,22 @@ uint16_t adc_get_carb_value(void)
  value = adc.carb_value;
  _END_ATOMIC_BLOCK();
  return value;
+}
+int16_t adc_get_tpsdot_value(void)
+{
+ int16_t dv; uint16_t dt;
+ tpsval_t tpsval[2];
+ _BEGIN_ATOMIC_BLOCK();
+ tpsval[0] = adc.tpsdot[0];
+ tpsval[1] = adc.tpsdot[1];
+ _END_ATOMIC_BLOCK();
+
+ dv = tpsval[0].tps_volt - tpsval[1].tps_volt;  //calculate voltage change in ADC discretes
+ dt = (tpsval[0].tps_tmr - tpsval[1].tps_tmr);  //calculate time change in ticks of timer
+ if (abs(dv) > 512) dv = (dv < 0) ? -512 : 512; //limit voltage change to the half of ADC range
+ if (dt < TMR_TICKS_PER_SEC/1000) return 0;     //avoid overflow, limit time change to minimum 1ms
+
+ return (((int32_t)dv) * TMR_TICKS_PER_SEC) / (tpsval[0].tps_tmr - tpsval[1].tps_tmr); //calculate 1-st derivative, num of ADC discr / sec
 }
 #endif
 
@@ -241,6 +279,14 @@ ISR(ADC_vect)
    adc.carb_value = ADC;
    ADMUX = ADCI_ADD_IO1|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
+
+   if ((TCNT1 - adc.tpsdot[1].tps_tmr) >= TPSDOT_TIME_DELTA)
+   {
+    //save values for TPSdot calculations
+    adc.tpsdot[1] = adc.tpsdot[0];          //previous = current
+    adc.tpsdot[0].tps_volt = ADC;           //save voltage
+    adc.tpsdot[0].tps_tmr = TCNT1;          //save timer value
+   }
    break;
 
   case ADCI_ADD_IO1:
@@ -336,4 +382,10 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
 
  return t;
 }
+
+int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
+{
+ return (((int32_t)adcvalue) * gradient) >> (7+6+1);
+}
+
 #endif

@@ -30,6 +30,7 @@
 #include "port/port.h"
 #include <stdlib.h>
 #include "bitmask.h"
+#include "eculogic.h"
 #include "spdsens.h"
 #include "funconv.h"    //thermistor_lookup(), ats_lookup
 #include "ioconfig.h"
@@ -155,8 +156,13 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 #endif
 
 #ifdef SECU3T
- d->sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d->param.tps_adc_factor, 0);
- d->sens.tpsdot = tpsdot_adc_to_pc(d->sens.tps_raw, d->param.tps_curve_gradient);
+ if (d->engine_mode != EM_START)
+ {
+  d->sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d->param.tps_adc_factor, 0);
+  d->sens.tpsdot = tpsdot_adc_to_pc(d->sens.tps_raw, d->param.tps_curve_gradient);
+ }
+ else
+  d->sens.tpsdot = 0; //disable accel.enrichment during cranking
 #endif
 }
 

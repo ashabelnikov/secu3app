@@ -80,10 +80,12 @@ uint16_t adc_get_add_io2_value(void);
  */
 uint16_t adc_get_carb_value(void);
 
+#ifdef FUEL_INJECT
 /** Get TPSdot value (dv/dt)
  * \return 1-st derivative value of TPS position (V/s), can be negative, voltage in ADC discretes
  */
 int16_t adc_get_tpsdot_value(void);
+#endif
 #endif
 
 /** Получение последнего измеренного значения сигнала c датчика(ов) детонации
@@ -163,12 +165,14 @@ int16_t temp_adc_to_c(int16_t adcvalue);
  */
 uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
 
+#ifdef FUEL_INJECT
 /**Converts ADC value discretes/sec of the TPSdot to the %/sec value
  * \param adcvalue значение в дискретах АЦП (Value in ADC discretes)
  * \param gradient наклон кривой ДПДЗ (Curve gradient)
  * \return percentage/sec
  */
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
+#endif
 #endif
 
 #endif //_ADC_H_

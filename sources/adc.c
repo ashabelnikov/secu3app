@@ -66,12 +66,14 @@
 #define TMR_TICKS_PER_SEC 250000L
 #endif
 
+#ifdef FUEL_INJECT
 /**Used for TPSdot calculations*/
 typedef struct
 {
  int16_t tps_volt;              //!< Voltage
  uint16_t tps_tmr;              //!< Timer value
 }tpsval_t;
+#endif
 #endif
 
 /**Cтруктура данных состояния АЦП */
@@ -85,7 +87,9 @@ typedef struct
  volatile uint16_t add_io1_value;//!< last measured value od ADD_IO1
  volatile uint16_t add_io2_value;//!< last measured value of ADD_IO2
  volatile uint16_t carb_value;   //!< last measured value of TPS
+#ifdef FUEL_INJECT
  volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
+#endif
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;           //!< если 1, то производится измерение всех значений
@@ -146,6 +150,7 @@ uint16_t adc_get_carb_value(void)
  _END_ATOMIC_BLOCK();
  return value;
 }
+#ifdef FUEL_INJECT
 int16_t adc_get_tpsdot_value(void)
 {
  int16_t dv; uint16_t dt;
@@ -162,6 +167,7 @@ int16_t adc_get_tpsdot_value(void)
 
  return (((int32_t)dv) * TMR_TICKS_PER_SEC) / (tpsval[0].tps_tmr - tpsval[1].tps_tmr); //calculate 1-st derivative, num of ADC discr / sec
 }
+#endif
 #endif
 
 uint16_t adc_get_knock_value(void)
@@ -280,6 +286,7 @@ ISR(ADC_vect)
    ADMUX = ADCI_ADD_IO1|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
 
+#ifdef FUEL_INJECT
    if ((TCNT1 - adc.tpsdot[1].tps_tmr) >= TPSDOT_TIME_DELTA)
    {
     //save values for TPSdot calculations
@@ -287,6 +294,7 @@ ISR(ADC_vect)
     adc.tpsdot[0].tps_volt = ADC;           //save voltage
     adc.tpsdot[0].tps_tmr = TCNT1;          //save timer value
    }
+#endif
    break;
 
   case ADCI_ADD_IO1:
@@ -383,9 +391,10 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
  return t;
 }
 
+#ifdef FUEL_INJECT
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
 {
  return (((int32_t)adcvalue) * gradient) >> (7+6+1);
 }
-
+#endif
 #endif

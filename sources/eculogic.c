@@ -51,7 +51,7 @@ void ignlogic_init(void)
 #endif
 }
 
-
+#ifdef FUEL_INJECT
 /** Calculates AE value.
  * \param d Pointer to ECU data structure
  * \return AE value in PW units
@@ -69,6 +69,7 @@ static int32_t calc_acc_enrich(struct ecudata_t* d)
  aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
  return (pwnc * aef) >> 7;                         //apply AE factor to the normal conditions PW
 }
+#endif
 
 int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 {

@@ -155,7 +155,7 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  d->sens.distance = spdsens_get_pulse_count();
 #endif
 
-#ifdef SECU3T
+#ifdef FUEL_INJECT
  if (d->engine_mode != EM_START)
  {
   d->sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d->param.tps_adc_factor, 0);

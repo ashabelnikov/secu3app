@@ -1168,8 +1168,49 @@ uint8_t uart_get_send_mode(void)
 }
 
 uint8_t uart_set_send_mode(uint8_t descriptor)
-{
- return uart.send_mode = descriptor;
+{ //note: code of this function must must follow code in uart_send_packet() !
+ switch(send_mode)
+ {
+  case TEMPER_PAR:
+  case CARBUR_PAR:
+  case IDLREG_PAR:
+  case ANGLES_PAR:
+  case FUNSET_PAR:
+  case STARTR_PAR:
+  case FNNAME_DAT:
+  case SENSOR_DAT:
+  case ADCCOR_PAR:
+  case ADCRAW_DAT:
+  case CKPS_PAR:
+  case OP_COMP_NC:
+  case CE_ERR_CODES:
+  case KNOCK_PAR:
+  case CE_SAVED_ERR:
+  case FWINFO_DAT:
+  case MISCEL_PAR:
+  case CHOKE_PAR:
+  case SECUR_PAR:
+  case UNIOUT_PAR:
+#ifdef FUEL_INJECT
+  case INJCTR_PAR:
+  case LAMBDA_PAR:
+  case ACCEL_PAR:
+#endif
+#ifdef REALTIME_TABLES
+  case EDITAB_PAR:
+  case RPMGRD_PAR:
+#endif
+  case ATTTAB_PAR:
+#ifdef DEBUG_VARIABLES
+  case DBGVAR_DAT:
+#endif
+#ifdef DIAGNOSTICS
+  case DIAGINP_DAT:
+#endif
+   return uart.send_mode = descriptor;
+  default:
+   break; //dot not set not existing context
+ }
 }
 
 /** Clears sender's buffer

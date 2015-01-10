@@ -1169,7 +1169,7 @@ uint8_t uart_get_send_mode(void)
 
 uint8_t uart_set_send_mode(uint8_t descriptor)
 { //note: code of this function must must follow code in uart_send_packet() !
- switch(send_mode)
+ switch(descriptor)
  {
   case TEMPER_PAR:
   case CARBUR_PAR:
@@ -1209,7 +1209,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
 #endif
    return uart.send_mode = descriptor;
   default:
-   break; //dot not set not existing context
+   return uart.send_mode; //dot not set not existing context
  }
 }
 

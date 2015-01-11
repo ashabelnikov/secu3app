@@ -132,7 +132,7 @@
  uint8_t uart_set_send_mode(uint8_t descriptor);
 
 /**Initialization of module
- * \param baud ID of baud rate (divisor's value - see datasheet)            
+ * \param baud ID of baud rate (divisor's value - see datasheet)
  */
  void uart_init(uint16_t baud);
 

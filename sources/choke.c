@@ -283,28 +283,39 @@ void sm_motion_control(struct ecudata_t* d, int16_t pos)
 int16_t calc_sm_position(struct ecudata_t* d)
 {
 #ifdef FUEL_INJECT
- uint8_t mode = 0;
+ uint8_t ppos = 0; //position in percentage * 2
  switch(chks.strt_mode)
  {
   case 0:  //cranking mode
+   ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 0); //use crank pos
    if (d->st_block)
    {
     chks.strt_t1 = s_timer_gtc();
     chks.strt_mode = 1;
    }
    break;
-  case 1: //wait specified crank-to-run time
-   if ((s_timer_gtc() - chks.strt_t1) >= d->param.inj_cranktorun_time)
-    chks.strt_mode = 2;
-   else
-    break;
+  case 1: //wait specified crank-to-run time and interpolate between crank and run positions
+   {
+    uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
+    if (time_since_crnk >= d->param.inj_cranktorun_time)
+     chks.strt_mode = 2; //transition has finished, we will immediately fall into mode 2, use run value
+    else
+    {
+     int16_t crnk_ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 0); //crank pos
+     int16_t run_ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 1);  //run pos
+     run_ppos-=(((((int32_t)(run_ppos - crnk_ppos)) * (d->param.inj_cranktorun_time - time_since_crnk) * 128) / d->param.inj_cranktorun_time) >> 7);
+     restrict_value_to(&run_ppos, 0, 100 * 2); //0...100%
+     ppos = run_ppos;
+     break;    //use interpolated value
+    }
+   }
   case 2: //run mode
-   mode = 1;
+   ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 1); //run pos
    if (!d->st_block)
     chks.strt_mode = 0; //engine is stopped, so go into the cranking mode again
    break;
  }
- return ((((int32_t)d->param.sm_steps) * inj_iac_pos_lookup(d, &chks.prev_temp, mode)) / 200);
+ return ((((int32_t)d->param.sm_steps) * ppos) / 200); //convert percentage position to SM steps
 #else //carburetor
  if (d->param.tmp_use)
   return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);

@@ -38,6 +38,6 @@ void wdt_reset_device(void);
 #ifdef _PLATFORM_M644_
 /** Turn off watchdog timer */
 void wdt_turnoff_timer(void);
-#endif 
+#endif
 
 #endif //_WDT_H_

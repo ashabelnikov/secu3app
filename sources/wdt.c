@@ -60,21 +60,20 @@ void wdt_reset_device(void)
 }
 
 #ifdef _PLATFORM_M644_
-void wdt_turnoff_timer(void) 
-{ 
+void wdt_turnoff_timer(void)
+{
  _BEGIN_ATOMIC_BLOCK();
  _WATCHDOG_RESET();
 
- //Clear WDRF in MCUSR 
- MCUSR&= ~_BV(WDRF); 
+ //Clear WDRF in MCUSR
+ MCUSR&= ~_BV(WDRF);
 
- // Write logical one to WDCE and WDE 
- WDTCSR = _BV(WDCE) | _BV(WDE); 
+ // Write logical one to WDCE and WDE
+ WDTCSR = _BV(WDCE) | _BV(WDE);
 
- // Turn off WDT 
- WDTCSR = 0x00; 
+ // Turn off WDT
+ WDTCSR = 0x00;
 
- _END_ATOMIC_BLOCK(); 
+ _END_ATOMIC_BLOCK();
 }
 #endif
- 

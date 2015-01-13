@@ -59,6 +59,9 @@
 #elif (BL_BAUD_RATE == 250000)
  #define _LDIINS_L LDIINS(/*0x04*/0x09)
  #define _LDIINS_H LDIINS(0x00)
+#elif (BL_BAUD_RATE == 500000)
+ #define _LDIINS_L LDIINS(0x04)
+ #define _LDIINS_H LDIINS(0x00)
 #else
  #error "Invalid baud rate value specified for boot loader!"
 #endif

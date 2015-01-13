@@ -29,9 +29,9 @@
 #include "port/avrio.h"
 #include "port/port.h"
 #include "bitmask.h"
+#include "ecudata.h"
 #include "fuelpump.h"
 #include "ioconfig.h"
-#include "secu3.h"
 #include "vstimer.h"
 
 /**Turn off timeout used at startup, 5 seconds*/

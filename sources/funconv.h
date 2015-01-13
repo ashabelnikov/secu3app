@@ -30,6 +30,8 @@
 #include <stdint.h>
 #include "vstimer.h"
 
+#define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
+
 /** f(x) liniar interpolation for function with single argument
  * \param x argument value
  * \param a1 function value at the beginning of interval
@@ -193,6 +195,12 @@ uint16_t inj_cranking_pw(struct ecudata_t* d);
  * \return Warmup enrichment * 128
  */
 uint8_t inj_warmup_en(struct ecudata_t* d);
+
+/** Calculates afterstart enrichemnt factor using a lookup table
+ * \param d pointer to ECU data structure
+ * \return Afterstart enrichment * 128
+ */
+uint8_t inj_aftstr_en(struct ecudata_t* d);
 
 /** Calculates IAC/PWM position vs coolant temperature using a lookup table.
  * This function is used in open-loop idle control algorithm.

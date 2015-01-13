@@ -37,8 +37,8 @@
 #include "ioconfig.h"
 #include "injector.h"   //inject_start_inj()
 #include "magnitude.h"
+#include "tables.h"     //fnptr_t
 
-#include "secu3.h"
 #include "knock.h"
 
 //PHASED_IGNITION can't be used without PHASE_SENSOR

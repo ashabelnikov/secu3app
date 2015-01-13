@@ -32,8 +32,8 @@
 #include <string.h>
 #include "bitmask.h"
 #include "dbgvar.h"
+#include "ecudata.h"
 #include "eeprom.h"
-#include "secu3.h"
 #include "uart.h"
 #include "ufcodes.h"
 #include "wdt.h"
@@ -63,6 +63,7 @@ uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #define ETMT_IDLC_MAP 11    //!< IAC_PWM position on cranking
 #define ETMT_AETPS_MAP 12   //!< AE TPS map
 #define ETMT_AERPM_MAP 13   //!< AE RPM map
+#define ETMT_AFTSTR_MAP 14  //!< afterstart enrichment
 
 /**Define internal state variables */
 typedef struct
@@ -443,7 +444,6 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.starter_off);
    build_i16h(d->param.smap_abandon);
    build_i16h(d->param.inj_cranktorun_time); //fuel injection
-   build_i8h(d->param.inj_aftstr_enrich);    //fuel injection
    build_i8h(d->param.inj_aftstr_strokes);   //fuel injection
    break;
 
@@ -786,6 +786,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d->tables_ram.inj_ae_rpm_enr,  INJ_AE_RPM_LOOKUP_TABLE_SIZE);
      build_rb((uint8_t*)&d->tables_ram.inj_ae_rpm_bins, INJ_AE_RPM_LOOKUP_TABLE_SIZE);
+     state = ETMT_AFTSTR_MAP;
+     break;
+    case ETMT_AFTSTR_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_aftstr, INJ_AFTSTR_LOOKUP_TABLE_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -940,7 +945,6 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.starter_off = recept_i16h();
    d->param.smap_abandon= recept_i16h();
    d->param.inj_cranktorun_time = recept_i16h(); //fuel injection
-   d->param.inj_aftstr_enrich = recept_i8h();    //fuel injection
    d->param.inj_aftstr_strokes = recept_i8h();   //fuel injection
    break;
 
@@ -1131,6 +1135,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
      break;
     case ETMT_AERPM_MAP: //AE RPM, Note! Here we consider inj_ae_rpm_bins and inj_ae_rpm_enr as single table
      recept_rb(((uint8_t*)&d->tables_ram.inj_ae_rpm_enr) + addr, INJ_AE_RPM_LOOKUP_TABLE_SIZE*2); /*INJ_AE_RPM_LOOKUP_TABLE_SIZE*2 max*/
+     break;
+    case ETMT_AFTSTR_MAP: //afterstart enrichment map
+     recept_rb(((uint8_t*)&d->tables_ram.inj_aftstr) + addr, INJ_AFTSTR_LOOKUP_TABLE_SIZE); /*INJ_AFTSTR_LOOKUP_TABLE_SIZE max*/
      break;
    }
   }

@@ -27,10 +27,10 @@
 #ifdef FUEL_INJECT
 
 #include "port/port.h"
+#include "ecudata.h"
 #include "eculogic.h"
 #include "funconv.h"
 #include "ioconfig.h"
-#include "secu3.h"
 #include "vstimer.h"
 
 /**Lambda correction afterstart turn on timeout, 30 seconds*/

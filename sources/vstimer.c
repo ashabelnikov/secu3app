@@ -27,10 +27,12 @@
 #include "port/avrio.h"
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
+#include "port/pgmspace.h"
 #include "port/port.h"
 #include "bitmask.h"
+#include "ce_errors.h"
 #include "ioconfig.h" //for SM_CONTROL
-#include "secu3.h"
+#include "tables.h"
 #include "vstimer.h"
 
 #ifdef _PLATFORM_M644_

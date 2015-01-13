@@ -26,10 +26,10 @@
 
 #include "port/port.h"
 #include <stdlib.h>
+#include "ecudata.h"
 #include "eculogic.h"
 #include "funconv.h"
 #include "magnitude.h"
-#include "secu3.h"
 
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
@@ -52,6 +52,15 @@ void ignlogic_init(void)
 }
 
 #ifdef FUEL_INJECT
+/** Scales afterstart enrichment depending on the elapsed time (strokes)
+ * \param scaled afterstart enrichment factor
+ */
+uint8_t scale_aftstr_enrich(struct ecudata_t* d)
+{
+  //TODO: do scale
+  return inj_aftstr_en(d);
+}
+
 /** Calculates AE value.
  * \param d Pointer to ECU data structure
  * \return AE value in PW units
@@ -120,18 +129,17 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
    uint32_t pw = inj_base_pw(d);
-   pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichemnt factor
+   pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichemnt factor
    if (lgs.aftstr_enrich_counter)
-    pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment factor
-   pw= (pw * (512 + d->corr.lambda)) >> 9;        //apply lambda correction additive factor (signed)
-   pw+= calc_acc_enrich(d);                       //add acceleration enrichment
+    pw= (pw * (128 + scale_aftstr_enrich(d))) >> 7; //apply scaled afterstart enrichment factor
+   pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
+   pw+= calc_acc_enrich(d);                         //add acceleration enrichment
    if (((int32_t)pw) < 0)
     pw = 0;
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
    }
 #endif
-
    break;
 
   case EM_WORK: //рабочий режим
@@ -174,11 +182,11 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
    uint32_t pw = inj_base_pw(d);
-   pw = (pw * inj_warmup_en(d)) >> 7;             //apply warmup enrichment factor
+   pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichment factor
    if (lgs.aftstr_enrich_counter)
-    pw= (pw * d->param.inj_aftstr_enrich) >> 7;   //apply afterstart enrichment factor
-   pw= (pw * (512 + d->corr.lambda)) >> 9;        //apply lambda correction additive factor (signed)
-   pw+= calc_acc_enrich(d);                       //add acceleration enrichment
+    pw= (pw * (128 + scale_aftstr_enrich(d))) >> 7; //apply scaled afterstart enrichment factor
+   pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
+   pw+= calc_acc_enrich(d);                         //add acceleration enrichment
    if (((int32_t)pw) < 0)
     pw = 0;
    pw+= inj_dead_time(d);

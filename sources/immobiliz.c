@@ -30,8 +30,8 @@
 #include <string.h>
 #include "bitmask.h"
 #include "crc16.h"
+#include "ecudata.h"
 #include "onewire.h"
-#include "secu3.h"
 
 /** Key validation function
  * \param d pointer to ECU data structure

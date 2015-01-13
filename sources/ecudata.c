@@ -19,34 +19,34 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file fuelecon.c
- * Implementation of controlling algorithms for Fuel Economizer (FE)
- * (Реализация алгоритмов управления Экономайзером Мощностных Режимов (ЭМР)).
+/** \file ecudata.c
+ * ECU data in RAM (global data structures and state variables)
  */
 
-#include "port/avrio.h"
 #include "port/port.h"
-#include "bitmask.h"
 #include "ecudata.h"
-#include "fuelecon.h"
-#include "ioconfig.h"
 
-/** Open/Close FE valve (открывает/закрывает клапан ЭМР) */
-#define SET_FE_VALVE_STATE(s) IOCFG_SET(IOP_FE, s)
+/**ECU data structure. Contains all related data and state information */
+struct ecudata_t edat;
 
-void fuelecon_init_ports(void)
+#ifdef REALTIME_TABLES
+uint8_t mm_get_byte_ram(uint16_t offset)
 {
- //Output for control FE valve (выход для управления клапаном ЭМР)
- IOCFG_INIT(IOP_FE, 0); //FE valve is off (ЭМР выключен)
+ return *(((uint8_t*)&edat.tables_ram) + offset);
 }
 
-void fuelecon_control(struct ecudata_t* d)
+uint8_t mm_get_byte_pgm(uint16_t offset)
 {
- int16_t discharge;
-
- discharge = (d->param.map_upper_pressure - d->sens.map);
- if (discharge < 0)
-  discharge = 0;
- d->fe_valve = discharge < d->param.fe_on_threshold;
- SET_FE_VALVE_STATE(d->fe_valve);
+ return PGM_GET_BYTE(((uint8_t _PGM*)edat.fn_dat) + offset);
 }
+
+uint16_t mm_get_word_ram(uint16_t offset)
+{
+ return *((uint16_t*)(((uint8_t*)&edat.tables_ram) + offset));
+}
+
+uint16_t mm_get_word_pgm(uint16_t offset)
+{
+ return PGM_GET_WORD(((uint8_t _PGM*)edat.fn_dat) + offset);
+}
+#endif

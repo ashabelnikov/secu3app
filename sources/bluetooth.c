@@ -31,7 +31,7 @@
 #include "port/pgmspace.h"
 #include "port/port.h"
 #include "bluetooth.h"
-#include "secu3.h"
+#include "ecudata.h"
 #include "suspendop.h"
 #include "uart.h"
 #include "vstimer.h"

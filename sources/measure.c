@@ -30,13 +30,13 @@
 #include "port/port.h"
 #include <stdlib.h>
 #include "bitmask.h"
+#include "ecudata.h"
 #include "eculogic.h"
 #include "spdsens.h"
 #include "funconv.h"    //thermistor_lookup(), ats_lookup
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "measure.h"
-#include "secu3.h"
 
 #if defined(AIRTEMP_SENS) && !defined(SECU3T)
  #error "You must define SECU3T if you want to use air temperature sensor (ATS supported only in SECU3T)"
@@ -274,11 +274,15 @@ void meas_initial_measure(struct ecudata_t* d)
 static void select_table_set(struct ecudata_t *d, uint8_t set_index)
 {
  if (set_index > (TABLES_NUMBER_PGM-1))
-  d->mm_ram = 1;
+ {
+  d->mm_ptr8 = mm_get_byte_ram;
+  d->mm_ptr16 = mm_get_word_ram;
+ }
  else
  {
   d->fn_dat = &fw_data.tables[set_index];
-  d->mm_ram = 0;
+  d->mm_ptr8 = mm_get_byte_pgm;
+  d->mm_ptr16 = mm_get_word_pgm;
  }
 }
 #endif

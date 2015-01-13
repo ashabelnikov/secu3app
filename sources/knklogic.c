@@ -27,10 +27,10 @@
 #include "port/avrio.h"
 #include "port/port.h"
 #include "ce_errors.h"
+#include "ecudata.h"
 #include "funconv.h"
 #include "knklogic.h"
 #include "magnitude.h"
-#include "secu3.h"
 
 /**Delay in strokes*/
 #define KNK_STRT_DELAY 150

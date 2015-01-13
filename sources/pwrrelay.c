@@ -28,10 +28,10 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "choke.h"
+#include "ecudata.h"
 #include "eeprom.h"
 #include "ioconfig.h"
 #include "magnitude.h"
-#include "secu3.h"
 #include "vstimer.h"
 
 /**Define state variables */

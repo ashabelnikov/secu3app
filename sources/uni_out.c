@@ -27,8 +27,8 @@
 
 #include "port/port.h"
 #include <string.h>
+#include "ecudata.h"
 #include "ioconfig.h"
-#include "secu3.h"
 #include "vstimer.h"
 
 /**Defines state variables for condition*/

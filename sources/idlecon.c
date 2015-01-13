@@ -27,9 +27,9 @@
 #include "port/avrio.h"
 #include "port/port.h"
 #include "bitmask.h"
+#include "ecudata.h"
 #include "idlecon.h"
 #include "ioconfig.h"
-#include "secu3.h"
 #include "vstimer.h"
 
 /** Opens/closes IE valve (открывает/закрывает клапан Ёѕ’’) */

@@ -88,8 +88,8 @@
 /**For setting lambda correction values*/
 #define EGO_CORR(v) ROUND((((v)/100.0)*512.0))
 
-/**For setting afterstart enrichment value */
-#define AFTSTR_ENR(v) ROUND(((v)*128.0))
+/**For filling afterstart enrichment lookup table */
+#define _ASE(v) ROUND((((v)/100.0)*128.0))
 
 /**For filling bins of the AE's TPS lookup table*/
 #define AE_TPS_B(v) ROUND((v) / 10.0)
@@ -241,8 +241,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .angle_corr =                  0,
   .zero_adv_ang =                0,
 
-  .fn_gasoline =                 6,
-  .fn_gas =                      6,
+  .fn_gasoline =                 1,
+  .fn_gas =                      1,
 
   .idl_regul =                   0,
   .idling_rpm =                  800,
@@ -323,7 +323,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_sd_igl_const =            86207,                //((0.375L * 3.482 * 18750000) / 142g) * ((1 * 4) / (2 * 4)), petrol density is 0.71 g/cc, 1bank,4cyl,2squirts,4injectors
 
   .inj_cranktorun_time =         SYS_TIME_S(3.00),     //3 seconds
-  .inj_aftstr_enrich =           AFTSTR_ENR(1.10),     //10% added
   .inj_aftstr_strokes =          150,                  //150 strokes
 
   .inj_lambda_str_per_stp =      8,                    //8 strokes
@@ -507,6 +506,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
    },
+   /**Fill afterstart enrichment lookup table, range is 0...199%, value indicates how many % will be added to fuel */
+   {// -30           -20        -10           0        10            20         30          40
+    _ASE(45.0), _ASE(41.0), _ASE(38.0), _ASE(35.0), _ASE(33.0), _ASE(31.5), _ASE(30.4), _ASE(29.0),
+    //  50            60         70          80        90           100        110         120
+    _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
+   },
 
    /**reserved bytes */
    {0}
@@ -626,6 +631,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
    },
+   /**Fill afterstart enrichment lookup table, range is 0...199%, value indicates how many % will be added to fuel */
+   {// -30           -20        -10           0        10            20         30          40
+    _ASE(45.0), _ASE(41.0), _ASE(38.0), _ASE(35.0), _ASE(33.0), _ASE(31.5), _ASE(30.4), _ASE(29.0),
+    //  50            60         70          80        90           100        110         120
+    _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
+   },
 
    /**reserved bytes */
    {0}
@@ -744,6 +755,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
    },
+   /**Fill afterstart enrichment lookup table, range is 0...199%, value indicates how many % will be added to fuel */
+   {// -30           -20        -10           0        10            20         30          40
+    _ASE(45.0), _ASE(41.0), _ASE(38.0), _ASE(35.0), _ASE(33.0), _ASE(31.5), _ASE(30.4), _ASE(29.0),
+    //  50            60         70          80        90           100        110         120
+    _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
+   },
 
    /**reserved bytes */
    {0}
@@ -861,6 +878,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
    {
     AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+   },
+   /**Fill afterstart enrichment lookup table, range is 0...199%, value indicates how many % will be added to fuel */
+   {// -30           -20        -10           0        10            20         30          40
+    _ASE(45.0), _ASE(41.0), _ASE(38.0), _ASE(35.0), _ASE(33.0), _ASE(31.5), _ASE(30.4), _ASE(29.0),
+    //  50            60         70          80        90           100        110         120
+    _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
    },
 
    /**reserved bytes */
@@ -1002,6 +1025,12 @@ PGM_DECLARE(f_data_t tt_def_data) =
  /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
  {
   AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
+ },
+ /**Fill afterstart enrichment lookup table, range is 0...199%, value indicates how many % will be added to fuel */
+ {// -30           -20        -10           0        10            20         30          40
+  _ASE(45.0), _ASE(41.0), _ASE(38.0), _ASE(35.0), _ASE(33.0), _ASE(31.5), _ASE(30.4), _ASE(29.0),
+  //  50            60         70          80        90           100        110         120
+  _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
  },
 
  /**reserved bytes */

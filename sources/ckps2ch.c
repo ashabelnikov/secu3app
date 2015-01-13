@@ -40,8 +40,8 @@
 #include "injector.h"   //inject_start_inj()
 #include "ioconfig.h"
 #include "magnitude.h"
+#include "tables.h"     //fnptr_t
 
-#include "secu3.h"
 #include "knock.h"
 
 //PHASED_IGNITION and DWELL_CONTROL can't be used in conjunction with 2 channel igniter (single input, driven by 2 edges)

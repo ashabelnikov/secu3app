@@ -30,6 +30,8 @@
 #include <stdint.h>
 #include "vstimer.h"
 
+#define CE_CONTROL_STATE_TIME_VALUE    50  //!< used for CE (flashing)
+
 //define bits (numbers of bits) of errors (Check Engine)
 //(определяем биты (номера битов) ошибок (Check Engine)).
 #define ECUERROR_CKPS_MALFUNCTION       0  //!< CKP sensor malfunction

@@ -33,7 +33,6 @@
 #include "adc.h"
 #include "bitmask.h"
 #include "magnitude.h"
-#include "secu3.h"
 
 /**номер канала используемого для ДАД */
 #define ADCI_MAP                2

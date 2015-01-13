@@ -28,9 +28,9 @@
 
 #include "port/port.h"
 #include "ckps.h"
+#include "ecudata.h"
 #include "ioconfig.h"
 #include "magnitude.h"
-#include "secu3.h"
 #include "vstimer.h"
 
 /**Input manifold heating time - 10 minutes */

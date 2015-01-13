@@ -28,8 +28,8 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "ce_errors.h"
+#include "ecudata.h"
 #include "ioconfig.h"
-#include "secu3.h"
 #include "starter.h"
 #include "vstimer.h"
 

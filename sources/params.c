@@ -31,11 +31,11 @@
 #include <string.h>
 #include "ce_errors.h"
 #include "crc16.h"
+#include "ecudata.h"
 #include "eeprom.h"
 #include "ioconfig.h"
 #include "jumper.h"
 #include "params.h"
-#include "secu3.h"
 #include "starter.h"
 #include "suspendop.h"
 #include "ventilator.h"

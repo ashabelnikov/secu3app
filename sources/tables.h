@@ -88,6 +88,7 @@
 #define INJ_IAC_POS_TABLE_SIZE          16          //!< number of points in the IAC/PWM position lookup table
 #define INJ_AE_TPS_LOOKUP_TABLE_SIZE    8           //!< number of points in AE TPS (d%/dt) lookup table
 #define INJ_AE_RPM_LOOKUP_TABLE_SIZE    4           //!< number of points in AE RPM lookup table size
+#define INJ_AFTSTR_LOOKUP_TABLE_SIZE    16          //!< afterstart enrichment lookup table
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -142,10 +143,12 @@ typedef struct f_data_t
   uint8_t inj_ae_rpm_enr[INJ_AE_RPM_LOOKUP_TABLE_SIZE];  //!< values of the AE's RPM lookup table (factor), value * 128.0, e.g. 128 = 1.00, this means to use 100% of AE)
   uint8_t inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE]; //!< bins of the AE's RPM lookup table (value / 100, e.g. value=25 means 2500min-1)
 
+  uint8_t inj_aftstr[INJ_AFTSTR_LOOKUP_TABLE_SIZE];      //!< afterstart enrichment vs coolant temperature lookup table, value * 128.0, 128 = 1.00 and means 100% will be adde to fuel
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[718];
+  uint8_t reserved[702];
 }f_data_t;
 
 
@@ -339,7 +342,6 @@ typedef struct params_t
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * ((Nbnk * Ncyl) / (Nsq * Ninj))
 
   uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
-  uint8_t  inj_aftstr_enrich;            //!< Afterstart enrichment factor * 128, e.g. 128 = 1.00
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
   uint8_t  inj_lambda_str_per_stp;       //!< Number of strokes per step for lambda control
@@ -358,7 +360,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[97];
+  uint8_t  reserved[98];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

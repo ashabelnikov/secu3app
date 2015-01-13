@@ -19,26 +19,25 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file secu3.h
- * Main module of the firmware.
+/** \file ecudata.h
+ * ECU data in RAM (global data structures and state variables).
  * This file contains main data structures used in the firmware.
- * (Главный модуль прошивки. Этот файл содержит основные структуры данных используемые в прошивке).
  */
 
-#ifndef _SECU3_H_
-#define _SECU3_H_
+#ifndef _ECUDATA_H_
+#define _ECUDATA_H_
 
 #include "tables.h"
 
-#define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
-#define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
-#define CE_CONTROL_STATE_TIME_VALUE   50    //!< used for CE (flashing)
-#ifdef HALL_SYNC
-#define ENGINE_ROTATION_TIMEOUT_VALUE 150   //!< timeout value used to determine that engine is stopped (used for Hall sensor)
-#else
-#define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
+#ifdef REALTIME_TABLES
+typedef uint8_t  (*mm_func8_ptr_t)(uint16_t);
+typedef uint16_t (*mm_func16_ptr_t)(uint16_t);
+
+uint8_t mm_get_byte_ram(uint16_t offset);
+uint8_t mm_get_byte_pgm(uint16_t offset);
+uint16_t mm_get_word_ram(uint16_t offset);
+uint16_t mm_get_word_pgm(uint16_t offset);
 #endif
-#define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
 
 #ifdef DIAGNOSTICS
 /**Describes diagnostics inputs data */
@@ -128,7 +127,8 @@ typedef struct ecudata_t
 
 #ifdef REALTIME_TABLES
  f_data_t tables_ram;                    //!< set of tables in RAM
- uint8_t mm_ram;                         //!< flag indicated that selected set of tables is in RAM
+ mm_func8_ptr_t mm_ptr8;                 //!< callback, returns 8 bit result, unsigned
+ mm_func16_ptr_t mm_ptr16;               //!< callback, return 16 bit result, unsigned
 #endif
  f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
 
@@ -162,4 +162,6 @@ typedef struct ecudata_t
 }ecudata_t;
 
 
-#endif  //_SECU3_H_
+extern struct ecudata_t edat;            //!< ECU data structure. Contains all related data and state information
+
+#endif //_ECUDATA_H_

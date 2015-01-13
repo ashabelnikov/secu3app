@@ -32,11 +32,11 @@
 #include "camsens.h"
 #include "ce_errors.h"
 #include "ckps.h"
+#include "ecudata.h"
 #include "eeprom.h"
 #include "ioconfig.h"
 #include "knock.h"
 #include "magnitude.h"
-#include "secu3.h"
 #include "suspendop.h"
 #include "vstimer.h"
 

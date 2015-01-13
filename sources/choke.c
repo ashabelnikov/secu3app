@@ -29,10 +29,10 @@
 #include "port/port.h"
 #include <stdlib.h>
 #include "bitmask.h"
+#include "ecudata.h"
 #include "ioconfig.h"
 #include "funconv.h"
 #include "magnitude.h"
-#include "secu3.h"
 #include "smcontrol.h"
 #include "pwrrelay.h"
 

@@ -29,6 +29,8 @@
 
 #include <stdint.h>
 
+#define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
+
 struct ecudata_t;
 
 /**Write data to EEPROM - the process is very slow. It will take place in parallel with

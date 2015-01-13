@@ -29,8 +29,8 @@
 #include "port/intrinsic.h"
 #include "port/port.h"
 #include "bitmask.h"
+#include "ecudata.h"
 #include "ioconfig.h"
-#include "secu3.h"
 #include "ventilator.h"
 
 /**Turns on/off cooling fan

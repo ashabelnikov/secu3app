@@ -39,6 +39,7 @@
 #include "ckps.h"
 #include "crc16.h"
 #include "diagnost.h"
+#include "ecudata.h"
 #include "eculogic.h"
 #include "eeprom.h"
 #include "fuelecon.h"
@@ -57,7 +58,6 @@
 #include "params.h"
 #include "procuart.h"
 #include "pwrrelay.h"
-#include "secu3.h"
 #include "starter.h"
 #include "suspendop.h"
 #include "tables.h"
@@ -67,8 +67,12 @@
 #include "vstimer.h"
 #include "wdt.h"
 
-/**ECU data structure. Contains all related data and state information */
-struct ecudata_t edat;
+#define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
+#ifdef HALL_SYNC
+#define ENGINE_ROTATION_TIMEOUT_VALUE 150   //!< timeout value used to determine that engine is stopped (used for Hall sensor)
+#else
+#define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
+#endif
 
 /**Control of certain units of engine (управление отдельными узлами двигателя).
  * \param d pointer to ECU data structure

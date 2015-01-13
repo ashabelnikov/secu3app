@@ -28,30 +28,25 @@
 #include "port/port.h"
 #include <stdlib.h>
 #include "ckps.h"
+#include "ecudata.h"
 #include "funconv.h"
 #include "ioconfig.h"
 #include "magnitude.h"
-#include "secu3.h"
 #include "vstimer.h"
-
 
 //For use with fn_dat pointer, because it can point either to FLASH or RAM
 #ifdef REALTIME_TABLES
  #define secu3_offsetof(type,member)   ((size_t)(&((type *)0)->member))
  /**Macro for abstraction under getting bytes from RAM or FLASH (RAM version) */
- #define _GB(x) mm_get_byte(d, secu3_offsetof(struct f_data_t, x))
- #define _GW(x) mm_get_word(d, secu3_offsetof(struct f_data_t, x))
- static /*INLINE*/ uint8_t mm_get_byte(struct ecudata_t* d, uint16_t offset)
- {
-  return d->mm_ram ? *(((uint8_t*)&d->tables_ram) + offset) : PGM_GET_BYTE(((uint8_t*)d->fn_dat) + offset);
- }
- static /*INLINE*/ uint8_t mm_get_word(struct ecudata_t* d, uint16_t offset)
- {
-  return d->mm_ram ? *(((uint8_t*)&d->tables_ram) + offset) : PGM_GET_WORD(((uint8_t*)d->fn_dat) + offset);
- }
-
+ #define _GB(x) ((int8_t)d->mm_ptr8(secu3_offsetof(struct f_data_t, x)))
+ #define _GW(x) ((int16_t)d->mm_ptr16(secu3_offsetof(struct f_data_t, x)))
+ #define _GBU(x) (d->mm_ptr8(secu3_offsetof(struct f_data_t, x)))
+ #define _GWU(x) (d->mm_ptr16(secu3_offsetof(struct f_data_t, x)))
 #else
- #define _GB(x) PGM_GET_BYTE(&d->fn_dat->x)  //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
+ #define _GB(x) ((int8_t)(PGM_GET_BYTE(&d->fn_dat->x)))    //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
+ #define _GW(x) ((int16_t)(PGM_GET_WORD(&d->fn_dat->x)))   //!< Macro for abstraction under getting words from RAM or FLASH (FLASH version)
+ #define _GBU(x) (PGM_GET_BYTE(&d->fn_dat->x))             //!< Unsigned version of _GB
+ #define _GWU(x) (PGM_GET_WORD(&d->fn_dat->x))             //!< Unsigned version of _GW
 #endif
 
 // ‘ункци€ билинейной интерпол€ции (поверхность)
@@ -342,7 +337,7 @@ int16_t thermistor_lookup(uint16_t adcvalue)
  if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.cts_curve[i]), PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]),
+ return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&fw_data.exdata.cts_curve[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]), //<--values in table are signed
         (i * v_step) + v_start, v_step, 16)) >> 4;
 }
 #endif
@@ -454,7 +449,7 @@ int16_t airtemp_function(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.ats_corr[i]), PGM_GET_BYTE(&fw_data.exdata.ats_corr[i1]),
+ return simple_interpolation(t, (int8_t)PGM_GET_BYTE(&fw_data.exdata.ats_corr[i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.ats_corr[i1]), //<--values in table are signed
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
@@ -477,7 +472,7 @@ int16_t ats_lookup(uint16_t adcvalue)
  if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.ats_curve[i]), PGM_GET_WORD(&fw_data.exdata.ats_curve[i1]),
+ return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&fw_data.exdata.ats_curve[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.ats_curve[i1]), //<--values in table are signed
         (i * v_step) + v_start, v_step, 16)) >> 4;
 }
 #endif //AIRTEMP_SENS
@@ -518,10 +513,10 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  //apply VE table, bilinear_interpolation() returns value * 16, we additionally divide it by 4 to avoid oveflow
  pw32*= bilinear_interpolation(rpm, discharge,
-        _GB(inj_ve[l][f]),
-        _GB(inj_ve[lp1][f]),
-        _GB(inj_ve[lp1][fp1]),
-        _GB(inj_ve[l][fp1]),
+        _GBU(inj_ve[l][f]),   //values in table are unsigned
+        _GBU(inj_ve[lp1][f]),
+        _GBU(inj_ve[lp1][fp1]),
+        _GBU(inj_ve[l][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
@@ -530,10 +525,10 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  //apply AFR table
  pw32*= bilinear_interpolation(rpm, discharge,
-        _GB(inj_afr[l][f]),
-        _GB(inj_afr[lp1][f]),
-        _GB(inj_afr[lp1][fp1]),
-        _GB(inj_afr[l][fp1]),
+        _GBU(inj_afr[l][f]),  //values in table are unsigned
+        _GBU(inj_afr[lp1][f]),
+        _GBU(inj_afr[lp1][fp1]),
+        _GBU(inj_afr[l][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
@@ -556,7 +551,7 @@ uint16_t inj_dead_time(struct ecudata_t* d)
  if (i >= INJ_DT_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_DT_LOOKUP_TABLE_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(voltage, _GW(inj_dead_time[i]), _GW(inj_dead_time[i1]),
+ return simple_interpolation(voltage, _GWU(inj_dead_time[i]), _GWU(inj_dead_time[i1]),  //<--values in table are unsigned
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
@@ -577,7 +572,7 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, _GW(inj_cranking[i]), _GW(inj_cranking[i1]),
+ return simple_interpolation(t, _GWU(inj_cranking[i]), _GWU(inj_cranking[i1]),  //<--values in table are unsigned
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 8) >> 3;
 }
 
@@ -586,7 +581,7 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
  int16_t i, i1, t = d->sens.temperat;
 
  if (!d->param.tmp_use)
-  return 128;   //coolant temperature sensor is not enabled (or not installed), no correction
+  return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
 
  //-30 - минимальное значение температуры
  if (t < TEMPERATURE_MAGNITUDE(-30))
@@ -598,7 +593,28 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
  if (i >= 15) i = i1 = 15;
  else i1 = i + 1;
 
- return simple_interpolation(t, _GB(inj_warmup[i]), _GB(inj_warmup[i1]),
+ return simple_interpolation(t, _GBU(inj_warmup[i]), _GBU(inj_warmup[i1]),  //<--values in table are unsigned
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+}
+
+uint8_t inj_aftstr_en(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
+
+ //-30 - минимальное значение температуры
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - шаг между узлами интерпол€ции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= 15) i = i1 = 15;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GBU(inj_aftstr[i]), _GBU(inj_aftstr[i1]),  //<--values in table are unsigned
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
@@ -627,10 +643,10 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
  else i1 = i + 1;
 
  if (mode) //run
-  return simple_interpolation(t, _GB(inj_iac_run_pos[i]), _GB(inj_iac_run_pos[i1]),
+  return simple_interpolation(t, _GBU(inj_iac_run_pos[i]), _GBU(inj_iac_run_pos[i1]),  //<--values in table are unsigned
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
  else //cranking
-  return simple_interpolation(t, _GB(inj_iac_crank_pos[i]), _GB(inj_iac_crank_pos[i1]),
+  return simple_interpolation(t, _GBU(inj_iac_crank_pos[i]), _GBU(inj_iac_crank_pos[i1]), //<--values in table are unsigned
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
@@ -645,7 +661,7 @@ int16_t inj_ae_tps_lookup(struct ecudata_t* d)
  if (i < 0)  {i = 0; tpsdot = (int16_t)_GB(inj_ae_tps_bins[0])*10;}
 
  return simple_interpolation(tpsdot,
-             ((int16_t)_GB(inj_ae_tps_enr[i]))-55, ((int16_t)_GB(inj_ae_tps_enr[i+1]))-55,
+             ((int16_t)_GBU(inj_ae_tps_enr[i]))-55, ((int16_t)_GBU(inj_ae_tps_enr[i+1]))-55,  //<--values in inj_ae_tps_enr table are unsigned
              (int16_t)_GB(inj_ae_tps_bins[i])*10,(int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]))*10, 164) >> 7; //*1.28
 }
 
@@ -655,13 +671,13 @@ uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
  int16_t rpm = d->sens.inst_frq; //min-1
 
  for(i = INJ_AE_RPM_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
-  if (d->sens.inst_frq >= _GB(inj_ae_rpm_bins[i])*100) break;
+  if (d->sens.inst_frq >= _GBU(inj_ae_rpm_bins[i])*100) break;
 
- if (i < 0)  {i = 0; rpm = _GB(inj_ae_rpm_bins[0])*100;}
+ if (i < 0)  {i = 0; rpm = _GBU(inj_ae_rpm_bins[0])*100;}
 
  return simple_interpolation(rpm,
-             ((int16_t)_GB(inj_ae_rpm_enr[i])), ((int16_t)_GB(inj_ae_rpm_enr[i+1])),
-             _GB(inj_ae_rpm_bins[i])*100,(_GB(inj_ae_rpm_bins[i+1])-_GB(inj_ae_rpm_bins[i]))*100, 16) >> 4;
+             ((int16_t)_GBU(inj_ae_rpm_enr[i])), ((int16_t)_GBU(inj_ae_rpm_enr[i+1])),  //<--values in table are unsigned
+             _GBU(inj_ae_rpm_bins[i])*100,(_GBU(inj_ae_rpm_bins[i+1])-_GBU(inj_ae_rpm_bins[i]))*100, 16) >> 4; //<--values of bins are unsigned
 }
 
 uint16_t inj_ae_clt_corr(struct ecudata_t* d)

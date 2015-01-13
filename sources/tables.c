@@ -241,8 +241,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .angle_corr =                  0,
   .zero_adv_ang =                0,
 
-  .fn_gasoline =                 1,
-  .fn_gas =                      1,
+  .fn_gasoline =                 0,
+  .fn_gas =                      0,
 
   .idl_regul =                   0,
   .idling_rpm =                  800,

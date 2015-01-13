@@ -53,12 +53,14 @@ void ignlogic_init(void)
 
 #ifdef FUEL_INJECT
 /** Scales afterstart enrichment depending on the elapsed time (strokes)
- * \param scaled afterstart enrichment factor
+ * \param scaled afterstart enrichment factor (value * 128)
  */
 uint8_t scale_aftstr_enrich(struct ecudata_t* d)
 {
-  //TODO: do scale
-  return inj_aftstr_en(d);
+ //do scaling of ASE factor (scale down)
+ int16_t counter = d->param.inj_aftstr_strokes - lgs.aftstr_enrich_counter; //convert decreasing to increasing
+ if (counter < 0) counter = 0;
+ return ((uint16_t)inj_aftstr_en(d) * (d->param.inj_aftstr_strokes - counter)) / d->param.inj_aftstr_strokes;
 }
 
 /** Calculates AE value.
@@ -127,7 +129,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
-   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
+   {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichemnt factor
    if (lgs.aftstr_enrich_counter)
@@ -180,7 +182,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.strt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
-   {//PW = (BASE * WARMUP) + AFTSTR_ENRICH + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
+   {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichment factor
    if (lgs.aftstr_enrich_counter)

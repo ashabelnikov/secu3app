@@ -294,9 +294,9 @@ void init_modules(void)
  lambda_init_state();
 #endif
 
+ s_timer_init();
  ignlogic_init();
 
- s_timer_init();
  vent_init_state();
 
  //check and enter blink codes indication mode

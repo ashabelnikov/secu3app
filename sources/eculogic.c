@@ -26,10 +26,13 @@
 
 #include "port/port.h"
 #include <stdlib.h>
+#include "ckps.h"
 #include "ecudata.h"
 #include "eculogic.h"
 #include "funconv.h"
+#include "injector.h"
 #include "magnitude.h"
+#include "vstimer.h"
 
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
@@ -38,6 +41,8 @@
 typedef struct
 {
  uint16_t aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment implementation
+ uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
+ uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
@@ -48,6 +53,8 @@ void ignlogic_init(void)
 {
 #ifdef FUEL_INJECT
  lgs.aftstr_enrich_counter = 0;
+ lgs.prime_delay_tmr = s_timer_gtc();
+ lgs.prime_ready = 0;
 #endif
 }
 
@@ -88,6 +95,14 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
  switch(d->engine_mode)
  {
   case EM_START: //режим пуска
+   //fire prime pulse before cranking
+   if (!lgs.prime_ready && ((s_timer_gtc() - lgs.prime_delay_tmr) >= ((uint16_t)d->param.inj_prime_delay*10)))
+   {
+    if (!ckps_is_cog_changed() && d->param.inj_prime_cold) //skip prime pulse if cranking has started or if it is disabled (=0)
+     inject_open_inj(inj_prime_pw(d));                     //start prime pulse
+    lgs.prime_ready = 1;
+   }
+
    if (d->sens.inst_frq > d->param.smap_abandon)
    {
     d->engine_mode = EM_IDLE;

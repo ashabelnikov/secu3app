@@ -445,6 +445,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.smap_abandon);
    build_i16h(d->param.inj_cranktorun_time); //fuel injection
    build_i8h(d->param.inj_aftstr_strokes);   //fuel injection
+   build_i16h(d->param.inj_prime_cold);      //fuel injection
+   build_i16h(d->param.inj_prime_hot);       //fuel injection
+   build_i8h(d->param.inj_prime_delay);      //fuel injection
    break;
 
   case FNNAME_DAT:
@@ -946,6 +949,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.smap_abandon= recept_i16h();
    d->param.inj_cranktorun_time = recept_i16h(); //fuel injection
    d->param.inj_aftstr_strokes = recept_i8h();   //fuel injection
+   d->param.inj_prime_cold = recept_i16h();      //fuel injection
+   d->param.inj_prime_hot = recept_i16h();       //fuel injection
+   d->param.inj_prime_delay = recept_i8h();      //fuel injection
    break;
 
   case ADCCOR_PAR:

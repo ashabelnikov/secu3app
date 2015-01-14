@@ -84,6 +84,8 @@
 
 /**For setting system time values, v in seconds*/
 #define SYS_TIME_S(v) ROUND(((v)*100.0))
+/**Same as SYS_TIME_S, but multiplied only by 10*/
+#define SYS_TIMEX10_S(v) ROUND((v)*10)
 
 /**For setting lambda correction values*/
 #define EGO_CORR(v) ROUND((((v)/100.0)*512.0))
@@ -321,6 +323,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min          (for management software only)
   .inj_cyl_disp =                CYL_DISP(0.375),      //0.375L (1.5/4)      (for management software only)
   .inj_sd_igl_const =            86207,                //((0.375L * 3.482 * 18750000) / 142g) * ((1 * 4) / (2 * 4)), petrol density is 0.71 g/cc, 1bank,4cyl,2squirts,4injectors
+
+  .inj_prime_cold =              _DLV(6.0),            //6 ms at -30°C
+  .inj_prime_hot =               _DLV(2.0),            //2 ms at 70°C
+  .inj_prime_delay =             SYS_TIMEX10_S(2.0),   //fire prime pulse after 2 seconds
 
   .inj_cranktorun_time =         SYS_TIME_S(3.00),     //3 seconds
   .inj_aftstr_strokes =          150,                  //150 strokes

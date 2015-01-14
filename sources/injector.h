@@ -57,6 +57,11 @@ void inject_set_inj_time(uint16_t time);
  */
 void inject_start_inj(void);
 
+/** This function directly opens injectors, used for priming pulse (before cranking)
+ * \param time Injection time, one tick = 3.2us
+ */
+void inject_open_inj(uint16_t time);
+
 #endif //FUEL_INJECT
 
 #endif //_INJECTOR_H_

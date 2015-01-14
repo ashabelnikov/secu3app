@@ -230,6 +230,12 @@ uint8_t inj_ae_rpm_lookup(struct ecudata_t* d);
  */
 uint16_t inj_ae_clt_corr(struct ecudata_t* d);
 
+/** Calculates prime pulse width from coolant temperature
+ * \param d pointer to ECU data structure
+ * \return PW in tics of timer (1 tick = 3.2uS)
+ */
+uint16_t inj_prime_pw(struct ecudata_t* d);
+
 #endif
 
 #endif //_FUNCONV_H_

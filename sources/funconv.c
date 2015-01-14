@@ -687,14 +687,28 @@ uint16_t inj_ae_clt_corr(struct ecudata_t* d)
  if (!d->param.tmp_use)
   return 128;   //coolant temperature sensor is not enabled (or not installed), no correction
 
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
- if (t > TEMPERATURE_MAGNITUDE(70))
-  t = TEMPERATURE_MAGNITUDE(70);
+ //-30 - temperature when correction factor is as specified by inj_ae_coldacc_mult
+ // 70 - temperature when correction factor doesn't take effect
+ restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70));
 
  return simple_interpolation(t,
              ((int16_t)(d->param.inj_ae_coldacc_mult))+128, 128,
              TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 32) >> 5;
+}
+
+uint16_t inj_prime_pw(struct ecudata_t* d)
+{
+ int16_t t = d->sens.temperat; //clt
+
+ if (!d->param.tmp_use)
+  return d->param.inj_prime_hot;   //coolant temperature sensor is not enabled (or not installed), use hot PW
+
+ //-30 - temperature for "cold" PW
+ // 70 - temperature for "hot" PW
+ restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70));
+
+ return simple_interpolation(t, d->param.inj_prime_cold, d->param.inj_prime_hot,
+             TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 1);
 }
 
 #endif //FUEL_INJECT

@@ -121,6 +121,22 @@ void inject_start_inj(void)
   inj.cur_cyl = 0;
 }
 
+void inject_open_inj(uint16_t time)
+{
+  if (0==time) return;
+  time = (time >> 1) - INJ_COMPB_CALIB - 1;
+  _BEGIN_ATOMIC_BLOCK();
+  OCR2B = TCNT2 + _AB(time, 0) + 1;
+  inj.tmr2b_h = _AB(time, 1);
+  IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector 1
+  IOCFG_SET(IOP_INJ_OUT1, 1);                 //turn on injector 2
+  IOCFG_SET(IOP_INJ_OUT2, 1);                 //turn on injector 3
+  IOCFG_SET(IOP_INJ_OUT3, 1);                 //turn on injector 4
+  SETBIT(TIMSK2, OCIE2B);
+  SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
+  _END_ATOMIC_BLOCK();
+}
+
 /**Interrupt for controlling of first injector*/
 ISR(TIMER2_COMPB_vect)
 {

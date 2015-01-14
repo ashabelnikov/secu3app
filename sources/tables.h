@@ -341,6 +341,10 @@ typedef struct params_t
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * ((Nbnk * Ncyl) / (Nsq * Ninj))
 
+  uint16_t inj_prime_cold;               //!< Prime pulse PW at cold (CLT=-30°C)
+  uint16_t inj_prime_hot;                //!< Prime pulse PW at hot (CLT=70°C)
+  uint8_t  inj_prime_delay;              //!< Prime pulse delay in 0.1 sec units
+
   uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
@@ -354,13 +358,14 @@ typedef struct params_t
   uint8_t  inj_ae_tpsdot_thrd;           //!< TPS %/sec threshold, max rate is 255%/sec
   uint8_t  inj_ae_coldacc_mult;          //!< Cold acceleration multiplier (-30°C), (value - 1.0) * 128
 
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[98];
+  uint8_t  reserved[93];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

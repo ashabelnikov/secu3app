@@ -68,7 +68,7 @@
 #define _ACC ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0)
 
 /**For specifying values in the warmup enrichment lookup table*/
-#define _WLV(v) ROUND(((v)*128.0))
+#define _WLV(v) ROUND((((v)/100.0)*128.0))
 
 /**For specifying values in VE table*/
 #define _VE(v) ROUND(((v)*128.0))
@@ -308,6 +308,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .sm_steps =                    800,
   .choke_rpm =                   {2000, 1200},
   .choke_startup_corr =          20,
+
   .choke_rpm_if =                51,
   .choke_corr_time =             300,
   .choke_corr_temp =             40,
@@ -468,11 +469,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)
    },
-   /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature / обогащение при прогреве */
-   {// -30           -20        -10           0        10            20         30          40
-    _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
-    //  50            60         70          80        90           100        110         120
-    _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)
+   /**Fill warmup enrichment lookup table, factor(0...199%) vs coolant temperature / обогащение при прогреве */
+   {// -30        -20        -10          0        10          20         30         40
+    _WLV(160), _WLV(156), _WLV(152), _WLV(147), _WLV(142), _WLV(137), _WLV(133), _WLV(129),
+    //  50         60         70         80        90          100        110        120
+    _WLV(126), _WLV(123), _WLV(120), _WLV(117), _WLV(114), _WLV(110), _WLV(105), _WLV(100)
    },
    /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage / время открытия форсунки (динам. производ.)*/
    {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
@@ -593,11 +594,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)
    },
-   /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature / обогащение при прогреве */
-   {// -30           -20        -10           0        10            20         30          40
-    _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
-    //  50            60         70          80        90           100        110         120
-    _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)
+   /**Fill warmup enrichment lookup table, factor(0...199%) vs coolant temperature / обогащение при прогреве */
+   {// -30        -20        -10          0        10          20         30         40
+    _WLV(160), _WLV(156), _WLV(152), _WLV(147), _WLV(142), _WLV(137), _WLV(133), _WLV(129),
+    //  50         60         70         80        90          100        110       120
+    _WLV(126), _WLV(123), _WLV(120), _WLV(117), _WLV(114), _WLV(110), _WLV(105), _WLV(100)
    },
    /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage / время открытия форсунки (динам. производ.)*/
    {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
@@ -717,11 +718,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)
    },
-   /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature / обогащение при прогреве */
-   {// -30           -20        -10           0        10            20         30          40
-    _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
-    //  50            60         70          80        90           100        110         120
-    _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)
+   /**Fill warmup enrichment lookup table, factor(0...199%) vs coolant temperature / обогащение при прогреве */
+   {// -30        -20        -10          0        10          20         30        40
+    _WLV(160), _WLV(156), _WLV(152), _WLV(147), _WLV(142), _WLV(137), _WLV(133), _WLV(129),
+    //  50         60         70         80        90          100        110       120
+    _WLV(126), _WLV(123), _WLV(120), _WLV(117), _WLV(114), _WLV(110), _WLV(105), _WLV(100)
    },
    /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage / время открытия форсунки (динам. производ.)*/
    {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
@@ -841,11 +842,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     //  50            60         70          80        90           100        110         120
     _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)
    },
-   /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature / обогащение при прогреве */
-   {// -30           -20        -10           0        10            20         30          40
-    _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
-    //  50            60         70          80        90           100        110         120
-    _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)
+   /**Fill warmup enrichment lookup table, factor(0...199%) vs coolant temperature / обогащение при прогреве */
+   {// -30        -20        -10          0        10           20         30        40
+    _WLV(160), _WLV(156), _WLV(152), _WLV(147), _WLV(142), _WLV(137), _WLV(133), _WLV(129),
+    //  50         60         70         80        90          100        110        120
+    _WLV(126), _WLV(123), _WLV(120), _WLV(117), _WLV(114), _WLV(110), _WLV(105), _WLV(100)
    },
    /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage / время открытия форсунки (динам. производ.)*/
    {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
@@ -988,11 +989,11 @@ PGM_DECLARE(f_data_t tt_def_data) =
   //  50            60         70          80        90           100        110         120
   _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)
  },
- /**Fill warmup enrichment lookup table, factor(0...1.99) vs coolant temperature / обогащение при прогреве */
- {// -30           -20        -10           0        10            20         30          40
-  _WLV(1.60), _WLV(1.56), _WLV(1.52), _WLV(1.47), _WLV(1.42), _WLV(1.37), _WLV(1.33), _WLV(1.29),
-  //  50            60         70          80        90           100        110         120
-  _WLV(1.26), _WLV(1.23), _WLV(1.20), _WLV(1.17), _WLV(1.14), _WLV(1.10), _WLV(1.05), _WLV(1.00)
+ /**Fill warmup enrichment lookup table, factor(0...199%) vs coolant temperature / обогащение при прогреве */
+ {// -30         -20        -10         0        10           20         30        40
+  _WLV(160), _WLV(156), _WLV(152), _WLV(147), _WLV(142), _WLV(137), _WLV(133), _WLV(129),
+  //  50          60         70        80        90          100        110        120
+  _WLV(126), _WLV(123), _WLV(120), _WLV(117), _WLV(114), _WLV(110), _WLV(105), _WLV(100)
  },
  /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage / время открытия форсунки (динам. производ.)*/
  {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2

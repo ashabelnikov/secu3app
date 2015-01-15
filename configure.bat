@@ -31,19 +31,19 @@ rem Check validity of command line option
 IF %1 == M32 (
 set CFG_MCU=m32
 set CFG_BL_START=7C00
-set CFG_FWD_START=5494
+set CFG_FWD_START=5404
 set CFG_EE_SIZE=1024
 set CFG_LNKXCL=lnkm32s.xcl
 ) else IF %1 == M64 (
 set CFG_MCU=m64
 set CFG_BL_START=F800
-set CFG_FWD_START=D094
+set CFG_FWD_START=D004
 set CFG_EE_SIZE=2048
 set CFG_LNKXCL=lnkm64s.xcl
 ) else IF %1 == M644 (
 set CFG_MCU=m644
 set CFG_BL_START=F800
-set CFG_FWD_START=D094
+set CFG_FWD_START=D004
 set CFG_EE_SIZE=2048
 set CFG_LNKXCL=lnkm644s.xcl
 ) else (

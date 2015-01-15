@@ -95,6 +95,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
  switch(d->engine_mode)
  {
   case EM_START: //режим пуска
+#ifdef FUEL_INJECT
    //fire prime pulse before cranking
    if (!lgs.prime_ready && ((s_timer_gtc() - lgs.prime_delay_tmr) >= ((uint16_t)d->param.inj_prime_delay*10)))
    {
@@ -102,7 +103,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
      inject_open_inj(inj_prime_pw(d));                     //start prime pulse
     lgs.prime_ready = 1;
    }
-
+#endif
    if (d->sens.inst_frq > d->param.smap_abandon)
    {
     d->engine_mode = EM_IDLE;

@@ -354,10 +354,10 @@ typedef struct params_t
   uint16_t inj_lambda_swt_point;         //!< lambda switch point in volts
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
+  uint8_t  inj_lambda_activ_delay;       //!< Lambda sensor activation delay
 
   uint8_t  inj_ae_tpsdot_thrd;           //!< TPS %/sec threshold, max rate is 255%/sec
   uint8_t  inj_ae_coldacc_mult;          //!< Cold acceleration multiplier (-30°C), (value - 1.0) * 128
-
 
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
@@ -365,7 +365,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[93];
+  uint8_t  reserved[92];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

@@ -33,9 +33,7 @@
 #include "ioconfig.h"
 #include "vstimer.h"
 
-/**Lambda correction afterstart turn on timeout, 30 seconds*/
-#define LAMBDA_AFTERSTART_TIMEOUT 3000
-
+/**Internal state variables*/
 typedef struct
 {
  uint8_t stroke_counter;         //!< Used to count strokes for correction integration
@@ -62,7 +60,7 @@ void lambda_control(struct ecudata_t* d)
  }
  else
  {
-  if ((s_timer_gtc() - ego.lambda_t1) >= LAMBDA_AFTERSTART_TIMEOUT)
+  if ((s_timer_gtc() - ego.lambda_t1) >= (d->param.inj_lambda_activ_delay*100))
    ego.enabled = 1;
  }
 }

@@ -481,7 +481,7 @@ int16_t ats_lookup(uint16_t adcvalue)
 #ifdef FUEL_INJECT
 uint16_t inj_base_pw(struct ecudata_t* d)
 {
- int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
+ int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
  int8_t f, fp1, lp1;
 
  //calculate lookup table indexes. VE and AFR tables have same size
@@ -524,7 +524,7 @@ uint16_t inj_base_pw(struct ecudata_t* d)
  pw32>>=(7+4);
 
  //apply AFR table
- pw32*= bilinear_interpolation(rpm, discharge,
+ afr = bilinear_interpolation(rpm, discharge,
         _GBU(inj_afr[l][f]),  //values in table are unsigned
         _GBU(inj_afr[lp1][f]),
         _GBU(inj_afr[lp1][fp1]),
@@ -533,7 +533,8 @@ uint16_t inj_base_pw(struct ecudata_t* d)
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
         gradient) >> 2;
- pw32>>=(11+2);
+ pw32=(pw32 * afr)>>(11+2);
+ d->corr.afr=afr>>2;          //update value of AFR
 
  //return restricted value (16 bit)
  return ((pw32 > 65535) ? 65535 : pw32);

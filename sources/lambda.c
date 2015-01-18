@@ -73,6 +73,12 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  if (!ego.enabled)
   return; //wait some time before oxygen sensor will be turned on
 
+ if (d->corr.afr != 139) //EGO allowed only when AFR=14.7
+ {
+  d->corr.lambda = 0;
+  return;
+ }
+
  if (d->sens.inst_frq > d->param.inj_lambda_rpm_thrd)    //RPM > threshold
  {
   if (d->sens.temperat > d->param.inj_lambda_temp_thrd)  //coolant temperature > threshold

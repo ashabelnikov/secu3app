@@ -105,6 +105,7 @@ typedef struct correct_t
  int16_t airt_aalt;                      //!< Advance angle from air temp. corr. map
 #ifdef FUEL_INJECT
  int16_t lambda;                         //!< Current value of lambda (EGO) correction, can be negative
+ uint8_t afr;                            //!< Current value of air to fuel ratio (from AFR map)
 #endif
 }correct_t;
 

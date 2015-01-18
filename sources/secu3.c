@@ -160,6 +160,7 @@ void init_ecu_data(struct ecudata_t* d)
 #ifdef FUEL_INJECT
  edat.inj_pw = 0;
  edat.corr.lambda = 0;
+ edat.corr.afr = 0;
 #endif
 }
 

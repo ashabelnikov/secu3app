@@ -19,51 +19,85 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file idlecon.c
- * Implementation of controling of Idle Econimizer (IE) valve.
- * (Реализация управления клапаном принудительного холостого хода(ЭПХХ)).
+/** \file fuelcut.c
+ * Implementation of controling of Idle Cut-off valve (Carburetor) of fuel cut (Fuel injection).
  */
 
 #include "port/avrio.h"
 #include "port/port.h"
 #include "bitmask.h"
 #include "ecudata.h"
-#include "idlecon.h"
+#include "fuelcut.h"
 #include "ioconfig.h"
 #include "vstimer.h"
 
-/** Opens/closes IE valve (открывает/закрывает клапан ЭПХХ) */
-#define SET_IE_VALVE_STATE(s) IOCFG_SET(IOP_IE, s)
+#ifdef FUEL_INJECT
+/**State variable for delay counter*/
+static uint8_t state = 0;
 
 void idlecon_init_ports(void)
 {
- IOCFG_INIT(IOP_IE, 1); //valve is turned on (клапан ЭПХХ включен)
+ //empty
 }
 
-//Implementation of IE functionality. If throttle gate is closed AND frq > [up.threshold] OR
-//throttle gate is closed AND frq > [lo.threshold] BUT valve is already closed, THEN turn off
-//fuel supply by stopping to apply voltage to valve's coil. ELSE - fuel supply is turned on.
-
-//реализация функции ЭПХХ. Если заслонка карбюратора закрыта и frq > [верх.порог] или
-//заслонка карбюратора закрыта и frq > [ниж.порог] но клапан уже закрыт, то производится
-//выключение подачи топлива путем прекращения подачи напряжения на обмотку эл.клапана. Иначе - подача топлива.
 void idlecon_control(struct ecudata_t* d)
 {
- //if throttle gate is opened, then onen valve,reload timer and exit from condition
- //(если дроссель открыт, то открываем клапан, заряжаем таймер и выходим из условия).
+ if (d->sens.inst_frq > d->param.ie_hit)
+ {
+  //When RPM > hi threshold, then check TPS, CTS and MAP
+  if ((!d->sens.carb) && (d->sens.temperat > d->param.fuelcut_cts_thrd) && (d->sens.map < d->param.fuelcut_map_thrd))
+  {
+   if (0==state)
+   {
+    s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
+    state = 1;
+   }
+   else
+   {
+    if (s_timer_is_action(epxx_delay_time_counter))
+     d->ie_valve = 0;  //Cut fuel
+   }
+  }
+  else
+  {
+   d->ie_valve = 1;   //normal operation
+   state = 0;
+  }
+ }
+ else if (d->sens.inst_frq < d->param.ie_lot)
+ { //always turn on fuel when RPM < low threshold
+  d->ie_valve = 1;
+  state = 0;
+ }
+}
+
+#else //Carburetor (Idle Cut-off valve control)
+
+void idlecon_init_ports(void)
+{
+ IOCFG_INIT(IOP_IE, 1); //valve is turned on
+}
+
+//Implementation of Idle Cut-off valve control. If throttle gate is closed AND frq > [up.threshold] OR
+//throttle gate is closed AND frq > [lo.threshold] BUT valve is already closed, THEN turn off
+//fuel supply by stopping to apply voltage to valve's coil. ELSE - fuel supply is turned on.
+void idlecon_control(struct ecudata_t* d)
+{
+ //if throttle gate is opened, then open valve,reload timer and exit from condition
  if (d->sens.carb)
  {
   d->ie_valve = 1;
   s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
  }
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
- //(если дроссель закрыт, то состояние клапана зависит от оборотов, предыдущего состояния клапана, таймера и вида топлива).
  else
-  if (d->sens.gas) //gas (газовое топливо)
+  if (d->sens.gas) //gas
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d->sens.inst_frq > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit_g)))?0:1;
-  else //gasoline (бензин)
+  else //petrol
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
- SET_IE_VALVE_STATE(d->ie_valve);
+ IOCFG_SET(IOP_IE, d->ie_valve)
 }
+
+#endif

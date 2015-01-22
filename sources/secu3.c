@@ -42,11 +42,11 @@
 #include "ecudata.h"
 #include "eculogic.h"
 #include "eeprom.h"
-#include "fuelecon.h"
+#include "pwrvalve.h"
 #include "fuelpump.h"
 #include "funconv.h"
 #include "jumper.h"
-#include "idlecon.h"
+#include "fuelcut.h"
 #include "immobiliz.h"
 #include "injector.h"
 #include "intkheat.h"
@@ -509,8 +509,9 @@ MAIN()
    ckps_set_advance_angle(edat.corr.curr_angle);
 
 #ifdef FUEL_INJECT
-   //set current injection time
+   //set current injection time and fuel cut state
    inject_set_inj_time(edat.inj_pw);
+   inject_set_fuelcut(edat.ie_valve);
 
    lambda_stroke_event_notification(&edat);
 #endif

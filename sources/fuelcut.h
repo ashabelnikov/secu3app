@@ -19,9 +19,8 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file idlecon.h
- * Control of Idle Econimizer (IE) valve.
- * (”правление клапаном принудительного холостого хода(Ёѕ’’)).
+/** \file fuelcut.h
+ * Control of Idle Cut-off valve (Carburetor) or fuel cut (Fuel injection).
  */
 
 #ifndef _IDLECON_H_
@@ -29,10 +28,10 @@
 
 struct ecudata_t;
 
-/** Initialization of used I/O ports (инициализаци€ используемых портов) */
+/** Initialization of used I/O ports */
 void idlecon_init_ports(void);
 
-/** Does control of valve (”правление клапаном)
+/** Does control of valve or fuel cut
  * \param d pointer to ECU data structure
  */
 void idlecon_control(struct ecudata_t* d);

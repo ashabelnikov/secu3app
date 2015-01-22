@@ -52,6 +52,11 @@ void inject_set_num_squirts(uint8_t numsqr);
  */
 void inject_set_inj_time(uint16_t time);
 
+/**Set fuel cut on/off
+ * \param state Fuel cut flag (1 - fuel is On, 0 - fuel of Off)
+ */
+void inject_set_fuelcut(uint8_t state);
+
 /**Start injection (open injector for specified time).
  * This function must be called synchronously with crankshaft
  */

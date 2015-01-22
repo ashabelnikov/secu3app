@@ -19,8 +19,8 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file fuelecon.c
- * Implementation of controlling algorithms for Fuel Economizer (FE)
+/** \file pwrvalve.c
+ * Implementation of controlling algorithms for Power Valve (Carburetor)
  * (Реализация алгоритмов управления Экономайзером Мощностных Режимов (ЭМР)).
  */
 
@@ -28,7 +28,7 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "ecudata.h"
-#include "fuelecon.h"
+#include "pwrvalve.h"
 #include "ioconfig.h"
 
 /** Open/Close FE valve (открывает/закрывает клапан ЭМР) */

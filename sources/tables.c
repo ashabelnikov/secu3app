@@ -235,6 +235,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ie_hit_g =                    2100,
   .fe_on_threshold =             392,
   .shutoff_delay =               0,
+  .fuelcut_map_thrd =            1280,
+  .fuelcut_cts_thrd =            60,
 
   .angle_dec_speed =             96,
   .angle_inc_speed =             96,

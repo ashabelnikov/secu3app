@@ -53,6 +53,7 @@ typedef struct
  uint8_t  cur_cyl;               //!< current cylinder
  uint8_t  sqr_cyl;               //!< current cylinder for squirt
  volatile uint8_t cyl_inc;       //!< used to calculate next number of cylinder for squirt
+ volatile uint8_t fuelcut;       //!< fuelcut flag
 }inj_state_t;
 
 /** Global instance of injector state variable structure*/
@@ -63,6 +64,7 @@ void inject_init_state(void)
  inj.inj_time = 0xFFFF;
  inj.sqr_cyl = 0;
  inj.cur_cyl = 0;
+ inj.fuelcut = 1;  //no fuel cut
 }
 
 void inject_init_ports(void)
@@ -97,8 +99,15 @@ void inject_set_inj_time(uint16_t time)
  _END_ATOMIC_BLOCK();
 }
 
+void inject_set_fuelcut(uint8_t state)
+{
+ inj.fuelcut = state;
+}
+
 void inject_start_inj(void)
 {
+ if (!inj.fuelcut)
+  return; //fuel is OFF
  if (inj.cur_cyl == inj.sqr_cyl)
  {
   //interrupts must be disabled!

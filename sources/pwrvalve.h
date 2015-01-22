@@ -19,8 +19,8 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file fuelecon.h
- * Control of Fuel Economizer (FE)
+/** \file pwrvalve.h
+ * Control of Power Valve (Carburetor)
  * (”правление экономайзером мощностных режимов).
  */
 

@@ -240,6 +240,8 @@ typedef struct params_t
   uint16_t ie_hit_g;                     //!< верхний порог ЭПХХ (газ) (upper threshold for idle economizer valve(min-1) for gas)
   int16_t  fe_on_threshold;              //!< порог включения экономайзера мощностных режимов (switch on threshold of FE)
   uint8_t  shutoff_delay;                //!< задержка выключения клапана (idle economizer valve's turn off delay)
+  uint16_t fuelcut_map_thrd;             //!< fuel cut off MAP threshold
+  int16_t fuelcut_cts_thrd;              //!< fuel cut off CTS threshold
 
   // Advance angle control
   int16_t  angle_dec_speed;              //!< limitation of alternation speed of advance angle (when decreasing)
@@ -365,7 +367,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[92];
+  uint8_t  reserved[88];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

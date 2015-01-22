@@ -97,7 +97,7 @@ void idlecon_control(struct ecudata_t* d)
   else //petrol
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
- IOCFG_SET(IOP_IE, d->ie_valve)
+ IOCFG_SET(IOP_IE, d->ie_valve);
 }
 
 #endif

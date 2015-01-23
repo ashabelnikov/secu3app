@@ -84,14 +84,14 @@ int16_t idling_function(struct ecudata_t* d)
  int16_t rpm = d->sens.inst_frq;
 
  //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы
- for(i = 14; i >= 0; i--)
+ for(i = F_IDL_POINTS-2; i >= 0; i--)
   if (d->sens.inst_frq >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i])) break;
 
  if (i < 0)  {i = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
+ if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_IDL_POINTS-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_IDL_POINTS-1]);
 
- return simple_interpolation(rpm,
-             _GB(f_idl[i]), _GB(f_idl[i+1]),
-             PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[i]), 16);
+ return simple_interpolation(rpm, _GB(f_idl[i]), _GB(f_idl[i+1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[i]), 16);
 }
 
 
@@ -105,7 +105,7 @@ int16_t start_function(struct ecudata_t* d)
 
  i = (rpm - 200) / 40;   //40 - шаг по оборотам
 
- if (i >= 15) i = i1 = 15;
+ if (i >= F_STR_POINTS-1) i = i1 = F_STR_POINTS-1;
   else i1 = i + 1;
 
  return simple_interpolation(rpm, _GB(f_str[i]), _GB(f_str[i1]), (i * 40) + 200, 40, 16);
@@ -128,8 +128,8 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   gradient = 1;  //исключаем деление на ноль и отрицательное значение если верхнее давление меньше нижнего
  l = (discharge / gradient);
 
- if (l >= (F_WRK_POINTS_F - 1))
-  lp1 = l = F_WRK_POINTS_F - 1;
+ if (l >= (F_WRK_POINTS_L - 1))
+  lp1 = l = F_WRK_POINTS_L - 1;
  else
   lp1 = l + 1;
 
@@ -140,12 +140,13 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   return 0; //выходим если вызвавший указал что мы должны обновить только расход воздуха
 
  //находим узлы интерпол€ции, вводим ограничение если обороты выход€т за пределы
- for(f = 14; f >= 0; f--)
+ for(f = F_WRK_POINTS_F-2; f >= 0; f--)
   if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
 
  //рабоча€ карта работает на rpm_grid_points[0] оборотах и выше
  if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
-  fp1 = f + 1;
+ if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_WRK_POINTS_F-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_WRK_POINTS_F-1]);
+ fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
         _GB(f_wrk[l][f]),
@@ -174,7 +175,7 @@ int16_t coolant_function(struct ecudata_t* d)
  //10 - шаг между узлами интерпол€ции по температуре
  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= F_TMP_POINTS-1) i = i1 = F_TMP_POINTS-1;
  else i1 = i + 1;
 
  return simple_interpolation(t, _GB(f_tmp[i]), _GB(f_tmp[i1]),
@@ -446,7 +447,7 @@ int16_t airtemp_function(struct ecudata_t* d)
  //10 - step between interpolation points
  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= ATS_CORR_LOOKUP_TABLE_SIZE-1) i = i1 = ATS_CORR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
  return simple_interpolation(t, (int8_t)PGM_GET_BYTE(&fw_data.exdata.ats_corr[i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.ats_corr[i1]), //<--values in table are signed
@@ -502,6 +503,7 @@ uint16_t inj_base_pw(struct ecudata_t* d)
   if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
 
  if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
+ if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1]);
   fp1 = f + 1;
 
  //Calculate basic pulse width. Calculations are based on the ideal gas law and precalulated constant
@@ -570,7 +572,7 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  //10 - step between interpolation points in table
  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= INJ_CRANKING_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_CRANKING_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
  return simple_interpolation(t, _GWU(inj_cranking[i]), _GWU(inj_cranking[i1]),  //<--values in table are unsigned
@@ -591,7 +593,7 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
  //10 - шаг между узлами интерпол€ции по температуре
  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= INJ_WARMUP_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_WARMUP_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
  return simple_interpolation(t, _GBU(inj_warmup[i]), _GBU(inj_warmup[i1]),  //<--values in table are unsigned
@@ -612,7 +614,7 @@ uint8_t inj_aftstr_en(struct ecudata_t* d)
  //10 - шаг между узлами интерпол€ции по температуре
  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= INJ_AFTSTR_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_AFTSTR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
  return simple_interpolation(t, _GBU(inj_aftstr[i]), _GBU(inj_aftstr[i1]),  //<--values in table are unsigned
@@ -640,7 +642,7 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
  //10 - шаг между узлами интерпол€ции по температуре
  i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= INJ_IAC_POS_TABLE_SIZE-1) i = i1 = INJ_IAC_POS_TABLE_SIZE-1;
  else i1 = i + 1;
 
  if (mode) //run
@@ -660,6 +662,7 @@ int16_t inj_ae_tps_lookup(struct ecudata_t* d)
   if (d->sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
 
  if (i < 0)  {i = 0; tpsdot = (int16_t)_GB(inj_ae_tps_bins[0])*10;}
+ if (tpsdot > ((int16_t)_GB(inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE-1])*10)) tpsdot = ((int16_t)_GB(inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE-1])*10);
 
  return simple_interpolation(tpsdot,
              ((int16_t)_GBU(inj_ae_tps_enr[i]))-55, ((int16_t)_GBU(inj_ae_tps_enr[i+1]))-55,  //<--values in inj_ae_tps_enr table are unsigned
@@ -675,6 +678,7 @@ uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
   if (d->sens.inst_frq >= _GBU(inj_ae_rpm_bins[i])*100) break;
 
  if (i < 0)  {i = 0; rpm = _GBU(inj_ae_rpm_bins[0])*100;}
+ if (rpm > _GBU(inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE-1])*100) rpm = _GBU(inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE-1])*100;
 
  return simple_interpolation(rpm,
              ((int16_t)_GBU(inj_ae_rpm_enr[i])), ((int16_t)_GBU(inj_ae_rpm_enr[i+1])),  //<--values in table are unsigned

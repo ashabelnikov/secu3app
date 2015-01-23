@@ -74,8 +74,6 @@ uartstate_t uart;
 #define TFIOEND  0x83       //!< Transposed FIOEND
 #define TFESC    0x84       //!< Transposed FESC
 
-#define PACKET_BYTE_SIZE 1  //!< Size of byte in packet
-
 /** Appends transmitter's buffer
  * \param b byte which will be used to append tx buffer
  */
@@ -124,8 +122,6 @@ uint8_t takeout_rx_buff(void)
 }
 
 #else //HEX mode
-
-#define PACKET_BYTE_SIZE 2  //!< Size of byte in packet
 
 /**For BIN-->HEX encoding */
 PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
@@ -234,12 +230,10 @@ static void build_rb(const uint8_t* ramBuffer, uint8_t size)
  * can NOT be used for binary data */
 static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 {
- if (size > uart.recv_size)
-  size = uart.recv_size;
 #ifdef UART_BINARY
- while(size--) *ramBuffer++ = takeout_rx_buff();
+ while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = takeout_rx_buff();
 #else
- while(size--) *ramBuffer++ = uart.recv_buf[uart.recv_index++];
+ while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = uart.recv_buf[uart.recv_index++];
 #endif
 }
 
@@ -308,14 +302,7 @@ static uint32_t recept_i32h(void)
  * can be used for binary data */
 static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 {
-#ifdef UART_BINARY
- uint8_t rcvsize = uart.recv_size;
-#else
- uint8_t rcvsize = uart.recv_size >> 1; //two hex symbols per byte
-#endif
- if (size > rcvsize)
-  size = rcvsize;
- while(size--) *ramBuffer++ = recept_i8h();
+ while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = recept_i8h();
 }
 //--------------------------------------------------------------------
 
@@ -877,7 +864,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    uint8_t fuel = recept_i4h();
    uint8_t state = recept_i4h();
    uint8_t addr = recept_i8h();
-   uart.recv_size-=(1+1+1+PACKET_BYTE_SIZE); //[d][x][x][xx]
+// uart.recv_size-=(1+1+1+PACKET_BYTE_SIZE); //[d][x][x][xx]
    switch(state)
    {
     case ETMT_STRT_MAP: //start map

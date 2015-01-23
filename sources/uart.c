@@ -34,6 +34,7 @@
 #include "dbgvar.h"
 #include "ecudata.h"
 #include "eeprom.h"
+#include "ioconfig.h"
 #include "uart.h"
 #include "ufcodes.h"
 #include "wdt.h"
@@ -493,7 +494,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i24h(0);
 #endif
 #if defined(AIRTEMP_SENS) && defined(SECU3T)
-   build_i16h(d->sens.air_temp);
+   if (IOCFG_CHECK(IOP_AIR_TEMP))
+    build_i16h(d->sens.air_temp);
+   else
+    build_i16h(0x7FFF);                   //<--indicates that it is not used, voltage will be shown on the dashboard
 #else
    build_i16h(0);
 #endif

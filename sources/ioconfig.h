@@ -108,6 +108,8 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_RESERVED27   66     //!< reserved plug   ()
 #define IOP_RESERVED28   67     //!< reserved plug   ()
 
+#define IOP_IGN78_OFF    (IOP_IGN_OUT7-(IOP_ADD_IO2+1)) //!< needed by ckps.c
+
 /**Wrap macro from port/pgmspace.h. for getting function pointers from program memory */
 #define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
 

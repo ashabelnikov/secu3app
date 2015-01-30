@@ -155,7 +155,9 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    if (((int32_t)pw) < 0)
     pw = 0;
    pw+= inj_dead_time(d);
-   d->inj_pw = pw > 65535 ? 65535 : pw;
+   if (d->ie_valve)
+    d->inj_pw = pw > 65535 ? 65535 : pw;
+   else d->inj_pw = 0;
    }
 #endif
    break;
@@ -208,7 +210,9 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    if (((int32_t)pw) < 0)
     pw = 0;
    pw+= inj_dead_time(d);
-   d->inj_pw = pw > 65535 ? 65535 : pw;
+   if (d->ie_valve)
+    d->inj_pw = pw > 65535 ? 65535 : pw;
+   else d->inj_pw = 0;
    }
 #endif
 

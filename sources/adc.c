@@ -164,7 +164,7 @@ int16_t adc_get_tpsdot_value(void)
  if (abs(dv) > 512) dv = (dv < 0) ? -512 : 512; //limit voltage change to the half of ADC range
  if (dt < TMR_TICKS_PER_SEC/1000) return 0;     //avoid overflow, limit time change to minimum 1ms
 
- return (((int32_t)dv) * TMR_TICKS_PER_SEC) / (tpsval[0].tps_tmr - tpsval[1].tps_tmr); //calculate 1-st derivative, num of ADC discr / sec
+ return (((int32_t)dv) * TMR_TICKS_PER_SEC) / dt; //calculate 1-st derivative, num of ADC discr / sec
 }
 #endif
 #endif

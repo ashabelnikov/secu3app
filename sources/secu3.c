@@ -219,8 +219,6 @@ void init_modules(void)
  //Initialization of ADC
  adc_init();
 
- //проводим несколько циклов измерения датчиков для инициализации данных
- meas_initial_measure(&edat);
 
  //Take away of starter blocking (снимаем блокировку стартера)
  starter_set_blocking_state(0);
@@ -305,6 +303,9 @@ void init_modules(void)
 
  //Initialization of the suspended operations module
  sop_init_operations();
+
+ //проводим несколько циклов измерения датчиков для инициализации данных
+ meas_initial_measure(&edat);
 }
 
 

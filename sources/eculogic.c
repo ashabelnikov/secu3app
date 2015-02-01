@@ -171,7 +171,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 
 #if defined(SM_CONTROL) && !defined(FUEL_INJECT)
    //air flow will be always 1 if choke RPM regulator is active
-   if (d->choke_rpm_reg || (0!=d->param.choke_rpm[0]))
+   if (d->choke_rpm_reg)
    {
     work_function(d, 1);                    //обновляем значение расхода воздуха
     angle = d->corr.idle_aalt = idling_function(d);//базовый УОЗ - функция для ХХ

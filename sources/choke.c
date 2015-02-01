@@ -136,6 +136,8 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    {
     chks.strt_t1 = s_timer_gtc();
     chks.strt_mode = 1;
+    //set choke RPM regulation flag (will be activated after delay)
+    d->choke_rpm_reg = (0!=d->param.choke_rpm[0]);
    }
    break; //use startup correction
   case 1:
@@ -151,8 +153,6 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 #ifdef USE_RPMREG_TURNON_DELAY
     CLEARBIT(chks.flags, CF_PRMREG_ENTO);
 #endif
-    //set choke RPM regulation flag
-    d->choke_rpm_reg = (0!=d->param.choke_rpm[0]);
    }
    break; //use startup correction
   case 2:

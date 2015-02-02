@@ -96,7 +96,10 @@ void inject_set_inj_time(uint16_t time)
 {
  if (time < 16)                              //restrict minimum injection time to 50uS
   time = 16;
- time = (time >> 1) - INJ_COMPB_CALIB - 1;   //calibration ticks and 1 tick to ensure correct behaviour when low byte is 0
+ time = (time >> 1) - INJ_COMPB_CALIB;       //subtract calibration ticks
+ if (0==_AB(time, 0))                        //avoid strange bug which appears when OCR2B is set to the same value as TCNT2
+  (_AB(time, 0))++;
+
  _BEGIN_ATOMIC_BLOCK();
  inj.inj_time = time;
  _END_ATOMIC_BLOCK();
@@ -115,7 +118,7 @@ void inject_start_inj(void)
  {
   //interrupts must be disabled!
   _BEGIN_ATOMIC_BLOCK();
-  OCR2B = TCNT2 + _AB(inj.inj_time, 0) + 1;
+  OCR2B = TCNT2 + _AB(inj.inj_time, 0);
   inj.tmr2b_h = _AB(inj.inj_time, 1);
   IOCFG_SET(IOP_INJ_OUT0, INJ_ON);            //turn on injector 1
   IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 2
@@ -136,9 +139,11 @@ void inject_start_inj(void)
 void inject_open_inj(uint16_t time)
 {
   if (0==time) return;
-  time = (time >> 1) - INJ_COMPB_CALIB - 1;
+  time = (time >> 1) - INJ_COMPB_CALIB;
+  if (0==_AB(time, 0))
+   (_AB(time, 0))++;
   _BEGIN_ATOMIC_BLOCK();
-  OCR2B = TCNT2 + _AB(time, 0) + 1;
+  OCR2B = TCNT2 + _AB(time, 0);
   inj.tmr2b_h = _AB(time, 1);
   IOCFG_SET(IOP_INJ_OUT0, INJ_ON);            //turn on injector 1
   IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 2

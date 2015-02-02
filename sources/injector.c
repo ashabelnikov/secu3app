@@ -40,6 +40,9 @@
  #error "You can not use FUEL_INJECT option without _PLATFORM_M644_"
 #endif
 
+#define INJ_ON  0   //!< Injector is turned on
+#define INJ_OFF 1   //!< Injector is turned off
+
 /**COMPB interrupt calibration*/
 #define INJ_COMPB_CALIB 2
 
@@ -69,10 +72,10 @@ void inject_init_state(void)
 
 void inject_init_ports(void)
 {
- IOCFG_INIT(IOP_INJ_OUT0, 0);                //injector 1 is turned off
- IOCFG_INIT(IOP_INJ_OUT1, 0);                //injector 2 is turned off
- IOCFG_INIT(IOP_INJ_OUT2, 0);                //injector 3 is turned off
- IOCFG_INIT(IOP_INJ_OUT3, 0);                //injector 4 is turned off
+ IOCFG_INIT(IOP_INJ_OUT0, INJ_OFF);          //injector 1 is turned off
+ IOCFG_INIT(IOP_INJ_OUT1, INJ_OFF);          //injector 2 is turned off
+ IOCFG_INIT(IOP_INJ_OUT2, INJ_OFF);          //injector 3 is turned off
+ IOCFG_INIT(IOP_INJ_OUT3, INJ_OFF);          //injector 4 is turned off
 }
 
 void inject_set_cyl_number(uint8_t cylnum)
@@ -114,10 +117,10 @@ void inject_start_inj(void)
   _BEGIN_ATOMIC_BLOCK();
   OCR2B = TCNT2 + _AB(inj.inj_time, 0) + 1;
   inj.tmr2b_h = _AB(inj.inj_time, 1);
-  IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector 1
-  IOCFG_SET(IOP_INJ_OUT1, 1);                 //turn on injector 2
-  IOCFG_SET(IOP_INJ_OUT2, 1);                 //turn on injector 3
-  IOCFG_SET(IOP_INJ_OUT3, 1);                 //turn on injector 4
+  IOCFG_SET(IOP_INJ_OUT0, INJ_ON);            //turn on injector 1
+  IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 2
+  IOCFG_SET(IOP_INJ_OUT2, INJ_ON);            //turn on injector 3
+  IOCFG_SET(IOP_INJ_OUT3, INJ_ON);            //turn on injector 4
 
   SETBIT(TIMSK2, OCIE2B);
   SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
@@ -137,10 +140,10 @@ void inject_open_inj(uint16_t time)
   _BEGIN_ATOMIC_BLOCK();
   OCR2B = TCNT2 + _AB(time, 0) + 1;
   inj.tmr2b_h = _AB(time, 1);
-  IOCFG_SET(IOP_INJ_OUT0, 1);                 //turn on injector 1
-  IOCFG_SET(IOP_INJ_OUT1, 1);                 //turn on injector 2
-  IOCFG_SET(IOP_INJ_OUT2, 1);                 //turn on injector 3
-  IOCFG_SET(IOP_INJ_OUT3, 1);                 //turn on injector 4
+  IOCFG_SET(IOP_INJ_OUT0, INJ_ON);            //turn on injector 1
+  IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 2
+  IOCFG_SET(IOP_INJ_OUT2, INJ_ON);            //turn on injector 3
+  IOCFG_SET(IOP_INJ_OUT3, INJ_ON);            //turn on injector 4
   SETBIT(TIMSK2, OCIE2B);
   SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
   _END_ATOMIC_BLOCK();
@@ -155,10 +158,10 @@ ISR(TIMER2_COMPB_vect)
  }
  else
  {
-  IOCFG_SET(IOP_INJ_OUT0, 0);                //turn off injector 1
-  IOCFG_SET(IOP_INJ_OUT1, 0);                //turn off injector 2
-  IOCFG_SET(IOP_INJ_OUT2, 0);                //turn off injector 3
-  IOCFG_SET(IOP_INJ_OUT3, 0);                //turn off injector 4
+  IOCFG_SET(IOP_INJ_OUT0, INJ_OFF);          //turn off injector 1
+  IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 2
+  IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 3
+  IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 4
   CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
  }
 }

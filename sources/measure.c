@@ -239,7 +239,7 @@ void meas_average_measured_values(struct ecudata_t* d)
  d->sens.add_i2 = d->sens.add_i2_raw;
 #endif
 
-#ifdef AIRTEMP_SENS
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
  if (IOCFG_CHECK(IOP_AIR_TEMP))
   d->sens.air_temp = ats_lookup(d->sens.add_i2_raw);   //ADD_IO2 input
  else

@@ -98,7 +98,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_INJ_OUT1     56     //!< INJ_OUT1        (output)
 #define IOP_INJ_OUT2     57     //!< INJ_OUT2        (output)
 #define IOP_INJ_OUT3     58     //!< INJ_OUT3        (output)
-#define IOP_RESERVED20   59     //!< reserved plug   ()
+#define IOP_IAC_PWM      59     //!< reserved plug   (output)
 #define IOP_RESERVED21   60     //!< reserved plug   ()
 #define IOP_RESERVED22   61     //!< reserved plug   ()
 #define IOP_RESERVED23   62     //!< reserved plug   ()

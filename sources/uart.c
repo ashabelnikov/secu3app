@@ -182,7 +182,7 @@ void build_rs(const uint8_t* ramBuffer, uint8_t size)
 #else
 static void build_i4h(uint8_t i)
 {
- uart.send_buf[uart.send_size++] = ((i)+0x30);
+ uart.send_buf[uart.send_size++] = (i < 0xA) ? i+0x30 : i+0x37;
 }
 #endif
 
@@ -272,7 +272,8 @@ static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 #else
 static uint8_t recept_i4h(void)
 {
- return uart.recv_buf[uart.recv_index++] - 0x30;
+ uint8_t i = uart.recv_buf[uart.recv_index++];
+ return  (i < 0x3A) ? i - 0x30 : i - 0x37;
 }
 #endif
 

@@ -45,4 +45,19 @@ void vent_init_state(void);
  */
 void vent_turnoff(struct ecudata_t *d);
 
+#ifdef _PLATFORM_M644_
+/**Set PWM frequency
+ * \param period value of PWM period (period = 1/f * 524288)
+ */
+void vent_set_pwmfrq(uint16_t period);
+
+#ifdef FUEL_INJECT
+/** Use by IAC when ECF is remapped to IAC_PWM
+ * \param duty 8-bit PWM duty value (0...255)
+ */
+void vent_set_duty8(uint8_t duty);
+#endif
+#endif
+
+
 #endif //_VENTILATOR_H_

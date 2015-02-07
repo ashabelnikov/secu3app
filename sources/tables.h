@@ -270,6 +270,7 @@ typedef struct params_t
   int16_t  vent_off;                     //!< температура выключения вентилятора (cooling fan's turn off temperature)
   uint8_t  vent_pwm;                     //!< flag - control cooling fan by using PWM
   uint8_t  cts_use_map;                  //!< Flag which indicates using of lookup table for coolant temperature sensor
+  uint16_t vent_pwmfrq;                  //!< PWM frequency (value = 1/f * 524288), 10....5000Hz
 
   // ADC corrections/compensations
   int16_t  map_adc_factor;               //!< Поправки для коррекции погрешностей АЦП (ДАД)
@@ -367,7 +368,7 @@ typedef struct params_t
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[88];
+  uint8_t  reserved[86];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

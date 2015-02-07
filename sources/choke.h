@@ -27,7 +27,7 @@
 #ifndef _CHOKE_H_
 #define _CHOKE_H_
 
-#ifdef SM_CONTROL
+#if defined(SM_CONTROL) || defined(FUEL_INJECT)
 
 #include <stdint.h>
 
@@ -44,10 +44,12 @@ void choke_init(void);
  */
 void choke_control(struct ecudata_t* d);
 
+#ifdef SM_CONTROL
 /** Used in power management
  * \return 1 - choke is ready, 0 - choke is not ready
  */
 uint8_t choke_is_ready(void);
+#endif
 
 #endif
 

@@ -24,7 +24,10 @@
  * (Реализация управления воздушной заслонкой карбюратора).
  */
 
-#ifdef SM_CONTROL
+// SM_CONTROL - control carburetor's choke
+// FUEL_INJECT - control IAC using PWM
+// SM_CONTROL & FUEL_INJECT - control IAC using stepper or PWM
+#if defined(SM_CONTROL) || defined(FUEL_INJECT)
 
 #include "port/port.h"
 #include <stdlib.h>
@@ -35,17 +38,25 @@
 #include "magnitude.h"
 #include "smcontrol.h"
 #include "pwrrelay.h"
+#include "ventilator.h"
+
+#if defined(FUEL_INJECT) && (!defined(_PLATFORM_M644_) || !defined(SECU3T) || !defined(AIRTEMP_SENS))
+ #error "You can not use FUEL_INJECT option without _PLATFORM_M644_, SECU3T or AIRTEMP_SENS"
+#endif
 
 /**Direction used to set choke to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
 #ifdef FUEL_INJECT
+
+#ifdef SM_CONTROL
 //#define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle position in IAC stepper initialization
 
 //See flags variable in choke_st_t
 #define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
 #define CF_MAN_CNTR     1  //!< manual control mode flag
 #define CF_SMDIR_CHG    2  //!< flag, indicates that stepper motor direction has changed during motion
+#endif
 
 #else // Carburetor's choke stuff
 #define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle limit switch in choke initialization
@@ -88,8 +99,7 @@ typedef struct
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
  uint8_t   flags;          //!< state flags (see CF_ definitions)
 
-#ifdef FUEL_INJECT
-#else
+#ifndef FUEL_INJECT
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
@@ -102,26 +112,37 @@ choke_st_t chks = {0};
 
 void choke_init_ports(void)
 {
+#ifdef SM_CONTROL
  stpmot_init_ports();
+#endif
 }
 
 void choke_init(void)
 {
- stpmot_init();
  chks.state = 0;
- CLEARBIT(chks.flags, CF_POWERDOWN);
  chks.strt_mode = 0;
+#ifdef SM_CONTROL
+ stpmot_init();
+ CLEARBIT(chks.flags, CF_POWERDOWN);
  CLEARBIT(chks.flags, CF_MAN_CNTR);
-#ifdef FUEL_INJECT
-#else
+#endif
+#ifndef FUEL_INJECT
  chks.rpmreg_prev = 0;
  CLEARBIT(chks.flags, CF_RPMREG_ENEX);
 #endif
 }
 
+/** Calculates choke position (%*2) from step value
+ * \param value Position of choke in stepper motor steps
+ * \param steps total number of steps
+ * \return choke position in %*2
+ */
+uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
+{
+ return (((uint32_t)value) * 200) / steps;
+}
 
-#ifdef FUEL_INJECT
-#else
+#ifndef FUEL_INJECT
 /** Calculates choke position correction at startup mode and from RPM regulator
  * Work flow: Start-->Wait 3 sec.-->RPM regul.-->Ready
  * \param d pointer to ECU data structure
@@ -207,6 +228,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 }
 #endif
 
+#ifdef SM_CONTROL
 /** Set choke to initial position. Because we have no position feedback, we
  * must use number of steps more than stepper actually has.
  * \param d pointer to ECU data structure
@@ -221,16 +243,6 @@ static void initial_pos(struct ecudata_t* d, uint8_t dir)
  else
 #endif
   stpmot_run(d->param.sm_steps + (d->param.sm_steps >> 5));   //run using number of steps + 3%
-}
-
-/** Calculates choke position (%*2) from step value
- * \param value Position of choke in stepper motor steps
- * \param steps total number of steps
- * \return choke position in %*2
- */
-uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
-{
- return (((uint32_t)value) * 200) / steps;
 }
 
 /** Stepper motor control for normal working mode
@@ -275,12 +287,14 @@ void sm_motion_control(struct ecudata_t* d, int16_t pos)
   }
  }
 }
+#endif //SM_CONTROL
 
 /** Calculate stepper motor position for normal mode
  * \param d pointer to ECU data structure
+ * \param pwm 1 - PWM IAC, 0 - SM IAC
  * \return stepper motor position in steps
  */
-int16_t calc_sm_position(struct ecudata_t* d)
+int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 {
 #ifdef FUEL_INJECT
  uint8_t ppos = 0; //position in percentage * 2
@@ -315,7 +329,10 @@ int16_t calc_sm_position(struct ecudata_t* d)
     chks.strt_mode = 0; //engine is stopped, so go into the cranking mode again
    break;
  }
- return ((((int32_t)d->param.sm_steps) * ppos) / 200); //convert percentage position to SM steps
+ if (pwm)
+  return ((((int32_t)256) * ppos) / 200); //convert percentage position to PWM duty
+ else
+  return ((((int32_t)d->param.sm_steps) * ppos) / 200); //convert percentage position to SM steps
 #else //carburetor
  if (d->param.tmp_use)
   return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);
@@ -326,6 +343,18 @@ int16_t calc_sm_position(struct ecudata_t* d)
 
 void choke_control(struct ecudata_t* d)
 {
+#ifdef FUEL_INJECT
+ if (IOCFG_CHECK(IOP_IAC_PWM))
+ { //use PWM IAC
+  uint16_t  pos = calc_sm_position(d, 1);                     //calculate PWM duty
+  if (pos > 255) pos = 255;
+  d->choke_pos = calc_percent_pos(pos, 256);                  //update position value
+  vent_set_duty8(pos);
+  return;
+ }
+#endif
+
+#ifdef SM_CONTROL
  switch(chks.state)
  {
   case 0:                                                     //Initialization of choke position
@@ -374,7 +403,7 @@ void choke_control(struct ecudata_t* d)
     int16_t pos;
     if (!CHECKBIT(chks.flags, CF_MAN_CNTR))
     {
-     pos = calc_sm_position(d);                               //calculate stepper motor position
+     pos = calc_sm_position(d, 0);                            //calculate stepper motor position
      if (d->choke_manpos_d)
       SETBIT(chks.flags, CF_MAN_CNTR); //enter manual mode
     }
@@ -422,11 +451,14 @@ void choke_control(struct ecudata_t* d)
    }
    break;
  }
+#endif //SM_CONTROL
 }
 
+#ifdef SM_CONTROL
 uint8_t choke_is_ready(void)
 {
  return (chks.state == 5 || chks.state == 3);
 }
+#endif
 
-#endif //SM_CONTROL
+#endif //SM_CONTROL || FUEL_INJECT

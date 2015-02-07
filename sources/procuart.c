@@ -42,6 +42,7 @@
 #include "suspendop.h"
 #include "uart.h"
 #include "ufcodes.h"
+#include "ventilator.h"
 #include "vstimer.h"
 
 void process_uart_interface(struct ecudata_t* d)
@@ -67,6 +68,9 @@ void process_uart_interface(struct ecudata_t* d)
   switch(descriptor)
   {
    case TEMPER_PAR:
+#ifdef _PLATFORM_M644_
+    vent_set_pwmfrq(d->param.vent_pwmfrq);
+#endif
    case CARBUR_PAR:
    case IDLREG_PAR:
    case ANGLES_PAR:

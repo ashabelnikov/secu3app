@@ -377,6 +377,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i4h(d->param.cts_use_map);
    build_i16h(d->param.vent_on);
    build_i16h(d->param.vent_off);
+   build_i16h(d->param.vent_pwmfrq);
    break;
 
   case CARBUR_PAR:
@@ -881,6 +882,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.cts_use_map = recept_i4h();
    d->param.vent_on   = recept_i16h();
    d->param.vent_off  = recept_i16h();
+   d->param.vent_pwmfrq = recept_i16h();
    break;
 
   case CARBUR_PAR:

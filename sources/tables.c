@@ -105,6 +105,9 @@
 /**For setting AE cold accel. multiplier value*/
 #define AE_CAM(v) ROUND(((v)-1.0)*128.0)
 
+/**Cooling fan PWM frequency*/
+#define _FAN_PWMFRQ(v) ROUND((1.0/(v))*524288.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -262,6 +265,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_off =                    384,
   .vent_pwm =                    0,
   .cts_use_map =                 0,
+  .vent_pwmfrq =                 _FAN_PWMFRQ(5000),  //5000Hz
 
   .map_adc_factor =              _ACF,
   .map_adc_correction =          _ACC,

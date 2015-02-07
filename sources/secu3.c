@@ -99,7 +99,7 @@ void control_engine_units(struct ecudata_t *d)
  //power management
  pwrrelay_control(d);
 
-#ifdef SM_CONTROL
+#if defined(SM_CONTROL) || defined(FUEL_INJECT)
  //choke control
  choke_control(d);
 #endif
@@ -183,7 +183,7 @@ void init_ports(void)
  ce_init_ports();
  knock_init_ports();
  pwrrelay_init_ports();
-#ifdef SM_CONTROL
+#if defined(SM_CONTROL) || defined(FUEL_INJECT)
  choke_init_ports();
 #endif
 #ifdef INTK_HEATING
@@ -244,7 +244,7 @@ void init_modules(void)
  //initialization of power management unit
  pwrrelay_init();
 
-#ifdef SM_CONTROL
+#if defined(SM_CONTROL) || defined(FUEL_INJECT)
  choke_init();
 #endif
 
@@ -297,6 +297,9 @@ void init_modules(void)
  ignlogic_init();
 
  vent_init_state();
+#ifdef _PLATFORM_M644_
+ vent_set_pwmfrq(edat.param.vent_pwmfrq);
+#endif
 
  //check and enter blink codes indication mode
  bc_indication_mode(&edat);

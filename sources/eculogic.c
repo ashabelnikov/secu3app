@@ -76,8 +76,8 @@ uint8_t scale_aftstr_enrich(struct ecudata_t* d)
  */
 static int32_t calc_acc_enrich(struct ecudata_t* d)
 {
- //calculate normal conditions PW, MAP=100kPa, IAT=20°C
- int32_t pwnc = (ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*4) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d->param.inj_sd_igl_const) >> 6;
+ //calculate normal conditions PW, MAP=100kPa, IAT=20°C, AFR=14.7 (petrol)
+ int32_t pwnc = (ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*14.7*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d->param.inj_sd_igl_const) >> 12;
  int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
 
  if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd)

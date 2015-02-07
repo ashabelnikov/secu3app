@@ -34,6 +34,10 @@
 #include "magnitude.h"
 #include "vstimer.h"
 
+#if defined(FUEL_INJECT) && (!defined(_PLATFORM_M644_) || !defined(SECU3T) || !defined(AIRTEMP_SENS))
+ #error "You can not use FUEL_INJECT option without _PLATFORM_M644_, SECU3T or AIRTEMP_SENS"
+#endif
+
 //For use with fn_dat pointer, because it can point either to FLASH or RAM
 #ifdef REALTIME_TABLES
  #define secu3_offsetof(type,member)   ((size_t)(&((type *)0)->member))
@@ -430,7 +434,7 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
 }
 #endif
 
-#ifdef AIRTEMP_SENS
+#if defined(AIRTEMP_SENS) && defined(SECU3T)
 //Реализует функцию коррекции УОЗ по температуре воздуха(°C)
 // Возвращает значение угла опережения в целом виде * 32
 int16_t airtemp_function(struct ecudata_t* d)
@@ -476,7 +480,7 @@ int16_t ats_lookup(uint16_t adcvalue)
  return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&fw_data.exdata.ats_curve[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.ats_curve[i1]), //<--values in table are signed
         (i * v_step) + v_start, v_step, 16)) >> 4;
 }
-#endif //AIRTEMP_SENS
+#endif //AIRTEMP_SENS && SECU3T
 
 
 #ifdef FUEL_INJECT

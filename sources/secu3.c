@@ -291,6 +291,7 @@ void init_modules(void)
  inject_set_cyl_number(edat.param.ckps_engine_cyl);
  inject_set_num_squirts(edat.param.inj_config & 0xF);
  lambda_init_state();
+ inject_set_fuelcut(!edat.sys_locked);
 #endif
 
  s_timer_init();
@@ -515,7 +516,7 @@ MAIN()
 #ifdef FUEL_INJECT
    //set current injection time and fuel cut state
    inject_set_inj_time(edat.inj_pw);
-   inject_set_fuelcut(edat.ie_valve);
+   inject_set_fuelcut(edat.ie_valve && !edat.sys_locked);
 
    lambda_stroke_event_notification(&edat);
 #endif

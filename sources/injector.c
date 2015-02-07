@@ -138,7 +138,7 @@ void inject_start_inj(void)
 
 void inject_open_inj(uint16_t time)
 {
-  if (0==time) return;
+  if (0==time || !inj.fuelcut) return;
   time = (time >> 1) - INJ_COMPB_CALIB;
   if (0==_AB(time, 0))
    (_AB(time, 0))++;

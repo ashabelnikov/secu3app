@@ -65,6 +65,12 @@ void fuelpump_init(void)
 
 void fuelpump_control(struct ecudata_t* d)
 {
+ if (d->sys_locked)
+ { //system locked by immobilizer
+  TURN_ON_ELPUMP(0); //turn off
+  return;
+ }
+
  switch(fpstate.state)
  {
   case 0: //pump is turned on

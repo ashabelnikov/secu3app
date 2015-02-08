@@ -42,15 +42,13 @@
 #include "vstimer.h"
 #include "wdt.h"
 
-uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
-
 void save_param_if_need(struct ecudata_t* d)
 {
  //параметры не изменились за заданное время?
  if (s_timer16_is_action(save_param_timeout_counter))
  {
   //текущие и сохраненные параметры отличаются?
-  if (memcmp(eeprom_parameters_cache, &d->param, sizeof(params_t)-PAR_CRC_SIZE))
+  if (memcmp(d->eeprom_parameters_cache, &d->param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }
@@ -111,7 +109,7 @@ void load_eeprom_params(struct ecudata_t* d)
 
   //инициализируем кеш параметров, иначе после старта программы произойдет ненужное
   //их сохранение.
-  memcpy(eeprom_parameters_cache, &d->param, sizeof(params_t));
+  memcpy(d->eeprom_parameters_cache, &d->param, sizeof(params_t));
  }
  else
  {//перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены, а также

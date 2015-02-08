@@ -118,8 +118,11 @@ typedef struct ecudata_t
  struct sensors_t sens;                  //!< --sensors (сенсоры)
  struct correct_t corr;                  //!< --calculated corrections and lookup tables' values
 
- uint8_t  ie_valve;                      //!< State of Idle Economizer valve (состояние клапана ЭПХХ)
- uint8_t  fe_valve;                      //!< State of Fuel Economizer valve (состояние клапана ЭМР)
+ uint8_t  ie_valve;                      //!< State of Idle cut off valve (состояние клапана ЭПХХ)
+ uint8_t  fe_valve;                      //!< State of Power valve (состояние клапана ЭМР)
+#ifdef FUEL_INJECT
+ uint8_t  fc_revlim;                     //!< Flag indicates fuel cut from rev. limitter
+#endif
  uint8_t  cool_fan;                      //!< State of the cooling fan (состояние электровентилятора)
  uint8_t  st_block;                      //!< State of the starter blocking output (состояние выхода блокировки стартера)
  uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
@@ -164,5 +167,10 @@ typedef struct ecudata_t
 
 
 extern struct ecudata_t edat;            //!< ECU data structure. Contains all related data and state information
+
+/**Initialization of variables and data structures
+ * \param d pointer to ECU data structure
+ */
+void init_ecu_data(void);
 
 #endif //_ECUDATA_H_

@@ -33,12 +33,15 @@
 #include "ioconfig.h"
 #include "vstimer.h"
 
+#define EGO_FC_DELAY 6           //!< 6 strokes
+
 /**Internal state variables*/
 typedef struct
 {
  uint8_t stroke_counter;         //!< Used to count strokes for correction integration
  uint16_t lambda_t1;             //!< timer
  uint8_t enabled;                //!< Flag indicates that lambda correction is enabled by timeout
+ uint8_t fc_delay;               //!< delay in strokes before lambda correction will be turned on after fuel cut off
 }lambda_state_t;
 
 /**Instance of internal state variables structure*/
@@ -48,6 +51,7 @@ void lambda_init_state(void)
 {
  ego.stroke_counter = 0;
  ego.enabled = 0;
+ ego.fc_delay = 0;
 }
 
 void lambda_control(struct ecudata_t* d)
@@ -73,10 +77,27 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  if (!ego.enabled)
   return; //wait some time before oxygen sensor will be turned on
 
+ //Turn off EGO correction on overrun or rev. limiting
+ if (!d->ie_valve || d->fc_revlim)
+ { //overrun or rev.limiting
+  ego.fc_delay = EGO_FC_DELAY;
+  d->corr.lambda = 0;
+  return;
+ }
+ else
+ {
+  if (ego.fc_delay)
+  {
+   --ego.fc_delay;
+   d->corr.lambda = 0;
+   return;  //continue count delay
+  }
+ }
+
  if (d->corr.afr != 139) //EGO allowed only when AFR=14.7
  {
   d->corr.lambda = 0;
-  return;
+  return; //not 14.7
  }
 
  if (d->sens.inst_frq > d->param.inj_lambda_rpm_thrd)    //RPM > threshold

@@ -131,39 +131,6 @@ void check_firmware_integrity(void)
   ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
 }
 
-/**Initialization of variables and data structures
- * \param d pointer to ECU data structure
- */
-void init_ecu_data(struct ecudata_t* d)
-{
- edat.op_comp_code = 0;
- edat.op_actn_code = 0;
- edat.sens.inst_frq = 0;
- edat.corr.curr_angle = 0;
- edat.corr.knock_retard = 0;
- edat.ecuerrors_for_transfer = 0;
- edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
- edat.engine_mode = EM_START;
- edat.ce_state = 0;
- edat.cool_fan = 0;
- edat.st_block = 0; //стартер не заблокирован
- edat.sens.tps = edat.sens.tps_raw = 0;
- edat.sens.add_i1 = edat.sens.add_i1_raw = 0;
- edat.sens.add_i2 = edat.sens.add_i2_raw = 0;
- edat.choke_testing = 0;
- edat.choke_pos = 0;
- edat.choke_manpos_d = 0;
- edat.choke_rpm_reg = 0;
- edat.bt_name[0] = 0;
- edat.bt_pass[0] = 0;
- edat.sys_locked = 0; //unlocked
-#ifdef FUEL_INJECT
- edat.inj_pw = 0;
- edat.corr.lambda = 0;
- edat.corr.afr = 0;
-#endif
-}
-
 /**Initialization of I/O ports
  */
 void init_ports(void)
@@ -330,7 +297,7 @@ MAIN()
 #endif
 
  //подготовка структуры данных переменных состояния системы
- init_ecu_data(&edat);
+ init_ecu_data();
  knklogic_init(&retard_state);
 
  //Perform I/O ports configuration/initialization (конфигурируем порты ввода/вывода)
@@ -516,7 +483,7 @@ MAIN()
 #ifdef FUEL_INJECT
    //set current injection time and fuel cut state
    inject_set_inj_time(edat.inj_pw);
-   inject_set_fuelcut(edat.ie_valve && !edat.sys_locked);
+   inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim);
 
    lambda_stroke_event_notification(&edat);
 #endif

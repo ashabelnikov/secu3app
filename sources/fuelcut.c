@@ -69,6 +69,16 @@ void idlecon_control(struct ecudata_t* d)
   d->ie_valve = 1;
   state = 0;
  }
+
+ //simple Rev. limitter
+ if (d->sens.inst_frq > d->param.ie_hit_g)
+ {
+  d->fc_revlim = 1; //cut fuel
+ }
+ else if (d->sens.inst_frq < d->param.ie_lot_g)
+ {
+  d->fc_revlim = 0; //restore fuel
+ }
 }
 
 #else //Carburetor (Idle Cut-off valve control)

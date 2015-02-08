@@ -1243,8 +1243,8 @@ uint16_t convert_id_to_br(uint16_t id)
 {
  uint8_t i = 0;
  for(; i < CBRID_NUM; ++i)
-  if (brtoid[i][1] == id)
-   return brtoid[i][0];
+  if (PGM_GET_WORD(&brtoid[i][1]) == id)
+   return PGM_GET_WORD(&brtoid[i][0]);
  return CBR_9600;
 }
 #endif

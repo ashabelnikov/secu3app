@@ -40,20 +40,16 @@
 #define ADCI_UBAT               1
 /**номер канала используемого для ДТОЖ */
 #define ADCI_TEMP               0
-#ifdef SECU3T
 /*channel number for ADD_IO1 */
 #define ADCI_ADD_IO1            6
 /*channel number for ADD_IO2 */
 #define ADCI_ADD_IO2            5
 /*channel number for CARB */
 #define ADCI_CARB               7
-#endif
 /**номер канала используемого для канала детонации */
 #define ADCI_KNOCK              3
 /**заглушка, используется для ADCI_KNOCK чтобы сформировать задержку */
 #define ADCI_STUB               4
-
-#ifdef SECU3T
 
 #ifdef _PLATFORM_M644_
 /**Value of the time differential for TPSdot calculation, ticks of timer*/
@@ -73,7 +69,6 @@ typedef struct
  uint16_t tps_tmr;              //!< Timer value
 }tpsval_t;
 #endif
-#endif
 
 /**Cтруктура данных состояния АЦП */
 typedef struct
@@ -82,13 +77,11 @@ typedef struct
  volatile uint16_t ubat_value;   //!< последнее измеренное значение напряжения бортовой сети
  volatile uint16_t temp_value;   //!< последнее измеренное значение температуры охлаждающей жидкости
  volatile uint16_t knock_value;  //!< последнее измеренное значение сигнала c датчика(ов) детонации
-#ifdef SECU3T
  volatile uint16_t add_io1_value;//!< last measured value od ADD_IO1
  volatile uint16_t add_io2_value;//!< last measured value of ADD_IO2
  volatile uint16_t carb_value;   //!< last measured value of TPS
 #ifdef FUEL_INJECT
  volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
-#endif
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;           //!< если 1, то производится измерение всех значений
@@ -124,7 +117,6 @@ uint16_t adc_get_temp_value(void)
  return value;
 }
 
-#ifdef SECU3T
 uint16_t adc_get_add_io1_value(void)
 {
  uint16_t value;
@@ -166,7 +158,6 @@ int16_t adc_get_tpsdot_value(void)
 
  return (((int32_t)dv) * TMR_TICKS_PER_SEC) / dt; //calculate 1-st derivative, num of ADC discr / sec
 }
-#endif
 #endif
 
 uint16_t adc_get_knock_value(void)
@@ -261,25 +252,10 @@ ISR(ADC_vect)
 
   case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
    adc.temp_value = ADC;
-#ifdef SECU3T
    ADMUX = ADCI_CARB|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
-#else /*SECU-3*/
-   if (0==adc.measure_all)
-   {
-    ADMUX = ADCI_MAP|ADC_VREF_TYPE;
-    adc.sensors_ready = 1;
-   }
-   else
-   {
-    adc.measure_all = 0;
-    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
-    SETBIT(ADCSRA,ADSC);
-   }
-#endif
    break;
 
-#ifdef SECU3T
   case ADCI_CARB:
    adc.carb_value = ADC;
    ADMUX = ADCI_ADD_IO1|ADC_VREF_TYPE;
@@ -316,7 +292,6 @@ ISR(ADC_vect)
     SETBIT(ADCSRA,ADSC);
    }
    break;
-#endif
 
   case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации
    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
@@ -373,7 +348,6 @@ int16_t temp_adc_to_c(int16_t adcvalue)
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
 
-#ifdef SECU3T
 uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
 {
  int16_t t;
@@ -395,5 +369,4 @@ int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
 {
  return (((int32_t)adcvalue) * gradient) >> (7+6+1);
 }
-#endif
 #endif

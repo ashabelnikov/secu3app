@@ -156,7 +156,7 @@ void chokerpm_regulator_init(void);
 int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr);
 #endif
 
-#if defined(AIRTEMP_SENS) && defined(SECU3T)
+#ifdef AIRTEMP_SENS
 /** Calculates advance angle correction using intake air temperature
  * \param d pointer to ECU data structure
  * \return value of advance angle * 32

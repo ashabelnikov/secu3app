@@ -140,13 +140,6 @@
  #define COPT_THERMISTOR_CS 0
 #endif
 
-/** For SECU3-T */
-#ifdef SECU3T
- #define COPT_SECU3T 1
-#else
- #define COPT_SECU3T 0
-#endif
-
 /** For SECU3-T rev.9 board */
 #ifdef REV9_BOARD
  #define COPT_REV9_BOARD 1

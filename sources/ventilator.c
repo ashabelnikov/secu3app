@@ -38,19 +38,12 @@
  * speed up corresponding ISR
  */
 #ifdef COOLINGFAN_PWM
-#ifdef SECU3T /*SECU-3T*/
-
 #ifdef REV9_BOARD
  #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
 #else //REV6
  #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
-#endif
-
-#else         /*SECU-3*/
- #define COOLINGFAN_TURNON()  SETBIT(PORTB, PB1)
- #define COOLINGFAN_TURNOFF() CLEARBIT(PORTB, PB1)
 #endif
 #endif //COOLINGFAN_PWM
 
@@ -80,10 +73,8 @@ volatile uint8_t pwm_duty;      //!< current duty value
 
 void vent_init_ports(void)
 {
-#if defined(COOLINGFAN_PWM) && defined(SECU3T)
+#ifdef COOLINGFAN_PWM
  IOCFG_INIT(IOP_ECF, 1); //coolong fan is turned Off
-#else //relay only or SECU-3
- IOCFG_INIT(IOP_ECF, 0); //coolong fan is turned Off
 #endif
 }
 

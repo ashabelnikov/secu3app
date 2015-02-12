@@ -104,10 +104,8 @@ void control_engine_units(struct ecudata_t *d)
  choke_control(d);
 #endif
 
-#if defined(PHASE_SENSOR) || defined(SECU3T)
  //Cam sensor control
  cams_control();
-#endif
 
 #ifdef INTK_HEATING
  intkheat_control(d);
@@ -136,9 +134,7 @@ void check_firmware_integrity(void)
 void init_ports(void)
 {
  ckps_init_ports();
-#if defined(PHASE_SENSOR) || defined(SECU3T)
  cams_init_ports();
-#endif
  vent_init_ports();
  fuelecon_init_ports();
 #ifdef FUEL_PUMP
@@ -173,9 +169,7 @@ void init_modules(void)
  knock_set_band_pass(edat.param.knock_bpf_frequency);
  knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
  knock_set_int_time_constant(edat.param.knock_int_time_const);
-#ifdef SECU3T
  knock_set_channel(0);
-#endif
  if (edat.param.knock_use_knock_channel)
   if (!knock_module_initialize())
   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
@@ -199,9 +193,7 @@ void init_modules(void)
 #endif
 
  //initialization of cam module, must precede ckps initialization
-#if defined(PHASE_SENSOR) || defined(SECU3T)
  cams_init_state();
-#endif
 
 #ifdef FUEL_PUMP
  //initialization of electric fuel pump
@@ -234,9 +226,7 @@ void init_modules(void)
  ckps_select_input(edat.param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
 #endif
  ckps_set_edge_type(edat.param.ckps_edge_type);
-#ifdef SECU3T
  cams_vr_set_edge_type(edat.param.ref_s_edge_type); //REF_S edge (Фронт ДНО)
-#endif
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL
  ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
@@ -342,9 +332,7 @@ MAIN()
    //TODO: Сделать мягкую отсечку для избавления от нежелательной искры. Как?
 #endif
    ckps_init_state_variables();
-#if defined(PHASE_SENSOR) || defined(SECU3T)
    cams_init_state_variables();
-#endif
    edat.engine_mode = EM_START; //режим пуска
 
    knklogic_init(&retard_state);

@@ -33,19 +33,6 @@
 #include "ioconfig.h"
 #include "tables.h"
 
-//Speed sensor available in SECU-3T only, because cam sensor input in SECU-3 is not interrupt-driven
-#if defined(SPEED_SENSOR) && !defined(SECU3T)
- #error "You can not use SPEED_SENSOR option without SECU3T option! Define SECU3T if you want to use this option."
-#endif
-
-//Functionality added when either PHASE_SENSOR or SECU3T is defined
-#if defined(PHASE_SENSOR) || defined(SECU3T)
-
-#ifndef SECU3T /*SECU-3*/
- /** Get logic level from cam sensor output */
- #define GET_CAMSTATE() (CHECKBIT(PINC, PINC4) > 0)
-#endif
-
 #define F_CAMSIA 0   //PS (cam sensor input) is available (not remapped to other function)
 #ifdef SPEED_SENSOR
 #define F_REFSIA 1   //REF_S (reference sensor input) is available (not remapped to other function)
@@ -57,15 +44,10 @@ typedef struct
 {
  volatile uint8_t cam_ok;             //!< indicates presence of cam sensor (works properly)
  uint8_t cam_error;                   //!< error flag, indicates error
-#ifndef SECU3T /*SECU-3*/
- uint8_t prev_level;                  //!< previos logic level of sensor's output
-#endif
  uint16_t err_threshold;              //!< error threshold in teeth
  volatile uint16_t err_counter;       //!< teeth counter
  volatile uint8_t event;              //!< flag which indicates Hall cam sensor's event
-#ifdef SECU3T
  volatile uint8_t vr_event;           //!< flag which indicates VR cam sensor's event
-#endif
 #ifdef SPEED_SENSOR
  uint16_t spdsens_period_prev;        //!< for storing previous value of timer counting time between speed sensor pulse interrupts
  volatile uint16_t spdsens_period;    //!< period between speed sensor pulses (1 tick  = 4us)
@@ -82,24 +64,17 @@ camstate_t camstate;
 
 void cams_init_ports()
 {
-#ifdef SECU3T
  IOCFG_INIT(IOP_REF_S, 1);   //use pullup resistor
-#endif
  IOCFG_INIT(IOP_PS, 1);      //use pullup resistor
 }
 
 void cams_init_state_variables(void)
 {
-#ifndef SECU3T /*SECU-3*/
- camstate.prev_level = GET_CAMSTATE();
-#endif
  camstate.cam_ok = 0; //not Ok
 //camstate.err_threshold = 65 * 2;
  camstate.err_counter = 0;
  camstate.event = 0;
-#ifdef SECU3T
  camstate.vr_event = 0;
-#endif
 }
 
 void cams_init_state(void)
@@ -129,7 +104,6 @@ void cams_init_state(void)
   camstate.vss_input = 0; // not mapped to real IO
 #endif
 
-#ifdef SECU3T /*SECU-3T*/
  //interrupt edge for Hall input depends on PS inversion, interrupt by rising edge for VR input
  EICRA|= _BV(ISC11) | ((IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0);
  EICRA|= _BV(ISC01) | _BV(ISC00);
@@ -139,7 +113,6 @@ void cams_init_state(void)
 #endif
  if (IOCFG_CHECK(IOP_REF_S))
   EIMSK|= _BV(INT0);              //INT0 enabled only when REF_S input not remapped to alternative function
-#endif
 
 #ifdef SPEED_SENSOR
  if (1==camstate.vss_input)
@@ -188,7 +161,6 @@ void cams_control(void)
 #endif
 }
 
-#ifdef SECU3T /*SECU-3T*/
 uint8_t cams_vr_is_event_r(void)
 {
  uint8_t result;
@@ -236,9 +208,6 @@ void cams_vr_set_edge_type(uint8_t edge_type)
   EICRA&= ~_BV(ISC00);//falling
  _END_ATOMIC_BLOCK();
 }
-#endif //SECU3T
-#endif //defined(PHASE_SENSOR) || defined(SECU3T)
-
 
 //Functionality added to compilation only when PHASE_SENSOR defined
 #ifdef PHASE_SENSOR
@@ -249,26 +218,8 @@ void cams_set_error_threshold(uint16_t threshold)
 
 void cams_detect_edge(void)
 {
-#ifndef SECU3T /*SECU-3*/
- uint8_t level;
-#endif
  if (!CHECKBIT(flags, F_CAMSIA))
   return;
-
-#ifndef SECU3T /*SECU-3*/
- level = GET_CAMSTATE();
- if (camstate.prev_level != level)
- {
-  if (0 != level) //interesting edge from cam sensor
-  {
-   camstate.cam_ok = 1;
-   camstate.err_counter = 0;
-   camstate.prev_level = level;
-   camstate.event = 1;
-   return; //detected
-  }
- }
-#endif
 
  if (++camstate.err_counter > camstate.err_threshold)
  {
@@ -276,10 +227,6 @@ void cams_detect_edge(void)
   camstate.cam_error = 1;
   camstate.err_counter = 0;
  }
-
-#ifndef SECU3T /*SECU-3*/
- camstate.prev_level = level;
-#endif
 }
 
 uint8_t cams_is_ready(void)
@@ -312,7 +259,6 @@ uint8_t cams_is_event_r(void)
 //We need following ISR if cam sensor or speed sensor are enabled
 #if defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
 
-#ifdef SECU3T /*SECU-3T*/
 /**Interrupt from CAM sensor (Hall)*/
 ISR(INT1_vect)
 {
@@ -334,7 +280,6 @@ ISR(INT1_vect)
  camstate.spdsens_event = 1;  //set event flag
 #endif
 }
-#endif //SECU3T
 
 #endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
 

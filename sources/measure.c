@@ -38,10 +38,6 @@
 #include "magnitude.h"
 #include "measure.h"
 
-#if defined(AIRTEMP_SENS) && !defined(SECU3T)
- #error "You must define SECU3T if you want to use air temperature sensor (ATS supported only in SECU3T)"
-#endif
-
 #ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
  /**Special macro for compensating of voltage division (without voltage divider)*/
  #define _RESDIV(v, n, d) (v)
@@ -53,11 +49,7 @@
 /**Reads state of throttle gate (only the value, without inversion)
  * считывает состояние дроссельной заслонки (только значение, без инверсии)
  */
-#ifdef SECU3T  /*SECU-3T*/
- #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
-#else          /*SECU-3*/
- #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINC, PINC5) > 0)
-#endif
+#define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
 
 /**Number of values for averaging of RPM for tachometer
  * кол-во значений для усреднения частоты вращения к.в. для оборотов тахометра */
@@ -67,12 +59,10 @@
 #define MAP_AVERAGING           4                 //!< Number of values for averaging of pressure (MAP)
 #define BAT_AVERAGING           4                 //!< Number of values for averaging of board voltage
 #define TMP_AVERAGING           8                 //!< Number of values for averaging of coolant temperature
-#ifdef SECU3T
 #define TPS_AVERAGING           4                 //!< Number of values for averaging of throttle position
 #define AI1_AVERAGING           4                 //!< Number of values for averaging of ADD_IO1
 #define AI2_AVERAGING           4                 //!< Number of values for averaging of ADD_IO2
-#endif
-#if defined(SPEED_SENSOR) && defined(SECU3T)
+#ifdef SPEED_SENSOR
 #define SPD_AVERAGING           8                 //!< Number of values for averaging of speed sensor periods
 #endif
 
@@ -80,12 +70,10 @@ uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM avera
 uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaging of MAP sensor (буфер усреднения абсолютного давления)
 uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaging of voltage (буфер усреднения напряжения бортовой сети)
 uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaging of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
-#ifdef SECU3T
 uint16_t tps_circular_buffer[TPS_AVERAGING];      //!< Ring buffer for averaging of TPS
 uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaging of ADD_IO1
 uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaging of ADD_IO2
-#endif
-#if defined(SPEED_SENSOR) && defined(SECU3T)
+#ifdef SPEED_SENSOR
 uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging of speed sensor periods
 #endif
 
@@ -103,12 +91,10 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  static uint8_t  bat_ai  = BAT_AVERAGING-1;
  static uint8_t  tmp_ai  = TMP_AVERAGING-1;
  static uint8_t  frq_ai  = FRQ_AVERAGING-1;
-#ifdef SECU3T
  static uint8_t  tps_ai  = TPS_AVERAGING-1;
  static uint8_t  ai1_ai  = AI1_AVERAGING-1;
  static uint8_t  ai2_ai  = AI2_AVERAGING-1;
-#endif
-#if defined(SPEED_SENSOR) && defined(SECU3T)
+#ifdef SPEED_SENSOR
  static uint8_t  spd_ai = SPD_AVERAGING-1;
 #endif
 
@@ -127,7 +113,6 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  temp_circular_buffer[tmp_ai] = adc_get_temp_value();
  (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;
 
-#ifdef SECU3T
  tps_circular_buffer[tps_ai] = adc_get_carb_value();
  (tps_ai==0) ? (tps_ai = TPS_AVERAGING - 1): tps_ai--;
 
@@ -136,7 +121,6 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 
  ai2_circular_buffer[ai2_ai] = adc_get_add_io2_value();
  (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
-#endif
 
  if (d->param.knock_use_knock_channel)
  {
@@ -149,7 +133,7 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  else
   d->sens.knock_k = 0; //knock signal value must be zero if knock detection turned off
 
-#if defined(SPEED_SENSOR) && defined(SECU3T)
+#ifdef SPEED_SENSOR
  spd_circular_buffer[spd_ai] = spdsens_get_period();
  (spd_ai==0) ? (spd_ai = SPD_AVERAGING - 1): spd_ai--;
  d->sens.distance = spdsens_get_pulse_count();
@@ -214,13 +198,12 @@ void meas_average_measured_values(struct ecudata_t* d)
   sum+=freq_circular_buffer[i];
  d->sens.frequen=(sum/FRQ_AVERAGING);
 
-#if defined(SPEED_SENSOR) && defined(SECU3T)
+#ifdef SPEED_SENSOR
  for (sum=0,i = 0; i < SPD_AVERAGING; i++)  //average periods from speed sensor
   sum+=spd_circular_buffer[i];
  d->sens.speed=(sum/SPD_AVERAGING);
 #endif
 
-#ifdef SECU3T
  for (sum=0,i = 0; i < TPS_AVERAGING; i++)   //average throttle position
   sum+=tps_circular_buffer[i];
  d->sens.tps_raw = adc_compensate(_RESDIV((sum/TPS_AVERAGING), 2, 1), d->param.tps_adc_factor, d->param.tps_adc_correction);
@@ -237,9 +220,8 @@ void meas_average_measured_values(struct ecudata_t* d)
   sum+=ai2_circular_buffer[i];
  d->sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d->param.ai2_adc_factor, d->param.ai2_adc_correction);
  d->sens.add_i2 = d->sens.add_i2_raw;
-#endif
 
-#if defined(AIRTEMP_SENS) && defined(SECU3T)
+#ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
   d->sens.air_temp = ats_lookup(d->sens.add_i2_raw);   //ADD_IO2 input
  else

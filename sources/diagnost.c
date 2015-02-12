@@ -83,13 +83,11 @@ void init_digital_outputs(void)
  PORTC&= ~(_BV(PC1)|_BV(PC0));
  DDRD|= (_BV(DDD5)|_BV(DDD4));
  DDRC|= (_BV(DDC1)|_BV(DDC0));
-#ifdef SECU3T
  //ADD_IO1, ADD_IO2
  PORTC&= ~(_BV(PC5));
  PORTA&= ~(_BV(PA4));
  DDRC|= (_BV(DDC5));
  DDRA|= (_BV(DDA4));
-#endif
  //IE
  PORTB&= ~(_BV(PB0));
  DDRB|= _BV(DDB0);
@@ -97,41 +95,26 @@ void init_digital_outputs(void)
  PORTC&= ~_BV(PC7);
  DDRC|= _BV(DDC7);
  //ECF
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  PORTD&= ~(_BV(PD7));
 #else
  PORTD|= _BV(PD7);
 #endif
  DDRD |= _BV(DDD7);
-#else         /*SECU-3*/
- PORTB&= ~_BV(PB1);
- DDRB |= _BV(DDB1);
-#endif
  //CE
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  PORTB&= ~(_BV(PB2));
 #else
  PORTB|= _BV(PB2);
 #endif
  DDRB |= _BV(DDB2);
-#else         /*SECU-3*/
- PORTB&= ~(_BV(PB2));
- DDRB |= _BV(DDB2);
-#endif
  //ST_BLOCK
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  PORTB&= ~(_BV(PB1));
 #else
  PORTB|= _BV(PB1);
 #endif
  DDRB |= _BV(DDB1);
-#else         /*SECU-3*/
- PORTD|= _BV(PD7);
- DDRD |= _BV(DDD7);
-#endif
 }
 
 /**Set states of outputs
@@ -143,42 +126,28 @@ void set_outputs(uint16_t o)
  WRITEBIT(PORTD, PD5, (o & _OBV(1)));  //IGN_OUT2
  WRITEBIT(PORTC, PC0, (o & _OBV(2)));  //IGN_OUT3
  WRITEBIT(PORTC, PC1, (o & _OBV(3)));  //IGN_OUT4
-#ifdef SECU3T
  WRITEBIT(PORTC, PC5, (o & _OBV(4)));  //ADD_IO1
  WRITEBIT(PORTA, PA4, (o & _OBV(5)));  //ADD_IO2
-#endif
  WRITEBIT(PORTB, PB0, (o & _OBV(6)));  //IE
  WRITEBIT(PORTC, PC7, (o & _OBV(7)));  //FE
 
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTD, PD7, (o & _OBV(8)));  //ECF
 #else
  WRITEBIT(PORTD, PD7,!(o & _OBV(8)));
 #endif
-#else         /*SECU-3*/
- WRITEBIT(PORTB, PB1, (o & _OBV(8)));
-#endif
 
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB2, (o & _OBV(9)));  //CE
 #else
  WRITEBIT(PORTB, PB2,!(o & _OBV(9)));
 #endif
-#else         /*SECU-3*/
- WRITEBIT(PORTB, PB2, (o & _OBV(9)));
-#endif
 
  //ST_BLOCK
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB1, (o & _OBV(10))); //ST_BLOCK
 #else
  WRITEBIT(PORTB, PB1,!(o & _OBV(10)));
-#endif
-#else         /*SECU-3*/
- WRITEBIT(PORTD, PD7,!(o & _OBV(10)));
 #endif
 
  //BL
@@ -196,11 +165,7 @@ void init_digital_inputs(void)
  //GAS_V, CKPS, REF_S, PS
  DDRC&=~(_BV(DDC6));
  DDRD&=~(_BV(DDD6)|_BV(DDD2));
-#ifdef SECU3T
  DDRD&=~(_BV(DDB3));
-#else /*SECU-3*/
- DDRC&=~(_BV(DDC4));
-#endif
  //BL jmp, DE jmp
  DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
  PORTC|= _BV(PC3)|_BV(PC2);
@@ -213,11 +178,7 @@ uint8_t get_inputs(void)
 {
  //GAS_V, CKPS, REF_S, PS
  uint8_t i = _IBV((!!CHECKBIT(PINC, PINC6)), 0) | _IBV((!!CHECKBIT(PIND, PIND6)), 1) | _IBV((!!CHECKBIT(PIND, PIND2)), 2) |
-#ifdef SECU3T
              _IBV((!!CHECKBIT(PIND, PIND3)), 3) |
-#else  /*SECU-3*/
-             _IBV((!!CHECKBIT(PINC, PINC4)), 3) |
-#endif
              _IBV((!!CHECKBIT(PINC, PINC3)), 4) | _IBV((!!CHECKBIT(PINC, PINC2)), 5);  //BL jmp, DE jmp
  return i;
 }
@@ -260,11 +221,9 @@ void diagnost_process(struct ecudata_t* d)
   {
    //start measurements (sensors), start KSP settings latching
    case 0:
-#ifdef SECU3T
     if (diag.ksp_channel > KSP_CHANNEL_1)
      diag.ksp_channel = KSP_CHANNEL_0;
     knock_set_channel(diag.ksp_channel);
-#endif
     //start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
     knock_start_settings_latching();
     //start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
@@ -294,9 +253,7 @@ void diagnost_process(struct ecudata_t* d)
     if (adc_is_measure_ready())
     {
      diag.knock_value[diag.ksp_channel] = adc_get_knock_value();
-#ifdef SECU3T
      ++diag.ksp_channel;  //select next channel
-#endif
      _DELAY_US(100);
      diag.fsm_state = 0;
     }
@@ -310,17 +267,10 @@ void diagnost_process(struct ecudata_t* d)
    d->diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.ks_1 = _ADC_COMPENSATE(diag.knock_value[0], ADC_VREF_FACTOR, 0.0);
-#ifdef SECU3T
    d->diag_inp.add_io1 = _ADC_COMPENSATE(adc_get_add_io1_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.add_io2 = _ADC_COMPENSATE(adc_get_add_io2_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
-#else /*SECU-3*/
-   d->diag_inp.add_io1 = 0;      //not supported in SECU-3
-   d->diag_inp.add_io2 = 0;      //not supported in SECU-3
-   d->diag_inp.carb = (CHECKBIT(PINC, PINC5) > 0); //in SECU-3 it is digital input
-   d->diag_inp.ks_2 = 0;         //not supported in SECU-3
-#endif
 
    //digital inputs
    d->diag_inp.bits = get_inputs();

@@ -488,14 +488,14 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
    build_i8h(d->choke_pos);               // choke position
-#if defined(SPEED_SENSOR) && defined(SECU3T)
+#ifdef SPEED_SENSOR
    build_i16h(d->sens.speed);             // vehicle speed (2 bytes)
    build_i24h(d->sens.distance);          // distance (3 bytes)
 #else
    build_i16h(0);
    build_i24h(0);
 #endif
-#if defined(AIRTEMP_SENS) && defined(SECU3T)
+#ifdef AIRTEMP_SENS
    if (IOCFG_CHECK(IOP_AIR_TEMP))
     build_i16h(d->sens.air_temp);
    else

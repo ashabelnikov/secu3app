@@ -159,7 +159,6 @@ void iocfg_i_ign_out4(uint8_t value);    //!< init IGN_OUT4
 void iocfg_i_ign_out4i(uint8_t value);   //!< init IGN_OUT4           (inverted)
 void iocfg_s_ign_out4(uint8_t value);    //!< set  IGN_OUT4
 void iocfg_s_ign_out4i(uint8_t value);   //!< set  IGN_OUT4           (inverted)
-#ifdef SECU3T
 void iocfg_i_add_io1(uint8_t value);     //!< init ADD_IO1 output  (applicable only in SECU-3T)
 void iocfg_i_add_io1i(uint8_t value);    //!< init ADD_IO1 output  (applicable only in SECU-3T) (inverted)
 void iocfg_s_add_io1(uint8_t value);     //!< set  ADD_IO1 output  (applicable only in SECU-3T)
@@ -168,7 +167,6 @@ void iocfg_i_add_io2(uint8_t value);     //!< init ADD_IO2 output  (applicable o
 void iocfg_i_add_io2i(uint8_t value);    //!< init ADD_IO2 output  (applicable only in SECU-3T) (inverted)
 void iocfg_s_add_io2(uint8_t value);     //!< set  ADD_IO2 output  (applicable only in SECU-3T)
 void iocfg_s_add_io2i(uint8_t value);    //!< set  ADD_IO2 output  (applicable only in SECU-3T) (inverted)
-#endif
 void iocfg_i_ecf(uint8_t value);         //!< init ECF
 void iocfg_i_ecfi(uint8_t value);        //!< init ECF                (inverted)
 void iocfg_s_ecf(uint8_t value);         //!< set  ECF
@@ -205,7 +203,6 @@ void iocfg_i_ps(uint8_t value);          //!< init PS input
 void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
 uint8_t iocfg_g_ps(void);                //!< get PS input value
 uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
-#ifdef SECU3T
 void iocfg_i_add_i1(uint8_t value);      //!< init ADD_IO1 input   (applicable only in SECU-3T)
 void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_IO1 input   (applicable only in SECU-3T) (inverted)
 uint8_t iocfg_g_add_i1(void);            //!< set  ADD_IO1 input   (applicable only in SECU-3T)
@@ -218,7 +215,6 @@ void iocfg_i_ref_s(uint8_t value);       //!< init REF_S input     (applicable o
 void iocfg_i_ref_si(uint8_t value);      //!< init REF_S input     (applicable only in SECU-3T) (inverted)
 uint8_t iocfg_g_ref_s(void);             //!< get REF_S input      (applicable only in SECU-3T)
 uint8_t iocfg_g_ref_si(void);            //!< get REF_S input      (applicable only in SECU-3T) (inverted)
-#endif
 void iocfg_i_gas_v(uint8_t value);       //!< init GAS_V input
 void iocfg_i_gas_vi(uint8_t value);      //!< init GAS_V input        (inverted)
 uint8_t iocfg_g_gas_v(void);             //!< get GAS_V input value

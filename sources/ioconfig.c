@@ -117,7 +117,6 @@ void iocfg_s_ign_out4i(uint8_t value)  //inverted version
  WRITEBIT(PORTC, PC1, !value);
 }
 
-#ifdef SECU3T
 void iocfg_i_add_io1(uint8_t value)
 {
  WRITEBIT(PORTC, PC5, value);
@@ -161,117 +160,80 @@ void iocfg_s_add_io2i(uint8_t value)   //inverted version
 {
  WRITEBIT(PORTA, PA4, !value);
 }
-#endif
 
 void iocfg_i_ecf(uint8_t value)
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTD, PD7, value);
 #else
  WRITEBIT(PORTD, PD7, !(value));
 #endif
  DDRD |= _BV(DDD7);
-#else         /*SECU-3*/
- WRITEBIT(PORTB, PB1, value);
- DDRB |= _BV(DDB1);
-#endif
 }
 
 void iocfg_i_ecfi(uint8_t value)       //inverted version
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTD, PD7, !value);
 #else
  WRITEBIT(PORTD, PD7, value);
 #endif
  DDRD |= _BV(DDD7);
-#else         /*SECU-3*/
- WRITEBIT(PORTB, PB1, !value);
- DDRB |= _BV(DDB1);
-#endif
 }
 
 void iocfg_s_ecf(uint8_t value)
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTD, PD7, value);
 #else
  WRITEBIT(PORTD, PD7, !(value));
-#endif
-#else         /*SECU-3*/
- WRITEBIT(PORTB, PB1, value);
 #endif
 }
 
 void iocfg_s_ecfi(uint8_t value)       //inverted version
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTD, PD7, !value);
 #else
  WRITEBIT(PORTD, PD7, value);
 #endif
-#else         /*SECU-3*/
- WRITEBIT(PORTB, PB1, !value);
-#endif
 }
 
 void iocfg_i_st_block(uint8_t value)
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB1, value);
 #else
  WRITEBIT(PORTB, PB1, !(value));
 #endif
  DDRB |= _BV(DDB1);
-#else         /*SECU-3*/
- WRITEBIT(PORTD, PD7, !(value));
- DDRD |= _BV(DDD7);
-#endif
 }
 
 void iocfg_i_st_blocki(uint8_t value)  //inverted version
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB1, !value);
 #else
  WRITEBIT(PORTB, PB1, value);
 #endif
  DDRB |= _BV(DDB1);
-#else         /*SECU-3*/
- WRITEBIT(PORTD, PD7, value);
- DDRD |= _BV(DDD7);
-#endif
 }
 
 void iocfg_s_st_block(uint8_t value)
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB1, value);
 #else
  WRITEBIT(PORTB, PB1, !(value));
-#endif
-#else         /*SECU-3*/
- WRITEBIT(PORTD, PD7, !(value));
 #endif
 }
 
 void iocfg_s_st_blocki(uint8_t value)  //inverted version
 {
-#ifdef SECU3T /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB1, !value);
 #else
  WRITEBIT(PORTB, PB1, value);
-#endif
-#else         /*SECU-3*/
- WRITEBIT(PORTD, PD7, value);
 #endif
 }
 
@@ -326,57 +288,39 @@ void iocfg_s_stub(uint8_t nil)
 
 void iocfg_i_ce(uint8_t value)
 {
-#ifdef SECU3T  /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB2, value);
 #else
  WRITEBIT(PORTB, PB2, !value);
 #endif
  DDRB |= _BV(DDB2);
-#else          /*SECU-3*/
- WRITEBIT(PORTB, PB2, value);
- DDRB |= _BV(DDB2);
-#endif
 }
 
 void iocfg_i_cei(uint8_t value)        //inverted version
 {
-#ifdef SECU3T  /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB2, !value);
 #else
  WRITEBIT(PORTB, PB2, value);
 #endif
  DDRB |= _BV(DDB2);
-#else          /*SECU-3*/
- WRITEBIT(PORTB, PB2, !value);
- DDRB |= _BV(DDB2);
-#endif
 }
 
 void iocfg_s_ce(uint8_t value)
 {
-#ifdef SECU3T  /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB2, value);
 #else
  WRITEBIT(PORTB, PB2, !value);
-#endif
-#else          /*SECU-3*/
- WRITEBIT(PORTB, PB2, value);
 #endif
 }
 
 void iocfg_s_cei(uint8_t value)        //inverted version
 {
-#ifdef SECU3T  /*SECU-3T*/
 #ifdef REV9_BOARD
  WRITEBIT(PORTB, PB2, !value);
 #else
  WRITEBIT(PORTB, PB2, value);
-#endif
-#else          /*SECU-3*/
- WRITEBIT(PORTB, PB2, !value);
 #endif
 }
 
@@ -426,45 +370,26 @@ void iocfg_s_dei(uint8_t value)        //inverted version
 
 void iocfg_i_ps(uint8_t value)
 {
-#ifdef SECU3T
  WRITEBIT(PORTD, PD3, value);          //controls pullup resistor
  DDRD &= ~_BV(DDD3);                   //input
-#else /*SECU-3*/
- WRITEBIT(PORTC, PC4, value);
- DDRC &= ~_BV(DDC4);
-#endif
 }
 
 void iocfg_i_psi(uint8_t value)
 {
-#ifdef SECU3T
  WRITEBIT(PORTD, PD3, value);          //controlls pullup resistor
  DDRD &= ~_BV(DDD3);                   //input
-#else /*SECU-3*/
- WRITEBIT(PORTC, PC4, value);
- DDRC &= ~_BV(DDC4);
-#endif
 }
 
 uint8_t iocfg_g_ps(void)
 {
-#ifdef SECU3T
  return !!CHECKBIT(PIND, PIND3);
-#else /*SECU-3*/
- return !!CHECKBIT(PINC, PINC4);
-#endif
 }
 
 uint8_t iocfg_g_psi(void)              //inverted version
 {
-#ifdef SECU3T
  return !CHECKBIT(PIND, PIND3);
-#else /*SECU-3*/
- return !CHECKBIT(PINC, PINC4);
-#endif
 }
 
-#ifdef SECU3T
 void iocfg_i_add_i1(uint8_t value)
 {
  WRITEBIT(PORTA, PA6, value);          //controlls pullup resistor
@@ -530,8 +455,6 @@ uint8_t iocfg_g_ref_si(void)           //inverted version
 {
  return !CHECKBIT(PIND, PIND2);
 }
-
-#endif
 
 void iocfg_i_gas_v(uint8_t value)
 {

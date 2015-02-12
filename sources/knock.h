@@ -54,14 +54,12 @@ void knock_set_int_time_constant(uint8_t inttime);
 
 //channel selection values
 #define KSP_CHANNEL_0          0x00   //!< code for select 0 channel
-#ifdef SECU3T
 #define KSP_CHANNEL_1          0x01   //!< code for select 1 channel (available in SECU-3T)
 
 /**Set channel number
  * \param Channel number to set active (0,1)
  */
 void knock_set_channel(uint8_t channel);
-#endif
 
 /**Starts the process of transferring the settings into the signal processor. Must
  * be invoked under certain turning angles of the crankshaft, at which the signal

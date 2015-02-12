@@ -40,8 +40,8 @@
 #include "pwrrelay.h"
 #include "ventilator.h"
 
-#if defined(FUEL_INJECT) && (!defined(_PLATFORM_M644_) || !defined(SECU3T) || !defined(AIRTEMP_SENS))
- #error "You can not use FUEL_INJECT option without _PLATFORM_M644_, SECU3T or AIRTEMP_SENS"
+#if defined(FUEL_INJECT) && (!defined(_PLATFORM_M644_) || !defined(AIRTEMP_SENS))
+ #error "You can not use FUEL_INJECT option without _PLATFORM_M644_ or AIRTEMP_SENS"
 #endif
 
 /**Direction used to set choke to the initial position */

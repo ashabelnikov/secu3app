@@ -29,7 +29,6 @@
 
 #include <stdint.h>
 
-#if defined(PHASE_SENSOR) || defined(SECU3T)
 /**Initialization of used input ports*/
 void cams_init_ports(void);
 
@@ -42,7 +41,6 @@ void cams_init_state(void);
 /** Must be called from main loop to perform some operations */
 void cams_control(void);
 
-#ifdef SECU3T
 /**Checks for event(VR input) and automatically resets the flag
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_vr_is_event_r(void);
@@ -51,10 +49,6 @@ uint8_t cams_vr_is_event_r(void);
  * \param edge_type 0 - falling (спадающий), 1 - rising (нарастающий)
  */
 void cams_vr_set_edge_type(uint8_t edge_type);
-
-#endif //SECU3T
-
-#endif //defined(PHASE_SENSOR) || defined(SECU3T)
 
 #ifdef PHASE_SENSOR
 /** Sets threshold value (number of teeth between pulses) for errors checking

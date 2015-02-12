@@ -166,9 +166,7 @@ void process_uart_interface(struct ecudata_t* d)
     ckps_select_input(d->param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
 #endif
     ckps_set_edge_type(d->param.ckps_edge_type);
-#ifdef SECU3T
     cams_vr_set_edge_type(d->param.ref_s_edge_type); //REF_S (ÄÍÎ)
-#endif
     ckps_set_cogs_btdc(d->param.ckps_cogs_btdc);
     ckps_set_merge_outs(d->param.merge_ign_outs);
 

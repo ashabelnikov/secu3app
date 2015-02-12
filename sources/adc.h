@@ -63,7 +63,6 @@ uint16_t adc_get_ubat_value(void);
  */
 uint16_t adc_get_temp_value(void);
 
-#ifdef SECU3T
 /** Получение последнего измеренного значения с ADD_IO1
  * \return значение в дискретах АЦП
  */
@@ -85,7 +84,6 @@ uint16_t adc_get_carb_value(void);
  * \return 1-st derivative value of TPS position (V/s), can be negative, voltage in ADC discretes
  */
 int16_t adc_get_tpsdot_value(void);
-#endif
 #endif
 
 /** Получение последнего измеренного значения сигнала c датчика(ов) детонации
@@ -156,7 +154,6 @@ uint16_t ubat_adc_to_v(int16_t adcvalue);
  */
 int16_t temp_adc_to_c(int16_t adcvalue);
 
-#ifdef SECU3T
 /**Converts ADC value of the Throttle Position Sensor to the percentage of throttle opening
  * \param adcvalue значение в дискретах АЦП (Value in ADC discretes)
  * \param offset смещение кривой ДПДЗ (Curve offset. Can be negative)
@@ -172,7 +169,6 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
  * \return percentage/sec
  */
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
-#endif
 #endif
 
 #endif //_ADC_H_

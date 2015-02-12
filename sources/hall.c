@@ -47,11 +47,6 @@
 #if defined(PHASE_SENSOR) || defined(PHASED_IGNITION)
  #error "You can not use phase sensor and phased ignition when Hall sensor is used for synchronization"
 #endif
-//Hall sensor synchronization is not supported by SECU-3 because classic SECU-3 HW use input which
-//has no interrupt ability
-#ifndef SECU3T
- #error "Hall sensor synchronization is not supported by SECU-3, please define SECU3T if you use SECU-3T"
-#endif
 
 /**Maximum number of ignition channels (cylinders) */
 #define IGN_CHANNELS_MAX      8

@@ -702,13 +702,7 @@ static uint8_t sync_at_startup(void)
   case 1: //find out missing teeth (поиск синхрометки)
 
    //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
-   if (
-#ifdef SECU3T
-   ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
-#else
-   (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
-#endif
-   )
+   if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
    {
     SETBIT(flags, F_ISSYNC);
     ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
@@ -904,11 +898,7 @@ ISR(TIMER1_CAPT_vect)
  //count of teeth being found incorrect, then set error flag.
  //(каждый период проверяем на синхрометку, и если после обнаружения синхрометки
  //оказалось что кол-во зубьев неправильное, то устанавливаем признак ошибки).
-#ifdef SECU3T
  if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
-#else
- if (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev))
-#endif
  {
   if ((ckps.cog360 != ckps.wheel_cogs_nump1)) //also taking into account recovered teeth (учитываем также восстановленные зубья)
   {

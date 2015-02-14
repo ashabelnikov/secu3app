@@ -49,3 +49,6 @@ What to do in relation to SECU-3 firmware:
 13. Refactoring of camsens.c. INT1 handler is shared between several functions and
     it is good idea to put it into separate compilation unit. Use callback to set
     interrupt handler function.
+
+14. Reduce size of Boot loader's section, so about 1.5kB of exstra FLASH space will
+    be added!

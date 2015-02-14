@@ -2,9 +2,9 @@
 rem Batch file for build firmware of SECU-3 project under MS Windows. This script will
 rem configure Makefile for you and build project.
 rem Created by Alexey A. Shabelnikov, Kiev 17 July 2011.
-rem Note: It requires IAR compiler and linker or WinAvr
+rem Note: It requires IAR compiler and linker or WinAvr (AVR-GCC)
 
-set USAGE=Supported platforms: M32,M64,M644  Supported toolchains: IAR,GCC
+set USAGE=Supported platforms: M644  Supported toolchains: IAR,GCC
 set PLATFORM=Undefined
 set CFGFILE=platform_cfg
 set MAKEFILE=Undefined
@@ -28,19 +28,7 @@ exit 1
 )
 
 rem Check validity of command line option
-IF %1 == M32 (
-set CFG_MCU=m32
-set CFG_BL_START=7C00
-set CFG_FWD_START=5404
-set CFG_EE_SIZE=1024
-set CFG_LNKXCL=lnkm32s.xcl
-) else IF %1 == M64 (
-set CFG_MCU=m64
-set CFG_BL_START=F800
-set CFG_FWD_START=D004
-set CFG_EE_SIZE=2048
-set CFG_LNKXCL=lnkm64s.xcl
-) else IF %1 == M644 (
+IF %1 == M644 (
 set CFG_MCU=m644
 set CFG_BL_START=F800
 set CFG_FWD_START=D004
@@ -53,21 +41,13 @@ exit 1
 )
 
 IF %2 == IAR (
-IF %1 == M32 (
-set CFG_MCU=m32
-) else IF %1 == M64 (
-set CFG_MCU=m64
-) else IF %1 == M644 (
+IF %1 == M644 (
 set CFG_MCU=m644
 )
 set MAKEFILE=Makefile_iar
 GOTO build
 ) else IF %2 == GCC (
-IF %1 == M32 (
-set CFG_MCU=atmega32
-) else IF %1 == M64 (
-set CFG_MCU=atmega64
-) else IF %1 == M644 (
+IF %1 == M644 (
 set CFG_MCU=atmega644
 )
 set MAKEFILE=Makefile_gcc

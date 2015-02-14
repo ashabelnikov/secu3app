@@ -35,15 +35,7 @@
  * (Определяем размер секции бутлоадера в зависимости от выбранной платформы.
  * Везде используется размер загрузчика соответствующий значению SECONDBOOTSTART)
  */
-#ifdef _PLATFORM_M16_
- #define BOOT_LOADER_SIZE  512
-#elif defined _PLATFORM_M32_
- #define BOOT_LOADER_SIZE  1024
-#elif defined(_PLATFORM_M64_) || defined(_PLATFORM_M644_)
- #define BOOT_LOADER_SIZE  2048
-#else
- #error "Not supported platform!"
-#endif
+#define BOOT_LOADER_SIZE  2048
 
 /**Define start address of boot loader in the firmware (in bytes),
  * FLASHEND defined in ioavr.h

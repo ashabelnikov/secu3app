@@ -197,15 +197,11 @@ void diagnost_process(struct ecudata_t* d)
  //perform initialization of digital inputs
  init_digital_inputs();
 
-#ifdef _PLATFORM_M644_
+ //Diasable unneeded interrupts
  TIMSK0&=~(_BV(OCIE0A)|_BV(OCIE0B)|_BV(TOIE0));
  TIMSK1&=~(_BV(ICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1));
  TIMSK2&=~(_BV(OCIE2A)|_BV(OCIE2B));
-#else
- //Diasable unneeded interrupts
- TIMSK&=~(_BV(OCIE2)|_BV(TICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1)|_BV(OCIE0)|_BV(TOIE0));
-#endif
- 
+
  //Disable external interrupts
  EIMSK&=  ~(_BV(INT0) | _BV(INT1) | _BV(INT2));
 

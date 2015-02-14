@@ -59,11 +59,7 @@
 #define SET_KSP_INTHOLD(v) WRITEBIT(PORTC, PC4, v) //!< Switches between integration/hold modes (SECU-3T)
 #define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode
 
-#ifdef _PLATFORM_M644_
- #define KSP_PRESCALER_VALUE KSP_PRESCALER_20MHZ  //!< set prescaler for 20mHz crystal
-#else
- #define KSP_PRESCALER_VALUE KSP_PRESCALER_16MHZ  //!< set prescaler for 16mHz crystal
-#endif
+#define KSP_PRESCALER_VALUE KSP_PRESCALER_20MHZ  //!< set prescaler for 20mHz crystal
 
 /**This data structure intended for duplication of data of current state
  * of signal processor */

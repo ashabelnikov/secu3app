@@ -255,9 +255,7 @@ void init_modules(void)
  ignlogic_init();
 
  vent_init_state();
-#ifdef _PLATFORM_M644_
  vent_set_pwmfrq(edat.param.vent_pwmfrq);
-#endif
 
  //check and enter blink codes indication mode
  bc_indication_mode(&edat);
@@ -281,10 +279,8 @@ MAIN()
  int16_t advance_angle_inhibitor_state = 0;
  retard_state_t retard_state;
 
-#ifdef _PLATFORM_M644_
  //We need this because we might been reset by WDT
  wdt_turnoff_timer();
-#endif
 
  //подготовка структуры данных переменных состояния системы
  init_ecu_data();

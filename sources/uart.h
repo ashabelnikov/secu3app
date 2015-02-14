@@ -29,8 +29,6 @@
 
 #include <stdint.h>
 
-
-#ifdef _PLATFORM_M644_
 //Here are some values for UBRR for 20.000 mHz crystal
 //
 //       Speed    Value(U2X=0)  Value(U2X=1)
@@ -51,28 +49,6 @@
 #define  CBR_28800               0x0056 //!< 28800 baud
 #define  CBR_38400               0x0040 //!< 38400 baud
 #define  CBR_57600               0x002A //!< 57600 baud
-#else
-//Here are some values for UBRR for 16.000 mHz crystal
-//
-//       Speed    Value(U2X=0)  Value(U2X=1)
-//       2400        0x1A0         0x340
-//       4800        0xCF          0x1A0
-//       9600        0x67          0xCF
-//       14400       0x44          0x8A
-//       19200       0x33          0x67
-//       28800       0x22          0x44
-//       38400       0x19          0x33
-//       57600       0x10          0x22
-
-#define  CBR_2400                0x0340 //!<  2400 baud
-#define  CBR_4800                0x01A0 //!<  4800 baud
-#define  CBR_9600                0x00CF //!<  9600 baud
-#define  CBR_14400               0x008A //!< 14400 baud
-#define  CBR_19200               0x0067 //!< 19200 baud
-#define  CBR_28800               0x0044 //!< 28800 baud 
-#define  CBR_38400               0x0033 //!< 38400 baud
-#define  CBR_57600               0x0022 //!< 57600 baud
-#endif
 
 
 //Define ID for each baud rate value

@@ -25,8 +25,7 @@
 #ifdef __ICCAVR__
  #include <ioavr.h>     //device IO
 
-//Mega64/644 compatibility - UART registers
-#if defined(__ATmega64__) || defined(__ATmega644__)
+//UART registers
 #ifndef RXEN
  #define RXEN  RXEN0
 #endif
@@ -62,22 +61,16 @@
  #define UCSRC UCSR0C
  #define USART_UDRE_vect USART0_UDRE_vect
  #define USART_RXC_vect USART0_RXC_vect
+
+//EEPROM
+#ifndef EEPE
+ #define EEPE EEWE
+#endif
+#ifndef EEMPE
+ #define EEMPE EEMWE
 #endif
 
-//Mega64/644 compatibility - External interrupts, EEPROM
-#if defined(__ATmega16__) || defined(__ATmega32__)
- #define EIMSK GICR
- #define EICRA MCUCR
-#elif defined(__ATmega644__)
-#ifndef EEWE
- #define EEWE EEPE
-#endif
-#ifndef EEMWE
- #define EEMWE EEMPE
-#endif
-#endif
-
-#if defined(__ATmega644__)
+//SPI
 #ifndef SPIE
  #define SPIE SPIE0
 #endif
@@ -95,7 +88,6 @@
 #endif
 #ifndef SPIF
  #define SPIF SPIF0
-#endif
 #endif
 
  //EE_READY_vect is defined instead of EE_RDY_vect in iom644.h
@@ -129,8 +121,7 @@
   #endif
  #endif
 
-//Mega64/644 compatibility - UART registers
-#if defined(__AVR_ATmega64__) || defined(__AVR_ATmega644__)
+//UART registers
 #ifndef RXEN
  #define RXEN  RXEN0
 #endif
@@ -166,15 +157,13 @@
  #define UCSRC UCSR0C
  #define USART_UDRE_vect USART0_UDRE_vect
  #define USART_RXC_vect USART0_RXC_vect
-#endif
 
-//Mega64/644 compatibility - External interrupts, EEPROM
-#if defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__)
- #define EIMSK GICR
- #define EICRA MCUCR
-#elif defined(__AVR_ATmega644__)
- #define EEWE EEPE
- #define EEMWE EEMPE
+//EEPROM
+#ifndef EEPE
+ #define EEPE EEWE
+#endif
+#ifndef EEMPE
+ #define EEMPE EEMWE
 #endif
 
 #endif

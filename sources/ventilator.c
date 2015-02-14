@@ -47,29 +47,14 @@
 #endif
 #endif //COOLINGFAN_PWM
 
-#ifdef _PLATFORM_M644_
- /** Timer reload value for 20mHz quartz
-  * Warning must be the same as another definition in vstimer.h!*/
- #define TIMER2_RELOAD_VALUE  0
- /**number of PWM discretes for 5kHz with 20mHz quartz */
- #define PWM_STEPS 31
-#else
- #define TIMER2_RELOAD_VALUE  6    //!< Timer reload value for 16mHz quartz
- #define PWM_STEPS 25              //!< Number of PWM discretes for 16mHz quartz
-#endif
-
-/**will be added to TIMER2_RELOAD_VALUE at the initialization */
-#define COMPADD 5
+/**number of PWM discretes for 5kHz with 20mHz quartz */
+#define PWM_STEPS 31
 
 volatile uint8_t pwm_state;     //!< For state machine. 0 - passive, 1 - active
-#ifdef _PLATFORM_M644_
 volatile uint16_t pwm_steps;    //!< number of timer ticks per PWM period
 volatile uint16_t pwm_duty_1;   //!< current duty value (+)
 volatile uint16_t pwm_duty_2;   //!< current duty value (-)
 volatile uint8_t tmr2a_h;       //!< used for extending OCR2A to 16 bit
-#else
-volatile uint8_t pwm_duty;      //!< current duty value
-#endif
 
 void vent_init_ports(void)
 {
@@ -81,16 +66,10 @@ void vent_init_ports(void)
 void vent_init_state(void)
 {
  pwm_state = 0;  //begin from active level
-#ifdef _PLATFORM_M644_
  pwm_steps = 31;
  pwm_duty_1 = 0;
  pwm_duty_2 = 0;
  tmr2a_h = 0;
- OCR2A = TIMER2_RELOAD_VALUE + COMPADD;
-#else
- pwm_duty = 0;   // 0%
- OCR2 = TIMER2_RELOAD_VALUE + COMPADD;
-#endif
 }
 
 #ifdef COOLINGFAN_PWM
@@ -99,44 +78,27 @@ void vent_init_state(void)
  */
 void vent_set_duty(uint8_t duty)
 {
-#ifdef _PLATFORM_M644_
- uint16_t duty_1 = ((uint32_t)duty * pwm_steps * 16) >> 12;
-#else
  //TODO: Maybe we need double buffering?
- pwm_duty = duty;
-#endif
+ uint16_t duty_1 = ((uint32_t)duty * pwm_steps * 16) >> 12;
 
  //We don't need interrupts if duty is 0 or 100%
  if (duty == 0)
  {
   _DISABLE_INTERRUPT();
-#ifdef _PLATFORM_M644_
   TIMSK2&=~_BV(OCIE2A);
-#else
-  TIMSK&=~_BV(OCIE2);
-#endif
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNOFF();
  }
-#ifdef _PLATFORM_M644_
  else if (duty == 255)
-#else
- else if (duty == PWM_STEPS)
-#endif
  {
   _DISABLE_INTERRUPT();
-#ifdef _PLATFORM_M644_
   TIMSK2&=~_BV(OCIE2A);
-#else
-  TIMSK&=~_BV(OCIE2);
-#endif
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNON();
  }
  else
  {
   _DISABLE_INTERRUPT();
-#ifdef _PLATFORM_M644_
   TIMSK2|=_BV(OCIE2A);
   pwm_duty_1 = duty_1;
   if (0==_AB(pwm_duty_1, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
@@ -144,53 +106,34 @@ void vent_set_duty(uint8_t duty)
   pwm_duty_2 = pwm_steps - pwm_duty_1;
   if (0==_AB(pwm_duty_2, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
    (_AB(pwm_duty_2, 0))++;
-#else
-  TIMSK|=_BV(OCIE2);
-#endif
   _ENABLE_INTERRUPT();
  }
 }
 
 /**T/C 2 Compare interrupt for generating of PWM (cooling fan control)*/
-#ifdef _PLATFORM_M644_
 ISR(TIMER2_COMPA_vect)
-#else
-ISR(TIMER2_COMP_vect)
-#endif
 {
-#ifdef _PLATFORM_M644_
  if (tmr2a_h)
  {
   --tmr2a_h;
  }
  else
  {
-#endif
   if (0 == pwm_state)
   { //start active part
    COOLINGFAN_TURNON();
-#ifdef _PLATFORM_M644_
    OCR2A = TCNT2 + _AB(pwm_duty_1, 0);
    tmr2a_h = _AB(pwm_duty_1, 1);
-#else
-   OCR2+= pwm_duty;
-#endif
    ++pwm_state;
   }
   else
   { //start passive part
    COOLINGFAN_TURNOFF();
-#ifdef _PLATFORM_M644_
    OCR2A = TCNT2 + _AB(pwm_duty_2, 0);
    tmr2a_h = _AB(pwm_duty_2, 1);
-#else
-   OCR2+= (PWM_STEPS - pwm_duty);
-#endif
    --pwm_state;
   }
-#ifdef _PLATFORM_M644_
  }
-#endif
 }
 #endif
 
@@ -213,11 +156,7 @@ void vent_control(struct ecudata_t *d)
  { //relay
   //We don't need interrupts for relay control
   _DISABLE_INTERRUPT();
-#ifdef _PLATFORM_M644_
   TIMSK2&=~_BV(OCIE2A);
-#else
-  TIMSK&=~_BV(OCIE2);
-#endif
   _ENABLE_INTERRUPT();
 
   if (d->sens.temperat >= d->param.vent_on)
@@ -227,9 +166,7 @@ void vent_control(struct ecudata_t *d)
  }
  else
  {
-#ifdef _PLATFORM_M644_
   uint16_t d_val;
-#endif
   //note: We skip 1 and 24 values of duty
   int16_t dd = d->param.vent_on - d->sens.temperat;
   if (dd < 2)
@@ -242,14 +179,10 @@ void vent_control(struct ecudata_t *d)
   else
    d->cool_fan = 1; //turned on
 
-#ifdef _PLATFORM_M644_
   d_val = ((uint16_t)(PWM_STEPS - dd) * 256) / PWM_STEPS;
   if (d_val > 255) d_val = 255;
   //TODO: implement kick on turn on
   vent_set_duty(d_val);
-#else
-  vent_set_duty(PWM_STEPS - dd);
-#endif
  }
 #endif
 }
@@ -266,7 +199,6 @@ void vent_turnoff(struct ecudata_t *d)
 #endif
 }
 
-#ifdef _PLATFORM_M644_
 void vent_set_pwmfrq(uint16_t period)
 {
  //period = 1/f * 524288
@@ -281,5 +213,4 @@ void vent_set_duty8(uint8_t duty)
  vent_set_duty(duty);
 #endif
 }
-#endif
 #endif

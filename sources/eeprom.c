@@ -50,7 +50,7 @@ typedef struct
 eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
 /** Initiates process of byte's writing (инициирует процесс записи байта в EEPROM) */
-#define EE_START_WR_BYTE()  {EECR|= _BV(EEMWE);  EECR|= _BV(EEWE);}
+#define EE_START_WR_BYTE()  {EECR|= _BV(EEMPE);  EECR|= _BV(EEPE);}
 
 uint8_t eeprom_take_completed_opcode(void)
 {

@@ -51,15 +51,10 @@
 /**заглушка, используется для ADCI_KNOCK чтобы сформировать задержку */
 #define ADCI_STUB               4
 
-#ifdef _PLATFORM_M644_
 /**Value of the time differential for TPSdot calculation, ticks of timer*/
 #define TPSDOT_TIME_DELTA 10000
 /**Tics of TCNT1 timer per 1 second */
 #define TMR_TICKS_PER_SEC 312500L
-#else //ATmega32
-#define TPSDOT_TIME_DELTA 8000
-#define TMR_TICKS_PER_SEC 250000L
-#endif
 
 #ifdef FUEL_INJECT
 /**Used for TPSdot calculations*/

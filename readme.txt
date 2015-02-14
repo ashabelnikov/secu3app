@@ -1,37 +1,30 @@
 
-    SECU-3 Application software. Distributed under GPL license
+    SECU-3 Firmware (Application). Distributed under GPL license
 
     Designed by Alexey A. Shabelnikov 2007. Ukraine, Kiev.
     Microprocessor systems - design & programming.
     http://secu-3.org e-mail: shabelnikov@secu-3.org
 
 
-    How to compile the project
+    HOW TO COMPILE THE PROJECT
     Как компилировать проект
 
-    It is possible to compile the project for ATMega16, ATMega32, ATMega64,
-ATMega644. Version for ATMega64 compiles, but it will not work! You can compile
-the project using either IAR(MS Windows) or GCC(Linux, MS Windows).
+    You can compile the project using either IAR(MS Windows) or GCC(Linux, MS
+    Windows). Project compiles for ATMega644/ATMega644P
     Under MS Windows: Run configure.bat with corresponding options (type of MCU
                       and type of compiler),it will create Makefile and start
                       building.
-    Under Linux:      Run configure.sh with option - type of MCU, it will create
-                      Makefile and start building.
+    Under Linux:      Run configure.sh with option - type of MCU and type of
+                      compiler, it will create Makefile and start building.
 
-    Проект можно скомпилировать для ATMega16, ATMega32, ATMega64. Для ATMega64
-код компилируется, но работать он не будет! Вы можете компилировать проект
-используя IAR или GCC. Запустите configure.bat c соответствующими опциями (тип
-микроконтроллера и тип компилятора), будет создан Makefile и начнется сборка
-проекта. Ниже представлен список возможных опций компиляции. Исключение ненужных
-опций позволит вам экономить память и ресурсы МК.
+    Вы можете компилировать проект используя IAR или GCC. Запустите configure.bat
+c соответствующими опциями (тип микроконтроллера и тип компилятора), будет создан
+Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
+Ниже представлен список возможных опций компиляции. Исключение ненужных опций
+позволит вам экономить память и ресурсы МК.
 
-    List of symbols which affects compilation:
+    LIST OF SYMBOLS WHICH AFFECT COMPILATION:
     Список символов управляющих компиляцией:
-
-    VPSEM                For using of starter blocking output for indication of
-                         idle cut off valve's state
-                         для индикации состояния клапана ЭПХХ используется выход
-                         блокировки стартера
 
     DWELL_CONTROL        For direct controlling of dwell
                          для прямого управления накоплением энергии в катушках

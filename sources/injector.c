@@ -36,8 +36,8 @@
 #include "ioconfig.h"
 #include "tables.h"
 
-#if !defined(_PLATFORM_M644_) || !defined(AIRTEMP_SENS)
- #error "You can not use FUEL_INJECT option without _PLATFORM_M644_ or AIRTEMP_SENS"
+#ifndef AIRTEMP_SENS
+ #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
 #endif
 
 #define INJ_ON  0   //!< Injector is turned on

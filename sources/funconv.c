@@ -34,8 +34,8 @@
 #include "magnitude.h"
 #include "vstimer.h"
 
-#if defined(FUEL_INJECT) && (!defined(_PLATFORM_M644_) || !defined(AIRTEMP_SENS))
- #error "You can not use FUEL_INJECT option without _PLATFORM_M644_ or AIRTEMP_SENS"
+#if defined(FUEL_INJECT) && !defined(AIRTEMP_SENS)
+ #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
 #endif
 
 //For use with fn_dat pointer, because it can point either to FLASH or RAM

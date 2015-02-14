@@ -68,9 +68,7 @@ void process_uart_interface(struct ecudata_t* d)
   switch(descriptor)
   {
    case TEMPER_PAR:
-#ifdef _PLATFORM_M644_
     vent_set_pwmfrq(d->param.vent_pwmfrq);
-#endif
    case CARBUR_PAR:
    case IDLREG_PAR:
    case ANGLES_PAR:

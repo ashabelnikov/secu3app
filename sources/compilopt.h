@@ -28,48 +28,6 @@
 
 #include "port/port.h"
 
-/**ATmega16 target */
-#ifdef _PLATFORM_M16_
- #define COPT_ATMEGA16 1
-#else
- #define COPT_ATMEGA16 0
-#endif
-
-/**ATmega32 target */
-#ifdef _PLATFORM_M32_
- #define COPT_ATMEGA32 1
-#else
- #define COPT_ATMEGA32 0
-#endif
-
-/**ATmega64 target */
-#ifdef _PLATFORM_M64_
- #define COPT_ATMEGA64 1
-#else
- #define COPT_ATMEGA64 0
-#endif
-
-/**ATmega128 target */
-#ifdef _PLATFORM_M128_
- #define COPT_ATMEGA128 1
-#else
- #define COPT_ATMEGA128 0
-#endif
-
-/**ATmega644 target */
-#ifdef _PLATFORM_M644_
- #define COPT_ATMEGA644 1
-#else
- #define COPT_ATMEGA644 0
-#endif
-
-/**Use VPSEM mode */
-#ifdef VPSEM
- #define COPT_VPSEM 1
-#else
- #define COPT_VPSEM 0
-#endif
-
 /** Use dwell control */
 #ifdef DWELL_CONTROL
  #define COPT_DWELL_CONTROL 1

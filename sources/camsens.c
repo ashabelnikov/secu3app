@@ -33,6 +33,10 @@
 #include "ioconfig.h"
 #include "tables.h"
 
+#ifdef HALL_SYNC
+void ProcessInterrupt1(void); //!< External ISR function, see hall.c for more information about this function
+#endif
+
 #ifdef SPEED_SENSOR
 #define F_USEVSS 0   //!< Flag, indicates that VSS is used (mapped to real I/O)
 #endif
@@ -132,7 +136,7 @@ void cams_init_state(void)
   EICRA|= _BV(ISC01) | 0;    //inversion
  }
 #endif
-#ifdef PHASE_SENSOR
+#if defined(PHASE_SENSOR) || defined(HALL_SYNC)
  else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_s)
  {
   camstate.ref_s_inpalt = 3; //REF_S remapped to PS
@@ -266,18 +270,25 @@ uint8_t cams_vr_is_event_r(void)
 /**Interrupt from VR sensor. Marked as REF_S on the schematics */
 ISR(INT0_vect)
 {
-#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
- //In this case this ISR can be used either for: vehicle speed sensor, cam sensor or reference sensor
+#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR) || defined(HALL_SYNC)
+ //In this case this ISR can be used either for: vehicle speed sensor, cam/Hall sensor or reference sensor
  //
  if (1==camstate.ref_s_inpalt)      //reference sensor (normal INT0 operation)
   camstate.vr_event = 1;            //set event flag
-#ifdef SPEED_SENSOR
- else if (2==camstate.ref_s_inpalt) //INT0 used for VSS
-  PROCESS_VSS()
-#endif
+
+//note: PHASE_SENSOR and HALL_SYNC are options which can't be used together (for now)
 #ifdef PHASE_SENSOR
  else if (3==camstate.ref_s_inpalt) //INT0 used for cam sensor
   PROCESS_CAM()
+#endif
+#ifdef HALL_SYNC
+ else if (3==camstate.ref_s_inpalt) //INT0 used for synchronization from Hall sensor
+  ProcessInterrupt1();              //call ISR if PS mapped to REF_S
+#endif
+
+#ifdef SPEED_SENSOR
+ else if (2==camstate.ref_s_inpalt) //INT0 used for VSS
+  PROCESS_VSS()
 #endif
 
 #else
@@ -362,7 +373,6 @@ ISR(INT1_vect)
 #ifdef HALL_SYNC //Synchronization from hall sensor
  //In this case PS input can be used for either Hall sensor(sync from Hall sensor) or VSS sensor
 
- void ProcessInterrupt1(void); //see hall.c for more information about this functions
  if (1==camstate.ps_inpalt)
   ProcessInterrupt1();         //call INT1 handler if PS input not remapped to other function (Hall sensor is connected to PS)
 #ifdef SPEED_SENSOR

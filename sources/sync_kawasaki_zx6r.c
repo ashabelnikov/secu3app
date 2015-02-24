@@ -61,7 +61,7 @@
 /**How many cogs must be skipped during start up*/
 #define HALL_ON_START_SKIP_COGS 2
 
-/**Synchronization contition. Plinomial is equal to v / 2.66 */
+/**Synchronization contition. Polinomial is equal to v / 2.66 */
 #define HALL_SYNCCOND(v) (((v) >> 2) + ((v) >> 3))
 
 /**Number of cogs including small one, so 2+1 */
@@ -686,14 +686,10 @@ ISR(TIMER1_CAPT_vect)
  SETBIT(flags, F_HALLEV); //set event flag
 }
 
-/**Interrupt from a Hall sensor (external)*/
-#ifdef SPEED_SENSOR
-/**INT1 handler function */
-void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
-#else
-/**Interrupt from a Hall sensor (external)*/
-ISR(INT1_vect)
-#endif
+/**INT1 handler function (Interrupt from a Hall sensor (external)).
+ * See also prototype of this function in camsens.c
+ */
+void ProcessInterrupt1(void)
 {
  ProcessCogEdge(TCNT1);
  SETBIT(flags, F_HALLEV); //set event flag

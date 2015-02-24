@@ -20,8 +20,8 @@
 */
 
 /** \file camsens.c
- * Implementation of camshaft position sensor's processing.
- * (Реализация обработки датчика фаз).
+ * Implementation of camshaft position sensor's processing (two types - Hall and VR) and referense sensor processing.
+ * Also, this module contains processing of VSS.
  */
 
 #include "port/avrio.h"
@@ -33,21 +33,34 @@
 #include "ioconfig.h"
 #include "tables.h"
 
-#define F_CAMSIA 0   //PS (cam sensor input) is available (not remapped to other function)
 #ifdef SPEED_SENSOR
-#define F_REFSIA 1   //REF_S (reference sensor input) is available (not remapped to other function)
+#define F_USEVSS 0   //!< Flag, indicates that VSS is used (mapped to real I/O)
 #endif
-#define flags TWSR   //only 2 bits are allowed to be used as R/W
+
+#ifdef PHASE_SENSOR
+#define F_USECAM 1   //!< Flag, indicates that cam sensor is used (mapped to real I/O)
+#endif
+
+#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
+#define flags TWSR   //!< Only 2 bits are allowed to be used as R/W
+#endif
 
 /** Defines state variables */
 typedef struct
 {
+ //Reference sensor stuff
+ volatile uint8_t vr_event;           //!< flag which indicates event from reference sensor
+
+ //Cam sensor only stuff
+#ifdef PHASE_SENSOR
  volatile uint8_t cam_ok;             //!< indicates presence of cam sensor (works properly)
  uint8_t cam_error;                   //!< error flag, indicates error
- uint16_t err_threshold;              //!< error threshold in teeth
- volatile uint16_t err_counter;       //!< teeth counter
- volatile uint8_t event;              //!< flag which indicates Hall cam sensor's event
- volatile uint8_t vr_event;           //!< flag which indicates VR cam sensor's event
+ uint16_t cam_err_threshold;          //!< error threshold in teeth
+ volatile uint16_t cam_err_counter;   //!< teeth counter
+ volatile uint8_t cam_event;          //!< flag which indicates Hall cam sensor's event
+#endif
+
+ //VSS sensor only stuff
 #ifdef SPEED_SENSOR
  uint16_t spdsens_period_prev;        //!< for storing previous value of timer counting time between speed sensor pulse interrupts
  volatile uint16_t spdsens_period;    //!< period between speed sensor pulses (1 tick  = 4us)
@@ -55,8 +68,10 @@ typedef struct
  volatile uint32_t spdsens_counter;   //!< number of speed sensor pulses since last ignition turn on
  volatile uint8_t spdsens_event;      //!< indicates pending event from speed sensor
  uint8_t spdsens_state;               //!< Used in special state machine to filter overflows
- volatile uint8_t vss_input;          //!< variable indicating to which input VSS is remapped (PS or REF_S)
 #endif
+
+ volatile uint8_t ref_s_inpalt;       //!< shows which input is mapped to REF_S (0 - remapped to no ISR function, 1 - normal operation (not remapped), 2 - VSS, 3 - PS)
+ volatile uint8_t ps_inpalt;          //!< shows which input is mapped to PS (0 - remapped to no ISR function, 1 - normal operation (not remapped), 2 - VSS)
 }camstate_t;
 
 /** Global instance of cam sensor state variables */
@@ -70,10 +85,11 @@ void cams_init_ports()
 
 void cams_init_state_variables(void)
 {
+#ifdef PHASE_SENSOR
  camstate.cam_ok = 0; //not Ok
-//camstate.err_threshold = 65 * 2;
- camstate.err_counter = 0;
- camstate.event = 0;
+ camstate.cam_err_counter = 0;
+ camstate.cam_event = 0;
+#endif
  camstate.vr_event = 0;
 }
 
@@ -81,7 +97,9 @@ void cams_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
  cams_init_state_variables();
+#ifdef PHASE_SENSOR
  camstate.cam_error = 0; //no errors
+#endif
 #ifdef SPEED_SENSOR
  camstate.spdsens_counter = 0;
  camstate.spdsens_period = 0xFFFF;
@@ -90,36 +108,91 @@ void cams_init_state(void)
  camstate.spdsens_state = 0;
 #endif
 
- //set flag indicating that PS (cam sensor input) is available
- WRITEBIT(flags, F_CAMSIA, IOCFG_CHECK(IOP_PS));
+ //Collect information about remapping of REF_S input.
+ //Interrupt edge for VR input depends on REF_S inversion, but will be overriden by cams_vr_set_edge_type() if REF_S is not remapped.
+ if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_s)
+ {
+  camstate.ref_s_inpalt = 1; //REF_S not remapped, normal operation - reference sensor
+  EICRA|= _BV(ISC01) | _BV(ISC00);
+ }
+ if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_si)
+ {
+  camstate.ref_s_inpalt = 1; //REF_S not remapped, normal operation - reference sensor
+  EICRA|= _BV(ISC01) | 0;    //inversion
+ }
 #ifdef SPEED_SENSOR
- //set flag indicating that REF_S (reference sensor input) is available
- WRITEBIT(flags, F_REFSIA, IOCFG_CHECK(IOP_REF_S));
- //set variable indicating to which input VSS is remapped (PS or REF_S)
- if ((IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_s) || (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_si))
-  camstate.vss_input = 1; // remapped to REF_S
- else if ((IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ps) || (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_psi))
-  camstate.vss_input = 2; // remapped to PS
- else
-  camstate.vss_input = 0; // not mapped to real IO
+ else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_s)
+ {
+  camstate.ref_s_inpalt = 2; //REF_S remapped to VSS
+  EICRA|= _BV(ISC01) | _BV(ISC00);
+ }
+ else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_si)
+ {
+  camstate.ref_s_inpalt = 2; //REF_S remapped to VSS
+  EICRA|= _BV(ISC01) | 0;    //inversion
+ }
 #endif
-
- //interrupt edge for Hall input depends on PS inversion, interrupt by rising edge for VR input
- EICRA|= _BV(ISC11) | ((IOCFG_CB(IOP_PS) != (fnptr_t)iocfg_g_psi) ? _BV(ISC10) : 0);
- EICRA|= _BV(ISC01) | _BV(ISC00);
 #ifdef PHASE_SENSOR
- if (CHECKBIT(flags, F_CAMSIA))
-  EIMSK|= _BV(INT1);              //INT1 enabled only when cam sensor is utilized in the firmware or input is available
+ else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_s)
+ {
+  camstate.ref_s_inpalt = 3; //REF_S remapped to PS
+  EICRA|= _BV(ISC01) | _BV(ISC00);
+ }
+ else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_si)
+ {
+  camstate.ref_s_inpalt = 3; //REF_S remapped to PS
+  EICRA|= _BV(ISC01) | 0;    //inversion
+ }
 #endif
- if (IOCFG_CHECK(IOP_REF_S))
-  EIMSK|= _BV(INT0);              //INT0 enabled only when REF_S input not remapped to alternative function
+ else
+  camstate.ref_s_inpalt = 0; //REF_S remapped to other input, no ISR
 
+ //Collect information about remapping of PS input
+ //Interrupt edge for Hall input depends only on PS inversion
+ if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ps)
+ {
+  camstate.ps_inpalt = 1;    //PS not remapped, normal operation - phase sensor
+  EICRA|= _BV(ISC11) | _BV(ISC10);
+ }
+ else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_psi)
+ {
+  camstate.ps_inpalt = 1;    //PS not remapped, normal operation - phase sensor
+  EICRA|= _BV(ISC11) | 0;    //inverted
+ }
 #ifdef SPEED_SENSOR
- if (1==camstate.vss_input)
-  EIMSK|= _BV(INT0);              //VSS remapped to INT0 (REF_S)
- else if (2==camstate.vss_input)
-  EIMSK|= _BV(INT1);              //VSS remapped to INT1 (PS)
+ else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ps)
+ {
+  camstate.ps_inpalt = 2;    //PS remapped to VSS
+  EICRA|= _BV(ISC11) | _BV(ISC10);
+ }
+ else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_psi)
+ {
+  camstate.ps_inpalt = 2;    //PS remapped to VSS
+  EICRA|= _BV(ISC11) | 0;    //inverted
+ }
 #endif
+ else
+  camstate.ps_inpalt = 0;    //PS remapped to other input, no ISR
+ ///////////////////////////////////////////////////////////////////////////////////
+
+ //Helpful flag variables, which will speed up code execution
+#ifdef SPEED_SENSOR
+ WRITEBIT(flags, F_USEVSS, (camstate.ref_s_inpalt == 2) || (camstate.ps_inpalt == 2));
+#endif
+#ifdef PHASE_SENSOR
+ WRITEBIT(flags, F_USECAM, (camstate.ref_s_inpalt == 3) || (camstate.ps_inpalt == 1));
+#endif
+
+#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
+  //INT1 enabled only when cam or VSS sensor is utilized in the firmware AND if PS mapped to PS or VSS, for other cases ISR is not required
+  //So, if firmware compiled without PHASE_SENSOR and SPEED_SENSOR options, then we don't require INT1 interrupt at all.
+ if (0!=camstate.ps_inpalt)
+  EIMSK|= _BV(INT1);
+#endif
+
+ //INT0 doesn't depend on PHASE_SENSOR and SPEED_SENSOR compilation options
+ if (0!=camstate.ref_s_inpalt)
+  EIMSK|= _BV(INT0);              //INT0 enabled only when REF_S input mapped to input which requires ISR (default REF_S requires it)
 
  _END_ATOMIC_BLOCK();
 }
@@ -129,7 +202,7 @@ void cams_control(void)
 #ifdef SPEED_SENSOR
  uint16_t t1_curr, t1_prev, period;
  uint8_t _t, event;
- if (0==camstate.vss_input)
+ if (!CHECKBIT(flags, F_USEVSS))
   return;                                //speed sensor is not enabled
  _t = _SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
@@ -171,61 +244,86 @@ uint8_t cams_vr_is_event_r(void)
  return result;
 }
 
-/**Interrupt from CAM sensor (VR). Marked as REF_S on the schematics */
+#ifdef PHASE_SENSOR
+/**Must be called from ISR to process cam sensor*/
+#define PROCESS_CAM() {\
+  camstate.cam_ok = 1;\
+  camstate.cam_err_counter = 0;\
+  camstate.cam_event = 1;\
+}
+#endif
+
+#ifdef SPEED_SENSOR
+/**Must be called from ISR to process VSS*/
+#define PROCESS_VSS() {\
+  ++camstate.spdsens_counter;\
+  camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;\
+  camstate.spdsens_period_prev = TCNT1;\
+  camstate.spdsens_event = 1;\
+}
+#endif
+
+/**Interrupt from VR sensor. Marked as REF_S on the schematics */
 ISR(INT0_vect)
 {
+#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
+ //In this case this ISR can be used either for: vehicle speed sensor, cam sensor or reference sensor
+ //
+ if (1==camstate.ref_s_inpalt)      //reference sensor (normal INT0 operation)
+  camstate.vr_event = 1;            //set event flag
 #ifdef SPEED_SENSOR
- if (CHECKBIT(flags, F_REFSIA))
- {//normal INT0 operation
-  camstate.vr_event = 1; //set event flag
- }
- else
- {
-  if (1==camstate.vss_input)
-  { //INT0 used for VSS
-   ++camstate.spdsens_counter;
-   camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;
-   camstate.spdsens_period_prev = TCNT1;
-   camstate.spdsens_event = 1;  //set event flag
-  }
- }
+ else if (2==camstate.ref_s_inpalt) //INT0 used for VSS
+  PROCESS_VSS()
+#endif
+#ifdef PHASE_SENSOR
+ else if (3==camstate.ref_s_inpalt) //INT0 used for cam sensor
+  PROCESS_CAM()
+#endif
+
 #else
+ //Simple case.
+ //In this case this ISR used only for reference sensor (normal INT0 operation)
+ //
  camstate.vr_event = 1; //set event flag
 #endif
 }
 
 void cams_vr_set_edge_type(uint8_t edge_type)
 {
-#ifdef SPEED_SENSOR
- //if REF_S remapped to VSS, then edge depends on inversion flag
- if (camstate.vss_input == 1)
-  edge_type = (IOCFG_CB(IOP_SPDSENS) != (fnptr_t)iocfg_g_ref_si);
+#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
+ //set edge only if REF_S is not remapped to other function, for other functions which require ISR, edge selected at initialization
+ //We don't need this check if firmware compiled without SPEED_SENSOR and PHASE_SENSOR options
+ if (1==camstate.ref_s_inpalt)
+ {
 #endif
- _BEGIN_ATOMIC_BLOCK();
- if (edge_type)
-  EICRA|= _BV(ISC00); //rising
- else
-  EICRA&= ~_BV(ISC00);//falling
- _END_ATOMIC_BLOCK();
+  _BEGIN_ATOMIC_BLOCK();
+  if (edge_type)
+   EICRA|= _BV(ISC00); //rising
+  else
+   EICRA&= ~_BV(ISC00);//falling
+  _END_ATOMIC_BLOCK();
+#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
+ }
+#endif
 }
 
 //Functionality added to compilation only when PHASE_SENSOR defined
 #ifdef PHASE_SENSOR
 void cams_set_error_threshold(uint16_t threshold)
 {
- camstate.err_threshold = threshold;
+ camstate.cam_err_threshold = threshold;
 }
 
 void cams_detect_edge(void)
 {
- if (!CHECKBIT(flags, F_CAMSIA))
-  return;
+ if (!CHECKBIT(flags, F_USECAM))
+  return; //do nothing if cam sensor is not mapped to PS or remapped to REF_S
 
- if (++camstate.err_counter > camstate.err_threshold)
+ if (++camstate.cam_err_counter > camstate.cam_err_threshold)
  {
   camstate.cam_ok = 0;
   camstate.cam_error = 1;
-  camstate.err_counter = 0;
+  camstate.cam_err_counter = 0;
  }
 }
 
@@ -248,37 +346,43 @@ uint8_t cams_is_event_r(void)
 {
  uint8_t result;
  _BEGIN_ATOMIC_BLOCK();
- result = camstate.event;
- camstate.event = 0; //reset event flag
+ result = camstate.cam_event;
+ camstate.cam_event = 0; //reset event flag
  _END_ATOMIC_BLOCK();
  return result;
 }
 #endif //PHASE_SENSOR
 
-
-//We need following ISR if cam sensor or speed sensor are enabled
+//We need following ISR if cam sensor or speed sensor is selected for compilation
 #if defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
 
 /**Interrupt from CAM sensor (Hall)*/
 ISR(INT1_vect)
 {
-#ifdef HALL_SYNC
+#ifdef HALL_SYNC //Synchronization from hall sensor
+ //In this case PS input can be used for either Hall sensor(sync from Hall sensor) or VSS sensor
+
  void ProcessInterrupt1(void); //see hall.c for more information about this functions
- if (CHECKBIT(flags, F_CAMSIA))
-  ProcessInterrupt1(); //call INT1 handler if PS input not remapped to other function
-#else
- camstate.cam_ok = 1;
- camstate.err_counter = 0;
- camstate.event = 1;          //set event flag
+ if (1==camstate.ps_inpalt)
+  ProcessInterrupt1();         //call INT1 handler if PS input not remapped to other function (Hall sensor is connected to PS)
+#ifdef SPEED_SENSOR
+ else if (2==camstate.ps_inpalt)
+  PROCESS_VSS();               //PS remapped to VSS, you should use CKPS input for Hall sensor instead of PS
+#endif
+
+#else //Synchronization from CKP sensor
+
+ //In this case PS input can be used for either cam or VSS sensor
+#ifdef PHASE_SENSOR
+ if (1==camstate.ps_inpalt)
+  PROCESS_CAM()                //PS is not remapped to othe function, so use in for cam sensor
 #endif
 #ifdef SPEED_SENSOR
- if (2!=camstate.vss_input)
-  return;                     //not remapped to PS input
- ++camstate.spdsens_counter;
- camstate.spdsens_period = TCNT1 - camstate.spdsens_period_prev;
- camstate.spdsens_period_prev = TCNT1;
- camstate.spdsens_event = 1;  //set event flag
+ if (2==camstate.ps_inpalt)
+  PROCESS_VSS()                //PS remapped to VSS
 #endif
+
+#endif  //HALL_SYNC
 }
 
 #endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
@@ -286,7 +390,7 @@ ISR(INT1_vect)
 #ifdef SPEED_SENSOR
 uint16_t spdsens_get_period(void)
 {
- return (camstate.vss_input) ? camstate.spdsens_period_buff : 0;
+ return CHECKBIT(flags, F_USEVSS) ? camstate.spdsens_period_buff : 0;
 }
 
 uint32_t spdsens_get_pulse_count(void)
@@ -295,6 +399,6 @@ uint32_t spdsens_get_pulse_count(void)
  _BEGIN_ATOMIC_BLOCK();
  value = camstate.spdsens_counter;
  _END_ATOMIC_BLOCK();
- return (camstate.vss_input) ? value : 0;
+ return CHECKBIT(flags, F_USEVSS) ? value : 0;
 }
 #endif

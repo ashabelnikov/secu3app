@@ -20,8 +20,7 @@
 */
 
 /** \file camsens.h
- * Processing of camshaft position sensor.
- * (Обработка датчика фаз).
+ * Processing of camshaft position sensor, reference sensor and VSS.
  */
 
 #ifndef _CAMSENS_H_

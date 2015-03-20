@@ -20,6 +20,7 @@
 */
 
 /** \file magnitude.h
+ * \author Alexey A. Shabelnikov
  * Helpful macros for working with constants when fixed point representation of fractional numbers is used
  * (Вспомогательные макросы для работы с константными значениями при использовании целочисленного
  * представления дробных чисел).

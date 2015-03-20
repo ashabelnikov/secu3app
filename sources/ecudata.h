@@ -20,6 +20,7 @@
 */
 
 /** \file ecudata.h
+ * \author Alexey A. Shabelnikov
  * ECU data in RAM (global data structures and state variables).
  * This file contains main data structures used in the firmware.
  */

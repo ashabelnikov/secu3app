@@ -20,6 +20,7 @@
 */
 
 /** \file bc_input.c
+ * \author Alexey A. Shabelnikov
  * Implementation of CE errors information output using blink codes
  * (Реализация выдачи информации об ошибках СЕ используя блинк коды).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file choke.h
+ * \author Alexey A. Shabelnikov
  * Carburetor choke control.
  * (Управление воздушной заслонкой карбюратора).
  */

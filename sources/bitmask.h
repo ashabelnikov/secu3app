@@ -20,6 +20,7 @@
 */
 
 /** \file bitmask.h
+ * \author Alexey A. Shabelnikov
  * Support for bit operations.
  * Helpful macros for perform bit operations. Note: You must define corresponding *_ENDIAN_DATA_FORMAT
  * symbol to ensure correct work of mentioned macros.

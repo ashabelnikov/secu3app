@@ -20,6 +20,7 @@
 */
 
 /** \file camsens.c
+ * \author Alexey A. Shabelnikov
  * Implementation of camshaft position sensor's processing (two types - Hall and VR) and referense sensor processing.
  * Also, this module contains processing of VSS.
  */

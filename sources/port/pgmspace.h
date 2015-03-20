@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file pgmspace.h
+ * \author Alexey A. Shabelnikov
+ * Promram space access macros
+ */
+
 #ifndef _SECU3_PGMSPACE_H_
 #define _SECU3_PGMSPACE_H_
 

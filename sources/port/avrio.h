@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file avrio.h
+ * \author Alexey A. Shabelnikov
+ * Define I/O registers and bits
+ */
+
 #ifndef _SECU3_AVRIO_H_
 #define _SECU3_AVRIO_H_
 

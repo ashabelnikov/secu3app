@@ -20,6 +20,7 @@
 */
 
 /** \file lambda.h
+ * \author Alexey A. Shabelnikov
  * Correction algorithms using an exhaust gas oxygen sensor
  * (Корректировка состава смеси используя датчик кислорода).
  */

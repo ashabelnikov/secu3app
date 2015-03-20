@@ -20,6 +20,7 @@
 */
 
 /** \file onewire.c
+ * \author Alexey A. Shabelnikov
  * Implementation of 1-wire protocol API.
  * (Реализация API протокола 1-wire).
  */

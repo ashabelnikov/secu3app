@@ -20,6 +20,7 @@
 */
 
 /** \file diagnost.c
+ * \author Alexey A. Shabelnikov
  * Implementation of hardware diagnostics
  * (Реализация диагностики аппаратной части)
  */

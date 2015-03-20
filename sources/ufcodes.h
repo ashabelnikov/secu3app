@@ -20,6 +20,7 @@
 */
 
 /** \file ufcodes.h
+ * \author Alexey A. Shabelnikov
  * Codes of descriptors of packets used in communication via serial interface
  * ( оды дескрипторов пакетов используемых при передаче данных через последовательный интерфейс).
  */

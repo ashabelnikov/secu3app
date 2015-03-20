@@ -20,6 +20,7 @@
 */
 
 /** \file wdt.c
+ * \author Alexey A. Shabelnikov
  * Implementation of watchdog timer API (Реализация модуля сторожевого таймера)
  */
 

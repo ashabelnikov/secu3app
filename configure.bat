@@ -1,4 +1,7 @@
 @echo off
+rem SECU-3  - An open source, free engine control unit
+rem Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Kiev
+rem 
 rem Batch file for build firmware of SECU-3 project under MS Windows. This script will
 rem configure Makefile for you and build project.
 rem Created by Alexey A. Shabelnikov, Kiev 17 July 2011.

@@ -20,6 +20,7 @@
 */
 
 /** \file compilopt.h
+ * \author Alexey A. Shabelnikov
  * Definitions of compile-time options (preprocessor directives).
  */
 

@@ -20,6 +20,7 @@
 */
 
 /** \file knklogic.h
+ * \author Alexey A. Shabelnikov
  * The module contains all the regulation logic of advance angle by detonation
  * (Модуль содержащий всю логику регулирования УОЗ по детонации).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file ecudata.c
+ * \author Alexey A. Shabelnikov
  * ECU data in RAM (global data structures and state variables)
  */
 

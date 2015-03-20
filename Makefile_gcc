@@ -1,4 +1,7 @@
 ###############################################################################
+#SECU-3  - An open source, free engine control unit
+#Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Kiev
+#
 # Maklefile for build firmware of SECU-3 project using GCC
 # Created by Alexey A. Shabelnikov, Kiev 17 July 2011. 
 # Note: It requires AVR-GCC toolchain (WinAVR)
@@ -53,7 +56,7 @@ SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
 	diagnost.c wdt.c ioconfig.c pwrrelay.c bc_input.c \
 	smcontrol.c choke.c hall.c bluetooth.c onewire.c \
 	immobiliz.c ckps2ch.c intkheat.c injector.c uni_out.c \
-	lambda.c ecudata.c
+	lambda.c ecudata.c gasdose.c
 
 # Define all object files and dependencies
 OBJECTS = $(SRC:%.c=$(OBJDIR)/%.o)

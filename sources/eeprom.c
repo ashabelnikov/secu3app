@@ -20,6 +20,7 @@
 */
 
 /** \file eeprom.c
+ * \author Alexey A. Shabelnikov
  * Implementation of EEPROM related functions (API).
  * Functions for read/write EEPROM and related functionality
  * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность)

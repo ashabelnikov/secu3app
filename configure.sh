@@ -1,4 +1,6 @@
 #!/bin/sh
+#SECU-3  - An open source, free engine control unit
+#Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Kiev
 
 # Script for building of the SECU-3 project firmware under Linux. This script will
 # configure Makefile for you and build project.

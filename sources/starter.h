@@ -20,6 +20,7 @@
 */
 
 /** \file starter.h
+ * \author Alexey A. Shabelnikov
  * Working with starter
  * (Работа со стартером).
  */

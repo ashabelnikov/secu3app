@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file port.h
+ * \author Alexey A. Shabelnikov
+ * Common port header
+ */
+
 #ifndef _SECU3_PORT_H_
 #define _SECU3_PORT_H_
 

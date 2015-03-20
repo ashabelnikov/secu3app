@@ -20,6 +20,7 @@
 */
 
 /** \file bluetooth.h
+ * \author Alexey A. Shabelnikov
  * Bluetooth related functionality and logic (baud rate setting, name, password)
  * (Логика связанная с блютузом (установка скорости, имя, пароль)).
  */

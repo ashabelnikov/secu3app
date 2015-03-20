@@ -20,6 +20,7 @@
 */
 
 /** \file suspendop.c
+ * \author Alexey A. Shabelnikov
  * Implementation of execution of suspended operations
  * (Реализация выполнения отложенных операций).
  */

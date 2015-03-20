@@ -20,6 +20,7 @@
 */
 
 /** \file sync_kawasaki_zx6r.c
+ * \author Alexey A. Shabelnikov
  * Implementation of synchronization processing for Kawasaki ZX6R.
  * (Обработка датчика положения коленвала для мотоцикла Kawasaki ZX6R)
  */

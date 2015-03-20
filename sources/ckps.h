@@ -20,6 +20,7 @@
 */
 
 /** \file ckps.h
+ * \author Alexey A. Shabelnikov
  * Processing of crankshaft position sensor.
  * (Обработка датчика положения коленвала).
  */

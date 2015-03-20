@@ -20,6 +20,7 @@
 */
 
 /** \file eculogic.h
+ * \author Alexey A. Shabelnikov
  * Logic determining calculation and regulation of anvance angle
  * (Логика определяющая вычисление и регулирование угла опережения).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file crc16.c
+ * \author Alexey A. Shabelnikov
  * Implementation of CRC16 related functions.
  * Functions for calculate CRC16 of data in RAM and in the ROM
  * (Реализация Функций для вычисления контрольной суммы для данных в ОЗУ и в ПЗУ).

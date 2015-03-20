@@ -20,6 +20,7 @@
 */
 
 /** \file dbgvar.h
+ * \author Alexey A. Shabelnikov
  * Bebug variables header file. Variables are in the uart.c unit
  */
 

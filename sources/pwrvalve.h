@@ -20,6 +20,7 @@
 */
 
 /** \file pwrvalve.h
+ * \author Alexey A. Shabelnikov
  * Control of Power Valve (Carburetor)
  * (”правление экономайзером мощностных режимов).
  */

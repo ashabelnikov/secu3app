@@ -20,6 +20,7 @@
 */
 
 /** \file eculogic.c
+ * \author Alexey A. Shabelnikov
  * Implementation of logic for calculation and regulation of ignition timing and fuel injection
  * (–еализаци€ логики определ€ющей вычисление и регулирование угла опережени€ и впрыск топлива).
  */

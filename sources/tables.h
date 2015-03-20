@@ -20,6 +20,7 @@
 */
 
 /** \file tables.h
+ * \author Alexey A. Shabelnikov
  * Tables and datastructures stored in the frmware.
  * (“аблицы и структуры данных хранимые в прошивке).
  */

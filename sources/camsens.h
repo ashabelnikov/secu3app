@@ -20,6 +20,7 @@
 */
 
 /** \file camsens.h
+ * \author Alexey A. Shabelnikov
  * Processing of camshaft position sensor, reference sensor and VSS.
  */
 

@@ -20,6 +20,7 @@
 */
 
 /** \file adc.c
+ * \author Alexey A. Shabelnikov
  * Implementation of ADC related functions (API).
  * Functions for read values from ADC, perform conversion to phisical values etc
  * (Функции для работы с АЦП, считывание значений, преобразование в физические величины и т.д.).

@@ -20,6 +20,7 @@
 */
 
 /** \file smcontrol.c
+ * \author Alexey A. Shabelnikov
  * Implementation of stepper motor control
  * (Реализация управления шаговым двигателем).
  */

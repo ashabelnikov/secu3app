@@ -20,6 +20,7 @@
 */
 
 /** \file jumper.h
+ * \author Alexey A. Shabelnikov
  * Process jumpers which user can open/close to do some actions
  * (Обработка перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
  */

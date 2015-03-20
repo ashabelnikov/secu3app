@@ -20,6 +20,7 @@
 */
 
 /** \file immobiliz.h
+ * \author Alexey A. Shabelnikov
  * Immobilizer logic
  * (логика иммобилайзера).
  */

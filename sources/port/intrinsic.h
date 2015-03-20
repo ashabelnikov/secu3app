@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file intrinsic.h
+ * \author Alexey A. Shabelnikov
+ * Intrinsic functions and macros
+ */
+
 #ifndef _SECU3_INTRINSIC_H_
 #define _SECU3_INTRINSIC_H_
 

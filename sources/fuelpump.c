@@ -20,6 +20,7 @@
 */
 
 /** \file fuelpump.c
+ * \author Alexey A. Shabelnikov
  * Implementation of controling of electric fuel pump.
  * (Реализация управления электробензонасосом).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file uart.h
+ * \author Alexey A. Shabelnikov
  * Service for performing communication via UART.
  * (Поддержка обмена данными через UART).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file ioconfig.h
+ * \author Alexey A. Shabelnikov
  * I/O configuration file. Allows I/O functions remapping
  * (Файл конфигурации линий ввода/вывода).
  */

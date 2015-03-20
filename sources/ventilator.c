@@ -20,6 +20,7 @@
 */
 
 /** \file ventilator.c
+ * \author Alexey A. Shabelnikov
  * Implementation of cooling fan's control related functions.
  * (Реализация функций для управления электрическим вентилятором).
  */

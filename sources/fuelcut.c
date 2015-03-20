@@ -20,6 +20,7 @@
 */
 
 /** \file fuelcut.c
+ * \author Alexey A. Shabelnikov
  * Implementation of controling of Idle Cut-off valve (Carburetor) of fuel cut (Fuel injection).
  */
 

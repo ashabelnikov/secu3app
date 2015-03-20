@@ -20,6 +20,7 @@
 */
 
 /** \file ce_errors.c
+ * \author Alexey A. Shabelnikov
  * Implementation of controling of CE, errors detection and related functionality.
  * (Реализация управления лампой CE, обнаружения ошибок и соответствующей функциональности).
  */

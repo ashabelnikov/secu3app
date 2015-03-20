@@ -20,6 +20,7 @@
 */
 
 /** \file jumper.c
+ * \author Alexey A. Shabelnikov
  * Implementation of processing of jumpers which user can open/close to do some actions
  * (Реализация обработки перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
  */

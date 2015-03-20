@@ -20,6 +20,7 @@
 */
 
 /** \file starter.c
+ * \author Alexey A. Shabelnikov
  * Implementation of working with starter
  * (Реализация работы со стартером).
  */

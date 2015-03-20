@@ -20,6 +20,7 @@
 */
 
 /** \file bootldr.h
+ * \author Alexey A. Shabelnikov
  * Functionality and information for access boot loader
  * (Функционал и информация для доступа к загрузчику).
  */

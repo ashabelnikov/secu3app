@@ -20,6 +20,7 @@
 */
 
 /** \file tables.c
+ * \author Alexey A. Shabelnikov
  * Tables and datastructures stored in the frmware (instances).
  * (“аблицы и структуры данных хранимые в прошивке).
  */

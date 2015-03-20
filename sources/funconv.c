@@ -20,6 +20,7 @@
 */
 
 /** \file funconv.c
+ * \author Alexey A. Shabelnikov
  * Implementation of core mathematics and regulation logic.
  * (Реализация основной части математического аппарата и логики регулирования).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file pwrvalve.c
+ * \author Alexey A. Shabelnikov
  * Implementation of controlling algorithms for Power Valve (Carburetor)
  * (Реализация алгоритмов управления Экономайзером Мощностных Режимов (ЭМР)).
  */

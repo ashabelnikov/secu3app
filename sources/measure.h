@@ -20,6 +20,7 @@
 */
 
 /** \file measure.h
+ * \author Alexey A. Shabelnikov
  * Process (averaging, corrections etc) data comes from ADC and sensors
  * (Обработка (усреднение, корректировки и т.д.) данных поступающих от АЦП и данчиков).
  */

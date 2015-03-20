@@ -20,6 +20,7 @@
 */
 
 /** \file uni_out.c
+ * \author Alexey A. Shabelnikov
  * Implementation of a universal programmable output.
  */
 

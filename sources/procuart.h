@@ -20,6 +20,7 @@
 */
 
 /** \file procuart.h
+ * \author Alexey A. Shabelnikov
  * Functionality for processing of pending data which is sent/received via serial interface (UART)
  * (Обработка поступающих данных для приема/передачи через последовательный интерфейс (UART)).
  */

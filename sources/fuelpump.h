@@ -20,6 +20,7 @@
 */
 
 /** \file fuelpump.h
+ * \author Alexey A. Shabelnikov
  * Control of electric fuel pump.
  * (Управление электробензонасосом).
  */

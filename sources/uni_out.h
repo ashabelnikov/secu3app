@@ -20,6 +20,7 @@
 */
 
 /** \file uni_out.h
+ * \author Alexey A. Shabelnikov
  * A universal programmable output.
  */
 

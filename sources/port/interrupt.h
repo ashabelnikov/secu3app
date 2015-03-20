@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file interrupt.h
+ * \author Alexey A. Shabelnikov
+ * Interrupt related stuff
+ */
+
 #ifndef _SECU3_INTERRUPT_H_
 #define _SECU3_INTERRUPT_H_
 

@@ -20,6 +20,7 @@
 */
 
 /** \file ckps2ch.c
+ * \author Alexey A. Shabelnikov
  * Implementation of crankshaft position sensor's processing (2ch igniter version).
  * (Реализация обработки датчика положения коленвала, версия для 2-х канального коммутатора).
  */

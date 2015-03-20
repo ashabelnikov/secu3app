@@ -20,6 +20,7 @@
 */
 
 /** \file hall.c
+ * \author Alexey A. Shabelnikov
  * Implementation of Hall sensor's synchronization processing.
  * (Реализация обработки синхронизации от датчика Холла).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file intkheat.h
+ * \author Alexey A. Shabelnikov
  * Intake manifold heating control.
  * (”правление подогревом впускного коллектора).
  */

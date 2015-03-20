@@ -20,6 +20,7 @@
 */
 
 /** \file measure.c
+ * \author Alexey A. Shabelnikov
  * Implementation pf processing (averaging, corrections etc) of data comes from ADC and sensors
  * (Реализация обработки (усреднение, корректировки и т.д.) данных поступающих от АЦП и датчиков).
  */

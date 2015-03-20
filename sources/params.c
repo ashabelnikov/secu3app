@@ -20,6 +20,7 @@
 */
 
 /** \file params.c
+ * \author Alexey A. Shabelnikov
  * Implementation of functionality for work with parameters (save/restore/check)
  * (Реализация функциональности для работы с параметрами (сохранение/восстановление/проверка)).
  */

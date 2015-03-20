@@ -20,6 +20,7 @@
 */
 
 /** \file bootldr.c
+ * \author Alexey A. Shabelnikov
  * Contains boot loader's body which inserted into firmware
  * (Содержит тело загрузчика которое вставлено в прошивку).
  */

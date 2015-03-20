@@ -20,6 +20,7 @@
 */
 
 /** \file secu3.c
+ * \author Alexey A. Shabelnikov
  * Implementation of main module of the firmware.
  * (Реализация главного модуля прошивки).
  */

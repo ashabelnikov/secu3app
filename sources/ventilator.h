@@ -20,6 +20,7 @@
 */
 
 /** \file ventilator.h
+ * \author Alexey A. Shabelnikov
  * Cooling fan's control related functions.
  * (Функции для управления вентилятором).
  */

@@ -20,6 +20,7 @@
 */
 
 /** \file params.h
+ * \author Alexey A. Shabelnikov
  * Functionality for work with parameters (save/restore/check)
  * (Функциональность для работы с параметрами (сохранение/восстановление/проверка)).
  */

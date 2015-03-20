@@ -69,7 +69,6 @@
 
 //Flags (see flags variable)
 #define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing (признак ошибки ДХ, устанавливается в прерывании от ДХ, сбрасывается после обработки)
-#define F_HALLSIA   1                 //!< Indicates that Hall sensor(input) is available
 #define F_VHTPER    2                 //!< used to indicate that measured period is valid (actually measured)
 #define F_STROKE    3                 //!< flag for synchronization with rotation (флаг синхронизации с вращением)
 #define F_USEKNK    4                 //!< flag which indicates using of knock channel (признак использования канала детонации)
@@ -80,9 +79,7 @@
 //Additional flags (see flags2 variable)
 #define F_STRMOD    0                 //!< used for synchronization during cranking
 #define F_ISSYNC    1                 //!< used to indicate that system has already synchronized
-#define F_SELEDGE_C 2                 //!< indicates selected edge type for CKPS input, falling edge is default
-#define F_SELEDGE_P 3                 //!< indicates selected edge type for PS input, falling edge is default
-#define F_SELINP    4                 //!< indicates selected input type (either CKPS or PS can be used), PS is default
+#define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default
 
 /** State variables */
 typedef struct
@@ -169,15 +166,6 @@ void ckps_init_state_variables(void)
  TCCR0B = 0;                          //timer is stopped (останавливаем таймер0)
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
 
- if (CHECKBIT(flags2, F_SELINP)) //CKPS input
- {
-  SET_CKPS_EDGE(CHECKBIT(flags2, F_SELEDGE_C)); //set previously selected edge for ICP1
- }
- else    //PS input
- { //default
-  if (CHECKBIT(flags, F_HALLSIA))
-   SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));  //set previously selected edge for INT1
- }
 
  hall.t1oc = 0;                       //reset overflow counter
  hall.t1oc_s = 255;                   //RPM is very low
@@ -196,15 +184,10 @@ void ckps_init_state_variables(void)
 void ckps_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
- //set flag indicating that Hall sensor input is available
- WRITEBIT(flags, F_HALLSIA, IOCFG_CHECK(IOP_PS));
- CLEARBIT(flags2, F_SELEDGE_C); //falling edge
- CLEARBIT(flags2, F_SELEDGE_P); //falling edge
- CLEARBIT(flags2, F_SELINP);    //PS input
+ if (IOCFG_CHECK(IOP_CKPS))
+  CLEARBIT(flags2, F_SELEDGE); //falling edge
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
-
- EIMSK|=  CHECKBIT(flags, F_HALLSIA) ? _BV(INT1) : 0; //INT1 enabled only when Hall sensor input is available
 
  //Compare channels do not connected to lines of ports (normal port mode)
  //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
@@ -216,6 +199,8 @@ void ckps_init_state(void)
  //enable overflow interrupt of timer 0
  //(разрешаем прерывание по переполнению таймера 0)
  TIMSK0|=_BV(TOIE0);
+ if (IOCFG_CHECK(IOP_CKPS))
+  TIMSK1|=_BV(ICIE1);    //enable input capture interrupt only if CKPS is not remapped
  _END_ATOMIC_BLOCK();
 }
 
@@ -280,29 +265,16 @@ uint16_t ckps_calculate_instant_freq(void)
 
 void ckps_set_edge_type(uint8_t edge_type)
 {
- uint8_t _t;
- //We need to select input capture interrupt edge only if CKPS is selected for input
- if (CHECKBIT(flags2, F_SELINP))
- { //CKPS input
-  if (edge_type == (CHECKBIT(flags2, F_SELEDGE_C) != 0))
-   return; //already has needed state
-  _t = _SAVE_INTERRUPT();
-  _DISABLE_INTERRUPT();
-  SET_CKPS_EDGE(edge_type);
-  _RESTORE_INTERRUPT(_t);
-  WRITEBIT(flags2, F_SELEDGE_C, edge_type); //save selected edge type
- }
- else
- { //PS input
-  //We select edge by reading I/O remapping inversion flag
-  uint8_t ps_edge = (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_psi);
-  if (ps_edge == (CHECKBIT(flags2, F_SELEDGE_P) != 0))
-   return; //already has needed state
-  _t = _SAVE_INTERRUPT();
-  _DISABLE_INTERRUPT();
-  SET_PS_EDGE(ps_edge);
-  _RESTORE_INTERRUPT(_t);
-  WRITEBIT(flags2, F_SELEDGE_P, ps_edge);  //save selected edge type
+ //Set edge of CKPS input only if it is not remapped
+ if (IOCFG_CHECK(IOP_CKPS))
+ {
+  WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type
+  _BEGIN_ATOMIC_BLOCK();
+  if (edge_type)
+   TCCR1B|= _BV(ICES1);              //rising
+  else
+   TCCR1B&=~_BV(ICES1);              //falling
+  _END_ATOMIC_BLOCK();
  }
 }
 
@@ -428,36 +400,6 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 void ckps_set_shutter_spark(uint8_t i_shutter)
 {
  //not supported in this implementation
-}
-
-void ckps_select_input(uint8_t i_type)
-{
- if (i_type == (CHECKBIT(flags2, F_SELINP) !=0))
-  return; //already has needed state
-
- if (!i_type)
- { //Use PS input
-  _BEGIN_ATOMIC_BLOCK();
-  //Do operations only if Hall sensor input is available
-  if (CHECKBIT(flags, F_HALLSIA))
-  {
-   SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));
-   EIMSK|= _BV(INT1);    //enable INT1 interrupt
-  }
-  TIMSK1&= ~_BV(ICIE1);  //disable input capture interrupt
-  _END_ATOMIC_BLOCK();
- }
- else
- { //Use CKPS input
-  _BEGIN_ATOMIC_BLOCK();
-  SET_CKPS_EDGE(CHECKBIT(flags2, F_SELEDGE_C));
-
-  TIMSK1|=_BV(ICIE1);    //enable input capture interrupt
-  if (CHECKBIT(flags, F_HALLSIA))
-   EIMSK&= ~_BV(INT1);   //disable INT1 interrupt (PS input)
-  _END_ATOMIC_BLOCK();
- }
- WRITEBIT(flags2, F_SELINP, i_type); //save selected value
 }
 
 void ckps_set_shutter_wnd_width(int16_t width)
@@ -694,6 +636,16 @@ void ProcessInterrupt1(void)
  ProcessCogEdge(TCNT1);
  SETBIT(flags, F_HALLEV); //set event flag
 }
+
+/**INT0 handler function (Interrupt from a Hall sensor (external)).
+ * See also prototype of this function in camsens.c
+ */
+void ProcessInterrupt0(void)
+{
+ ProcessCogEdge(TCNT1);
+ SETBIT(flags, F_HALLEV); //set event flag
+}
+
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedures
  * for opening and closing knock measuring window

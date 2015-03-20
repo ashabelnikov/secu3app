@@ -280,7 +280,7 @@ void ckps_set_advance_angle(int16_t angle)
 
 void ckps_init_ports(void)
 {
- PORTD|= _BV(PD6); // pullup for ICP1 (подтяжка для ICP1)
+ IOCFG_INIT(IOP_CKPS, 1); // pullup for ICP1 (подтяжка для ICP1)
 
  //after ignition is on, igniters must not be in the accumulation mode,
  //therefore set low level on their inputs

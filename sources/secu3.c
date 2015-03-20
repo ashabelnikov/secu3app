@@ -221,11 +221,7 @@ void init_modules(void)
  ckps_init_state();
  ckps_set_cyl_number(edat.param.ckps_engine_cyl);
  ckps_set_cogs_num(edat.param.ckps_cogs_num, edat.param.ckps_miss_num);
-#ifdef HALL_SYNC
- //note: we must select input before setting edge type
- ckps_select_input(edat.param.hall_flags & _BV(HSF_USECKPINP)); //select input (CKPS or PS)
-#endif
- ckps_set_edge_type(edat.param.ckps_edge_type);
+ ckps_set_edge_type(edat.param.ckps_edge_type);     //CKPS edge (Ôğîíò ÄÏÊÂ)
  cams_vr_set_edge_type(edat.param.ref_s_edge_type); //REF_S edge (Ôğîíò ÄÍÎ)
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL

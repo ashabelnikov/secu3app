@@ -61,7 +61,6 @@
 
 //Flags (see flags variable)
 #define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing (признак ошибки ДХ, устанавливается в прерывании от ДХ, сбрасывается после обработки)
-#define F_HALLSIA   1                 //!< Indicates that Hall sensor(input) is available
 #define F_VHTPER    2                 //!< used to indicate that measured period is valid (actually measured)
 #define F_STROKE    3                 //!< flag for synchronization with rotation (флаг синхронизации с вращением)
 #define F_USEKNK    4                 //!< flag which indicates using of knock channel (признак использования канала детонации)
@@ -72,9 +71,7 @@
 //Additional flags (see flags2 variable)
 #define F_SHUTTER   0                 //!< indicates using of shutter entering for spark generation (used at startup)
 #define F_SHUTTER_S 1                 //!< synchronized value of F_SHUTTER
-#define F_SELEDGE_C 2                 //!< indicates selected edge type for CKPS input, falling edge is default
-#define F_SELEDGE_P 3                 //!< indicates selected edge type for PS input, falling edge is default
-#define F_SELINP    4                 //!< indicates selected input type (either CKPS or PS can be used), PS is default
+#define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default
 
 /** State variables */
 typedef struct
@@ -122,19 +119,6 @@ PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
  //     1          2          3          4         5         6         7         8
  {0, 37500000L, 18750000L, 12500000L, 9375000L, 7500000L, 6250000L, 5357143L, 4687500L};
 
-/**Set edge type for CKPS input*/
-#define SET_CKPS_EDGE(type) {\
-  if ((type)) \
-   TCCR1B|= _BV(ICES1); \
-  else \
-   TCCR1B&=~_BV(ICES1); }
-
-/**Set edge type for PS input*/
-#define SET_PS_EDGE(type) {\
-  if ((type)) \
-   EICRA = (EICRA | _BV(ISC11)) & ~_BV(ISC10); \
-  else \
-   EICRA|=_BV(ISC11) | _BV(ISC10); }
 
 void ckps_init_state_variables(void)
 {
@@ -154,16 +138,6 @@ void ckps_init_state_variables(void)
  TCCR0B = 0;                          //timer is stopped (останавливаем таймер0)
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
 
- if (CHECKBIT(flags2, F_SELINP)) //CKPS input
- {
-  SET_CKPS_EDGE(CHECKBIT(flags2, F_SELEDGE_C)); //set previously selected edge for ICP1
- }
- else    //PS input
- { //default
-  if (CHECKBIT(flags, F_HALLSIA))
-   SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));  //set previously selected edge for INT1
- }
-
  hall.t1oc = 0;                       //reset overflow counter
  hall.t1oc_s = 255;                   //RPM is very low
 
@@ -181,15 +155,10 @@ void ckps_init_state_variables(void)
 void ckps_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
- //set flag indicating that Hall sensor input is available
- WRITEBIT(flags, F_HALLSIA, IOCFG_CHECK(IOP_PS));
- CLEARBIT(flags2, F_SELEDGE_C); //falling edge
- CLEARBIT(flags2, F_SELEDGE_P); //falling edge
- CLEARBIT(flags2, F_SELINP);    //PS input
+ if (IOCFG_CHECK(IOP_CKPS))
+  CLEARBIT(flags2, F_SELEDGE); //falling edge
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
-
- EIMSK|=  CHECKBIT(flags, F_HALLSIA) ? _BV(INT1) : 0; //INT1 enabled only when Hall sensor input is available
 
  //Compare channels do not connected to lines of ports (normal port mode)
  //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
@@ -201,6 +170,8 @@ void ckps_init_state(void)
  //enable overflow interrupt of timer 0
  //(разрешаем прерывание по переполнению таймера 0)
  TIMSK0|=_BV(TOIE0);
+ if (IOCFG_CHECK(IOP_CKPS))
+  TIMSK1|=_BV(ICIE1);    //enable input capture interrupt only if CKPS is not remapped
  _END_ATOMIC_BLOCK();
 }
 
@@ -214,7 +185,7 @@ void ckps_set_advance_angle(int16_t angle)
 
 void ckps_init_ports(void)
 {
- PORTD|= _BV(PD6); // pullup for ICP1 (подтяжка для ICP1)
+ IOCFG_INIT(IOP_CKPS, 1); // pullup for ICP1
 
  //after ignition is on, igniters must not be in the accumulation mode,
  //therefore set low level on their inputs
@@ -263,32 +234,18 @@ uint16_t ckps_calculate_instant_freq(void)
   return hall.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
-
 void ckps_set_edge_type(uint8_t edge_type)
 {
- uint8_t _t;
- //We need to select input capture interrupt edge only if CKPS is selected for input
- if (CHECKBIT(flags2, F_SELINP))
- { //CKPS input
-  if (edge_type == (CHECKBIT(flags2, F_SELEDGE_C) != 0))
-   return; //already has needed state
-  _t = _SAVE_INTERRUPT();
-  _DISABLE_INTERRUPT();
-  SET_CKPS_EDGE(edge_type);
-  _RESTORE_INTERRUPT(_t);
-  WRITEBIT(flags2, F_SELEDGE_C, edge_type); //save selected edge type
- }
- else
- { //PS input
-  //We select edge by reading I/O remapping inversion flag
-  uint8_t ps_edge = (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_psi);
-  if (ps_edge == (CHECKBIT(flags2, F_SELEDGE_P) != 0))
-   return; //already has needed state
-  _t = _SAVE_INTERRUPT();
-  _DISABLE_INTERRUPT();
-  SET_PS_EDGE(ps_edge);
-  _RESTORE_INTERRUPT(_t);
-  WRITEBIT(flags2, F_SELEDGE_P, ps_edge);  //save selected edge type
+ //Set edge of CKPS input only if it is not remapped
+ if (IOCFG_CHECK(IOP_CKPS))
+ {
+  WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type
+  _BEGIN_ATOMIC_BLOCK();
+  if (edge_type)
+   TCCR1B|= _BV(ICES1);              //rising
+  else
+   TCCR1B&=~_BV(ICES1);              //falling
+  _END_ATOMIC_BLOCK();
  }
 }
 
@@ -405,36 +362,6 @@ void ckps_set_shutter_spark(uint8_t i_shutter)
  _BEGIN_ATOMIC_BLOCK(); //we need this because in ATmega644 this flag is not in I/O register
  WRITEBIT(flags2, F_SHUTTER, i_shutter);
  _END_ATOMIC_BLOCK();
-}
-
-void ckps_select_input(uint8_t i_type)
-{
- if (i_type == (CHECKBIT(flags2, F_SELINP) !=0))
-  return; //already has needed state
-
- if (!i_type)
- { //Use PS input
-  _BEGIN_ATOMIC_BLOCK();
-  //Do operations only if Hall sensor input is available
-  if (CHECKBIT(flags, F_HALLSIA))
-  {
-   SET_PS_EDGE(CHECKBIT(flags2, F_SELEDGE_P));
-   EIMSK|= _BV(INT1);    //enable INT1 interrupt
-  }
-  TIMSK1&= ~_BV(ICIE1); //disable input capture interrupt
-  _END_ATOMIC_BLOCK();
- }
- else
- { //Use CKPS input
-  _BEGIN_ATOMIC_BLOCK();
-  SET_CKPS_EDGE(CHECKBIT(flags2, F_SELEDGE_C));
-
-  TIMSK1|=_BV(ICIE1);    //enable input capture interrupt
-  if (CHECKBIT(flags, F_HALLSIA))
-   EIMSK&= ~_BV(INT1);   //diable INT1 interrupt (PS input)
-  _END_ATOMIC_BLOCK();
- }
- WRITEBIT(flags2, F_SELINP, i_type); //save selected value
 }
 
 void ckps_set_shutter_wnd_width(int16_t width)
@@ -643,7 +570,7 @@ ISR(TIMER1_CAPT_vect)
  //toggle edge
  if (!(TCCR1B & _BV(ICES1)))
  { //falling
-  if (CHECKBIT(flags2, F_SELEDGE_C))
+  if (CHECKBIT(flags2, F_SELEDGE))
    ProcessRisingEdge();
   else
    ProcessFallingEdge(ICR1);
@@ -651,7 +578,7 @@ ISR(TIMER1_CAPT_vect)
  }
  else
  { //rising
-  if (CHECKBIT(flags2, F_SELEDGE_C))
+  if (CHECKBIT(flags2, F_SELEDGE))
    ProcessFallingEdge(ICR1);
   else
    ProcessRisingEdge();
@@ -671,7 +598,7 @@ void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
  //toggle edge
  if (EICRA & _BV(ISC10))
  { //falling
-  if (CHECKBIT(flags2, F_SELEDGE_P))
+  if (CHECKBIT(flags2, F_SELEDGE))
    ProcessRisingEdge();
   else
    ProcessFallingEdge(tmr);
@@ -679,7 +606,7 @@ void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
  }
  else
  { //rising
-  if (CHECKBIT(flags2, F_SELEDGE_P))
+  if (CHECKBIT(flags2, F_SELEDGE))
    ProcessFallingEdge(tmr);
   else
    ProcessRisingEdge();
@@ -689,6 +616,35 @@ void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
  WRITEBIT(flags2, F_SHUTTER_S, CHECKBIT(flags2, F_SHUTTER)); //synchronize
  SETBIT(flags, F_HALLEV); //set event flag
 }
+
+/**INT0 handler function (Interrupt from a Hall sensor (external))
+ * Called from camsens.c
+ */
+void ProcessInterrupt0(void) //see also prototype of this function in camsens.c
+{
+ uint16_t tmr = TCNT1;
+ //toggle edge
+ if (EICRA & _BV(ISC00))
+ { //falling
+  if (CHECKBIT(flags2, F_SELEDGE))
+   ProcessRisingEdge();
+  else
+   ProcessFallingEdge(tmr);
+  EICRA&= ~(_BV(ISC00));  //next edge will be rising
+ }
+ else
+ { //rising
+  if (CHECKBIT(flags2, F_SELEDGE))
+   ProcessFallingEdge(tmr);
+  else
+   ProcessRisingEdge();
+  EICRA|=_BV(ISC00); //next will be falling
+ }
+
+ WRITEBIT(flags2, F_SHUTTER_S, CHECKBIT(flags2, F_SHUTTER)); //synchronize
+ SETBIT(flags, F_HALLEV); //set event flag
+}
+
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedures
  * for opening and closing knock measuring window

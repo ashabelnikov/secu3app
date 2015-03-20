@@ -159,11 +159,6 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num);
  */
 void ckps_set_shutter_spark(uint8_t i_shutter);
 
-/** Selects which input to use for synchronization from a Hall sensor
- * \param i_type 0 - Use phase sensor input (Hall), 1 - Use CKP input (VR)
- */
-void ckps_select_input(uint8_t i_type);
-
 /** Sets shutter's window width in degrees of crankshaft
  * \param width Width in degrees of cranckshaft of the shutter window, the value must be > 0
  */

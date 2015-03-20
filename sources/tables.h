@@ -111,9 +111,6 @@
 #define BTF_SET_BBR                     1          //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
 #define BTF_USE_IMM                     2          //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 
-//Hall sensor flags
-#define HSF_USECKPINP                   0          //!< Specifies which input to use for Hall sensor (CKPS or PS)
-
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */

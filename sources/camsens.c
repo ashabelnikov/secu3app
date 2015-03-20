@@ -34,19 +34,26 @@
 #include "tables.h"
 
 #ifdef HALL_SYNC
-void ProcessInterrupt1(void); //!< External ISR function, see hall.c for more information about this function
+void ProcessInterrupt0(void);         //!< External ISR function, see hall.c for more information about this function
+void ProcessInterrupt1(void);         //!< External ISR function, see hall.c for more information about this function
 #endif
 
 #ifdef SPEED_SENSOR
-#define F_USEVSS 0   //!< Flag, indicates that VSS is used (mapped to real I/O)
+#define F_USEVSS 0                    //!< Flag, indicates that VSS is used (mapped to real I/O)
 #endif
 
 #ifdef PHASE_SENSOR
-#define F_USECAM 1   //!< Flag, indicates that cam sensor is used (mapped to real I/O)
+#define F_USECAM 1                    //!< Flag, indicates that cam sensor is used (mapped to real I/O)
 #endif
 
 #if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
-#define flags TWSR   //!< Only 2 bits are allowed to be used as R/W
+#define flags TWSR                    //!< Only 2 bits are allowed to be used as R/W
+#endif
+
+//warning! Variable and bit number define must be same as in hall.c
+#ifdef HALL_SYNC
+#define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default
+#define flags2 TWBR                   //!< flags
 #endif
 
 /** Defines state variables */
@@ -116,67 +123,97 @@ void cams_init_state(void)
  //Interrupt edge for VR input depends on REF_S inversion, but will be overriden by cams_vr_set_edge_type() if REF_S is not remapped.
  if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_s)
  {
-  camstate.ref_s_inpalt = 1; //REF_S not remapped, normal operation - reference sensor
+  camstate.ref_s_inpalt = 1;                //REF_S not remapped, normal operation - reference sensor
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
  if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_si)
  {
-  camstate.ref_s_inpalt = 1; //REF_S not remapped, normal operation - reference sensor
-  EICRA|= _BV(ISC01) | 0;    //inversion
+  camstate.ref_s_inpalt = 1;                //REF_S not remapped, normal operation - reference sensor
+  EICRA|= _BV(ISC01) | 0;                   //inversion
  }
 #ifdef SPEED_SENSOR
  else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_s)
  {
-  camstate.ref_s_inpalt = 2; //REF_S remapped to VSS
+  camstate.ref_s_inpalt = 2;                //REF_S remapped to VSS
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
  else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_si)
  {
-  camstate.ref_s_inpalt = 2; //REF_S remapped to VSS
-  EICRA|= _BV(ISC01) | 0;    //inversion
+  camstate.ref_s_inpalt = 2;                //REF_S remapped to VSS
+  EICRA|= _BV(ISC01) | 0;                   //inversion
  }
 #endif
-#if defined(PHASE_SENSOR) || defined(HALL_SYNC)
+#ifdef PHASE_SENSOR
  else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_s)
  {
-  camstate.ref_s_inpalt = 3; //REF_S remapped to PS
+  camstate.ref_s_inpalt = 3;                //REF_S remapped to PS
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
  else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_si)
  {
-  camstate.ref_s_inpalt = 3; //REF_S remapped to PS
-  EICRA|= _BV(ISC01) | 0;    //inversion
+  camstate.ref_s_inpalt = 3;                //REF_S remapped to PS
+  EICRA|= _BV(ISC01) | 0;                   //inversion
+ }
+#endif
+#ifdef HALL_SYNC
+ //remapping of REF_S to CKPS takes sense only with HALL_SYNC
+ else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ref_s)
+ {
+  camstate.ref_s_inpalt = 4;                //REF_S remapped to CKP sensor
+  EICRA|= _BV(ISC01) | _BV(ISC00);
+  WRITEBIT(flags2, F_SELEDGE, 1);           //save selected edge type
+ }
+ else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ref_si)
+ {
+  camstate.ref_s_inpalt = 4;                //REF_S remapped to CKP sensor
+  EICRA|= _BV(ISC01) | 0;                   //inversion
+  WRITEBIT(flags2, F_SELEDGE, 0);           //save selected edge type
  }
 #endif
  else
-  camstate.ref_s_inpalt = 0; //REF_S remapped to other input, no ISR
+  camstate.ref_s_inpalt = 0;                //REF_S remapped to other input, no ISR
 
  //Collect information about remapping of PS input
  //Interrupt edge for Hall input depends only on PS inversion
  if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ps)
  {
-  camstate.ps_inpalt = 1;    //PS not remapped, normal operation - phase sensor
+  camstate.ps_inpalt = 1;                   //PS not remapped, normal operation - phase sensor
   EICRA|= _BV(ISC11) | _BV(ISC10);
  }
  else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_psi)
  {
-  camstate.ps_inpalt = 1;    //PS not remapped, normal operation - phase sensor
-  EICRA|= _BV(ISC11) | 0;    //inverted
+  camstate.ps_inpalt = 1;                   //PS not remapped, normal operation - phase sensor
+  EICRA|= _BV(ISC11) | 0;                   //inverted
  }
 #ifdef SPEED_SENSOR
  else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ps)
  {
-  camstate.ps_inpalt = 2;    //PS remapped to VSS
+  camstate.ps_inpalt = 2;                   //PS remapped to VSS
   EICRA|= _BV(ISC11) | _BV(ISC10);
  }
  else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_psi)
  {
-  camstate.ps_inpalt = 2;    //PS remapped to VSS
-  EICRA|= _BV(ISC11) | 0;    //inverted
+  camstate.ps_inpalt = 2;                   //PS remapped to VSS
+  EICRA|= _BV(ISC11) | 0;                   //inverted
+ }
+#endif
+#ifdef HALL_SYNC
+ //remapping of REF_S to CKPS takes sense only with HALL_SYNC
+ else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ps)
+ {
+  camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor
+  EICRA|= _BV(ISC11) | _BV(ISC10);
+  WRITEBIT(flags2, F_SELEDGE, 1);           //save selected edge type
+ }
+ else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_psi)
+ {
+  camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor
+  EICRA|= _BV(ISC11) | 0;                   //inverted
+  WRITEBIT(flags2, F_SELEDGE, 0);           //save selected edge type
  }
 #endif
  else
-  camstate.ps_inpalt = 0;    //PS remapped to other input, no ISR
+  camstate.ps_inpalt = 0;                   //PS remapped to other input, no ISR
  ///////////////////////////////////////////////////////////////////////////////////
 
  //Helpful flag variables, which will speed up code execution
@@ -187,9 +224,11 @@ void cams_init_state(void)
  WRITEBIT(flags, F_USECAM, (camstate.ref_s_inpalt == 3) || (camstate.ps_inpalt == 1));
 #endif
 
-#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
-  //INT1 enabled only when cam or VSS sensor is utilized in the firmware AND if PS mapped to PS or VSS, for other cases ISR is not required
-  //So, if firmware compiled without PHASE_SENSOR and SPEED_SENSOR options, then we don't require INT1 interrupt at all.
+#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC)
+  //INT1 enabled only when cam or VSS sensor is utilized in the firmware or HALL_SYNC option used AND if
+  //PS mapped to PS, VSS or CKPS, for other cases ISR is not required.
+  //So, if firmware compiled without PHASE_SENSOR, SPEED_SENSOR and HALL_SYNC options, then we don't
+  //require INT1 interrupt at all.
  if (0!=camstate.ps_inpalt)
   EIMSK|= _BV(INT1);
 #endif
@@ -282,10 +321,9 @@ ISR(INT0_vect)
   PROCESS_CAM()
 #endif
 #ifdef HALL_SYNC
- else if (3==camstate.ref_s_inpalt) //INT0 used for synchronization from Hall sensor
-  ProcessInterrupt1();              //call ISR if PS mapped to REF_S
+ else if (4==camstate.ref_s_inpalt) //INT0 used for synchronization from Hall sensor
+  ProcessInterrupt0();              //call ISR if CKPS mapped to REF_S
 #endif
-
 #ifdef SPEED_SENSOR
  else if (2==camstate.ref_s_inpalt) //INT0 used for VSS
   PROCESS_VSS()
@@ -301,21 +339,17 @@ ISR(INT0_vect)
 
 void cams_vr_set_edge_type(uint8_t edge_type)
 {
-#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
- //set edge only if REF_S is not remapped to other function, for other functions which require ISR, edge selected at initialization
- //We don't need this check if firmware compiled without SPEED_SENSOR and PHASE_SENSOR options
- if (1==camstate.ref_s_inpalt)
- {
+#ifdef HALL_SYNC
+ if (camstate.ref_s_inpalt == 4)
+  WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type for hall.c
 #endif
-  _BEGIN_ATOMIC_BLOCK();
-  if (edge_type)
-   EICRA|= _BV(ISC00); //rising
-  else
-   EICRA&= ~_BV(ISC00);//falling
-  _END_ATOMIC_BLOCK();
-#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR)
- }
-#endif
+
+ _BEGIN_ATOMIC_BLOCK();
+ if (edge_type)
+  EICRA|= _BV(ISC00); //rising
+ else
+  EICRA&= ~_BV(ISC00);//falling
+ _END_ATOMIC_BLOCK();
 }
 
 //Functionality added to compilation only when PHASE_SENSOR defined
@@ -365,37 +399,26 @@ uint8_t cams_is_event_r(void)
 #endif //PHASE_SENSOR
 
 //We need following ISR if cam sensor or speed sensor is selected for compilation
-#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
+#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC)
 
 /**Interrupt from CAM sensor (Hall)*/
 ISR(INT1_vect)
 {
-#ifdef HALL_SYNC //Synchronization from hall sensor
- //In this case PS input can be used for either Hall sensor(sync from Hall sensor) or VSS sensor
-
- if (1==camstate.ps_inpalt)
+#ifdef HALL_SYNC               //Synchronization from hall sensor
+ if (3==camstate.ps_inpalt)
   ProcessInterrupt1();         //call INT1 handler if PS input not remapped to other function (Hall sensor is connected to PS)
-#ifdef SPEED_SENSOR
- else if (2==camstate.ps_inpalt)
-  PROCESS_VSS();               //PS remapped to VSS, you should use CKPS input for Hall sensor instead of PS
-#endif
-
-#else //Synchronization from CKP sensor
-
- //In this case PS input can be used for either cam or VSS sensor
-#ifdef PHASE_SENSOR
- if (1==camstate.ps_inpalt)
-  PROCESS_CAM()                //PS is not remapped to othe function, so use in for cam sensor
 #endif
 #ifdef SPEED_SENSOR
  if (2==camstate.ps_inpalt)
-  PROCESS_VSS()                //PS remapped to VSS
+  PROCESS_VSS();               //PS remapped to VSS, you should use CKPS input for Hall sensor instead of PS
 #endif
-
-#endif  //HALL_SYNC
+#ifdef PHASE_SENSOR
+ if (1==camstate.ps_inpalt)
+  PROCESS_CAM()                //PS is not remapped to other function, so use in for cam sensor
+#endif
 }
 
-#endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR)
+#endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC)
 
 #ifdef SPEED_SENSOR
 uint16_t spdsens_get_period(void)

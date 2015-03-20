@@ -478,6 +478,29 @@ uint8_t iocfg_g_gas_vi(void)           //inverted version
  return !CHECKBIT(PINC, PINC6);
 }
 
+void iocfg_i_ckps(uint8_t value)
+{
+ WRITEBIT(PORTD, PD6, value);          //controlls pullup resistor
+ CLEARBIT(DDRD, DDD6);                 //input
+}
+
+void iocfg_i_ckpsi(uint8_t value)     //inverted version
+{
+ WRITEBIT(PORTD, PD6, value);          //controlls pullup resistor
+ CLEARBIT(DDRD, DDD6);                 //input
+}
+
+uint8_t iocfg_g_ckps(void)
+{
+ return !!CHECKBIT(PIND, PIND6);
+}
+
+uint8_t iocfg_g_ckpsi(void)           //inverted version
+{
+ return !CHECKBIT(PIND, PIND6);
+}
+
+
 uint8_t iocfg_g_stub(void)
 {
  //this is a stub! Always return 0

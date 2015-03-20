@@ -1,4 +1,7 @@
 @echo off
+rem SECU-3  - An open source, free engine control unit
+rem Copyright (C) 2007 Alexey A. Shabelnikov. Ukraine, Kiev
+rem 
 rem Batch file for generating check sum for firmware of SECU-3 project
 rem Created by Alexey A. Shabelnikov, Kiev 26 September 2009. 
 

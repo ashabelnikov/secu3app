@@ -69,10 +69,10 @@
 #define HALL_COGS_NUM 3
 
 //Flags (see flags variable)
-#define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing (признак ошибки ДХ, устанавливается в прерывании от ДХ, сбрасывается после обработки)
+#define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing
 #define F_VHTPER    2                 //!< used to indicate that measured period is valid (actually measured)
-#define F_STROKE    3                 //!< flag for synchronization with rotation (флаг синхронизации с вращением)
-#define F_USEKNK    4                 //!< flag which indicates using of knock channel (признак использования канала детонации)
+#define F_STROKE    3                 //!< flag for synchronization with rotation
+#define F_USEKNK    4                 //!< flag which indicates using of knock channel
 #define F_HALLEV    5                 //!< flag indicates presence of Hall sensor event
 #define F_IGNIEN    6                 //!< Ignition enabled/disabled
 #define F_SPSIGN    7                 //!< Sign of the measured stroke period (time between TDCs)
@@ -87,25 +87,25 @@ typedef struct
 {
  uint16_t measure_start_value;        //!< previous value if timer 1 used for calculation of stroke period
  uint16_t tmr_prev;                   //!< same as measure_start_value but used for determining cog period
- volatile uint16_t stroke_period;     //!< stores the last measurement of 1 stoke (Хранит последнее измерение периода такта двигателя)
+ volatile uint16_t stroke_period;     //!< stores the last measurement of 1 stoke
  uint8_t cog;                         //!< current cog
  uint16_t cog_period;                 //!< same as stroke period, but may also contain period value of small tooth
  uint16_t cog_period_prev;            //!< previous value of cog_period
- volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
- uint32_t frq_calc_dividend;          //!< divident for calculating of RPM (делимое для расчета частоты вращения)
- volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
+ volatile uint8_t chan_number;        //!< number of ignition channels
+ uint32_t frq_calc_dividend;          //!< divident for calculating of RPM
+ volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLAYER
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
  volatile fnptr_t io_callback[HALL_COGS_NUM-1]; //!< Callbacks used to set state of corresponding ignition channel
  uint8_t channel_mode_b;              //!< channel index for use in COMPB interrupt
  uint8_t channel_mode_a;              //!< channel index for use in COMPA interrupt
- volatile uint16_t degrees_per_stroke;//!< Number of degrees which corresponds to the 1 stroke (количество градусов приходящееся на 1 такт двигателя)
+ volatile uint16_t degrees_per_stroke;//!< Number of degrees which corresponds to the 1 stroke
 #ifdef STROBOSCOPE
  uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
 #endif
  volatile uint8_t knkwnd_mode;        //!< used to indicate that knock measuring window is opened
- volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, relatively to TDC (начало окна фазовой селекции детонации в градусах относительно в.м.т)
- volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, (ширина окна фазовой селекции детонации в градусах)
+ volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, relatively to TDC
+ volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER
  int16_t shutter_wnd_width;           //!< Window width (in degrees of cranckshaft) in trigger shutter
  int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
 #ifdef DWELL_CONTROL
@@ -115,13 +115,13 @@ typedef struct
 
 hallstate_t hall;                     //!< instance of state variables
 
-/** Arrange flags in the free I/O register (размещаем в свободном регистре ввода/вывода) 
+/** Arrange flags in the free I/O register
  *  note: may be not effective on other MCUs or even case bugs! Be aware.
  */
 #define flags  GPIOR0                 //ATmega644 has one general purpose I/O register
 #define flags2 TWBR
 
-/** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
+/** Supplement timer/counter 0 up to 16 bits, use R15 */
 #ifdef __ICCAVR__
  __no_init __regvar uint8_t TCNT0_H@15;
 #else //GCC
@@ -133,20 +133,6 @@ hallstate_t hall;                     //!< instance of state variables
 PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
  //     1          2          3          4         5         6         7         8
  {0, 37500000L, 18750000L, 12500000L, 9375000L, 7500000L, 6250000L, 5357143L, 4687500L};
-
-/**Set edge type for CKPS input*/
-#define SET_CKPS_EDGE(type) {\
-  if ((type)) \
-   TCCR1B|= _BV(ICES1); \
-  else \
-   TCCR1B&=~_BV(ICES1); }
-
-/**Set edge type for PS input*/
-#define SET_PS_EDGE(type) {\
-  if ((type)) \
-   EICRA = (EICRA | _BV(ISC11)) & ~_BV(ISC10); \
-  else \
-   EICRA|=_BV(ISC11) | _BV(ISC10); }
 
 void ckps_init_state_variables(void)
 {
@@ -164,9 +150,8 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags2, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
 
- TCCR0B = 0;                          //timer is stopped (останавливаем таймер0)
+ TCCR0B = 0;                          //timer is stopped
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
-
 
  hall.t1oc = 0;                       //reset overflow counter
  hall.t1oc_s = 255;                   //RPM is very low
@@ -191,14 +176,12 @@ void ckps_init_state(void)
  CLEARBIT(flags, F_ERROR);
 
  //Compare channels do not connected to lines of ports (normal port mode)
- //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
  TCCR1A = 0;
 
  //Tune timer 1 (clock = 250kHz)
  TCCR1B = _BV(CS11)|_BV(CS10);
 
  //enable overflow interrupt of timer 0
- //(разрешаем прерывание по переполнению таймера 0)
  TIMSK0|=_BV(TOIE0);
  if (IOCFG_CHECK(IOP_CKPS))
   TIMSK1|=_BV(ICIE1);    //enable input capture interrupt only if CKPS is not remapped
@@ -219,8 +202,6 @@ void ckps_init_ports(void)
 
  //after ignition is on, igniters must not be in the accumulation mode,
  //therefore set low level on their inputs
- //(после включения зажигания коммутаторы не должны быть в режиме накопления,
- //поэтому устанавливаем на их входах низкий уровень)
  IOCFG_INIT(IOP_IGN_OUT1, IGN_OUTPUTS_INIT_VAL);        //init 1-st (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT2, IGN_OUTPUTS_INIT_VAL);        //init 2-nd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT3, IGN_OUTPUTS_INIT_VAL);        //init 3-rd (can be remapped)
@@ -244,13 +225,10 @@ void ckps_init_ports(void)
 //Instantaneous frequency calculation of crankshaft rotation from the measured period between the engine strokes
 //(for example for 4-cylinder, 4-stroke it is 180°)
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
-//Высчитывание мгновенной частоты вращения коленвала по измеренному периоду между тактами двигателя
-//(например для 4-цилиндрового, 4-х тактного это 180 градусов)
-//Период в дискретах таймера (одна дискрета = 4мкс), в одной минуте 60 сек, в одной секунде 1000000 мкс.
 uint16_t ckps_calculate_instant_freq(void)
 {
  uint16_t period; uint8_t ovfcnt, sign;
- //ensure atomic acces to variable (обеспечиваем атомарный доступ к переменной)
+ //ensure atomic acces to variable
  _DISABLE_INTERRUPT();
  period = hall.stroke_period;        //stroke period
  ovfcnt = hall.t1oc_s;               //number of timer overflows
@@ -422,19 +400,16 @@ void turn_off_ignition_channel(uint8_t i_channel)
   return; //ignition disabled
  //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes
  //the igniter go to the regime of energy accumulation
- //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
- //коммутатор перейти в режим накопления энергии
  ((iocfg_pfn_set)hall.io_callback[i_channel])(IGN_OUTPUTS_OFF_VAL);
 }
 
 /**Interrupt handler for Compare/Match channel A of timer T1
- * вектор прерывания по совпадению канала А таймера Т1
  */
 ISR(TIMER1_COMPA_vect)
 {
  uint16_t tmr = TCNT1;
  ((iocfg_pfn_set)hall.io_callback[hall.channel_mode_a])(IGN_OUTPUTS_ON_VAL);
- TIMSK1&= ~_BV(OCIE1A); //disable interrupt (запрещаем прерывание)
+ TIMSK1&= ~_BV(OCIE1A); //disable interrupt
 
  //-----------------------------------------------------
  //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
@@ -493,12 +468,11 @@ ISR(TIMER1_COMPA_vect)
 }
 
 /**Interrupt handler for Compare/Match channel B of timer T1.
- * вектор прерывания по совпадению канала B таймера Т1.
  */
 ISR(TIMER1_COMPB_vect)
 {
  turn_off_ignition_channel(hall.channel_mode_b);//finish ignition pulse
- TIMSK1&= ~_BV(OCIE1B);     //disable interrupt (запрещаем прерывание)
+ TIMSK1&= ~_BV(OCIE1B);     //disable interrupt
 
 #ifdef HALL_OUTPUT
  IOCFG_SET(IOP_HALL_OUT, 0);//end of pulse
@@ -507,9 +481,7 @@ ISR(TIMER1_COMPB_vect)
 
 /**Initialization of timer 0 using specified value and start, clock = 250kHz
  * It is assumed that this function called when all interrupts are disabled
- * (Инициализация таймера 0 указанным значением и запуск, clock = 250kHz.
- * Предполагается что вызов этой функции будет происходить при запрещенных прерываниях)
- * \param value value for load into timer (значение для загрузки в таймер)
+ * \param value value for load into timer
  */
 INLINE
 void set_timer0(uint16_t value)
@@ -545,6 +517,7 @@ void ProcessCogEdge(uint16_t tmr)
     hall.cog = 1;
     goto sync_enter;
    }
+   goto sync_skip; //skip all if we can't synchronize
   }
  }
 
@@ -555,6 +528,11 @@ void ProcessCogEdge(uint16_t tmr)
    SETBIT(flags, F_ERROR);
   hall.cog = 1;
  }
+ else if (hall.cog >= HALL_COGS_NUM+1)  //cog must not exceed HALL_COGS_NUM
+ {
+  SETBIT(flags, F_ERROR);
+  hall.cog = 1;                         //This this a good idea to set here cog=1, because if misssync occurs, system can continue to work properly (only indicating error by CE)
+ }
 
  //skip small tooth
  if (hall.cog == HALL_COGS_NUM)
@@ -562,7 +540,7 @@ void ProcessCogEdge(uint16_t tmr)
 
 sync_enter:
 
- //save period value if it is correct. We need to do it forst of all to have fresh stroke_period value
+ //save period value if it is correct. We need to do it first of all to have fresh stroke_period value
  if (CHECKBIT(flags, F_VHTPER))
  {
   //calculate stroke period
@@ -571,7 +549,7 @@ sync_enter:
   hall.t1oc_s = hall.t1oc, hall.t1oc = 0; //save value and reset counter
  }
  SETBIT(flags, F_VHTPER);
- SETBIT(flags, F_STROKE); //set the stroke-synchronization event (устанавливаем событие тактовой синхронизации)
+ SETBIT(flags, F_STROKE); //set the stroke-synchronization event
  hall.measure_start_value = tmr;
 
  uint16_t delay;
@@ -611,10 +589,11 @@ sync_enter:
 #endif
   set_timer0(delay);
   hall.knkwnd_mode = 0;
+
+  knock_start_settings_latching();//start the process of downloading the settings into the HIP9011
  }
 
- knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
- adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+ adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values
 
 sync_skip:
  ++hall.cog;
@@ -622,7 +601,7 @@ sync_skip:
  hall.cog_period_prev = hall.cog_period;
 }
 
-/**Input capture interrupt of timer 1 (прерывание по захвату таймера 1) */
+/**Input capture interrupt of timer 1 */
 ISR(TIMER1_CAPT_vect)
 {
  ProcessCogEdge(ICR1);
@@ -650,18 +629,17 @@ void ProcessInterrupt0(void)
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedures
  * for opening and closing knock measuring window
- * (Задача этого обработчика дополнять таймер до 16-ти разрядов и вызывать процедуры
- * открытия/закрытия окна измерения уровня детонации по истечении установленного 16-ти разрядного таймера). */
+ */
 ISR(TIMER0_OVF_vect)
 {
- if (TCNT0_H!=0)  //Did high byte exhaust (старший байт не исчерпан) ?
+ if (TCNT0_H!=0)  //Did high byte exhaust ?
  {
   TCNT0 = 0;
   --TCNT0_H;
  }
  else
- {//the countdown is over (отсчет времени закончился)
-  TCCR0B = 0;    //stop timer (останавливаем таймер)
+ {//the countdown is over
+  TCCR0B = 0;    //stop timer
 
   if (!hall.knkwnd_mode)
   {//start listening detonation (opening the window)

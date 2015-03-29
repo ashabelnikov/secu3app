@@ -28,6 +28,7 @@
 #include "port/pgmspace.h"
 #include "funconv.h"
 #include "magnitude.h"
+#include "gdcontrol.h"
 
 #define GASDOSE_POS_RPM_SIZE 16   //!< RPM axis size
 #define GASDOSE_POS_TPS_SIZE 16   //!< TPS axis size

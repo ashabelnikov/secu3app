@@ -68,6 +68,15 @@ extern uint8_t sm_pulse_state;
 extern volatile uint16_t sm_steps_cnt;
 #endif
 
+#ifdef GD_CONTROL
+//See gdcontrol.c
+extern volatile uint16_t gdsm_steps;
+extern volatile uint8_t gdsm_latch;
+extern uint16_t gdsm_steps_b;
+extern uint8_t gdsm_pulse_state;
+extern volatile uint16_t gdsm_steps_cnt;
+#endif
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
@@ -92,6 +101,27 @@ ISR(TIMER2_OVF_vect)
    sm_pulse_state = 0;
    --sm_steps_b;
    ++sm_steps_cnt; //count processed steps
+  }
+ }
+#endif
+
+#ifdef GD_CONTROL
+ if (!gdsm_pulse_state && gdsm_latch) {
+  gdsm_steps_b = gdsm_steps;
+  gdsm_latch = 0;
+ }
+
+ if (gdsm_steps_b)
+ {
+  if (!gdsm_pulse_state) {
+   IOCFG_SET(IOP_GD_STP, 1); //falling edge
+   gdsm_pulse_state = 1;
+  }
+  else {//The step occurs on the rising edge of ~CLOCK signal
+   IOCFG_SET(IOP_GD_STP, 0); //rising edge
+   gdsm_pulse_state = 0;
+   --gdsm_steps_b;
+   ++gdsm_steps_cnt; //count processed steps
   }
  }
 #endif

@@ -169,4 +169,11 @@
  #define COPT_FUEL_INJECT 0
 #endif
 
+/** Stepper motor control (gas dose control) and related functionality */
+#ifdef GD_CONTROL
+ #define COPT_GD_CONTROL 1
+#else
+ #define COPT_GD_CONTROL 0
+#endif
+
 #endif //_COMPILOPT_H_

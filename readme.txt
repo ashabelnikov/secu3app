@@ -96,6 +96,10 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     FUEL_INJECT          Include support of fuel injection
                          Включить поддержку управления впрыском топлива
 
+    GD_CONTROL           Enable stepper motor control for gas dose control
+                         (Включить функциональность по управлению шаговым
+                         двигателем для дозатора газа)
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600. Note! Will not take effect
                          without reprogramming using ISP programmator.

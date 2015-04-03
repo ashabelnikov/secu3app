@@ -53,6 +53,8 @@
 /**дискретность представления % открытия дроссельной заслонки (ДПДЗ)*/
 #define TPS_PHYSICAL_MAGNITUDE_MULTIPLIER 2
 
+/**Gas dose stepper motor discretes per 1 step */
+#define GD_PHYSICAL_MAGNITUDE_MULTIPLIER 2
 
 /* Following macros are necessary when transforming floating point constant-values into integers.
  * Values of phisical magnitudes stored in integers
@@ -74,6 +76,9 @@
 
 /** Transforms floating point value of percentage of opening (TPS) to fixed point value */
 #define TPS_MAGNITUDE(t) ROUND ((t) * TPS_PHYSICAL_MAGNITUDE_MULTIPLIER)
+
+/** Transforms floating point value of percentage of gas dose position to fixed point value */
+#define GD_MAGNITUDE(t) ROUND ((t) * GD_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
 /** Transforms ADC compensation factor to fixed point value */
 #define ADC_COMP_FACTOR(f) ROUND((f) * 16384)

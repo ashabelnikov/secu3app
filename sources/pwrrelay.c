@@ -31,6 +31,7 @@
 #include "choke.h"
 #include "ecudata.h"
 #include "eeprom.h"
+#include "gasdose.h"
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "vstimer.h"
@@ -92,6 +93,9 @@ void pwrrelay_control(struct ecudata_t* d)
   if ((temperature_ok && eeprom_is_idle()
 #ifdef SM_CONTROL
       && choke_is_ready()
+#endif
+#ifdef GD_CONTROL
+      && gasdose_is_ready()
 #endif
       ) || s_timer16_is_action(powerdown_timeout_counter))
    IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay

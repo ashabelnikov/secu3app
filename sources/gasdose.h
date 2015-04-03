@@ -27,6 +27,28 @@
 #ifndef _GASDOSE_H_
 #define _GASDOSE_H_
 
+#ifdef GD_CONTROL  //if gas dosator control included
 
+#include <stdint.h>
+
+struct ecudata_t;
+
+/** Initialization of used I/O ports */
+void gasdose_init_ports(void);
+
+/** Initialization of the module (state variables etc)*/
+void gasdose_init(void);
+
+/** Does control of gas dosator
+ * \param d pointer to ECU data structure
+ */
+void gasdose_control(struct ecudata_t* d);
+
+/** Used in power management
+ * \return 1 - gas dose actuator is ready, 0 - not ready
+ */
+uint8_t gasdose_is_ready(void);
+
+#endif
 
 #endif //_GASDOSE_H_

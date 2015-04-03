@@ -43,6 +43,7 @@
 #include "ecudata.h"
 #include "eculogic.h"
 #include "eeprom.h"
+#include "gasdose.h"
 #include "pwrvalve.h"
 #include "fuelpump.h"
 #include "funconv.h"
@@ -105,6 +106,11 @@ void control_engine_units(struct ecudata_t *d)
  choke_control(d);
 #endif
 
+#if defined(GD_CONTROL)
+ //gas dosator control
+ gasdose_control(d);
+#endif
+
  //Cam sensor control
  cams_control();
 
@@ -149,6 +155,9 @@ void init_ports(void)
  pwrrelay_init_ports();
 #if defined(SM_CONTROL) || defined(FUEL_INJECT)
  choke_init_ports();
+#endif
+#if defined(GD_CONTROL)
+ gasdose_init_ports();
 #endif
 #ifdef INTK_HEATING
  intkheat_init_ports();
@@ -206,6 +215,10 @@ void init_modules(void)
 
 #if defined(SM_CONTROL) || defined(FUEL_INJECT)
  choke_init();
+#endif
+
+#if defined(GD_CONTROL)
+ gasdose_init();
 #endif
 
  //initialization of intake manifold heating unit

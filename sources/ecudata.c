@@ -79,6 +79,9 @@ void init_ecu_data(void)
  edat.choke_pos = 0;
  edat.choke_manpos_d = 0;
  edat.choke_rpm_reg = 0;
+ edat.gasdose_testing = 0;    //GD
+ edat.gasdose_pos = 0;        //GD
+ edat.gasdose_manpos_d = 0;   //GD
  edat.bt_name[0] = 0;
  edat.bt_pass[0] = 0;
  edat.sys_locked = 0; //unlocked

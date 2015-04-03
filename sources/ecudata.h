@@ -129,6 +129,7 @@ typedef struct ecudata_t
  uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
  uint8_t  airflow;                       //!< Air flow (расход воздуха)
  uint8_t  choke_pos;                     //!< Choke position in % * 2
+ uint8_t  gasdose_pos;       /*GD*/      //!< Gas dosator position in % * 2
 
 #ifdef REALTIME_TABLES
  f_data_t tables_ram;                    //!< set of tables in RAM
@@ -156,6 +157,9 @@ typedef struct ecudata_t
  uint8_t choke_testing;                  //!< Used to indcate that choke testing is on/off (so it is applicable only if SM_CONTROL compilation option is used)
  int8_t choke_manpos_d;                  //!< Muanual position setting delta value used for choke control
  uint8_t choke_rpm_reg;                  //!< Used to indicate that at the moment system regulates RPM by means of choke position
+
+ uint8_t gasdose_testing;    /*GD*/      //!< Used to indcate that gas dosator testing is on/off (so it is applicable only if GD_CONTROL compilation option is used)
+ int8_t gasdose_manpos_d;    /*GD*/      //!< Muanual position setting delta value used for gasdose control
 
  uint8_t bt_name[9];                     //!< received name for Bluetooth (8 chars max), zero element is size
  uint8_t bt_pass[7];                     //!< received password for Bluetooth (6 chars max), zero element is size

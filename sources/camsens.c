@@ -341,8 +341,9 @@ ISR(INT0_vect)
 void cams_vr_set_edge_type(uint8_t edge_type)
 {
 #ifdef HALL_SYNC
- if (camstate.ref_s_inpalt == 4)
+ if (camstate.ref_s_inpalt == 4) {
   WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type for hall.c
+ }
 #endif
 
  _BEGIN_ATOMIC_BLOCK();

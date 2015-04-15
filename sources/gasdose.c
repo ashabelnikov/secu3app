@@ -216,6 +216,9 @@ static int16_t calc_sm_position(struct ecudata_t* d)
 
 void gasdose_control(struct ecudata_t* d)
 {
+ if (!IOCFG_CHECK(IOP_GD_STP))
+  return; //gas dose control was not enabled (outputs were not remapped)
+
  switch(gds.state)
  {
   case 0:                                                     //Initialization of stepper motor position

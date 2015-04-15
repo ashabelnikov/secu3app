@@ -126,11 +126,11 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
  discharge = (d->param.map_upper_pressure - d->sens.map);
  if (discharge < 0) discharge = 0;
 
- //map_upper_pressure - верхнее значение давления
- //map_lower_pressure - нижнее значение давления
- gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / 16; //делим на количество узлов интерполяции по оси давления
+ //map_upper_pressure - value of the upper pressure
+ //map_lower_pressure - value of the lower pressure
+ gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (F_WRK_POINTS_L-1); //divide by number of points on the MAP axis - 1
  if (gradient < 1)
-  gradient = 1;  //исключаем деление на ноль и отрицательное значение если верхнее давление меньше нижнего
+  gradient = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
  l = (discharge / gradient);
 
  if (l >= (F_WRK_POINTS_L - 1))
@@ -138,7 +138,7 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
  else
   lp1 = l + 1;
 
- //обновляем переменную расхода воздуха
+ //update air flow variable
  d->airflow = 16 - l;
 
  if (i_update_airflow_only)
@@ -494,7 +494,7 @@ uint16_t inj_base_pw(struct ecudata_t* d)
  discharge = (d->param.map_upper_pressure - d->sens.map);
  if (discharge < 0) discharge = 0;
 
- gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / INJ_VE_POINTS_L;
+ gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (INJ_VE_POINTS_L-1);
  if (gradient < 1)
   gradient = 1;
  l = (discharge / gradient);

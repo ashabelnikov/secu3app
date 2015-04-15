@@ -157,8 +157,8 @@ static uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
  */
 static void initial_pos(struct ecudata_t* d, uint8_t dir)
 {
- gdstpmot_dir(dir);                                             //set direction
- gdstpmot_run(d->param.sm_steps + (d->param.sm_steps >> 5));    //run using number of steps + 3%
+ gdstpmot_dir(dir);                                           //set direction
+ gdstpmot_run(d->param.sm_steps + (d->param.sm_steps >> 5));  //run using number of steps + 3%
 }
 
 //TODO: redundant to simular function in choke.c, remove this redundant copy in the future
@@ -170,7 +170,7 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 {
  int16_t diff;
  restrict_value_to(&pos, 0, d->param.sm_steps);
- if (CHECKBIT(gds.flags, CF_SMDIR_CHG))                      //direction has changed
+ if (CHECKBIT(gds.flags, CF_SMDIR_CHG))                       //direction has changed
  {
   if (!gdstpmot_is_busy())
   {
@@ -178,7 +178,7 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
    CLEARBIT(gds.flags, CF_SMDIR_CHG);
   }
  }
- if (!CHECKBIT(gds.flags, CF_SMDIR_CHG))                     //normal operation
+ if (!CHECKBIT(gds.flags, CF_SMDIR_CHG))                      //normal operation
  {
   diff = pos - gds.smpos;
   if (!gdstpmot_is_busy())
@@ -187,9 +187,9 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
    {
     gds.cur_dir = diff < 0 ? SM_DIR_CW : SM_DIR_CCW;
     gdstpmot_dir(gds.cur_dir);
-    gdstpmot_run(abs(diff));                                    //start stepper motor
-    gds.smpos_prev = gds.smpos;                             //remember position when SM started motion
-    gds.smpos = pos;                                         //this is a target position
+    gdstpmot_run(abs(diff));                                  //start stepper motor
+    gds.smpos_prev = gds.smpos;                               //remember position when SM started motion
+    gds.smpos = pos;                                          //this is a target position
    }
   }
   else //busy
@@ -198,7 +198,7 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
    //stop stepper motor and go to the direction changing.
    if (((gds.smpos - gds.smpos_prev) & 0x8000) != ((pos - gds.smpos_prev) & 0x8000))
    {
-    gdstpmot_run(0);                                            //stop stepper motor
+    gdstpmot_run(0);                                          //stop stepper motor
     SETBIT(gds.flags, CF_SMDIR_CHG);
    }
   }

@@ -92,10 +92,10 @@ int16_t gdp_function(struct ecudata_t* d)
  fp1 = f + 1;
 
  return bilinear_interpolation(rpm, tps,  //note that tps is additionally multiplied by 16
-        PGM_GET_BYTE(gasdose_pos[t][f]),
-        PGM_GET_BYTE(gasdose_pos[tp1][f]),
-        PGM_GET_BYTE(gasdose_pos[tp1][fp1]),
-        PGM_GET_BYTE(gasdose_pos[t][fp1]),
+        PGM_GET_BYTE(&gasdose_pos[t][f]),
+        PGM_GET_BYTE(&gasdose_pos[tp1][f]),
+        PGM_GET_BYTE(&gasdose_pos[tp1][fp1]),
+        PGM_GET_BYTE(&gasdose_pos[t][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (TPS_AXIS_STEP*t),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
@@ -158,7 +158,7 @@ static uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 static void initial_pos(struct ecudata_t* d, uint8_t dir)
 {
  gdstpmot_dir(dir);                                           //set direction
- gdstpmot_run(d->param.sm_steps + (d->param.sm_steps >> 5));  //run using number of steps + 3%
+ gdstpmot_run(d->param.gd_steps + (d->param.gd_steps >> 5));  //run using number of steps + 3%
 }
 
 //TODO: redundant to simular function in choke.c, remove this redundant copy in the future
@@ -169,7 +169,7 @@ static void initial_pos(struct ecudata_t* d, uint8_t dir)
 static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 {
  int16_t diff;
- restrict_value_to(&pos, 0, d->param.sm_steps);
+ restrict_value_to(&pos, 0, d->param.gd_steps);
  if (CHECKBIT(gds.flags, CF_SMDIR_CHG))                       //direction has changed
  {
   if (!gdstpmot_is_busy())
@@ -275,7 +275,7 @@ void gasdose_control(struct ecudata_t* d)
 
     sm_motion_control(d, pos);                                //SM command execution
    }
-   d->gasdose_pos = calc_percent_pos(gds.smpos, d->param.sm_steps);//update position value
+   d->gasdose_pos = calc_percent_pos(gds.smpos, d->param.gd_steps);//update position value
    goto check_pwr;
 
   //     Testing modes
@@ -284,7 +284,7 @@ void gasdose_control(struct ecudata_t* d)
    {
     d->gasdose_pos = GD_MAGNITUDE(0);                         //update position value
     gdstpmot_dir(SM_DIR_CCW);
-    gdstpmot_run(d->param.sm_steps);
+    gdstpmot_run(d->param.gd_steps);
     gds.state = 7;
    }
    goto check_tst;
@@ -294,7 +294,7 @@ void gasdose_control(struct ecudata_t* d)
    {
     d->gasdose_pos = GD_MAGNITUDE(100.0);                     //update position value
     gdstpmot_dir(SM_DIR_CW);
-    gdstpmot_run(d->param.sm_steps);
+    gdstpmot_run(d->param.gd_steps);
     gds.state = 6;
    }
    goto check_tst;

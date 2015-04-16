@@ -489,6 +489,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
    build_i8h(d->choke_pos);               // choke position
+   build_i8h(d->gasdose_pos);             // gas dosator position
 #ifdef SPEED_SENSOR
    build_i16h(d->sens.speed);             // vehicle speed (2 bytes)
    build_i24h(d->sens.distance);          // distance (3 bytes)

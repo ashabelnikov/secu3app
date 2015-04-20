@@ -35,6 +35,7 @@
 #include "bluetooth.h"
 #include "bootldr.h"
 #include "camsens.h"
+#include "carb_afr.h"
 #include "ce_errors.h"
 #include "choke.h"
 #include "ckps.h"
@@ -123,8 +124,13 @@ void control_engine_units(struct ecudata_t *d)
  uniout_control(d);
 #endif
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
  lambda_control(d);
+#endif
+
+#ifdef CARB_AFR
+ //Carburetor AFR control
+ carbafr_control(d);
 #endif
 }
 
@@ -168,6 +174,9 @@ void init_ports(void)
 #endif
 #ifdef FUEL_INJECT
  inject_init_ports();
+#endif
+#ifdef CARB_AFR
+ carbafr_init_ports();
 #endif
 }
 
@@ -257,8 +266,14 @@ void init_modules(void)
  inject_init_state();
  inject_set_cyl_number(edat.param.ckps_engine_cyl);
  inject_set_num_squirts(edat.param.inj_config & 0xF);
- lambda_init_state();
  inject_set_fuelcut(!edat.sys_locked);
+#endif
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
+ lambda_init_state();
+#endif
+
+#ifdef CARB_AFR
+ carbafr_init();
 #endif
 
  s_timer_init();
@@ -478,7 +493,8 @@ MAIN()
    //set current injection time and fuel cut state
    inject_set_inj_time(edat.inj_pw);
    inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim);
-
+#endif
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
    lambda_stroke_event_notification(&edat);
 #endif
 

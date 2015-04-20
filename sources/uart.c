@@ -515,11 +515,15 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->corr.idlreg_aac);        // advance angle correction from idling RPM regulator
    build_i16h(d->corr.octan_aac);         // octane correction value
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
    build_i16h(d->corr.lambda);            // lambda correction
-   build_i16h(d->inj_pw);                 // injector pulse width
 #else
    build_i16h(0);
+#endif
+
+#ifdef FUEL_INJECT
+   build_i16h(d->inj_pw);                 // injector pulse width
+#else
    build_i16h(0);
 #endif
    break;

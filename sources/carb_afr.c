@@ -19,33 +19,34 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file lambda.h
+/** \file carb_afr.h
  * \author Alexey A. Shabelnikov
- * Correction algorithms using an exhaust gas oxygen sensor
- * (Корректировка состава смеси используя датчик кислорода).
+ * Implementation of AFR control on carburetor using electronic actuators driven by PWM
  */
 
-#ifndef _LAMBDA_H_
-#define _LAMBDA_H_
+#ifdef CARB_AFR
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#include "port/avrio.h"
+#include "port/port.h"
+#include "bitmask.h"
+#include "ecudata.h"
+#include "carb_afr.h"
+#include "ioconfig.h"
 
-struct ecudata_t;
-
-/** Initialization of state variables
- */
-void lambda_init_state(void);
-
-/**Control of lambda correction
- * \param d pointer to ECU data structure
- */
-void lambda_control(struct ecudata_t* d);
-
-/** Must be called from the main loop to notify about stroke events
- * \param d pointer to ECU data structure
- */
-void lambda_stroke_event_notification(struct ecudata_t* d);
-
+#ifdef FUEL_INJECT
+ #error "You can't use carburetor AFR control together with fuel injection, please omit FUEL_INJECT option"
 #endif
 
-#endif //_LAMBDA_H_
+void carbafr_init_ports(void)
+{
+}
+
+void carbafr_init(void)
+{
+}
+
+void carbafr_control(struct ecudata_t* d)
+{
+}
+
+#endif

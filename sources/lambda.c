@@ -25,7 +25,7 @@
  * (–еализаци€ корректировки состава смеси использу€ датчик кислорода).
  */
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
 
 #include "port/port.h"
 #include "ecudata.h"
@@ -78,6 +78,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  if (!ego.enabled)
   return; //wait some time before oxygen sensor will be turned on
 
+#ifndef CARB_AFR
  //Turn off EGO correction on overrun or rev. limiting
  if (!d->ie_valve || d->fc_revlim)
  { //overrun or rev.limiting
@@ -100,6 +101,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
   d->corr.lambda = 0;
   return; //not 14.7
  }
+#endif
 
  if (d->sens.inst_frq > d->param.inj_lambda_rpm_thrd)    //RPM > threshold
  {

@@ -100,6 +100,11 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          (Включить функциональность по управлению шаговым
                          двигателем для дозатора газа)
 
+    CARB_AFR             Enable control of AFR on carburetor by means of
+                         electronic actuators (valves driven by PWM)
+                         (Включить поддержку управления составом смеси на
+                          карбюраторе при помощи электронных актюаторов)
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600. Note! Will not take effect
                          without reprogramming using ISP programmator.

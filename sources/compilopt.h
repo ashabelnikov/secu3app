@@ -176,4 +176,11 @@
  #define COPT_GD_CONTROL 0
 #endif
 
+/** Build firmware for AFR control on carburetor using electronic actuators */
+#ifdef CARB_AFR
+ #define COPT_CARB_AFR 1
+#else
+ #define COPT_CARB_AFR 0
+#endif
+
 #endif //_COMPILOPT_H_

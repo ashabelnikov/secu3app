@@ -41,6 +41,10 @@
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
 #endif
 
+#ifdef CARB_AFR
+ #error "You can not use FUEL_INJECT option together with CARB_AFR"
+#endif
+
 #define INJ_ON  0   //!< Injector is turned on
 #define INJ_OFF 1   //!< Injector is turned off
 

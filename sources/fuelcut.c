@@ -24,6 +24,7 @@
  * Implementation of controling of Idle Cut-off valve (Carburetor) of fuel cut (Fuel injection).
  */
 
+#ifndef CARB_AFR
 #include "port/avrio.h"
 #include "port/port.h"
 #include "bitmask.h"
@@ -31,17 +32,23 @@
 #include "fuelcut.h"
 #include "ioconfig.h"
 #include "vstimer.h"
+#else
+#ifdef FUEL_INJECT
+ #error "You can not use FUEL_INJECT option together with CARB_AFR"
+#endif
+#endif
 
 #ifdef FUEL_INJECT
+
 /**State variable for delay counter*/
 static uint8_t state = 0;
 
-void idlecon_init_ports(void)
+void fuelcut_init_ports(void)
 {
  //empty
 }
 
-void idlecon_control(struct ecudata_t* d)
+void fuelcut_control(struct ecudata_t* d)
 {
  if (d->sens.inst_frq > d->param.ie_hit)
  {
@@ -84,7 +91,9 @@ void idlecon_control(struct ecudata_t* d)
 
 #else //Carburetor (Idle Cut-off valve control)
 
-void idlecon_init_ports(void)
+#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+
+void fuelcut_init_ports(void)
 {
  IOCFG_INIT(IOP_IE, 1); //valve is turned on
 }
@@ -92,7 +101,7 @@ void idlecon_init_ports(void)
 //Implementation of Idle Cut-off valve control. If throttle gate is closed AND frq > [up.threshold] OR
 //throttle gate is closed AND frq > [lo.threshold] BUT valve is already closed, THEN turn off
 //fuel supply by stopping to apply voltage to valve's coil. ELSE - fuel supply is turned on.
-void idlecon_control(struct ecudata_t* d)
+void fuelcut_control(struct ecudata_t* d)
 {
  //if throttle gate is opened, then open valve,reload timer and exit from condition
  if (d->sens.carb)
@@ -110,5 +119,7 @@ void idlecon_control(struct ecudata_t* d)
    &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
  IOCFG_SET(IOP_IE, d->ie_valve);
 }
+
+#endif //CARB_AFR
 
 #endif

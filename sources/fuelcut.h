@@ -27,14 +27,18 @@
 #ifndef _IDLECON_H_
 #define _IDLECON_H_
 
+#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+
 struct ecudata_t;
 
 /** Initialization of used I/O ports */
-void idlecon_init_ports(void);
+void fuelcut_init_ports(void);
 
 /** Does control of valve or fuel cut
  * \param d pointer to ECU data structure
  */
-void idlecon_control(struct ecudata_t* d);
+void fuelcut_control(struct ecudata_t* d);
+
+#endif //CARB_AFR
 
 #endif //_IDLECON_H_

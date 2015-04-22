@@ -22,8 +22,9 @@
 /** \file pwrvalve.c
  * \author Alexey A. Shabelnikov
  * Implementation of controlling algorithms for Power Valve (Carburetor)
- * (Реализация алгоритмов управления Экономайзером Мощностных Режимов (ЭМР)).
  */
+
+#ifndef CARB_AFR //power valve functionality isn't needed when carburetor AFR control is used
 
 #include "port/avrio.h"
 #include "port/port.h"
@@ -32,16 +33,16 @@
 #include "pwrvalve.h"
 #include "ioconfig.h"
 
-/** Open/Close FE valve (открывает/закрывает клапан ЭМР) */
+/** Open/Close FE valve */
 #define SET_FE_VALVE_STATE(s) IOCFG_SET(IOP_FE, s)
 
-void fuelecon_init_ports(void)
+void pwrvalve_init_ports(void)
 {
- //Output for control FE valve (выход для управления клапаном ЭМР)
- IOCFG_INIT(IOP_FE, 0); //FE valve is off (ЭМР выключен)
+ //Output for control of FE valve
+ IOCFG_INIT(IOP_FE, 0); //FE valve is off
 }
 
-void fuelecon_control(struct ecudata_t* d)
+void pwrvalve_control(struct ecudata_t* d)
 {
  int16_t discharge;
 
@@ -51,3 +52,5 @@ void fuelecon_control(struct ecudata_t* d)
  d->fe_valve = discharge < d->param.fe_on_threshold;
  SET_FE_VALVE_STATE(d->fe_valve);
 }
+
+#endif //CARB_AFR

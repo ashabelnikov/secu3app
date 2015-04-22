@@ -22,20 +22,23 @@
 /** \file pwrvalve.h
  * \author Alexey A. Shabelnikov
  * Control of Power Valve (Carburetor)
- * (”правление экономайзером мощностных режимов).
  */
 
 #ifndef _FUELECON_H_
 #define _FUELECON_H_
 
+#ifndef CARB_AFR //power valve functionality isn't needed when carburetor AFR control is used
+
 struct ecudata_t;
 
 /**Initialization of I/O ports*/
-void fuelecon_init_ports(void);
+void pwrvalve_init_ports(void);
 
 /**Implements control algorithm
  * \param d pointer to ECU data structure
  */
-void fuelecon_control(struct ecudata_t* d);
+void pwrvalve_control(struct ecudata_t* d);
+
+#endif
 
 #endif //_FUELECON_H_

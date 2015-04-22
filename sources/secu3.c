@@ -82,17 +82,21 @@
  */
 void control_engine_units(struct ecudata_t *d)
 {
- //реализация функции ЭПХХ.
- idlecon_control(d);
+#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+ //Idle fuel cut-off control or fuel cut-off
+ fuelcut_control(d);
+#endif
 
- //управление блокировкой стартера
+ //Starter blocking control
  starter_control(d);
 
  //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе
  vent_control(d);
 
- //Управление ЭМР (экономайзер мощностных режимов)
- fuelecon_control(d);
+#ifndef CARB_AFR //Carb. AFR control supersede power valve functionality
+ //Power valve control
+ pwrvalve_control(d);
+#endif
 
 #ifdef FUEL_PUMP
  //Controlling of electric fuel pump (Управление электробензонасосом)
@@ -149,11 +153,15 @@ void init_ports(void)
  ckps_init_ports();
  cams_init_ports();
  vent_init_ports();
- fuelecon_init_ports();
+#ifndef CARB_AFR //Carb. AFR control supersede power valve functionality
+ pwrvalve_init_ports();
+#endif
 #ifdef FUEL_PUMP
  fuelpump_init_ports();
 #endif
- idlecon_init_ports();
+#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+ fuelcut_init_ports();
+#endif
  starter_init_ports();
  jumper_init_ports();
  ce_init_ports();

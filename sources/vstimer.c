@@ -77,6 +77,15 @@ extern uint8_t gdsm_pulse_state;
 extern volatile uint16_t gdsm_steps_cnt;
 #endif
 
+#ifdef CARB_AFR
+//See carb_afr.c
+extern uint8_t cafr_iv_comp;
+extern volatile uint8_t cafr_iv_duty;
+extern uint8_t cafr_pv_comp;
+extern volatile uint8_t cafr_pv_duty;
+extern uint8_t cafr_soft_cnt;
+#endif
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
@@ -124,6 +133,21 @@ ISR(TIMER2_OVF_vect)
    ++gdsm_steps_cnt; //count processed steps
   }
  }
+#endif
+
+#ifdef CARB_AFR
+ cafr_soft_cnt = (cafr_soft_cnt + 1) & 0x3F; //increment modulo 64
+ if (cafr_soft_cnt == 0)
+ {
+  cafr_iv_comp = cafr_iv_duty;
+  cafr_pv_comp = cafr_pv_duty;
+  IOCFG_SET(IOP_IE, 1); //ON
+  IOCFG_SET(IOP_FE, 1); //ON
+ }
+ if (cafr_iv_comp == cafr_soft_cnt)
+  IOCFG_SET(IOP_IE, 0); //OFF
+ if (cafr_pv_comp == cafr_soft_cnt)
+  IOCFG_SET(IOP_FE, 0); //OFF
 #endif
 
  if (divider > 0)

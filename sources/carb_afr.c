@@ -46,23 +46,143 @@ uint8_t cafr_pv_comp;
 volatile uint8_t cafr_pv_duty; //PV PWM duty
 uint8_t cafr_soft_cnt;
 
+/***/
+#define SET_IV_DUTY(v) cafr_iv_duty = (v)
+/***/
+#define SET_PV_DUTY(v) cafr_pv_duty = (v)
+
+/**Define state variables */
+typedef struct
+{
+ uint16_t state;                //!< control state used for hysteresis
+}cafr_st_t;
+
+/**Instance of state variables */
+cafr_st_t cas = {0};
+
 void carbafr_init_ports(void)
 {
- IOCFG_INIT(IOP_IE, 1); //valve is turned on
- IOCFG_INIT(IOP_FE, 1); //valve is turned on
+ IOCFG_INIT(IOP_IE, 1); //valve is turned on ????
+ IOCFG_INIT(IOP_FE, 1); //valve is turned on ????
 }
 
 void carbafr_init(void)
 {
- cafr_iv_duty = CAFR_PWM_STEPS; //100%
- cafr_pv_duty = CAFR_PWM_STEPS;
- cafr_iv_comp = CAFR_PWM_STEPS;
- cafr_pv_comp = CAFR_PWM_STEPS;
+ cafr_iv_duty = CAFR_PWM_STEPS-1; //100%
+ cafr_pv_duty = CAFR_PWM_STEPS-1;
+ cafr_iv_comp = CAFR_PWM_STEPS-1;
+ cafr_pv_comp = CAFR_PWM_STEPS-1;
  cafr_soft_cnt = CAFR_PWM_STEPS-1;
+
+ cas.state = 0;
+}
+
+/***/
+static int16_t get_discharge(struct ecudata_t* d)
+{
+ int16_t discharge = (d->param.map_upper_pressure - d->sens.map);
+ return (discharge < 0) ? 0 : discharge;
+}
+
+/** Control two actuators depending on current mode
+ */
+static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
+{
+ if (mode)
+ { //work, control FE, but also control IE if FE=0 and mixture is still rich
+   if (d->corr.lambda > -256)
+   { //control AFR using power valve only, normal mode
+    int16_t pv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
+    pv_duty = (((uint32_t)pv_duty) * (512 + d->corr.lambda)) >> 9;
+    restrict_value_to(&pv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
+    SET_PV_DUTY(pv_duty); //control power valve
+    SET_IV_DUTY(CAFR_PWM_STEPS-1); //idle cut-off valve is 100% opened
+   }
+   else
+   { //mixture is too rich and power valve is not enough to make it lean, then use idle cut-off valve to additionally lean it
+    int16_t iv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
+    duty = (((uint32_t)iv_duty) * (512 + d->corr.lambda)) >> 9;
+    restrict_value_to(&iv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
+    SET_IV_DUTY(iv_duty); //control
+    SET_PV_DUTY(CAFR_PWM_STEPS/4); //25%
+   }
+ }
+ else
+ { //indling, control IE only, FE = 50%
+   int16_t duty = CAFR_PWM_STEPS/2; //basic duty is 50%
+   duty = (((uint32_t)duty) * (512 + d->corr.lambda)) >> 9;
+   restrict_value_to(&duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
+   SET_IV_DUTY(duty); //control
+   SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
+ }
 }
 
 void carbafr_control(struct ecudata_t* d)
 {
+ if (d->sens.frequen < 100)
+ {
+   SET_IV_DUTY(CAFR_PWM_STEPS-1); //100%
+   SET_PV_DUTY(CAFR_PWM_STEPS-1); //100%
+   //todo: update ie_valve
+   //todo: update fe_valve
+ }
+ else
+ { //RPM > 100 min-1
+
+  //Use close loop control when (CTS > 40) and (RPM < 4000) and (discharge > threshold),
+  //otherwise use 50% value for both valves
+  //
+  //(discharge > threshold) means engine is not under full load
+  if ((d->sens.temperat > TEMPERATURE_MAGNITUDE(40.0)) && (d->sens.inst_frq < 4000) && (get_discharge(d) > d->param.fe_on_threshold))
+  {
+   if (d->sens.carb)
+   { //throttle is opened
+    if (d->sens.inst_frq > 1100)
+    {
+     //control FE,--> IE=100%
+     control_iv_and_pv(d, 1);
+    }
+    else
+    {
+     //control IE, FE = 50%
+     control_iv_and_pv(d, 0);
+    }
+   }
+   else
+   { //throttle is closed
+     switch(cas.state)
+     {
+      case 0:
+       if (d->sens.inst_frq > 2250)
+        cas.state = 1;
+       else
+       {
+        //control IE, FE = 50%
+        control_iv_and_pv(d, 0);
+       }
+       break;
+      case 1:
+       if (d->sens.inst_frq < 2100)
+        cas.state = 0;
+       else
+       {
+        SET_IV_DUTY(0); //0%
+        SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
+        //todo: update ie_valve
+        //todo: update fe_valve
+       }
+       break;
+     }
+   }
+  }
+  else
+  {
+   SET_IV_DUTY(CAFR_PWM_STEPS/2); //50%
+   SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
+   //todo: update ie_valve
+   //todo: update fe_valve
+  }
+ }
 }
 
 #endif

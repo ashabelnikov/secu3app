@@ -151,6 +151,10 @@ uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 int16_t calc_startup_corr(struct ecudata_t* d)
 {
  int16_t rpm_corr = 0;
+
+//if (d->sens.gas)
+// d->choke_rpm_reg = 0;   //always turn off regulator when fuel type is gas
+
  switch(chks.strt_mode)
  {
   case 0:  //starting

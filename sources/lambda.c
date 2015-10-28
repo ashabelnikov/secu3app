@@ -129,4 +129,9 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
   d->corr.lambda = 0;
 }
 
+uint8_t lambda_is_activated(void)
+{
+ return ego.enabled;
+}
+
 #endif

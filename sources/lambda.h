@@ -46,6 +46,11 @@ void lambda_control(struct ecudata_t* d);
  */
 void lambda_stroke_event_notification(struct ecudata_t* d);
 
+/** Check for activation of lambda sensor (heated-up)
+ * \return 1 - activated, 0 - still not activated
+ */
+uint8_t lambda_is_activated(void);
+
 #endif
 
 #endif //_LAMBDA_H_

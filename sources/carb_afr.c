@@ -37,7 +37,8 @@
  #error "You can't use carburetor AFR control together with fuel injection, please omit FUEL_INJECT option"
 #endif
 
-#define CAFR_PWM_STEPS 64  //!< software PWM steps
+#define CAFR_IDL_RPM_THRD 1100 //!< RPM threshold before idling
+#define CAFR_PWM_STEPS 64      //!< software PWM steps
 
 //see code in vstimer.c for more information about these variables
 uint8_t cafr_iv_comp;
@@ -62,12 +63,13 @@ cafr_st_t cas = {0};
 
 void carbafr_init_ports(void)
 {
- IOCFG_INIT(IOP_IE, 1); //valve is turned on ????
- IOCFG_INIT(IOP_FE, 1); //valve is turned on ????
+ IOCFG_INIT(IOP_IE, 1); //valve is turned on
+ IOCFG_INIT(IOP_FE, 1); //valve is turned on
 }
 
 void carbafr_init(void)
 {
+ //both valves are fully open
  cafr_iv_duty = CAFR_PWM_STEPS-1; //100%
  cafr_pv_duty = CAFR_PWM_STEPS-1;
  cafr_iv_comp = CAFR_PWM_STEPS-1;
@@ -77,7 +79,10 @@ void carbafr_init(void)
  cas.state = 0;
 }
 
-/***/
+/** Get discharge in kPa units
+ * \param d Pointer to ECU data structure
+ * \return discharge value in kPa
+ */
 static int16_t get_discharge(struct ecudata_t* d)
 {
  int16_t discharge = (d->param.map_upper_pressure - d->sens.map);
@@ -85,6 +90,8 @@ static int16_t get_discharge(struct ecudata_t* d)
 }
 
 /** Control two actuators depending on current mode
+ * \param d Pointer to ECU data structure
+ * \param mode Mode of operation: 1 - work, 0 - idling
  */
 static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
 {
@@ -108,7 +115,7 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
    }
  }
  else
- { //indling, control IE only, FE = 50%
+ { //idling, control IE only, FE = 50%
    int16_t duty = CAFR_PWM_STEPS/2; //basic duty is 50%
    duty = (((uint32_t)duty) * (512 + d->corr.lambda)) >> 9;
    restrict_value_to(&duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
@@ -121,6 +128,7 @@ void carbafr_control(struct ecudata_t* d)
 {
  if (d->sens.frequen < 100)
  {
+   //both valves are fully opened
    SET_IV_DUTY(CAFR_PWM_STEPS-1); //100%
    SET_PV_DUTY(CAFR_PWM_STEPS-1); //100%
    //todo: update ie_valve
@@ -129,18 +137,18 @@ void carbafr_control(struct ecudata_t* d)
  else
  { //RPM > 100 min-1
 
-  //Use close loop control when (CTS > 40) and (RPM < 4000) and (discharge > threshold),
+  //Use closed loop control when lambda sensor is heated-up and (CTS > 40) and (RPM < 4000) and (discharge > threshold),
   //otherwise use 50% value for both valves
   //
   //(discharge > threshold) means engine is not under full load
-  if ((d->sens.temperat > TEMPERATURE_MAGNITUDE(40.0)) && (d->sens.inst_frq < 4000) && (get_discharge(d) > d->param.fe_on_threshold))
+  if (lambda_is_activated() && (d->sens.temperat > TEMPERATURE_MAGNITUDE(40.0)) && (d->sens.inst_frq < 4000) && (get_discharge(d) > d->param.fe_on_threshold))
   {
    if (d->sens.carb)
    { //throttle is opened
-    if (d->sens.inst_frq > 1100)
+    if (d->sens.inst_frq > CAFR_IDL_RPM_THRD)
     {
      //control FE,--> IE=100%
-     control_iv_and_pv(d, 1);
+     control_iv_and_pv(d, 1); //IE can be used to additionally lean mixture
     }
     else
     {
@@ -153,7 +161,7 @@ void carbafr_control(struct ecudata_t* d)
      switch(cas.state)
      {
       case 0:
-       if (d->sens.inst_frq > 2250)
+       if (d->sens.inst_frq > d->param.ie_hit)  //todo: use idle cut off threshold
         cas.state = 1;
        else
        {
@@ -162,7 +170,7 @@ void carbafr_control(struct ecudata_t* d)
        }
        break;
       case 1:
-       if (d->sens.inst_frq < 2100)
+       if (d->sens.inst_frq < d->param.ie_lot)  //todo: use idle cut off threshold
         cas.state = 0;
        else
        {

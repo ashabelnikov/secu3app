@@ -51,7 +51,7 @@ uint16_t mm_get_word_ram(uint16_t offset)
 
 uint16_t mm_get_word_pgm(uint16_t offset)
 {
- return PGM_GET_WORD(((uint8_t _PGM*)edat.fn_dat) + offset);
+ return PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)edat.fn_dat) + offset));
 }
 #endif
 

@@ -72,8 +72,8 @@ void fuelcut_control(struct ecudata_t* d)
    state = 0;
   }
  }
- else if (d->sens.inst_frq < d->param.ie_lot)
- { //always turn on fuel when RPM < low threshold
+ else if (d->sens.inst_frq < d->param.ie_lot || d->sens.carb)
+ { //always turn on fuel when RPM < low threshold or throttle is opened
   d->ie_valve = 1;
   state = 0;
  }

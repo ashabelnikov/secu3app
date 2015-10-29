@@ -108,7 +108,8 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
    else
    { //mixture is too rich and power valve is not enough to make it lean, then use idle cut-off valve to additionally lean it
     int16_t iv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-    duty = (((uint32_t)iv_duty) * (512 + d->corr.lambda)) >> 9;
+    duty = (((uint32_t)iv_duty) * (512 + d->corr.lambda)) >> 8; //div. by 256
+    duty+= (CAFR_PWM_STEPS/4);
     restrict_value_to(&iv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
     SET_IV_DUTY(iv_duty); //control
     SET_PV_DUTY(CAFR_PWM_STEPS/4); //25%

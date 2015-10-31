@@ -83,10 +83,15 @@ void process_uart_interface(struct ecudata_t* d)
 #ifdef FUEL_INJECT
    case INJCTR_PAR:
     inject_set_num_squirts(d->param.inj_config & 0xF);
-   case LAMBDA_PAR:
    case ACCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
+#endif
+
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
+   case LAMBDA_PAR:
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE); //paramaters were altered, so reset time counter
     break;
 #endif
 

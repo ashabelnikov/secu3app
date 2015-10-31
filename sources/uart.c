@@ -658,7 +658,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   build_i32h(d->param.inj_sd_igl_const);
   build_i8h(d->param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
   break;
+#endif
 
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
  case LAMBDA_PAR:
   build_i8h(d->param.inj_lambda_str_per_stp);
   build_i8h(d->param.inj_lambda_step_size);
@@ -668,7 +670,9 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   build_i16h(d->param.inj_lambda_rpm_thrd);
   build_i8h(d->param.inj_lambda_activ_delay);
   break;
+#endif
 
+#ifdef FUEL_INJECT
  case ACCEL_PAR:
   build_i8h(d->param.inj_ae_tpsdot_thrd);
   build_i8h(d->param.inj_ae_coldacc_mult);
@@ -1074,7 +1078,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   d->param.inj_sd_igl_const = recept_i32h();
   recept_i8h();      //stub
   break;
+#endif
 
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
  case LAMBDA_PAR:
   d->param.inj_lambda_str_per_stp = recept_i8h();
   d->param.inj_lambda_step_size = recept_i8h();
@@ -1084,7 +1090,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   d->param.inj_lambda_rpm_thrd = recept_i16h();
   d->param.inj_lambda_activ_delay = recept_i8h();
   break;
+#endif
 
+#ifdef FUEL_INJECT
  case ACCEL_PAR:
   d->param.inj_ae_tpsdot_thrd = recept_i8h();
   d->param.inj_ae_coldacc_mult = recept_i8h();
@@ -1179,7 +1187,7 @@ uint8_t uart_get_send_mode(void)
 }
 
 uint8_t uart_set_send_mode(uint8_t descriptor)
-{ //note: code of this function must must follow code in uart_send_packet() !
+{ //note: code of this function must follow code in uart_send_packet() !
  switch(descriptor)
  {
   case TEMPER_PAR:
@@ -1204,8 +1212,10 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case UNIOUT_PAR:
 #ifdef FUEL_INJECT
   case INJCTR_PAR:
-  case LAMBDA_PAR:
   case ACCEL_PAR:
+#endif
+#if defined(FUEL_INJECT) || defined(CARB_AFR)
+  case LAMBDA_PAR:
 #endif
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:

@@ -32,25 +32,39 @@
 #include "ecudata.h"
 #include "carb_afr.h"
 #include "ioconfig.h"
+#include "funconv.h"
+#include "lambda.h"
+#include "magnitude.h"
+//#include "dbgvar.h"
 
 #ifdef FUEL_INJECT
  #error "You can't use carburetor AFR control together with fuel injection, please omit FUEL_INJECT option"
 #endif
 
-#define CAFR_IDL_RPM_THRD 1100 //!< RPM threshold before idling
-#define CAFR_PWM_STEPS 64      //!< software PWM steps
+#define CAFR_IDL_RPM_THRD 1100 //!< RPM threshold before idling (min-1)
+#define CAFR_HLD_RPM_THRD 4000 //!< High load RPM threshold (min-1)
+#define CAFR_PWM_STEPS 64      //!< software PWM steps (0...63)
 
 //see code in vstimer.c for more information about these variables
-uint8_t cafr_iv_comp;
-volatile uint8_t cafr_iv_duty; //IV PWM duty
-uint8_t cafr_pv_comp;
-volatile uint8_t cafr_pv_duty; //PV PWM duty
-uint8_t cafr_soft_cnt;
+uint8_t cafr_iv_comp;          //!< Compare register for IV channel
+volatile uint8_t cafr_iv_duty; //!< IV PWM duty
+uint8_t cafr_pv_comp;          //!< Compare register for Pv channel
+volatile uint8_t cafr_pv_duty; //!< PV PWM duty
+uint8_t cafr_soft_cnt;         //!< Counter
 
-/***/
-#define SET_IV_DUTY(v) cafr_iv_duty = (v)
-/***/
-#define SET_PV_DUTY(v) cafr_pv_duty = (v)
+/** Set IV(idle cut off) valve duty */
+#define SET_IV_DUTY(v) { \
+ cafr_iv_duty = (v); \
+ /*dbg_var1 = (v);*/ \
+ /*todo: update ie_valve*/ \
+ }
+
+/** Set PV(power) valve duty */
+#define SET_PV_DUTY(v) { \
+ cafr_pv_duty = (v); \
+ /*dbg_var2 = (v);*/ \
+ /*todo: update fe_valve*/ \
+ }
 
 /**Define state variables */
 typedef struct
@@ -75,6 +89,9 @@ void carbafr_init(void)
  cafr_iv_comp = CAFR_PWM_STEPS-1;
  cafr_pv_comp = CAFR_PWM_STEPS-1;
  cafr_soft_cnt = CAFR_PWM_STEPS-1;
+
+ //todo: update ie_valve
+ //todo: update fe_valve
 
  cas.state = 0;
 }
@@ -108,8 +125,8 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
    else
    { //mixture is too rich and power valve is not enough to make it lean, then use idle cut-off valve to additionally lean it
     int16_t iv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-    duty = (((uint32_t)iv_duty) * (512 + d->corr.lambda)) >> 8; //div. by 256
-    duty+= (CAFR_PWM_STEPS/4);
+    iv_duty = (((uint32_t)iv_duty) * (512 + d->corr.lambda)) >> 8; //div. by 256
+    iv_duty+= (CAFR_PWM_STEPS/4);
     restrict_value_to(&iv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
     SET_IV_DUTY(iv_duty); //control
     SET_PV_DUTY(CAFR_PWM_STEPS/4); //25%
@@ -127,22 +144,19 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
 
 void carbafr_control(struct ecudata_t* d)
 {
- if (d->sens.frequen < 100)
+ if (d->sens.frequen < d->param.inj_lambda_rpm_thrd) //100 min-1
  {
    //both valves are fully opened
    SET_IV_DUTY(CAFR_PWM_STEPS-1); //100%
    SET_PV_DUTY(CAFR_PWM_STEPS-1); //100%
-   //todo: update ie_valve
-   //todo: update fe_valve
  }
  else
  { //RPM > 100 min-1
-
   //Use closed loop control when lambda sensor is heated-up and (CTS > 40) and (RPM < 4000) and (discharge > threshold),
   //otherwise use 50% value for both valves
   //
   //(discharge > threshold) means engine is not under full load
-  if (lambda_is_activated() && (d->sens.temperat > TEMPERATURE_MAGNITUDE(40.0)) && (d->sens.inst_frq < 4000) && (get_discharge(d) > d->param.fe_on_threshold))
+  if (lambda_is_activated() && (d->sens.temperat > d->param.inj_lambda_temp_thrd) && (d->sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge(d) > d->param.fe_on_threshold))
   {
    if (d->sens.carb)
    { //throttle is opened
@@ -177,8 +191,6 @@ void carbafr_control(struct ecudata_t* d)
        {
         SET_IV_DUTY(0); //0%
         SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
-        //todo: update ie_valve
-        //todo: update fe_valve
        }
        break;
      }
@@ -188,8 +200,6 @@ void carbafr_control(struct ecudata_t* d)
   {
    SET_IV_DUTY(CAFR_PWM_STEPS/2); //50%
    SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
-   //todo: update ie_valve
-   //todo: update fe_valve
   }
  }
 }

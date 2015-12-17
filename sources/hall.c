@@ -72,7 +72,7 @@
 //Additional flags (see flags2 variable)
 #define F_SHUTTER   0                 //!< indicates using of shutter entering for spark generation (used at startup)
 #define F_SHUTTER_S 1                 //!< synchronized value of F_SHUTTER
-#define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default
+#define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default (see also same definition in camsens.c)
 
 /** State variables */
 typedef struct
@@ -81,7 +81,7 @@ typedef struct
  volatile uint16_t stroke_period;     //!< stores the last measurement of 1 stoke (Хранит последнее измерение периода такта двигателя)
  volatile uint8_t chan_number;        //!< number of ignition channels (кол-во каналов зажигания)
  uint32_t frq_calc_dividend;          //!< divident for calculating of RPM (делимое для расчета частоты вращения)
- volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
+ volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLIER (требуемый УОЗ * ANGLE_MULTIPLIER)
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
  volatile fnptr_t io_callback;        //!< Callback used to set state of ignition channel (we use single channel)
@@ -90,13 +90,18 @@ typedef struct
  uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
 #endif
  volatile uint8_t knkwnd_mode;        //!< used to indicate that knock measuring window is opened
- volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, relatively to TDC (начало окна фазовой селекции детонации в градусах относительно в.м.т)
- volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, (ширина окна фазовой селекции детонации в градусах)
+ volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLIER, relatively to TDC (начало окна фазовой селекции детонации в градусах относительно в.м.т)
+ volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLIER, (ширина окна фазовой селекции детонации в градусах)
  int16_t shutter_wnd_width;           //!< Window width (in degrees of cranckshaft) in trigger shutter
  int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
 #ifdef DWELL_CONTROL
  volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
 #endif
+
+#ifdef FUEL_INJECT
+ volatile uint8_t cur_chan;           //!< current number of channel for fuel injection
+#endif
+ uint8_t ckps_inpalt;                 //!< indicates that CKPS is not remapped
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -136,7 +141,6 @@ void ckps_init_state_variables(void)
  SETBIT(flags2, F_SHUTTER);
  SETBIT(flags2, F_SHUTTER_S);
 
- TCCR0B = 0;                          //timer is stopped (останавливаем таймер0)
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
 
  hall.t1oc = 0;                       //reset overflow counter
@@ -150,14 +154,25 @@ void ckps_init_state_variables(void)
 #ifdef DWELL_CONTROL
  hall.cr_acc_time = 0;
 #endif
+
+#ifdef FUEL_INJECT
+ hall.cur_chan = 0;
+#endif
  _END_ATOMIC_BLOCK();
 }
 
 void ckps_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
- if (IOCFG_CHECK(IOP_CKPS))
+
+ if ((IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ckps) || (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ckpsi))
+ {
   CLEARBIT(flags2, F_SELEDGE); //falling edge
+  hall.ckps_inpalt = 1; //not remapped
+ }
+ else
+  hall.ckps_inpalt = 0; //CKPS mapped on other input
+
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
 
@@ -165,13 +180,10 @@ void ckps_init_state(void)
  //(Каналы Compare не подключены к линиям портов (нормальный режим портов))
  TCCR1A = 0;
 
- //Tune timer 1 (clock = 250kHz)
- TCCR1B = _BV(CS11)|_BV(CS10);
+ TCCR1B = _BV(CS11)|_BV(CS10);  //Tune timer 1 (clock = 312.5 kHz)
+ TCCR0B = _BV(CS01)|_BV(CS00);  //Tune timer 0 (clock = 312.5 kHz)
 
- //enable overflow interrupt of timer 0
- //(разрешаем прерывание по переполнению таймера 0)
- TIMSK0|=_BV(TOIE0);
- if (IOCFG_CHECK(IOP_CKPS))
+ if (hall.ckps_inpalt)
   TIMSK1|=_BV(ICIE1);    //enable input capture interrupt only if CKPS is not remapped
  _END_ATOMIC_BLOCK();
 }
@@ -237,8 +249,8 @@ uint16_t ckps_calculate_instant_freq(void)
 
 void ckps_set_edge_type(uint8_t edge_type)
 {
- //Set edge of CKPS input only if it is not remapped
- if (IOCFG_CHECK(IOP_CKPS))
+ //Set CKPS input edge only if it is not remapped
+ if (hall.ckps_inpalt)
  {
   WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type
   _BEGIN_ATOMIC_BLOCK();
@@ -315,8 +327,8 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
  hall.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
 
- //precalculate value of degrees per 1 engine stroke (value * ANGLE_MULTIPLAYER)
- degrees_per_stroke = (720 * ANGLE_MULTIPLAYER) / i_cyl_number;
+ //precalculate value of degrees per 1 engine stroke (value * ANGLE_MULTIPLIER)
+ degrees_per_stroke = (720 * ANGLE_MULTIPLIER) / i_cyl_number;
 
  _t = _SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
@@ -357,6 +369,13 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
  //not supported by Hall sensor
 }
+
+#ifdef FUEL_INJECT
+void ckps_set_inj_timing(int16_t phase)
+{
+ //not supported in this implementation
+}
+#endif
 
 void ckps_set_shutter_spark(uint8_t i_shutter)
 {
@@ -465,18 +484,18 @@ ISR(TIMER1_COMPB_vect)
 #endif
 }
 
-/**Initialization of timer 0 using specified value and start, clock = 250kHz
+
+/**Initialize timer 0 using specified value and start it, clock = 312.5kHz
  * It is assumed that this function called when all interrupts are disabled
- * (Инициализация таймера 0 указанным значением и запуск, clock = 250kHz.
- * Предполагается что вызов этой функции будет происходить при запрещенных прерываниях)
- * \param value value for load into timer (значение для загрузки в таймер)
+ * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
 void set_timer0(uint16_t value)
 {
- TCNT0_H = _AB(value, 1);
- TCNT0 = ~(_AB(value, 0));  //One's complement is faster than 255 - low byte
- TCCR0B = _BV(CS01)|_BV(CS00);
+  OCR0A = TCNT0 + _AB(value, 0);
+  TCNT0_H = _AB(value, 1);
+  SETBIT(TIMSK0, OCIE0A);
+  SETBIT(TIFR0, OCF0A);
 }
 
 /** Special function for processing falling edge,
@@ -561,7 +580,9 @@ void ProcessRisingEdge(void)
  }
 
 #ifdef FUEL_INJECT
- inject_start_inj();      //start fuel injection
+ inject_start_inj(hall.cur_chan);     //start fuel injection
+ if (++hall.cur_chan >= hall.chan_number)
+  hall.cur_chan = 0;
 #endif
 }
 
@@ -651,7 +672,7 @@ void ProcessInterrupt0(void) //see also prototype of this function in camsens.c
  * for opening and closing knock measuring window
  * (Задача этого обработчика дополнять таймер до 16-ти разрядов и вызывать процедуры
  * открытия/закрытия окна измерения уровня детонации по истечении установленного 16-ти разрядного таймера). */
-ISR(TIMER0_OVF_vect)
+ISR(TIMER0_COMPA_vect)
 {
  if (TCNT0_H!=0)  //Did high byte exhaust (старший байт не исчерпан) ?
  {
@@ -660,7 +681,7 @@ ISR(TIMER0_OVF_vect)
  }
  else
  {//the countdown is over (отсчет времени закончился)
-  TCCR0B = 0;    //stop timer (останавливаем таймер)
+  CLEARBIT(TIMSK0, OCIE0A);    //disable this interrupt
 
   if (!hall.knkwnd_mode)
   {//start listening detonation (opening the window)

@@ -135,23 +135,23 @@ int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
  * \param adcvalue значение в дискретах АЦП
  * \param offset смещение кривой ДАД (Curve offset. Can be negative)
  * \param gradient наклон кривой ДАД (Curve gradient. If < 0, then it means characteristic curve is inverted)
- * \return физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ * \return физическая величина * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER
  * \details
  * offset  = offset_volts / ADC_DISCRETE, где offset_volts - значение в вольтах;
- * gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLAYER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
+ * gradient = 128 * gradient_kpa * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER * ADC_DISCRETE, где gradient_kpa значение в кило-паскалях
  */
 uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient);
 
 /**переводит значение АЦП в физическую величину - напряжение
  * \param adcvalue значение в дискретах АЦП
- * \return физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ * \return физическая величина * UBAT_PHYSICAL_MAGNITUDE_MULTIPLIER
  */
 uint16_t ubat_adc_to_v(int16_t adcvalue);
 
 /**Converts ADC value into phisical magnituge - temperature (given from linear sensor)
  * Переводит значение АЦП в физическую величину - температура, для линейного датчика
  * \param adcvalue Voltage from sensor (напряжение с датчика - значение в дискретах АЦП)
- * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLAYER
+ * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER
  */
 int16_t temp_adc_to_c(int16_t adcvalue);
 

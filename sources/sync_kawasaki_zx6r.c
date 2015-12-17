@@ -93,7 +93,7 @@ typedef struct
  uint16_t cog_period_prev;            //!< previous value of cog_period
  volatile uint8_t chan_number;        //!< number of ignition channels
  uint32_t frq_calc_dividend;          //!< divident for calculating of RPM
- volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLAYER
+ volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLIER
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
  volatile fnptr_t io_callback[HALL_COGS_NUM-1]; //!< Callbacks used to set state of corresponding ignition channel
@@ -104,13 +104,14 @@ typedef struct
  uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
 #endif
  volatile uint8_t knkwnd_mode;        //!< used to indicate that knock measuring window is opened
- volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER, relatively to TDC
- volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLAYER
+ volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLIER, relatively to TDC
+ volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLIER
  int16_t shutter_wnd_width;           //!< Window width (in degrees of cranckshaft) in trigger shutter
  int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
 #ifdef DWELL_CONTROL
  volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
 #endif
+ uint8_t ckps_inpalt;                 //!< indicates that CKPS is not remapped
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -150,7 +151,6 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags2, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
 
- TCCR0B = 0;                          //timer is stopped
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
 
  hall.t1oc = 0;                       //reset overflow counter
@@ -170,20 +170,24 @@ void ckps_init_state_variables(void)
 void ckps_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
- if (IOCFG_CHECK(IOP_CKPS))
-  CLEARBIT(flags2, F_SELEDGE); //falling edge
+ if ((IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ckps) || (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ckpsi))
+ {
+  CLEARBIT(flags2, F_SELEDGE);        //falling edge
+  hall.ckps_inpalt = 1;               //not remapped
+ }
+ else
+  hall.ckps_inpalt = 0;               //CKPS mapped on other input
+
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
 
- //Compare channels do not connected to lines of ports (normal port mode)
+ //Compare channels not connected to lines of ports (normal port mode)
  TCCR1A = 0;
 
- //Tune timer 1 (clock = 250kHz)
- TCCR1B = _BV(CS11)|_BV(CS10);
+ TCCR1B = _BV(CS11)|_BV(CS10); //Tune timer 1 (clock = 312.5 kHz)
+ TCCR0B = _BV(CS01)|_BV(CS00); //tune timer 0 (clock = 312.5 kHz)
 
- //enable overflow interrupt of timer 0
- TIMSK0|=_BV(TOIE0);
- if (IOCFG_CHECK(IOP_CKPS))
+ if (hall.ckps_inpalt)
   TIMSK1|=_BV(ICIE1);    //enable input capture interrupt only if CKPS is not remapped
  _END_ATOMIC_BLOCK();
 }
@@ -245,7 +249,7 @@ uint16_t ckps_calculate_instant_freq(void)
 void ckps_set_edge_type(uint8_t edge_type)
 {
  //Set edge of CKPS input only if it is not remapped
- if (IOCFG_CHECK(IOP_CKPS))
+ if (hall.ckps_inpalt)
  {
   WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type
   _BEGIN_ATOMIC_BLOCK();
@@ -331,8 +335,8 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  uint8_t _t;
 
  hall.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
- //precalculate value of degrees per 1 engine stroke (value * ANGLE_MULTIPLAYER)
- degrees_per_stroke = (720 * ANGLE_MULTIPLAYER) / i_cyl_number;
+ //precalculate value of degrees per 1 engine stroke (value * ANGLE_MULTIPLIER)
+ degrees_per_stroke = (720 * ANGLE_MULTIPLIER) / i_cyl_number;
 
  _t = _SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
@@ -375,6 +379,13 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
  //not supported in this implementation, because number of cogs must be equal to number of cylinders
 }
+
+#ifdef FUEL_INJECT
+void ckps_set_inj_timing(int16_t phase)
+{
+ //not supported in this implementation
+}
+#endif
 
 void ckps_set_shutter_spark(uint8_t i_shutter)
 {
@@ -479,16 +490,17 @@ ISR(TIMER1_COMPB_vect)
 #endif
 }
 
-/**Initialization of timer 0 using specified value and start, clock = 250kHz
+/**Initialize timer 0 using specified value and start it, clock = 312.5kHz
  * It is assumed that this function called when all interrupts are disabled
- * \param value value for load into timer
+ * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
 void set_timer0(uint16_t value)
 {
- TCNT0_H = _AB(value, 1);
- TCNT0 = ~(_AB(value, 0));  //One's complement is faster than 255 - low byte
- TCCR0B = _BV(CS01)|_BV(CS00);
+  OCR0A = TCNT0 + _AB(value, 0);
+  TCNT0_H = _AB(value, 1);
+  SETBIT(TIMSK0, OCIE0A);
+  SETBIT(TIFR0, OCF0A);
 }
 
 /** Special function for processing falling edge, must be called from ISR
@@ -630,7 +642,7 @@ void ProcessInterrupt0(void)
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedures
  * for opening and closing knock measuring window
  */
-ISR(TIMER0_OVF_vect)
+ISR(TIMER0_COMPA_vect)
 {
  if (TCNT0_H!=0)  //Did high byte exhaust ?
  {
@@ -639,7 +651,7 @@ ISR(TIMER0_OVF_vect)
  }
  else
  {//the countdown is over
-  TCCR0B = 0;    //stop timer
+  CLEARBIT(TIMKS0, OCIE0A);    //disable this interrupt
 
   if (!hall.knkwnd_mode)
   {//start listening detonation (opening the window)

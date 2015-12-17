@@ -112,6 +112,14 @@
 #define BTF_SET_BBR                     1          //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
 #define BTF_USE_IMM                     2          //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 
+//Injection configuration constants
+#define INJCFG_THROTTLEBODY             0          //!< Throttle-body or central injection
+#define INJCFG_SIMULTANEOUS             1          //!< Simultaneous port injection
+#define INJCFG_2BANK_ALTERN             2          //!< 2 banks alternating injection
+#define INJCFG_SEMISEQUENTIAL           3          //!< Semi-sequential injection
+#define INJCFG_FULLSEQUENTIAL           4          //!< Full-sequential injection
+
+
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.
  * Описывает одно семейство характеристик, дискрета УОЗ = 0.5 град.
  */
@@ -337,7 +345,7 @@ typedef struct params_t
 
   // Fuel injection
   uint8_t  inj_flags;                    //!< Fuel injection related flags
-  uint8_t  inj_config;                   //!< Configuration of injection (7-4 bits: inj. config., 3-0 bits: num of squitrs)
+  uint8_t  inj_config;                   //!< Configuration of injection (7-4 bits: inj. config., 3-0 bits: num of squitrs), inj.config: INJCFG_x constants
   uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
   uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * ((Nbnk * Ncyl) / (Nsq * Ninj))
@@ -362,13 +370,15 @@ typedef struct params_t
 
   uint16_t gd_steps;                     //!< Number of steps of gas dosator stepper motor
 
+  int16_t  inj_timing;                   //!< Injection timing in crank degrees * ANGLE_MULTIPLIER
+
   /**Эти зарезервированные байты необходимы для сохранения бинарной совместимости
    * новых версий прошивок с более старыми версиями. При добавлении новых данных
    * в структуру, необходимо расходовать эти байты.
    * Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[84];
+  uint8_t  reserved[82];
 
   /**Контрольная сумма данных этой структуры (для проверки корректности данных после считывания из EEPROM)
    * CRC of this structure (for checking correctness of data after loading from EEPROM) */

@@ -63,7 +63,7 @@
  */
 
 /** Transforms floating point value of advance angle to fixed point value */
-#define ANGLE_MAGNITUDE(a) ROUND ((a) * ANGLE_MULTIPLAYER)
+#define ANGLE_MAGNITUDE(a) ROUND ((a) * ANGLE_MULTIPLIER)
 
 /** Transforms floating point value of temperature to fixed point value */
 #define TEMPERATURE_MAGNITUDE(t) ROUND ((t) * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)

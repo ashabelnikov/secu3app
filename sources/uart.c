@@ -657,6 +657,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   build_i16h(d->param.inj_cyl_disp);
   build_i32h(d->param.inj_sd_igl_const);
   build_i8h(d->param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
+  build_i16h(d->param.inj_timing);
   break;
 #endif
 
@@ -1077,6 +1078,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   d->param.inj_cyl_disp = recept_i16h();
   d->param.inj_sd_igl_const = recept_i32h();
   recept_i8h();      //stub
+  d->param.inj_timing = recept_i16h();
   break;
 #endif
 

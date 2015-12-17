@@ -60,13 +60,19 @@ void inject_set_fuelcut(uint8_t state);
 
 /**Start injection (open injector for specified time).
  * This function must be called synchronously with crankshaft
+ * \param chan Channel number
  */
-void inject_start_inj(void);
+void inject_start_inj(uint8_t chan);
 
 /** This function directly opens injectors, used for priming pulse (before cranking)
  * \param time Injection time, one tick = 3.2us
  */
 void inject_open_inj(uint16_t time);
+
+/** Set injection configuration
+ * \param cfg Selected configuration (See INJCFG_x constants in tables.h)
+ */
+void inject_set_config(uint8_t cfg);
 
 #endif //FUEL_INJECT
 

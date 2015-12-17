@@ -103,7 +103,7 @@ typedef struct
  uint16_t measure_start_value;        //!< remembers the value of the capture register to measure the half-turn (запоминает значение регистра захвата для измерения периода полуоборота)
  uint16_t current_angle;              //!< counts out given advance angle during the passage of each tooth (отсчитывает заданный УОЗ при прохождении каждого зуба)
  volatile uint16_t stroke_period;     //!< stores the last measurement of the passage of teeth n (хранит последнее измерение времени прохождения n зубьев)
- int16_t  advance_angle;              //!< required adv.angle * ANGLE_MULTIPLAYER (требуемый УОЗ * ANGLE_MULTIPLAYER)
+ int16_t  advance_angle;              //!< required adv.angle * ANGLE_MULTIPLIER (требуемый УОЗ * ANGLE_MULTIPLIER)
  volatile int16_t advance_angle_buffered;//!< buffered value of advance angle (to ensure correct latching)
  uint8_t  starting_mode;              //!< state of state machine processing of teeth at the startup (состояние конечного автомата обработки зубьев на пуске)
  uint8_t  channel_mode;               //!< determines which channel of the ignition to run at the moment (определяет какой канал зажигания нужно запускать в данный момент)
@@ -115,6 +115,9 @@ typedef struct
 #ifdef HALL_OUTPUT
  int8_t   hop_offset;                 //!< Hall output: start of pulse in tooth of wheel relatively to TDC
  uint8_t  hop_duration;               //!< Hall output: duration of pulse in tooth of wheel
+#endif
+#ifdef FUEL_INJECT
+ int16_t  inj_phase;                  //!< Injection timing: start of pulse in teeth of wheel relatively to TDC
 #endif
 
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
@@ -153,6 +156,10 @@ typedef struct
 #ifdef HALL_OUTPUT
  volatile uint16_t hop_begin_cog;      //!< Hall output: tooth number that corresponds to the beginning of pulse
  volatile uint16_t hop_end_cog;        //!< Hall output: tooth number that corresponds to the end of pulse
+#endif
+
+#ifdef FUEL_INJECT
+ volatile uint16_t inj_begin_cog;      //!< Injection timing: tooth number that corresponds to the beginning of pulse
 #endif
 
  /** Determines number of tooth (relatively to TDC) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
@@ -205,8 +212,7 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags2, F_CALTIM);
  CLEARBIT(flags2, F_SPSIGN);
 
- TCCR0B = 0;                           //timer is stopped (останавливаем таймер0)
- TIMSK1|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
+ TIMSK1|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correcting calculation of very low RPM
 
 #ifdef STROBOSCOPE
  ckps.strobe = 0;
@@ -229,11 +235,11 @@ void ckps_init_state(void)
 
  //(Noise reduction(подавление шума), rising edge of capture(передний фронт захвата), clock = 250kHz)
  TCCR1B = _BV(ICNC1)|_BV(ICES1)|_BV(CS11)|_BV(CS10);
+ TCCR0B = _BV(CS01)|_BV(CS00); //clock = 312.5 kHz
 
- //enable input capture and Compare A interrupts of timer 1, also overflow interrupt of timer 0
- //(разрешаем прерывание по захвату и сравнению А таймера 1, а также по переполнению таймера 0)
+ //enable input capture and Compare A interrupts of timer 1
  TIMSK1|= _BV(ICIE1);
- TIMSK0|= _BV(TOIE0);
+
  _END_ATOMIC_BLOCK();
 }
 
@@ -334,6 +340,9 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
   //update Hall output pulse parameters because they depend on ckps.cogs_btdc parameter
   chanstate[i].hop_begin_cog = _normalize_tn(tdc - ckps.hop_offset);
   chanstate[i].hop_end_cog = _normalize_tn(chanstate[i].hop_begin_cog + ckps.hop_duration);
+#endif
+#ifdef FUEL_INJECT
+  chanstate[i].inj_begin_cog = _normalize_tn(tdc - ckps.inj_phase);
 #endif
  }
  ckps.cogs_btdc = cogs_btdc;
@@ -520,8 +529,8 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
  cogs_per_chan = (((uint32_t)(norm_num * 2)) << 8) / ckps.chan_number;
 
- //precalculate value of degrees per 1 cog, it is fractional number multiplied by ANGLE_MULTIPLAYER
- degrees_per_cog = (((((uint32_t)360) << 8) / norm_num) * ANGLE_MULTIPLAYER) >> 8;
+ //precalculate value of degrees per 1 cog, it is fractional number multiplied by ANGLE_MULTIPLIER
+ degrees_per_cog = (((((uint32_t)360) << 8) / norm_num) * ANGLE_MULTIPLIER) >> 8;
 
  //precalculate value and round it always to the upper bound,
  //e.g. for 60-2 crank wheel result = 11 (66°), for 36-1 crank wheel result = 7 (70°)
@@ -549,6 +558,25 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  _RESTORE_INTERRUPT(_t);
 }
 
+#ifdef FUEL_INJECT
+void ckps_set_inj_timing(int16_t phase)
+{
+ uint8_t _t, i;
+ //save values because we will access them from other function
+ //Also, convert form crank degrees to teeth
+ ckps.inj_phase = phase / ((int16_t)ckps.degrees_per_cog);
+
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+ for(i = 0; i < ckps.chan_number; ++i)
+ {
+  uint16_t tdc = (((uint16_t)ckps.cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
+  chanstate[i].inj_begin_cog = _normalize_tn(tdc - ckps.inj_phase);
+ }
+ _RESTORE_INTERRUPT(_t);
+}
+#endif
+
 /**Forces ignition spark if corresponding interrupt is pending*/
 #define force_pending_spark() \
  if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)) && CHECKBIT(flags, F_IGNIEN))\
@@ -562,11 +590,6 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  */
 ISR(TIMER1_COMPA_vect)
 {
-#ifdef COOLINGFAN_PWM
- uint8_t timsk_sv0, timsk_sv1;
- uint8_t ucsrb_sv = UCSRB;
-#endif
-
  TIMSK1&= ~_BV(OCIE1A);//disable interrupt (запрещаем прерывание)
 
  //line of port in the low level, now set it into a high level - makes the igniter to stop 
@@ -598,39 +621,20 @@ ISR(TIMER1_COMPA_vect)
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(chanstate[ckps.channel_mode].output_state2);
  }
 
- //-----------------------------------------------------
-#ifdef COOLINGFAN_PWM
- //ADCSRA&=~_BV(ADIE);            //??
- UCSRB&=~(_BV(RXCIE)|_BV(UDRIE)); //mask UART interrupts
- timsk_sv0=TIMSK0, timsk_sv1=TIMSK1;
- TIMSK0=0, TIMSK1=0;              //mask all timer interrupts except OCF2 and TOV2
- _ENABLE_INTERRUPT();
-#endif
- //-----------------------------------------------------
-
  CLEARBIT(flags2, F_CALTIM); //we already output the spark, so calculation of time is finished
- //-----------------------------------------------------
-#ifdef COOLINGFAN_PWM
- _DISABLE_INTERRUPT();
- //ADCSRA|=_BV(ADIE);
- UCSRB = ucsrb_sv;
- TIMSK0=timsk_sv0, TIMSK1=timsk_sv1;
-#endif
- //-----------------------------------------------------
 }
 
-/**Initialization of timer 0 using specified value and start, clock = 250kHz
+/**Initialize timer 0 using specified value and start it, clock = 312.5kHz
  * It is assumed that this function called when all interrupts are disabled
- * (Инициализация таймера 0 указанным значением и запуск, clock = 250kHz.
- * Предполагается что вызов этой функции будет происходить при запрещенных прерываниях)
- * \param value value for load into timer (значение для загрузки в таймер)
+ * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
 void set_timer0(uint16_t value)
 {
- TCNT0_H = _AB(value, 1);
- TCNT0 = ~(_AB(value, 0));  //One's complement is faster than 255 - low byte
- TCCR0B = _BV(CS01)|_BV(CS00);
+  OCR0A = TCNT0 + _AB(value, 0);
+  TCNT0_H = _AB(value, 1);
+  SETBIT(TIMSK0, OCIE0A);
+  SETBIT(TIFR0, OCF0A);
 }
 
 /**Helpful function, used at the startup of engine
@@ -671,20 +675,7 @@ static uint8_t sync_at_startup(void)
 static void process_ckps_cogs(void)
 {
  uint8_t i;
- uint8_t timsk_sv0 = TIMSK0, timsk_sv1 = TIMSK1;
 
- //-----------------------------------------------------
- //Software PWM is very sensitive even to small delays. So, we need to allow OCF2 and TOV2
- //interrupts occur during processing of this handler.
-#ifdef COOLINGFAN_PWM
- //remember current state, mask all not urgent interrupts and enable interrupts
- uint8_t ucsrb_sv = UCSRB;
- //ADCSRA&=~_BV(ADIE);            //??
- UCSRB&=~(_BV(RXCIE)|_BV(UDRIE)); //mask UART interrupts
- TIMSK0=0,TIMSK1=0;               //mask all timer interrupts except OCF2 and TOV2
- _ENABLE_INTERRUPT();
-#endif
- //-----------------------------------------------------
  force_pending_spark();
 
  for(i = 0; i < ckps.chan_number; ++i)
@@ -743,10 +734,6 @@ static void process_ckps_cogs(void)
    ckps.measure_start_value = GetICR();
    SETBIT(flags, F_VHTPER);
    SETBIT(flags, F_STROKE); //set the stroke-synchronozation event (устанавливаем событие тактовой синхронизации)
-
-#ifdef FUEL_INJECT
-   inject_start_inj();      //start fuel injection
-#endif
   }
 
 #ifdef HALL_OUTPUT
@@ -754,6 +741,11 @@ static void process_ckps_cogs(void)
    IOCFG_SET(IOP_HALL_OUT, 1);
   if (ckps.cog == chanstate[i].hop_end_cog)
    IOCFG_SET(IOP_HALL_OUT, 0);
+#endif
+
+#ifdef FUEL_INJECT
+  if (ckps.cog == chanstate[i].inj_begin_cog)
+   inject_start_inj(i);      //start fuel injection for current channel
 #endif
  }
 
@@ -774,7 +766,7 @@ static void process_ckps_cogs(void)
    else
     OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
    TIFR1 = _BV(OCF1A);
-   timsk_sv1|= _BV(OCIE1A);   // enable Compare A interrupt (разрешаем прерывание)
+   TIMSK1|= _BV(OCIE1A);      // enable Compare A interrupt (разрешаем прерывание)
    CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    SETBIT(flags2, F_CALTIM);  // Set indication that we begin to calculate the time
   }
@@ -789,16 +781,6 @@ static void process_ckps_cogs(void)
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
 #endif
-
- //-----------------------------------------------------
-#ifdef COOLINGFAN_PWM
- //disable interrupts and restore previous states of masked interrupts
- _DISABLE_INTERRUPT();
- //ADCSRA|=_BV(ADIE);
- UCSRB = ucsrb_sv;
-#endif
- TIMSK0 = timsk_sv0, TIMSK1 = timsk_sv1;
- //-----------------------------------------------------
 
  force_pending_spark();
 }
@@ -869,7 +851,7 @@ sync_enter:
  * for processing teeth when set 16 bit timer expires
  * (Задача этого обработчика дополнять таймер до 16-ти разрядов и вызывать процедуру
  * обработки зубьев по истечении установленного 16-ти разряюного таймера). */
-ISR(TIMER0_OVF_vect)
+ISR(TIMER0_COMPA_vect)
 {
  if (TCNT0_H!=0)  //Did high byte exhaust (старший байт не исчерпан) ?
  {
@@ -879,7 +861,7 @@ ISR(TIMER0_OVF_vect)
  else
  {//the countdown is over (отсчет времени закончился)
   ICR1 = TCNT1;  //simulate input capture
-  TCCR0B = 0;    //stop timer (останавливаем таймер)
+  CLEARBIT(TIMSK0, OCIE0A); //disable this interrupt
 
   if (ckps.miss_cogs_num > 1)
   {

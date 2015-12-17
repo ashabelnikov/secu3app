@@ -82,7 +82,9 @@ void process_uart_interface(struct ecudata_t* d)
 
 #ifdef FUEL_INJECT
    case INJCTR_PAR:
-    inject_set_num_squirts(d->param.inj_config & 0xF);
+    inject_set_num_squirts(d->param.inj_config & 0xF);  //number of squirts
+    inject_set_config(d->param.inj_config >> 4);        //type of injection
+    ckps_set_inj_timing(d->param.inj_timing);           //injection timing (phase)
    case ACCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);

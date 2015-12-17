@@ -34,7 +34,7 @@
  * so it should be a multiple of degree of 2 (коэффициент масштабирования углов поворота коленвала, фигурирует
  * в вычислениях и операциях деления поэтому он должен быть кратен степени 2).
  */
-#define ANGLE_MULTIPLAYER   32
+#define ANGLE_MULTIPLIER   32
 
 /**Initialization of CKP module (hardware & variables)
  * (инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится)
@@ -79,7 +79,7 @@ void ckps_set_acc_time(uint16_t i_acc_time);
 
 /** Set andvance angle
  * (устанавливает УОЗ для реализации в алгоритме)
- * \param angle advance angle * ANGLE_MULTIPLAYER
+ * \param angle advance angle * ANGLE_MULTIPLIER
  */
 void ckps_set_advance_angle(int16_t angle);
 
@@ -166,5 +166,11 @@ void ckps_set_shutter_spark(uint8_t i_shutter);
 void ckps_set_shutter_wnd_width(int16_t width);
 #endif
 
+#ifdef FUEL_INJECT
+/** Set injection timing relatively to TDC
+ * \param phase Injection timing in degrees of wheel * ANGLE_MULTIPLIER
+ */
+void ckps_set_inj_timing(int16_t phase);
+#endif
 
 #endif //_CKPS_H_

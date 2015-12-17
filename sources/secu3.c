@@ -271,10 +271,12 @@ void init_modules(void)
 #endif
 
 #ifdef FUEL_INJECT
+ ckps_set_inj_timing(edat.param.inj_timing);
  inject_init_state();
  inject_set_cyl_number(edat.param.ckps_engine_cyl);
  inject_set_num_squirts(edat.param.inj_config & 0xF);
  inject_set_fuelcut(!edat.sys_locked);
+ inject_set_config(edat.param.inj_config >> 4);
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR)
  lambda_init_state();

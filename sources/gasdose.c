@@ -37,34 +37,6 @@
 #include "magnitude.h"
 #include "pwrrelay.h"
 
-//=============================================================================================================================
-
-#define GASDOSE_POS_RPM_SIZE 16   //!< RPM axis size
-#define GASDOSE_POS_TPS_SIZE 16   //!< TPS axis size
-#define _GD(v) GD_MAGNITUDE(v)    //!< For encoding of gas dose actuator position value
-
-/** Gas dose actuator position vs (TPS,RPM)
- */
-PGM_DECLARE(uint8_t gasdose_pos[GASDOSE_POS_TPS_SIZE][GASDOSE_POS_RPM_SIZE]) =
-{//  600       720         840        990       1170        1380       1650       1950       2310       2730       3210      3840        4530      5370        6360      7500 (min-1)
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //0%
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //20%
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //40%
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //60%
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //80%
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //
- {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}  //100%
-};
-
 /**TPS % between two interpolation points, additionally multiplied by 16 */
 #define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(GASDOSE_POS_TPS_SIZE-1))
 
@@ -92,10 +64,10 @@ int16_t gdp_function(struct ecudata_t* d)
  fp1 = f + 1;
 
  return bilinear_interpolation(rpm, tps,  //note that tps is additionally multiplied by 16
-        PGM_GET_BYTE(&gasdose_pos[t][f]),
-        PGM_GET_BYTE(&gasdose_pos[tp1][f]),
-        PGM_GET_BYTE(&gasdose_pos[tp1][fp1]),
-        PGM_GET_BYTE(&gasdose_pos[t][fp1]),
+        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[t][f]),
+        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[tp1][f]),
+        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[tp1][fp1]),
+        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[t][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (TPS_AXIS_STEP*t),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),

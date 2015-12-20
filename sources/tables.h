@@ -93,6 +93,9 @@
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
+#define GASDOSE_POS_RPM_SIZE            16          //!< RPM axis size
+#define GASDOSE_POS_TPS_SIZE            16          //!< TPS axis size
+
 
 /** оличество наборов таблиц хранимых в пам€ти программ
  * Number of sets of tables stored in the firmware */
@@ -196,13 +199,13 @@ typedef struct fw_ex_data_t
   /**Sizes of cells in RPM grid (so, we don't need to calculate them at the runtime)*/
   int16_t rpm_grid_sizes[RPM_GRID_SIZE-1];
 
-  /**Ёти зарезервированные байты необходимы дл€ сохранени€ бинарной совместимости
-   * новых версий прошивок с более старыми верси€ми. ѕри добавлении новых данных
-   * в структуру, необходимо расходовать эти байты.
-   * Following reserved bytes required for keeping binary compatibility between
+  /** Gas dose actuator position vs (TPS,RPM)*/
+  uint8_t gasdose_pos[GASDOSE_POS_TPS_SIZE][GASDOSE_POS_RPM_SIZE];
+
+  /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[2048];
+  uint8_t reserved[1792];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

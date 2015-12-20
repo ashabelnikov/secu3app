@@ -21,7 +21,7 @@
 
 /** \file spdsens.h
  * \author Alexey A. Shabelnikov
- * Speed sensor support (Поддержка датчика скорости)
+ * Speed sensor support
  * This is only interface to two functions placed in camsens.c
  */
 

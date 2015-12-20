@@ -624,6 +624,12 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.choke_corr_temp);
    break;
 
+  case GASDOSE_PAR:
+   build_i16h(d->param.gd_steps);
+   build_i4h(d->gasdose_testing);    //fake parameter (actually it is command)
+   build_i8h(0);                     //fake parameter, not used in outgoing paket
+   break;
+
   case SECUR_PAR:
    build_i4h(0);
    build_i4h(0);
@@ -1034,6 +1040,12 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.choke_corr_temp = recept_i16h();
    break;
 
+  case GASDOSE_PAR:
+   d->param.gd_steps = recept_i16h();
+   d->gasdose_testing = recept_i4h(); //fake parameter (actually it is status)
+   d->gasdose_manpos_d = recept_i8h();//fake parameter
+   break;
+
   case SECUR_PAR:
   {
    uint8_t old_bt_flags = d->param.bt_flags;
@@ -1210,6 +1222,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case FWINFO_DAT:
   case MISCEL_PAR:
   case CHOKE_PAR:
+  case GASDOSE_PAR:  //GD
   case SECUR_PAR:
   case UNIOUT_PAR:
 #ifdef FUEL_INJECT

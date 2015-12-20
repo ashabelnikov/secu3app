@@ -22,7 +22,6 @@
 /** \file smcontrol.h
  * \author Alexey A. Shabelnikov
  * Stepper motor control
- * (”правление шаговым двигателем).
  */
 
 #ifndef _SMCONTROL_H_

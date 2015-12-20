@@ -69,4 +69,6 @@
 #define   LAMBDA_PAR   '-'   //!< lambda correction parameters
 #define   ACCEL_PAR    '|'   //!< acceleration enrichment parameters
 
+#define   GASDOSE_PAR  '*'   //!< gas dose parameters
+
 #endif //_UFCODES_H_

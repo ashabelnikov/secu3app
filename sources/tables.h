@@ -106,17 +106,19 @@
 
 
 //Bluetooth and security flags (bit numbers)
-#define BTF_USE_BT                      0          //!< Bluetooth and security flags: specifies to use or not to use bluetooth
-#define BTF_SET_BBR                     1          //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
-#define BTF_USE_IMM                     2          //!< Bluetooth and security flags: specifies to use or not to use immobilizer
+#define BTF_USE_BT                      0           //!< Bluetooth and security flags: specifies to use or not to use bluetooth
+#define BTF_SET_BBR                     1           //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
+#define BTF_USE_IMM                     2           //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 
 //Injection configuration constants
-#define INJCFG_THROTTLEBODY             0          //!< Throttle-body or central injection
-#define INJCFG_SIMULTANEOUS             1          //!< Simultaneous port injection
-#define INJCFG_2BANK_ALTERN             2          //!< 2 banks alternating injection
-#define INJCFG_SEMISEQUENTIAL           3          //!< Semi-sequential injection
-#define INJCFG_FULLSEQUENTIAL           4          //!< Full-sequential injection
+#define INJCFG_THROTTLEBODY             0           //!< Throttle-body or central injection
+#define INJCFG_SIMULTANEOUS             1           //!< Simultaneous port injection
+#define INJCFG_2BANK_ALTERN             2           //!< 2 banks alternating injection
+#define INJCFG_SEMISEQUENTIAL           3           //!< Semi-sequential injection
+#define INJCFG_FULLSEQUENTIAL           4           //!< Full-sequential injection
 
+//Fuel pump flags
+#define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas
 
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
 typedef struct f_data_t
@@ -364,10 +366,12 @@ typedef struct params_t
 
   int16_t  inj_timing;                   //!< Injection timing in crank degrees * ANGLE_MULTIPLIER
 
+  uint8_t  flpmp_flags;                  //!< fuel pump flags
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[82];
+  uint8_t  reserved[81];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

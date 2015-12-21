@@ -342,7 +342,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_steps =                    256,                  //256 steps, gas dose number of steps
 
-  .inj_timing =                  0,                   //TDC
+  .inj_timing =                  0,                    //TDC
+
+  .flpmp_flags =                 _BV(FPF_OFFONGAS),    //turn off fuel pump when GAS_V = 1
 
   .reserved =                    {0},
   .crc =                         0

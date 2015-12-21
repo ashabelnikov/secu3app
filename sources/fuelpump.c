@@ -64,6 +64,16 @@ void fuelpump_init(void)
  fpstate.state = 0;
 }
 
+/** Check GAS_V input state and apply FPF_OFFONGAS flag. So, result will always be 0 if
+ *  FPF_OFFONGAS = 0 and result will depend on GAS_V if FPF_OFFONGAS = 1.
+ * \param d Pointer to ECU data structure
+ * \return 1 - if GAS_V = 1 and related fuel pump turning off is enabled
+ */
+static uint8_t gas_v_logic(struct ecudata_t* d)
+{
+ return (d->sens.gas && CHECKBIT(d->param.flpmp_flags, FPF_OFFONGAS));
+}
+
 void fuelpump_control(struct ecudata_t* d)
 {
  if (d->sys_locked)
@@ -76,7 +86,7 @@ void fuelpump_control(struct ecudata_t* d)
  {
   case 0: //pump is turned on
    //Turn off pump if timer is expired or gas valve is turned on
-   if (d->sens.gas || s_timer16_is_action(fuel_pump_time_counter))
+   if (gas_v_logic(d) || s_timer16_is_action(fuel_pump_time_counter))
    {
     TURN_ON_ELPUMP(0); //turn off
     fpstate.state = 1;
@@ -90,7 +100,7 @@ void fuelpump_control(struct ecudata_t* d)
 
   case 1: //pump is turned off
    //Do not turn on pump if gas valve is turned on
-   if (!d->sens.gas && d->sens.frequen > 0)
+   if (!gas_v_logic(d) && d->sens.frequen > 0)
    {
     TURN_ON_ELPUMP(1); //turn on
     s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);

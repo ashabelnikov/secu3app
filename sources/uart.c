@@ -610,6 +610,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.ign_cutoff_thrd);
    build_i8h(d->param.hop_start_cogs);
    build_i8h(d->param.hop_durat_cogs);
+   build_i8h(d->param.flpmp_flags);   //fuel pump flags
    break;
 
   case CHOKE_PAR:
@@ -1025,6 +1026,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ign_cutoff_thrd = recept_i16h();
    d->param.hop_start_cogs = recept_i8h();
    d->param.hop_durat_cogs = recept_i8h();
+   d->param.flpmp_flags = recept_i8h();   //fuel pump flags
   }
   break;
 

@@ -168,7 +168,7 @@ static void set_channels_ss(void)
 }
 
 /**Set channels' I/O for 2 banks alternating injection mode */
-static set_channels_2bnk(void)
+static void set_channels_2bnk(void)
 {
  uint8_t _t, i = 0, ch = 0;
  for(; i < inj.cyl_number; ++i)

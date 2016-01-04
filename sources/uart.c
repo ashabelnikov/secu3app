@@ -396,7 +396,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    break;
 
   case IDLREG_PAR:
-   build_i4h(d->param.idl_regul);
+   build_i8h(d->param.idl_flags);   //idling flags
    build_i16h(d->param.ifac1);
    build_i16h(d->param.ifac2);
    build_i16h(d->param.MINEFR);
@@ -919,7 +919,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    break;
 
   case IDLREG_PAR:
-   d->param.idl_regul = recept_i4h();
+   d->param.idl_flags = recept_i8h();   //idling flags
    d->param.ifac1     = recept_i16h();
    d->param.ifac2     = recept_i16h();
    d->param.MINEFR    = recept_i16h();

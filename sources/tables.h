@@ -125,6 +125,10 @@
 #define CKF_OFFRPMREGONGAS              1           //!< Turn off RPM regulator when fuel type is gas
 #define CKF_USETHROTTLEPOS              2           //!< Use throttle limit switch in choke initialization
 
+//Idling regulator flags
+#define IRF_USE_REGULATOR               0           //!< Use regulator (keep selected idling RPM by alternating advance angle)
+#define IRF_USE_REGONGAS                1           //!< Use regulator if fuel type is gas
+
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
 typedef struct f_data_t
 {
@@ -260,7 +264,7 @@ typedef struct params_t
   uint8_t  fn_gas;                       //!< index of set of characteristics used for gas
 
   // Idling regulator (via advance angle)
-  uint8_t  idl_regul;                    //!< keep selected idling RPM by alternating advance angle
+  uint8_t  idl_flags;                    //!< Idling regulator flags (see IRF_x constants for more information)
   uint16_t idling_rpm;                   //!< selected idling RPM regulated by using advance angle
   int16_t  ifac1;                        //!< Idling regulator's factor for positive error
   int16_t  ifac2;                        //!< Idling regulator's factor for negative error
@@ -373,7 +377,7 @@ typedef struct params_t
 
   uint8_t  flpmp_flags;                  //!< fuel pump flags
 
-  uint8_t  choke_flags;                  //!< choke related flags
+  uint8_t  choke_flags;                  //!< choke related flags (see CKF_x constants for more information)
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from

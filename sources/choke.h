@@ -22,7 +22,6 @@
 /** \file choke.h
  * \author Alexey A. Shabelnikov
  * Carburetor choke control.
- * (Управление воздушной заслонкой карбюратора).
  */
 
 #ifndef _CHOKE_H_
@@ -40,7 +39,7 @@ void choke_init_ports(void);
 /** Initialization of the module (state variables etc)*/
 void choke_init(void);
 
-/** Does control of choke (Управление воздушной заслонкой)
+/** Does control of choke
  * \param d pointer to ECU data structure
  */
 void choke_control(struct ecudata_t* d);

@@ -623,6 +623,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.choke_rpm_if);
    build_i16h(d->param.choke_corr_time);
    build_i16h(d->param.choke_corr_temp);
+   build_i8h(d->param.choke_flags); //choke flags
    break;
 
   case GASDOSE_PAR:
@@ -1040,6 +1041,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.choke_rpm_if = recept_i16h();
    d->param.choke_corr_time = recept_i16h();
    d->param.choke_corr_temp = recept_i16h();
+   d->param.choke_flags = recept_i8h(); //choke flags
    break;
 
   case GASDOSE_PAR:

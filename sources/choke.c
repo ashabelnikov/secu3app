@@ -22,7 +22,6 @@
 /** \file choke.c
  * \author Alexey A. Shabelnikov
  * Implementation of carburetor choke control.
- * (Реализация управления воздушной заслонкой карбюратора).
  */
 
 // SM_CONTROL - control carburetor's choke
@@ -51,7 +50,6 @@
 #ifdef FUEL_INJECT
 
 #ifdef SM_CONTROL
-//#define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle position in IAC stepper initialization
 
 //See flags variable in choke_st_t
 #define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
@@ -60,9 +58,7 @@
 #endif
 
 #else // Carburetor's choke stuff
-#define USE_THROTTLE_POS 1         //undefine this constant if you don't need to use throttle limit switch in choke initialization
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
-//#define STARTUP_ON_GAS           //define this option if you start engine on gas
 
 /**RPM regulator call period, 50ms*/
 #define RPMREG_CORR_TIME 10
@@ -82,9 +78,7 @@
 #ifdef USE_RPMREG_TURNON_DELAY
 #define CF_PRMREG_ENTO  4  //!< indicates that system is entered to RPM regulation mode
 #endif
-#ifdef STARTUP_ON_GAS
 #define CF_GASV_STATE   5  //!< GAS_V state before startup
-#endif
 
 #endif //FUEL_INJECT
 
@@ -152,8 +146,11 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 {
  int16_t rpm_corr = 0;
 
-//if (d->sens.gas)
-// d->choke_rpm_reg = 0;   //always turn off regulator when fuel type is gas
+ if (CHECKBIT(d->param.choke_flags, CKF_OFFRPMREGONGAS)) //is turning off on gas enabled?
+ {
+  if (d->sens.gas)
+   d->choke_rpm_reg = 0;   //always turn off regulator when fuel type is gas
+ }
 
  switch(chks.strt_mode)
  {
@@ -220,16 +217,13 @@ int16_t calc_startup_corr(struct ecudata_t* d)
  else if (d->sens.temperat < TEMPERATURE_MAGNITUDE(0))
   return d->param.sm_steps; //if temperature  < 0, then choke must be fully closed
  else
-#ifdef STARTUP_ON_GAS
  {
-  if (CHECKBIT(chks.flags, CF_GASV_STATE))
+  //if fuel type is gas AND it is enabled to turn off additional startup closing, then turn off it
+  if (CHECKBIT(chks.flags, CF_GASV_STATE) && CHECKBIT(d->param.choke_flags, CKF_OFFSTRTADDONGAS))
    return 0;
   else
    return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
  }
-#else
-  return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
-#endif
 }
 #endif
 
@@ -242,11 +236,9 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 static void initial_pos(struct ecudata_t* d, uint8_t dir)
 {
  stpmot_dir(dir);                                             //set direction
-#ifdef USE_THROTTLE_POS
- if (0==d->sens.carb)
+ if (0==d->sens.carb && CHECKBIT(d->param.choke_flags, CKF_USETHROTTLEPOS))
   stpmot_run(d->param.sm_steps >> 2);                         //run using number of steps = 25%
  else
-#endif
   stpmot_run(d->param.sm_steps + (d->param.sm_steps >> 5));   //run using number of steps + 3%
 }
 
@@ -367,7 +359,7 @@ void choke_control(struct ecudata_t* d)
     initial_pos(d, INIT_POS_DIR);
    chks.state = 2;
    chks.prev_temp = d->sens.temperat;
-#ifdef STARTUP_ON_GAS
+#ifndef FUEL_INJECT
    WRITEBIT(chks.flags, CF_GASV_STATE, d->sens.gas);          //Remember state of gas valve
 #endif
    break;

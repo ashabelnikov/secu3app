@@ -120,6 +120,11 @@
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas
 
+//Choke flags
+#define CKF_OFFSTRTADDONGAS             0           //!< Turn off additional startup closing of choke when fuel type is gas
+#define CKF_OFFRPMREGONGAS              1           //!< Turn off RPM regulator when fuel type is gas
+#define CKF_USETHROTTLEPOS              2           //!< Use throttle limit switch in choke initialization
+
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
 typedef struct f_data_t
 {
@@ -368,10 +373,12 @@ typedef struct params_t
 
   uint8_t  flpmp_flags;                  //!< fuel pump flags
 
+  uint8_t  choke_flags;                  //!< choke related flags
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[81];
+  uint8_t  reserved[80];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

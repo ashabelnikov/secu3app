@@ -346,6 +346,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .flpmp_flags =                 _BV(FPF_OFFONGAS),    //turn off fuel pump when GAS_V = 1
 
+  .choke_flags =                 0,                    //do not turn off additional startup closing, RPM regulator when fuel type is gas and don't use throttle position in choke initialization
+
   .reserved =                    {0},
   .crc =                         0
  },

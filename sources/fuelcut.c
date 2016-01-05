@@ -79,11 +79,11 @@ void fuelcut_control(struct ecudata_t* d)
  }
 
  //simple Rev. limitter
- if (d->sens.inst_frq > d->param.ie_hit_g)
+ if (d->sens.inst_frq > d->param.revlim_hit)
  {
   d->fc_revlim = 1; //cut fuel
  }
- else if (d->sens.inst_frq < d->param.ie_lot_g)
+ else if (d->sens.inst_frq < d->param.revlim_lot)
  {
   d->fc_revlim = 0; //restore fuel
  }

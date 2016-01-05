@@ -348,6 +348,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .choke_flags =                 0,                    //do not turn off additional startup closing, RPM regulator when fuel type is gas and don't use throttle position in choke initialization
 
+  .revlim_lot =                  8000,                 // 8000 min-1
+  .revlim_hit =                  8100,                 // 8100 min-1
+
   .reserved =                    {0},
   .crc =                         0
  },

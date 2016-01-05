@@ -130,7 +130,7 @@ static uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 static void initial_pos(struct ecudata_t* d, uint8_t dir)
 {
  gdstpmot_dir(dir);                                           //set direction
- gdstpmot_run(d->param.gd_steps + (d->param.gd_steps >> 5));  //run using number of steps + 3%
+ gdstpmot_run(d->param.gd_steps + (d->param.gd_steps >> 4));  //run using number of steps + 6%
 }
 
 //TODO: redundant to simular function in choke.c, remove this redundant copy in the future

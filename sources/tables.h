@@ -243,10 +243,10 @@ typedef struct params_t
   uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
 
   // Idle cut-off valve and power valve
-  uint16_t ie_lot;                       //!< lower threshold for idle cut off valve(min-1) for gasiline
+  uint16_t ie_lot;                       //!< lower threshold for idle cut off valve(min-1) for gasoline
   uint16_t ie_hit;                       //!< upper threshold for idle cut off valve(min-1) for gasoline
-  uint16_t ie_lot_g;                     //!< lower threshold for idle cut off valve(min-1) for gas. In fuel injection, used for rev.limitting
-  uint16_t ie_hit_g;                     //!< upper threshold for idle cut off valve(min-1) for gas. In fuel injection, used for rev.limitting
+  uint16_t ie_lot_g;                     //!< lower threshold for idle cut off valve(min-1) for gas
+  uint16_t ie_hit_g;                     //!< upper threshold for idle cut off valve(min-1) for gas
   int16_t  fe_on_threshold;              //!< switch on threshold of power valve (FE)
   uint8_t  shutoff_delay;                //!< idle cut off valve's turn off delay
   uint16_t fuelcut_map_thrd;             //!< fuel cut off MAP threshold
@@ -379,10 +379,13 @@ typedef struct params_t
 
   uint8_t  choke_flags;                  //!< choke related flags (see CKF_x constants for more information)
 
+  uint16_t revlim_lot;                   //!< lower threshold for rev.limitting (fuel injection)
+  uint16_t revlim_hit;                   //!< upper threshold for rev.limitting (fuel injection)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[80];
+  uint8_t  reserved[76];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

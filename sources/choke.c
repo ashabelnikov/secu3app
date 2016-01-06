@@ -143,6 +143,7 @@ uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 /** Calculates choke position correction at startup mode and from RPM regulator
  * Work flow: Start-->Wait 3 sec.-->RPM regul.-->Ready
  * \param d pointer to ECU data structure
+ * \return Correction value in SM steps
  */
 int16_t calc_startup_corr(struct ecudata_t* d)
 {

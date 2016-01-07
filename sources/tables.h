@@ -382,10 +382,12 @@ typedef struct params_t
   uint16_t revlim_lot;                   //!< lower threshold for rev.limitting (fuel injection)
   uint16_t revlim_hit;                   //!< upper threshold for rev.limitting (fuel injection)
 
+  int16_t  inj_timing_crk;               //!< Injection timing on cranking in crank degrees * ANGLE_MULTIPLIER
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[76];
+  uint8_t  reserved[74];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -271,7 +271,7 @@ void init_modules(void)
 #endif
 
 #ifdef FUEL_INJECT
- ckps_set_inj_timing(edat.param.inj_timing);
+ ckps_set_inj_timing(edat.param.inj_timing_crk); //use inj.timing on cranking
  inject_init_state();
  inject_set_cyl_number(edat.param.ckps_engine_cyl);
  inject_set_num_squirts(edat.param.inj_config & 0xF);
@@ -460,6 +460,7 @@ MAIN()
 #endif
   //------------------------------------------------------------------------
 
+
   //выполняем операции которые необходимо выполнять строго для каждого рабочего такта.
   if (ckps_is_stroke_event_r())
   {
@@ -503,6 +504,8 @@ MAIN()
    //set current injection time and fuel cut state
    inject_set_inj_time(edat.inj_pw);
    inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim);
+   //set injection timing depending on current mode of engine
+   ckps_set_inj_timing((EM_START == edat.engine_mode) ? edat.param.inj_timing_crk : edat.param.inj_timing);
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR)
    lambda_stroke_event_notification(&edat);

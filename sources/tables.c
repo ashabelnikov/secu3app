@@ -351,6 +351,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .revlim_lot =                  8000,                 // 8000 min-1
   .revlim_hit =                  8100,                 // 8100 min-1
 
+  .inj_timing_crk =              0,                    //TDC
+
   .reserved =                    {0},
   .crc =                         0
  },

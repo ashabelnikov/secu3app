@@ -34,7 +34,7 @@
 #include "ioconfig.h"
 #include "tables.h"
 
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
 void ProcessInterrupt0(void);         //!< External ISR function, see hall.c for more information about this function
 void ProcessInterrupt1(void);         //!< External ISR function, see hall.c for more information about this function
 #endif
@@ -52,7 +52,7 @@ void ProcessInterrupt1(void);         //!< External ISR function, see hall.c for
 #endif
 
 //warning! Variable and bit number define must be same as in hall.c
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
 #define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default
 #define flags2 TWBR                   //!< flags
 #endif
@@ -156,8 +156,8 @@ void cams_init_state(void)
   EICRA|= _BV(ISC01) | 0;                   //inversion
  }
 #endif
-#ifdef HALL_SYNC
- //remapping of REF_S to CKPS takes sense only with HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
+ //remapping of REF_S to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
  else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ref_s)
  {
   camstate.ref_s_inpalt = 4;                //REF_S remapped to CKP sensor
@@ -198,8 +198,8 @@ void cams_init_state(void)
   EICRA|= _BV(ISC11) | 0;                   //inverted
  }
 #endif
-#ifdef HALL_SYNC
- //remapping of REF_S to CKPS takes sense only with HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
+ //remapping of REF_S to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
  else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ps)
  {
   camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor
@@ -225,7 +225,7 @@ void cams_init_state(void)
  WRITEBIT(flags, F_USECAM, (camstate.ref_s_inpalt == 3) || (camstate.ps_inpalt == 1));
 #endif
 
-#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC)
+#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //INT1 enabled only when cam or VSS sensor is utilized in the firmware or HALL_SYNC option used AND if
   //PS mapped to PS, VSS or CKPS, for other cases ISR is not required.
   //So, if firmware compiled without PHASE_SENSOR, SPEED_SENSOR and HALL_SYNC options, then we don't
@@ -310,7 +310,7 @@ uint8_t cams_vr_is_event_r(void)
 /**Interrupt from VR sensor. Marked as REF_S on the schematics */
 ISR(INT0_vect)
 {
-#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR) || defined(HALL_SYNC)
+#if defined(SPEED_SENSOR) || defined(PHASE_SENSOR) || defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  //In this case this ISR can be used either for: vehicle speed sensor, cam/Hall sensor or reference sensor
  //
  if (1==camstate.ref_s_inpalt)      //reference sensor (normal INT0 operation)
@@ -321,7 +321,7 @@ ISR(INT0_vect)
  else if (3==camstate.ref_s_inpalt) //INT0 used for cam sensor
   PROCESS_CAM()
 #endif
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  else if (4==camstate.ref_s_inpalt) //INT0 used for synchronization from Hall sensor
   ProcessInterrupt0();              //call ISR if CKPS mapped to REF_S
 #endif
@@ -340,7 +340,7 @@ ISR(INT0_vect)
 
 void cams_vr_set_edge_type(uint8_t edge_type)
 {
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  if (camstate.ref_s_inpalt == 4) {
   WRITEBIT(flags2, F_SELEDGE, edge_type); //save selected edge type for hall.c
  }
@@ -401,12 +401,12 @@ uint8_t cams_is_event_r(void)
 #endif //PHASE_SENSOR
 
 //We need following ISR if cam sensor or speed sensor is selected for compilation
-#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC)
+#if defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC) || defined(CKPS_NPLUS1)
 
 /**Interrupt from CAM sensor (Hall)*/
 ISR(INT1_vect)
 {
-#ifdef HALL_SYNC               //Synchronization from hall sensor
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1) //Synchronization from hall sensor
  if (3==camstate.ps_inpalt)
   ProcessInterrupt1();         //call INT1 handler if PS input not remapped to other function (Hall sensor is connected to PS)
 #endif
@@ -420,7 +420,7 @@ ISR(INT1_vect)
 #endif
 }
 
-#endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC)
+#endif //defined(PHASE_SENSOR) || defined(SPEED_SENSOR) || defined(HALL_SYNC) || defined(CKPS_NPLUS1)
 
 #ifdef SPEED_SENSOR
 uint16_t spdsens_get_period(void)

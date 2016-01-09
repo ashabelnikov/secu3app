@@ -153,7 +153,7 @@ void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration);
  */
 void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num);
 
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
 /** Enable/disable spark generation using shutter entering (used on startup - at low RPM)
  * Note: This function is applicable only when synchronization from Hall sensor is selected
  * \param i_shutter 1 - use shutter, 0 - don't use shutter (use timer)

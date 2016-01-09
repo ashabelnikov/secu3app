@@ -105,6 +105,10 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          (Включить поддержку управления составом смеси на
                           карбюраторе при помощи электронных актюаторов)
 
+    CKPS_NPLUS1          Synchronization from N+1 crankshaft wheel (e.g. 2+1
+                         used in kawasaki ZX6R)
+                         Синхронизация от задающего диска N+1, например 2+1
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600. Note! Will not take effect
                          without reprogramming using ISP programmator.

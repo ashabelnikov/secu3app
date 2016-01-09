@@ -25,7 +25,7 @@
  * (Реализация обработки датчика положения коленвала).
  */
 
-#if !defined(HALL_SYNC) && !defined(CKPS_2CHIGN)
+#if !defined(HALL_SYNC) && !defined(CKPS_2CHIGN) && !defined(CKPS_NPLUS1)
 
 #include <stdlib.h>
 #include "port/avrio.h"
@@ -1080,4 +1080,4 @@ ISR(TIMER1_OVF_vect)
  ++ckps.t1oc;
 }
 
-#endif //!HALL_SYNC && !CKPS_2CHIGN
+#endif //!HALL_SYNC && !CKPS_2CHIGN && !CKPS_NPLUS1

@@ -183,4 +183,11 @@
  #define COPT_CARB_AFR 0
 #endif
 
+/** Build firmware for using N+1 crankshaft wheel */
+#ifdef CKPS_NPLUS1
+ #define COPT_CKPS_NPLUS1 1
+#else
+ #define COPT_CKPS_NPLUS1 0
+#endif
+
 #endif //_COMPILOPT_H_

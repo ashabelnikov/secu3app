@@ -29,6 +29,9 @@
 #if defined(HALL_SYNC)
  #error "You can not use HALL_SYNC option together with CKPS_2CHIGN!"
 #endif
+#if defined(CKPS_NPLUS1)
+ #error "You can not use CKPS_NPLUS1 option together with CKPS_2CHIGN!"
+#endif
 
 #include <stdlib.h>
 #include "port/avrio.h"
@@ -562,18 +565,21 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 void ckps_set_inj_timing(int16_t phase)
 {
  uint8_t _t, i;
+ //TODO: We can do some optimization in the future - set timing only if it is not equal to current (already set one)
+
  //save values because we will access them from other function
  //Also, convert form crank degrees to teeth
  ckps.inj_phase = phase / ((int16_t)ckps.degrees_per_cog);
 
- _t=_SAVE_INTERRUPT();
- _DISABLE_INTERRUPT();
  for(i = 0; i < ckps.chan_number; ++i)
  {
   uint16_t tdc = (((uint16_t)ckps.cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
-  chanstate[i].inj_begin_cog = _normalize_tn(tdc - ckps.inj_phase);
- }
+  uint16_t timing = _normalize_tn(tdc - ckps.inj_phase); //current inj.timing
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+  chanstate[i].inj_begin_cog = timing;
  _RESTORE_INTERRUPT(_t);
+ }
 }
 #endif
 

@@ -71,7 +71,7 @@
 #include "wdt.h"
 
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
 #define ENGINE_ROTATION_TIMEOUT_VALUE 150   //!< timeout value used to determine that engine is stopped (used for Hall sensor)
 #else
 #define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
@@ -265,7 +265,7 @@ void init_modules(void)
 #ifdef HALL_OUTPUT
  ckps_set_hall_pulse(edat.param.hop_start_cogs, edat.param.hop_durat_cogs);
 #endif
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  ckps_set_shutter_wnd_width(edat.param.hall_wnd_width);
  ckps_set_advance_angle(0);
 #endif
@@ -436,7 +436,7 @@ MAIN()
    calc_adv_ang = 0;
 
 #ifdef DWELL_CONTROL
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //Double dwell time if RPM is low and non-stable
   ckps_set_acc_time(edat.st_block ? accumulation_time(&edat) : accumulation_time(&edat) << 1);
 #else
@@ -471,7 +471,7 @@ MAIN()
    //за один рабочий такт. В режиме пуска фильтр УОЗ отключен.
    if (EM_START == edat.engine_mode)
    {
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
     int16_t strt_map_angle = start_function(&edat);
     ckps_set_shutter_spark(0==strt_map_angle);
     edat.corr.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
@@ -481,7 +481,7 @@ MAIN()
    }
    else
    {
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
     ckps_set_shutter_spark(edat.sens.frequen < 200);
 #endif
     edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_speed, edat.param.angle_dec_speed);

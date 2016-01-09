@@ -177,7 +177,7 @@ void process_uart_interface(struct ecudata_t* d)
 #endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
 
-#ifdef HALL_SYNC
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
     ckps_set_shutter_wnd_width(d->param.hall_wnd_width);
 #endif
 

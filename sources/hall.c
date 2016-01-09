@@ -29,6 +29,9 @@
 #if defined(CKPS_2CHIGN)
  #error "You can not use CKPS_2CHIGN option together with HALL_SYNC!"
 #endif
+#if defined(CKPS_NPLUS1)
+ #error "You can not use CKPS_NPLUS1 option together with HALL_SYNC!"
+#endif
 
 #include <stdlib.h>
 #include "port/avrio.h"

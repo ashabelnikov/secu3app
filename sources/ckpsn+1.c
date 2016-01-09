@@ -19,15 +19,18 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file sync_kawasaki_zx6r.c
+/** \file ckpsn+1.c
  * \author Alexey A. Shabelnikov
  * Implementation of synchronization processing for Kawasaki ZX6R.
  * (Обработка датчика положения коленвала для мотоцикла Kawasaki ZX6R)
  */
 
-#ifdef HALL_SYNC
+#ifdef CKPS_NPLUS1
 #if defined(CKPS_2CHIGN)
- #error "You can not use CKPS_2CHIGN option together with HALL_SYNC!"
+ #error "You can not use CKPS_2CHIGN option together with CKPS_NPLUS1"
+#endif
+#if defined(HALL_SYNC)
+ #error "You can not use HALL_SYNC option together with CKPS_NPLUS1"
 #endif
 
 #include <stdlib.h>
@@ -43,7 +46,7 @@
 
 #include "knock.h"
 
-//Phase sensor and phased ignition are not supported when hall sensor is used for synchronization
+//Phase sensor and phased ignition are not supported when this method is used for synchronization
 #if defined(PHASE_SENSOR) || defined(PHASED_IGNITION)
  #error "You can not use phase sensor and phased ignition when Hall sensor is used for synchronization"
 #endif
@@ -651,7 +654,7 @@ ISR(TIMER0_COMPA_vect)
  }
  else
  {//the countdown is over
-  CLEARBIT(TIMKS0, OCIE0A);    //disable this interrupt
+  CLEARBIT(TIMSK0, OCIE0A);    //disable this interrupt
 
   if (!hall.knkwnd_mode)
   {//start listening detonation (opening the window)
@@ -688,4 +691,4 @@ ISR(TIMER1_OVF_vect)
  ++hall.t1oc;
 }
 
-#endif //HALL_SYNC
+#endif //CKPS_NPLUS1

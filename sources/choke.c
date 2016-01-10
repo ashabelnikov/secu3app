@@ -137,6 +137,16 @@ uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 }
 
 #ifndef FUEL_INJECT
+
+/** Returns 1 if RPM regulator allowed 
+ * \param d pointer to ECU data structure
+ * \return  1 - allowed, 0 - not allowed
+ */
+static uint8_t is_rpmreg_allowed(struct ecudata_t* d)
+{
+ return !(d->sens.gas && CHECKBIT(d->param.choke_flags, CKF_OFFRPMREGONGAS));
+}
+
 /** Calculates choke position correction at startup mode and from RPM regulator
  * Work flow: Start-->Wait 3 sec.-->RPM regul.-->Ready
  * \param d pointer to ECU data structure
@@ -146,12 +156,6 @@ int16_t calc_startup_corr(struct ecudata_t* d)
 {
  int16_t rpm_corr = 0;
 
- if (CHECKBIT(d->param.choke_flags, CKF_OFFRPMREGONGAS)) //is turning off on gas enabled?
- {
-  if (d->sens.gas)
-   d->choke_rpm_reg = 0;   //always turn off regulator when fuel type is gas
- }
-
  switch(chks.strt_mode)
  {
   case 0:  //starting
@@ -160,7 +164,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     chks.strt_t1 = s_timer_gtc();
     chks.strt_mode = 1;
     //set choke RPM regulation flag (will be activated after delay)
-    d->choke_rpm_reg = (0!=d->param.choke_rpm[0]);
+    d->choke_rpm_reg = (0!=d->param.choke_rpm[0]) && is_rpmreg_allowed(d);
    }
    break; //use startup correction
   case 1:
@@ -206,6 +210,13 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    else
     rpm_corr = chks.rpmreg_prev;
   }
+
+  if (!is_rpmreg_allowed()) //Is RPM regulator not allowed?
+  {
+   d->choke_rpm_reg = 0;    //always don't use regulator when fuel type is gas
+   rpm_corr = 0;            //regulator's correction is zero
+  }
+
   case 3:
    if (!d->st_block)
     chks.strt_mode = 0; //engine is stopped, so use correction again

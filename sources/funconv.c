@@ -573,7 +573,7 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  int16_t i, i1, t = d->sens.temperat;
 
  if (!d->param.tmp_use)
-  return 1000;   //coolant temperature sensor is not enabled, default is 3.2uS
+  return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
  //-30 - minimum value of temperature corresponding to the first point in table
  if (t < TEMPERATURE_MAGNITUDE(-30))
@@ -586,7 +586,7 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  else i1 = i + 1;
 
  return simple_interpolation(t, _GWU(inj_cranking[i]), _GWU(inj_cranking[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 8) >> 3;
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
 }
 
 uint8_t inj_warmup_en(struct ecudata_t* d)

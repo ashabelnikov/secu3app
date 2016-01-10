@@ -78,9 +78,6 @@
 #ifdef USE_RPMREG_TURNON_DELAY
 #define CF_PRMREG_ENTO  4  //!< indicates that system is entered to RPM regulation mode
 #endif
-/*
-#define CF_GASV_STATE   5  //!< GAS_V state before startup
-*/
 
 #endif //FUEL_INJECT
 
@@ -215,18 +212,13 @@ int16_t calc_startup_corr(struct ecudata_t* d)
    return rpm_corr;  //correction from RPM regulator only
  }
 
- if (d->sens.temperat > d->param.choke_corr_temp)
+ //if (temperature > threshold) OR (fuel is gas AND allowed) then don't use correction
+ if ((d->sens.temperat > d->param.choke_corr_temp) || (d->sens.gas && CHECKBIT(d->param.choke_flags, CKF_OFFSTRTADDONGAS)))
   return 0; //Do not use correction if coolant temperature > threshold
  else if (d->sens.temperat < TEMPERATURE_MAGNITUDE(0))
   return d->param.sm_steps; //if temperature  < 0, then choke must be fully closed
  else
- {
-  //if fuel type is gas AND it is enabled to turn off additional startup closing, then turn off it
-  if (/*CHECKBIT(chks.flags, CF_GASV_STATE)*/d->sens.gas && CHECKBIT(d->param.choke_flags, CKF_OFFSTRTADDONGAS))
-   return 0;
-  else
    return (((int32_t)d->param.sm_steps) * d->param.choke_startup_corr) / 200;
- }
 }
 #endif
 
@@ -362,11 +354,6 @@ void choke_control(struct ecudata_t* d)
     initial_pos(d, INIT_POS_DIR);
    chks.state = 2;
    chks.prev_temp = d->sens.temperat;
-/*
-#ifndef FUEL_INJECT
-   WRITEBIT(chks.flags, CF_GASV_STATE, d->sens.gas);          //Remember state of gas valve
-#endif
-*/
    break;
 
   case 1:                                                     //system is being preparing to power-down

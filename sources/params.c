@@ -90,6 +90,8 @@ void reset_eeprom_params(struct ecudata_t* d)
 #ifdef REALTIME_TABLES
  eeprom_write_P(&tt_def_data, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 #endif
+ //write 4 bytes of magic number identifying platform
+ eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
  wdt_reset_device(); //reboot!
 }
 

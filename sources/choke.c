@@ -211,7 +211,7 @@ int16_t calc_startup_corr(struct ecudata_t* d)
     rpm_corr = chks.rpmreg_prev;
   }
 
-  if (!is_rpmreg_allowed()) //Is RPM regulator not allowed?
+  if (!is_rpmreg_allowed(d)) //Is RPM regulator not allowed?
   {
    d->choke_rpm_reg = 0;    //always don't use regulator when fuel type is gas
    rpm_corr = 0;            //regulator's correction is zero

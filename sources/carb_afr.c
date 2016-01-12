@@ -144,6 +144,12 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
 
 void carbafr_control(struct ecudata_t* d)
 {
+#ifdef GD_CONTROL
+ //Don't use AFR control when gas doser is activated and fuel type is gas
+ if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
+  return; //no AFR control
+#endif
+
  if (d->sens.frequen < d->param.inj_lambda_rpm_thrd) //100 min-1
  {
    //both valves are fully opened

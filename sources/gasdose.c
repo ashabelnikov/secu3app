@@ -183,7 +183,11 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
  */
 static int16_t calc_sm_position(struct ecudata_t* d)
 {
- return ((((int32_t)d->param.gd_steps) * gdp_function(d)) / GD_MAGNITUDE(100.0));
+ int16_t pos = ((((int32_t)d->param.gd_steps) * gdp_function(d)) / GD_MAGNITUDE(100.0));
+
+ pos = pos - (d->ie_valve ? 0 : d->param.gd_steps); //apply fuel cut flag
+
+ return pos;
 }
 
 void gasdose_control(struct ecudata_t* d)

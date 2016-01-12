@@ -21,10 +21,10 @@
 
 /** \file fuelcut.c
  * \author Alexey A. Shabelnikov
- * Implementation of controling of Idle Cut-off valve (Carburetor) of fuel cut (Fuel injection).
+ * Implementation of controling of Idle Cut-off valve control (Carburetor) or fuel cut control (Fuel injection).
  */
 
-#ifndef CARB_AFR
+#if !defined(CARB_AFR) || defined(GD_CONTROL)
 #include "port/avrio.h"
 #include "port/port.h"
 #include "bitmask.h"
@@ -32,11 +32,37 @@
 #include "fuelcut.h"
 #include "ioconfig.h"
 #include "vstimer.h"
-#else
-#ifdef FUEL_INJECT
+#endif //!CARB_AFR || GD_CONTROL
+
+#if defined(CARB_AFR) && defined(FUEL_INJECT)
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
+
+
+#if !defined(CARB_AFR) || defined(GD_CONTROL)
+/** Fuel cut control logic for carburetor or gas doser
+ * \param d Pointer to ECU data structure
+ */
+static void simple_fuel_cut(struct ecudata_t* d)
+{
+ //if throttle gate is opened, then open valve,reload timer and exit from condition
+ if (d->sens.carb)
+ {
+  d->ie_valve = 1;
+  s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
+ }
+ //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
+ else
+  if (d->sens.gas) //gas
+   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+   &&(((d->sens.inst_frq > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit_g)))?0:1;
+  else //petrol
+   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+   &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
+ IOCFG_SET(IOP_IE, d->ie_valve);
+}
 #endif
+
 
 #ifdef FUEL_INJECT
 
@@ -50,6 +76,15 @@ void fuelcut_init_ports(void)
 
 void fuelcut_control(struct ecudata_t* d)
 {
+#ifdef GD_CONTROL
+ if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
+ {
+  simple_fuel_cut(d);   //fuel cut off for gas doser
+  goto revlim;
+ }
+#endif
+
+ //fuel cut off for fuel injection
  if (d->sens.inst_frq > d->param.ie_hit)
  {
   //When RPM > hi threshold, then check TPS, CTS and MAP
@@ -78,6 +113,7 @@ void fuelcut_control(struct ecudata_t* d)
   state = 0;
  }
 
+revlim:
  //simple Rev. limitter
  if (d->sens.inst_frq > d->param.revlim_hit)
  {
@@ -91,11 +127,13 @@ void fuelcut_control(struct ecudata_t* d)
 
 #else //Carburetor (Idle Cut-off valve control)
 
-#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+#if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
 
 void fuelcut_init_ports(void)
 {
+#ifndef CARB_AFR
  IOCFG_INIT(IOP_IE, 1); //valve is turned on
+#endif
 }
 
 //Implementation of Idle Cut-off valve control. If throttle gate is closed AND frq > [up.threshold] OR
@@ -103,23 +141,18 @@ void fuelcut_init_ports(void)
 //fuel supply by stopping to apply voltage to valve's coil. ELSE - fuel supply is turned on.
 void fuelcut_control(struct ecudata_t* d)
 {
- //if throttle gate is opened, then open valve,reload timer and exit from condition
- if (d->sens.carb)
+#ifdef CARB_AFR
+ //In case of carb. AFR control, fuel cut for gas doser must be used only 
+ //when gas doser is activated and fuel type is gas
+ if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
  {
-  d->ie_valve = 1;
-  s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
+#endif
+  simple_fuel_cut(d);
+#ifdef CARB_AFR
  }
- //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
- else
-  if (d->sens.gas) //gas
-   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d->sens.inst_frq > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit_g)))?0:1;
-  else //petrol
-   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
- IOCFG_SET(IOP_IE, d->ie_valve);
+#endif
 }
 
-#endif //CARB_AFR
+#endif //!CARB_AFR || GD_CONTROL
 
 #endif

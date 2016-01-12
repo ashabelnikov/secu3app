@@ -53,6 +53,7 @@
 #include "immobiliz.h"
 #include "injector.h"
 #include "intkheat.h"
+#include "ioconfig.h"
 #include "knklogic.h"
 #include "knock.h"
 #include "lambda.h"
@@ -82,7 +83,7 @@
  */
 void control_engine_units(struct ecudata_t *d)
 {
-#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+#if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
  //Idle fuel cut-off control or fuel cut-off
  fuelcut_control(d);
 #endif
@@ -159,7 +160,7 @@ void init_ports(void)
 #ifdef FUEL_PUMP
  fuelpump_init_ports();
 #endif
-#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+#if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
  fuelcut_init_ports();
 #endif
  starter_init_ports();
@@ -503,7 +504,12 @@ MAIN()
 #ifdef FUEL_INJECT
    //set current injection time and fuel cut state
    inject_set_inj_time(edat.inj_pw);
+#ifdef GD_CONTROL
+   //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
+   inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim && !(edat.sens.gas && IOCFG_CHECK(IOP_GD_STP)));
+#else
    inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim);
+#endif
    //set injection timing depending on current mode of engine
    ckps_set_inj_timing((EM_START == edat.engine_mode) ? edat.param.inj_timing_crk : edat.param.inj_timing);
 #endif

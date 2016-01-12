@@ -27,7 +27,7 @@
 #ifndef _IDLECON_H_
 #define _IDLECON_H_
 
-#ifndef CARB_AFR //Carb. AFR control supersede idle cut-off functionality
+#if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
 
 struct ecudata_t;
 
@@ -39,6 +39,6 @@ void fuelcut_init_ports(void);
  */
 void fuelcut_control(struct ecudata_t* d);
 
-#endif //CARB_AFR
+#endif //!CARB_AFR || GD_CONTROL
 
 #endif //_IDLECON_H_

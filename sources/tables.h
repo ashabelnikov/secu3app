@@ -384,10 +384,12 @@ typedef struct params_t
 
   int16_t  inj_timing_crk;               //!< Injection timing on cranking in crank degrees * ANGLE_MULTIPLIER
 
+  uint8_t  gd_fc_closing;                //!< How much close (in %) gas doser in fuel cut mode (relatively to current position)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[74];
+  uint8_t  reserved[73];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

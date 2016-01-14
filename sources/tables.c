@@ -353,6 +353,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_timing_crk =              0,                    //TDC
 
+  .gd_fc_closing =               GD_MAGNITUDE(30),     //close for 30%
+
   .reserved =                    {0},
   .crc =                         0
  },

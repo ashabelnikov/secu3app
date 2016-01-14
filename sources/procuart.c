@@ -91,7 +91,7 @@ void process_uart_interface(struct ecudata_t* d)
     break;
 #endif
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    case LAMBDA_PAR:
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE); //paramaters were altered, so reset time counter
     break;

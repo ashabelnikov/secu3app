@@ -129,7 +129,7 @@ void control_engine_units(struct ecudata_t *d)
  uniout_control(d);
 #endif
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  lambda_control(d);
 #endif
 
@@ -279,7 +279,7 @@ void init_modules(void)
  inject_set_fuelcut(!edat.sys_locked);
  inject_set_config(edat.param.inj_config >> 4);
 #endif
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  lambda_init_state();
 #endif
 
@@ -513,7 +513,7 @@ MAIN()
    //set injection timing depending on current mode of engine
    ckps_set_inj_timing((EM_START == edat.engine_mode) ? edat.param.inj_timing_crk : edat.param.inj_timing);
 #endif
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_stroke_event_notification(&edat);
 #endif
 

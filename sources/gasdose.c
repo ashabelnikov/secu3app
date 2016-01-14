@@ -184,8 +184,11 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 static int16_t calc_sm_position(struct ecudata_t* d)
 {
  int16_t pos = ((((int32_t)d->param.gd_steps) * gdp_function(d)) / GD_MAGNITUDE(100.0));
+ if (pos < 0) pos = 0;
 
- pos = pos - (d->ie_valve ? 0 : d->param.gd_steps); //apply fuel cut flag
+ pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
+
+ pos = (d->ie_valve ? pos : 0); //apply fuel cut flag
 
  return pos;
 }

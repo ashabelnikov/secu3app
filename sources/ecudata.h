@@ -104,7 +104,7 @@ typedef struct correct_t
  int16_t work_aalt;                      //!< Advance angle from work map
  int16_t temp_aalt;                      //!< Advance angle from coolant temp. corr. map
  int16_t airt_aalt;                      //!< Advance angle from air temp. corr. map
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  int16_t lambda;                         //!< Current value of lambda (EGO) correction, can be negative
 #endif
 #ifdef FUEL_INJECT

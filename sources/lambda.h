@@ -22,13 +22,12 @@
 /** \file lambda.h
  * \author Alexey A. Shabelnikov
  * Correction algorithms using an exhaust gas oxygen sensor
- * (Корректировка состава смеси используя датчик кислорода).
  */
 
 #ifndef _LAMBDA_H_
 #define _LAMBDA_H_
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 
 struct ecudata_t;
 

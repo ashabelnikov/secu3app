@@ -517,7 +517,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->corr.idlreg_aac);        // advance angle correction from idling RPM regulator
    build_i16h(d->corr.octan_aac);         // octane correction value
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    build_i16h(d->corr.lambda);            // lambda correction
 #else
    build_i16h(0);
@@ -672,7 +672,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   break;
 #endif
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  case LAMBDA_PAR:
   build_i8h(d->param.inj_lambda_str_per_stp);
   build_i8h(d->param.inj_lambda_step_size);
@@ -1104,7 +1104,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   break;
 #endif
 
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  case LAMBDA_PAR:
   d->param.inj_lambda_str_per_stp = recept_i8h();
   d->param.inj_lambda_step_size = recept_i8h();
@@ -1239,7 +1239,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case INJCTR_PAR:
   case ACCEL_PAR:
 #endif
-#if defined(FUEL_INJECT) || defined(CARB_AFR)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
   case LAMBDA_PAR:
 #endif
 #ifdef REALTIME_TABLES

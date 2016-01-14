@@ -676,8 +676,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  case LAMBDA_PAR:
   build_i8h(d->param.inj_lambda_str_per_stp);
-  build_i8h(d->param.inj_lambda_step_size);
-  build_i16h(d->param.inj_lambda_corr_limit);
+  build_i8h(d->param.inj_lambda_step_size_p);
+  build_i8h(d->param.inj_lambda_step_size_m);
+  build_i16h(d->param.inj_lambda_corr_limit_p);
+  build_i16h(d->param.inj_lambda_corr_limit_m);
   build_i16h(d->param.inj_lambda_swt_point);
   build_i16h(d->param.inj_lambda_temp_thrd);
   build_i16h(d->param.inj_lambda_rpm_thrd);
@@ -1109,8 +1111,10 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  case LAMBDA_PAR:
   d->param.inj_lambda_str_per_stp = recept_i8h();
-  d->param.inj_lambda_step_size = recept_i8h();
-  d->param.inj_lambda_corr_limit = recept_i16h();
+  d->param.inj_lambda_step_size_p = recept_i8h();
+  d->param.inj_lambda_step_size_m = recept_i8h();
+  d->param.inj_lambda_corr_limit_p = recept_i16h();
+  d->param.inj_lambda_corr_limit_m = recept_i16h();
   d->param.inj_lambda_swt_point = recept_i16h();
   d->param.inj_lambda_temp_thrd = recept_i16h();
   d->param.inj_lambda_rpm_thrd = recept_i16h();

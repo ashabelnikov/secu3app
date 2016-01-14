@@ -361,8 +361,8 @@ typedef struct params_t
   uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied
 
   uint8_t  inj_lambda_str_per_stp;       //!< Number of strokes per step for lambda control
-  uint8_t  inj_lambda_step_size;         //!< Step size, value * 512, max 0.49
-  uint16_t inj_lambda_corr_limit;        //!< +/- limit, value * 512
+  uint8_t  inj_lambda_step_size_p;       //!< "+" Step size, value * 512, max 0.49
+  uint16_t inj_lambda_corr_limit_p;      //!< "+" limit, value * 512
   uint16_t inj_lambda_swt_point;         //!< lambda switch point in volts
   int16_t  inj_lambda_temp_thrd;         //!< Coolant temperature activation threshold
   uint16_t inj_lambda_rpm_thrd;          //!< RPM activation threshold
@@ -386,10 +386,14 @@ typedef struct params_t
 
   uint8_t  gd_fc_closing;                //!< How much close (in %) gas doser in fuel cut mode (relatively to current position)
 
+  uint8_t  inj_lambda_step_size_m;       //!<"-" Step size, value * 512, max 0.49
+
+  uint16_t inj_lambda_corr_limit_m;      //!<"-" limit, value * 512
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[73];
+  uint8_t  reserved[70];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

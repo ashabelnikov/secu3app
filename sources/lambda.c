@@ -127,11 +127,11 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
 
     //update EGO correction
     if (d->sens.add_i1 > d->param.inj_lambda_swt_point)
-     d->corr.lambda-=d->param.inj_lambda_step_size;
+     d->corr.lambda-=d->param.inj_lambda_step_size_m;
     else if (d->sens.add_i1 < d->param.inj_lambda_swt_point)
-     d->corr.lambda+=d->param.inj_lambda_step_size;
+     d->corr.lambda+=d->param.inj_lambda_step_size_p;
 
-    restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit, d->param.inj_lambda_corr_limit);
+    restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
    }
   }
   else

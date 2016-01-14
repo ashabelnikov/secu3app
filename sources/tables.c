@@ -330,8 +330,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_aftstr_strokes =          150,                  //150 strokes
 
   .inj_lambda_str_per_stp =      8,                    //8 strokes
-  .inj_lambda_step_size =        EGO_CORR(2.5),        //2.5%
-  .inj_lambda_corr_limit =       EGO_CORR(30.0),       //30% max
+  .inj_lambda_step_size_p =      EGO_CORR(2.5),        //2.5%
+  .inj_lambda_corr_limit_p =     EGO_CORR(30.0),       //30% max
   .inj_lambda_swt_point =        VOLTAGE_MAGNITUDE(0.5), //0.5V
   .inj_lambda_temp_thrd =        TEMPERATURE_MAGNITUDE(60.0), //60°C
   .inj_lambda_rpm_thrd =         1200,                 //1200 min-1
@@ -354,6 +354,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_timing_crk =              0,                    //TDC
 
   .gd_fc_closing =               GD_MAGNITUDE(30),     //close for 30%
+
+  .inj_lambda_step_size_m =      EGO_CORR(2.5),        //2.5%
+  .inj_lambda_corr_limit_m =     EGO_CORR(30.0),       //30% max
 
   .reserved =                    {0},
   .crc =                         0

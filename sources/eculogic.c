@@ -81,8 +81,11 @@ static int32_t calc_acc_enrich(struct ecudata_t* d)
  int32_t pwnc = (ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*14.7*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d->param.inj_sd_igl_const) >> 12;
  int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
 
- if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd)
+ if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd) {
+  d->acceleration = 0;
   return 0;                                        //no acceleration or deceleration
+ }
+ d->acceleration = 1;
 
  aef = ((int32_t)aef * inj_ae_clt_corr(d)) >> 7;   //apply CLT correction factor to AE factor
  aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
@@ -122,6 +125,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    uint32_t pw = inj_cranking_pw(d);
    pw+= inj_dead_time(d);
    d->inj_pw = pw > 65535 ? 65535 : pw;
+   d->acceleration = 0; //no acceleration
    }
 #endif
    break;

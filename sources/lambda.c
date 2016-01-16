@@ -86,7 +86,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
 
 #ifdef FUEL_INJECT
  //Turn off EGO correction on overrun or rev. limiting
- if (!d->ie_valve || d->fc_revlim)
+ if (!d->ie_valve || d->fc_revlim || d->acceleration)
  { //overrun or rev.limiting
   ego.fc_delay = EGO_FC_DELAY;
   d->corr.lambda = 0;

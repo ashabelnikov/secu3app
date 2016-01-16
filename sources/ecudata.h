@@ -170,6 +170,11 @@ typedef struct ecudata_t
 #ifdef FUEL_INJECT
  uint16_t inj_pw;                        //!< current value of injector pulse width
 #endif
+
+#if defined(FUEL_INJECT)
+ uint8_t acceleration;                   //!< acceleration/decelaration flag
+#endif
+
 }ecudata_t;
 
 

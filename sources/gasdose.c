@@ -185,7 +185,10 @@ static int16_t calc_sm_position(struct ecudata_t* d)
 {
  int16_t pos = gdp_function(d); //basic position, value in %
 
- pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
+//pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
+ pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal
+ if (pos > GD_MAGNITUDE(100.0))
+  pos = GD_MAGNITUDE(100.0);
 
  pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
 

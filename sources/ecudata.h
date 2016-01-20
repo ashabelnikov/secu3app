@@ -123,7 +123,7 @@ typedef struct ecudata_t
 
  uint8_t  ie_valve;                      //!< State of Idle cut off valve (состояние клапана ЭПХХ)
  uint8_t  fe_valve;                      //!< State of Power valve (состояние клапана ЭМР)
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  uint8_t  fc_revlim;                     //!< Flag indicates fuel cut from rev. limitter
 #endif
  uint8_t  cool_fan;                      //!< State of the cooling fan (состояние электровентилятора)

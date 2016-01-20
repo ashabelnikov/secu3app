@@ -148,6 +148,19 @@ void fuelcut_control(struct ecudata_t* d)
  {
 #endif
   simple_fuel_cut(d);
+
+#ifdef GD_CONTROL
+  //simple Rev. limitter used only for gas doser
+  if (d->sens.inst_frq > d->param.revlim_hit)
+  {
+   d->fc_revlim = 1; //cut fuel
+  }
+  else if (d->sens.inst_frq < d->param.revlim_lot)
+  {
+   d->fc_revlim = 0; //restore fuel
+  }
+#endif
+
 #ifdef CARB_AFR
  }
 #endif

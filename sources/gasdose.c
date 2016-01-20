@@ -192,6 +192,8 @@ static int16_t calc_sm_position(struct ecudata_t* d)
 
  pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
 
+ pos = (d->fc_revlim ? 0 : pos); //apply rev.limit flag
+
  return ((((int32_t)d->param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
 }
 

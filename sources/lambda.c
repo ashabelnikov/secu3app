@@ -78,13 +78,14 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  if (!ego.enabled)
   return; //wait some time before oxygen sensor will be turned on
 
-#ifndef CARB_AFR
 
-#ifdef GD_CONTROL
- if (!(d->sens.gas && IOCFG_CHECK(IOP_GD_STP))) {
+ //used only with fuel injection or gas doser
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+
+#if !defined(FUEL_INJECT) && defined(GD_CONTROL)
+ if ((d->sens.gas && IOCFG_CHECK(IOP_GD_STP))) {
 #endif
 
-#ifdef FUEL_INJECT
  //Turn off EGO correction on overrun or rev. limiting
  if (!d->ie_valve || d->fc_revlim || d->acceleration)
  { //overrun or rev.limiting
@@ -102,18 +103,32 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
   }
  }
 
+#if !defined(FUEL_INJECT) && defined(GD_CONTROL)
+ }
+#endif
+
+#endif // FUEL_INJECT || GD_CONTROL
+
+
+//used unly by fuel injection and must not be used when gas doser is active (gas fuel)
+#ifdef FUEL_INJECT
+
+#ifdef GD_CONTROL
+ if (!(d->sens.gas && IOCFG_CHECK(IOP_GD_STP))) {
+#endif
+
  if (d->corr.afr != 139) //EGO allowed only when AFR=14.7
  {
   d->corr.lambda = 0;
   return; //not 14.7
  }
-#endif
 
 #ifdef GD_CONTROL
  }
 #endif
 
-#endif
+#endif //FUEL_INJECT
+
 
  if (d->sens.inst_frq > d->param.inj_lambda_rpm_thrd)    //RPM > threshold
  {

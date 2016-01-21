@@ -92,8 +92,6 @@ void init_ecu_data(void)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  edat.corr.lambda = 0;
  edat.fc_revlim = 0;
-#endif
-#if defined(FUEL_INJECT)
  edat.acceleration = 0;
 #endif
 }

@@ -64,8 +64,8 @@
 #define  CBRID_NUM               8      //!< Number of IDs
 
 
-#define  UART_RECV_BUFF_SIZE     82  //!< Size of receiver's buffer
-#define  UART_SEND_BUFF_SIZE     108 //!< Size of transmitter's buffer
+#define  UART_RECV_BUFF_SIZE     82     //!< Size of receiver's buffer
+#define  UART_SEND_BUFF_SIZE     112    //!< Size of transmitter's buffer
 
 // Interface of the module (интерфейс модуля)
 

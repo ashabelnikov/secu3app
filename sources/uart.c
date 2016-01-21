@@ -485,7 +485,12 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
              (d->fe_valve   << 3) |       // power valve flag
              (d->ce_state   << 4) |       // CE flag
              (d->cool_fan   << 5) |       // cooling fan flag
-             (d->st_block   << 6));       // starter blocking flag
+             (d->st_block   << 6) |       // starter blocking flag
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+             (d->acceleration << 7));     // acceleration enrichment flag
+#else
+             (0 << 7));
+#endif
    build_i8h(d->sens.tps);                // TPS (0...100%, x2)
    build_i16h(d->sens.add_i1);            // ADD_I1 voltage
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
@@ -528,6 +533,13 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   build_i16h(d->sens.tpsdot);            // TPS opening/closing speed
+#else
+   build_i16h(0);
+#endif
+
    break;
 
   case ADCCOR_PAR:
@@ -687,7 +699,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   break;
 #endif
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  case ACCEL_PAR:
   build_i8h(d->param.inj_ae_tpsdot_thrd);
   build_i8h(d->param.inj_ae_coldacc_mult);
@@ -1122,7 +1134,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   break;
 #endif
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  case ACCEL_PAR:
   d->param.inj_ae_tpsdot_thrd = recept_i8h();
   d->param.inj_ae_coldacc_mult = recept_i8h();
@@ -1243,6 +1255,8 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case UNIOUT_PAR:
 #ifdef FUEL_INJECT
   case INJCTR_PAR:
+#endif
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
   case ACCEL_PAR:
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)

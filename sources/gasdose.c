@@ -74,6 +74,30 @@ int16_t gdp_function(struct ecudata_t* d)
         TPS_AXIS_STEP) >> 4;
 }
 
+/** Calculates AE value for gas doser
+ * \param d Pointer to ECU data structure
+ * \return AE value in %
+ */
+static int16_t calc_gd_acc_enrich(struct ecudata_t* d)
+{
+ int32_t gdnc = GD_MAGNITUDE(100.0);               //normal conditions %
+ int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
+
+ if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd) {
+  d->acceleration = 0;
+  return 0;                                        //no acceleration or deceleration
+ }
+ d->acceleration = 1;
+
+ //For now we don't use CLT and RPM correction factors
+/*
+ aef = ((int32_t)aef * inj_ae_clt_corr(d)) >> 7;   //apply CLT correction factor to AE factor
+ aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
+*/
+
+ return (gdnc * aef) >> 7;                         //apply AE factor to the normal conditions
+}
+
 //=============================================================================================================================
 
 
@@ -189,6 +213,8 @@ static int16_t calc_sm_position(struct ecudata_t* d)
  pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal
  if (pos > GD_MAGNITUDE(100.0))
   pos = GD_MAGNITUDE(100.0);
+
+ pos+= calc_gd_acc_enrich(d);    //apply acceleration enrichment
 
  pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
 

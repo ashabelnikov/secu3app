@@ -57,7 +57,7 @@
 /**Tics of TCNT1 timer per 1 second */
 #define TMR_TICKS_PER_SEC 312500L
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Used for TPSdot calculations*/
 typedef struct
 {
@@ -76,7 +76,7 @@ typedef struct
  volatile uint16_t add_io1_value;//!< last measured value od ADD_IO1
  volatile uint16_t add_io2_value;//!< last measured value of ADD_IO2
  volatile uint16_t carb_value;   //!< last measured value of TPS
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
@@ -137,7 +137,7 @@ uint16_t adc_get_carb_value(void)
  _END_ATOMIC_BLOCK();
  return value;
 }
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 int16_t adc_get_tpsdot_value(void)
 {
  int16_t dv; uint16_t dt;
@@ -257,7 +257,7 @@ ISR(ADC_vect)
    ADMUX = ADCI_ADD_IO1|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
    if ((TCNT1 - adc.tpsdot[1].tps_tmr) >= TPSDOT_TIME_DELTA)
    {
     //save values for TPSdot calculations
@@ -360,7 +360,7 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
  return t;
 }
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
 {
  return (((int32_t)adcvalue) * gradient) >> (7+6+1);

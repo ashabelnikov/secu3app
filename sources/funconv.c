@@ -663,6 +663,9 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
+#endif //FUEL_INJECT
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 int16_t inj_ae_tps_lookup(struct ecudata_t* d)
 {
  int8_t i;
@@ -678,7 +681,9 @@ int16_t inj_ae_tps_lookup(struct ecudata_t* d)
              ((int16_t)_GBU(inj_ae_tps_enr[i]))-55, ((int16_t)_GBU(inj_ae_tps_enr[i+1]))-55,  //<--values in inj_ae_tps_enr table are unsigned
              (int16_t)_GB(inj_ae_tps_bins[i])*10,(int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]))*10, 164) >> 7; //*1.28, so output value will be x 128
 }
+#endif
 
+#ifdef FUEL_INJECT
 uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
 {
  int8_t i;

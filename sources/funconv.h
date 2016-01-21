@@ -213,12 +213,17 @@ uint8_t inj_aftstr_en(struct ecudata_t* d);
  */
 uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode);
 
+#endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Calculates TPS based acceleration value
  * \param d pointer to ECU data structure
  * \return acceleration factor * 128, value can be negative
  */
 int16_t inj_ae_tps_lookup(struct ecudata_t* d);
+#endif
 
+#ifdef FUEL_INJECT
 /** Calculates RPM correction factor for AE
  * \param d pointer to ECU data structure
  * \return factor * 128, positive value

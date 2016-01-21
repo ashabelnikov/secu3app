@@ -80,7 +80,7 @@ typedef struct sensors_t
  int16_t air_temp;                       //!< Intake air temperature
 #endif
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  int16_t tpsdot;                         //!< Speed of TPS movement (d%/dt = %/s), positive when acceleration, negative when deceleration
 #endif
 

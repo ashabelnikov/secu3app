@@ -518,10 +518,17 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  //Calculate basic pulse width. Calculations are based on the ideal gas law and precalulated constant
  //All Ideal gas law arguments except MAP and air temperature were drove in to the constant, this dramatically increases performance
- //Note that inj_sd_igl_const constant must not exceed 131072
- uint32_t pw32 = ((uint32_t)d->sens.map * d->param.inj_sd_igl_const) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
+ //Note that inj_sd_igl_const constant must not exceed 524288
 
- pw32>>=2;     //after this shift pw32 value is basic pulse width * 4
+ uint8_t nsht = 0; //no division
+ if (d->sens.map > PRESSURE_MAGNITUDE(250.0))
+  nsht = 2;        //pressure will be divided by 4
+ else if (d->sens.map > PRESSURE_MAGNITUDE(125.0))
+  nsht = 1;        //pressure will be devided by 2
+
+ uint32_t pw32 = ((uint32_t)(d->sens.map >> nsht) * d->param.inj_sd_igl_const) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
+
+ pw32>>=(2-nsht);     //after this shift pw32 value is basic pulse width * 4
 
  //apply VE table, bilinear_interpolation() returns value * 16, we additionally divide it by 4 to avoid oveflow
  pw32*= bilinear_interpolation(rpm, discharge,

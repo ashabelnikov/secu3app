@@ -65,10 +65,11 @@ void ignlogic_init(void)
  */
 uint8_t scale_aftstr_enrich(struct ecudata_t* d)
 {
+ int16_t aftstr_strokes = (d->param.inj_aftstr_strokes << 1);
  //do scaling of ASE factor (scale down)
- int16_t counter = d->param.inj_aftstr_strokes - lgs.aftstr_enrich_counter; //convert decreasing to increasing
+ int16_t counter = aftstr_strokes - lgs.aftstr_enrich_counter; //convert decreasing to increasing
  if (counter < 0) counter = 0;
- return ((uint16_t)inj_aftstr_en(d) * (d->param.inj_aftstr_strokes - counter)) / d->param.inj_aftstr_strokes;
+ return ((uint16_t)inj_aftstr_en(d) * (aftstr_strokes - counter)) / aftstr_strokes;
 }
 
 /** Calculates AE value.
@@ -113,7 +114,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
 #ifdef FUEL_INJECT
-    lgs.aftstr_enrich_counter = d->param.inj_aftstr_strokes; //init engine strokes counter
+    lgs.aftstr_enrich_counter = d->param.inj_aftstr_strokes << 1; //init engine strokes counter
 #endif
    }
    angle = d->corr.strt_aalt = start_function(d);//базовый УОЗ - функция для пуска

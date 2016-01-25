@@ -390,10 +390,13 @@ typedef struct params_t
 
   uint16_t inj_lambda_corr_limit_m;      //!<"-" limit, value * 512
 
+  uint16_t gd_lambda_corr_limit_p;       //!<"+" limit, used for gas doser (idling), value * 512
+  uint16_t gd_lambda_corr_limit_m;       //!<"-" limit, used for gas doser (idling), value * 512
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[70];
+  uint8_t  reserved[66];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

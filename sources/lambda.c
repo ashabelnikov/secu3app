@@ -146,7 +146,16 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
     else if (d->sens.add_i1 < d->param.inj_lambda_swt_point)
      d->corr.lambda+=d->param.inj_lambda_step_size_p;
 
+#ifdef GD_CONTROL
+    //Use special limits when gas doser is active AND engine is not heated up AND Idling
+    if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP) && (d->sens.temperat <= d->param.idlreg_turn_on_temp) && (!d->sens.carb))
+     restrict_value_to(&d->corr.lambda, -d->param.gd_lambda_corr_limit_m, d->param.gd_lambda_corr_limit_p);
+    else
+     restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
+#else
     restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
+#endif
+
    }
   }
   else

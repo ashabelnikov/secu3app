@@ -76,7 +76,9 @@ void process_uart_interface(struct ecudata_t* d)
    case STARTR_PAR:
    case ADCCOR_PAR:
    case CHOKE_PAR:
+#ifdef GD_CONTROL
    case GASDOSE_PAR:
+#endif
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;

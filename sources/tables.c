@@ -358,6 +358,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_lambda_step_size_m =      EGO_CORR(2.5),        //2.5%
   .inj_lambda_corr_limit_m =     EGO_CORR(30.0),       //30% max
 
+  .gd_lambda_corr_limit_p =     EGO_CORR(30.0),        //30% max
+  .gd_lambda_corr_limit_m =     EGO_CORR(30.0),        //30% max
+
   .reserved =                    {0},
   .crc =                         0
  },

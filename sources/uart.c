@@ -640,12 +640,16 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.choke_flags); //choke flags
    break;
 
+#ifdef GD_CONTROL
   case GASDOSE_PAR:
    build_i16h(d->param.gd_steps);
    build_i4h(d->gasdose_testing);    //fake parameter (actually it is command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
    build_i8h(d->param.gd_fc_closing);
+   build_i16h(d->param.gd_lambda_corr_limit_p);
+   build_i16h(d->param.gd_lambda_corr_limit_m);
    break;
+#endif
 
   case SECUR_PAR:
    build_i4h(0);
@@ -1064,12 +1068,16 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.choke_flags = recept_i8h(); //choke flags
    break;
 
+#ifdef GD_CONTROL
   case GASDOSE_PAR:
    d->param.gd_steps = recept_i16h();
    d->gasdose_testing = recept_i4h(); //fake parameter (actually it is status)
    d->gasdose_manpos_d = recept_i8h();//fake parameter
    d->param.gd_fc_closing = recept_i8h();
+   d->param.gd_lambda_corr_limit_p = recept_i16h();
+   d->param.gd_lambda_corr_limit_m = recept_i16h();
    break;
+#endif
 
   case SECUR_PAR:
   {
@@ -1250,7 +1258,9 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case FWINFO_DAT:
   case MISCEL_PAR:
   case CHOKE_PAR:
+#ifdef GD_CONTROL
   case GASDOSE_PAR:  //GD
+#endif
   case SECUR_PAR:
   case UNIOUT_PAR:
 #ifdef FUEL_INJECT

@@ -350,12 +350,24 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
  if (adcvalue < 0)
   adcvalue = 0;
  t = adcvalue + offset;
- if (t < 0)
-  t = 0;
+ if (gradient > 0)
+ {
+  if (t < 0)
+   t = 0;
+ }
+ else
+ {
+  if (t > 0)
+   t = 0;
+ }
 
  t = (((int32_t)t) * gradient) >> (7+6);
+
+ //TODO: use restrict_value function instead of following code
  if (t > TPS_MAGNITUDE(100)) //restrict to 100%
   t = TPS_MAGNITUDE(100);
+ if (t < TPS_MAGNITUDE(0))
+  t = TPS_MAGNITUDE(0);
 
  return t;
 }

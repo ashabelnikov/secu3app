@@ -110,7 +110,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
 #endif // FUEL_INJECT || GD_CONTROL
 
 
-//used unly by fuel injection and must not be used when gas doser is active (gas fuel)
+//used only by fuel injection and must not be used when gas doser is active (gas fuel)
 #ifdef FUEL_INJECT
 
 #ifdef GD_CONTROL

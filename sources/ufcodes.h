@@ -70,5 +70,6 @@
 #define   ACCEL_PAR    '|'   //!< acceleration enrichment parameters
 
 #define   GASDOSE_PAR  '*'   //!< gas dose parameters
+#define   SIGINF_DAT   '~'   //! signature information
 
 #endif //_UFCODES_H_

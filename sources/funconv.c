@@ -688,9 +688,7 @@ int16_t inj_ae_tps_lookup(struct ecudata_t* d)
              ((int16_t)_GBU(inj_ae_tps_enr[i]))-55, ((int16_t)_GBU(inj_ae_tps_enr[i+1]))-55,  //<--values in inj_ae_tps_enr table are unsigned
              (int16_t)_GB(inj_ae_tps_bins[i])*10,(int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]))*10, 164) >> 7; //*1.28, so output value will be x 128
 }
-#endif
 
-#ifdef FUEL_INJECT
 uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
 {
  int8_t i;
@@ -706,7 +704,9 @@ uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
              ((int16_t)_GBU(inj_ae_rpm_enr[i])), ((int16_t)_GBU(inj_ae_rpm_enr[i+1])),  //<--values in table are unsigned
              _GBU(inj_ae_rpm_bins[i])*100,(_GBU(inj_ae_rpm_bins[i+1])-_GBU(inj_ae_rpm_bins[i]))*100, 16) >> 4; //<--values of bins are unsigned
 }
+#endif
 
+#ifdef FUEL_INJECT
 uint16_t inj_ae_clt_corr(struct ecudata_t* d)
 {
  int16_t t = d->sens.temperat; //clt

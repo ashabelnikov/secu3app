@@ -89,11 +89,11 @@ static int16_t calc_gd_acc_enrich(struct ecudata_t* d)
  }
  d->acceleration = 1;
 
- //For now we don't use CLT and RPM correction factors
+ //For now we don't use CLT correction factor
 /*
  aef = ((int32_t)aef * inj_ae_clt_corr(d)) >> 7;   //apply CLT correction factor to AE factor
- aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
 */
+ aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
 
  return (gdnc * aef) >> 7;                         //apply AE factor to the normal conditions
 }

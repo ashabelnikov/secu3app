@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * CRC16 related functions.
  * Functions for calculate CRC16 of data in RAM and in the ROM
- * (Функции для вычисления контрольной суммы для данных в ОЗУ и в ПЗУ).
  */
 
 #ifndef _CRC16_H_
@@ -33,18 +32,16 @@
 #include <stdint.h>
 
 /** Calculates CRC16 for given block of data in RAM
- * (Вычисляет контрольную сумму CRC16 для блока данных в ОЗУ).
- * \param buf pointer to block of data (RAM) (указатель на байтовый буфер)
- * \param num size of block to process (размер буфера в байтах)
- * \return calculated CRC16 (контрольная сумма CRC16)
+ * \param buf pointer to block of data (RAM)
+ * \param num size of block to process in bytes
+ * \return calculated CRC16
  */
 uint16_t crc16(uint8_t *buf, uint16_t num);
 
 /** Calculates CRC16 for given block of data in ROM
- * (Вычисляет контрольную сумму CRC16 для блока данных в ПЗУ).
- * \param buf pointer to block of data (ROM) (указатель на байтовый буфер)
- * \param num size of block to process (размер буфера в байтах)
- * \return calculated CRC16 (контрольная сумма CRC16)
+ * \param buf pointer to block of data (ROM)
+ * \param num size of block to process in bytes
+ * \return calculated CRC16
  */
 uint16_t crc16f(uint8_t _PGM *buf, uint16_t num);
 

@@ -23,15 +23,14 @@
  * \author Alexey A. Shabelnikov
  * Implementation of CRC16 related functions.
  * Functions for calculate CRC16 of data in RAM and in the ROM
- * (Реализация Функций для вычисления контрольной суммы для данных в ОЗУ и в ПЗУ).
  */
 
 #include "port/port.h"
 #include "crc16.h"
 
-#define      P_16   0xA001     //!< polynomial (полином)
+#define      P_16   0xA001     //!< polynomial
 
-//variant for RAM (вариант для данных в RAM)
+//variant for RAM
 uint16_t crc16( uint8_t *buf, uint16_t num )
 {
  uint16_t i;
@@ -52,7 +51,7 @@ uint16_t crc16( uint8_t *buf, uint16_t num )
  return( crc );
 }
 
-//variant for FLASH (вариант для данных во FLASH)
+//variant for FLASH
 uint16_t crc16f(uint8_t _PGM *buf, uint16_t num )
 {
  uint16_t i;

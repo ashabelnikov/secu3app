@@ -22,7 +22,6 @@
 /** \file diagnost.h
  * \author Alexey A. Shabelnikov
  * Hardware diagnostics
- * (Диагностика аппаратной части).
  */
 
 #ifndef _DIAGNOSTICS_H_

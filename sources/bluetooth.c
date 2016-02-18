@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * Implementation of bluetooth related functionality and logic (baud rate setting, name, password).
  * Note that current implementation supports Bluetooth with HC-06 firmware.
- * (Реализация логики связанной с блютузом (установка скорости, имя, пароль))
  */
 
 #ifdef BLUETOOTH_SUPP

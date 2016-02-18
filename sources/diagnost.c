@@ -22,7 +22,6 @@
 /** \file diagnost.c
  * \author Alexey A. Shabelnikov
  * Implementation of hardware diagnostics
- * (Реализация диагностики аппаратной части)
  */
 
 #ifdef DIAGNOSTICS
@@ -221,9 +220,9 @@ void diagnost_process(struct ecudata_t* d)
     if (diag.ksp_channel > KSP_CHANNEL_1)
      diag.ksp_channel = KSP_CHANNEL_0;
     knock_set_channel(diag.ksp_channel);
-    //start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
+    //start the process of downloading the settings into the HIP9011
     knock_start_settings_latching();
-    //start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+    //start the process of measuring analog input values
     adc_begin_measure(0); //<--normal speed
     diag.fsm_state = 1;
     break;

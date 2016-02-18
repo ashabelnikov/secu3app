@@ -22,7 +22,6 @@
 /** \file ce_errors.c
  * \author Alexey A. Shabelnikov
  * Implementation of controling of CE, errors detection and related functionality.
- * (Реализация управления лампой CE, обнаружения ошибок и соответствующей функциональности).
  */
 
 #include "port/avrio.h"
@@ -44,9 +43,9 @@
 /**CE state variables structure */
 typedef struct
 {
- uint16_t ecuerrors;         //!< 16 error codes maximum (максимум 16 кодов ошибок)
- uint16_t merged_errors;     //!< caching errors to preserve resource of the EEPROM (кеширует ошибки для сбережения ресурса EEPROM)
- uint16_t write_errors;      //!< ф. eeprom_start_wr_data() launches background process! (запускает фоновый процесс!)
+ uint16_t ecuerrors;         //!< 16 error codes maximum
+ uint16_t merged_errors;     //!< caching errors to preserve resource of the EEPROM
+ uint16_t write_errors;      //!< func. eeprom_start_wr_data() launches background process!
  uint16_t bv_tdc;            //!< board voltage debouncong counter for eliminating of false errors during normal transients
  uint8_t  bv_eds;            //!< board voltage error detecting state, used for state machine
  uint8_t  bv_dev;            //!< board voltage deviation flag, if 0, then voltage is below normal, if 1, then voltage is above normal
@@ -55,7 +54,7 @@ typedef struct
 /**State variables */
 ce_state_t ce_state = {0,0,0,0,0,0};
 
-//operations under errors (операции над ошибками)
+//operations under errors
 /*#pragma inline*/
 void ce_set_error(uint8_t error)
 {
@@ -72,7 +71,6 @@ void ce_clear_error(uint8_t error)
 void check(struct ecudata_t* d)
 {
  //If error of CKP sensor was, then set corresponding bit of error
- //если была ошибка ДПКВ то устанавливаем бит соответствующей ошибки
  if (ckps_is_error())
  {
   ce_set_error(ECUERROR_CKPS_MALFUNCTION);
@@ -96,7 +94,6 @@ void check(struct ecudata_t* d)
 #endif
 
  //if error of knock channel was
- //если была ошибка канала детонации
  if (d->param.knock_use_knock_channel)
  {
   if (knock_is_error())
@@ -176,7 +173,7 @@ void check(struct ecudata_t* d)
   }
   else
   { //debouncing counter is expired
-   //error if U > 4 and RPM > 2500 
+   //error if U > 4 and RPM > 2500
    if (d->sens.voltage_raw > ROUND(4.0 / ADC_DISCRETE) && d->sens.inst_frq > 2500)
     ce_set_error(ECUERROR_VOLT_SENSOR_FAIL);
    else
@@ -190,8 +187,6 @@ void check(struct ecudata_t* d)
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
 //then the CE will be turned on continuously. At the start of program CE lights up for 0.5 seconds. for indicating
 //of the operability.
-//При возникновении любой ошибки, СЕ загорается на фиксированное время. Если ошибка не исчезает (например испорчен код программы),
-//то CE будет гореть непрерывно. При запуске программы СЕ загорается на 0.5 сек. для индицирования работоспособности.
 void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
 {
  uint16_t temp_errors;
@@ -199,7 +194,6 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  check(d);
 
  //If the timer counted the time, then turn off the CE
- //если таймер отсчитал время, то гасим СЕ
  if (s_timer_is_action(*ce_control_time_counter))
  {
   ce_set_state(CE_STATE_OFF);
@@ -207,7 +201,6 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  }
 
  //If at least one error is present  - turn on CE and start timer
- //если есть хотя бы одна ошибка - зажигаем СЕ и запускаем таймер
  if (ce_state.ecuerrors!=0)
  {
   s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
@@ -217,22 +210,17 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
 
  temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
  //check for error which is still not in merged_errors
- //появилась ли ошибка которой нет в merged_errors?
  if (temp_errors!=ce_state.merged_errors)
  {
-  //Because at the time of emergence of a new error, EEPROM can be busy (for example, saving options),
+  //Because at the time of appearing of a new error, EEPROM can be busy (for example, saving options),
   //then it is necessary to run deffered operation, which will be automatically executed as soon as the EEPROM
   //will be released.
-  //Так как на момент возникновения новой ошибки EEPROM может быть занято (например сохранением параметров),
-  //то необходимо запустить отложенную операцию, которая будет автоматически выполнена как только EEPROM
-  //освободится.
   sop_set_operation(SOP_SAVE_CE_MERGED_ERRORS);
  }
 
  ce_state.merged_errors = temp_errors;
 
  //copy error's bits into the cache for transferring
- //переносим биты ошибок в кеш для передачи.
  d->ecuerrors_for_transfer|= ce_state.ecuerrors;
 }
 

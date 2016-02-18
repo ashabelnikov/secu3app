@@ -22,7 +22,6 @@
 /** \file carb_afr.h
  * \author Alexey A. Shabelnikov
  * Control of AFR on carburetor using electronic actuators driven by PWM
- * (Управление составом смеси на карбюраторе используя электронные актюаторы управляемые ШИМ).
  */
 
 #ifndef _CARB_AFR_H_

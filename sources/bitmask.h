@@ -30,16 +30,16 @@
 #ifndef _BITMASK_H_
 #define _BITMASK_H_
 
-/** Set y bit in the byte x (установка бита y в байте x) */
+/** Set y bit in the byte x */
 #define SETBIT(x,y)   ((x) |= (1<<(y)))
 
-/** Clear y bit in the byte x (сброс бита y в байте x) */
+/** Clear y bit in the byte x */
 #define CLEARBIT(x,y) ((x) &= (~(1<<(y))))
 
-/** Check y bit in the byte x (проверка бита y в байте x) */
+/** Check y bit in the byte x */
 #define CHECKBIT(x,y) ((x) & (1<<(y)))
 
-/** Write specified v value to y bit in the byte x (запись значения v в бит y в байте x) */
+/** Write specified v value to y bit in the byte x */
 #define WRITEBIT(x, y, v) if (v)  SETBIT(x,y); else CLEARBIT(x, y);
 
 #ifdef LITTLE_ENDIAN_DATA_FORMAT //little-endian data store format (Intel)

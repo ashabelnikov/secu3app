@@ -45,8 +45,8 @@ void cams_control(void);
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_vr_is_event_r(void);
 
-/** Set edge type for VR input (Установка фронта для ДНО)
- * \param edge_type 0 - falling (спадающий), 1 - rising (нарастающий)
+/** Set edge type for VR input
+ * \param edge_type 0 - falling, 1 - rising
  */
 void cams_vr_set_edge_type(uint8_t edge_type);
 

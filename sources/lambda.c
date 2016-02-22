@@ -32,6 +32,7 @@
 #include "eculogic.h"
 #include "funconv.h"
 #include "ioconfig.h"
+#include "magnitude.h"
 #include "vstimer.h"
 
 #define EGO_FC_DELAY 6           //!< 6 strokes
@@ -140,11 +141,27 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
    {
     ego.stroke_counter = d->param.inj_lambda_str_per_stp;
 
-    //update EGO correction
+////////////////////////////////////////////////////////////////////////////////////////
+    //update EGO correction (with deadband)
+    int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
+    int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
+    if (int_p_thrd < 0)
+     int_p_thrd = 0;
+
+    if (d->sens.add_i1 > int_m_thrd)
+     d->corr.lambda-=d->param.inj_lambda_step_size_m;
+    else if (d->sens.add_i1 < int_p_thrd)
+     d->corr.lambda+=d->param.inj_lambda_step_size_p;
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+/*  //update EGO correction (simple switch point)
     if (d->sens.add_i1 > d->param.inj_lambda_swt_point)
      d->corr.lambda-=d->param.inj_lambda_step_size_m;
     else if (d->sens.add_i1 < d->param.inj_lambda_swt_point)
      d->corr.lambda+=d->param.inj_lambda_step_size_p;
+*/
+
 
 #ifdef GD_CONTROL
     //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))

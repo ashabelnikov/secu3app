@@ -37,6 +37,30 @@
 #include "magnitude.h"
 #include "pwrrelay.h"
 
+
+/**Direction used to set stepper motor to the initial position */
+#define INIT_POS_DIR SM_DIR_CW
+
+//See flags variable in gasdose_st_t
+#define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
+#define CF_MAN_CNTR     1  //!< manual control mode flag
+#define CF_SMDIR_CHG    3  //!< flag, indicates that stepper motor direction has changed during motion
+
+/**Define state variables*/
+typedef struct
+{
+ uint8_t   state;          //!< state machine state
+ uint16_t  smpos;          //!< current position of stepper motor in steps
+ uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
+ int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
+ uint8_t   flags;          //!< state flags (see CF_ definitions)
+ uint8_t   acc_strokes;    //!< strokes counter for acceleration enrichment
+}gasdose_st_t;
+
+/**Instance of state variables */
+static gasdose_st_t gds = {0};
+
+
 /**TPS % between two interpolation points, additionally multiplied by 16 */
 #define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(GASDOSE_POS_TPS_SIZE-1))
 
@@ -83,11 +107,37 @@ static int16_t calc_gd_acc_enrich(struct ecudata_t* d)
  int32_t gdnc = GD_MAGNITUDE(100.0);               //normal conditions %
  int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
 
+//------------------------------
+ int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
+ int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
+ if (int_p_thrd < 0)
+  int_p_thrd = 0;
+
+ if (((d->sens.tpsdot > d->param.inj_ae_tpsdot_thrd) && (d->sens.add_i1 < int_m_thrd)) ||
+     ((d->sens.tpsdot < (-d->param.inj_ae_tpsdot_thrd)) && (d->sens.add_i1 > int_p_thrd)))
+ {
+  d->acceleration  = 1;
+  gds.acc_strokes = 5; //init acceleration strokes counter
+ }
+
+ if (((d->sens.tpsdot < d->param.inj_ae_tpsdot_thrd) && ((d->sens.add_i1 > int_m_thrd) || (gds.acc_strokes == 0))) ||
+     ((d->sens.tpsdot > (-d->param.inj_ae_tpsdot_thrd)) && ((d->sens.add_i1 < int_p_thrd) || (gds.acc_strokes == 0))))
+ {
+  d->acceleration = 0;
+ }
+
+ if (!d->acceleration)
+  return 0; //no acceleration enrichment
+//------------------------------
+
+/*
  if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd) {
   d->acceleration = 0;
   return 0;                                        //no acceleration or deceleration
  }
  d->acceleration = 1;
+*/
+
 
  //For now we don't use CLT correction factor
 /*
@@ -100,27 +150,6 @@ static int16_t calc_gd_acc_enrich(struct ecudata_t* d)
 
 //=============================================================================================================================
 
-
-/**Direction used to set stepper motor to the initial position */
-#define INIT_POS_DIR SM_DIR_CW
-
-//See flags variable in gasdose_st_t
-#define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
-#define CF_MAN_CNTR     1  //!< manual control mode flag
-#define CF_SMDIR_CHG    3  //!< flag, indicates that stepper motor direction has changed during motion
-
-/**Define state variables*/
-typedef struct
-{
- uint8_t   state;          //!< state machine state
- uint16_t  smpos;          //!< current position of stepper motor in steps
- uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
- int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
- uint8_t   flags;          //!< state flags (see CF_ definitions)
-}gasdose_st_t;
-
-/**Instance of state variables */
-static gasdose_st_t gds = {0};
 
 void gasdose_init_ports(void)
 {
@@ -325,6 +354,12 @@ void gasdose_control(struct ecudata_t* d)
 uint8_t gasdose_is_ready(void)
 {
  return (gds.state == 5 || gds.state == 3);
+}
+
+void gasdose_stroke_event_notification(struct ecudata_t* d)
+{
+ if (gds.acc_strokes)
+  --gds.acc_strokes;
 }
 
 #endif //GD_CONTROL

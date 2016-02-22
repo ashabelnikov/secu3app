@@ -519,6 +519,10 @@ MAIN()
 
    ignlogic_stroke_event_notification(&edat);
 
+#ifdef GD_CONTROL
+   gasdose_stroke_event_notification(&edat);
+#endif
+
    //управляем усилением аттенюатора в зависимости от оборотов
    if (edat.param.knock_use_knock_channel)
     knock_set_gain(knock_attenuator_function(&edat));

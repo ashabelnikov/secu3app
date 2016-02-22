@@ -49,6 +49,11 @@ void gasdose_control(struct ecudata_t* d);
  */
 uint8_t gasdose_is_ready(void);
 
+/** Must be called from the main loop to notify about stroke events
+ * \param d pointer to ECU data structure
+ */
+void gasdose_stroke_event_notification(struct ecudata_t* d);
+
 #endif
 
 #endif //_GASDOSE_H_

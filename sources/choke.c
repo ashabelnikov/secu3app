@@ -357,6 +357,9 @@ void choke_control(struct ecudata_t* d)
  }
 #endif
 
+ if (!IOCFG_CHECK(IOP_SM_STP))
+  return;                                                     //stepper motor control is not enabled: do nothing
+
 #ifdef SM_CONTROL
  switch(chks.state)
  {

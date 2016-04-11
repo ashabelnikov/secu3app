@@ -22,7 +22,6 @@
 /** \file eculogic.c
  * \author Alexey A. Shabelnikov
  * Implementation of logic for calculation and regulation of ignition timing and fuel injection
- * (Реализация логики определяющей вычисление и регулирование угла опережения и впрыск топлива).
  */
 
 #include "port/port.h"
@@ -99,7 +98,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
  int16_t angle;
  switch(d->engine_mode)
  {
-  case EM_START: //режим пуска
+  case EM_START: //cranking mode
 #ifdef FUEL_INJECT
    //fire prime pulse before cranking
    if (!lgs.prime_ready && ((s_timer_gtc() - lgs.prime_delay_tmr) >= ((uint16_t)d->param.inj_prime_delay*10)))
@@ -117,9 +116,9 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
     lgs.aftstr_enrich_counter = d->param.inj_aftstr_strokes << 1; //init engine strokes counter
 #endif
    }
-   angle = d->corr.strt_aalt = start_function(d);//базовый УОЗ - функция для пуска
+   angle = d->corr.strt_aalt = start_function(d);//basic ignition timing - cranking map
    d->corr.idle_aalt = d->corr.work_aalt = d->corr.temp_aalt = d->corr.airt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
-   d->airflow = 0;                         //в режиме пуска нет расхода
+   d->airflow = 0;                         //no "air flow" on cranking
 
 #ifdef FUEL_INJECT
    { //PW = CRANKING + DEADTIME
@@ -131,14 +130,14 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #endif
    break;
 
-  case EM_IDLE: //режим холостого хода
-   if (d->sens.carb)//педаль газа нажали - в рабочий режим
+  case EM_IDLE: //idling mode
+   if (d->sens.carb)//gas pedal depressed - go into work mode
    {
     d->engine_mode = EM_WORK;
    }
-   work_function(d, 1);                    //обновляем значение расхода воздуха
-   angle = d->corr.idle_aalt = idling_function(d); //базовый УОЗ - функция для ХХ
-   d->corr.temp_aalt = coolant_function(d);//добавляем к УОЗ температурную коррекцию
+   work_function(d, 1);                    //update air flow value
+   angle = d->corr.idle_aalt = idling_function(d); //basic ignition timing - idling map
+   d->corr.temp_aalt = coolant_function(d);//add CLT correction to ignition timing
    angle+=d->corr.temp_aalt;
 #ifdef AIRTEMP_SENS
    d->corr.airt_aalt = airtemp_function(d);//add air temperature correction
@@ -146,7 +145,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #else
    d->corr.airt_aalt = 0;
 #endif
-   d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//добавляем регулировку
+   d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//add correction from idling regulator
    angle+=d->corr.idlreg_aac;
    d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
 
@@ -168,8 +167,8 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #endif
    break;
 
-  case EM_WORK: //рабочий режим
-   if (!d->sens.carb)//педаль газа отпустили - в переходной режим ХХ
+  case EM_WORK: //work mode (load)
+   if (!d->sens.carb)//gas pedal released - go in to idling mode
    {
     d->engine_mode = EM_IDLE;
     idling_regulator_init();
@@ -179,21 +178,21 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    //air flow will be always 1 if choke RPM regulator is active
    if (d->choke_rpm_reg)
    {
-    work_function(d, 1);                    //обновляем значение расхода воздуха
-    angle = d->corr.idle_aalt = idling_function(d);//базовый УОЗ - функция для ХХ
+    work_function(d, 1);                    //update air flow value
+    angle = d->corr.idle_aalt = idling_function(d);//basic ignition timing - idling map
     d->corr.work_aalt = AAV_NOTUSED;
    }
    else
    {
-    angle = d->corr.work_aalt = work_function(d, 0);//базовый УОЗ - функция рабочего режима
+    angle = d->corr.work_aalt = work_function(d, 0);//basic ignition timing - work map
     d->corr.idle_aalt = AAV_NOTUSED;
    }
 #else
-   angle = d->corr.work_aalt = work_function(d, 0);//базовый УОЗ - функция рабочего режима
+   angle = d->corr.work_aalt = work_function(d, 0);//basic ignition timing - work map
    d->corr.idle_aalt = AAV_NOTUSED;
 #endif
 
-   d->corr.temp_aalt = coolant_function(d);//добавляем к УОЗ температурную коррекцию;
+   d->corr.temp_aalt = coolant_function(d);//add CLT correction to ignition timing
    angle+=d->corr.temp_aalt;
 #ifdef AIRTEMP_SENS
    d->corr.airt_aalt = airtemp_function(d);//add air temperature correction;
@@ -201,7 +200,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #else
    d->corr.airt_aalt = 0;
 #endif
-   //отнимаем поправку полученную от регулятора по детонации
+   //substract correction obtained from detonation regulator
    angle-=d->corr.knock_retard;
    d->corr.strt_aalt = d->corr.idlreg_aac = AAV_NOTUSED;
 
@@ -224,7 +223,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 
    break;
 
-  default:  //непонятная ситуация - угол в ноль
+  default:  //undefined situation - zero ignition timing
    angle = 0;
 #ifdef FUEL_INJECT
    d->inj_pw = 0;

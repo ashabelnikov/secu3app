@@ -88,7 +88,12 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
 #endif
 
  //Turn off EGO correction on overrun or rev. limiting
+#ifdef GD_CONTROL
+ //turn off EGO correction also on idling if gas doser is active
+ if (!d->ie_valve || d->fc_revlim || d->acceleration ||  (!d->sens.carb && (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))))
+#else
  if (!d->ie_valve || d->fc_revlim || d->acceleration)
+#endif
  { //overrun or rev.limiting
   ego.fc_delay = EGO_FC_DELAY;
   d->corr.lambda = 0;

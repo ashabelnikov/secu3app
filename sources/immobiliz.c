@@ -22,7 +22,6 @@
 /** \file immobiliz.c
  * \author Alexey A. Shabelnikov
  * Implementation of immobilizer logic
- * (Реализация логики иммобилайзера).
  */
 
 #ifdef IMMOBILIZER

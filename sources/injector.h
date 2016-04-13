@@ -22,7 +22,6 @@
 /** \file injector.h
  * \author Alexey A. Shabelnikov
  * Fuel injector control
- * (Управление топливной форсункой).
  */
 
 #ifndef _INJECTOR_H_

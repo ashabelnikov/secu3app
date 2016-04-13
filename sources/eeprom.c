@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * Implementation of EEPROM related functions (API).
  * Functions for read/write EEPROM and related functionality
- * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
 #include "port/avrio.h"
@@ -35,14 +34,13 @@
 #include "wdt.h"
 
 /**Describes information is necessary for storing of data into EEPROM
- * (Описывает информацию необходимую для сохранения данных в EEPROM)
  */
 typedef struct
 {
- uint16_t ee_addr;             //!< Address for EEPROM (адрес для записи в EEPROM)
- uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ)
- uint16_t count;               //!< Number of bytes (количество байтов)
- uint8_t eews;                 //!< State of writing process (состояние процесса записи)
+ uint16_t ee_addr;             //!< Address for EEPROM
+ uint8_t* sram_addr;           //!< Address of data in RAM
+ uint16_t count;               //!< Number of bytes
+ uint8_t eews;                 //!< State of writing process
  uint8_t opcode;               //!< code of specific operation wich cased writing process
  uint8_t completed_opcode;     //!< will be equal to opcode after finish of process
 }eeprom_wr_desc_t;
@@ -50,7 +48,7 @@ typedef struct
 /**State variables */
 eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
-/** Initiates process of byte's writing (инициирует процесс записи байта в EEPROM) */
+/** Initiates process of byte's writing */
 #define EE_START_WR_BYTE()  {EECR|= _BV(EEMPE);  EECR|= _BV(EEPE);}
 
 uint8_t eeprom_take_completed_opcode(void)

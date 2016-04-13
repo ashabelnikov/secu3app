@@ -617,6 +617,10 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(PGM_GET_BYTE(&fw_data.cddata.fw_version)); //<--version of the firmware
    break;
 
+  case SIGINF_DAT:
+   build_fs(fwinfo, 60);
+   break;
+
   case MISCEL_PAR:
    build_i16h(d->param.uart_divisor);
    build_i8h(d->param.uart_period_t_ms);

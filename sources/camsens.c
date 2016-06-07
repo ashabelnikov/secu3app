@@ -127,7 +127,7 @@ void cams_init_state(void)
   camstate.ref_s_inpalt = 1;                //REF_S not remapped, normal operation - reference sensor
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
- if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_si)
+ else if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_si)
  {
   camstate.ref_s_inpalt = 1;                //REF_S not remapped, normal operation - reference sensor
   EICRA|= _BV(ISC01) | 0;                   //inversion

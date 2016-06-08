@@ -739,3 +739,38 @@ uint16_t inj_prime_pw(struct ecudata_t* d)
 }
 
 #endif //FUEL_INJECT
+
+
+#ifdef PA4_INP_IGNTIM
+
+#define PA4_LOOKUP_TABLE_SIZE 16
+#define _PA4LV(v) ROUND((v) * 2.0)
+/**Ignition timing vs voltage. Linear function with small dead band near to 2.5V */
+PGM_DECLARE(int8_t pa4_igntim_corr[PA4_LOOKUP_TABLE_SIZE]) =
+{_PA4LV(-17.5),_PA4LV(-15.0),_PA4LV(-12.5),_PA4LV(-10.0),_PA4LV(-07.5),_PA4LV(-05.0),_PA4LV(-02.5),_PA4LV(00.0),
+ _PA4LV( 00.0),_PA4LV( 02.5),_PA4LV( 05.0),_PA4LV( 07.5),_PA4LV( 10.0),_PA4LV( 12.5),_PA4LV( 15.0),_PA4LV(17.5) };
+
+int16_t pa4_function(uint16_t adcvalue)
+{
+ int16_t i, i1;
+
+ //Voltage value at the start of axis in ADC discretes
+ uint16_t v_start = ROUND(0.00 / ADC_DISCRETE);
+ //Voltage value at the end of axis in ADC discretes
+ uint16_t v_end = ROUND(5.00 / ADC_DISCRETE);
+
+ uint16_t v_step = (v_end - v_start) / (PA4_LOOKUP_TABLE_SIZE - 1);
+
+ if (adcvalue < v_start)
+  adcvalue = v_start;
+
+ i = (adcvalue - v_start) / v_step;
+
+ if (i >= PA4_LOOKUP_TABLE_SIZE-1) i = i1 = PA4_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return  simple_interpolation(adcvalue, (int8_t)PGM_GET_BYTE(&pa4_igntim_corr[i]), (int8_t)PGM_GET_BYTE(&pa4_igntim_corr[i1]), //<--values in table are signed
+        (i * v_step) + v_start, v_step, 16);
+}
+
+#endif //PA4_INP_IGNTIM

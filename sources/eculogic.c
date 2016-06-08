@@ -145,6 +145,9 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #else
    d->corr.airt_aalt = 0;
 #endif
+#ifdef PA4_INP_IGNTIM
+   angle+=pa4_function(d->sens.pa4);
+#endif
    d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//add correction from idling regulator
    angle+=d->corr.idlreg_aac;
    d->corr.strt_aalt = d->corr.work_aalt = AAV_NOTUSED;
@@ -199,6 +202,9 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    angle+=d->corr.airt_aalt;
 #else
    d->corr.airt_aalt = 0;
+#endif
+#ifdef PA4_INP_IGNTIM
+   angle+=pa4_function(d->sens.pa4);
 #endif
    //substract correction obtained from detonation regulator
    angle-=d->corr.knock_retard;

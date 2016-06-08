@@ -134,6 +134,9 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          Включить поддержку универсального программируемого
                          выхода
 
+    PA4_INP_IGNTIM *     Use PA4 as analog input for manual correction of
+                         ignition timing
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager
   означает что опция является внутренней и не отображается в списке опций в

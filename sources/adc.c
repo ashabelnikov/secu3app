@@ -49,8 +49,11 @@
 #define ADCI_CARB               7
 /**номер канала используемого для канала детонации */
 #define ADCI_KNOCK              3
-/**заглушка, используется для ADCI_KNOCK чтобы сформировать задержку */
-#define ADCI_STUB               4
+
+#ifdef PA4_INP_IGNTIM
+/*channel number for PA4 input */
+#define ADCI_PA4                4
+#endif
 
 /**Value of the time differential for TPSdot calculation, ticks of timer*/
 #define TPSDOT_TIME_DELTA 10000
@@ -81,6 +84,9 @@ typedef struct
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;           //!< если 1, то производится измерение всех значений
+#ifdef PA4_INP_IGNTIM
+ volatile uint16_t pa4_value;    //!< last measured value from PA4 input
+#endif
 }adcstate_t;
 
 /** переменные состояния АЦП */
@@ -165,6 +171,17 @@ uint16_t adc_get_knock_value(void)
  return value;
 }
 
+#ifdef PA4_INP_IGNTIM
+uint16_t adc_get_pa4_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.pa4_value;
+ _END_ATOMIC_BLOCK();
+ return value;
+}
+#endif
+
 void adc_begin_measure(uint8_t speed2x)
 {
  //мы не можем запускать новое измерение, если еще не завершилось
@@ -189,7 +206,8 @@ void adc_begin_measure_knock(uint8_t speed2x)
   return;
 
  adc.sensors_ready = 0;
- ADMUX = ADCI_STUB|ADC_VREF_TYPE;
+ adc.measure_all = 1;   //<--one measurement delay will be used
+ ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
  if (speed2x)
   CLEARBIT(ADCSRA, ADPS0); //250kHz
  else
@@ -276,6 +294,15 @@ ISR(ADC_vect)
 
   case ADCI_ADD_IO2:
    adc.add_io2_value = ADC;
+
+#ifdef PA4_INP_IGNTIM
+   ADMUX = ADCI_PA4|ADC_VREF_TYPE;
+   SETBIT(ADCSRA,ADSC);
+   break;
+
+  case ADCI_PA4:
+   adc.pa4_value = ADC;
+#endif
    if (0==adc.measure_all)
    {
     ADMUX = ADCI_MAP|ADC_VREF_TYPE;
@@ -289,12 +316,14 @@ ISR(ADC_vect)
    }
    break;
 
-  case ADCI_STUB: //это холостое измерение необходимо только для задержки перед измерением сигнала детонации
-   ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
-   SETBIT(ADCSRA,ADSC);
-   break;
-
   case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
+   if (adc.measure_all)
+   {                      //waste measurement is required (for delay)
+    adc.measure_all = 0;
+    SETBIT(ADCSRA,ADSC);  //change nothing and start ADC again
+    break;
+   }
+
    adc.knock_value = ADC;
    adc.sensors_ready = 1;
    break;

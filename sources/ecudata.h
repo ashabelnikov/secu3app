@@ -79,6 +79,9 @@ typedef struct sensors_t
 #ifdef AIRTEMP_SENS
  int16_t air_temp;                       //!< Intake air temperature
 #endif
+#ifdef PA4_INP_IGNTIM
+ uint16_t pa4;                           //!< PA4 input voltage
+#endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  int16_t tpsdot;                         //!< Speed of TPS movement (d%/dt = %/s), positive when acceleration, negative when deceleration

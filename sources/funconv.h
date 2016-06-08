@@ -245,4 +245,9 @@ uint16_t inj_prime_pw(struct ecudata_t* d);
 
 #endif
 
+#ifdef PA4_INP_IGNTIM
+/**Ignition timing correction vs voltage at the PA4 input */
+int16_t pa4_function(uint16_t adcvalue);
+#endif
+
 #endif //_FUNCONV_H_

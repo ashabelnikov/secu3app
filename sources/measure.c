@@ -67,6 +67,10 @@
 #define SPD_AVERAGING           8                 //!< Number of values for averaging of speed sensor periods
 #endif
 
+#ifdef PA4_INP_IGNTIM
+#define PA4_AVERAGING           4                 //!< Number of values for averaging of PA4
+#endif
+
 uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
 uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaging of MAP sensor (буфер усреднения абсолютного давления)
 uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaging of voltage (буфер усреднения напряжения бортовой сети)
@@ -76,6 +80,10 @@ uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaging
 uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaging of ADD_IO2
 #ifdef SPEED_SENSOR
 uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging of speed sensor periods
+#endif
+
+#ifdef PA4_INP_IGNTIM
+uint16_t pa4_circular_buffer[PA4_AVERAGING];      //!< Ring buffer for averaging of PA4
 #endif
 
 void meas_init_ports(void)
@@ -97,6 +105,9 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  static uint8_t  ai2_ai  = AI2_AVERAGING-1;
 #ifdef SPEED_SENSOR
  static uint8_t  spd_ai = SPD_AVERAGING-1;
+#endif
+#ifdef PA4_INP_IGNTIM
+  static uint8_t  pa4_ai  = PA4_AVERAGING-1;
 #endif
 
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
@@ -122,6 +133,11 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 
  ai2_circular_buffer[ai2_ai] = adc_get_add_io2_value();
  (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
+
+#ifdef PA4_INP_IGNTIM
+ pa4_circular_buffer[pa4_ai] = adc_get_pa4_value();
+ (pa4_ai==0) ? (pa4_ai = PA4_AVERAGING - 1): pa4_ai--;
+#endif
 
  if (d->param.knock_use_knock_channel)
  {
@@ -221,6 +237,12 @@ void meas_average_measured_values(struct ecudata_t* d)
   sum+=ai2_circular_buffer[i];
  d->sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d->param.ai2_adc_factor, d->param.ai2_adc_correction);
  d->sens.add_i2 = d->sens.add_i2_raw;
+
+#ifdef PA4_INP_IGNTIM
+ for (sum=0,i = 0; i < PA4_AVERAGING; i++)   //average PA4 input
+  sum+=pa4_circular_buffer[i];
+ d->sens.pa4 = adc_compensate((sum/PA4_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
+#endif
 
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))

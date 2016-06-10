@@ -151,6 +151,7 @@ void check_firmware_integrity(void)
  */
 void init_ports(void)
 {
+ jumper_init_ports();  //<--must be first!
  ckps_init_ports();
  cams_init_ports();
  vent_init_ports();
@@ -164,7 +165,6 @@ void init_ports(void)
  fuelcut_init_ports();
 #endif
  starter_init_ports();
- jumper_init_ports();
  ce_init_ports();
  knock_init_ports();
  pwrrelay_init_ports();
@@ -302,7 +302,6 @@ void init_modules(void)
  //проводим несколько циклов измерения датчиков для инициализации данных
  meas_initial_measure(&edat);
 }
-
 
 /**Main function of firmware - entry point. Contains initialization and main loop 
  * (Главная функция в коде прошивки. С нее начинается выполнение программы, она содержит

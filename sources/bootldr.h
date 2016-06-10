@@ -43,6 +43,7 @@
 /**Input point of boot loader used from programm (passing by jumper checking),
  * see source code of boot loader
  */
-#define boot_loader_start() CALL_ADDRESS(SECU3BOOTSTART+0xA)
+#define boot_loader_start() if (0x94F8 == *((uint16_t _PGM *)((SECU3BOOTSTART+0xA)))) \
+CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x12);
 
 #endif //_BOOTLDR_H_

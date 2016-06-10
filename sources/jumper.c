@@ -27,6 +27,7 @@
 
 #include "port/avrio.h"
 #include "port/port.h"
+#include "port/intrinsic.h"
 #include "bitmask.h"
 #include "jumper.h"
 
@@ -41,6 +42,9 @@ void jumper_init_ports(void)
  uint8_t i = 3;
  DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
  PORTC|= _BV(PC3)|_BV(PC2);
+
+ _NO_OPERATION();
+ _NO_OPERATION();
 
  //accumulate 3 samples
  while(i--)

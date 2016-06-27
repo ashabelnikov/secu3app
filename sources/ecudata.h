@@ -113,6 +113,9 @@ typedef struct correct_t
 #ifdef FUEL_INJECT
  uint8_t afr;                            //!< Current value of air to fuel ratio (from AFR map)
 #endif
+#ifdef PA4_INP_IGNTIM
+ int16_t pa4_aac;                        //!< Ignition timing correction from PA4
+#endif
 }correct_t;
 
 /**Describes system's data (main ECU data structure)

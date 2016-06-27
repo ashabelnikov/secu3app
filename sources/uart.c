@@ -520,7 +520,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->corr.temp_aalt);         // advance angle from coolant temperature correction map
    build_i16h(d->corr.airt_aalt);         // advance angle from air temperature correction map
    build_i16h(d->corr.idlreg_aac);        // advance angle correction from idling RPM regulator
-   build_i16h(d->corr.octan_aac);         // octane correction value
+   build_i16h(d->corr.octan_aac
+#ifdef PA4_INP_IGNTIM
+   + d->corr.pa4_aac
+#endif
+                               );         // octane correction value
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    build_i16h(d->corr.lambda);            // lambda correction

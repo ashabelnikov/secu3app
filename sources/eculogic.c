@@ -128,6 +128,11 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->acceleration = 0; //no acceleration
    }
 #endif
+
+#ifdef PA4_INP_IGNTIM
+   d->corr.pa4_aac = 0;
+#endif
+
    break;
 
   case EM_IDLE: //idling mode
@@ -146,7 +151,8 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   angle+=pa4_function(d->sens.pa4);
+   d->corr.pa4_aac = pa4_function(d->sens.pa4);
+   angle+=d->corr.pa4_aac;
 #endif
    d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//add correction from idling regulator
    angle+=d->corr.idlreg_aac;
@@ -204,7 +210,8 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   angle+=pa4_function(d->sens.pa4);
+   d->corr.pa4_aac = pa4_function(d->sens.pa4);
+   angle+=d->corr.pa4_aac;
 #endif
    //substract correction obtained from detonation regulator
    angle-=d->corr.knock_retard;

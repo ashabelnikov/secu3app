@@ -112,6 +112,7 @@ typedef struct correct_t
 #endif
 #ifdef FUEL_INJECT
  uint8_t afr;                            //!< Current value of air to fuel ratio (from AFR map)
+ int16_t inj_timing;                     //!< Current injection timing
 #endif
 #ifdef PA4_INP_IGNTIM
  int16_t pa4_aac;                        //!< Ignition timing correction from PA4

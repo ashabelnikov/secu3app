@@ -670,6 +670,46 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
+int16_t inj_timing_lookup(struct ecudata_t* d)
+{
+ int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
+ int8_t f, fp1, lp1;
+
+ discharge = (d->param.map_upper_pressure - d->sens.map);
+ if (discharge < 0) discharge = 0;
+
+ //map_upper_pressure - value of the upper pressure
+ //map_lower_pressure - value of the lower pressure
+ gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (INJ_VE_POINTS_L-1); //divide by number of points on the MAP axis - 1
+ if (gradient < 1)
+  gradient = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
+ l = (discharge / gradient);
+
+ if (l >= (INJ_VE_POINTS_L - 1))
+  lp1 = l = INJ_VE_POINTS_L - 1;
+ else
+  lp1 = l + 1;
+
+ //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы
+ for(f = INJ_VE_POINTS_F-2; f >= 0; f--)
+  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+
+ //рабочая карта работает на rpm_grid_points[0] оборотах и выше
+ if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
+ if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1]);
+ fp1 = f + 1;
+
+ return bilinear_interpolation(rpm, discharge,
+        _GB(inj_timing[l][f]),
+        _GB(inj_timing[lp1][f]),
+        _GB(inj_timing[lp1][fp1]),
+        _GB(inj_timing[l][fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
+        (gradient * l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
+        gradient) * 3 * 2;
+}
+
 #endif //FUEL_INJECT
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

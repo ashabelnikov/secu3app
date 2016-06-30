@@ -88,6 +88,7 @@ void init_ecu_data(void)
 #ifdef FUEL_INJECT
  edat.inj_pw = 0;
  edat.corr.afr = 0;
+ edat.corr.inj_timing = 0;
 #endif
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  edat.corr.lambda = 0;

@@ -213,6 +213,12 @@ uint8_t inj_aftstr_en(struct ecudata_t* d);
  */
 uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode);
 
+/** Calculates injection timing from lookup table
+ * \param d pointer to ECU data structure
+ * \return Injection timing in crank degrees * ANGLE_MULTIPLIER
+ */
+int16_t inj_timing_lookup(struct ecudata_t* d);
+
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

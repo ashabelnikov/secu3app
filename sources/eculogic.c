@@ -26,6 +26,7 @@
 
 #include "port/port.h"
 #include <stdlib.h>
+#include "bitmask.h"
 #include "ckps.h"
 #include "ecudata.h"
 #include "eculogic.h"
@@ -107,6 +108,9 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
      inject_open_inj(inj_prime_pw(d));                     //start prime pulse
     lgs.prime_ready = 1;
    }
+
+   d->corr.inj_timing = d->param.inj_timing_crk;
+
 #endif
    if (d->sens.inst_frq > d->param.smap_abandon)
    {
@@ -173,6 +177,8 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
     d->inj_pw = pw > 65535 ? 65535 : pw;
    else d->inj_pw = 0;
    }
+
+   d->corr.inj_timing = CHECKBIT(d->param.inj_flags, INJFLG_USETIMINGMAP) ? inj_timing_lookup(d) : d->param.inj_timing;
 #endif
    break;
 
@@ -232,6 +238,8 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
     d->inj_pw = pw > 65535 ? 65535 : pw;
    else d->inj_pw = 0;
    }
+
+   d->corr.inj_timing = CHECKBIT(d->param.inj_flags, INJFLG_USETIMINGMAP) ? inj_timing_lookup(d) : d->param.inj_timing;
 #endif
 
    break;

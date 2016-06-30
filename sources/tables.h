@@ -117,6 +117,9 @@
 #define INJCFG_SEMISEQUENTIAL           3           //!< Semi-sequential injection
 #define INJCFG_FULLSEQUENTIAL           4           //!< Full-sequential injection
 
+//Injection flags (see inj_flags variable)
+#define INJFLG_USETIMINGMAP             0           //!< Use injection timing map instead of simple constant
+
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas
 
@@ -158,10 +161,12 @@ typedef struct f_data_t
 
   uint8_t inj_aftstr[INJ_AFTSTR_LOOKUP_TABLE_SIZE];      //!< afterstart enrichment vs coolant temperature lookup table, value * 128.0, 128 = 1.00 and means 100% will be adde to fuel
 
+  int8_t inj_timing[INJ_VE_POINTS_L][INJ_VE_POINTS_F];   //!< injection timing in crankshaft degrees (value / 3.0), -360...360 deg.
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[702];
+  uint8_t reserved[446];
 }f_data_t;
 
 

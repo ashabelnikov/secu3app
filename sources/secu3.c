@@ -510,7 +510,7 @@ MAIN()
    inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim);
 #endif
    //set injection timing depending on current mode of engine
-   ckps_set_inj_timing((EM_START == edat.engine_mode) ? edat.param.inj_timing_crk : edat.param.inj_timing);
+   ckps_set_inj_timing(edat.corr.inj_timing);
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_stroke_event_notification(&edat);

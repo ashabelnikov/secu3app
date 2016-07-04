@@ -66,6 +66,7 @@ uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #define ETMT_AETPS_MAP 12   //!< AE TPS map
 #define ETMT_AERPM_MAP 13   //!< AE RPM map
 #define ETMT_AFTSTR_MAP 14  //!< afterstart enrichment
+#define ETMT_IT_MAP   15    //!< injection timing map
 
 /**Define internal state variables */
 typedef struct
@@ -833,7 +834,18 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     case ETMT_AFTSTR_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d->tables_ram.inj_aftstr, INJ_AFTSTR_LOOKUP_TABLE_SIZE);
-     state = ETMT_STRT_MAP;
+     state = ETMT_IT_MAP;
+     break;
+    case ETMT_IT_MAP:
+     build_i8h(wrk_index*INJ_VE_POINTS_L);
+     build_rb((uint8_t*)&d->tables_ram.inj_timing[wrk_index][0], INJ_VE_POINTS_F);
+     if (wrk_index >= INJ_VE_POINTS_L-1 )
+     {
+      wrk_index = 0;
+      state = ETMT_STRT_MAP;
+     }
+     else
+      ++wrk_index;
      break;
    }
    break;
@@ -1210,6 +1222,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
      break;
     case ETMT_AFTSTR_MAP: //afterstart enrichment map
      recept_rb(((uint8_t*)&d->tables_ram.inj_aftstr) + addr, INJ_AFTSTR_LOOKUP_TABLE_SIZE); /*INJ_AFTSTR_LOOKUP_TABLE_SIZE max*/
+     break;
+    case ETMT_IT_MAP:   //Injection timing
+     recept_rb(((uint8_t*)&d->tables_ram.inj_timing[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
      break;
    }
   }

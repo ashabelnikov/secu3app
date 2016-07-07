@@ -194,6 +194,7 @@ typedef struct
 {
  //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
  int16_t output_state;   //!< regulator's memory
+ uint8_t enter_state;    //!< 
 }idlregul_state_t;
 
 /**Variable. State data for idling regulator */
@@ -203,6 +204,7 @@ idlregul_state_t idl_prstate;
 void idling_regulator_init(void)
 {
  idl_prstate.output_state = 0;
+ idl_prstate.enter_state = 0;
 }
 
 //Интегральный регулятор (интегрирование по выходу) для регулирования оборотов ХХ углом опережения зажигания
@@ -215,13 +217,34 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
- if (!CHECKBIT(d->param.idl_flags, IRF_USE_REGULATOR) || (d->sens.frequen >(d->param.idling_rpm + capture_range))
-    || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use))
+ if (!CHECKBIT(d->param.idl_flags, IRF_USE_REGULATOR) || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use))
   return 0;
 
  //don't use regulator on gas if specified in parameters
  if (d->sens.gas && !CHECKBIT(d->param.idl_flags, IRF_USE_REGONGAS))
   return 0;
+
+ //regulator will be turned on with delay
+ if (d->sens.frequen < (d->param.idling_rpm + capture_range))
+ {
+  switch(idl_prstate.enter_state)
+  {
+   case 0:
+    s_timer_set(*io_timer,IDLE_ENTER_TIME_VALUE);
+    idl_prstate.enter_state = 1;
+    return 0; //no correction
+   case 1:
+    if (s_timer_is_action(*io_timer))
+    {
+     idl_prstate.enter_state = 2;
+     s_timer_set(*io_timer,IDLE_PERIOD_TIME_VALUE);
+     break;
+    }
+    return 0; //no correction
+  }
+ }
+ else
+  return 0; //no correction
 
  //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне
  //нечувствительности, то используем расчитанную ранее коррекцию.

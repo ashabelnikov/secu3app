@@ -32,6 +32,7 @@
 #include "vstimer.h"
 
 #define IDLE_PERIOD_TIME_VALUE        50    //!< used by idling regulator
+#define IDLE_ENTER_TIME_VALUE         150   //!< time for entering closed loop mode
 
 /** f(x) liniar interpolation for function with single argument
  * \param x argument value

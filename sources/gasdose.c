@@ -238,9 +238,12 @@ static int16_t calc_sm_position(struct ecudata_t* d)
 {
  int16_t pos = gdp_function(d); //basic position, value in %
 
- //apply correction from IAT sensor
- // pos * ((273.15-IAT) * (1/273.15))
- pos = ((((int32_t)(TEMPERATURE_MAGNITUDE(273.15) - d->sens.air_temp)) * 60) * pos) >> 16;
+ //apply correction from IAT sensor, use approximation instead of division
+ //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
+ int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ?
+               ((d->sens.air_temp + TEMPERATURE_MAGNITUDE(184)) * 23) - (d->sens.air_temp * 40) :
+               ((d->sens.air_temp + TEMPERATURE_MAGNITUDE(179)) * 23) - (d->sens.air_temp * 33);
+ pos = ((int32_t)pos * (corr - 386)) >> 14;
 
 //pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
  pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal

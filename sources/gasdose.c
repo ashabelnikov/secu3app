@@ -37,7 +37,6 @@
 #include "magnitude.h"
 #include "pwrrelay.h"
 
-
 /**Direction used to set stepper motor to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
 
@@ -240,10 +239,8 @@ static int16_t calc_sm_position(struct ecudata_t* d)
 
  //apply correction from IAT sensor, use approximation instead of division
  //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
- int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ?
-               ((d->sens.air_temp + TEMPERATURE_MAGNITUDE(184)) * 23) - (d->sens.air_temp * 40) :
-               ((d->sens.air_temp + TEMPERATURE_MAGNITUDE(179)) * 23) - (d->sens.air_temp * 33);
- pos = ((int32_t)pos * (corr - 386)) >> 14;
+ int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10);
+ pos = ((int32_t)pos * (corr)) >> 14;
 
 //pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
  pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal

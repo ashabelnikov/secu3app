@@ -471,9 +471,17 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
     break;
 
   case SENSOR_DAT:
+#ifdef SEND_INST_VAL
+   build_i16h(d->sens.inst_frq);          // instant RPM
+#else
    build_i16h(d->sens.frequen);           // averaged RPM
+#endif
    build_i16h(d->sens.map);               // MAP pressure
-   build_i16h(d->sens.voltage);           // voltage
+#ifdef SEND_INST_VAL
+   build_i16h(d->sens.inst_voltage);      // instant voltage value
+#else
+   build_i16h(d->sens.voltage);           // voltage (avaraged)
+#endif
    build_i16h(d->sens.temperat);          // coolant temperature
    build_i16h(d->corr.curr_angle);        // advance angle
    build_i16h(d->sens.knock_k);           // knock value

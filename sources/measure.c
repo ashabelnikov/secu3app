@@ -120,6 +120,9 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;
 
  ubat_circular_buffer[bat_ai] = adc_get_ubat_value();
+#ifdef SEND_INST_VAL
+ d->sens.inst_voltage = adc_compensate(ubat_circular_buffer[bat_ai] * 6, d->param.ubat_adc_factor, d->param.ubat_adc_correction);
+#endif
  (bat_ai==0) ? (bat_ai = BAT_AVERAGING - 1): bat_ai--;
 
  temp_circular_buffer[tmp_ai] = adc_get_temp_value();

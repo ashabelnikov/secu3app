@@ -137,6 +137,8 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     PA4_INP_IGNTIM *     Use PA4 as analog input for manual correction of
                          ignition timing
 
+    SEND_INST_VAL *      Send instant values (RPM, voltage) instead of averaged
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager
   означает что опция является внутренней и не отображается в списке опций в

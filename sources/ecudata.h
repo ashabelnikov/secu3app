@@ -63,6 +63,9 @@ typedef struct sensors_t
 {
  uint16_t map;                           //!< Input Manifold Pressure (давление во впускном коллекторе (усредненное))
  uint16_t voltage;                       //!< Board voltage (напряжение бортовой сети (усредненное))
+#ifdef SEND_INST_VAL
+ uint16_t inst_voltage;                  //!< Instant valtage - not averaged
+#endif
  int16_t  temperat;                      //!< Coolant temperature (температура охлаждающей жидкости (усредненная))
  uint16_t frequen;                       //!< Averaged RPM (частота вращения коленвала (усредненная))
  uint16_t inst_frq;                      //!< Instant RPM - not averaged  (мгновенная частота вращения)

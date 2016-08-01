@@ -44,6 +44,6 @@
  * see source code of boot loader
  */
 #define boot_loader_start() if (0x94F8 == *((uint16_t _PGM *)((SECU3BOOTSTART+0xA)))) \
-CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x12);
+CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x14);
 
 #endif //_BOOTLDR_H_

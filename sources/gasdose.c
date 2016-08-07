@@ -69,7 +69,7 @@ static gasdose_st_t gds = {0};
  */
 int16_t gdp_function(struct ecudata_t* d)
 {
- int16_t rpm = d->sens.inst_frq, tps = d->sens.tps * 16;
+ int16_t rpm = d->sens.inst_frq, tps = (TPS_MAGNITUDE(100.0) - d->sens.tps) * 16;
  int8_t t = (tps / TPS_AXIS_STEP), f, tp1, fp1;
 
  if (t >= (GASDOSE_POS_TPS_SIZE - 1))

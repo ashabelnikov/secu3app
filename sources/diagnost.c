@@ -151,11 +151,17 @@ void set_outputs(uint16_t o)
 #endif
 
  //BL
- WRITEBIT(PORTC, PC3, (o & _OBV(11)));
+ if (o & _OBV(12)) {
+  WRITEBIT(PORTC, PC3, (o & _OBV(11))); }
+ else {
+  WRITEBIT(PORTC, PC3, 1); }             //pull up input
  WRITEBIT(DDRC, DDC3, (o & _OBV(12)));   //select mode: input/output
 
  //DE
- WRITEBIT(PORTC, PC2, (o & _OBV(13)));
+ if (o & _OBV(14)) {
+  WRITEBIT(PORTC, PC2, (o & _OBV(13))); }
+ else {
+  WRITEBIT(PORTC, PC2, 1); }             //pull up input
  WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
 }
 

@@ -105,7 +105,7 @@
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
- /**Fill data residing in code area, has floating address. Address is identified by a unique signature*/
+ /**Fill data residing in code area*/
  {
   //Add new data here
 
@@ -205,7 +205,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {0,0,0},
 
   /**Version of the firmware. Do not forget to write out same value into the signature info! */
-  0x44,
+  0x45,
 
   /**2 bytes - size of this structure. */
   sizeof(cd_data_t)

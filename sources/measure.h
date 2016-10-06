@@ -21,8 +21,7 @@
 
 /** \file measure.h
  * \author Alexey A. Shabelnikov
- * Process (averaging, corrections etc) data comes from ADC and sensors
- * (Обработка (усреднение, корректировки и т.д.) данных поступающих от АЦП и данчиков).
+ * Processing (averaging, corrections etc) of data which comes from ADC and sensors
  */
 
 #ifndef _MEASURE_H_
@@ -51,9 +50,7 @@ void meas_average_measured_values(struct ecudata_t* d);
  */
 void meas_initial_measure(struct ecudata_t* d);
 
-/**Performs reading of discrete inputs and switching of fuel type
- * производит считывание дискретных входов системы и переключение
- * типа топлива (набор таблиц).
+/**Performs reading of discrete inputs and switching of fuel type (sets of maps)
  * \param d pointer to ECU data structure
  */
 void meas_take_discrete_inputs(struct ecudata_t *d);

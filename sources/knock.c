@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * Implementation of knock chip related functions.
  * Service of HIP9011 knock signal processing chip
- * (Реализация обслуживания чипа HIP9011 обрабатывающего сигнал детонации).
  */
 
 #include "port/avrio.h"

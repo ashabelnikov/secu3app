@@ -366,6 +366,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_lambda_dead_band =        VOLTAGE_MAGNITUDE(0.0), //zero dead band by default
 
+  .load_src_cfg =                0,                    //default is MAP
+
   .reserved =                    {0},
   .crc =                         0
  },

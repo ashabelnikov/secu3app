@@ -22,8 +22,7 @@
 /** \file knock.h
  * \author Alexey A. Shabelnikov
  * Knock chip related functions.
- * Service of HIP9011 knock signal processing chip
- * (Обслуживание чипа HIP9011 обрабатывающего сигнал детонации).
+ * Service of the HIP9011 knock signal processing chip
  */
 
 #ifndef _KNOCK_H_

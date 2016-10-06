@@ -116,7 +116,7 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  if (rpm_only)
   return;
 
- map_circular_buffer[map_ai] = adc_get_map_value();
+ map_circular_buffer[map_ai] = (d->param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value();
  (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;
 
  ubat_circular_buffer[bat_ai] = adc_get_ubat_value();

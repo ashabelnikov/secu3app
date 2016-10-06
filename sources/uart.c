@@ -427,6 +427,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.map_curve_gradient);
    build_i16h(d->param.tps_curve_offset);
    build_i16h(d->param.tps_curve_gradient);
+   build_i4h(d->param.load_src_cfg);
    break;
 
   case STARTR_PAR:
@@ -1006,6 +1007,10 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.map_curve_gradient = recept_i16h();
    d->param.tps_curve_offset = recept_i16h();
    d->param.tps_curve_gradient = recept_i16h();
+
+   temp = recept_i4h();
+   if (temp < 2)
+    d->param.load_src_cfg = temp;
    break;
 
   case STARTR_PAR:

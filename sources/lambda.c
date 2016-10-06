@@ -22,7 +22,6 @@
 /** \file lambda.c
  * \author Alexey A. Shabelnikov
  * Implementation of correction algorithms using an exhaust gas oxygen sensor
- * (–еализаци€ корректировки состава смеси использу€ датчик кислорода).
  */
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)

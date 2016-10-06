@@ -400,10 +400,12 @@ typedef struct params_t
 
   uint16_t inj_lambda_dead_band;         //!< lambda switch point dead band
 
+  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - TPS)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[64];
+  uint8_t  reserved[63];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

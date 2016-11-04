@@ -477,7 +477,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 #else
    build_i16h(d->sens.frequen);           // averaged RPM
 #endif
-   build_i16h(d->sens.map);               // MAP pressure
+#ifdef SEND_INST_VAL
+   build_i16h(d->sens.inst_map);          // instant MAP pressure
+#else
+   build_i16h(d->sens.map);               // averaged MAP pressure
+#endif
 #ifdef SEND_INST_VAL
    build_i16h(d->sens.inst_voltage);      // instant voltage value
 #else
@@ -502,7 +506,11 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
              (0 << 7));
 #endif
    build_i8h(d->sens.tps);                // TPS (0...100%, x2)
-   build_i16h(d->sens.add_i1);            // ADD_I1 voltage
+#ifdef SEND_INST_VAL
+   build_i16h(d->sens.inst_add_i1);       // instant ADD_I1 voltage
+#else
+   build_i16h(d->sens.add_i1);            // averaged ADD_I1 voltage
+#endif
    build_i16h(d->sens.add_i2);            // ADD_I2 voltage
    build_i16h(d->ecuerrors_for_transfer); // CE errors
    build_i8h(d->choke_pos);               // choke position

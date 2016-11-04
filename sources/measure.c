@@ -117,6 +117,9 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
   return;
 
  map_circular_buffer[map_ai] = (d->param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value();
+#ifdef SEND_INST_VAL
+ d->sens.inst_map = map_adc_to_kpa(adc_compensate(_RESDIV(map_circular_buffer[map_ai], 2, 1), d->param.map_adc_factor, d->param.map_adc_correction), d->param.map_curve_offset, d->param.map_curve_gradient);
+#endif
  (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;
 
  ubat_circular_buffer[bat_ai] = adc_get_ubat_value();
@@ -132,6 +135,9 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
  (tps_ai==0) ? (tps_ai = TPS_AVERAGING - 1): tps_ai--;
 
  ai1_circular_buffer[ai1_ai] = adc_get_add_io1_value();
+#ifdef SEND_INST_VAL
+ d->sens.inst_add_i1 = adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d->param.ai1_adc_factor, d->param.ai1_adc_correction);
+#endif
  (ai1_ai==0) ? (ai1_ai = AI1_AVERAGING - 1): ai1_ai--;
 
  ai2_circular_buffer[ai2_ai] = adc_get_add_io2_value();

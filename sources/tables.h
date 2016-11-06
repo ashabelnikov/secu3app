@@ -122,6 +122,9 @@
 
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas
+#ifdef FUEL_INJECT
+#define FPF_INJONGAS                    1           //!< Turn off injectors when fuel type is gas
+#endif
 
 //Choke flags
 #define CKF_OFFSTRTADDONGAS             0           //!< Turn off additional startup closing of choke when fuel type is gas

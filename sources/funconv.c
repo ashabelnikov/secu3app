@@ -723,10 +723,10 @@ int16_t inj_timing_lookup(struct ecudata_t* d)
  fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
-        _GB(inj_timing[l][f]),
-        _GB(inj_timing[lp1][f]),
-        _GB(inj_timing[lp1][fp1]),
-        _GB(inj_timing[l][fp1]),
+        _GBU(inj_timing[l][f]),
+        _GBU(inj_timing[lp1][f]),
+        _GBU(inj_timing[lp1][fp1]),
+        _GBU(inj_timing[l][fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),

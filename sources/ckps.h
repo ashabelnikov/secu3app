@@ -167,7 +167,7 @@ void ckps_set_shutter_wnd_width(int16_t width);
 #endif
 
 #ifdef FUEL_INJECT
-/** Set injection timing relatively to TDC
+/** Set injection timing relatively to TDC (value in crankshaft degrees BTDC)
  * \param phase Injection timing in degrees of wheel * ANGLE_MULTIPLIER
  */
 void ckps_set_inj_timing(int16_t phase);

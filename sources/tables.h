@@ -161,7 +161,7 @@ typedef struct f_data_t
 
   uint8_t inj_aftstr[INJ_AFTSTR_LOOKUP_TABLE_SIZE];      //!< afterstart enrichment vs coolant temperature lookup table, value * 128.0, 128 = 1.00 and means 100% will be adde to fuel
 
-  int8_t inj_timing[INJ_VE_POINTS_L][INJ_VE_POINTS_F];   //!< injection timing in crankshaft degrees (value / 3.0), -360...360 deg.
+  uint8_t inj_timing[INJ_VE_POINTS_L][INJ_VE_POINTS_F];  //!< injection timing in crankshaft degrees (value / 3.0), 0...720 deg.
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from

@@ -345,7 +345,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_steps =                    256,                  //256 steps, gas dose number of steps
 
-  .inj_timing =                  0,                    //TDC
+  .inj_timing =                  0,                    //TDC (0 = 720°)
 
   .flpmp_flags =                 _BV(FPF_OFFONGAS),    //turn off fuel pump when GAS_V = 1
 
@@ -1171,7 +1171,7 @@ PGM_DECLARE(f_data_t tt_def_data) =
   _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
  },
 
- /**Fill injection timing map, value can be in range -360...360 */
+ /**Fill injection timing map, value can be in range 0...720 */
  {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
   {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, //16
   {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, //15

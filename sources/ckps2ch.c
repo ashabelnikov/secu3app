@@ -568,8 +568,7 @@ void ckps_set_inj_timing(int16_t phase)
  //TODO: We can do some optimization in the future - set timing only if it is not equal to current (already set one)
 
  //convert from 0..720 BTDC to -360...360
- if (phase <= ANGLE_MAGNITUDE(360))
-  phase = phase - ANGLE_MAGNITUDE(720);
+ phase-= ANGLE_MAGNITUDE(360);
 
  //save values because we will access them from other function
  //Also, convert form crank degrees to teeth

@@ -73,7 +73,9 @@ void check(struct ecudata_t* d)
  //If error of CKP sensor was, then set corresponding bit of error
  if (ckps_is_error())
  {
-  ce_set_error(ECUERROR_CKPS_MALFUNCTION);
+  //ignore error in case of stall of an engine
+  if (!(((d->st_block) && (d->sens.inst_frq < d->param.starter_off)) || (d->sens.inst_frq < 30)))
+   ce_set_error(ECUERROR_CKPS_MALFUNCTION);
   ckps_reset_error();
  }
  else
@@ -165,8 +167,8 @@ void check(struct ecudata_t* d)
   //use simple debouncing techique to eliminate errors during normal transients (e.g. switching ignition off) 
   if (ce_state.bv_tdc)
   {//state changed? If so, then rest state machine (start again)
-   if ((0==ce_state.bv_dev && d->sens.voltage_raw > ROUND(12.0 / ADC_DISCRETE)) ||
-       (1==ce_state.bv_dev && d->sens.voltage_raw < ROUND(16.0 / ADC_DISCRETE)))
+   if ((0==ce_state.bv_dev && d->sens.voltage_raw > ROUND(11.7 / ADC_DISCRETE)) ||
+       (1==ce_state.bv_dev && d->sens.voltage_raw < ROUND(15.5 / ADC_DISCRETE)))
     ce_state.bv_eds = 0;
 
    --ce_state.bv_tdc;

@@ -145,6 +145,8 @@ void check_firmware_integrity(void)
 {
  if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
   ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
+ if (crc16f(fwinfo, FWINFOSIZE)!=0x44DB)
+  check_firmware_integrity(); //Uuups!
 }
 
 /**Initialization of I/O ports

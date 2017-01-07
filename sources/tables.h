@@ -497,6 +497,8 @@ PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
 PGM_DECLARE(extern f_data_t tt_def_data);
 #endif
 
-PGM_DECLARE(extern uint8_t fwinfo[60]);
+/*fwinfo*/
+#define FWINFOSIZE 69
+PGM_DECLARE(extern uint8_t fwinfo[FWINFOSIZE]);
 
 #endif //_TABLES_H_

@@ -182,7 +182,6 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only)
 void meas_average_measured_values(struct ecudata_t* d)
 {
  uint8_t i;  uint32_t sum;
- static uint16_t temp_avr = 0;
 
  for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
   sum+=map_circular_buffer[i];
@@ -197,17 +196,8 @@ void meas_average_measured_values(struct ecudata_t* d)
  if (d->param.tmp_use)
  {
   for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
-  { //filter noisy samples by comparing each sample with averaged value (threshold is 6.25%)
-   uint16_t t = (temp_avr >> 4);
-   if (temp_avr && (temp_circular_buffer[i] > (temp_avr + t)))
-    sum+=(temp_avr + t);
-   else if (temp_avr && (temp_circular_buffer[i] < ((int16_t)temp_avr - t)))
-    sum+=(temp_avr - t);
-   else
     sum+=temp_circular_buffer[i];
-  }
-  temp_avr = sum/TMP_AVERAGING;
-  d->sens.temperat_raw = adc_compensate(_RESDIV(temp_avr, 5, 3),d->param.temp_adc_factor,d->param.temp_adc_correction);
+  d->sens.temperat_raw = adc_compensate(_RESDIV(sum/TMP_AVERAGING, 5, 3),d->param.temp_adc_factor,d->param.temp_adc_correction);
 #ifndef THERMISTOR_CS
   d->sens.temperat = temp_adc_to_c(d->sens.temperat_raw);
 #else

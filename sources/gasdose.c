@@ -242,16 +242,19 @@ static int16_t calc_sm_position(struct ecudata_t* d)
  int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10);
  pos = ((int32_t)pos * (corr)) >> 14;
 
-//pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
- pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal
- if (pos > GD_MAGNITUDE(100.0))
-  pos = GD_MAGNITUDE(100.0);
+ if (d->sens.gas) //gas valve will function when petrol is used, but in very limited mode
+ {
+  //pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
+  pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal
+  if (pos > GD_MAGNITUDE(100.0))
+   pos = GD_MAGNITUDE(100.0);
 
- pos+= calc_gd_acc_enrich(d);    //apply acceleration enrichment
+  pos+= calc_gd_acc_enrich(d);    //apply acceleration enrichment
 
- pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
+  pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
 
- pos = (d->fc_revlim ? 0 : pos); //apply rev.limit flag
+  pos = (d->fc_revlim ? 0 : pos); //apply rev.limit flag
+ }
 
  return ((((int32_t)d->param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
 }

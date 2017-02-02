@@ -239,7 +239,8 @@ static int16_t calc_sm_position(struct ecudata_t* d)
 
  //apply correction from IAT sensor, use approximation instead of division
  //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
- int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10);
+ //int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10); //my
+ int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(30)) ? TEMPERATURE_MAGNITUDE(4110) - (d->sens.air_temp * 15) : TEMPERATURE_MAGNITUDE(3970) - (d->sens.air_temp * 10);   //alvikagal
  pos = ((int32_t)pos * (corr)) >> 14;
 
  if (d->sens.gas) //gas valve will function when petrol is used, but in very limited mode

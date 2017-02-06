@@ -90,8 +90,11 @@ void init_ecu_data(void)
  edat.corr.afr = 0;
  edat.corr.inj_timing = 0;
 #endif
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || defined(CARB_AFR)
  edat.corr.lambda = 0;
+#endif
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  edat.fc_revlim = 0;
  edat.acceleration = 0;
 #endif

@@ -43,6 +43,7 @@ typedef struct
  uint16_t lambda_t1;             //!< timer
  uint8_t enabled;                //!< Flag indicates that lambda correction is enabled by timeout
  uint8_t fc_delay;               //!< delay in strokes before lambda correction will be turned on after fuel cut off
+ uint8_t gasv_prev;              //!< previous value of GAS_V input
 }lambda_state_t;
 
 /**Instance of internal state variables structure*/
@@ -53,6 +54,7 @@ void lambda_init_state(void)
  ego.stroke_counter = 0;
  ego.enabled = 0;
  ego.fc_delay = 0;
+ ego.gasv_prev = 0;
 }
 
 void lambda_control(struct ecudata_t* d)
@@ -78,6 +80,14 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  if (!ego.enabled)
   return; //wait some time before oxygen sensor will be turned on
 
+//do not process EGO correction if it is not needed (gas equipment on the carburetor)
+#if !defined(FUEL_INJECT) && !defined(CARB_AFR)
+ if (!d->sens.gas || !IOCFG_CHECK(IOP_GD_STP))
+ {
+  d->corr.lambda = 0;
+  return;
+ }
+#endif
 
  //used only with fuel injection or gas doser
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
@@ -134,6 +144,13 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
 
 #endif //FUEL_INJECT
 
+ //Reset EGO correction each time fuel type(set of maps) is changed (triggering of level on the GAS_V input)
+ if (ego.gasv_prev != d->sens.gas)
+ {
+  d->corr.lambda = 0;
+  ego.gasv_prev = d->sens.gas;
+  return; //exit from this iteration
+ }
 
  if (d->sens.inst_frq > d->param.inj_lambda_rpm_thrd)    //RPM > threshold
  {
@@ -158,14 +175,12 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
      d->corr.lambda+=d->param.inj_lambda_step_size_p;
 ////////////////////////////////////////////////////////////////////////////////////////
 
-
 /*  //update EGO correction (simple switch point)
     if (d->sens.add_i1 > d->param.inj_lambda_swt_point)
      d->corr.lambda-=d->param.inj_lambda_step_size_m;
     else if (d->sens.add_i1 < d->param.inj_lambda_swt_point)
      d->corr.lambda+=d->param.inj_lambda_step_size_p;
 */
-
 
 #ifdef GD_CONTROL
     //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))

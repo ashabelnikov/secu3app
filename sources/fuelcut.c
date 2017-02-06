@@ -147,7 +147,11 @@ void fuelcut_control(struct ecudata_t* d)
  if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
  {
 #endif
-  simple_fuel_cut(d);
+  uint8_t off_icv_on_gas = IOCFG_CHECK(IOP_GD_STP); //turn off carburetor's idle cut off valve when gas doser is active
+  if (!d->sens.gas || !off_icv_on_gas)
+   simple_fuel_cut(d);
+  else
+   IOCFG_SET(IOP_IE, 0); //turn off valve
 
 #ifdef GD_CONTROL
   //simple Rev. limitter used only for gas doser

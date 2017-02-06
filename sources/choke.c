@@ -460,7 +460,7 @@ void choke_control(struct ecudata_t* d)
 #ifdef SM_CONTROL
 uint8_t choke_is_ready(void)
 {
- return (chks.state == 5 || chks.state == 3);
+ return (chks.state == 5 || chks.state == 3) || !IOCFG_CHECK(IOP_SM_STP);
 }
 #endif
 

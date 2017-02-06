@@ -361,7 +361,7 @@ void gasdose_control(struct ecudata_t* d)
 
 uint8_t gasdose_is_ready(void)
 {
- return (gds.state == 5 || gds.state == 3);
+ return (gds.state == 5 || gds.state == 3) || !IOCFG_CHECK(IOP_GD_STP);
 }
 
 void gasdose_stroke_event_notification(struct ecudata_t* d)

@@ -51,7 +51,7 @@ void vent_turnoff(struct ecudata_t *d);
  */
 void vent_set_pwmfrq(uint16_t period);
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Use by IAC when ECF is remapped to IAC_PWM
  * \param duty 8-bit PWM duty value (0...255)
  */

@@ -36,6 +36,7 @@
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "pwrrelay.h"
+#include "ventilator.h"
 
 /**Direction used to set stepper motor to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
@@ -231,9 +232,10 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 
 /** Calculate stepper motor position for normal mode
  * \param d pointer to ECU data structure
+ * \param pwm 0 - stepper valve, 1 - PWM valve
  * \return stepper motor position in steps
  */
-static int16_t calc_sm_position(struct ecudata_t* d)
+static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 {
  int16_t pos = gdp_function(d); //basic position, value in %
 
@@ -260,11 +262,23 @@ static int16_t calc_sm_position(struct ecudata_t* d)
   pos = (d->fc_revlim ? 0 : pos); //apply rev.limit flag
  }
 
- return ((((int32_t)d->param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
+ if (pwm)
+  return ((((int32_t)256) * pos) / 200); //convert percentage position to PWM duty
+ else
+  return ((((int32_t)d->param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
 }
 
 void gasdose_control(struct ecudata_t* d)
 {
+ if (IOCFG_CHECK(IOP_GD_PWM))
+ { //use PWM valve
+  uint16_t  pos = calc_sm_position(d, 1);                     //calculate PWM duty
+  if (pos > 255) pos = 255;
+  d->gasdose_pos = calc_percent_pos(pos, 256);                //update position value
+  vent_set_duty8(pos);
+  return;
+ }
+
  if (!IOCFG_CHECK(IOP_GD_STP))
   return; //gas dose control was not enabled (outputs were not remapped)
 
@@ -312,7 +326,7 @@ void gasdose_control(struct ecudata_t* d)
     int16_t pos;
     if (!CHECKBIT(gds.flags, CF_MAN_CNTR))
     {
-     pos = calc_sm_position(d);                               //calculate stepper motor position
+     pos = calc_sm_position(d, 0);                            //calculate stepper motor position
      if (d->gasdose_manpos_d)
       SETBIT(gds.flags, CF_MAN_CNTR);                         //enter manual mode
     }

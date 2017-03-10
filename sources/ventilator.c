@@ -193,7 +193,7 @@ void vent_turnoff(struct ecudata_t *d)
 #ifndef COOLINGFAN_PWM
  IOCFG_SET(IOP_ECF, 0);
 #else
- if (!d->param.vent_pwm && !IOCFG_CHECK(IOP_IAC_PWM))
+ if (!d->param.vent_pwm && !IOCFG_CHECK(IOP_IAC_PWM) && !IOCFG_CHECK(IOP_GD_PWM))
   IOCFG_SET(IOP_ECF, 0);
  else
   COOLINGFAN_TURNOFF();
@@ -207,7 +207,7 @@ void vent_set_pwmfrq(uint16_t period)
  pwm_steps = ((uint32_t)(39062 * period)) >> 17;
 }
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 void vent_set_duty8(uint8_t duty)
 {
 #ifdef COOLINGFAN_PWM

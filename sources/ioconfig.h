@@ -102,7 +102,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_IAC_PWM      59     //!< IAC_PWM         (output)
 #define IOP_GD_DIR       60     //!< GD_DIR          (output)
 #define IOP_GD_STP       61     //!< GD_STP          (output)
-#define IOP_RESERVED23   62     //!< reserved plug   ()
+#define IOP_GD_PWM       62     //!< PWM gas valve   (output)
 #define IOP_RESERVED24   63     //!< reserved plug   ()
 #define IOP_RESERVED25   64     //!< reserved plug   ()
 #define IOP_RESERVED26   65     //!< reserved plug   ()

@@ -187,8 +187,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 2.4
-   IOREMVER(2,4),
+   //Version of this structure - 2.5
+   IOREMVER(2,5),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),

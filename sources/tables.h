@@ -87,6 +87,7 @@
 #define INJ_AE_TPS_LOOKUP_TABLE_SIZE    8           //!< number of points in AE TPS (d%/dt) lookup table
 #define INJ_AE_RPM_LOOKUP_TABLE_SIZE    4           //!< number of points in AE RPM lookup table size
 #define INJ_AFTSTR_LOOKUP_TABLE_SIZE    16          //!< afterstart enrichment lookup table
+#define INJ_TARGET_RPM_TABLE_SIZE       16          //!< idling target RPM lookup table size
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -166,10 +167,12 @@ typedef struct f_data_t
 
   uint8_t inj_timing[INJ_VE_POINTS_L][INJ_VE_POINTS_F];  //!< injection timing in crankshaft degrees (value / 3.0), 0...720 deg.
 
+  uint8_t inj_target_rpm[INJ_TARGET_RPM_TABLE_SIZE];  //!< target RPM on idling (value / 10)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[446];
+  uint8_t reserved[430];
 }f_data_t;
 
 

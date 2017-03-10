@@ -102,6 +102,9 @@
 //For encoding of injection timing map values
 #define _IT(v) ROUND((v) / 3.0)
 
+//For indling target RPM
+#define _IR(v) ROUND((v) / 10.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -586,6 +589,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 1
    },
 
+   /**Fill idle target RPM vs coolant temperature */
+   {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
+    _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -729,6 +737,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 3
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 2
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 1
+   },
+
+   /**Fill idle target RPM vs coolant temperature */
+   {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
+    _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
    },
 
    /**reserved bytes */
@@ -875,6 +888,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 1
    },
 
+   /**Fill idle target RPM vs coolant temperature */
+   {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
+    _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1017,6 +1035,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 3
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 2
     {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 1
+   },
+
+   /**Fill idle target RPM vs coolant temperature */
+   {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
+    _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
    },
 
    /**reserved bytes */
@@ -1190,6 +1213,11 @@ PGM_DECLARE(f_data_t tt_def_data) =
   {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 3
   {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 2
   {_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0)}, // 1
+ },
+
+ /**Fill idle target RPM vs coolant temperature */
+ {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
+  _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
  },
 
  /**reserved bytes */

@@ -250,6 +250,12 @@ uint16_t inj_ae_clt_corr(struct ecudata_t* d);
  */
 uint16_t inj_prime_pw(struct ecudata_t* d);
 
+/** Calculates target idling RPM from coolant temperature
+ * \param d pointer to ECU data structure
+ * \return RPM value in min-1 units
+ */
+uint16_t inj_idling_rpm(struct ecudata_t* d);
+
 #endif
 
 #ifdef PA4_INP_IGNTIM

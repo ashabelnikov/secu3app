@@ -801,6 +801,27 @@ uint16_t inj_prime_pw(struct ecudata_t* d)
              TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 1);
 }
 
+uint16_t inj_idling_rpm(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 900;   //coolant temperature sensor is not enabled (or not installed)
+
+ //-30 - minimal value of temperature on the horizontal axis
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - шаг между узлами интерполяции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_TARGET_RPM_TABLE_SIZE-1) i = i1 = INJ_TARGET_RPM_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(t, _GBU(inj_target_rpm[i]), _GBU(inj_target_rpm[i1]),  //<--values in table are unsigned
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+}
+
 #endif //FUEL_INJECT
 
 

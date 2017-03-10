@@ -263,4 +263,13 @@ uint16_t inj_idling_rpm(struct ecudata_t* d);
 int16_t pa4_function(uint16_t adcvalue);
 #endif
 
+
+#ifdef GD_CONTROL
+/**Use VE and AFR tables for gas dosator. Result = VE * AFR * K, where K is stoichiometry constant
+ * \return value * 2048
+ */
+uint16_t gd_ve_afr(struct ecudata_t* d);
+#endif
+
+
 #endif //_FUNCONV_H_

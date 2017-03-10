@@ -63,7 +63,7 @@ static gasdose_st_t gds = {0};
 /**TPS % between two interpolation points, additionally multiplied by 16 */
 #define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(GASDOSE_POS_TPS_SIZE-1))
 
-/** Calculation îf gas dosator position, based on (TPS,RPM)
+/** Calculation of gas dosator position, based on (TPS,RPM)
  * \param d Pointer to ECU data structure
  * \return Gas dosator position in % (value * 2)
  */
@@ -236,6 +236,9 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 static int16_t calc_sm_position(struct ecudata_t* d)
 {
  int16_t pos = gdp_function(d); //basic position, value in %
+
+ //apply correction from VE and AFR maps
+ pos = (((int32_t)pos) * gd_ve_afr(d)) >> 11;
 
  //apply correction from IAT sensor, use approximation instead of division
  //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));

@@ -861,3 +861,68 @@ int16_t pa4_function(uint16_t adcvalue)
 }
 
 #endif //PA4_INP_IGNTIM
+
+
+#ifdef GD_CONTROL
+/**Use VE and AFR tables for gas dosator. Result = VE * AFR * K, where K is stoichiometry constant
+ * \return value * 2048
+ */
+uint16_t gd_ve_afr(struct ecudata_t* d)
+{
+ int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
+ int8_t f, fp1, lp1;
+ int32_t corr;
+
+ //calculate lookup table indexes. VE and AFR tables have same size
+ discharge = (d->param.map_upper_pressure - d->sens.map);
+ if (discharge < 0) discharge = 0;
+
+ gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (INJ_VE_POINTS_L-1);
+ if (gradient < 1)
+  gradient = 1;
+ l = (discharge / gradient);
+
+ if (l >= (INJ_VE_POINTS_F - 1))
+  lp1 = l = INJ_VE_POINTS_F - 1;
+ else
+  lp1 = l + 1;
+
+ for(f = 14; f >= 0; f--)
+  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+
+ if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
+ if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1]);
+  fp1 = f + 1;
+
+ //apply VE table, bilinear_interpolation() returns value * 16
+ corr = bilinear_interpolation(rpm, discharge,
+        _GBU(inj_ve[l][f]),   //values in table are unsigned
+        _GBU(inj_ve[lp1][f]),
+        _GBU(inj_ve[lp1][fp1]),
+        _GBU(inj_ve[l][fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
+        (gradient * l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
+        gradient);
+
+ //calculate AFR value, returned value * 16
+ afr = bilinear_interpolation(rpm, discharge,
+        _GBU(inj_afr[l][f]),  //values in table are unsigned
+        _GBU(inj_afr[lp1][f]),
+        _GBU(inj_afr[lp1][fp1]),
+        _GBU(inj_afr[l][fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
+        (gradient * l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
+        gradient);
+
+ corr=(corr * afr)>>11; //apply AFR value
+
+ corr=(corr * ROUND(15.6*1024))>>10; //multiply by 15.6 (hardcoded stoichiometry value for propane/butane mixture)
+
+ //d->corr.afr=afr>>4;          //update value of AFR
+
+ return (corr >> 4); //return correction value * 2048
+}
+
+#endif //GD_CONTROL

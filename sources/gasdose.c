@@ -242,6 +242,9 @@ static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
  //apply correction from VE and AFR maps
  pos = (((int32_t)pos) * gd_ve_afr(d)) >> 11;
 
+ //apply warmup enrichemnt factor
+ pos = (((int32_t)pos) * inj_warmup_en(d)) >> 7;
+
  //apply correction from IAT sensor, use approximation instead of division
  //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
  //int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10); //my

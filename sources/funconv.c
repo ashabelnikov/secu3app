@@ -619,27 +619,6 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
 }
 
-uint8_t inj_warmup_en(struct ecudata_t* d)
-{
- int16_t i, i1, t = d->sens.temperat;
-
- if (!d->param.tmp_use)
-  return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
-
- //-30 - минимальное значение температуры
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_WARMUP_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_WARMUP_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GBU(inj_warmup[i]), _GBU(inj_warmup[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
-}
-
 uint8_t inj_aftstr_en(struct ecudata_t* d)
 {
  int16_t i, i1, t = d->sens.temperat;
@@ -736,6 +715,27 @@ int16_t inj_timing_lookup(struct ecudata_t* d)
 #endif //FUEL_INJECT
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
+uint8_t inj_warmup_en(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
+
+ //-30 - минимальное значение температуры
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - шаг между узлами интерпол€ции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_WARMUP_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_WARMUP_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GBU(inj_warmup[i]), _GBU(inj_warmup[i1]),  //<--values in table are unsigned
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+}
+
 int16_t inj_ae_tps_lookup(struct ecudata_t* d)
 {
  int8_t i;

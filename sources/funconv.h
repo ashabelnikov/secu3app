@@ -192,11 +192,6 @@ uint16_t inj_dead_time(struct ecudata_t* d);
  */
 uint16_t inj_cranking_pw(struct ecudata_t* d);
 
-/** Calculates warmup enrichemnt factor using a lookup table
- * \param d pointer to ECU data structure
- * \return Warmup enrichment * 128
- */
-uint8_t inj_warmup_en(struct ecudata_t* d);
 
 /** Calculates afterstart enrichemnt factor using a lookup table
  * \param d pointer to ECU data structure
@@ -223,6 +218,12 @@ int16_t inj_timing_lookup(struct ecudata_t* d);
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates warmup enrichemnt factor using a lookup table
+ * \param d pointer to ECU data structure
+ * \return Warmup enrichment * 128
+ */
+uint8_t inj_warmup_en(struct ecudata_t* d);
+
 /** Calculates TPS based acceleration value
  * \param d pointer to ECU data structure
  * \return acceleration factor * 128, value can be negative

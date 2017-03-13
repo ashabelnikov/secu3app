@@ -42,8 +42,9 @@
 #if !defined(CARB_AFR) || defined(GD_CONTROL)
 /** Fuel cut control logic for carburetor or gas doser
  * \param d Pointer to ECU data structure
+ * \param apply Apply to phisical output - 1, or not - 0 (IE will be turned off)
  */
-static void simple_fuel_cut(struct ecudata_t* d)
+static void simple_fuel_cut(struct ecudata_t* d, uint8_t apply)
 {
  //if throttle gate is opened, then open valve,reload timer and exit from condition
  if (d->sens.carb)
@@ -59,7 +60,10 @@ static void simple_fuel_cut(struct ecudata_t* d)
   else //petrol
    d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
- IOCFG_SET(IOP_IE, d->ie_valve);
+ if (apply)
+  IOCFG_SET(IOP_IE, d->ie_valve);
+ else
+  IOCFG_SET(IOP_IE, 0); //turn off valve
 }
 #endif
 
@@ -79,7 +83,7 @@ void fuelcut_control(struct ecudata_t* d)
 #ifdef GD_CONTROL
  if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
  {
-  simple_fuel_cut(d);   //fuel cut off for gas doser
+  simple_fuel_cut(d, 1);   //fuel cut off for gas doser
   goto revlim;
  }
 #endif
@@ -148,10 +152,7 @@ void fuelcut_control(struct ecudata_t* d)
  {
 #endif
   uint8_t off_icv_on_gas = IOCFG_CHECK(IOP_GD_STP); //turn off carburetor's idle cut off valve when gas doser is active
-  if (!d->sens.gas || !off_icv_on_gas)
-   simple_fuel_cut(d);
-  else
-   IOCFG_SET(IOP_IE, 0); //turn off valve
+  simple_fuel_cut(d, (!d->sens.gas || !off_icv_on_gas));
 
 #ifdef GD_CONTROL
   //simple Rev. limitter used only for gas doser

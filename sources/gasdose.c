@@ -233,7 +233,7 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 /** Calculate stepper motor position for normal mode
  * \param d pointer to ECU data structure
  * \param pwm 0 - stepper valve, 1 - PWM valve
- * \return stepper motor position in steps
+ * \return stepper motor position in steps or PWM duty (depending on pwm input parameter)
  */
 static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 {

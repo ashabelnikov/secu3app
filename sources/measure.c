@@ -325,17 +325,29 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
  }
 #else //use tables from RAM
 
- if (!IOCFG_CHECK(IOP_MAPSEL0))
- { //without additioanl selection input
+// uint8_t power_mode_sw = 0; //switch tables for different load modes
+// if (!power_mode_sw)
+// {
+  if (!IOCFG_CHECK(IOP_MAPSEL0))
+  { //without additioanl selection input
    select_table_set(d, d->sens.gas ? d->param.fn_gas : d->param.fn_gasoline);   //gas/petrol
- }
- else
- { //use! additional selection input
-  uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
-  if (d->sens.gas)
-   select_table_set(d, mapsel0 ? 1 : d->param.fn_gas);          //on gas
+  }
   else
-   select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
- }
+  { //use! additional selection input or power mode
+   uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
+   if (d->sens.gas)
+    select_table_set(d, mapsel0 ? 1 : d->param.fn_gas);          //on gas
+   else
+    select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
+  }
+// }
+// else
+// { //use power mode
+//  uint8_t mapsel0 = (d->sens.tps > TPS_MAGNITUDE(60.0));        //use second set of maps for current fuel if TPS > 60%
+//  if (d->sens.gas)
+//   select_table_set(d, mapsel0 ? 1 : d->param.fn_gas);          //on gas
+//  else
+//   select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
+// }
 #endif
 }

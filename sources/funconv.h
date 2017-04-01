@@ -257,6 +257,14 @@ uint16_t inj_prime_pw(struct ecudata_t* d);
  */
 uint16_t inj_idling_rpm(struct ecudata_t* d);
 
+/** Claculate idling regulator's rigidity
+ * \param d pointer to ECU data structure
+ * \param targ_map Idling inlet manifold pressure
+ * \param targ_rpm Idling RPM
+ * \return value * 128
+ */
+uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t targ_rpm);
+
 #endif
 
 #ifdef PA4_INP_IGNTIM

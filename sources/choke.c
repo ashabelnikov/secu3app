@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include "bitmask.h"
 #include "ecudata.h"
+#include "eculogic.h"
 #include "ioconfig.h"
 #include "funconv.h"
 #include "magnitude.h"
@@ -56,6 +57,7 @@
 #define CF_MAN_CNTR     1  //!< manual control mode flag
 #define CF_SMDIR_CHG    2  //!< flag, indicates that stepper motor direction has changed during motion
 #endif
+#define CF_CL_LOOP      3  //!< IAC closed loop flag
 
 #else // Carburetor's choke stuff
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
@@ -99,6 +101,11 @@ typedef struct
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
 #endif
 
+#ifdef FUEL_INJECT
+ int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
+ int16_t   iac_pos;        //!< IAC pos between call of the closed loop regulator
+#endif
+
 }choke_st_t;
 
 /**Instance of state variables */
@@ -123,6 +130,11 @@ void choke_init(void)
 #ifndef FUEL_INJECT
  chks.rpmreg_prev = 0;
  CLEARBIT(chks.flags, CF_RPMREG_ENEX);
+#endif
+#ifdef FUEL_INJECT
+ CLEARBIT(chks.flags, CF_CL_LOOP);
+ chks.prev_rpm_error = 0;
+ chks.iac_pos = 0;
 #endif
 }
 
@@ -300,15 +312,16 @@ void sm_motion_control(struct ecudata_t* d, int16_t pos)
 int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 {
 #ifdef FUEL_INJECT
- uint8_t ppos = 0; //position in percentage * 2
+
  switch(chks.strt_mode)
  {
   case 0:  //cranking mode
-   ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 0); //use crank pos
+   chks.iac_pos = inj_iac_pos_lookup(d, &chks.prev_temp, 0) << 1; //use crank pos
    if (d->st_block)
    {
+    CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
     chks.strt_t1 = s_timer_gtc();
-    chks.strt_mode = 1;
+    chks.strt_mode = CHECKBIT(d->param.idl_flags, IRF_USE_INJREG) ? 2 : 1; //skip soft crank-to-run IAC transition when closed loop enabled
    }
    break;
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
@@ -322,20 +335,81 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
      int16_t run_ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 1);  //run pos
      run_ppos-=(((((int32_t)(run_ppos - crnk_ppos)) * (d->param.inj_cranktorun_time - time_since_crnk) * 128) / d->param.inj_cranktorun_time) >> 7);
      restrict_value_to(&run_ppos, 0, 100 * 2); //0...100%
-     ppos = run_ppos;
+     chks.iac_pos = run_ppos << 1;
      break;    //use interpolated value
     }
    }
   case 2: //run mode
-   ppos = inj_iac_pos_lookup(d, &chks.prev_temp, 1); //run pos
+   if (CHECKBIT(d->param.idl_flags, IRF_USE_INJREG))
+   { //closed loop mode
+
+    //TODO: 1. ограничение оборотов интегратора
+    //      2. вызов процедуры регулятора по таймеру
+    //      3. коррекция наполнения по положению РХХ (чтобы смесь не уходила)
+    //      4. Смещение РХХ при включении вентилятора
+
+    int16_t rpm = inj_idling_rpm(d); //target RPM depending on the coolant temperature
+
+    //use addition value when vehicle starts to run
+#ifdef SPEED_SENSOR
+    if (IOCFG_CHECK(IOP_SPDSENS) && (d->sens.speed < 65530))
+     rpm += (d->param.rpm_on_run_add * 10);
+#endif
+    //calculate transition RPM thresholds
+    uint16_t rpm_thrd1 = (((uint32_t)rpm) * d->param.idl_coef_thrd1) >> 7;
+    uint16_t rpm_thrd2 = (((uint32_t)rpm) * d->param.idl_coef_thrd2) >> 7;
+
+    // go into the closed loop mode
+    if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d->engine_mode == EM_IDLE) && (d->sens.inst_frq < rpm_thrd1))
+    {
+     SETBIT(chks.flags, CF_CL_LOOP);
+    }
+    // go out from the closed loop
+    else if (CHECKBIT(chks.flags, CF_CL_LOOP) && ((d->engine_mode != EM_IDLE) || (d->sens.inst_frq > rpm_thrd2)))
+    {
+     chks.iac_pos += (d->param.idl_to_run_add << 1);
+     CLEARBIT(chks.flags, CF_CL_LOOP); //exit
+    }
+
+    //closed loop mode is active
+    if (CHECKBIT(chks.flags, CF_CL_LOOP))
+    {
+     uint16_t rigidity = inj_idlreg_rigidity(d, d->param.idl_map_value, rpm);  //regulator's rigidity
+     int16_t derror, error = rpm - d->sens.frequen;
+     if (abs(error) > (d->param.idl_intrpm_lim * 10)) //limit maximum error
+      error = (d->param.idl_intrpm_lim * 10);
+     derror = error - chks.prev_rpm_error;
+
+     if ((d->sens.temperat >= d->param.idlreg_turn_on_temp) || (d->sens.frequen >= rpm))
+     { //hot engine or RPM above or equal target idling RPM
+      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d->param.idl_reg_p) + ((int32_t)error * d->param.idl_reg_i))) >> (8+7));
+     }
+     else
+     { //cold engine
+      if ((error > 0) && (derror > 0)) //works only if errors are positive
+       chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d->param.idl_reg_p)) >> (8+7));
+     }
+
+     chks.prev_rpm_error = error; //save for further calculation of derror
+     restrict_value_to(&chks.iac_pos, 0, 400); //do we actually need this restriction?
+    }
+
+   }
+   else
+   { //open loop mode
+    chks.iac_pos = inj_iac_pos_lookup(d, &chks.prev_temp, 1) << 1; //run pos
+   }
+
    if (!d->st_block)
-    chks.strt_mode = 0; //engine is stopped, so go into the cranking mode again
+    chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
    break;
  }
+
  if (pwm)
-  return ((((int32_t)256) * ppos) / 200); //convert percentage position to PWM duty
+  return ((((int32_t)256) * chks.iac_pos) / 400); //convert percentage position to PWM duty
  else
-  return ((((int32_t)d->param.sm_steps) * ppos) / 200); //convert percentage position to SM steps
+  return ((((int32_t)d->param.sm_steps) * chks.iac_pos) / 400); //convert percentage position to SM steps
+
 #else //carburetor
  if (d->param.tmp_use)
   return ((((int32_t)d->param.sm_steps) * choke_closing_lookup(d, &chks.prev_temp)) / 200) + calc_startup_corr(d);

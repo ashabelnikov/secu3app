@@ -105,6 +105,9 @@
 //For indling target RPM
 #define _IR(v) ROUND((v) / 10.0)
 
+//For indling regulator's rigidity function
+#define _IRR(v) ROUND(((v) * 128.0))
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -208,7 +211,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {0,0,0},
 
   /**Version of the firmware. Do not forget to write out same value into the signature info! */
-  0x46,
+  0x47,
 
   /**2 bytes - size of this structure. */
   sizeof(cd_data_t)
@@ -370,6 +373,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_lambda_dead_band =        VOLTAGE_MAGNITUDE(0.0), //zero dead band by default
 
   .load_src_cfg =                0,                    //default is MAP
+
+  .idl_to_run_add =              60,                   //30%
+  .rpm_on_run_add =              20,                   //200 min-1
+  .idl_reg_p =                   25,                   //0.1 (proportional)
+  .idl_reg_i =                   25,                   //0.1 (integral)
+  .idl_coef_thrd1 =              64,                   //0.5
+  .idl_coef_thrd2 =              110,                  //0.86
+  .idl_intrpm_lim =              20,                   //200 min-1
+  .idl_map_value =               1600,                 //25 kPa
 
   .reserved =                    {0},
   .crc =                         0
@@ -594,6 +606,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
    },
 
+   /**Fill idle regulator's rigidity function*/
+   {
+    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -742,6 +759,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    /**Fill idle target RPM vs coolant temperature */
    {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
     _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
+   },
+
+   /**Fill idle regulator's rigidity function*/
+   {
+    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
    },
 
    /**reserved bytes */
@@ -893,6 +915,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
    },
 
+   /**Fill idle regulator's rigidity function*/
+   {
+    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1042,6 +1069,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
    },
 
+   /**Fill idle regulator's rigidity function*/
+   {
+    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+   },
+
    /**reserved bytes */
    {0}
   }
@@ -1051,7 +1083,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   * Date in format Mmm dd yyyy.
   * Do not forget to write out same value of version into to the fw_version field of cd_data_t!
   */
- {"SECU-3 firmware v4.6. Build ["__DATE__"]       "},
+ {"SECU-3 firmware v4.7. Build ["__DATE__"]       "},
 
  /**Version of this structure - 0.0*/
  0x00,
@@ -1218,6 +1250,11 @@ PGM_DECLARE(f_data_t tt_def_data) =
  /**Fill idle target RPM vs coolant temperature */
  {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
   _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
+ },
+
+ /**Fill idle regulator's rigidity function*/
+ {
+  _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
  },
 
  /**reserved bytes */

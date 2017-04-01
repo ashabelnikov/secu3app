@@ -67,6 +67,8 @@ uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #define ETMT_AERPM_MAP 13   //!< AE RPM map
 #define ETMT_AFTSTR_MAP 14  //!< afterstart enrichment
 #define ETMT_IT_MAP   15    //!< injection timing map
+#define ETMT_ITRPM_MAP 16   //!< idling RPM
+#define ETMT_RIGID_MAP 17   //!< idl. regulator's rigidity map
 
 /**Define internal state variables */
 typedef struct
@@ -407,6 +409,15 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->param.idlreg_min_angle);
    build_i16h(d->param.idlreg_max_angle);
    build_i16h(d->param.idlreg_turn_on_temp);
+   //closed loop parameters:
+   build_i8h(d->param.idl_to_run_add);
+   build_i8h(d->param.rpm_on_run_add);
+   build_i16h(d->param.idl_reg_p);
+   build_i16h(d->param.idl_reg_i);
+   build_i8h(d->param.idl_coef_thrd1);
+   build_i8h(d->param.idl_coef_thrd2);
+   build_i8h(d->param.idl_intrpm_lim);
+   build_i16h(d->param.idl_map_value);
    break;
 
   case ANGLES_PAR:
@@ -859,10 +870,21 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      if (wrk_index >= INJ_VE_POINTS_L-1 )
      {
       wrk_index = 0;
-      state = ETMT_STRT_MAP;
+      state = ETMT_ITRPM_MAP;
      }
      else
       ++wrk_index;
+     break;
+    case ETMT_ITRPM_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d->tables_ram.inj_target_rpm, INJ_TARGET_RPM_TABLE_SIZE);
+     state = ETMT_RIGID_MAP;
+     break;
+     break;
+    case ETMT_RIGID_MAP:
+     build_i8h(0); //<-- not used, because size of table is not above 16 bytes (8 values * 2 bytes)
+     build_rw((uint16_t*)&d->tables_ram.inj_idl_rigidity, INJ_IDL_RIGIDITY_SIZE);
+     state = ETMT_STRT_MAP;
      break;
    }
    break;
@@ -989,6 +1011,15 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.idlreg_min_angle = recept_i16h();
    d->param.idlreg_max_angle = recept_i16h();
    d->param.idlreg_turn_on_temp = recept_i16h();
+   //closed loop parameters:
+   d->param.idl_to_run_add = recept_i8h();
+   d->param.rpm_on_run_add = recept_i8h();
+   d->param.idl_reg_p = recept_i16h();
+   d->param.idl_reg_i = recept_i16h();
+   d->param.idl_coef_thrd1 = recept_i8h();
+   d->param.idl_coef_thrd2 = recept_i8h();
+   d->param.idl_intrpm_lim = recept_i8h();
+   d->param.idl_map_value = recept_i16h();
    break;
 
   case ANGLES_PAR:
@@ -1246,6 +1277,12 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
      break;
     case ETMT_IT_MAP:   //Injection timing
      recept_rb(((uint8_t*)&d->tables_ram.inj_timing[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
+     break;
+    case ETMT_ITRPM_MAP: //Idling RPM map
+     recept_rb(((uint8_t*)&d->tables_ram.inj_target_rpm) + addr, INJ_TARGET_RPM_TABLE_SIZE); /*INJ_TARGET_RPM_TABLE_SIZE max*/
+     break;
+    case ETMT_RIGID_MAP: //Idling regulator's rigidity function
+     recept_rw(((uint16_t*)&d->tables_ram.inj_idl_rigidity) + addr, INJ_IDL_RIGIDITY_SIZE); /*INJ_IDL_RIGIDITY_SIZE max*/
      break;
    }
   }

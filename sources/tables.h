@@ -88,6 +88,7 @@
 #define INJ_AE_RPM_LOOKUP_TABLE_SIZE    4           //!< number of points in AE RPM lookup table size
 #define INJ_AFTSTR_LOOKUP_TABLE_SIZE    16          //!< afterstart enrichment lookup table
 #define INJ_TARGET_RPM_TABLE_SIZE       16          //!< idling target RPM lookup table size
+#define INJ_IDL_RIGIDITY_SIZE           8           //! size of the idling regulator's rigidity function lookup table
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -135,6 +136,7 @@
 //Idling regulator flags
 #define IRF_USE_REGULATOR               0           //!< Use regulator (keep selected idling RPM by alternating advance angle)
 #define IRF_USE_REGONGAS                1           //!< Use regulator if fuel type is gas
+#define IRF_USE_INJREG                  2           //!< Using of closed loop mode for IAC valve (fuel injection only)
 
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
 typedef struct f_data_t
@@ -169,10 +171,12 @@ typedef struct f_data_t
 
   uint8_t inj_target_rpm[INJ_TARGET_RPM_TABLE_SIZE];  //!< target RPM on idling (value / 10)
 
+  uint16_t inj_idl_rigidity[INJ_IDL_RIGIDITY_SIZE];   //!< table containing idling regulator's rigidity function (value * 128)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[430];
+  uint8_t reserved[414];
 }f_data_t;
 
 
@@ -408,10 +412,19 @@ typedef struct params_t
 
   uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - TPS)
 
+  uint8_t  idl_to_run_add;               //!< Value (in %) added to IAC position when exiting from closed loop (value * 2)
+  uint8_t  rpm_on_run_add;               //!< Value added to target RPM when vehicle starts to run (min-1, value / 10)
+  uint16_t idl_reg_p;                    //!< IAC closeed loop proportional coefficient (value * 256, max 5.0)
+  uint16_t idl_reg_i;                    //!< IAC closed loop integral coefficient (value * 256, max 5.0)
+  uint8_t  idl_coef_thrd1;               //!< coefficient for calculating closed loop entering RPM threshold (value * 128, max 2.0)
+  uint8_t  idl_coef_thrd2;               //!< coefficient for calculating closed loop leaving RPM threshold (value * 128, max 2.0)
+  uint8_t  idl_intrpm_lim;               //!< RPM error limit for integrator (min-1, value / 10, max 1200)
+  uint16_t idl_map_value;                //!< intake manifold pressure on idling (kPa * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[63];
+  uint8_t  reserved[52];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

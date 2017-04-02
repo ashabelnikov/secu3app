@@ -822,29 +822,10 @@ uint16_t inj_idling_rpm(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
 }
 
-
-/*
-//SQRT()
-uint16_t ui16_sqrt(uint16_t x)
-{
- uint16_t m, y, b;
- m = 0x4000;
- y = 0;
- while (m != 0)
- {
-  b = y | m;
-  y = y >> 1;
-  if (x >= b)
-  {
-   x = x - b;
-   y = y | m;
-  }
-  m = m >> 2;
- }
- return y;
-}
-*/
-
+/** Square root calculation
+ * \param input Input value
+ * \return SQRT(input)
+ */
 static uint16_t ui32_sqrt(uint32_t input)
 {
  unsigned long mask = 0x40000000, sqr = 0, temp;
@@ -862,16 +843,18 @@ static uint16_t ui32_sqrt(uint32_t input)
  return (uint16_t)sqr;
 }
 
-
 uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
+ uint8_t k_load = ROUND(2.0*32), k_rpm = ROUND(2.0*32); //value * 32, max 6.0
 
  //normalize values (function argument components)
- int16_t dload = (((int32_t)abs(d->sens.map - targ_map) * 8192) / (d->param.map_upper_pressure - d->param.map_lower_pressure)) >> 3;
- int16_t drpm = (((int32_t)abs(d->sens.inst_frq - targ_rpm) * 8192) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 3;
+ //as a result dload and drpm values multiplied by 1024
+ //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
+ int16_t dload = (((int32_t)abs(d->sens.map - targ_map) * (int16_t)128 * k_load) / (d->param.map_upper_pressure - d->param.map_lower_pressure)) >> 2;
+ int16_t drpm = (((int32_t)abs(d->sens.inst_frq - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
 
- //calculate argument R = SQRT(x^2 + y^2)
+ //calculate argument R = SQRT(dload^2 + drpm^2)
  int16_t i, i1, R = ui32_sqrt(((int32_t)dload * dload) + ((int32_t)drpm * drpm));
 
  if (R > RAD_MAG(1.0))
@@ -883,7 +866,7 @@ uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t ta
   else i1 = i + 1;
 
  return simple_interpolation(R, _GWU(inj_idl_rigidity[i]), _GWU(inj_idl_rigidity[i1]),  //<--values in table are unsigned
-        (i * VOLTAGE_MAGNITUDE(0.1428)), VOLTAGE_MAGNITUDE(0.1428), 8) >> 3;
+        (i * RAD_MAG(0.1428)), RAD_MAG(0.1428), 8) >> 3;
 }
 
 #endif //FUEL_INJECT

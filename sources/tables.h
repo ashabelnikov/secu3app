@@ -416,8 +416,8 @@ typedef struct params_t
   uint8_t  rpm_on_run_add;               //!< Value added to target RPM when vehicle starts to run (min-1, value / 10)
   uint16_t idl_reg_p;                    //!< IAC closeed loop proportional coefficient (value * 256, max 5.0)
   uint16_t idl_reg_i;                    //!< IAC closed loop integral coefficient (value * 256, max 5.0)
-  uint8_t  idl_coef_thrd1;               //!< coefficient for calculating closed loop entering RPM threshold (value * 128, max 2.0)
-  uint8_t  idl_coef_thrd2;               //!< coefficient for calculating closed loop leaving RPM threshold (value * 128, max 2.0)
+  uint8_t  idl_coef_thrd1;               //!< coefficient for calculating closed loop entering RPM threshold (value - 1.0) * 128, max 1.99)
+  uint8_t  idl_coef_thrd2;               //!< coefficient for calculating closed loop leaving RPM threshold (value - 1.0) * 128, max 1.99)
   uint8_t  idl_intrpm_lim;               //!< RPM error limit for integrator (min-1, value / 10, max 1200)
   uint16_t idl_map_value;                //!< intake manifold pressure on idling (kPa * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER)
 

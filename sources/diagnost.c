@@ -72,7 +72,11 @@ void diagnost_start(void)
 
 void diagnost_stop(void)
 {
- sop_set_operation(SOP_SEND_NC_LEAVE_DIAG);
+ if (diag.diag_started)
+ {
+  sop_set_operation(SOP_SEND_NC_LEAVE_DIAG);
+  diag.diag_started = 0;
+ }
 }
 
 /**Initialization of outputs in diagnostic mode. All outputs are OFF*/

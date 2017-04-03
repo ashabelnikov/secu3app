@@ -49,4 +49,8 @@ void pwrrelay_control(struct ecudata_t* d);
  */
 uint8_t pwrrelay_get_state(void);
 
+/** Init active stepper motors used in the system
+ */
+void pwrrelay_init_steppers(struct ecudata_t* d);
+
 #endif //_PWRRELAY_H_

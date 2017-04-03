@@ -54,6 +54,11 @@ uint8_t gasdose_is_ready(void);
  */
 void gasdose_stroke_event_notification(struct ecudata_t* d);
 
+/**Init stepper motor
+ * \param d pointer to ECU data structure
+ */
+void gasdose_init_motor(struct ecudata_t* d);
+
 #endif
 
 #endif //_GASDOSE_H_

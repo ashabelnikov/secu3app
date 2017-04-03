@@ -49,6 +49,11 @@ void choke_control(struct ecudata_t* d);
  * \return 1 - choke is ready, 0 - choke is not ready
  */
 uint8_t choke_is_ready(void);
+
+/**Init stepper motor
+ * \param d pointer to ECU data structure
+ */
+void choke_init_motor(struct ecudata_t* d);
 #endif
 
 #endif

@@ -946,6 +946,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
 //TODO: remove it from here. It must be in secu3.c, use callback. E.g. on_bl_starting()
 /** Initialization of used I/O ports (производит инициализацию линий портов) */
 void ckps_init_ports(void);
+void sop_send_gonna_bl_start(struct ecudata_t* d);
+void pwrrelay_init_steppers(struct ecudata_t* d);
 
 uint8_t uart_recept_packet(struct ecudata_t* d)
 {
@@ -969,12 +971,19 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 
   case BOOTLOADER:
    //TODO: in the future use callback and move following code out
+   //init steppers if necessary
+   pwrrelay_init_steppers(d);
+
    //передатчик зан€т. необходимо подождать его освобождени€ и только потом запускать бутлоадер
    while (uart_is_sender_busy()) { wdt_reset_timer(); }
+
+   //send confirmation that firmware is ready to start boot loader
+   sop_send_gonna_bl_start(d);
+
    //если в бутлоадере есть команда "cli", то эту строчку можно убрать
    _DISABLE_INTERRUPT();
    ckps_init_ports();
-   //прыгаем на бутлоадер мину€ проверку перемычки
+   //jump to the boot loader code skipping check of jumper's state
    boot_loader_start();
    break;
 

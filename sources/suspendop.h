@@ -67,6 +67,7 @@
 #define OPCODE_DIAGNOST_LEAVE        7    //!< leave diagnostic mode
 #endif
 #define OPCODE_RESET_EEPROM       0xCF    //!< reset EEPROM, second byte must be 0xAA
+#define OPCODE_BL_CONFIRM         0xCB    //!< boot loader starting confirmation
 struct ecudata_t;
 
 /**Set specified operation to execution queue (установка указанной рперации в очередь на выполнение)
@@ -87,5 +88,10 @@ void sop_init_operations(void);
  * \param d pointer to ECU data structure
  */
 void sop_execute_operations(struct ecudata_t* d);
+
+/** Send confirmation saying that firmare has finished all preparations and is going to start a boot loader
+ * \param d pointer to ECU data structure
+ */
+void sop_send_gonna_bl_start(struct ecudata_t* d);
 
 #endif //#define _SUSPOP_H_

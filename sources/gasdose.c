@@ -390,4 +390,9 @@ void gasdose_stroke_event_notification(struct ecudata_t* d)
   --gds.acc_strokes;
 }
 
+void gasdose_init_motor(struct ecudata_t* d)
+{
+ initial_pos(d, INIT_POS_DIR);
+}
+
 #endif //GD_CONTROL

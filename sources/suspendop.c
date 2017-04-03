@@ -319,3 +319,13 @@ void sop_execute_operations(struct ecudata_t* d)
 #endif
  }
 }
+
+void sop_send_gonna_bl_start(struct ecudata_t* d)
+{
+ //send confirmation that firmware is ready to start boot loader
+ _AB(d->op_comp_code, 0) = OPCODE_BL_CONFIRM;
+ _AB(d->op_comp_code, 1) = 0xBC;
+ uart_send_packet(d, OP_COMP_NC);
+ //delay 25ms
+ delay_25ms();
+}

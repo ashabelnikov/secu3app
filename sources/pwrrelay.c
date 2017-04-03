@@ -35,6 +35,11 @@
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "vstimer.h"
+#include "smcontrol.h"
+#include "gdcontrol.h"
+#include "choke.h"
+#include "gasdose.h"
+#include "wdt.h"
 
 /**Define state variables */
 typedef struct
@@ -110,4 +115,37 @@ void pwrrelay_control(struct ecudata_t* d)
 uint8_t pwrrelay_get_state(void)
 {
  return (pwrs.pwrdown == 0);
+}
+
+void pwrrelay_init_steppers(struct ecudata_t* d)
+{
+ int cnt = 6000;
+
+ if (!IOCFG_CHECK(IOP_PWRRELAY))
+  return; //do nothing if power management is not used
+
+#ifdef SM_CONTROL
+ if (IOCFG_CHECK(IOP_SM_STP))
+  choke_init_motor(d);   //send initialization command to choke/IAC motor
+#endif
+#ifdef GD_CONTROL
+ if (IOCFG_CHECK(IOP_GD_STP))
+  gasdose_init_motor(d); //send initialization command to stepper gas valve motor
+#endif
+
+ //wait while at least one of the motors is busy, but no more than several seconds
+ while(0
+#ifdef SM_CONTROL
+ || stpmot_is_busy()
+#endif
+#ifdef GD_CONTROL
+ || gdstpmot_is_busy()
+#endif
+ )
+ {
+  wdt_reset_timer();
+  _DELAY_US(1000);
+  if (--cnt <= 0)
+   break;
+ }
 }

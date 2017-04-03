@@ -545,6 +545,11 @@ uint8_t choke_is_ready(void)
 {
  return (chks.state == 5 || chks.state == 3) || !IOCFG_CHECK(IOP_SM_STP);
 }
+
+void choke_init_motor(struct ecudata_t* d)
+{
+ initial_pos(d, INIT_POS_DIR);
+}
 #endif
 
 #endif //SM_CONTROL || FUEL_INJECT

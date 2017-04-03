@@ -194,7 +194,7 @@ typedef struct
 {
  //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
  int16_t output_state;   //!< regulator's memory
- uint8_t enter_state;    //!< 
+ uint8_t enter_state;    //!< used for entering delay implementation
 }idlregul_state_t;
 
 /**Variable. State data for idling regulator */
@@ -214,6 +214,7 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
  int16_t error,factor;
  //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
  uint16_t capture_range = 200;
+ #define IRUSDIV 1
 
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
@@ -230,14 +231,14 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
   switch(idl_prstate.enter_state)
   {
    case 0:
-    s_timer_set(*io_timer,IDLE_ENTER_TIME_VALUE);
-    idl_prstate.enter_state = 1;
+    s_timer_set(*io_timer, IDLE_ENTER_TIME_VALUE);
+    ++idl_prstate.enter_state; //=1
     return 0; //no correction
    case 1:
     if (s_timer_is_action(*io_timer))
     {
-     idl_prstate.enter_state = 2;
-     s_timer_set(*io_timer,IDLE_PERIOD_TIME_VALUE);
+     ++idl_prstate.enter_state; //=2
+     s_timer_set(*io_timer, IDLE_PERIOD_TIME_VALUE);
      break;
     }
     return 0; //no correction
@@ -251,24 +252,24 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
  error = d->param.idling_rpm - d->sens.frequen;
  restrict_value_to(&error, -200, 200);
  if (abs(error) <= d->param.MINEFR)
-  return idl_prstate.output_state;
+  return idl_prstate.output_state >> IRUSDIV;
 
- //выбираем необходимый коэффициент регулятора, в зависимости от знака ошибки
+ //select corresponding coefficient depending on sign of error
  if (error > 0)
   factor = d->param.ifac1;
  else
   factor = d->param.ifac2;
 
- //изменяем значение коррекции только по таймеру idle_period_time_counter
+ //update regulator's value only by timer events
  if (s_timer_is_action(*io_timer))
  {
-  s_timer_set(*io_timer,IDLE_PERIOD_TIME_VALUE);
-  idl_prstate.output_state = idl_prstate.output_state + (error * factor) / 4;
+  s_timer_set(*io_timer, IDLE_PERIOD_TIME_VALUE);
+  idl_prstate.output_state+= (((int32_t)error) * factor) >> 8; //factor multiplied by 256
  }
- //ограничиваем коррекцию нижним и верхним пределами регулирования
- restrict_value_to(&idl_prstate.output_state, d->param.idlreg_min_angle, d->param.idlreg_max_angle);
+ //limit correction by min and max values, specified by user
+ restrict_value_to(&idl_prstate.output_state, d->param.idlreg_min_angle << IRUSDIV, d->param.idlreg_max_angle << IRUSDIV);
 
- return idl_prstate.output_state;
+ return idl_prstate.output_state >> IRUSDIV;
 }
 
 //Нелинейный фильтр ограничивающий скорость изменения УОЗ на переходных режимах двигателя

@@ -253,8 +253,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .idl_flags =                   _BV(IRF_USE_REGONGAS), //use regulator on gas
   .idling_rpm =                  800,
-  .ifac1 =                       4,
-  .ifac2 =                       4,
+  .ifac1 =                       25,
+  .ifac2 =                       25,
   .MINEFR =                      20,
   .idlreg_min_angle =           -160,
   .idlreg_max_angle =            320,

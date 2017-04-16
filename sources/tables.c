@@ -64,6 +64,9 @@
 /**For specifying values in AFR table*/
 #define _FR(v) ROUND((1.0/(v)*2048.0))
 
+/**For specifying values in EGO curve table*/
+#define _ER(v) ROUND((1.0/(v)*32768.0))
+
 /**For setting cylinder displacement value*/
 #define CYL_DISP(v) ROUND(((v)*16384.0))
 
@@ -383,6 +386,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_intrpm_lim =              20,                   //200 min-1
   .idl_map_value =               1600,                 //25 kPa
 
+  .inj_lambda_senstype =         0,                    //NBO sensor type
+  .gd_lambda_stoichval =         131,                  //15.6
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -611,6 +617,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
    },
 
+   /**Fill EGO AFR curve look up table*/
+   {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
+   ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
+
    /**reserved bytes */
    {0}
   },
@@ -766,6 +776,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
    },
 
+   /**Fill EGO AFR curve looku up table*/
+   {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
+   ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
+
    /**reserved bytes */
    {0}
   },
@@ -920,6 +934,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
    },
 
+   /**Fill EGO AFR curve looku up table*/
+   {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
+   ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
+
    /**reserved bytes */
    {0}
   },
@@ -1073,6 +1091,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
    },
+
+   /**Fill EGO AFR curve looku up table*/
+   {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
+   ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
 
    /**reserved bytes */
    {0}
@@ -1256,6 +1278,10 @@ PGM_DECLARE(f_data_t tt_def_data) =
  {
   _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
  },
+
+ /**Fill EGO AFR curve looku up table*/
+ {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
+ ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
 
  /**reserved bytes */
  {0}

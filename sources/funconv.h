@@ -257,7 +257,7 @@ uint16_t inj_prime_pw(struct ecudata_t* d);
  */
 uint16_t inj_idling_rpm(struct ecudata_t* d);
 
-/** Claculate idling regulator's rigidity
+/** Calculate idling regulator's rigidity
  * \param d pointer to ECU data structure
  * \param targ_map Idling inlet manifold pressure
  * \param targ_rpm Idling RPM
@@ -275,10 +275,22 @@ int16_t pa4_function(uint16_t adcvalue);
 
 #ifdef GD_CONTROL
 /**Use VE and AFR tables for gas dosator. Result = VE * AFR * K, where K is stoichiometry constant
+ * \param d pointer to ECU data structure
  * \return value * 2048
  */
 uint16_t gd_ve_afr(struct ecudata_t* d);
 #endif
 
+#if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
+/** Converts ADC value (voltage) into AFR
+ * \param d pointer to ECU data structure
+ * \return (1/AFR) * 32768
+ */
+int16_t ego_curve_lookup(struct ecudata_t* d);
+
+int16_t ego_curve_min(struct ecudata_t* d);
+int16_t ego_curve_max(struct ecudata_t* d);
+
+#endif
 
 #endif //_FUNCONV_H_

@@ -122,27 +122,33 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  }
 #endif
 
+
+ //used only by fuel injection and gas doser
+ if (d->param.inj_lambda_senstype==0)
+ { //NBO sensor type
+  if (d->corr.afr !=
+#ifdef GD_CONTROL
+  ((d->sens.gas && IOCFG_CHECK(IOP_GD_STP)) ? d->param.gd_lambda_stoichval : 139)
+#else
+  139 //14.7
+#endif
+     ) //EGO allowed only when AFR=14.7 for petrol, and 15.6 for LPG
+  {
+   d->corr.lambda = 0;
+   return; //not a stoichiometry AFR
+  }
+ }
+ else
+ { //WBO sensor type or emulation
+  if ((d->corr.afr < (ego_curve_min(d) >> 4)) || (d->corr.afr > (ego_curve_max(d) >> 4)))
+  {
+   d->corr.lambda = 0;
+   return; //not a stoichiometry AFR
+  }
+ }
+
 #endif // FUEL_INJECT || GD_CONTROL
 
-
-//used only by fuel injection and must not be used when gas doser is active (gas fuel)
-#ifdef FUEL_INJECT
-
-#ifdef GD_CONTROL
- if (!(d->sens.gas && IOCFG_CHECK(IOP_GD_STP))) {
-#endif
-
- if (d->corr.afr != 139) //EGO allowed only when AFR=14.7
- {
-  d->corr.lambda = 0;
-  return; //not 14.7
- }
-
-#ifdef GD_CONTROL
- }
-#endif
-
-#endif //FUEL_INJECT
 
  //Reset EGO correction each time fuel type(set of maps) is changed (triggering of level on the GAS_V input)
  if (ego.gasv_prev != d->sens.gas)
@@ -163,17 +169,18 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
     ego.stroke_counter = d->param.inj_lambda_str_per_stp;
 
 ////////////////////////////////////////////////////////////////////////////////////////
-    //update EGO correction (with deadband)
-    int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
-    int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
-    if (int_p_thrd < 0)
-     int_p_thrd = 0;
+    if (d->param.inj_lambda_senstype==0)
+    { //NBO sensor type
+     //update EGO correction (with deadband)
+     int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
+     int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
+     if (int_p_thrd < 0)
+      int_p_thrd = 0;
 
-    if (d->sens.add_i1 > int_m_thrd)
-     d->corr.lambda-=d->param.inj_lambda_step_size_m;
-    else if (d->sens.add_i1 < int_p_thrd)
-     d->corr.lambda+=d->param.inj_lambda_step_size_p;
-////////////////////////////////////////////////////////////////////////////////////////
+     if (d->sens.add_i1 > int_m_thrd)
+      d->corr.lambda-=d->param.inj_lambda_step_size_m;
+     else if (d->sens.add_i1 < int_p_thrd)
+      d->corr.lambda+=d->param.inj_lambda_step_size_p;
 
 /*  //update EGO correction (simple switch point)
     if (d->sens.add_i1 > d->param.inj_lambda_swt_point)
@@ -181,6 +188,17 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
     else if (d->sens.add_i1 < d->param.inj_lambda_swt_point)
      d->corr.lambda+=d->param.inj_lambda_step_size_p;
 */
+    }
+    else
+    { //WBO sensor type (or emulation)
+     uint16_t sens_afr = ego_curve_lookup(d) >> 4;
+     if (sens_afr < d->corr.afr)
+      d->corr.lambda-=d->param.inj_lambda_step_size_m;
+     else if (sens_afr > d->corr.afr)
+      d->corr.lambda+=d->param.inj_lambda_step_size_p;
+    }
+////////////////////////////////////////////////////////////////////////////////////////
+
 
 #ifdef GD_CONTROL
     //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))

@@ -69,6 +69,7 @@ uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #define ETMT_IT_MAP   15    //!< injection timing map
 #define ETMT_ITRPM_MAP 16   //!< idling RPM
 #define ETMT_RIGID_MAP 17   //!< idl. regulator's rigidity map
+#define ETMT_EGOCRV_MAP 18  //!< EGO curve (WBO emulation)
 
 /**Define internal state variables */
 typedef struct
@@ -685,6 +686,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.gd_fc_closing);
    build_i16h(d->param.gd_lambda_corr_limit_p);
    build_i16h(d->param.gd_lambda_corr_limit_m);
+   build_i8h(d->param.gd_lambda_stoichval);
    break;
 #endif
 
@@ -738,6 +740,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   build_i16h(d->param.inj_lambda_rpm_thrd);
   build_i8h(d->param.inj_lambda_activ_delay);
   build_i16h(d->param.inj_lambda_dead_band);
+  build_i8h(d->param.inj_lambda_senstype);
   break;
 #endif
 
@@ -880,11 +883,21 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      build_rb((uint8_t*)&d->tables_ram.inj_target_rpm, INJ_TARGET_RPM_TABLE_SIZE);
      state = ETMT_RIGID_MAP;
      break;
-     break;
     case ETMT_RIGID_MAP:
      build_i8h(0); //<-- not used, because size of table is not above 16 bytes (8 values * 2 bytes)
      build_rw((uint16_t*)&d->tables_ram.inj_idl_rigidity, INJ_IDL_RIGIDITY_SIZE);
-     state = ETMT_STRT_MAP;
+     state = ETMT_EGOCRV_MAP;
+     break;
+    case ETMT_EGOCRV_MAP:
+     build_i8h(wrk_index*(INJ_EGO_CURVE_SIZE/2));
+     build_rw((uint16_t*)&d->tables_ram.inj_ego_curve[wrk_index*(INJ_EGO_CURVE_SIZE/2)], (wrk_index < 2) ? INJ_EGO_CURVE_SIZE/2 : 2);
+     if (wrk_index >= 2)
+     {
+      wrk_index = 0;
+      state = ETMT_STRT_MAP;
+     }
+     else
+      ++wrk_index;
      break;
    }
    break;
@@ -1158,6 +1171,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.gd_fc_closing = recept_i8h();
    d->param.gd_lambda_corr_limit_p = recept_i16h();
    d->param.gd_lambda_corr_limit_m = recept_i16h();
+   d->param.gd_lambda_stoichval = recept_i8h();
    break;
 #endif
 
@@ -1222,6 +1236,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   d->param.inj_lambda_rpm_thrd = recept_i16h();
   d->param.inj_lambda_activ_delay = recept_i8h();
   d->param.inj_lambda_dead_band = recept_i16h();
+  d->param.inj_lambda_senstype = recept_i8h();
   break;
 #endif
 
@@ -1292,6 +1307,9 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
      break;
     case ETMT_RIGID_MAP: //Idling regulator's rigidity function
      recept_rw(((uint16_t*)&d->tables_ram.inj_idl_rigidity) + addr, INJ_IDL_RIGIDITY_SIZE); /*INJ_IDL_RIGIDITY_SIZE max*/
+     break;
+    case ETMT_EGOCRV_MAP: //EGO curve (WBO emulation)
+     recept_rw(((uint16_t*)&d->tables_ram.inj_ego_curve) + addr, INJ_EGO_CURVE_SIZE/2); /*INJ_EGO_CURVE_SIZE/2 max*/
      break;
    }
   }

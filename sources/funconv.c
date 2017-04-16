@@ -844,6 +844,7 @@ static uint16_t ui32_sqrt(uint32_t input)
  return (uint16_t)sqr;
 }
 
+
 uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
@@ -966,7 +967,7 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
 
  corr=(corr * afr)>>11; //apply AFR value
 
- corr=(corr * ROUND(15.6*1024))>>10; //multiply by 15.6 (hardcoded stoichiometry value for propane/butane mixture)
+ corr=(corr * 2048) / d->param.gd_lambda_stoichval; // multiply by stoichiometry AFR value specified by user
 
  //d->corr.afr=afr>>4;          //update value of AFR
 
@@ -974,3 +975,40 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
 }
 
 #endif //GD_CONTROL
+
+
+#if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
+int16_t ego_curve_lookup(struct ecudata_t* d)
+{
+ int16_t i, i1, voltage = d->sens.add_i1;
+
+ //Voltage value at the start of axis in ADC discretes
+ uint16_t v_start = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE]);
+ //Voltage value at the end of axis in ADC discretes
+ uint16_t v_end = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE+1]);
+
+ uint16_t v_step = (v_end - v_start) / (INJ_EGO_CURVE_SIZE - 1);
+
+ if (voltage < v_start)
+  voltage = v_start;
+
+ i = (voltage - v_start) / v_step;
+
+ if (i >= INJ_EGO_CURVE_SIZE-1) i = i1 = INJ_EGO_CURVE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(voltage, _GWU(inj_ego_curve[i]), _GWU(inj_ego_curve[i1]), //<--values in table are unsigned
+        (i * v_step) + v_start, v_step, 4)) >> 2;
+}
+
+int16_t ego_curve_min(struct ecudata_t* d)
+{
+ return _GWU(inj_ego_curve[0]);
+}
+
+int16_t ego_curve_max(struct ecudata_t* d)
+{
+ return _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE-1]);
+}
+
+#endif

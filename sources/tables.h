@@ -89,6 +89,7 @@
 #define INJ_AFTSTR_LOOKUP_TABLE_SIZE    16          //!< afterstart enrichment lookup table
 #define INJ_TARGET_RPM_TABLE_SIZE       16          //!< idling target RPM lookup table size
 #define INJ_IDL_RIGIDITY_SIZE           8           //! size of the idling regulator's rigidity function lookup table
+#define INJ_EGO_CURVE_SIZE              16          //!< oxygen sensor AFR curve
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -173,10 +174,13 @@ typedef struct f_data_t
 
   uint16_t inj_idl_rigidity[INJ_IDL_RIGIDITY_SIZE];   //!< table containing idling regulator's rigidity function (value * 128)
 
+  //note! inj_ego_curve must be followed by ego_vl_begin and ego_vl_end values!
+  uint16_t inj_ego_curve[INJ_EGO_CURVE_SIZE+2];       //!< Air-Fuel ratio lookup table, (1/value) * 32768, e.g. 1/14.7 * 32768 = 2229, the last two values are voltages corresponding to the beginning and to the end of axis (ADC discretes)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[414];
+  uint8_t reserved[378];
 }f_data_t;
 
 
@@ -421,10 +425,14 @@ typedef struct params_t
   uint8_t  idl_intrpm_lim;               //!< RPM error limit for integrator (min-1, value / 10, max 1200)
   uint16_t idl_map_value;                //!< intake manifold pressure on idling (kPa * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
+  uint8_t  inj_lambda_senstype;          //!< EGO sensor type (0 - NBO, 1 - WBO)
+
+  uint8_t gd_lambda_stoichval;           //!< Stoichiometric value of fuel used with stepper gas valve, (1/value) * 2048
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[52];
+  uint8_t  reserved[50];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

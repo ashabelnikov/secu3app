@@ -27,6 +27,7 @@
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 
 #include "port/port.h"
+#include <stdlib.h>
 #include "ecudata.h"
 #include "eculogic.h"
 #include "funconv.h"
@@ -126,13 +127,15 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  //used only by fuel injection and gas doser
  if (d->param.inj_lambda_senstype==0)
  { //NBO sensor type
-  if (d->corr.afr !=
+  int16_t afrerr = abs(d->corr.afr -
 #ifdef GD_CONTROL
-  ((d->sens.gas && IOCFG_CHECK(IOP_GD_STP)) ? d->param.gd_lambda_stoichval : 139)
+  ((d->sens.gas && IOCFG_CHECK(IOP_GD_STP)) ? d->param.gd_lambda_stoichval : AFRVAL_MAG(14.7))
 #else
-  139 //14.7
+  AFRVAL_MAG(14.7) //14.7
 #endif
-     ) //EGO allowed only when AFR=14.7 for petrol, and 15.6 for LPG
+  );
+
+  if (afrerr > AFRVAL_MAG(0.03)) //EGO allowed only when AFR=14.7 for petrol, and 15.6 for LPG
   {
    d->corr.lambda = 0;
    return; //not a stoichiometry AFR
@@ -140,7 +143,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  }
  else
  { //WBO sensor type or emulation
-  if ((d->corr.afr < (ego_curve_min(d) >> 4)) || (d->corr.afr > (ego_curve_max(d) >> 4)))
+  if ((d->corr.afr < ego_curve_min(d)) || (d->corr.afr > ego_curve_max(d)))
   {
    d->corr.lambda = 0;
    return; //not a stoichiometry AFR
@@ -191,7 +194,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
     }
     else
     { //WBO sensor type (or emulation)
-     uint16_t sens_afr = ego_curve_lookup(d) >> 4;
+     uint16_t sens_afr = ego_curve_lookup(d);
      if (sens_afr < d->corr.afr)
       d->corr.lambda-=d->param.inj_lambda_step_size_m;
      else if (sens_afr > d->corr.afr)

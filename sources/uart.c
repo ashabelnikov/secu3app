@@ -686,7 +686,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.gd_fc_closing);
    build_i16h(d->param.gd_lambda_corr_limit_p);
    build_i16h(d->param.gd_lambda_corr_limit_m);
-   build_i8h(d->param.gd_lambda_stoichval);
+   build_i16h(d->param.gd_lambda_stoichval);
    break;
 #endif
 
@@ -1171,7 +1171,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.gd_fc_closing = recept_i8h();
    d->param.gd_lambda_corr_limit_p = recept_i16h();
    d->param.gd_lambda_corr_limit_m = recept_i16h();
-   d->param.gd_lambda_stoichval = recept_i8h();
+   d->param.gd_lambda_stoichval = recept_i16h();
    break;
 #endif
 

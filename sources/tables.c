@@ -62,10 +62,10 @@
 #define _VE(v) ROUND(((v)*128.0))
 
 /**For specifying values in AFR table*/
-#define _FR(v) ROUND((1.0/(v)*2048.0))
+#define _FR(v) ROUND(((v-8.0)*16))
 
 /**For specifying values in EGO curve table*/
-#define _ER(v) ROUND((1.0/(v)*32768.0))
+#define _ER(v) ROUND((v)*128.0)
 
 /**For setting cylinder displacement value*/
 #define CYL_DISP(v) ROUND(((v)*16384.0))
@@ -387,7 +387,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_map_value =               1600,                 //25 kPa
 
   .inj_lambda_senstype =         0,                    //NBO sensor type
-  .gd_lambda_stoichval =         131,                  //15.6
+  .gd_lambda_stoichval =         1997,                 //15.6
 
   .reserved =                    {0},
   .crc =                         0

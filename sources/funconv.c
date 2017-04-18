@@ -514,6 +514,38 @@ int16_t ats_lookup(uint16_t adcvalue)
 
 
 #ifdef FUEL_INJECT
+
+
+/**Calculate 1/x function using Newton-Raphson method, 2 iterations
+ * \param x  8...24, value * 1024
+ * \return 1/x * 32768
+ */
+uint16_t nr_1x_afr(uint16_t x)
+{
+ uint16_t r;
+ if (x > 20480) //20 * 1024
+  r = 1507; //0.046 * 32768
+ else if (x > (16179)) //15.8 * 1024
+  r = 1835; //0.058 * 32768
+ else if (x > (11469)) //11.2 * 1024
+  r = 2392; //0.073 * 32768
+ else
+  r = 3375; //0.103 * 32768
+
+ uint8_t i = 2;
+
+ while(i--)
+ {
+//  r = ((uint32_t)(r * ((2*32768) - (((uint32_t)(x * r)) >> 10)))) >> 15;
+//  r = ((uint32_t)r * (2*32768 - (uint16_t)(((uint32_t)x * r) >> 10))) >> 15;
+    r = ((uint32_t)r * (uint16_t)((uint16_t)0 - (uint16_t)(((uint32_t)x * r) >> 10))) >> 15;
+ }
+
+ return r;
+}
+
+
+
 uint16_t inj_base_pw(struct ecudata_t* d)
 {
  int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
@@ -575,9 +607,12 @@ uint16_t inj_base_pw(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient) >> 2;
- pw32=(pw32 * afr)>>(11+2);
- d->corr.afr=afr>>2;          //update value of AFR
+        gradient);
+ afr+=(8*256);
+
+ pw32=(pw32 * nr_1x_afr(afr << 2)) >> 15;
+
+ d->corr.afr = afr >> 1;     //update value of AFR
 
  //return restricted value (16 bit)
  return ((pw32 > 65535) ? 65535 : pw32);
@@ -965,13 +1000,14 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
         gradient);
 
- corr=(corr * afr)>>11; //apply AFR value
+ afr+=(8*256); //offset by 8 to obtain normal value
+ corr=(corr * nr_1x_afr(afr << 2)) >> 15;  //apply AFR value
 
- corr=(corr * 2048) / d->param.gd_lambda_stoichval; // multiply by stoichiometry AFR value specified by user
+ corr=(corr * ((uint16_t)d->param.gd_lambda_stoichval)) >> 7; // multiply by stoichiometry AFR value specified by user
 
- //d->corr.afr=afr>>4;          //update value of AFR
+ d->corr.afr = afr >> 1; //update value of AFR
 
- return (corr >> 4); //return correction value * 2048
+ return; //return correction value * 2048
 }
 
 #endif //GD_CONTROL
@@ -1003,12 +1039,16 @@ int16_t ego_curve_lookup(struct ecudata_t* d)
 
 int16_t ego_curve_min(struct ecudata_t* d)
 {
- return _GWU(inj_ego_curve[0]);
+ int16_t a = _GWU(inj_ego_curve[0]);
+ int16_t b = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE-1]);
+ return  a < b ? a : b;
 }
 
 int16_t ego_curve_max(struct ecudata_t* d)
 {
- return _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE-1]);
+ int16_t a = _GWU(inj_ego_curve[0]);
+ int16_t b = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE-1]);
+ return a > b ? a : b;
 }
 
 #endif

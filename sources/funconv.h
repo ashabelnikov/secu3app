@@ -284,10 +284,9 @@ uint16_t gd_ve_afr(struct ecudata_t* d);
 #if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
 /** Converts ADC value (voltage) into AFR
  * \param d pointer to ECU data structure
- * \return (1/AFR) * 32768
+ * \return AFR * 128
  */
 int16_t ego_curve_lookup(struct ecudata_t* d);
-
 int16_t ego_curve_min(struct ecudata_t* d);
 int16_t ego_curve_max(struct ecudata_t* d);
 

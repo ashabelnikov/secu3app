@@ -56,6 +56,9 @@
 /**Gas dose stepper motor discretes per 1 step */
 #define GD_PHYSICAL_MAGNITUDE_MULTIPLIER 2
 
+/**AFR value multiplier*/
+#define AFRVAL_MULTIPLIER 128
+
 /* Following macros are necessary when transforming floating point constant-values into integers.
  * Values of phisical magnitudes stored in integers
  * (данные макросы необходимы для преобразования числел-констант с плавающей запятой
@@ -84,5 +87,8 @@
 #define ADC_COMP_FACTOR(f) ROUND((f) * 16384)
 /** Transforms ADC compensation correction to fixed point value */
 #define ADC_COMP_CORR(f, c) ROUND32(16384 * (0.5 - ((-(c)) / ADC_DISCRETE) * (f)))
+
+/** For AFR value representation in program */
+#define AFRVAL_MAG(afr) ROUND((afr)*AFRVAL_MULTIPLIER)
 
 #endif //_MAGNITUDE_H_

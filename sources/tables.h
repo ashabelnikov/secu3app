@@ -150,7 +150,7 @@ typedef struct f_data_t
   int8_t f_tmp[F_TMP_POINTS];                       //!< coolant temper. correction of advance angle
   //fuel injection maps
   uint8_t inj_ve[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Volumetric efficiency lookup table, value * 128
-  uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];//!< Air-Fuel ratio lookup table, (1/value) * 2048, e.g. 1/14.7 * 2048 = 139
+  uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];//!< Air-Fuel ratio lookup table, (value - 8) * 16
   uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];//!< Injector pulse width used when engine is starting up (cranking)
   uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE]; //!< Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00
   uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE]; //!< Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS
@@ -175,7 +175,7 @@ typedef struct f_data_t
   uint16_t inj_idl_rigidity[INJ_IDL_RIGIDITY_SIZE];   //!< table containing idling regulator's rigidity function (value * 128)
 
   //note! inj_ego_curve must be followed by ego_vl_begin and ego_vl_end values!
-  uint16_t inj_ego_curve[INJ_EGO_CURVE_SIZE+2];       //!< Air-Fuel ratio lookup table, (1/value) * 32768, e.g. 1/14.7 * 32768 = 2229, the last two values are voltages corresponding to the beginning and to the end of axis (ADC discretes)
+  uint16_t inj_ego_curve[INJ_EGO_CURVE_SIZE+2];       //!< Air-Fuel ratio lookup table, value * 128, the last two values are voltages corresponding to the beginning and to the end of axis (ADC discretes)
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
@@ -427,12 +427,12 @@ typedef struct params_t
 
   uint8_t  inj_lambda_senstype;          //!< EGO sensor type (0 - NBO, 1 - WBO)
 
-  uint8_t gd_lambda_stoichval;           //!< Stoichiometric value of fuel used with stepper gas valve, (1/value) * 2048
+  uint16_t gd_lambda_stoichval;           //!< Stoichiometric value of fuel used with stepper gas valve, value * 128
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[50];
+  uint8_t  reserved[49];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

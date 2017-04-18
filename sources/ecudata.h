@@ -116,7 +116,7 @@ typedef struct correct_t
  int16_t lambda;                         //!< Current value of lambda (EGO) correction, can be negative
 #endif
 #ifdef FUEL_INJECT
- uint8_t afr;                            //!< Current value of air to fuel ratio (from AFR map)
+ uint16_t afr;                           //!< Current value of air to fuel ratio (from AFR map), value*128
  int16_t inj_timing;                     //!< Current injection timing
 #endif
 #ifdef PA4_INP_IGNTIM

@@ -240,7 +240,23 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
  */
 static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 {
- int16_t pos = gdp_function(d); //basic position, value in %
+ int16_t corr, pos;
+
+ if (d->engine_mode==EM_START)
+ {
+  gds.aftstr_enrich_counter = d->param.inj_aftstr_strokes << 1; //init engine strokes counter
+
+  uint16_t pw = inj_cranking_pw(d); //use Cranking PW injection map to define GD position on cranking
+  if (pw > 3125)
+   pw = 3125; //10ms max.
+
+  //convert from 3.2uS timer ticks to %, 3125(10ms) corresponds to 100%
+  pos = (((int32_t)pw) * 1049) >> 14; //1049 = (GD_MAGNITUDE(100.0) / 3125) * 16384
+
+  goto cranking_pos;
+ }
+
+ pos = gdp_function(d); //basic position, value in %
 
  //apply correction from VE and AFR maps
  pos = (((int32_t)pos) * gd_ve_afr(d)) >> 11;
@@ -251,7 +267,7 @@ static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
  //apply correction from IAT sensor, use approximation instead of division
  //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
  //int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10); //my
- int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(30)) ? TEMPERATURE_MAGNITUDE(4110) - (d->sens.air_temp * 15) : TEMPERATURE_MAGNITUDE(3970) - (d->sens.air_temp * 10);   //alvikagal
+ corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(30)) ? TEMPERATURE_MAGNITUDE(4110) - (d->sens.air_temp * 15) : TEMPERATURE_MAGNITUDE(3970) - (d->sens.air_temp * 10);   //alvikagal
  pos = ((int32_t)pos * (corr)) >> 14;
 
  if (d->sens.gas) //gas valve will function when petrol is used, but in very limited mode
@@ -272,6 +288,8 @@ static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 
   pos = (d->fc_revlim ? 0 : pos); //apply rev.limit flag
  }
+
+cranking_pos:
 
  if (pwm)
   return ((((int32_t)256) * pos) / 200); //convert percentage position to PWM duty

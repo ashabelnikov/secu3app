@@ -513,8 +513,27 @@ int16_t ats_lookup(uint16_t adcvalue)
 #endif //AIRTEMP_SENS
 
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+uint16_t inj_cranking_pw(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
 
+ if (!d->param.tmp_use)
+  return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
+
+ //-30 - minimum value of temperature corresponding to the first point in table
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points in table
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_CRANKING_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_CRANKING_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GWU(inj_cranking[i]), _GWU(inj_cranking[i1]),  //<--values in table are unsigned
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
+}
 
 /**Calculate 1/x function using Newton-Raphson method, 2 iterations
  * \param x  8...24, value * 1024
@@ -543,9 +562,9 @@ uint16_t nr_1x_afr(uint16_t x)
 
  return r;
 }
+#endif
 
-
-
+#ifdef FUEL_INJECT
 uint16_t inj_base_pw(struct ecudata_t* d)
 {
  int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
@@ -634,48 +653,6 @@ uint16_t inj_dead_time(struct ecudata_t* d)
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
-uint16_t inj_cranking_pw(struct ecudata_t* d)
-{
- int16_t i, i1, t = d->sens.temperat;
-
- if (!d->param.tmp_use)
-  return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
-
- //-30 - minimum value of temperature corresponding to the first point in table
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - step between interpolation points in table
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_CRANKING_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_CRANKING_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GWU(inj_cranking[i]), _GWU(inj_cranking[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
-}
-
-uint8_t inj_aftstr_en(struct ecudata_t* d)
-{
- int16_t i, i1, t = d->sens.temperat;
-
- if (!d->param.tmp_use)
-  return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
-
- //-30 - минимальное значение температуры
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_AFTSTR_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_AFTSTR_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GBU(inj_aftstr[i]), _GBU(inj_aftstr[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
-}
-
 uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode)
 {
  int16_t i, i1, t = d->sens.temperat;
@@ -751,6 +728,27 @@ int16_t inj_timing_lookup(struct ecudata_t* d)
 #endif //FUEL_INJECT
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
+uint8_t inj_aftstr_en(struct ecudata_t* d)
+{
+ int16_t i, i1, t = d->sens.temperat;
+
+ if (!d->param.tmp_use)
+  return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
+
+ //-30 - минимальное значение температуры
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - шаг между узлами интерпол€ции по температуре
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_AFTSTR_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_AFTSTR_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GBU(inj_aftstr[i]), _GBU(inj_aftstr[i1]),  //<--values in table are unsigned
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+}
+
 uint8_t inj_warmup_en(struct ecudata_t* d)
 {
  int16_t i, i1, t = d->sens.temperat;
@@ -1007,7 +1005,7 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
 
  d->corr.afr = afr >> 1; //update value of AFR
 
- return; //return correction value * 2048
+ return corr; //return correction value * 2048
 }
 
 #endif //GD_CONTROL

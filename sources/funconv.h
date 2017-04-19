@@ -173,6 +173,14 @@ int16_t airtemp_function(struct ecudata_t* d);
 int16_t ats_lookup(uint16_t adcvalue);
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates pulse width used when engine is stating up
+ * \param d pointer to ECU data structure
+ * \return Cranking pulse width in ticks of timer (1 tick = 3.2uS)
+ */
+uint16_t inj_cranking_pw(struct ecudata_t* d);
+#endif
+
 #ifdef FUEL_INJECT
 /** Calculates basic injection time using Ideal gas law, VE and AFR lookup tables
  * \param d pointer to ECU data structure
@@ -185,19 +193,6 @@ uint16_t inj_base_pw(struct ecudata_t* d);
  * \return Injector dead time in tics of timer
  */
 uint16_t inj_dead_time(struct ecudata_t* d);
-
-/** Calculates pulse width used when engine is stating up
- * \param d pointer to ECU data structure
- * \return Cranking pulse width in ticks of timer (1 tick = 3.2uS)
- */
-uint16_t inj_cranking_pw(struct ecudata_t* d);
-
-
-/** Calculates afterstart enrichemnt factor using a lookup table
- * \param d pointer to ECU data structure
- * \return Afterstart enrichment * 128
- */
-uint8_t inj_aftstr_en(struct ecudata_t* d);
 
 /** Calculates IAC/PWM position vs coolant temperature using a lookup table.
  * This function is used in open-loop idle control algorithm.
@@ -218,6 +213,12 @@ int16_t inj_timing_lookup(struct ecudata_t* d);
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates afterstart enrichemnt factor using a lookup table
+ * \param d pointer to ECU data structure
+ * \return Afterstart enrichment * 128
+ */
+uint8_t inj_aftstr_en(struct ecudata_t* d);
+
 /** Calculates warmup enrichemnt factor using a lookup table
  * \param d pointer to ECU data structure
  * \return Warmup enrichment * 128

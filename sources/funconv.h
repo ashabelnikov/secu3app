@@ -290,6 +290,14 @@ int16_t ego_curve_lookup(struct ecudata_t* d);
 int16_t ego_curve_min(struct ecudata_t* d);
 int16_t ego_curve_max(struct ecudata_t* d);
 
+
+/** Scales afterstart enrichment depending on the elapsed time (strokes)
+ * \param d pointer to ECU data structure
+ * \param enrich_counter current value of counter of strokes (decriasing)
+ * \return scaled afterstart enrichment factor (value * 128)
+ */
+uint8_t scale_aftstr_enrich(struct ecudata_t* d, uint16_t enrich_counter);
+
 #endif
 
 #endif //_FUNCONV_H_

@@ -60,17 +60,6 @@ void ignlogic_init(void)
 }
 
 #ifdef FUEL_INJECT
-/** Scales afterstart enrichment depending on the elapsed time (strokes)
- * \param scaled afterstart enrichment factor (value * 128)
- */
-uint8_t scale_aftstr_enrich(struct ecudata_t* d)
-{
- int16_t aftstr_strokes = (d->param.inj_aftstr_strokes << 1);
- //do scaling of ASE factor (scale down)
- int16_t counter = aftstr_strokes - lgs.aftstr_enrich_counter; //convert decreasing to increasing
- if (counter < 0) counter = 0;
- return ((uint16_t)inj_aftstr_en(d) * (aftstr_strokes - counter)) / aftstr_strokes;
-}
 
 /** Calculates AE value.
  * \param d Pointer to ECU data structure
@@ -167,7 +156,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichemnt factor
    if (lgs.aftstr_enrich_counter)
-    pw= (pw * (128 + scale_aftstr_enrich(d))) >> 7; //apply scaled afterstart enrichment factor
+    pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
    pw+= calc_acc_enrich(d);                         //add acceleration enrichment
    if (((int32_t)pw) < 0)
@@ -228,7 +217,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    uint32_t pw = inj_base_pw(d);
    pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichment factor
    if (lgs.aftstr_enrich_counter)
-    pw= (pw * (128 + scale_aftstr_enrich(d))) >> 7; //apply scaled afterstart enrichment factor
+    pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
    pw+= calc_acc_enrich(d);                         //add acceleration enrichment
    if (((int32_t)pw) < 0)

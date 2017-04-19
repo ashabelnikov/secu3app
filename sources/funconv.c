@@ -1051,4 +1051,13 @@ int16_t ego_curve_max(struct ecudata_t* d)
  return a > b ? a : b;
 }
 
+uint8_t scale_aftstr_enrich(struct ecudata_t* d, uint16_t enrich_counter)
+{
+ int16_t aftstr_strokes = (d->param.inj_aftstr_strokes << 1);
+ //do scaling of ASE factor (scale down)
+ int16_t counter = aftstr_strokes - enrich_counter; //convert decreasing to increasing
+ if (counter < 0) counter = 0;
+ return ((uint16_t)inj_aftstr_en(d) * (aftstr_strokes - counter)) / aftstr_strokes;
+}
+
 #endif

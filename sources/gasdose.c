@@ -37,6 +37,7 @@
 #include "magnitude.h"
 #include "pwrrelay.h"
 #include "ventilator.h"
+#include "eculogic.h"
 
 /**Direction used to set stepper motor to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
@@ -55,6 +56,7 @@ typedef struct
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
  uint8_t   flags;          //!< state flags (see CF_ definitions)
  uint8_t   acc_strokes;    //!< strokes counter for acceleration enrichment
+ uint16_t  aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment
 }gasdose_st_t;
 
 /**Instance of state variables */
@@ -162,6 +164,7 @@ void gasdose_init(void)
  gdstpmot_init();
  CLEARBIT(gds.flags, CF_POWERDOWN);
  CLEARBIT(gds.flags, CF_MAN_CNTR);
+ gds.aftstr_enrich_counter = 0;
 }
 
 /** Calculates actuator position (%*2) from step value
@@ -259,6 +262,11 @@ static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
    pos = GD_MAGNITUDE(100.0);
 
   pos+= calc_gd_acc_enrich(d);    //apply acceleration enrichment
+
+  if (d->engine_mode == EM_START)
+   gds.aftstr_enrich_counter = d->param.inj_aftstr_strokes << 1; //init engine strokes counter
+  else if (gds.aftstr_enrich_counter)
+   pos= ((int32_t)pos * (128 + scale_aftstr_enrich(d, gds.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
 
   pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
 
@@ -388,6 +396,10 @@ void gasdose_stroke_event_notification(struct ecudata_t* d)
 {
  if (gds.acc_strokes)
   --gds.acc_strokes;
+
+ //update afterstart enrichemnt counter
+ if (gds.aftstr_enrich_counter)
+  --gds.aftstr_enrich_counter;
 }
 
 void gasdose_init_motor(struct ecudata_t* d)

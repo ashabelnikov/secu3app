@@ -138,6 +138,7 @@
 #define IRF_USE_REGULATOR               0           //!< Use regulator (keep selected idling RPM by alternating advance angle)
 #define IRF_USE_REGONGAS                1           //!< Use regulator if fuel type is gas
 #define IRF_USE_INJREG                  2           //!< Using of closed loop mode for IAC valve (fuel injection only)
+#define IRF_PREG_MODE                   3           //!< Use P-regulator instead on I-regulator
 
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
 typedef struct f_data_t

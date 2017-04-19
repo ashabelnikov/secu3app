@@ -264,7 +264,11 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
  if (s_timer_is_action(*io_timer))
  {
   s_timer_set(*io_timer, IDLE_PERIOD_TIME_VALUE);
-  idl_prstate.output_state+= (((int32_t)error) * factor) >> 8; //factor multiplied by 256
+
+  if (CHECKBIT(d->param.idl_flags, IRF_PREG_MODE))
+   idl_prstate.output_state = (((int32_t)error) * factor) >> 8; //P-regulator mode
+  else
+   idl_prstate.output_state+= (((int32_t)error) * factor) >> 8; //factor multiplied by 256
  }
  //limit correction by min and max values, specified by user
  restrict_value_to(&idl_prstate.output_state, d->param.idlreg_min_angle << IRUSDIV, d->param.idlreg_max_angle << IRUSDIV);

@@ -50,6 +50,8 @@
 
 #ifdef FUEL_INJECT
 
+#define COLD_ENG_INT      //! Use integral component on cold engine
+
 /**RPM regulator call period, 100ms*/
 #define RPMREG_CORR_TIME 10
 
@@ -389,6 +391,9 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
      restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
      derror = error - chks.prev_rpm_error;
 
+#ifdef COLD_ENG_INT
+     chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d->param.idl_reg_p) + ((int32_t)error * d->param.idl_reg_i))) >> (8+7));
+#else
      if ((d->sens.temperat >= d->param.idlreg_turn_on_temp) || (d->sens.frequen >= rpm))
      { //hot engine or RPM above or equal target idling RPM
       chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d->param.idl_reg_p) + ((int32_t)error * d->param.idl_reg_i))) >> (8+7));
@@ -398,6 +403,7 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
       if ((error > 0) && (derror > 0)) //works only if errors are positive
        chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d->param.idl_reg_p)) >> (8+7));
      }
+#endif
 
      chks.prev_rpm_error = error; //save for further calculation of derror
      restrict_value_to(&chks.iac_pos, 0, 800); //do we actually need this restriction?

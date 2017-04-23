@@ -123,7 +123,6 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  }
 #endif
 
-
  //used only by fuel injection and gas doser
  if (d->param.inj_lambda_senstype==0)
  { //NBO sensor type
@@ -135,7 +134,7 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
 #endif
   );
 
-  if (afrerr > AFRVAL_MAG(0.03)) //EGO allowed only when AFR=14.7 for petrol, and 15.6 for LPG
+  if (afrerr > AFRVAL_MAG(0.05)) //EGO allowed only when AFR=14.7 for petrol, and 15.6 for LPG
   {
    d->corr.lambda = 0;
    return; //not a stoichiometry AFR
@@ -151,7 +150,6 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  }
 
 #endif // FUEL_INJECT || GD_CONTROL
-
 
  //Reset EGO correction each time fuel type(set of maps) is changed (triggering of level on the GAS_V input)
  if (ego.gasv_prev != d->sens.gas)
@@ -184,20 +182,19 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
       d->corr.lambda-=d->param.inj_lambda_step_size_m;
      else if (d->sens.add_i1 < int_p_thrd)
       d->corr.lambda+=d->param.inj_lambda_step_size_p;
-
-/*  //update EGO correction (simple switch point)
-    if (d->sens.add_i1 > d->param.inj_lambda_swt_point)
-     d->corr.lambda-=d->param.inj_lambda_step_size_m;
-    else if (d->sens.add_i1 < d->param.inj_lambda_swt_point)
-     d->corr.lambda+=d->param.inj_lambda_step_size_p;
-*/
     }
     else
     { //WBO sensor type (or emulation)
      uint16_t sens_afr = ego_curve_lookup(d);
-     if (sens_afr < d->corr.afr)
+
+     int16_t int_m_thrd = d->corr.afr - AFRVAL_MAG(0.05);
+     int16_t int_p_thrd = d->corr.afr + AFRVAL_MAG(0.05);
+     if (int_m_thrd < 0)
+      int_m_thrd = 0;
+
+     if (sens_afr < int_m_thrd)
       d->corr.lambda-=d->param.inj_lambda_step_size_m;
-     else if (sens_afr > d->corr.afr)
+     else if (sens_afr > int_p_thrd)
       d->corr.lambda+=d->param.inj_lambda_step_size_p;
     }
 ////////////////////////////////////////////////////////////////////////////////////////

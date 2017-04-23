@@ -62,7 +62,7 @@
 #define _VE(v) ROUND(((v)*128.0))
 
 /**For specifying values in AFR table*/
-#define _FR(v) ROUND(((v-8.0)*16))
+#define _FR(v) ROUND((((v)-8.0)*16))
 
 /**For specifying values in EGO curve table*/
 #define _ER(v) ROUND((v)*128.0)

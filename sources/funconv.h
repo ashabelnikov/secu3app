@@ -34,32 +34,6 @@
 #define IDLE_PERIOD_TIME_VALUE        25    //!< used by idling regulator
 #define IDLE_ENTER_TIME_VALUE         150   //!< time for entering closed loop mode
 
-/** f(x) liniar interpolation for function with single argument
- * \param x argument value
- * \param a1 function value at the beginning of interval
- * \param a2 function value at the end of interval
- * \param x_s argument value at the beginning of interval
- * \param x_l length of interval in x
- * \param m function multiplier
- * \return interpolated value of function * m
- */
-int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l, uint8_t m);
-
-/** f(x,y) liniar interpolation for function with two arguments
- * \param x first argument value
- * \param y second argument value
- * \param a1 function value at the beginning of interval (1 corner)
- * \param a2 function value at the beginning of interval (2 corner)
- * \param a3 function value at the beginning of interval (3 corner)
- * \param a4 function value at the beginning of interval (4 corner)
- * \param x_s first argument value at the beginning of interval
- * \param y_s second argument value at the beginning of interval
- * \param x_l length of interval in x
- * \param y_l length of interval in y
- * \return interpolated value of function * 16
- */
-int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t a3,int16_t a4,int16_t x_s,int16_t y_s,int16_t x_l,int16_t y_l);
-
 struct ecudata_t;
 
 /** Calculates advance angle from "start" map
@@ -111,13 +85,6 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer);
  * \return value of advance angle * 32
  */
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m);
-
-/** Restricts specified value to specified limits
- * \param io_value pointer to value to be restricted. This parameter will also receive result.
- * \param i_bottom_limit bottom limit
- * \param i_top_limit upper limit
- */
-void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
 
 #ifdef DWELL_CONTROL
 /** Calculates current accumulation time (dwell control) using current board voltage

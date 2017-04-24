@@ -37,6 +37,7 @@
 #include "ioconfig.h"
 #include "funconv.h"
 #include "magnitude.h"
+#include "mathemat.h"
 #include "smcontrol.h"
 #include "pwrrelay.h"
 #include "ventilator.h"

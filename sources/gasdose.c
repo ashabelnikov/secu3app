@@ -35,6 +35,7 @@
 #include "gdcontrol.h"
 #include "ioconfig.h"
 #include "magnitude.h"
+#include "mathemat.h"
 #include "pwrrelay.h"
 #include "ventilator.h"
 #include "eculogic.h"

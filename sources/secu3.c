@@ -59,6 +59,7 @@
 #include "lambda.h"
 #include "magnitude.h"
 #include "measure.h"
+#include "mathemat.h"
 #include "params.h"
 #include "procuart.h"
 #include "pwrrelay.h"

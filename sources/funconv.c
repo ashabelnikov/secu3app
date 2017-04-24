@@ -22,7 +22,6 @@
 /** \file funconv.c
  * \author Alexey A. Shabelnikov
  * Implementation of core mathematics and regulation logic.
- * (Реализация основной части математического аппарата и логики регулирования).
  */
 
 #include "port/pgmspace.h"
@@ -34,6 +33,7 @@
 #include "funconv.h"
 #include "ioconfig.h"
 #include "magnitude.h"
+#include "mathemat.h"
 #include "vstimer.h"
 
 #if defined(FUEL_INJECT) && !defined(AIRTEMP_SENS)
@@ -54,33 +54,6 @@
  #define _GBU(x) (PGM_GET_BYTE(&d->fn_dat->x))             //!< Unsigned version of _GB
  #define _GWU(x) (PGM_GET_WORD(&d->fn_dat->x))             //!< Unsigned version of _GW
 #endif
-
-// Функция билинейной интерполяции (поверхность)
-// x, y - значения аргументов интерполируемой функции
-// a1,a2,a3,a4 - значение функции в узлах интерполяции (углы четырехугольника)
-// x_s,y_s - значения аргументов функции соответствующие началу прямоугольной области
-// x_l,y_l - размеры прямоугольной области (по x и y соответственно)
-// возвращает интерполированное значение функции * 16
-int16_t bilinear_interpolation(int16_t x, int16_t y, int16_t a1, int16_t a2, int16_t a3, int16_t a4,
-                               int16_t x_s, int16_t y_s, int16_t x_l, int16_t y_l)
-{
- int16_t a23,a14;
- a23 = ((a2 * 16) + (((int32_t)(a3 - a2) * 16) * (x - x_s)) / x_l);
- a14 = (a1 * 16) + (((int32_t)(a4 - a1) * 16) * (x - x_s)) / x_l;
- return (a14 + ((((int32_t)(a23 - a14)) * (y - y_s)) / y_l));
-}
-
-// Функция линейной интерполяции
-// x - значение аргумента интерполируемой функции
-// a1,a2 - значения функции в узлах интерполяции
-// x_s - значение аргумента функции в начальной точке
-// x_l - длина отрезка(проекции на ось х) между точками
-// m - function multiplier
-// возвращает интерполированное значение функции * m
-int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int16_t x_l, uint8_t m)
-{
- return ((a1 * m) + (((int32_t)(a2 - a1) * m) * (x - x_s)) / x_l);
-}
 
 // Реализует функцию УОЗ от оборотов для холостого хода
 // Возвращает значение угла опережения в целом виде * 32. 2 * 16 = 32.
@@ -301,15 +274,6 @@ int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_stat
  //текущий УОЗ будет предыдущим в следующий раз
  *ip_prev_state = new_advance_angle;
  return *ip_prev_state;
-}
-
-//ограничивает указанное значение указанными пределами
-void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit)
-{
- if (*io_value > i_top_limit)
-  *io_value = i_top_limit;
- if (*io_value < i_bottom_limit)
-  *io_value = i_bottom_limit;
 }
 
 // Реализует функцию коэффициента усиления аттенюатора от оборотов
@@ -539,33 +503,6 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
 }
 
-/**Calculate 1/x function using Newton-Raphson method, 2 iterations
- * \param x  8...24, value * 1024
- * \return 1/x * 32768
- */
-uint16_t nr_1x_afr(uint16_t x)
-{
- uint16_t r;
- if (x > 20480) //20 * 1024
-  r = 1507; //0.046 * 32768
- else if (x > (16179)) //15.8 * 1024
-  r = 1835; //0.058 * 32768
- else if (x > (11469)) //11.2 * 1024
-  r = 2392; //0.073 * 32768
- else
-  r = 3375; //0.103 * 32768
-
- uint8_t i = 2;
-
- while(i--)
- {
-//  r = ((uint32_t)(r * ((2*32768) - (((uint32_t)(x * r)) >> 10)))) >> 15;
-//  r = ((uint32_t)r * (2*32768 - (uint16_t)(((uint32_t)x * r) >> 10))) >> 15;
-    r = ((uint32_t)r * (uint16_t)((uint16_t)0 - (uint16_t)(((uint32_t)x * r) >> 10))) >> 15;
- }
-
- return r;
-}
 #endif
 
 #ifdef FUEL_INJECT
@@ -859,28 +796,6 @@ uint16_t inj_idling_rpm(struct ecudata_t* d)
  return (simple_interpolation(t, _GBU(inj_target_rpm[i]), _GBU(inj_target_rpm[i1]),  //<--values in table are unsigned
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
 }
-
-/** Square root calculation
- * \param input Input value
- * \return SQRT(input)
- */
-static uint16_t ui32_sqrt(uint32_t input)
-{
- unsigned long mask = 0x40000000, sqr = 0, temp;
- do
- {
-  temp = sqr | mask;
-  sqr >>= 1;
-  if(temp <= input)
-  {
-   sqr |= mask;
-   input -= temp;
-  }
- } while(mask >>= 2);
-
- return (uint16_t)sqr;
-}
-
 
 uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t targ_rpm)
 {

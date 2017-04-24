@@ -33,6 +33,7 @@
 #include "funconv.h"
 #include "ioconfig.h"
 #include "magnitude.h"
+#include "mathemat.h"
 #include "vstimer.h"
 
 #define EGO_FC_DELAY 6           //!< 6 strokes

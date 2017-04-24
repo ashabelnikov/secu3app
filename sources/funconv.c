@@ -863,7 +863,6 @@ int16_t pa4_function(uint16_t adcvalue)
 
 #endif //PA4_INP_IGNTIM
 
-
 #ifdef GD_CONTROL
 /**Use VE and AFR tables for gas dosator. Result = VE * AFR * K, where K is stoichiometry constant
  * \return value * 2048
@@ -918,9 +917,10 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
         gradient);
 
  afr+=(8*256); //offset by 8 to obtain normal value
- corr=(corr * nr_1x_afr(afr << 2)) >> 15;  //apply AFR value
 
  corr=(corr * ((uint16_t)d->param.gd_lambda_stoichval)) >> 7; // multiply by stoichiometry AFR value specified by user
+
+ corr=(corr * nr_1x_afr(afr << 2)) >> 15;  //apply AFR value
 
  d->corr.afr = afr >> 1; //update value of AFR
 

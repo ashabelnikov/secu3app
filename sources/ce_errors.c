@@ -38,6 +38,7 @@
 #include "knock.h"
 #include "magnitude.h"
 #include "suspendop.h"
+#include "tables.h"  //for ce_sett_t type
 #include "vstimer.h"
 
 /**CE state variables structure */
@@ -67,8 +68,16 @@ void ce_clear_error(uint8_t error)
  CLEARBIT(ce_state.ecuerrors, error);
 }
 
-/** Internal function. Contains checking logic */
-void check(struct ecudata_t* d)
+uint8_t ce_is_error(uint8_t error)
+{
+ return CHECKBIT(ce_state.ecuerrors, error);
+}
+
+/** Internal function. Contains checking logic 
+ * \param d Pointer to ECU data structure
+ * \param cesd Pointer to the CE settings data structure
+ */
+void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
 {
  //If error of CKP sensor was, then set corresponding bit of error
  if (ckps_is_error())
@@ -103,6 +112,8 @@ void check(struct ecudata_t* d)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
    knock_reset_error();
   }
+  else if ((d->sens.knock_k < cesd->ks_v_min || d->sens.knock_k > cesd->ks_v_max) && d->sens.frequen > 1000)
+   ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   else
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
  }
@@ -110,8 +121,7 @@ void check(struct ecudata_t* d)
   ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
 
  //checking MAP sensor. TODO: implement additional check
- // error if voltage < 0.1v
- if (d->sens.map_raw < ROUND(0.1 / ADC_DISCRETE) && d->sens.carb)
+ if (((d->sens.map_raw < cesd->map_v_min) || (d->sens.map_raw > cesd->map_v_max)) && d->sens.carb)
   ce_set_error(ECUERROR_MAP_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
@@ -119,29 +129,10 @@ void check(struct ecudata_t* d)
  //checking coolant temperature sensor
  if (d->param.tmp_use)
  {
-#ifndef THERMISTOR_CS
-  // error if (2.28v > voltage > 3.93v)
-  if (d->sens.temperat_raw < ROUND(2.28 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(3.93 / ADC_DISCRETE))
+  if (d->sens.temperat_raw < cesd->cts_v_min || d->sens.temperat_raw > cesd->cts_v_max)
    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
   else
    ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
-#else
-  if (!d->param.cts_use_map) //use linear sensor
-  {
-   if (d->sens.temperat_raw < ROUND(2.28 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(3.93 / ADC_DISCRETE))
-    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
-   else
-    ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
-  }
-  else
-  {
-   // error if (0.2v > voltage > 4.7v) for thermistor
-   if (d->sens.temperat_raw < ROUND(0.2 / ADC_DISCRETE) || d->sens.temperat_raw > ROUND(4.7 / ADC_DISCRETE))
-    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
-   else
-    ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
-  }
-#endif
  }
  else
   ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
@@ -149,11 +140,11 @@ void check(struct ecudata_t* d)
  //checking the voltage using simple state machine
  if (0==ce_state.bv_eds) //voltage is OK
  {
-  if (d->sens.voltage_raw < ROUND(12.0 / ADC_DISCRETE))
+  if (d->sens.voltage_raw < cesd->vbat_v_min)
   { //below normal
    ce_state.bv_dev = 0, ce_state.bv_eds = 1;
   }
-  else if (d->sens.voltage_raw > ROUND(16.0 / ADC_DISCRETE))
+  else if (d->sens.voltage_raw > cesd->vbat_v_max)
   { //above normal
    ce_state.bv_dev = 1, ce_state.bv_eds = 1;
   }
@@ -166,9 +157,9 @@ void check(struct ecudata_t* d)
  {
   //use simple debouncing techique to eliminate errors during normal transients (e.g. switching ignition off) 
   if (ce_state.bv_tdc)
-  {//state changed? If so, then rest state machine (start again)
-   if ((0==ce_state.bv_dev && d->sens.voltage_raw > ROUND(11.7 / ADC_DISCRETE)) ||
-       (1==ce_state.bv_dev && d->sens.voltage_raw < ROUND(15.5 / ADC_DISCRETE)))
+  {//state changed? If so, then reset state machine (start again)
+   if ((0==ce_state.bv_dev && d->sens.voltage_raw > cesd->vbat_v_min) ||
+       (1==ce_state.bv_dev && d->sens.voltage_raw < cesd->vbat_v_max))
     ce_state.bv_eds = 0;
 
    --ce_state.bv_tdc;
@@ -184,6 +175,24 @@ void check(struct ecudata_t* d)
    ce_state.bv_eds = 0; //reset state machine
   }
  }
+
+ //checking TPS sensor
+ if ((d->sens.tps_raw < cesd->tps_v_min) || (d->sens.tps_raw > cesd->tps_v_max))
+  ce_set_error(ECUERROR_TPS_SENSOR_FAIL);
+ else
+  ce_clear_error(ECUERROR_TPS_SENSOR_FAIL);
+
+ //checking ADD_I1 sensor
+ if ((d->sens.add_i1_raw < cesd->add_i1_v_min) || (d->sens.add_i1_raw > cesd->add_i1_v_max))
+  ce_set_error(ECUERROR_ADD_I1_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I1_SENSOR);
+
+ //checking ADD_I2 sensor
+ if ((d->sens.add_i2_raw < cesd->add_i2_v_min) || (d->sens.add_i2_raw > cesd->add_i2_v_max))
+  ce_set_error(ECUERROR_ADD_I2_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I2_SENSOR);
 }
 
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
@@ -193,7 +202,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
 {
  uint16_t temp_errors;
 
- check(d);
+ check(d, &fw_data.exdata.cesd);
 
  //If the timer counted the time, then turn off the CE
  if (s_timer_is_action(*ce_control_time_counter))

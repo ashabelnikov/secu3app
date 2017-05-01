@@ -44,6 +44,8 @@
 #define ECUERROR_DWELL_CONTROL          8  //!< Problems with dwell control (overcharge etc)
 #define ECUERROR_CAMS_MALFUNCTION       9  //!< CAM sensor malfunction
 #define ECUERROR_TPS_SENSOR_FAIL       10  //!< TPS sensor does not work
+#define ECUERROR_ADD_I1_SENSOR         11  //!< ADD_I1 input error
+#define ECUERROR_ADD_I2_SENSOR         12  //!< ADD_I2 input error
 
 struct ecudata_t;
 
@@ -62,6 +64,11 @@ void ce_set_error(uint8_t error);
  * \param error code of error
  */
 void ce_clear_error(uint8_t error);
+
+/** Check for presence of specified error
+ * \param error code of error (bit number)
+ */
+uint8_t ce_is_error(uint8_t error);
 
 /**Performs preservation of all stockpiled in temporary memory errors in the EEPROM.
  * Call only if EEPROM is ready!

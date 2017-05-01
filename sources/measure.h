@@ -30,6 +30,7 @@
 #include <stdint.h>
 
 struct ecudata_t;
+struct ce_sett_t;
 
 /**Initialization of used input ports*/
 void meas_init_ports(void);
@@ -38,12 +39,13 @@ void meas_init_ports(void);
  * \param d pointer to ECU data structure
  * \param rpm_only if != 0, then only RPM related buffers will be updated
  */
-void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only);
+void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t _PGM *cesd);
 
 /**Perform avaraging using data from ring buffers
  * \param d pointer to ECU data structure
+ * \param cesd Pointer to CE settings data structure
  */
-void meas_average_measured_values(struct ecudata_t* d);
+void meas_average_measured_values(struct ecudata_t* d, ce_sett_t _PGM *cesd);
 
 /**Initialization of ring buffers. Performs initial measurements. Used before start of engine
  * \param d pointer to ECU data structure

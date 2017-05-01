@@ -185,6 +185,38 @@ typedef struct f_data_t
 }f_data_t;
 
 
+/**Check Engine settings data*/
+typedef struct ce_sett_t
+{
+ uint16_t map_v_min;                                //!< mininum correct value
+ uint16_t map_v_max;                                //!< maximum correct value
+ uint16_t map_v_em;                                 //!< emergency value, used in case of error
+
+ uint16_t vbat_v_min;
+ uint16_t vbat_v_max;
+ uint16_t vbat_v_em;
+
+ uint16_t cts_v_min;
+ uint16_t cts_v_max;
+ uint16_t cts_v_em;
+
+ uint16_t ks_v_min;
+ uint16_t ks_v_max;
+ uint16_t ks_v_em;
+
+ uint16_t tps_v_min;
+ uint16_t tps_v_max;
+ uint16_t tps_v_em;
+
+ uint16_t add_i1_v_min;
+ uint16_t add_i1_v_max;
+ uint16_t add_i1_v_em;
+
+ uint16_t add_i2_v_min;
+ uint16_t add_i2_v_max;
+ uint16_t add_i2_v_em;
+}ce_sett_t;
+
 /**Describes separate tables stored in the firmware
  */
 typedef struct fw_ex_data_t
@@ -223,10 +255,13 @@ typedef struct fw_ex_data_t
   /** Gas dose actuator position vs (TPS,RPM)*/
   uint8_t gasdose_pos[GASDOSE_POS_TPS_SIZE][GASDOSE_POS_RPM_SIZE];
 
+  /**CE settings data*/
+  ce_sett_t cesd;
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1792];
+  uint8_t reserved[1750];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

@@ -375,7 +375,7 @@ MAIN()
     knock_start_settings_latching();
 
    edat.corr.curr_angle = calc_adv_ang;
-   meas_update_values_buffers(&edat, 1);  //<-- update RPM only
+   meas_update_values_buffers(&edat, 1, &fw_data.exdata.cesd);  //<-- update RPM only
   }
 
   //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
@@ -405,7 +405,7 @@ MAIN()
    }
 
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-   meas_update_values_buffers(&edat, 0);
+   meas_update_values_buffers(&edat, 0, &fw_data.exdata.cesd);
   }
 
   //----------непрерывное выполнение-----------------------------------------
@@ -420,7 +420,7 @@ MAIN()
   //расчет мгновенной частоты вращения коленвала
   edat.sens.inst_frq = ckps_calculate_instant_freq();
   //усреднение физических величин хранящихся в кольцевых буферах
-  meas_average_measured_values(&edat);
+  meas_average_measured_values(&edat, &fw_data.exdata.cesd);
   //cчитываем дискретные входы системы и переключаем тип топлива
   meas_take_discrete_inputs(&edat);
   //управление периферией
@@ -467,7 +467,7 @@ MAIN()
   //выполняем операции которые необходимо выполнять строго для каждого рабочего такта.
   if (ckps_is_stroke_event_r())
   {
-   meas_update_values_buffers(&edat, 0);
+   meas_update_values_buffers(&edat, 0, &fw_data.exdata.cesd);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    //Ограничиваем быстрые изменения УОЗ, он не может измениться больше чем на определенную величину

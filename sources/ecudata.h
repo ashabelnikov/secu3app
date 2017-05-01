@@ -99,6 +99,7 @@ typedef struct sensors_t
  int16_t  tps_raw;                       //!< raw ADC value from TPS sensor
  int16_t  add_i1_raw;                    //!< raw ADC value from ADD_I1 input
  int16_t  add_i2_raw;                    //!< raw ADC value from ADD_I2 input
+ int16_t  knock_raw;                     //!< raw value of signal from KS chip
 }sensors_t;
 
 typedef struct correct_t

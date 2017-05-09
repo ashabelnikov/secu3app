@@ -465,10 +465,12 @@ typedef struct params_t
 
   uint16_t gd_lambda_stoichval;           //!< Stoichiometric value of fuel used with stepper gas valve, value * 128
 
+  uint8_t  inj_lambda_ms_per_stp;         // Number of strokes per step for lambda control
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[49];
+  uint8_t  reserved[48];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

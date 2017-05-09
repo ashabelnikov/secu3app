@@ -741,6 +741,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
   build_i8h(d->param.inj_lambda_activ_delay);
   build_i16h(d->param.inj_lambda_dead_band);
   build_i8h(d->param.inj_lambda_senstype);
+  build_i8h(d->param.inj_lambda_ms_per_stp);
   break;
 #endif
 
@@ -1237,6 +1238,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   d->param.inj_lambda_activ_delay = recept_i8h();
   d->param.inj_lambda_dead_band = recept_i16h();
   d->param.inj_lambda_senstype = recept_i8h();
+  d->param.inj_lambda_ms_per_stp = recept_i8h();
   break;
 #endif
 

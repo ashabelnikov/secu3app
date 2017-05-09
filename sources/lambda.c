@@ -43,6 +43,7 @@ typedef struct
 {
  uint8_t stroke_counter;         //!< Used to count strokes for correction integration
  uint16_t lambda_t1;             //!< timer
+ uint16_t lambda_t2;             //!< timer for ms per step
  uint8_t enabled;                //!< Flag indicates that lambda correction is enabled by timeout
  uint8_t fc_delay;               //!< delay in strokes before lambda correction will be turned on after fuel cut off
  uint8_t gasv_prev;              //!< previous value of GAS_V input
@@ -73,6 +74,54 @@ void lambda_control(struct ecudata_t* d)
    ego.enabled = 1;
  }
 }
+
+/** Process one lambda iteration
+ * \param d Pointer to ECU data structure
+ */
+static void lambda_iteration(struct ecudata_t* d)
+{
+////////////////////////////////////////////////////////////////////////////////////////
+    if (d->param.inj_lambda_senstype==0)
+    { //NBO sensor type
+     //update EGO correction (with deadband)
+     int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
+     int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
+     if (int_p_thrd < 0)
+      int_p_thrd = 0;
+
+     if (d->sens.add_i1 > int_m_thrd)
+      d->corr.lambda-=d->param.inj_lambda_step_size_m;
+     else if (d->sens.add_i1 < int_p_thrd)
+      d->corr.lambda+=d->param.inj_lambda_step_size_p;
+    }
+    else
+    { //WBO sensor type (or emulation)
+     uint16_t sens_afr = ego_curve_lookup(d);
+
+     int16_t int_m_thrd = d->corr.afr - AFRVAL_MAG(0.05);
+     int16_t int_p_thrd = d->corr.afr + AFRVAL_MAG(0.05);
+     if (int_m_thrd < 0)
+      int_m_thrd = 0;
+
+     if (sens_afr < int_m_thrd)
+      d->corr.lambda-=d->param.inj_lambda_step_size_m;
+     else if (sens_afr > int_p_thrd)
+      d->corr.lambda+=d->param.inj_lambda_step_size_p;
+    }
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+#ifdef GD_CONTROL
+    //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))
+    if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP) && ((IOCFG_CHECK(IOP_SM_STP) && (d->choke_pos > 0)) || (!IOCFG_CHECK(IOP_SM_STP) && d->sens.temperat <= d->param.idlreg_turn_on_temp)))
+     restrict_value_to(&d->corr.lambda, -d->param.gd_lambda_corr_limit_m, d->param.gd_lambda_corr_limit_p);
+    else
+     restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
+#else
+    restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
+#endif
+}
+
 
 void lambda_stroke_event_notification(struct ecudata_t* d)
 {
@@ -164,53 +213,24 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
  {
   if (d->sens.temperat > d->param.inj_lambda_temp_thrd)  //coolant temperature > threshold
   {
-   if (ego.stroke_counter)
-    ego.stroke_counter--;
+
+   if (d->param.inj_lambda_str_per_stp > 0)
+   {//using strokes
+    if (ego.stroke_counter)
+     ego.stroke_counter--;
+    else
+    {
+     ego.stroke_counter = d->param.inj_lambda_str_per_stp;
+     lambda_iteration(d);
+    }
+   }
    else
-   {
-    ego.stroke_counter = d->param.inj_lambda_str_per_stp;
-
-////////////////////////////////////////////////////////////////////////////////////////
-    if (d->param.inj_lambda_senstype==0)
-    { //NBO sensor type
-     //update EGO correction (with deadband)
-     int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
-     int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
-     if (int_p_thrd < 0)
-      int_p_thrd = 0;
-
-     if (d->sens.add_i1 > int_m_thrd)
-      d->corr.lambda-=d->param.inj_lambda_step_size_m;
-     else if (d->sens.add_i1 < int_p_thrd)
-      d->corr.lambda+=d->param.inj_lambda_step_size_p;
+   { //using ms
+    if ((s_timer_gtc() - ego.lambda_t2) >= (d->param.inj_lambda_ms_per_stp))
+    {
+     ego.lambda_t2 = s_timer_gtc();
+     lambda_iteration(d);
     }
-    else
-    { //WBO sensor type (or emulation)
-     uint16_t sens_afr = ego_curve_lookup(d);
-
-     int16_t int_m_thrd = d->corr.afr - AFRVAL_MAG(0.05);
-     int16_t int_p_thrd = d->corr.afr + AFRVAL_MAG(0.05);
-     if (int_m_thrd < 0)
-      int_m_thrd = 0;
-
-     if (sens_afr < int_m_thrd)
-      d->corr.lambda-=d->param.inj_lambda_step_size_m;
-     else if (sens_afr > int_p_thrd)
-      d->corr.lambda+=d->param.inj_lambda_step_size_p;
-    }
-////////////////////////////////////////////////////////////////////////////////////////
-
-
-#ifdef GD_CONTROL
-    //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))
-    if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP) && ((IOCFG_CHECK(IOP_SM_STP) && (d->choke_pos > 0)) || (!IOCFG_CHECK(IOP_SM_STP) && d->sens.temperat <= d->param.idlreg_turn_on_temp)))
-     restrict_value_to(&d->corr.lambda, -d->param.gd_lambda_corr_limit_m, d->param.gd_lambda_corr_limit_p);
-    else
-     restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
-#else
-    restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
-#endif
-
    }
   }
   else

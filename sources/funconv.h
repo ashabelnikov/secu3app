@@ -233,6 +233,12 @@ uint16_t inj_idling_rpm(struct ecudata_t* d);
  */
 uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t targ_rpm);
 
+/** Calculates mixture correction coefficient based on the IAC and TPS positions
+ * \param d pointer to ECU data structure
+ * \raturn value * 8192
+ */
+uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d);
+
 #endif
 
 #ifdef PA4_INP_IGNTIM

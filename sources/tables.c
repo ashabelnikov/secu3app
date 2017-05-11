@@ -111,6 +111,13 @@
 //For indling regulator's rigidity function
 #define _IRR(v) ROUND(((v) * 128.0))
 
+//IAC correction weight
+#define _MW(v) ROUND((v) * 256.0)
+#define _MWX(v) ROUND((v) * 2.0)
+//IAC correction
+#define _MC(v) ROUND((v) * 8192.0)
+#define _MCX(v) ROUND((v) * 128.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -660,6 +667,18 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
    ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
 
+   /**Fill mixture correction weight vs TPS position*/
+   {//   0         4          8        12        16        20       24        28        32        36        40        44       48         52       56         60
+    _MW(0.995),_MW(0.51),_MW(0.40),_MW(0.32),_MW(0.28),_MW(0.24),_MW(0.22),_MW(0.17),_MW(0.14),_MW(0.12),_MW(0.09),_MW(0.07),_MW(0.05),_MW(0.04),_MW(0.02),_MW(0.00),
+    _MWX(0.00),_MWX(60.0) //0-60% TPS
+   },
+
+   /**Fill mixture correction vs IAC position*/
+   {//   0        10         20         30        40          50          60        70
+    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -819,6 +838,18 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
    ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
 
+   /**Fill mixture correction weight vs TPS position*/
+   {//   0         4          8        12        16        20       24        28        32        36        40        44       48         52       56         60
+    _MW(0.995),_MW(0.51),_MW(0.40),_MW(0.32),_MW(0.28),_MW(0.24),_MW(0.22),_MW(0.17),_MW(0.14),_MW(0.12),_MW(0.09),_MW(0.07),_MW(0.05),_MW(0.04),_MW(0.02),_MW(0.00),
+    _MWX(0.00),_MWX(60.0) //0-60% TPS
+   },
+
+   /**Fill mixture correction vs IAC position*/
+   {//   0        10         20         30        40          50          60        70
+    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -977,6 +1008,18 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
    ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
 
+   /**Fill mixture correction weight vs TPS position*/
+   {//   0         4          8        12        16        20       24        28        32        36        40        44       48         52       56         60
+    _MW(0.995),_MW(0.51),_MW(0.40),_MW(0.32),_MW(0.28),_MW(0.24),_MW(0.22),_MW(0.17),_MW(0.14),_MW(0.12),_MW(0.09),_MW(0.07),_MW(0.05),_MW(0.04),_MW(0.02),_MW(0.00),
+    _MWX(0.00),_MWX(60.0) //0-60% TPS
+   },
+
+   /**Fill mixture correction vs IAC position*/
+   {//   0        10         20         30        40          50          60        70
+    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1134,6 +1177,18 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    /**Fill EGO AFR curve looku up table*/
    {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
    ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
+
+   /**Fill mixture correction weight vs TPS position*/
+   {//   0         4          8        12        16        20       24        28        32        36        40        44       48         52       56         60
+    _MW(0.995),_MW(0.51),_MW(0.40),_MW(0.32),_MW(0.28),_MW(0.24),_MW(0.22),_MW(0.17),_MW(0.14),_MW(0.12),_MW(0.09),_MW(0.07),_MW(0.05),_MW(0.04),_MW(0.02),_MW(0.00),
+    _MWX(0.00),_MWX(60.0) //0-60% TPS
+   },
+
+   /**Fill mixture correction vs IAC position*/
+   {//   0        10         20         30        40          50          60        70
+    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+   },
 
    /**reserved bytes */
    {0}
@@ -1321,6 +1376,18 @@ PGM_DECLARE(f_data_t tt_def_data) =
  /**Fill EGO AFR curve looku up table*/
  {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
  ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
+
+ /**Fill mixture correction weight vs TPS position*/
+ {//   0         4          8        12        16        20       24        28        32        36        40        44       48         52       56         60
+  _MW(0.995),_MW(0.51),_MW(0.40),_MW(0.32),_MW(0.28),_MW(0.24),_MW(0.22),_MW(0.17),_MW(0.14),_MW(0.12),_MW(0.09),_MW(0.07),_MW(0.05),_MW(0.04),_MW(0.02),_MW(0.00),
+  _MWX(0.00),_MWX(60.0) //0-60% TPS
+ },
+
+ /**Fill mixture correction vs IAC position*/
+ {//   0        10         20         30        40          50          60        70
+  _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+  _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+ },
 
  /**reserved bytes */
  {0}

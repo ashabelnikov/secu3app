@@ -158,6 +158,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    if (lgs.aftstr_enrich_counter)
     pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
+   pw= (pw * inj_iacmixtcorr_lookup(d)) >> 13;      //apply mixture correction vs IAC
    pw+= calc_acc_enrich(d);                         //add acceleration enrichment
    if (((int32_t)pw) < 0)
     pw = 0;
@@ -219,6 +220,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    if (lgs.aftstr_enrich_counter)
     pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
    pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
+   pw= (pw * inj_iacmixtcorr_lookup(d)) >> 13;      //apply mixture correction vs IAC
    pw+= calc_acc_enrich(d);                         //add acceleration enrichment
    if (((int32_t)pw) < 0)
     pw = 0;

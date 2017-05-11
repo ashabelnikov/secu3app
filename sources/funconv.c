@@ -823,6 +823,54 @@ uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t ta
         (i * RAD_MAG(0.1428)), RAD_MAG(0.1428), 8) >> 3;
 }
 
+uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d)
+{
+ int16_t i, i1, x = d->choke_pos << 6; //value * 128
+
+ //IAC pos. value at the start of axis
+ uint16_t x_start = _GWU(inj_iac_corr[INJ_IAC_CORR_SIZE]);
+ //IAC pos. value at the end of axis
+ uint16_t x_end = _GWU(inj_iac_corr[INJ_IAC_CORR_SIZE+1]);
+
+ uint16_t x_step = (x_end - x_start) / (INJ_IAC_CORR_SIZE - 1);
+
+ if (x < x_start)
+  x = x_start;
+
+ i = (x - x_start) / x_step;
+
+ if (i >= INJ_IAC_CORR_SIZE-1) i = i1 = INJ_IAC_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ uint16_t corr = (simple_interpolation(x, _GWU(inj_iac_corr[i]), _GWU(inj_iac_corr[i1]), //<--values in table are unsigned
+        (i * x_step) + x_start, x_step, 2)) >> 1;
+
+ //Calculate weight coefficient:
+
+ x = d->sens.tps << 6; //value * 128
+
+ //IAC pos. value at the start of axis
+ x_start = (_GBU(inj_iac_corr_w[INJ_IAC_CORR_W_SIZE])) << 6;
+ //IAC pos. value at the end of axis
+ x_end = (_GBU(inj_iac_corr_w[INJ_IAC_CORR_W_SIZE+1])) << 6;
+
+ x_step = (x_end - x_start) / (INJ_IAC_CORR_W_SIZE - 1);
+
+ if (x < x_start)
+  x = x_start;
+
+ i = (x - x_start) / x_step;
+
+ if (i >= INJ_IAC_CORR_W_SIZE-1) i = i1 = INJ_IAC_CORR_W_SIZE-1;
+ else i1 = i + 1;
+
+ uint16_t corr_w = (simple_interpolation(x, _GBU(inj_iac_corr_w[i]), _GBU(inj_iac_corr_w[i1]), //<--values in table are unsigned
+        (i * x_step) + x_start, x_step, 32));
+
+ //calculate final value
+ return ((uint32_t)corr * corr_w) >> (8+5);
+}
+
 #endif //FUEL_INJECT
 
 

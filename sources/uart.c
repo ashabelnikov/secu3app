@@ -70,6 +70,8 @@ uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #define ETMT_ITRPM_MAP 16   //!< idling RPM
 #define ETMT_RIGID_MAP 17   //!< idl. regulator's rigidity map
 #define ETMT_EGOCRV_MAP 18  //!< EGO curve (WBO emulation)
+#define ETMT_IACC_MAP 19    //!< mixture correction vs IAC pos
+#define ETMT_IACCW_MAP 20   //!< weight of misture correction vs TPS
 
 /**Define internal state variables */
 typedef struct
@@ -895,6 +897,28 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      if (wrk_index >= 2)
      {
       wrk_index = 0;
+      state = ETMT_IACC_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_IACC_MAP:
+     build_i8h(wrk_index*INJ_IAC_CORR_SIZE);
+     build_rw((uint16_t*)&d->tables_ram.inj_iac_corr[wrk_index*INJ_IAC_CORR_SIZE], (wrk_index < 1) ? INJ_IAC_CORR_SIZE : 2);
+     if (wrk_index >= 1)
+     {
+      wrk_index = 0;
+      state = ETMT_IACCW_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_IACCW_MAP:
+     build_i8h(wrk_index*INJ_IAC_CORR_W_SIZE);
+     build_rb((uint8_t*)&d->tables_ram.inj_iac_corr_w[wrk_index*INJ_IAC_CORR_W_SIZE], (wrk_index < 1) ? INJ_IAC_CORR_W_SIZE : 2);
+     if (wrk_index >= 1)
+     {
+      wrk_index = 0;
       state = ETMT_STRT_MAP;
      }
      else
@@ -1312,6 +1336,12 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
      break;
     case ETMT_EGOCRV_MAP: //EGO curve (WBO emulation)
      recept_rw(((uint16_t*)&d->tables_ram.inj_ego_curve) + addr, INJ_EGO_CURVE_SIZE/2); /*INJ_EGO_CURVE_SIZE/2 max*/
+     break;
+    case ETMT_IACC_MAP: //Mixture correction vs IAC pos
+     recept_rw(((uint16_t*)&d->tables_ram.inj_iac_corr) + addr, INJ_IAC_CORR_SIZE); /*INJ_IAC_CORR_SIZE max*/
+     break;
+    case ETMT_IACCW_MAP: //Weight of mixture correction vs TPS pos
+     recept_rb(((uint8_t*)&d->tables_ram.inj_iac_corr_w) + addr, INJ_IAC_CORR_W_SIZE); /*INJ_IAC_CORR_W_SIZE max*/
      break;
    }
   }

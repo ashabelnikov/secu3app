@@ -90,6 +90,8 @@
 #define INJ_TARGET_RPM_TABLE_SIZE       16          //!< idling target RPM lookup table size
 #define INJ_IDL_RIGIDITY_SIZE           8           //! size of the idling regulator's rigidity function lookup table
 #define INJ_EGO_CURVE_SIZE              16          //!< oxygen sensor AFR curve
+#define INJ_IAC_CORR_W_SIZE             16          //!< IAC correction weight lookup table size
+#define INJ_IAC_CORR_SIZE               8           //!< IAC correction lookup table size
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -178,10 +180,14 @@ typedef struct f_data_t
   //note! inj_ego_curve must be followed by ego_vl_begin and ego_vl_end values!
   uint16_t inj_ego_curve[INJ_EGO_CURVE_SIZE+2];       //!< Air-Fuel ratio lookup table, value * 128, the last two values are voltages corresponding to the beginning and to the end of axis (ADC discretes)
 
+  uint8_t inj_iac_corr_w[INJ_IAC_CORR_W_SIZE+2];      //!< IAC correction weight lookup table (value * 256), the last two values are TPS corresponding to the beginning and to the end of axis
+
+  uint16_t inj_iac_corr[INJ_IAC_CORR_SIZE+2];         //!< IAC correction lookup table (value * 8192), the last two values are IAC positions corresponding to the beginning and to the end of axis
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[378];
+  uint8_t reserved[340];
 }f_data_t;
 
 

@@ -47,6 +47,7 @@ typedef struct
  uint8_t enabled;                //!< Flag indicates that lambda correction is enabled by timeout
  uint8_t fc_delay;               //!< delay in strokes before lambda correction will be turned on after fuel cut off
  uint8_t gasv_prev;              //!< previous value of GAS_V input
+ uint8_t ms_delay;               //!< delay flag (used for ms per step)
 }lambda_state_t;
 
 /**Instance of internal state variables structure*/
@@ -58,6 +59,7 @@ void lambda_init_state(void)
  ego.enabled = 0;
  ego.fc_delay = 0;
  ego.gasv_prev = 0;
+ ego.ms_delay = 0;
 }
 
 void lambda_control(struct ecudata_t* d)
@@ -77,9 +79,11 @@ void lambda_control(struct ecudata_t* d)
 
 /** Process one lambda iteration
  * \param d Pointer to ECU data structure
+ * \return 1 - if correction has been updated, otherwise 0
  */
-static void lambda_iteration(struct ecudata_t* d)
+static uint8_t lambda_iteration(struct ecudata_t* d)
 {
+ uint8_t updated = 0;
 ////////////////////////////////////////////////////////////////////////////////////////
     if (d->param.inj_lambda_senstype==0)
     { //NBO sensor type
@@ -89,10 +93,16 @@ static void lambda_iteration(struct ecudata_t* d)
      if (int_p_thrd < 0)
       int_p_thrd = 0;
 
-     if (d->sens.add_i1 > int_m_thrd)
+     if (d->sens.add_i1 /*d->sens.inst_add_i1*/ > int_m_thrd)
+     {
       d->corr.lambda-=d->param.inj_lambda_step_size_m;
-     else if (d->sens.add_i1 < int_p_thrd)
+      updated = 1;
+     }
+     else if (d->sens.add_i1 /*d->sens.inst_add_i1*/ < int_p_thrd)
+     {
       d->corr.lambda+=d->param.inj_lambda_step_size_p;
+      updated = 1;
+     }
     }
     else
     { //WBO sensor type (or emulation)
@@ -104,9 +114,15 @@ static void lambda_iteration(struct ecudata_t* d)
       int_m_thrd = 0;
 
      if (sens_afr < int_m_thrd)
+     {
       d->corr.lambda-=d->param.inj_lambda_step_size_m;
+      updated = 1;
+     }
      else if (sens_afr > int_p_thrd)
+     {
       d->corr.lambda+=d->param.inj_lambda_step_size_p;
+      updated = 1;
+     }
     }
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,6 +136,7 @@ static void lambda_iteration(struct ecudata_t* d)
 #else
     restrict_value_to(&d->corr.lambda, -d->param.inj_lambda_corr_limit_m, d->param.inj_lambda_corr_limit_p);
 #endif
+ return updated;
 }
 
 
@@ -226,10 +243,22 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
    }
    else
    { //using ms
-    if ((s_timer_gtc() - ego.lambda_t2) >= (d->param.inj_lambda_ms_per_stp))
+    if (!ego.ms_delay)
     {
-     ego.lambda_t2 = s_timer_gtc();
-     lambda_iteration(d);
+     if (lambda_iteration(d))
+     {
+      ego.lambda_t2 = s_timer_gtc();
+      ego.ms_delay = 1;
+     }
+    }
+    else if ((s_timer_gtc() - ego.lambda_t2) >= (d->param.inj_lambda_ms_per_stp))
+    {
+     ego.ms_delay = 0;
+     if (lambda_iteration(d))
+     {
+      ego.lambda_t2 = s_timer_gtc();
+      ego.ms_delay = 1;
+     }
     }
    }
   }

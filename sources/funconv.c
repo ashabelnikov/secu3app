@@ -981,7 +981,7 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
 #if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
 int16_t ego_curve_lookup(struct ecudata_t* d)
 {
- int16_t i, i1, voltage = d->sens.add_i1;
+ int16_t i, i1, voltage = d->sens.add_i1; /*d->sens.inst_add_i1*/
 
  //Voltage value at the start of axis in ADC discretes
  uint16_t v_start = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE]);

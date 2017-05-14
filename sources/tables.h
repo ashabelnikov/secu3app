@@ -92,6 +92,7 @@
 #define INJ_EGO_CURVE_SIZE              16          //!< oxygen sensor AFR curve
 #define INJ_IAC_CORR_W_SIZE             16          //!< IAC correction weight lookup table size
 #define INJ_IAC_CORR_SIZE               8           //!< IAC correction lookup table size
+#define INJ_IATCLT_CORR_SIZE            8           //!< IAT/CLT correction lookup table size
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -184,10 +185,12 @@ typedef struct f_data_t
 
   uint16_t inj_iac_corr[INJ_IAC_CORR_SIZE+2];         //!< IAC correction lookup table (value * 8192), the last two values are IAC positions corresponding to the beginning and to the end of axis
 
+  uint16_t inj_iatclt_corr[INJ_IATCLT_CORR_SIZE+2];   //!< IAT/CLT correction lookup table (value * 8192), the last two values are air flows (load*rpm) corresponding to the beginning and to the end of axis
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[340];
+  uint8_t reserved[320];
 }f_data_t;
 
 

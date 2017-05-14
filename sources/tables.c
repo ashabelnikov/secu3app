@@ -118,6 +118,10 @@
 #define _MC(v) ROUND((v) * 8192.0)
 #define _MCX(v) ROUND((v) * 128.0)
 
+//IAT/CLT correction
+#define _IC(v) ROUND((v) * 8192.0)
+#define _ICX(v) ROUND((v) / 32.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -679,6 +683,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
    },
 
+   /**Fill IAT/CLT correction lookup table*/
+   {//
+    _IC(1.000),_IC(0.500),_IC(0.160),_IC(0.08),_IC(0.050),_IC(0.035),_IC(0.025),_IC(0.010),
+    _ICX(5000),_ICX(960000) //
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -848,6 +858,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {//   0        10         20         30        40          50          60        70
     _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+   },
+
+   /**Fill IAT/CLT correction lookup table*/
+   {//
+    _IC(1.000),_IC(0.500),_IC(0.160),_IC(0.08),_IC(0.050),_IC(0.035),_IC(0.025),_IC(0.010),
+    _ICX(5000),_ICX(960000) //
    },
 
    /**reserved bytes */
@@ -1020,6 +1036,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
    },
 
+   /**Fill IAT/CLT correction lookup table*/
+   {//
+    _IC(1.000),_IC(0.500),_IC(0.160),_IC(0.08),_IC(0.050),_IC(0.035),_IC(0.025),_IC(0.010),
+    _ICX(5000),_ICX(960000) //
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1188,6 +1210,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {//   0        10         20         30        40          50          60        70
     _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+   },
+
+   /**Fill IAT/CLT correction lookup table*/
+   {//
+    _IC(1.000),_IC(0.500),_IC(0.160),_IC(0.08),_IC(0.050),_IC(0.035),_IC(0.025),_IC(0.010),
+    _ICX(5000),_ICX(960000) //
    },
 
    /**reserved bytes */
@@ -1387,6 +1415,12 @@ PGM_DECLARE(f_data_t tt_def_data) =
  {//   0        10         20         30        40          50          60        70
   _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
   _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
+ },
+
+ /**Fill IAT/CLT correction lookup table*/
+ {//
+  _IC(1.000),_IC(0.500),_IC(0.160),_IC(0.08),_IC(0.050),_IC(0.035),_IC(0.025),_IC(0.010),
+  _ICX(5000),_ICX(960000) //
  },
 
  /**reserved bytes */

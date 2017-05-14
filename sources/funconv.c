@@ -506,6 +506,43 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
 #endif
 
 #ifdef FUEL_INJECT
+
+/** Calculates corrected MAT based on the coefficient from a lookup table, IAT and CTS sensors
+ * \param d Pointer to ECU data structure
+ * \return corrected MAT value (temperature units, Celsius)
+ */
+static uint16_t inj_corrected_mat(struct ecudata_t* d)
+{
+ int16_t i, i1; uint16_t x = ((int32_t)d->sens.inst_frq * d->sens.map) >> (6+5); //value / 32
+
+ //air flow value at the start of axis
+ uint16_t x_start = _GWU(inj_iatclt_corr[INJ_IATCLT_CORR_SIZE]);
+ //air flow value at the end of axis
+ uint16_t x_end = _GWU(inj_iatclt_corr[INJ_IATCLT_CORR_SIZE+1]);
+
+ //additionally divide x by 2, because simple_interpolation is limited to 32767
+ x = x >> 1;
+ x_start = x_start >> 1;
+ x_end = x_end >> 1;
+
+ uint16_t x_step = (x_end - x_start) / (INJ_IATCLT_CORR_SIZE - 1);
+
+ if (x < x_start)
+  x = x_start;
+
+ i = (x - x_start) / x_step;
+
+ if (i >= INJ_IATCLT_CORR_SIZE-1) i = i1 = INJ_IATCLT_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ uint16_t coeff = (simple_interpolation(x, _GWU(inj_iatclt_corr[i]), _GWU(inj_iatclt_corr[i1]), //<--values in table are unsigned
+        (i * x_step) + x_start, x_step, 2));
+
+ //Corrected MAT = (CTS - IAT) * coefficient(load*rpm) + IAT,
+ //at this point coefficient is multiplied by 16384
+ return (((int32_t)(d->sens.temperat - d->sens.air_temp) * coeff) >> (13+1)) + d->sens.air_temp;
+}
+
 uint16_t inj_base_pw(struct ecudata_t* d)
 {
  int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
@@ -542,7 +579,7 @@ uint16_t inj_base_pw(struct ecudata_t* d)
  else if (d->sens.map > PRESSURE_MAGNITUDE(125.0))
   nsht = 1;        //pressure will be devided by 2
 
- uint32_t pw32 = ((uint32_t)(d->sens.map >> nsht) * d->param.inj_sd_igl_const) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
+ uint32_t pw32 = ((uint32_t)(d->sens.map >> nsht) * d->param.inj_sd_igl_const) / (inj_corrected_mat(d) + TEMPERATURE_MAGNITUDE(273.15));
 
  pw32>>=(2-nsht);     //after this shift pw32 value is basic pulse width * 4
 

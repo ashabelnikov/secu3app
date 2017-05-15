@@ -50,7 +50,6 @@ void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_
   *io_value = i_bottom_limit;
 }
 
-
 #if defined(FUEL_INJECTION) || defined(GD_CONTROL)
 uint16_t nr_1x_afr(uint16_t x)
 {

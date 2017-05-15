@@ -511,9 +511,11 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  * \param d Pointer to ECU data structure
  * \return corrected MAT value (temperature units, Celsius)
  */
-static uint16_t inj_corrected_mat(struct ecudata_t* d)
+static int16_t inj_corrected_mat(struct ecudata_t* d)
 {
- int16_t i, i1; uint16_t x = ((int32_t)d->sens.inst_frq * d->sens.map) >> (6+5); //value / 32
+ int16_t i, i1; uint16_t x;
+ uint32_t x_raw = ((int32_t)d->sens.inst_frq * d->sens.map) >> (6+5); //value / 32
+ x = (x_raw > 65535) ? 65535 : x_raw;
 
  //air flow value at the start of axis
  uint16_t x_start = _GWU(inj_iatclt_corr[INJ_IATCLT_CORR_SIZE]);
@@ -540,7 +542,7 @@ static uint16_t inj_corrected_mat(struct ecudata_t* d)
 
  //Corrected MAT = (CTS - IAT) * coefficient(load*rpm) + IAT,
  //at this point coefficient is multiplied by 16384
- return (((int32_t)(d->sens.temperat - d->sens.air_temp) * coeff) >> (13+1)) + d->sens.air_temp;
+ return (int16_t)(((int32_t)(d->sens.temperat - d->sens.air_temp) * coeff) >> (13+1)) + d->sens.air_temp;
 }
 
 uint16_t inj_base_pw(struct ecudata_t* d)

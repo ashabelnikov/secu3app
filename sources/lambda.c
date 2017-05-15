@@ -47,7 +47,7 @@ typedef struct
  uint8_t enabled;                //!< Flag indicates that lambda correction is enabled by timeout
  uint8_t fc_delay;               //!< delay in strokes before lambda correction will be turned on after fuel cut off
  uint8_t gasv_prev;              //!< previous value of GAS_V input
- uint8_t ms_delay;               //!< delay flag (used for ms per step)
+ uint8_t ms_mask;                //!< correction mask (used for ms per step)
 }lambda_state_t;
 
 /**Instance of internal state variables structure*/
@@ -59,7 +59,7 @@ void lambda_init_state(void)
  ego.enabled = 0;
  ego.fc_delay = 0;
  ego.gasv_prev = 0;
- ego.ms_delay = 0;
+ ego.ms_mask = 0;
 }
 
 void lambda_control(struct ecudata_t* d)
@@ -79,9 +79,10 @@ void lambda_control(struct ecudata_t* d)
 
 /** Process one lambda iteration
  * \param d Pointer to ECU data structure
- * \return 1 - if correction has been updated, otherwise 0
+ * \param mask Mask updating for "-" (1) or for "+" (2), 0 - no masking
+ * \return 1,2 - if correction has been updated (- or +), otherwise 0
  */
-static uint8_t lambda_iteration(struct ecudata_t* d)
+static uint8_t lambda_iteration(struct ecudata_t* d, uint8_t mask)
 {
  uint8_t updated = 0;
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -95,13 +96,19 @@ static uint8_t lambda_iteration(struct ecudata_t* d)
 
      if (d->sens.add_i1 /*d->sens.inst_add_i1*/ > int_m_thrd)
      {
-      d->corr.lambda-=d->param.inj_lambda_step_size_m;
-      updated = 1;
+      if (1!=mask)
+      {
+       d->corr.lambda-=d->param.inj_lambda_step_size_m;
+       updated = 1;
+      }
      }
      else if (d->sens.add_i1 /*d->sens.inst_add_i1*/ < int_p_thrd)
      {
-      d->corr.lambda+=d->param.inj_lambda_step_size_p;
-      updated = 1;
+      if (2!=mask)
+      {
+       d->corr.lambda+=d->param.inj_lambda_step_size_p;
+       updated = 2;
+      }
      }
     }
     else
@@ -115,13 +122,19 @@ static uint8_t lambda_iteration(struct ecudata_t* d)
 
      if (sens_afr < int_m_thrd)
      {
-      d->corr.lambda-=d->param.inj_lambda_step_size_m;
-      updated = 1;
+      if (1!=mask)
+      {
+       d->corr.lambda-=d->param.inj_lambda_step_size_m;
+       updated = 1;
+      }
      }
      else if (sens_afr > int_p_thrd)
      {
-      d->corr.lambda+=d->param.inj_lambda_step_size_p;
-      updated = 1;
+      if (2!=mask)
+      {
+       d->corr.lambda+=d->param.inj_lambda_step_size_p;
+       updated = 2;
+      }
      }
     }
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -238,28 +251,24 @@ void lambda_stroke_event_notification(struct ecudata_t* d)
     else
     {
      ego.stroke_counter = d->param.inj_lambda_str_per_stp;
-     lambda_iteration(d);
+     lambda_iteration(d, 0);
     }
    }
    else
    { //using ms
-    if (!ego.ms_delay)
+
+    uint8_t updated = lambda_iteration(d, ego.ms_mask);
+    if (updated)
     {
-     if (lambda_iteration(d))
-     {
-      ego.lambda_t2 = s_timer_gtc();
-      ego.ms_delay = 1;
-     }
+     ego.lambda_t2 = s_timer_gtc();
+     ego.ms_mask = updated;
     }
-    else if ((s_timer_gtc() - ego.lambda_t2) >= (d->param.inj_lambda_ms_per_stp))
+    else
     {
-     ego.ms_delay = 0;
-     if (lambda_iteration(d))
-     {
-      ego.lambda_t2 = s_timer_gtc();
-      ego.ms_delay = 1;
-     }
+     if ((s_timer_gtc() - ego.lambda_t2) >= (d->param.inj_lambda_ms_per_stp))
+      ego.ms_mask = 0;
     }
+
    }
   }
   else

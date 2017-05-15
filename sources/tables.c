@@ -115,7 +115,7 @@
 #define _MW(v) ROUND((v) * 256.0)
 #define _MWX(v) ROUND((v) * 2.0)
 //IAC correction
-#define _MC(v) ROUND((v) * 8192.0)
+#define _MC(v) ROUND(((v)-1.0) * 8192.0)
 #define _MCX(v) ROUND((v) * 128.0)
 
 //IAT/CLT correction

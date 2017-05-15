@@ -867,9 +867,9 @@ uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d)
  int16_t i, i1, x = d->choke_pos << 6; //value * 128
 
  //IAC pos. value at the start of axis
- uint16_t x_start = _GWU(inj_iac_corr[INJ_IAC_CORR_SIZE]);
+ uint16_t x_start = _GW(inj_iac_corr[INJ_IAC_CORR_SIZE]);
  //IAC pos. value at the end of axis
- uint16_t x_end = _GWU(inj_iac_corr[INJ_IAC_CORR_SIZE+1]);
+ uint16_t x_end = _GW(inj_iac_corr[INJ_IAC_CORR_SIZE+1]);
 
  uint16_t x_step = (x_end - x_start) / (INJ_IAC_CORR_SIZE - 1);
 
@@ -881,7 +881,7 @@ uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d)
  if (i >= INJ_IAC_CORR_SIZE-1) i = i1 = INJ_IAC_CORR_SIZE-1;
  else i1 = i + 1;
 
- uint16_t corr = (simple_interpolation(x, _GWU(inj_iac_corr[i]), _GWU(inj_iac_corr[i1]), //<--values in table are unsigned
+ int16_t corr = (simple_interpolation(x, _GW(inj_iac_corr[i]), _GW(inj_iac_corr[i1]), //<--values in table are unsigned
         (i * x_step) + x_start, x_step, 2)) >> 1;
 
  //Calculate weight coefficient:
@@ -907,7 +907,7 @@ uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d)
         (i * x_step) + x_start, x_step, 32));
 
  //calculate final value
- return ((uint32_t)corr * corr_w) >> (8+5);
+ return 8192 + (int16_t)(((int32_t)corr * corr_w) >> (8+5));
 }
 
 #endif //FUEL_INJECT

@@ -297,6 +297,9 @@ uint16_t ckps_calculate_instant_freq(void)
  sign = CHECKBIT(flags2, F_SPSIGN);  //sign of stroke period
  _ENABLE_INTERRUPT();
 
+ if (0xFF == ovfcnt)
+  return 0; //engine is stopped
+
  //We know period and number of timer overflows, so we can calculate correct value of RPM even if RPM is very low
  if (sign && ovfcnt > 0)
   return ckps.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) - (65536-period));

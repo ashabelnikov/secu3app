@@ -176,6 +176,8 @@ void process_uart_interface(struct ecudata_t* d)
 
 #ifndef DWELL_CONTROL
     ckps_set_ignition_cogs(d->param.ckps_ignit_cogs);
+#else
+    ckps_set_rising_spark(CHECKBIT(edat.param.hall_flags, CKPF_RISING_SPARK));
 #endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
 

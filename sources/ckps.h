@@ -75,6 +75,10 @@ void ckps_set_ignition_cogs(uint8_t cogs);
  * \param i_acc_time accumulation time in timer's ticks (1 tick = 4uS)
  */
 void ckps_set_acc_time(uint16_t i_acc_time);
+/**Set rising/falling edge of ignition pulse on spark
+ * \param rising_edge 0 - falling edge on spark (default), 1 - rising edge on spark
+ */
+void ckps_set_rising_spark(uint8_t rising_edge);
 #endif
 
 /** Set andvance angle

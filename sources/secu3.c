@@ -261,6 +261,8 @@ void init_modules(void)
  ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL
  ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
+#else
+ ckps_set_rising_spark(CHECKBIT(edat.param.hall_flags, CKPF_RISING_SPARK));
 #endif
  ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);
  ckps_use_knock_channel(edat.param.knock_use_knock_channel);

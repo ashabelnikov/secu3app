@@ -143,6 +143,9 @@
 #define IRF_USE_INJREG                  2           //!< Using of closed loop mode for IAC valve (fuel injection only)
 #define IRF_PREG_MODE                   3           //!< Use P-regulator instead on I-regulator
 
+//CKPS flags
+#define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark
+
 /**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
 typedef struct f_data_t
 {
@@ -367,7 +370,7 @@ typedef struct params_t
   uint8_t  ckps_cogs_num;                //!< number of crank wheel's teeth
   uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
   uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input
-  uint8_t  hall_flags;                   //!< Hall sensor related flags
+  uint8_t  hall_flags;                   //!< Hall sensor related flags (See CKPF_ defines)
   int16_t  hall_wnd_width;               //!< Hall sensor's shutter window width in degrees of crankshaft (advance value of distributor)
 
   // Ignition outputs control

@@ -72,6 +72,14 @@
 #define IGN_OUTPUTS_ON_VAL   1        //!< value used to turn on ignition channel
 #define IGN_OUTPUTS_OFF_VAL  0        //!< value used to turn off ignition channel
 
+#ifdef DWELL_CONTROL
+#define IGNOUTCB_ON_VAL (ckps.ignout_on_val)
+#define IGNOUTCB_OFF_VAL (ckps.ignout_off_val)
+#else
+#define IGNOUTCB_ON_VAL IGN_OUTPUTS_ON_VAL
+#define IGNOUTCB_OFF_VAL IGN_OUTPUTS_OFF_VAL
+#endif
+
 /**Задержка входа в прерывание COMPA и установки уровня на соотв. линии порта в тиках таймера.
  * Используется для компенсации времени. */
 #define COMPA_VECT_DELAY 2
@@ -125,6 +133,9 @@ typedef struct
  uint32_t acc_delay;                  //!< delay between last ignition and next accumulation
  uint16_t tmrval_saved;               //!< value of timer at the moment of each spark
  uint16_t period_saved;               //!< inter-tooth period at the moment of each spark
+ volatile uint8_t rising_edge_spark;  //!< flag, indicates that rising edge of ignition pulse will be generated at the moment of spark
+ volatile uint8_t ignout_on_val;
+ volatile uint8_t ignout_off_val;
 #endif
  volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
 #ifdef HALL_OUTPUT
@@ -399,6 +410,20 @@ void ckps_set_acc_time(uint16_t i_acc_time)
  ckps.cr_acc_time = i_acc_time;
  _END_ATOMIC_BLOCK();
 }
+void ckps_set_rising_spark(uint8_t rising_edge)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ ckps.rising_edge_spark = rising_edge;
+ if (rising_edge) { //spark on rising edge
+  ckps.ignout_on_val = IGN_OUTPUTS_OFF_VAL;
+  ckps.ignout_off_val = IGN_OUTPUTS_ON_VAL;
+ }
+ else { //spark on falling edge
+  ckps.ignout_on_val = IGN_OUTPUTS_ON_VAL;
+  ckps.ignout_off_val = IGN_OUTPUTS_OFF_VAL;
+ }
+ _END_ATOMIC_BLOCK();
+}
 #endif
 
 uint8_t ckps_is_error(void)
@@ -633,9 +658,9 @@ void turn_off_ignition_channel(uint8_t i_channel)
  //the igniter go to the regime of energy accumulation
  //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
  //коммутатор перейти в режим накопления энергии
- ((iocfg_pfn_set)chanstate[i_channel].io_callback1)(IGN_OUTPUTS_OFF_VAL);
+ ((iocfg_pfn_set)chanstate[i_channel].io_callback1)(IGNOUTCB_OFF_VAL);
 #ifdef PHASED_IGNITION
- ((iocfg_pfn_set)chanstate[i_channel].io_callback2)(IGN_OUTPUTS_OFF_VAL);
+ ((iocfg_pfn_set)chanstate[i_channel].io_callback2)(IGNOUTCB_OFF_VAL);
 #endif
 }
 
@@ -644,13 +669,13 @@ void turn_off_ignition_channel(uint8_t i_channel)
 #define force_pending_spark() \
  if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
  { \
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);\
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);\
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);\
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGNOUTCB_ON_VAL);\
  }
 #else
 #define force_pending_spark() \
  if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);
 #endif
 
 /**Interrupt handler for Compare/Match channel A of timer T1
@@ -687,38 +712,48 @@ ISR(TIMER1_COMPA_vect)
  }
 #endif
 
- ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGN_OUTPUTS_ON_VAL);
+ ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);
 #ifdef PHASED_IGNITION
- ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGN_OUTPUTS_ON_VAL);
+ ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGNOUTCB_ON_VAL);
 #endif
 
 #ifdef DWELL_CONTROL
  ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
  if (ckps.cr_acc_time > ckps.acc_delay-120)
   ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
- ckps.acc_delay-= ckps.cr_acc_time;    //apply dwell time
- ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
 
- ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
- ckps.channel_mode_b&= ckps.chan_mask;
- CLEARBIT(flags2, F_ADDPTK);
- SETBIT(flags, F_NTSCHB);
-
- //if less than 2 teeth remains to the accumulation beginning we have to program compare channel in advance, otherwise
- //we may loose spark in some cases
- if (ckps.acc_delay < (ckps.period_curr << 1))
+ if (ckps.rising_edge_spark)
  {
-  OCR1B = GetICR() + ckps.acc_delay;
+  ckps.channel_mode_b = ckps.channel_mode;
+  OCR1B = ckps.tmrval_saved + ckps.cr_acc_time;
   TIFR1 = _BV(OCF1B);
   TIMSK1|= _BV(OCIE1B);
  }
+ else
+ {
+  ckps.acc_delay-= ckps.cr_acc_time;    //apply dwell time
+  ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
 
- //We remembered value of TCNT1 at the top of of this function. But input capture event
- //may occur when interrupts were already disabled (by hardware) but value of timer is still
- //not saved. Another words, ICR1 must not be less than tmrval_saved.
- if (TIFR1 & _BV(ICF1))
-  ckps.tmrval_saved = ICR1;
+  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
+  CLEARBIT(flags2, F_ADDPTK);
+  SETBIT(flags, F_NTSCHB);
 
+  //if less than 2 teeth remains to the accumulation beginning we have to program compare channel in advance, otherwise
+  //we may lose spark in some cases
+  if (ckps.acc_delay < (ckps.period_curr << 1))
+  {
+   OCR1B = GetICR() + ckps.acc_delay;
+   TIFR1 = _BV(OCF1B);
+   TIMSK1|= _BV(OCIE1B);
+  }
+
+  //We remembered value of TCNT1 at the top of of this function. But input capture event
+  //may occur when interrupts were already disabled (by hardware) but value of timer is still
+  //not saved. Another words, ICR1 must not be less than tmrval_saved.
+  if (TIFR1 & _BV(ICF1))
+   ckps.tmrval_saved = ICR1;
+ }
+ ckps.channel_mode_b&= ckps.chan_mask;
 #else
  //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубьях)
  chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
@@ -811,7 +846,7 @@ static void process_ckps_cogs(void)
  force_pending_spark();
 
 #ifdef DWELL_CONTROL
- if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA)
+ if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA && !ckps.rising_edge_spark)
  {
   //We must take into account time elapsed between last spark and following tooth.
   //Because ICR1 can not be less than tmrval_saved we are using addition modulo 65535

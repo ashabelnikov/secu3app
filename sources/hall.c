@@ -60,6 +60,14 @@
 #define IGN_OUTPUTS_ON_VAL   1        //!< value used to turn on ignition channel
 #define IGN_OUTPUTS_OFF_VAL  0        //!< value used to turn off ignition channel
 
+#ifdef DWELL_CONTROL
+#define IGNOUTCB_ON_VAL (hall.ignout_on_val)
+#define IGNOUTCB_OFF_VAL (hall.ignout_off_val)
+#else
+#define IGNOUTCB_ON_VAL IGN_OUTPUTS_ON_VAL
+#define IGNOUTCB_OFF_VAL IGN_OUTPUTS_OFF_VAL
+#endif
+
 /**Calibration constant used to compensate delay in interrupts (ticks of timer 1) */
 #define CALIBRATION_DELAY    2
 
@@ -99,6 +107,9 @@ typedef struct
  int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
 #ifdef DWELL_CONTROL
  volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
+ volatile uint8_t rising_edge_spark;  //!< flag, indicates that rising edge of ignition pulse will be generated at the moment of spark
+ volatile uint8_t ignout_on_val;
+ volatile uint8_t ignout_off_val;
 #endif
 
 #ifdef FUEL_INJECT
@@ -285,6 +296,21 @@ void ckps_set_acc_time(uint16_t i_acc_time)
  hall.cr_acc_time = i_acc_time;
  _END_ATOMIC_BLOCK();
 }
+
+void ckps_set_rising_spark(uint8_t rising_edge)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ hall.rising_edge_spark = rising_edge;
+ if (rising_edge) { //spark on rising edge
+  hall.ignout_on_val = IGN_OUTPUTS_OFF_VAL;
+  hall.ignout_off_val = IGN_OUTPUTS_ON_VAL;
+ }
+ else { //spark on falling edge
+  hall.ignout_on_val = IGN_OUTPUTS_ON_VAL;
+  hall.ignout_off_val = IGN_OUTPUTS_OFF_VAL;
+ }
+ _END_ATOMIC_BLOCK();
+}
 #endif
 
 uint8_t ckps_is_error(void)
@@ -411,7 +437,7 @@ void turn_off_ignition_channel(void)
  //the igniter go to the regime of energy accumulation
  //Завершение импульса запуска коммутатора, перевод линии порта в низкий уровень - заставляем
  //коммутатор перейти в режим накопления энергии
- ((iocfg_pfn_set)hall.io_callback)(IGN_OUTPUTS_OFF_VAL);
+ ((iocfg_pfn_set)hall.io_callback)(IGNOUTCB_OFF_VAL);
 }
 
 /**Interrupt handler for Compare/Match channel A of timer T1
@@ -420,7 +446,7 @@ void turn_off_ignition_channel(void)
 ISR(TIMER1_COMPA_vect)
 {
  uint16_t tmr = TCNT1;
- ((iocfg_pfn_set)hall.io_callback)(IGN_OUTPUTS_ON_VAL);
+ ((iocfg_pfn_set)hall.io_callback)(IGNOUTCB_ON_VAL);
  TIMSK1&= ~_BV(OCIE1A);//disable interrupt (запрещаем прерывание)
 
  //-----------------------------------------------------
@@ -439,14 +465,23 @@ ISR(TIMER1_COMPA_vect)
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
 #else
- if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
+ if (hall.rising_edge_spark)
  {
   if (hall.cr_acc_time > hall.stroke_period-120)
    hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
-  OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
+  OCR1B = tmr + hall.cr_acc_time;
  }
  else
-  OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
+ {
+  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
+  {
+   if (hall.cr_acc_time > hall.stroke_period-120)
+    hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+   OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
+  }
+  else
+   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
+ }
 #endif
 
 #ifdef COOLINGFAN_PWM

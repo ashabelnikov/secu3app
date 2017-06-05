@@ -473,20 +473,32 @@ ISR(TIMER1_COMPA_vect)
 #else
  if (hall.rising_edge_spark)
  {
-  if (hall.cr_acc_time > hall.stroke_period-120)
-   hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+#ifdef COOLINGFAN_PWM
+ _DISABLE_INTERRUPT();
+#endif
+  int32_t period32 = GET_OVF_AWARE_PERIOD(CHECKBIT(flags, F_SPSIGN), hall.t1oc_s, hall.stroke_period);
+  if (period32 < 32768) { //prevent error cased by overflow
+   if (hall.cr_acc_time > hall.stroke_period-120)
+    hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+  }
   OCR1B = tmr + hall.cr_acc_time;
+#ifdef COOLINGFAN_PWM
+ _ENABLE_INTERRUPT();
+#endif
  }
  else
  {
-  if (CHECK_TIM1_OVF())
+  if (!CHECKBIT(flags2, F_SHUTTER_S)) //do not set dwell timer here in the sutter-spark mode, because in this mode we set it in the FallingEdge function
   {
-   if (hall.cr_acc_time > hall.stroke_period-120)
-    hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
-   OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
+   if (CHECK_TIM1_OVF())
+   {
+    if (hall.cr_acc_time > hall.stroke_period-120)
+     hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+    OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
+   }
+   else
+    OCR1B = tmr + 60000;  //pulse width is limited to 192 ms
   }
-  else
-   OCR1B = tmr + 60000;  //pulse width is limited to 192 ms
  }
 #endif
 
@@ -494,8 +506,11 @@ ISR(TIMER1_COMPA_vect)
  _DISABLE_INTERRUPT();
 #endif
 
- TIFR1 = _BV(OCF1B);
- TIMSK1|= _BV(OCIE1B);
+ if (!CHECKBIT(flags2, F_SHUTTER_S) || hall.rising_edge_spark)
+ {
+  TIFR1 = _BV(OCF1B);
+  TIMSK1|= _BV(OCIE1B);
+ }
 
 #ifdef HALL_OUTPUT
  IOCFG_SET(IOP_HALL_OUT, 1);//begin of pulse
@@ -608,6 +623,29 @@ void ProcessFallingEdge(uint16_t tmr)
 
   knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
   adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
+ }
+ else if (!hall.rising_edge_spark)
+ {
+  //in shutter-spark mode we start dwell timer here. This will ensure good accuracy at very low RPMs
+  int32_t period32 = GET_OVF_AWARE_PERIOD(CHECKBIT(flags, F_SPSIGN), hall.t1oc_s, hall.stroke_period);
+#ifdef COOLINGFAN_PWM
+  _ENABLE_INTERRUPT();
+#endif
+  int32_t delay = ((uint32_t)hall.shutter_wnd_width * period32) / hall.degrees_per_stroke;
+#ifdef COOLINGFAN_PWM
+  _DISABLE_INTERRUPT();
+#endif
+  if (delay < 65536)
+  {
+   if (hall.cr_acc_time > delay-120)
+    hall.cr_acc_time = delay-120;  //restrict accumulation time. Dead band = 500us 
+   OCR1B  = tmr + delay - hall.cr_acc_time;
+  }
+  else
+   OCR1B  = tmr + 60000; //time is limited to 192 ms
+
+  TIFR1 = _BV(OCF1B);
+  TIMSK1|= _BV(OCIE1B);
  }
 }
 

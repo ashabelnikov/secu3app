@@ -487,7 +487,7 @@ MAIN()
    else
    {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    ckps_set_shutter_spark(edat.sens.frequen < 200);
+    ckps_set_shutter_spark(edat.sens.frequen < 200 && 0==start_function(&edat));
 #endif
     edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_speed, edat.param.angle_dec_speed);
    }

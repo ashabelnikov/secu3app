@@ -238,6 +238,12 @@ void ckps_init_ports(void)
 #endif
 }
 
+/** Get a 32-bit value of period, taking into accound overflows
+ */
+#define GET_OVF_AWARE_PERIOD(sign, ovfcnt, period) \
+ (((sign) && (ovfcnt) > 0) ? ((((int32_t)ovfcnt) * 65536) - (65536-(period))) : ((((int32_t)ovfcnt) * 65536) + (period)))
+
+
 //Instantaneous frequency calculation of crankshaft rotation from the measured period between the engine strokes
 //(for example for 4-cylinder, 4-stroke it is 180°)
 //Period measured in the discretes of timer (one discrete = 4us), one minute = 60 seconds, one second has 1,000,000 us.
@@ -258,10 +264,7 @@ uint16_t ckps_calculate_instant_freq(void)
   return 0; //engine is stopped
 
  //We know period and number of timer overflows, so we can calculate correct value of RPM even if RPM is very low
- if (sign && ovfcnt > 0)
-  return hall.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) - (65536-period));
- else
-  return hall.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
+ return hall.frq_calc_dividend / GET_OVF_AWARE_PERIOD(sign, ovfcnt, period);
 }
 
 void ckps_set_edge_type(uint8_t edge_type)
@@ -440,6 +443,9 @@ void turn_off_ignition_channel(void)
  ((iocfg_pfn_set)hall.io_callback)(IGNOUTCB_OFF_VAL);
 }
 
+/**Check for timer1 overflow during measuring of period*/
+#define CHECK_TIM1_OVF() ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
+
 /**Interrupt handler for Compare/Match channel A of timer T1
  * вектор прерывания по совпадению канала А таймера Т1
  */
@@ -459,7 +465,7 @@ ISR(TIMER1_COMPA_vect)
 
 #ifndef DWELL_CONTROL
  //set timer for pulse completion, use fast division by 3
- if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
+ if (CHECK_TIM1_OVF())
 //OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
   OCR1B = tmr + hall.stroke_period / 3;
  else
@@ -473,14 +479,14 @@ ISR(TIMER1_COMPA_vect)
  }
  else
  {
-  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
+  if (CHECK_TIM1_OVF())
   {
    if (hall.cr_acc_time > hall.stroke_period-120)
     hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
    OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
   }
   else
-   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
+   OCR1B = tmr + 60000;  //pulse width is limited to 192 ms
  }
 #endif
 
@@ -573,8 +579,11 @@ void ProcessFallingEdge(uint16_t tmr)
 #endif
   //-----------------------------------------------------
 
+  //get 32 bit, overflow aware period value
+  int32_t period32 = GET_OVF_AWARE_PERIOD(CHECKBIT(flags, F_SPSIGN), hall.t1oc_s, hall.stroke_period);
+
   //start timer for counting out of advance angle (spark)
-  delay = (((uint32_t)hall.advance_angle * hall.stroke_period) / hall.degrees_per_stroke);
+  delay = (((uint32_t)hall.advance_angle * period32) / hall.degrees_per_stroke);
 #ifdef COOLINGFAN_PWM
   _DISABLE_INTERRUPT();
 #endif

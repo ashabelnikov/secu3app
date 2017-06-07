@@ -506,11 +506,15 @@ ISR(TIMER1_COMPA_vect)
  _DISABLE_INTERRUPT();
 #endif
 
+#ifdef DWELL_CONTROL
  if (!CHECKBIT(flags2, F_SHUTTER_S) || hall.rising_edge_spark)
  {
+#endif
   TIFR1 = _BV(OCF1B);
   TIMSK1|= _BV(OCIE1B);
+#ifdef DWELL_CONTROL
  }
+#endif
 
 #ifdef HALL_OUTPUT
  IOCFG_SET(IOP_HALL_OUT, 1);//begin of pulse
@@ -624,6 +628,7 @@ void ProcessFallingEdge(uint16_t tmr)
   knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
   adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
  }
+#ifdef DWELL_CONTROL
  else if (!hall.rising_edge_spark)
  {
   //in shutter-spark mode we start dwell timer here. This will ensure good accuracy at very low RPMs
@@ -647,6 +652,7 @@ void ProcessFallingEdge(uint16_t tmr)
   TIFR1 = _BV(OCF1B);
   TIMSK1|= _BV(OCIE1B);
  }
+#endif
 }
 
 /** Special function for processing rising edge,

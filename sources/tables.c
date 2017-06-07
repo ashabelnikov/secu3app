@@ -265,7 +265,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .fn_gasoline =                 0,
   .fn_gas =                      0,
 
-  .idl_flags =                   _BV(IRF_USE_REGONGAS), //use regulator on gas
+  .idl_flags =                   _BV(IRF_USE_REGONGAS) | _BV(IRF_USE_CLONGAS), //use regulator on gas, use clesed-loop on gas
   .idling_rpm =                  800,
   .ifac1 =                       25,
   .ifac2 =                       25,
@@ -401,6 +401,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .gd_lambda_stoichval =         1997,                 //15.6
 
   .inj_lambda_ms_per_stp =       0,                    //0 by default
+
+  .idl_iacminpos =               20,                   //10%
+  .idl_iacmaxpos =               180,                  //90%
 
   .reserved =                    {0},
   .crc =                         0

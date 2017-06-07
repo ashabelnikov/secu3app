@@ -422,6 +422,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.idl_coef_thrd2);
    build_i8h(d->param.idl_intrpm_lim);
    build_i16h(d->param.idl_map_value);
+   build_i8h(d->param.idl_iacminpos);
+   build_i8h(d->param.idl_iacmaxpos);
    break;
 
   case ANGLES_PAR:
@@ -1079,6 +1081,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.idl_coef_thrd2 = recept_i8h();
    d->param.idl_intrpm_lim = recept_i8h();
    d->param.idl_map_value = recept_i16h();
+   d->param.idl_iacminpos = recept_i8h();
+   d->param.idl_iacmaxpos = recept_i8h();
    break;
 
   case ANGLES_PAR:

@@ -142,6 +142,7 @@
 #define IRF_USE_REGONGAS                1           //!< Use regulator if fuel type is gas
 #define IRF_USE_INJREG                  2           //!< Using of closed loop mode for IAC valve (fuel injection only)
 #define IRF_PREG_MODE                   3           //!< Use P-regulator instead on I-regulator
+#define IRF_USE_CLONGAS                 4           //!< Use closed loop on gas
 
 //CKPS flags
 #define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark
@@ -479,10 +480,13 @@ typedef struct params_t
 
   uint8_t  inj_lambda_ms_per_stp;         // Number of strokes per step for lambda control
 
+  uint8_t  idl_iacminpos;
+  uint8_t  idl_iacmaxpos;
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[48];
+  uint8_t  reserved[46];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

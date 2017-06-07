@@ -350,7 +350,7 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
     }
    }
   case 2: //run mode
-   if (CHECKBIT(d->param.idl_flags, IRF_USE_INJREG))
+   if (CHECKBIT(d->param.idl_flags, IRF_USE_INJREG) && (!d->sens.gas || CHECKBIT(d->param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
    { //closed loop mode
     uint16_t tmr = s_timer_gtc();
     if ((tmr - chks.rpmreg_t1) < RPMREG_CORR_TIME)
@@ -407,7 +407,7 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
 #endif
 
      chks.prev_rpm_error = error; //save for further calculation of derror
-     restrict_value_to(&chks.iac_pos, 0, 800); //do we actually need this restriction?
+     restrict_value_to(&chks.iac_pos, ((uint16_t)d->param.idl_iacminpos) << 2, ((uint16_t)d->param.idl_iacmaxpos) << 2); //do we actually need this restriction?
     }
 
    }

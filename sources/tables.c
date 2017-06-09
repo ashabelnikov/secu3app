@@ -405,6 +405,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_iacminpos =               20,                   //10%
   .idl_iacmaxpos =               180,                  //90%
 
+  .hall_degrees_btdc =           60*32,                //60° BTDC
+
   .reserved =                    {0},
   .crc =                         0
  },

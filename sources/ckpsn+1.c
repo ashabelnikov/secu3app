@@ -432,6 +432,11 @@ void ckps_set_shutter_wnd_width(int16_t width)
  _END_ATOMIC_BLOCK();
 }
 
+void ckps_set_degrees_btdc(int16_t degrees_btdc)
+{
+ //not supported
+}
+
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
  */

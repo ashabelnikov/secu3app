@@ -476,17 +476,19 @@ typedef struct params_t
 
   uint8_t  inj_lambda_senstype;          //!< EGO sensor type (0 - NBO, 1 - WBO)
 
-  uint16_t gd_lambda_stoichval;           //!< Stoichiometric value of fuel used with stepper gas valve, value * 128
+  uint16_t gd_lambda_stoichval;          //!< Stoichiometric value of fuel used with stepper gas valve, value * 128
 
-  uint8_t  inj_lambda_ms_per_stp;         // Number of strokes per step for lambda control
+  uint8_t  inj_lambda_ms_per_stp;        //!< Number of strokes per step for lambda control
 
-  uint8_t  idl_iacminpos;
-  uint8_t  idl_iacmaxpos;
+  uint8_t  idl_iacminpos;                //!< restriction: IAC min pos
+  uint8_t  idl_iacmaxpos;                //!< restriction: IAC max pos
+
+  uint16_t  hall_degrees_btdc;           //!< Degrees BTDC, used for synchronization from a hall sensor (value * ANGLE_MULTIPLIER)
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[46];
+  uint8_t  reserved[44];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

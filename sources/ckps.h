@@ -168,6 +168,11 @@ void ckps_set_shutter_spark(uint8_t i_shutter);
  * \param width Width in degrees of cranckshaft of the shutter window, the value must be > 0
  */
 void ckps_set_shutter_wnd_width(int16_t width);
+
+/** Set degrees BTDC
+ * \param degrees BTDC * ANGLE_MULTIPLIER
+ */
+void ckps_set_degrees_btdc(int16_t degrees_btdc);
 #endif
 
 #ifdef FUEL_INJECT

@@ -73,6 +73,7 @@
 
 //Flags (see flags variable)
 #define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing (признак ошибки ДХ, устанавливается в прерывании от ДХ, сбрасывается после обработки)
+#define F_SELFRONT  1                 //!< Determines which fron will be used as starting point for advance angle timer
 #define F_VHTPER    2                 //!< used to indicate that measured period is valid (actually measured)
 #define F_STROKE    3                 //!< flag for synchronization with rotation (флаг синхронизации с вращением)
 #define F_USEKNK    4                 //!< flag which indicates using of knock channel (признак использования канала детонации)
@@ -104,6 +105,7 @@ typedef struct
  volatile int16_t knock_wnd_begin;    //!< begin of the phase selection window of detonation in degrees * ANGLE_MULTIPLIER, relatively to TDC (начало окна фазовой селекции детонации в градусах относительно в.м.т)
  volatile int16_t knock_wnd_end;      //!< width of the phase selection window of detonation in degrees * ANGLE_MULTIPLIER, (ширина окна фазовой селекции детонации в градусах)
  int16_t shutter_wnd_width;           //!< Window width (in degrees of cranckshaft) in trigger shutter
+ int16_t degrees_btdc;                //!< Degrees before TDC (value * ANGLE_MULTIPLIER)
  int16_t knock_wnd_begin_v;           //!< cached value of the beginning of phase selection window of detonation
 #ifdef DWELL_CONTROL
  volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
@@ -111,7 +113,7 @@ typedef struct
  volatile uint8_t ignout_on_val;
  volatile uint8_t ignout_off_val;
 #endif
-
+ volatile uint16_t delay;             //!<
 #ifdef FUEL_INJECT
  volatile uint8_t cur_chan;           //!< current number of channel for fuel injection
 #endif
@@ -145,7 +147,7 @@ void ckps_init_state_variables(void)
  _BEGIN_ATOMIC_BLOCK();
 
  hall.stroke_period = 0xFFFF;
- hall.advance_angle = hall.shutter_wnd_width; //=0
+ hall.advance_angle = hall.degrees_btdc; //=0
 
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_VHTPER);
@@ -204,7 +206,7 @@ void ckps_init_state(void)
 
 void ckps_set_advance_angle(int16_t angle)
 {
- int16_t aad = (hall.shutter_wnd_width - angle);
+ int16_t aad = (hall.degrees_btdc - angle);
  _BEGIN_ATOMIC_BLOCK();
  hall.advance_angle = aad;
  _END_ATOMIC_BLOCK();
@@ -374,7 +376,7 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
 void ckps_set_knock_window(int16_t begin, int16_t end)
 {
- int16_t begin_d = (hall.shutter_wnd_width + begin); //start of window
+ int16_t begin_d = (hall.degrees_btdc + begin); //start of window
  int16_t end_d = (end - begin); //width of window
  hall.knock_wnd_begin_v = begin; //save begin value to use in other setters
  _BEGIN_ATOMIC_BLOCK();
@@ -421,8 +423,13 @@ void ckps_set_shutter_spark(uint8_t i_shutter)
 
 void ckps_set_shutter_wnd_width(int16_t width)
 {
- int16_t begin_d = (width + hall.knock_wnd_begin_v); //start of window
  hall.shutter_wnd_width = width; //save it to use in other setters
+}
+
+void ckps_set_degrees_btdc(int16_t degrees_btdc)
+{
+ int16_t begin_d = (degrees_btdc + hall.knock_wnd_begin_v); //start of window
+ hall.degrees_btdc = degrees_btdc; //save it to use in other setters
  _BEGIN_ATOMIC_BLOCK();
  hall.knock_wnd_begin = begin_d;
  _END_ATOMIC_BLOCK();
@@ -585,7 +592,6 @@ void ProcessFallingEdge(uint16_t tmr)
 
  if (!CHECKBIT(flags2, F_SHUTTER_S))
  {
-  uint16_t delay;
 #ifdef STROBOSCOPE
   hall.strobe = 1; //strobe!
 #endif
@@ -601,19 +607,35 @@ void ProcessFallingEdge(uint16_t tmr)
   //get 32 bit, overflow aware period value
   int32_t period32 = GET_OVF_AWARE_PERIOD(CHECKBIT(flags, F_SPSIGN), hall.t1oc_s, hall.stroke_period);
 
-  //start timer for counting out of advance angle (spark)
-  delay = (((uint32_t)hall.advance_angle * period32) / hall.degrees_per_stroke);
+  // if number of degrees before a spark is less or equal to window width in interrupter, then use falling edge
+  // as a reference for advance angle timer, otherwise use rising edge (that will increase accuracy)
+  if (hall.advance_angle <= hall.shutter_wnd_width)
+  {
+   CLEARBIT(flags, F_SELFRONT);// use falling edge
+
+   //start timer for counting out of advance angle (spark)
+   hall.delay = (((uint32_t)hall.advance_angle * period32) / hall.degrees_per_stroke);
 #ifdef COOLINGFAN_PWM
-  _DISABLE_INTERRUPT();
+   _DISABLE_INTERRUPT();
 #endif
 
-  OCR1A = tmr + ((delay < 15) ? 15 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
-  TIFR1 = _BV(OCF1A);
-  TIMSK1|= _BV(OCIE1A);
+   OCR1A = tmr + ((hall.delay < 15) ? 15 : hall.delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
+   TIFR1 = _BV(OCF1A);
+   TIMSK1|= _BV(OCIE1A);
+  }
+  else
+  { //we profit! (accuracy will be better)
+   SETBIT(flags, F_SELFRONT);// use rising edge
+   hall.delay = ((uint32_t)(hall.advance_angle-hall.shutter_wnd_width) * period32) / hall.degrees_per_stroke;
+#ifdef COOLINGFAN_PWM
+   _DISABLE_INTERRUPT();
+#endif
+  }
 
   //start timer for countiong out of knock window opening
   if (CHECKBIT(flags, F_USEKNK))
   {
+   uint16_t delay;
 #ifdef COOLINGFAN_PWM
    _ENABLE_INTERRUPT();
 #endif
@@ -631,6 +653,7 @@ void ProcessFallingEdge(uint16_t tmr)
 #ifdef DWELL_CONTROL
  else if (!hall.rising_edge_spark)
  {
+  CLEARBIT(flags, F_SELFRONT);
   //in shutter-spark mode we start dwell timer here. This will ensure good accuracy at very low RPMs
   int32_t period32 = GET_OVF_AWARE_PERIOD(CHECKBIT(flags, F_SPSIGN), hall.t1oc_s, hall.stroke_period);
 #ifdef COOLINGFAN_PWM
@@ -659,7 +682,7 @@ void ProcessFallingEdge(uint16_t tmr)
  * must be called from ISR
  */
 INLINE
-void ProcessRisingEdge(void)
+void ProcessRisingEdge(uint16_t tmr)
 {
  //spark on rising at the startup, force COMPA interrupt
  if (CHECKBIT(flags2, F_SHUTTER_S))
@@ -669,6 +692,12 @@ void ProcessRisingEdge(void)
 #endif
 
   OCR1A = TCNT1 + 2;
+  TIFR1 = _BV(OCF1A);
+  TIMSK1|= _BV(OCIE1A);
+ }
+ else if (CHECKBIT(flags, F_SELFRONT))
+ { // use rising edge as reference point
+  OCR1A = tmr + ((hall.delay < 15) ? 15 : hall.delay) - CALIBRATION_DELAY;
   TIFR1 = _BV(OCF1A);
   TIMSK1|= _BV(OCIE1A);
  }
@@ -687,7 +716,7 @@ ISR(TIMER1_CAPT_vect)
  if (!(TCCR1B & _BV(ICES1)))
  { //falling
   if (CHECKBIT(flags2, F_SELEDGE))
-   ProcessRisingEdge();
+   ProcessRisingEdge(ICR1);
   else
    ProcessFallingEdge(ICR1);
   TCCR1B|= _BV(ICES1);  //next edge will be rising
@@ -697,7 +726,7 @@ ISR(TIMER1_CAPT_vect)
   if (CHECKBIT(flags2, F_SELEDGE))
    ProcessFallingEdge(ICR1);
   else
-   ProcessRisingEdge();
+   ProcessRisingEdge(ICR1);
   TCCR1B&= ~_BV(ICES1); //next will be falling
  }
 
@@ -715,7 +744,7 @@ void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
  if (EICRA & _BV(ISC10))
  { //falling
   if (CHECKBIT(flags2, F_SELEDGE))
-   ProcessRisingEdge();
+   ProcessRisingEdge(tmr);
   else
    ProcessFallingEdge(tmr);
   EICRA&= ~(_BV(ISC10));  //next edge will be rising
@@ -725,7 +754,7 @@ void ProcessInterrupt1(void) //see also prototype of this function in camsens.c
   if (CHECKBIT(flags2, F_SELEDGE))
    ProcessFallingEdge(tmr);
   else
-   ProcessRisingEdge();
+   ProcessRisingEdge(tmr);
   EICRA|=_BV(ISC10); //next will be falling
  }
 
@@ -743,7 +772,7 @@ void ProcessInterrupt0(void) //see also prototype of this function in camsens.c
  if (EICRA & _BV(ISC00))
  { //falling
   if (CHECKBIT(flags2, F_SELEDGE))
-   ProcessRisingEdge();
+   ProcessRisingEdge(tmr);
   else
    ProcessFallingEdge(tmr);
   EICRA&= ~(_BV(ISC00));  //next edge will be rising
@@ -753,7 +782,7 @@ void ProcessInterrupt0(void) //see also prototype of this function in camsens.c
   if (CHECKBIT(flags2, F_SELEDGE))
    ProcessFallingEdge(tmr);
   else
-   ProcessRisingEdge();
+   ProcessRisingEdge(tmr);
   EICRA|=_BV(ISC00); //next will be falling
  }
 

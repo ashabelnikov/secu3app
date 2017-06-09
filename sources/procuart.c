@@ -183,6 +183,7 @@ void process_uart_interface(struct ecudata_t* d)
 
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
     ckps_set_shutter_wnd_width(d->param.hall_wnd_width);
+    ckps_set_degrees_btdc(d->param.hall_degrees_btdc);
 #endif
 
 #ifdef FUEL_INJECT

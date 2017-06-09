@@ -618,6 +618,7 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i8h(d->param.ckps_miss_num);
    build_i8h(d->param.hall_flags);
    build_i16h(d->param.hall_wnd_width);
+   build_i16h(d->param.hall_degrees_btdc);
    break;
 
   case OP_COMP_NC:
@@ -1152,6 +1153,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
    d->param.ckps_miss_num = recept_i8h();
    d->param.hall_flags = recept_i8h();
    d->param.hall_wnd_width = recept_i16h();
+   d->param.hall_degrees_btdc = recept_i16h();
    break;
 
   case OP_COMP_NC:

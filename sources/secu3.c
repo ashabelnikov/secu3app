@@ -273,6 +273,7 @@ void init_modules(void)
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  ckps_set_shutter_wnd_width(edat.param.hall_wnd_width);
+ ckps_set_degrees_btdc(edat.param.hall_degrees_btdc);
  ckps_set_advance_angle(0);
 #endif
 

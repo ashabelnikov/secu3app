@@ -342,8 +342,11 @@ ISR(SPI_STC_vect)
 #endif
  { SET_KSP_CS(1); }
 
+ //make chance for pending interrupts to be processed with less delay
  _ENABLE_INTERRUPT();
+ _DISABLE_INTERRUPT();
 
+ //interrupts are disabled now!
  switch(ksp.ksp_interrupt_state)
  {
   case 0:   //state machine stopped
@@ -374,8 +377,7 @@ ISR(SPI_STC_vect)
    SPCR&= ~_BV(SPIE);
    break;
 #else //---SECU-3i---
-   {
-   _BEGIN_ATOMIC_BLOCK();
+
    if (ksp.pending_request)
    {//start loading data into the expander chip
     SETBIT(SPCR, CPOL);
@@ -389,8 +391,6 @@ ISR(SPI_STC_vect)
     ksp.ksp_interrupt_state = 0; //idle
     //disable interrupt and switch state machine into initial state - ready to new load
     SPCR&= ~_BV(SPIE);
-   }
-   _END_ATOMIC_BLOCK();
    }
    break;
 
@@ -428,7 +428,6 @@ ISR(SPI_STC_vect)
   case 10: //GPIOA read!
    spi_PORTA = SPDR;
    SET_KSP_TEST(1);
-   _BEGIN_ATOMIC_BLOCK();
    if (ksp.pending_request)
    {//start loading data into the knock chip
     CLEARBIT(SPCR, CPOL);
@@ -440,14 +439,13 @@ ISR(SPI_STC_vect)
    else
    {
     ksp.ksp_interrupt_state = 0; //idle
-    //disable interrupt and switch state machine into initial state - ready to new load
+    //disable interrupt and switch state machine into initial state - ready for new loading
     SPCR&= ~_BV(SPIE);
    }
-   _END_ATOMIC_BLOCK();
    break;
 #endif
-
  }
+ _ENABLE_INTERRUPT();
 }
 
 void knock_init_ports(void)

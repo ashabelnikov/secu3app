@@ -69,6 +69,10 @@ void knock_set_channel(uint8_t channel);
  */
 void knock_start_settings_latching(void);
 
+#ifndef SECU3T //---SECU-3i---
+void knock_start_expander_latching(void);
+#endif
+
 /**\return value > 0 if at the current moment latching operation is not in process */
 uint8_t knock_is_latching_idle(void);
 
@@ -82,6 +86,14 @@ void knock_reset_error(void);
  * \return 1 - if testing performed succesfully, otherwise 0.
  */
 uint8_t knock_module_initialize(void);
+
+#ifndef SECU3T //---SECU-3i---
+
+/** Initialization of expander chip MCP23S17
+ * \return 1 - if testing performed succesfully (chip works), otherwise 0.
+ */
+uint8_t knock_expander_initialize(void);
+#endif
 
 #define KNOCK_INTMODE_INT  1 //!< code for integration mode (used with knock_set_integration_mode())
 #define KNOCK_INTMODE_HOLD 0 //!< code for hold mode (used with knock_set_integration_mode())

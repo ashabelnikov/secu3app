@@ -139,7 +139,7 @@ static void set_channels_ss(void)
   uint8_t _t, i = 0, chan = inj.cyl_number / 2;
   for(; i < chan; ++i)
   {
-   fnptr_t value = IOCFG_CB(IOP_INJ_OUT0 + i);
+   fnptr_t value = IOCFG_CB(IOP_INJ_OUT1 + i);
    _t=_SAVE_INTERRUPT();
    _DISABLE_INTERRUPT();
    inj_chanstate[i].io_callback1 = value;
@@ -154,7 +154,7 @@ static void set_channels_ss(void)
   uint8_t _t, i = 0, ch = 0;
   for(; i < inj.cyl_number; ++i)
   {
-   fnptr_t value = IOCFG_CB(IOP_INJ_OUT0 + ch);
+   fnptr_t value = IOCFG_CB(IOP_INJ_OUT1 + ch);
    _t=_SAVE_INTERRUPT();
    _DISABLE_INTERRUPT();
    if (CHECKBIT(inj.squirt_mask, i)) {
@@ -173,7 +173,7 @@ static void set_channels_2bnk(void)
  uint8_t _t, i = 0, ch = 0;
  for(; i < inj.cyl_number; ++i)
  {
-  fnptr_t value = IOCFG_CB(IOP_INJ_OUT0 + ch);
+  fnptr_t value = IOCFG_CB(IOP_INJ_OUT1 + ch);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   if (CHECKBIT(inj.squirt_mask, i)) {
@@ -200,10 +200,10 @@ void inject_init_state(void)
 
 void inject_init_ports(void)
 {
- IOCFG_INIT(IOP_INJ_OUT0, INJ_OFF);           //injector 1 is turned off
- IOCFG_INIT(IOP_INJ_OUT1, INJ_OFF);           //injector 2 is turned off
- IOCFG_INIT(IOP_INJ_OUT2, INJ_OFF);           //injector 3 is turned off
- IOCFG_INIT(IOP_INJ_OUT3, INJ_OFF);           //injector 4 is turned off
+ IOCFG_INIT(IOP_INJ_OUT1, INJ_OFF);           //injector 1 is turned off
+ IOCFG_INIT(IOP_INJ_OUT2, INJ_OFF);           //injector 2 is turned off
+ IOCFG_INIT(IOP_INJ_OUT3, INJ_OFF);           //injector 3 is turned off
+ IOCFG_INIT(IOP_INJ_OUT4, INJ_OFF);           //injector 4 is turned off
 }
 
 /** Updates squirt mask */
@@ -283,10 +283,10 @@ void inject_start_inj(uint8_t chan)
    _BEGIN_ATOMIC_BLOCK();
    OCR2B = TCNT2 + _AB(inj.inj_time, 0);
    inj.tmr2b_h = _AB(inj.inj_time, 1);
-   IOCFG_SET(IOP_INJ_OUT0, INJ_ON);           //turn on injector 1
-   IOCFG_SET(IOP_INJ_OUT1, INJ_ON);           //turn on injector 2
-   IOCFG_SET(IOP_INJ_OUT2, INJ_ON);           //turn on injector 3
-   IOCFG_SET(IOP_INJ_OUT3, INJ_ON);           //turn on injector 4
+   IOCFG_SET(IOP_INJ_OUT1, INJ_ON);           //turn on injector 1
+   IOCFG_SET(IOP_INJ_OUT2, INJ_ON);           //turn on injector 2
+   IOCFG_SET(IOP_INJ_OUT3, INJ_ON);           //turn on injector 3
+   IOCFG_SET(IOP_INJ_OUT4, INJ_ON);           //turn on injector 4
    SETBIT(TIMSK2, OCIE2B);
    SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
    _END_ATOMIC_BLOCK();
@@ -349,10 +349,10 @@ void inject_open_inj(uint16_t time)
   _BEGIN_ATOMIC_BLOCK();
   OCR2B = TCNT2 + _AB(time, 0);
   inj.tmr2b_h = _AB(time, 1);
-  IOCFG_SET(IOP_INJ_OUT0, INJ_ON);            //turn on injector 1
-  IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 2
-  IOCFG_SET(IOP_INJ_OUT2, INJ_ON);            //turn on injector 3
-  IOCFG_SET(IOP_INJ_OUT3, INJ_ON);            //turn on injector 4
+  IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 1
+  IOCFG_SET(IOP_INJ_OUT2, INJ_ON);            //turn on injector 2
+  IOCFG_SET(IOP_INJ_OUT3, INJ_ON);            //turn on injector 3
+  IOCFG_SET(IOP_INJ_OUT4, INJ_ON);            //turn on injector 4
   SETBIT(TIMSK2, OCIE2B);
   SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
   inj.prime_pulse = 1;
@@ -370,10 +370,10 @@ ISR(TIMER2_COMPB_vect)
  {
   if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse)
   {//central/simultaneous
-   IOCFG_SET(IOP_INJ_OUT0, INJ_OFF);          //turn off injector 1
-   IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 2
-   IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 3
-   IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 4
+   IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 1
+   IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 2
+   IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 3
+   IOCFG_SET(IOP_INJ_OUT4, INJ_OFF);          //turn off injector 4
    CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
    inj.prime_pulse = 0;
   }
@@ -419,10 +419,10 @@ ISR(TIMER0_COMPB_vect)
  {
   if (inj.cfg < INJCFG_2BANK_ALTERN)
   { //central/simultaneous
-   IOCFG_SET(IOP_INJ_OUT0, INJ_OFF);          //turn off injector 1
-   IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 2
-   IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 3
-   IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 4
+   IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 1
+   IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 2
+   IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 3
+   IOCFG_SET(IOP_INJ_OUT4, INJ_OFF);          //turn off injector 4
    CLEARBIT(TIMSK0, OCIE0B);                  //disable this interrupt
   }
   else

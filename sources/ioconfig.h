@@ -30,6 +30,39 @@
 
 #include <stdint.h>
 
+/**Wrap macro from port/pgmspace.h. for getting function pointers from program memory */
+#define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
+
+/**Init specified I/O
+ * io_id - ID of I/O to be initialized
+ * io_state - Initial state of I/O (On/off)
+ */
+#define IOCFG_INIT(io_id, io_state) ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state)
+
+/**Set value of specified I/O
+ * io_id - ID of I/O to be set to specified value
+ * io_value - Value for I/O (On/Off)
+ */
+#define IOCFG_SET(io_id, io_value) ((iocfg_pfn_set)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(io_value)
+
+/**Get value of specified I/O. Applicable only for plugs which are inputs.
+ * io_id - ID of I/O to be set to specified value
+ */
+#define IOCFG_GET(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))()
+
+/**Checks specified I/O for availability. If specified I/O is not available it means that it is not
+ * plugged into a real I/O slot.
+ * returns 1 - available, 0 - not available
+ */
+#define IOCFG_CHECK(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))
+
+/**Get specified I/O callback address
+ * io_id - ID of I/O to be set to specified value
+ * returns - corresponding callback address
+ */
+#define IOCFG_CB(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))
+
+
 /**Function pointer type used for initialization of I/O */
 typedef void (*iocfg_pfn_init)(uint8_t state);
 /**Function pointer type used for setting value of I/O  */
@@ -37,14 +70,18 @@ typedef void (*iocfg_pfn_set)(uint8_t value);
 /**Function pointer type used for getting value from I/O*/
 typedef uint8_t (*iocfg_pfn_get)(void);
 
+uint8_t iocfg_g_stub(void);              //!< stub function for inputs
+void iocfg_s_stub(uint8_t);              //!< stub function for outputs
+
+#ifdef SECU3T //---SECU-3T---
 
 //List all I/O plugs
 #define IOP_IGN_OUT1      0     //!< IGN_OUT1        (output)
 #define IOP_IGN_OUT2      1     //!< IGN_OUT2        (output)
 #define IOP_IGN_OUT3      2     //!< IGN_OUT3        (output)
 #define IOP_IGN_OUT4      3     //!< IGN_OUT4        (output)
-#define IOP_ADD_O1        4     //!< ADD_IO1         (output)
-#define IOP_ADD_O2        5     //!< ADD_IO2         (output)
+#define IOP_IGN_OUT5      4     //!< ADD_IO1         (output)
+#define IOP_IGN_OUT6      5     //!< ADD_IO2         (output)
 #define IOP_ECF           6     //!< ECF             (output)
 #define IOP_ST_BLOCK      7     //!< ST_BLOCK        (output)
 #define IOP_IE            8     //!< IE              (output)
@@ -95,10 +132,10 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_UNI_OUT0     52     //!< UNI_OUT0        (output)
 #define IOP_UNI_OUT1     53     //!< UNI_OUT1        (output)
 #define IOP_UNI_OUT2     54     //!< UNI_OUT2        (output)
-#define IOP_INJ_OUT0     55     //!< INJ_OUT0        (output)
-#define IOP_INJ_OUT1     56     //!< INJ_OUT1        (output)
-#define IOP_INJ_OUT2     57     //!< INJ_OUT2        (output)
-#define IOP_INJ_OUT3     58     //!< INJ_OUT3        (output)
+#define IOP_INJ_OUT1     55     //!< INJ_OUT1        (output)
+#define IOP_INJ_OUT2     56     //!< INJ_OUT2        (output)
+#define IOP_INJ_OUT3     57     //!< INJ_OUT3        (output)
+#define IOP_INJ_OUT4     58     //!< INJ_OUT4        (output)
 #define IOP_IAC_PWM      59     //!< IAC_PWM         (output)
 #define IOP_GD_DIR       60     //!< GD_DIR          (output)
 #define IOP_GD_STP       61     //!< GD_STP          (output)
@@ -109,39 +146,7 @@ typedef uint8_t (*iocfg_pfn_get)(void);
 #define IOP_RESERVED27   66     //!< reserved plug   ()
 #define IOP_RESERVED28   67     //!< reserved plug   ()
 
-#define IOP_IGN78_OFF    (IOP_IGN_OUT7-(IOP_ADD_IO2+1)) //!< needed by ckps.c
-
-/**Wrap macro from port/pgmspace.h. for getting function pointers from program memory */
-#define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
-
-/**Init specified I/O
- * io_id - ID of I/O to be initialized
- * io_state - Initial state of I/O (On/off)
- */
-#define IOCFG_INIT(io_id, io_state) ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state)
-
-/**Set value of specified I/O
- * io_id - ID of I/O to be set to specified value
- * io_value - Value for I/O (On/Off)
- */
-#define IOCFG_SET(io_id, io_value) ((iocfg_pfn_set)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(io_value)
-
-/**Get value of specified I/O. Applicable only for plugs which are inputs.
- * io_id - ID of I/O to be set to specified value
- */
-#define IOCFG_GET(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))()
-
-/**Checks specified I/O for availability. If specified I/O is not available it means that it is not
- * plugged into a real I/O slot.
- * returns 1 - available, 0 - not available
- */
-#define IOCFG_CHECK(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))
-
-/**Get specified I/O callback address
- * io_id - ID of I/O to be set to specified value
- * returns - corresponding callback address
- */
-#define IOCFG_CB(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))
+#define IOP_IGN78_OFF    (IOP_IGN_OUT7-(IOP_IGN_OUT6+1)) //!< needed by ckps.c
 
 //List all I/O functions. These functions must be used only inside tables.c
 void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1
@@ -160,14 +165,14 @@ void iocfg_i_ign_out4(uint8_t value);    //!< init IGN_OUT4
 void iocfg_i_ign_out4i(uint8_t value);   //!< init IGN_OUT4           (inverted)
 void iocfg_s_ign_out4(uint8_t value);    //!< set  IGN_OUT4
 void iocfg_s_ign_out4i(uint8_t value);   //!< set  IGN_OUT4           (inverted)
-void iocfg_i_add_io1(uint8_t value);     //!< init ADD_IO1 output  (applicable only in SECU-3T)
-void iocfg_i_add_io1i(uint8_t value);    //!< init ADD_IO1 output  (applicable only in SECU-3T) (inverted)
-void iocfg_s_add_io1(uint8_t value);     //!< set  ADD_IO1 output  (applicable only in SECU-3T)
-void iocfg_s_add_io1i(uint8_t value);    //!< set  ADD_IO1 output  (applicable only in SECU-3T) (inverted)
-void iocfg_i_add_io2(uint8_t value);     //!< init ADD_IO2 output  (applicable only in SECU-3T)
-void iocfg_i_add_io2i(uint8_t value);    //!< init ADD_IO2 output  (applicable only in SECU-3T) (inverted)
-void iocfg_s_add_io2(uint8_t value);     //!< set  ADD_IO2 output  (applicable only in SECU-3T)
-void iocfg_s_add_io2i(uint8_t value);    //!< set  ADD_IO2 output  (applicable only in SECU-3T) (inverted)
+void iocfg_i_add_o1(uint8_t value);      //!< init ADD_O1 output
+void iocfg_i_add_o1i(uint8_t value);     //!< init ADD_O1 output      (inverted)
+void iocfg_s_add_o1(uint8_t value);      //!< set  ADD_O1 output
+void iocfg_s_add_o1i(uint8_t value);     //!< set  ADD_O1 output      (inverted)
+void iocfg_i_add_o2(uint8_t value);      //!< init ADD_O2 output
+void iocfg_i_add_o2i(uint8_t value);     //!< init ADD_O2 output      (inverted)
+void iocfg_s_add_o2(uint8_t value);      //!< set  ADD_O2 output
+void iocfg_s_add_o2i(uint8_t value);     //!< set  ADD_O2 output      (inverted)
 void iocfg_i_ecf(uint8_t value);         //!< init ECF
 void iocfg_i_ecfi(uint8_t value);        //!< init ECF                (inverted)
 void iocfg_s_ecf(uint8_t value);         //!< set  ECF
@@ -184,7 +189,6 @@ void iocfg_i_fe(uint8_t value);          //!< init FE
 void iocfg_i_fei(uint8_t value);         //!< init FE                 (inverted)
 void iocfg_s_fe(uint8_t value);          //!< set  FE
 void iocfg_s_fei(uint8_t value);         //!< set  FE                 (inverted)
-void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 
 void iocfg_i_ce(uint8_t value);          //!< init CE
 void iocfg_i_cei(uint8_t value);         //!< init CE                 (inverted)
@@ -204,14 +208,14 @@ void iocfg_i_ps(uint8_t value);          //!< init PS input
 void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
 uint8_t iocfg_g_ps(void);                //!< get PS input value
 uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
-void iocfg_i_add_i1(uint8_t value);      //!< init ADD_IO1 input
-void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_IO1 input      (inverted)
-uint8_t iocfg_g_add_i1(void);            //!< set  ADD_IO1 input
-uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_IO1 input      (inverted)
-void iocfg_i_add_i2(uint8_t value);      //!< init ADD_IO2 input
-void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_IO2 input      (inverted)
-uint8_t iocfg_g_add_i2(void);            //!< set  ADD_IO2 input
-uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_IO2 input      (inverted)
+void iocfg_i_add_i1(uint8_t value);      //!< init ADD_I1 input
+void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_I1 input       (inverted)
+uint8_t iocfg_g_add_i1(void);            //!< set  ADD_I1 input
+uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_I1 input       (inverted)
+void iocfg_i_add_i2(uint8_t value);      //!< init ADD_I2 input
+void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_I2 input       (inverted)
+uint8_t iocfg_g_add_i2(void);            //!< set  ADD_I2 input
+uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_I2 input       (inverted)
 void iocfg_i_ref_s(uint8_t value);       //!< init REF_S input
 void iocfg_i_ref_si(uint8_t value);      //!< init REF_S input        (inverted)
 uint8_t iocfg_g_ref_s(void);             //!< get REF_S input
@@ -225,6 +229,241 @@ void iocfg_i_ckpsi(uint8_t value);       //!< init CKPS input         (inverted)
 uint8_t iocfg_g_ckps(void);              //!< get CKPS input
 uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 
-uint8_t iocfg_g_stub(void);              //!< stub function for inputs
+
+#else //---SECU-3i---
+
+//List all I/O plugs
+#define IOP_IGN_OUT1      0     //!< IGN_O1          (output) *
+#define IOP_IGN_OUT2      1     //!< IGN_O2          (output) *
+#define IOP_IGN_OUT3      2     //!< IGN_O3          (output) *
+#define IOP_IGN_OUT4      3     //!< IGN_O4          (output) *
+#define IOP_IGN_OUT5      4     //!< IGN_O5          (output) *
+#define IOP_ECF           5     //!< ECF             (output) *
+#define IOP_INJ_OUT1      6     //!< INJ_O1          (output)
+#define IOP_INJ_OUT2      7     //!< INJ_O2          (output)
+#define IOP_INJ_OUT3      8     //!< INJ_O3          (output)
+#define IOP_INJ_OUT4      9     //!< INJ_O4          (output)
+#define IOP_INJ_OUT5     10     //!< INJ_O5          (output)
+#define IOP_BL           11     //!< BL (SM_AO1)     (output) *
+#define IOP_DE           12     //!< DE (SM_AO2)     (output) *
+#define IOP_ST_BLOCK     13     //!< STBL_O          (output)   spi
+#define IOP_CE           14     //!< CEL_O           (output)   spi
+#define IOP_FL_PUMP      15     //!< FPMP_O          (output)   spi
+#define IOP_PWRRELAY     16     //!< PWRR_O          (output)   spi
+#define IOP_EVAP_O       17     //!< EVAP_O          (output)   spi
+#define IOP_O2SH_O       18     //!< O2SH_O          (output)   spi
+#define IOP_COND_O       19     //!< COND_O          (output)   spi
+#define IOP_ADD_O2       20     //!< ADD_O2          (output)   spi
+//inputs
+#define IOP_PS           21     //!< PS              (input) *
+#define IOP_REF_S        22     //!< REF_S           (input) *
+#define IOP_CKPS         23     //!< CKPS            (input) *
+#define IOP_ADD_I1       24     //!< ADD_I1          (input) *
+#define IOP_ADD_I2       25     //!< ADD_I2          (input) *
+#define IOP_ADD_I3       26     //!< ADD_I3          (input)
+#define IOP_GAS_V        27     //!< GAS_V           (input)    spi
+#define IOP_IGN          28     //!< IGN_I           (input)    spi
+#define IOP_COND_I       29     //!< COND_I          (input)    spi
+#define IOP_EPAS_I       30     //!< EPAS_I          (input)    spi
+//reserved slots
+#define IOP_RESERVED1    31     //!< reserved slot   ()
+#define IOP_RESERVED2    32     //!< reserved slot   ()
+#define IOP_RESERVED3    33     //!< reserved slot   ()
+#define IOP_RESERVED4    34     //!< reserved slot   ()
+#define IOP_RESERVED5    35     //!< reserved slot   ()
+#define IOP_RESERVED6    36     //!< reserved slot   ()
+//Next definitions correspond to plugs only
+#define IOP_IGN_OUT6     37     //!< IGN_O6          (output)
+#define IOP_IGN_OUT7     38     //!< IGN_O7          (output)
+#define IOP_IGN_OUT8     39     //!< IGN_O8          (output)
+#define IOP_SM_DIR       40     //!< SM_DIR          (output)
+#define IOP_SM_STP       41     //!< SM_STP          (output)
+#define IOP_GD_DIR       42     //!< GD_DIR          (output)
+#define IOP_GD_STP       43     //!< GD_STP          (output)
+#define IOP_GD_PWM       44     //!< PWM gas valve   (output)
+#define IOP_IAC_PWM      45     //!< IAC_PWM         (output)
+#define IOP_HALL_OUT     46     //!< HALL_OUT        (output)
+#define IOP_STROBE       47     //!< STROBE          (output)
+#define IOP_INTK_HEAT    48     //!< INTK_HEAT       (output)
+#define IOP_UNI_OUT0     49     //!< UNI_OUT0        (output)
+#define IOP_UNI_OUT1     50     //!< UNI_OUT1        (output)
+#define IOP_UNI_OUT2     51     //!< UNI_OUT2        (output)
+#define IOP_IE           52     //!< IE              (output)
+#define IOP_FE           53     //!< FE              (output)
+#define IOP_BC_INPUT     54     //!< BC_INPUT        (input)
+#define IOP_MAPSEL0      55     //!< MAPSEL0         (input)
+#define IOP_SPDSENS      56     //!< SPD_SENS        (input)
+#define IOP_LAMBDA       57     //!< LAMBDA          (input)
+#define IOP_AIR_TEMP     58     //!< AIR_TEMP        (input)
+#define IOP_RESERVED7    59     //!< reserved plug   ()
+#define IOP_RESERVED8    60     //!< reserved plug   ()
+#define IOP_RESERVED9    61     //!< reserved plug   ()
+#define IOP_RESERVED10   62     //!< reserved plug   ()
+#define IOP_RESERVED11   63     //!< reserved plug   ()
+#define IOP_RESERVED12   64     //!< reserved plug   ()
+#define IOP_RESERVED13   65     //!< reserved plug   ()
+#define IOP_RESERVED14   66     //!< reserved plug   ()
+#define IOP_RESERVED15   67     //!< reserved plug   ()
+
+#define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c
+
+//List all I/O functions. These functions must be used only inside tables.c
+void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_O1
+void iocfg_i_ign_out1i(uint8_t value);   //!< init IGN_O1           (inverted)
+void iocfg_s_ign_out1(uint8_t value);    //!< set  IGN_O1
+void iocfg_s_ign_out1i(uint8_t value);   //!< set  IGN_O1           (inverted)
+
+void iocfg_i_ign_out2(uint8_t value);    //!< init IGN_O2
+void iocfg_i_ign_out2i(uint8_t value);   //!< init IGN_O2           (inverted)
+void iocfg_s_ign_out2(uint8_t value);    //!< set  IGN_O2
+void iocfg_s_ign_out2i(uint8_t value);   //!< set  IGN_O2           (inverted)
+
+void iocfg_i_ign_out3(uint8_t value);    //!< init IGN_O3
+void iocfg_i_ign_out3i(uint8_t value);   //!< init IGN_O3           (inverted)
+void iocfg_s_ign_out3(uint8_t value);    //!< set  IGN_O3
+void iocfg_s_ign_out3i(uint8_t value);   //!< set  IGN_O3           (inverted)
+
+void iocfg_i_ign_out4(uint8_t value);    //!< init IGN_O4
+void iocfg_i_ign_out4i(uint8_t value);   //!< init IGN_O4           (inverted)
+void iocfg_s_ign_out4(uint8_t value);    //!< set  IGN_O4
+void iocfg_s_ign_out4i(uint8_t value);   //!< set  IGN_O4           (inverted)
+
+void iocfg_i_ign_out5(uint8_t value);    //!< init IGN_O5
+void iocfg_i_ign_out5i(uint8_t value);   //!< init IGN_O5           (inverted)
+void iocfg_s_ign_out5(uint8_t value);    //!< set  IGN_O5
+void iocfg_s_ign_out5i(uint8_t value);   //!< set  IGN_O5           (inverted)
+
+void iocfg_i_ecf(uint8_t value);         //!< init ECF
+void iocfg_i_ecfi(uint8_t value);        //!< init ECF              (inverted)
+void iocfg_s_ecf(uint8_t value);         //!< set  ECF
+void iocfg_s_ecfi(uint8_t value);        //!< set  ECF              (inverted)
+
+void iocfg_i_inj_out1(uint8_t value);    //!< init INJ_O1
+void iocfg_i_inj_out1i(uint8_t value);   //!< init INJ_O1           (inverted)
+void iocfg_s_inj_out1(uint8_t value);    //!< set  INJ_O1
+void iocfg_s_inj_out1i(uint8_t value);   //!< set  INJ_O1           (inverted)
+
+void iocfg_i_inj_out2(uint8_t value);    //!< init INJ_O2
+void iocfg_i_inj_out2i(uint8_t value);   //!< init INJ_O2           (inverted)
+void iocfg_s_inj_out2(uint8_t value);    //!< set  INJ_O2
+void iocfg_s_inj_out2i(uint8_t value);   //!< set  INJ_O2           (inverted)
+
+void iocfg_i_inj_out3(uint8_t value);    //!< init INJ_O3
+void iocfg_i_inj_out3i(uint8_t value);   //!< init INJ_O3           (inverted)
+void iocfg_s_inj_out3(uint8_t value);    //!< set  INJ_O3
+void iocfg_s_inj_out3i(uint8_t value);   //!< set  INJ_O3           (inverted)
+
+void iocfg_i_inj_out4(uint8_t value);    //!< init INJ_O4
+void iocfg_i_inj_out4i(uint8_t value);   //!< init INJ_O4           (inverted)
+void iocfg_s_inj_out4(uint8_t value);    //!< set  INJ_O4
+void iocfg_s_inj_out4i(uint8_t value);   //!< set  INJ_O4           (inverted)
+
+void iocfg_i_inj_out5(uint8_t value);    //!< init INJ_O5
+void iocfg_i_inj_out5i(uint8_t value);   //!< init INJ_O5           (inverted)
+void iocfg_s_inj_out5(uint8_t value);    //!< set  INJ_O5
+void iocfg_s_inj_out5i(uint8_t value);   //!< set  INJ_O5           (inverted)
+
+void iocfg_i_bl(uint8_t value);          //!< init BL
+void iocfg_i_bli(uint8_t value);         //!< init BL               (inverted)
+void iocfg_s_bl(uint8_t value);          //!< set  BL
+void iocfg_s_bli(uint8_t value);         //!< set  BL               (inverted)
+
+void iocfg_i_de(uint8_t value);          //!< init DE
+void iocfg_i_dei(uint8_t value);         //!< init DE               (inverted)
+void iocfg_s_de(uint8_t value);          //!< set  DE
+void iocfg_s_dei(uint8_t value);         //!< set  DE               (inverted)
+
+void iocfg_i_st_block(uint8_t value);    //!< init STBL_O
+void iocfg_i_st_blocki(uint8_t value);   //!< init STBL_O           (inverted)
+void iocfg_s_st_block(uint8_t value);    //!< set  STBL_O
+void iocfg_s_st_blocki(uint8_t value);   //!< set  STBL_O           (inverted)
+
+void iocfg_i_ce(uint8_t value);          //!< init CEL_O
+void iocfg_i_cei(uint8_t value);         //!< init CEL_O            (inverted)
+void iocfg_s_ce(uint8_t value);          //!< set  CEL_O
+void iocfg_s_cei(uint8_t value);         //!< set  CEL_O            (inverted)
+
+void iocfg_i_fpmp_o(uint8_t value);      //!< init FPMP_O
+void iocfg_i_fpmp_oi(uint8_t value);     //!< init FPMP_O           (inverted)
+void iocfg_s_fpmp_o(uint8_t value);      //!< set  FPMP_O
+void iocfg_s_fpmp_oi(uint8_t value);     //!< set  FPMP_O           (inverted)
+
+void iocfg_i_pwrr_o(uint8_t value);      //!< init PWRR_O
+void iocfg_i_pwrr_oi(uint8_t value);     //!< init PWRR_O           (inverted)
+void iocfg_s_pwrr_o(uint8_t value);      //!< set  PWRR_O
+void iocfg_s_pwrr_oi(uint8_t value);     //!< set  PWRR_O           (inverted)
+
+void iocfg_i_evap_o(uint8_t value);      //!< init EVAP_O
+void iocfg_i_evap_oi(uint8_t value);     //!< init EVAP_O           (inverted)
+void iocfg_s_evap_o(uint8_t value);      //!< set  EVAP_O
+void iocfg_s_evap_oi(uint8_t value);     //!< set  EVAP_O           (inverted)
+
+void iocfg_i_o2sh_o(uint8_t value);      //!< init O2SH_O
+void iocfg_i_o2sh_oi(uint8_t value);     //!< init O2SH_O           (inverted)
+void iocfg_s_o2sh_o(uint8_t value);      //!< set  O2SH_O
+void iocfg_s_o2sh_oi(uint8_t value);     //!< set  O2SH_O           (inverted)
+
+void iocfg_i_cond_o(uint8_t value);      //!< init COND_O
+void iocfg_i_cond_oi(uint8_t value);     //!< init COND_O           (inverted)
+void iocfg_s_cond_o(uint8_t value);      //!< set  COND_O
+void iocfg_s_cond_oi(uint8_t value);     //!< set  COND_O           (inverted)
+
+void iocfg_i_add_o2(uint8_t value);      //!< init ADD_O2
+void iocfg_i_add_o2i(uint8_t value);     //!< init ADD_O2           (inverted)
+void iocfg_s_add_o2(uint8_t value);      //!< set  ADD_O2
+void iocfg_s_add_o2i(uint8_t value);     //!< set  ADD_O2           (inverted)
+
+//Inputs
+void iocfg_i_ps(uint8_t value);          //!< init PS input
+void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
+uint8_t iocfg_g_ps(void);                //!< get PS input value
+uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
+
+void iocfg_i_ref_s(uint8_t value);       //!< init REF_S input
+void iocfg_i_ref_si(uint8_t value);      //!< init REF_S input        (inverted)
+uint8_t iocfg_g_ref_s(void);             //!< get REF_S input
+uint8_t iocfg_g_ref_si(void);            //!< get REF_S input         (inverted)
+
+void iocfg_i_ckps(uint8_t value);        //!< init CKPS input
+void iocfg_i_ckpsi(uint8_t value);       //!< init CKPS input         (inverted)
+uint8_t iocfg_g_ckps(void);              //!< get CKPS input
+uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
+
+void iocfg_i_add_i1(uint8_t value);      //!< init ADD_I1 input
+void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_I1 input       (inverted)
+uint8_t iocfg_g_add_i1(void);            //!< set  ADD_I1 input
+uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_I1 input       (inverted)
+
+void iocfg_i_add_i2(uint8_t value);      //!< init ADD_I2 input
+void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_I2 input       (inverted)
+uint8_t iocfg_g_add_i2(void);            //!< set  ADD_I2 input
+uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_I2 input       (inverted)
+
+void iocfg_i_add_i3(uint8_t value);      //!< init ADD_I3 input
+void iocfg_i_add_i3i(uint8_t value);     //!< init ADD_I3 input       (inverted)
+uint8_t iocfg_g_add_i3(void);            //!< set  ADD_I3 input
+uint8_t iocfg_g_add_i3i(void);           //!< set  ADD_I3 input       (inverted)
+
+void iocfg_i_gas_v(uint8_t value);       //!< init GAS_V input
+void iocfg_i_gas_vi(uint8_t value);      //!< init GAS_V input        (inverted)
+uint8_t iocfg_g_gas_v(void);             //!< get GAS_V input value
+uint8_t iocfg_g_gas_vi(void);            //!< get GAS_V input value   (inverted)
+
+void iocfg_i_ign(uint8_t value);         //!< init IGN_I input
+void iocfg_i_igni(uint8_t value);        //!< init IGN_I input        (inverted)
+uint8_t iocfg_g_ign(void);               //!< get IGN_I input value
+uint8_t iocfg_g_igni(void);              //!< get IGN_I input value   (inverted)
+
+void iocfg_i_cond_i(uint8_t value);      //!< init IGN_I input
+void iocfg_i_cond_ii(uint8_t value);     //!< init IGN_I input        (inverted)
+uint8_t iocfg_g_cond_i(void);            //!< get IGN_I input value
+uint8_t iocfg_g_cond_ii(void);           //!< get IGN_I input value   (inverted)
+
+void iocfg_i_epas_i(uint8_t value);      //!< init EPAS_I input
+void iocfg_i_epas_ii(uint8_t value);     //!< init EPAS_I input       (inverted)
+uint8_t iocfg_g_epas_i(void);            //!< get EPAS_I input value
+uint8_t iocfg_g_epas_ii(void);           //!< get EPAS_I input value  (inverted)
+
+#endif
 
 #endif //_IOCONFIG_H_

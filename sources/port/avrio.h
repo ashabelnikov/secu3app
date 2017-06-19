@@ -94,6 +94,9 @@
 #ifndef SPIF
  #define SPIF SPIF0
 #endif
+#ifndef CPOL
+ #define CPOL CPOL0
+#endif
 
  //EE_READY_vect is defined instead of EE_RDY_vect in iom644.h
  #if defined(__ATmega644__)

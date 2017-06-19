@@ -35,6 +35,7 @@
 #include "ioconfig.h" //for SM_CONTROL
 #include "tables.h"
 #include "vstimer.h"
+#include "knock.h" //for knock_start_expander_latching()
 
 /**Reload count for system timer's divider, to obtain approximately 10 ms from 1.6384 ms,
  frequency will be divided by 6 */
@@ -91,6 +92,10 @@ extern uint8_t cafr_soft_cnt;
  */
 ISR(TIMER2_OVF_vect)
 {
+#ifndef SECU3T //---SECU-3i---
+ knock_start_expander_latching();
+#endif
+
  _ENABLE_INTERRUPT();
 
 #ifdef SM_CONTROL

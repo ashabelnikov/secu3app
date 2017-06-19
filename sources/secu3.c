@@ -190,6 +190,12 @@ void init_ports(void)
 #ifdef CARB_AFR
  carbafr_init_ports();
 #endif
+
+//temporary stub
+#ifndef SECU3T
+IOCFG_INIT(IOP_COND_I, 0);
+IOCFG_INIT(IOP_EPAS_I, 0);
+#endif
 }
 
 /**Initialization of system modules
@@ -207,6 +213,10 @@ void init_modules(void)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
+
+#ifndef SECU3T //---SECU-3i---
+ knock_expander_initialize();
+#endif
 
  //Initialization of ADC
  adc_init();

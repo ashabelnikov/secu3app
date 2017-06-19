@@ -26,6 +26,10 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     LIST OF SYMBOLS WHICH AFFECT COMPILATION:
     Список символов управляющих компиляцией:
 
+    SECU3T               Build for SECU-3T or for SECU-3i. If not defined, then
+                         build for SECU-3i
+                         собирать прошивку для SECU-3T или SECU-3i.
+
     DWELL_CONTROL        For direct controlling of dwell
                          для прямого управления накоплением энергии в катушках
                          зажигания

@@ -32,6 +32,16 @@
 #include "bitmask.h"
 #include "knock.h"
 
+#ifndef SECU3T //---SECU-3i---
+//See ioconfig.c for more information
+extern uint8_t  spi_PORTA;   //!< Bits of inputs read by SPI
+extern uint8_t  spi_PORTB;   //!< Bits of outputs controlled by SPI
+extern uint8_t  spi_IODIRA;  //!< Direction control bits for SPI PORTA (inputs)
+extern uint8_t  spi_IODIRB;  //!< Direction control bits for SPI PORTB (outputs)
+extern uint8_t  spi_GPPUA;   //!< Pull-up resistors control register A
+extern uint8_t  spi_GPPUB;   //!< Pull-up resistors control register B
+#endif
+
 //HIP9011 - Knock Signal Processor.
 
 //Command codes and quick description (crib)
@@ -57,8 +67,7 @@
 
 #define SET_KSP_CS(v) WRITEBIT(PORTB, PB4, v) //!< SS controls chip selection
 #define SET_KSP_INTHOLD(v) WRITEBIT(PORTC, PC4, v) //!< Switches between integration/hold modes (SECU-3T)
-#define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode
-
+#define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode (SECU-3T) or controls EX_CS (SECU-3i)
 #define KSP_PRESCALER_VALUE KSP_PRESCALER_20MHZ  //!< set prescaler for 20mHz crystal
 
 /**This data structure intended for duplication of data of current state
@@ -71,13 +80,15 @@ typedef struct
  volatile uint8_t ksp_channel;          //!< current channel number (2 channels are available)
  volatile uint8_t ksp_interrupt_state;  //!< for state machine executed inside interrupt handler
  uint8_t ksp_error;                     //!< stores errors flags
- volatile uint8_t ksp_last_word;        //!< used to control of latching
+#ifndef SECU3T //---SECU-3i---
+ volatile uint8_t pending_request;      //!< pending requests flag
+#endif
 }kspstate_t;
 
 /**State variables */
 kspstate_t ksp;
 
-//For work with hardware part of SPI
+//For working with hardware part of SPI
 /**Initialization of SPI in master mode */
 static void spi_master_init(void);
 /**Transmit single byte via SPI
@@ -101,6 +112,7 @@ uint8_t knock_module_initialize(void)
  _DISABLE_INTERRUPT();
 
  //Setting HOLD mode for integrator and "Run" mode for chip at all.
+ //Note: In the SECU-3i TEST is not connected to PB3 (left NC)
  SET_KSP_TEST(1);
  SET_KSP_INTHOLD(KNOCK_INTMODE_HOLD);
  SET_KSP_CS(1);
@@ -108,6 +120,12 @@ uint8_t knock_module_initialize(void)
  spi_master_init();
  ksp.ksp_interrupt_state = 0; //init state machine
  ksp.ksp_error = 0;
+
+ CLEARBIT(SPCR, CPOL);
+
+#ifndef SECU3T //---SECU-3i---
+ ksp.pending_request = 0;
+#endif //SECU-3i
 
  //set prescaler first
  SET_KSP_CS(0);
@@ -134,6 +152,68 @@ uint8_t knock_module_initialize(void)
  return 1;
 }
 
+#ifndef SECU3T //---SECU-3i---
+
+uint8_t knock_expander_initialize()
+{
+ uint8_t _t;
+
+ _t=_SAVE_INTERRUPT();
+ _DISABLE_INTERRUPT();
+ ksp.pending_request = 0;
+ ksp.ksp_interrupt_state = 0; //init state machine
+
+ spi_master_init();
+
+ SETBIT(SPCR, CPOL);
+
+ SET_KSP_TEST(0);
+ _DELAY_US(2);
+ SET_KSP_TEST(1);
+ _DELAY_US(2);
+
+ //configure port expander MCP23S17
+ //expander will be by default in the sequential mode, BANK=0,
+ //so, we don't need to initialize IOCON register
+/* SET_KSP_TEST(0);
+ spi_master_transmit(0x40);        //write
+ spi_master_transmit(0x0A);        //address = 0x0A
+ spi_master_transmit(0x00);        //IOCON = 0 (BANK=0, SEQOP=0, HAEN=0)
+ SET_KSP_TEST(1);
+ _DELAY_US(2);*/
+
+ //pull-up resistors:
+ SET_KSP_TEST(0);
+ spi_master_transmit(0x40);        //write
+ spi_master_transmit(0x0C);        //address = 0x0C
+ spi_master_transmit(spi_GPPUA);   //GPPUA = spi_GPPUA
+ spi_master_transmit(spi_GPPUB);   //GPPUB = spi_GPPUB
+ SET_KSP_TEST(1);
+ _DELAY_US(2);
+
+ //ports' direction:
+ SET_KSP_TEST(0);
+ spi_master_transmit(0x40);        //write
+ spi_master_transmit(0x00);        //address = 0x00
+ spi_master_transmit(spi_IODIRA);  //IODIRA = spi_IODIRA
+ spi_master_transmit(spi_IODIRB);  //IODIRB = spi_IODIRB
+ SET_KSP_TEST(1);
+ _DELAY_US(2);
+
+ //ports' values:
+ SET_KSP_TEST(0);
+ spi_master_transmit(0x40);        //write
+ spi_master_transmit(0x12);        //address = 0x12
+ spi_master_transmit(spi_PORTA);   //GPIOA = spi_GPIOA
+ spi_master_transmit(spi_PORTB);   //GPIOB = spi_GPIOB
+ SET_KSP_TEST(1);
+ _DELAY_US(2);
+
+ _RESTORE_INTERRUPT(_t);
+ return 1; //successfully
+}
+#endif
+
 //Initializes SPI in master mode
 static void spi_master_init(void)
 {
@@ -159,16 +239,55 @@ static void spi_master_transmit(uint8_t i_byte)
 
 void knock_start_settings_latching(void)
 {
- if (ksp.ksp_interrupt_state)
-  ksp.ksp_error = 1;
-
- SET_KSP_CS(0);
- ksp.ksp_interrupt_state = 1;
- SPDR = ksp.ksp_last_word = ksp.ksp_bpf;
- //enable interrupt, sending of the remaining data will be completed in
- //interrupt's state machine
- SPCR|= _BV(SPIE);
+ _BEGIN_ATOMIC_BLOCK();
+ if (0==ksp.ksp_interrupt_state)
+ {
+  CLEARBIT(SPCR, CPOL);
+  SET_KSP_CS(0);
+  ksp.ksp_interrupt_state = 1;
+  SPDR = ksp.ksp_bpf;
+  //enable interrupt, sending of the remaining data will be completed in
+  //interrupt's state machine
+  SPCR|= _BV(SPIE);
+ }
+ else if (ksp.ksp_interrupt_state < 5)
+  ksp.ksp_error = 1; //previous latching is not finished yet
+#ifndef SECU3T //---SECU-3i---
+ else
+  ksp.pending_request = 1; //if busy by MCP23S17, then just set request flag and exit
+#endif
+ _END_ATOMIC_BLOCK();
 }
+
+#ifndef SECU3T //---SECU-3i---
+void knock_start_expander_latching(void)
+{
+// _BEGIN_ATOMIC_BLOCK(); we rely that at the moment of calling of this function interrupts are disabled, so don't disable it twice
+ if (0==ksp.ksp_interrupt_state)
+ {
+  SETBIT(SPCR, CPOL);
+ _NO_OPERATION();
+ _NO_OPERATION();
+ _NO_OPERATION();
+ _NO_OPERATION();
+  SET_KSP_TEST(0);
+  ksp.ksp_interrupt_state = 5;
+ _NO_OPERATION();
+ _NO_OPERATION();
+ _NO_OPERATION();
+ _NO_OPERATION();
+  SPDR = 0x40; //write
+  //enable interrupt, sending of the remaining data will be completed in
+  //interrupt's state machine
+  SPCR|= _BV(SPIE);
+ }
+ else if (ksp.ksp_interrupt_state > 4)
+  ksp.ksp_error = 1; //previous latching is not finished yet
+ else
+  ksp.pending_request = 1; //if busy by HIP9011, then set request flag and exit
+// _END_ATOMIC_BLOCK();
+}
+#endif
 
 uint8_t knock_is_latching_idle(void)
 {
@@ -216,10 +335,12 @@ void knock_reset_error(void)
 /** Interrupt handler from SPI */
 ISR(SPI_STC_vect)
 {
- uint8_t t = SPDR;
  //signal processor requires transition of CS into high level after each sent
  //byte, at least for 200ns
- SET_KSP_CS(1);
+#ifndef SECU3T //---SECU-3i---
+ if (ksp.ksp_interrupt_state < 5)
+#endif
+ { SET_KSP_CS(1); }
 
  _ENABLE_INTERRUPT();
 
@@ -230,35 +351,102 @@ ISR(SPI_STC_vect)
 
   case 1: //BPF loaded
    SET_KSP_CS(0);
-   ksp.ksp_interrupt_state = 2;
-   if (t!=ksp.ksp_last_word)
-    ksp.ksp_error = 1;
-   SPDR = ksp.ksp_last_word = ksp.ksp_gain;
+   ++ksp.ksp_interrupt_state;
+   SPDR = ksp.ksp_gain;
    break;
 
   case 2: //Gain loaded
    SET_KSP_CS(0);
-   ksp.ksp_interrupt_state = 3;
-   if (t!=ksp.ksp_last_word)
-    ksp.ksp_error = 1;
-   SPDR = ksp.ksp_last_word = ksp.ksp_inttime;
+   ++ksp.ksp_interrupt_state;
+   SPDR = ksp.ksp_inttime;
    break;
 
   case 3: //Int.Time loaded
    SET_KSP_CS(0);
-   ksp.ksp_interrupt_state = 4;
-   if (t!=ksp.ksp_last_word)
-    ksp.ksp_error = 1;
-   SPDR = ksp.ksp_last_word = ksp.ksp_channel;
+   ++ksp.ksp_interrupt_state;
+   SPDR = ksp.ksp_channel;
    break;
 
   case 4: //channel number loaded
-   if (t!=ksp.ksp_last_word)
-    ksp.ksp_error = 1;
+#ifdef SECU3T
+   ksp.ksp_interrupt_state = 0; //idle
    //disable interrupt and switch state machine into initial state - ready to new load
    SPCR&= ~_BV(SPIE);
-   ksp.ksp_interrupt_state = 0;
    break;
+#else //---SECU-3i---
+   {
+   _BEGIN_ATOMIC_BLOCK();
+   if (ksp.pending_request)
+   {//start loading data into the expander chip
+    SETBIT(SPCR, CPOL);
+    SET_KSP_TEST(0);
+    ksp.pending_request = 0;
+    ++ksp.ksp_interrupt_state; // busy (state = 5)
+    SPDR = 0x40; //write opcode
+   }
+   else
+   {
+    ksp.ksp_interrupt_state = 0; //idle
+    //disable interrupt and switch state machine into initial state - ready to new load
+    SPCR&= ~_BV(SPIE);
+   }
+   _END_ATOMIC_BLOCK();
+   }
+   break;
+
+  case 5: //expander, opcode loaded
+   SPDR = 0x13; //address of the GPIOB
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 6: //GPIOB address loaded
+   SPDR = spi_PORTB;
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 7: //GPIOB wrote!
+
+   SET_KSP_TEST(1); //deselect the device
+   ++ksp.ksp_interrupt_state;
+   _NO_OPERATION();
+   _NO_OPERATION();
+   _NO_OPERATION();
+   _NO_OPERATION();
+   SET_KSP_TEST(0);
+   _NO_OPERATION();
+   _NO_OPERATION();
+   _NO_OPERATION();
+   _NO_OPERATION();
+   SPDR = 0x41;  //read opcode
+   break;
+  case 8: //expander, opcode loaded
+   SPDR = 0x12; //address of the GPIOA
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 9: //GPIOA address loaded
+   SPDR = 0x00;  //shift read register
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 10: //GPIOA read!
+   spi_PORTA = SPDR;
+   SET_KSP_TEST(1);
+   _BEGIN_ATOMIC_BLOCK();
+   if (ksp.pending_request)
+   {//start loading data into the knock chip
+    CLEARBIT(SPCR, CPOL);
+    SET_KSP_CS(0);
+    ksp.pending_request = 0;
+    ksp.ksp_interrupt_state = 1; //busy (state = 1)
+    SPDR = ksp.ksp_bpf;
+   }
+   else
+   {
+    ksp.ksp_interrupt_state = 0; //idle
+    //disable interrupt and switch state machine into initial state - ready to new load
+    SPCR&= ~_BV(SPIE);
+   }
+   _END_ATOMIC_BLOCK();
+   break;
+#endif
+
  }
 }
 

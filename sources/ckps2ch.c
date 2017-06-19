@@ -265,8 +265,8 @@ void ckps_init_ports(void)
  IOCFG_INIT(IOP_IGN_OUT2, IGN_OUTPUTS_INIT_VAL);        //init 2-nd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT3, IGN_OUTPUTS_INIT_VAL);        //init 3-rd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT4, IGN_OUTPUTS_INIT_VAL);        //init 4-th (can be remapped)
- IOCFG_INIT(IOP_ADD_O1, IGN_OUTPUTS_INIT_VAL);          //init 5-th (can be remapped)
- IOCFG_INIT(IOP_ADD_O2, IGN_OUTPUTS_INIT_VAL);          //init 6-th (can be remapped)
+ IOCFG_INIT(IOP_IGN_OUT5, IGN_OUTPUTS_INIT_VAL);        //init 5-th (can be remapped)
+ IOCFG_INIT(IOP_IGN_OUT6, IGN_OUTPUTS_INIT_VAL);        //init 6-th (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT7, IGN_OUTPUTS_INIT_VAL);        //init 7-th (for maniacs)
  IOCFG_INIT(IOP_IGN_OUT8, IGN_OUTPUTS_INIT_VAL);        //init 8-th (for maniacs)
 
@@ -402,7 +402,7 @@ uint8_t ckps_is_cog_changed(void)
 INLINE
 static fnptr_t get_callback(uint8_t index)
 {
- return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_IGN78_OFF);
+ return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_IGNPLG_OFF);
 }
 
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */

@@ -146,7 +146,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_RESERVED27   66     //!< reserved plug   ()
 #define IOP_RESERVED28   67     //!< reserved plug   ()
 
-#define IOP_IGN78_OFF    (IOP_IGN_OUT7-(IOP_IGN_OUT6+1)) //!< needed by ckps.c
+#define IOP_IGNPLG_OFF   (IOP_IGN_OUT7-(IOP_IGN_OUT6+1)) //!< needed by ckps.c
 
 //List all I/O functions. These functions must be used only inside tables.c
 void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1

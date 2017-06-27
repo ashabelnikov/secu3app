@@ -34,6 +34,7 @@
 #include "adc.h"
 #include "bitmask.h"
 #include "magnitude.h"
+#include "mathemat.h"
 
 /**номер канала используемого для ДАД */
 #define ADCI_MAP                2
@@ -42,18 +43,19 @@
 /**номер канала используемого для ДТОЖ */
 #define ADCI_TEMP               0
 /*channel number for ADD_IO1 */
-#define ADCI_ADD_IO1            6
+#define ADCI_ADD_I1             6
 /*channel number for ADD_IO2 */
-#define ADCI_ADD_IO2            5
+#define ADCI_ADD_I2             5
+
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+/*channel number for ADD_I3 */
+#define ADCI_ADD_I3             4
+#endif
+
 /*channel number for CARB */
 #define ADCI_CARB               7
 /**номер канала используемого для канала детонации */
 #define ADCI_KNOCK              3
-
-#ifdef PA4_INP_IGNTIM
-/*channel number for PA4 input */
-#define ADCI_PA4                4
-#endif
 
 /**Value of the time differential for TPSdot calculation, ticks of timer*/
 #define TPSDOT_TIME_DELTA 10000
@@ -76,17 +78,17 @@ typedef struct
  volatile uint16_t ubat_value;   //!< последнее измеренное значение напряжения бортовой сети
  volatile uint16_t temp_value;   //!< последнее измеренное значение температуры охлаждающей жидкости
  volatile uint16_t knock_value;  //!< последнее измеренное значение сигнала c датчика(ов) детонации
- volatile uint16_t add_io1_value;//!< last measured value od ADD_IO1
- volatile uint16_t add_io2_value;//!< last measured value of ADD_IO2
+ volatile uint16_t add_i1_value;//!< last measured value od ADD_I1
+ volatile uint16_t add_i2_value;//!< last measured value of ADD_I2
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+ volatile uint16_t add_i3_value;//!< last measured value of ADD_I3
+#endif
  volatile uint16_t carb_value;   //!< last measured value of TPS
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
  uint8_t  measure_all;           //!< если 1, то производится измерение всех значений
-#ifdef PA4_INP_IGNTIM
- volatile uint16_t pa4_value;    //!< last measured value from PA4 input
-#endif
 }adcstate_t;
 
 /** переменные состояния АЦП */
@@ -119,22 +121,35 @@ uint16_t adc_get_temp_value(void)
  return value;
 }
 
-uint16_t adc_get_add_io1_value(void)
+uint16_t adc_get_add_i1_value(void)
 {
  uint16_t value;
  _BEGIN_ATOMIC_BLOCK();
- value = adc.add_io1_value;
+ value = adc.add_i1_value;
  _END_ATOMIC_BLOCK();
  return value;
 }
-uint16_t adc_get_add_io2_value(void)
+
+uint16_t adc_get_add_i2_value(void)
 {
  uint16_t value;
  _BEGIN_ATOMIC_BLOCK();
- value = adc.add_io2_value;
+ value = adc.add_i2_value;
  _END_ATOMIC_BLOCK();
  return value;
 }
+
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+uint16_t adc_get_add_i3_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = adc.add_i3_value;
+ _END_ATOMIC_BLOCK();
+ return value;
+}
+#endif
+
 uint16_t adc_get_carb_value(void)
 {
  uint16_t value;
@@ -170,17 +185,6 @@ uint16_t adc_get_knock_value(void)
  _END_ATOMIC_BLOCK();
  return value;
 }
-
-#ifdef PA4_INP_IGNTIM
-uint16_t adc_get_pa4_value(void)
-{
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = adc.pa4_value;
- _END_ATOMIC_BLOCK();
- return value;
-}
-#endif
 
 void adc_begin_measure(uint8_t speed2x)
 {
@@ -272,7 +276,7 @@ ISR(ADC_vect)
 
   case ADCI_CARB:
    adc.carb_value = ADC;
-   ADMUX = ADCI_ADD_IO1|ADC_VREF_TYPE;
+   ADMUX = ADCI_ADD_I1|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
@@ -286,22 +290,22 @@ ISR(ADC_vect)
 #endif
    break;
 
-  case ADCI_ADD_IO1:
-   adc.add_io1_value = ADC;
-   ADMUX = ADCI_ADD_IO2|ADC_VREF_TYPE;
+  case ADCI_ADD_I1:
+   adc.add_i1_value = ADC;
+   ADMUX = ADCI_ADD_I2|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_ADD_IO2:
-   adc.add_io2_value = ADC;
+  case ADCI_ADD_I2:
+   adc.add_i2_value = ADC;
 
-#ifdef PA4_INP_IGNTIM
-   ADMUX = ADCI_PA4|ADC_VREF_TYPE;
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+   ADMUX = ADCI_ADD_I3|ADC_VREF_TYPE;
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_PA4:
-   adc.pa4_value = ADC;
+  case ADCI_ADD_I3:
+   adc.add_i3_value = ADC;
 #endif
    if (0==adc.measure_all)
    {
@@ -392,11 +396,7 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
 
  t = (((int32_t)t) * gradient) >> (7+6);
 
- //TODO: use restrict_value function instead of following code
- if (t > TPS_MAGNITUDE(100)) //restrict to 100%
-  t = TPS_MAGNITUDE(100);
- if (t < TPS_MAGNITUDE(0))
-  t = TPS_MAGNITUDE(0);
+ restrict_value_to(&t, TPS_MAGNITUDE(0), TPS_MAGNITUDE(100)); //restrict to 100%
 
  return t;
 }

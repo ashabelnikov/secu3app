@@ -144,7 +144,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   d->corr.pa4_aac = pa4_function(d->sens.pa4);
+   d->corr.pa4_aac = pa4_function(d->sens.add_i3);
    angle+=d->corr.pa4_aac;
 #endif
    d->corr.idlreg_aac = idling_pregulator(d,&idle_period_time_counter);//add correction from idling regulator
@@ -206,7 +206,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
    d->corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   d->corr.pa4_aac = pa4_function(d->sens.pa4);
+   d->corr.pa4_aac = pa4_function(d->sens.add_i3);
    angle+=d->corr.pa4_aac;
 #endif
    //substract correction obtained from detonation regulator

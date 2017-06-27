@@ -979,12 +979,19 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
    build_i16h(d->diag_inp.voltage);
    build_i16h(d->diag_inp.map);
    build_i16h(d->diag_inp.temp);
-   build_i16h(d->diag_inp.add_io1);
-   build_i16h(d->diag_inp.add_io2);
+   build_i16h(d->diag_inp.add_i1);
+   build_i16h(d->diag_inp.add_i2);
+#ifndef SECU3T
+   build_i16h(d->diag_inp.add_i3);
+   build_i16h(0); //reserved for ADD_I4
+#else //SECU-3T
+   build_i16h(0); //stub
+   build_i16h(0); //stub
+#endif
    build_i16h(d->diag_inp.carb);
    build_i16h(d->diag_inp.ks_1);
    build_i16h(d->diag_inp.ks_2);
-   build_i8h(d->diag_inp.bits);
+   build_i16h(d->diag_inp.bits);
    break;
 #endif
  }//switch
@@ -1370,7 +1377,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
 #endif
 #ifdef DIAGNOSTICS
   case DIAGOUT_DAT:
-   d->diag_out = recept_i16h();
+   d->diag_out = recept_i32h();
    break;
 #endif
  }//switch

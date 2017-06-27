@@ -47,10 +47,14 @@ typedef struct diagnost_inp_t
  uint16_t voltage;                       //!< board voltage
  uint16_t map;                           //!< MAP sensor
  uint16_t temp;                          //!< coolant temperature
- uint16_t add_io1;                       //!< additional input 1 (analog)
- uint16_t add_io2;                       //!< additional input 2 (analog)
+ uint16_t add_i1;                        //!< additional input 1 (analog)
+ uint16_t add_i2;                        //!< additional input 2 (analog)
+#ifndef SECU3T
+ uint16_t add_i3;                        //!< additional input 3 (analog)
+ uint16_t add_i4;                        //!< reserved
+#endif
  uint16_t carb;                          //!< carburetor switch, throttle position sensor (analog)
- uint8_t  bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp
+ uint16_t bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp (plus IGN_I, COND_I, EPAS_I for SECU-3i)
  uint16_t ks_1;                          //!< knock sensor 1
  uint16_t ks_2;                          //!< knock sensor 2
 }diagnost_inp_t;
@@ -77,15 +81,17 @@ typedef struct sensors_t
  uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage
+
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+ uint16_t add_i3;                        //!< ADD_I3 input voltage
+#endif
+
 #ifdef SPEED_SENSOR
  uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 4us)
  uint32_t distance;                      //!< Distance expressed by number of speed sensor pulses since last ignition turn on
 #endif
 #ifdef AIRTEMP_SENS
  int16_t air_temp;                       //!< Intake air temperature
-#endif
-#ifdef PA4_INP_IGNTIM
- uint16_t pa4;                           //!< PA4 input voltage
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
@@ -168,7 +174,7 @@ typedef struct ecudata_t
 
 #ifdef DIAGNOSTICS
  diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs
- uint16_t       diag_out;                //!< diagnostic mode: values of outputs
+ uint32_t       diag_out;                //!< diagnostic mode: values of outputs
 #endif
 
  uint8_t choke_testing;                  //!< Used to indcate that choke testing is on/off (so it is applicable only if SM_CONTROL compilation option is used)

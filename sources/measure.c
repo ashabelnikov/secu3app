@@ -63,14 +63,14 @@
 #define BAT_AVERAGING           4                 //!< Number of values for averaging of board voltage
 #define TMP_AVERAGING           8                 //!< Number of values for averaging of coolant temperature
 #define TPS_AVERAGING           4                 //!< Number of values for averaging of throttle position
-#define AI1_AVERAGING           4                 //!< Number of values for averaging of ADD_IO1
-#define AI2_AVERAGING           4                 //!< Number of values for averaging of ADD_IO2
+#define AI1_AVERAGING           4                 //!< Number of values for averaging of ADD_I1
+#define AI2_AVERAGING           4                 //!< Number of values for averaging of ADD_I2
 #ifdef SPEED_SENSOR
 #define SPD_AVERAGING           8                 //!< Number of values for averaging of speed sensor periods
 #endif
 
-#ifdef PA4_INP_IGNTIM
-#define PA4_AVERAGING           4                 //!< Number of values for averaging of PA4
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#define AI3_AVERAGING           4                 //!< Number of values for averaging of ADD_I3
 #endif
 
 uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
@@ -78,14 +78,14 @@ uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaging
 uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaging of voltage (буфер усреднения напряжения бортовой сети)
 uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaging of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
 uint16_t tps_circular_buffer[TPS_AVERAGING];      //!< Ring buffer for averaging of TPS
-uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaging of ADD_IO1
-uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaging of ADD_IO2
+uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaging of ADD_I1
+uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaging of ADD_I2
 #ifdef SPEED_SENSOR
 uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging of speed sensor periods
 #endif
 
-#ifdef PA4_INP_IGNTIM
-uint16_t pa4_circular_buffer[PA4_AVERAGING];      //!< Ring buffer for averaging of PA4
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+uint16_t ai3_circular_buffer[AI3_AVERAGING];      //!< Ring buffer for averaging of ADD_I3
 #endif
 
 void meas_init_ports(void)
@@ -109,8 +109,8 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
 #ifdef SPEED_SENSOR
  static uint8_t  spd_ai = SPD_AVERAGING-1;
 #endif
-#ifdef PA4_INP_IGNTIM
-  static uint8_t  pa4_ai  = PA4_AVERAGING-1;
+#if !defined(SECU3T) && defined(PA4_INP_IGNTIM)
+  static uint8_t  ai3_ai  = AI3_AVERAGING-1;
 #endif
 
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
@@ -138,18 +138,18 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
  tps_circular_buffer[tps_ai] = adc_get_carb_value();
  (tps_ai==0) ? (tps_ai = TPS_AVERAGING - 1): tps_ai--;
 
- ai1_circular_buffer[ai1_ai] = adc_get_add_io1_value();
+ ai1_circular_buffer[ai1_ai] = adc_get_add_i1_value();
 #ifdef SEND_INST_VAL
  d->sens.inst_add_i1 = adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d->param.ai1_adc_factor, d->param.ai1_adc_correction);
 #endif
  (ai1_ai==0) ? (ai1_ai = AI1_AVERAGING - 1): ai1_ai--;
 
- ai2_circular_buffer[ai2_ai] = adc_get_add_io2_value();
+ ai2_circular_buffer[ai2_ai] = adc_get_add_i2_value();
  (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
 
-#ifdef PA4_INP_IGNTIM
- pa4_circular_buffer[pa4_ai] = adc_get_pa4_value();
- (pa4_ai==0) ? (pa4_ai = PA4_AVERAGING - 1): pa4_ai--;
+#if !defined(SECU3T) && defined(PA4_INP_IGNTIM)
+ ai3_circular_buffer[pa4_ai] = adc_get_add_i3_value();
+ (ai3_ai==0) ? (ai3_ai = AI3_AVERAGING - 1): ai3_ai--;
 #endif
 
  if (d->param.knock_use_knock_channel)
@@ -232,20 +232,20 @@ void meas_average_measured_values(struct ecudata_t* d, ce_sett_t _PGM *cesd)
  if (d->sens.tps > TPS_MAGNITUDE(100))
   d->sens.tps = TPS_MAGNITUDE(100);
 
- for (sum=0,i = 0; i < AI1_AVERAGING; i++)   //average ADD_IO1 input
+ for (sum=0,i = 0; i < AI1_AVERAGING; i++)   //average ADD_I1 input
   sum+=ai1_circular_buffer[i];
  d->sens.add_i1_raw = adc_compensate(_RESDIV((sum/AI1_AVERAGING), 2, 1), d->param.ai1_adc_factor, d->param.ai1_adc_correction);
  d->sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : d->sens.add_i1_raw;
 
- for (sum=0,i = 0; i < AI2_AVERAGING; i++)   //average ADD_IO2 input
+ for (sum=0,i = 0; i < AI2_AVERAGING; i++)   //average ADD_I2 input
   sum+=ai2_circular_buffer[i];
  d->sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d->param.ai2_adc_factor, d->param.ai2_adc_correction);
  d->sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) ? cesd->add_i2_v_em : d->sens.add_i2_raw;
 
-#ifdef PA4_INP_IGNTIM
- for (sum=0,i = 0; i < PA4_AVERAGING; i++)   //average PA4 input
-  sum+=pa4_circular_buffer[i];
- d->sens.pa4 = adc_compensate((sum/PA4_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+ for (sum=0,i = 0; i < AI3_AVERAGING; i++)   //average ADD_I3 input (PA4)
+  sum+=ai3_circular_buffer[i];
+ d->sens.add_i3 = adc_compensate((sum/AI3_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
 #endif
 
 #ifdef AIRTEMP_SENS

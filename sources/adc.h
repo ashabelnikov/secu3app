@@ -64,15 +64,22 @@ uint16_t adc_get_ubat_value(void);
  */
 uint16_t adc_get_temp_value(void);
 
-/** Получение последнего измеренного значения с ADD_IO1
+/** Получение последнего измеренного значения с ADD_I1
  * \return значение в дискретах АЦП
  */
-uint16_t adc_get_add_io1_value(void);
+uint16_t adc_get_add_i1_value(void);
 
-/** Получение последнего измеренного значения с ADD_IO2
+/** Получение последнего измеренного значения с ADD_I2
  * \return значение в дискретах АЦП
  */
-uint16_t adc_get_add_io2_value(void);
+uint16_t adc_get_add_i2_value(void);
+
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+/** Get last measured value from ADD_I3
+ * \return value in the ADC discretes
+ */
+uint16_t adc_get_add_i3_value(void);
+#endif
 
 /** Get latest measured value from throttle gate position sensor
  * (Получение последнего измеренного значения с ДПДЗ)
@@ -170,14 +177,6 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
  * \return percentage/sec
  */
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
-#endif
-
-
-#ifdef PA4_INP_IGNTIM
-/** Get value of the PA4 input
- * \return value in ADC discretes
- */
-uint16_t adc_get_pa4_value(void);
 #endif
 
 #endif //_ADC_H_

@@ -39,11 +39,20 @@
 #include "ufcodes.h"
 #include "wdt.h"
 
+
+#ifndef SECU3T //---SECU-3i---
+extern uint8_t spi_PORTB;
+extern uint8_t spi_PORTA;
+extern uint8_t spi_IODIRA;
+extern uint8_t spi_IODIRB;
+extern uint8_t spi_GPPUA;
+#endif
+
 /**Helpful macro used for generation of bit mask for outputs*/
-#define _OBV(b) (((uint16_t)1) << b)
+#define _OBV(b) (((uint32_t)1) << b)
 
 /**Helpful macro used for generation of bit mask for inputs*/
-#define _IBV(v,b) (((uint8_t)v) << b)
+#define _IBV(v,b) (((uint16_t)v) << b)
 
 /**Helpful macro for ADC compensation, f,c - must be floationg point constants*/
 #define _ADC_COMPENSATE(v, f, c) adc_compensate(v, ADC_COMP_FACTOR(f), ADC_COMP_CORR(f, c))
@@ -82,6 +91,7 @@ void diagnost_stop(void)
 /**Initialization of outputs in diagnostic mode. All outputs are OFF*/
 void init_digital_outputs(void)
 {
+#ifdef SECU3T
  //IGN_OU1, IGN_OUT2, IGN_OUT3, IGN_OUT4
  PORTD&= ~(_BV(PD5)|_BV(PD4));
  PORTC&= ~(_BV(PC1)|_BV(PC0));
@@ -119,40 +129,68 @@ void init_digital_outputs(void)
  PORTB|= _BV(PB1);
 #endif
  DDRB |= _BV(DDB1);
+
+#else //---SECU-3i---
+
+ //IGN_O1, IGN_O2, IGN_O3, IGN_O4, IGN_O5
+ PORTD|= (_BV(PD5)|_BV(PD4));
+ PORTC|= (_BV(PC1)|_BV(PC0)|_BV(PC5));
+ DDRD|= (_BV(DDD5)|_BV(DDD4));
+ DDRC|= (_BV(DDC1)|_BV(DDC0)|_BV(DDC5));
+
+ //ECF
+ PORTD&= ~(_BV(PD7));
+ DDRD |= _BV(DDD7);
+
+ //INJ_O1, INJ_O2, INJ_O3, INJ_O4, INJ_O5
+ PORTB&= ~(_BV(PB2)|_BV(PB1)|_BV(PB0));
+ DDRB|= (_BV(DDB2)|_BV(DDB1)|_BV(DDB0));
+ PORTC&= ~(_BV(PC7)|_BV(PC6));
+ DDRC|= (_BV(DDC7)|_BV(DDC6));
+
+ //STBL_O, CEL_O, FPMP_O, PWRR_O, COND_O, O2SH_O, EVAP_O, ADD_O2
+ spi_PORTB&= ~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0));
+ spi_IODIRB&= ~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0));
+
+#endif
 }
 
 /**Set states of outputs
  * \param o Bits containing output states
  */
-void set_outputs(uint16_t o)
+void set_outputs(uint32_t o)
 {
+
+#ifdef SECU3T
+
  WRITEBIT(PORTD, PD4, (o & _OBV(0)));  //IGN_OUT1
  WRITEBIT(PORTD, PD5, (o & _OBV(1)));  //IGN_OUT2
  WRITEBIT(PORTC, PC0, (o & _OBV(2)));  //IGN_OUT3
  WRITEBIT(PORTC, PC1, (o & _OBV(3)));  //IGN_OUT4
- WRITEBIT(PORTC, PC5, (o & _OBV(4)));  //ADD_IO1
- WRITEBIT(PORTA, PA4, (o & _OBV(5)));  //ADD_IO2
- WRITEBIT(PORTB, PB0, (o & _OBV(6)));  //IE
- WRITEBIT(PORTC, PC7, (o & _OBV(7)));  //FE
+ WRITEBIT(PORTB, PB0, (o & _OBV(4)));  //IE
+ WRITEBIT(PORTC, PC7, (o & _OBV(5)));  //FE
 
 #ifdef REV9_BOARD
- WRITEBIT(PORTD, PD7, (o & _OBV(8)));  //ECF
+ WRITEBIT(PORTD, PD7, (o & _OBV(6)));  //ECF
 #else
- WRITEBIT(PORTD, PD7,!(o & _OBV(8)));
+ WRITEBIT(PORTD, PD7,!(o & _OBV(6)));
 #endif
 
 #ifdef REV9_BOARD
- WRITEBIT(PORTB, PB2, (o & _OBV(9)));  //CE
+ WRITEBIT(PORTB, PB2, (o & _OBV(7)));  //CE
 #else
- WRITEBIT(PORTB, PB2,!(o & _OBV(9)));
+ WRITEBIT(PORTB, PB2,!(o & _OBV(7)));
 #endif
 
  //ST_BLOCK
 #ifdef REV9_BOARD
- WRITEBIT(PORTB, PB1, (o & _OBV(10))); //ST_BLOCK
+ WRITEBIT(PORTB, PB1, (o & _OBV(8))); //ST_BLOCK
 #else
- WRITEBIT(PORTB, PB1,!(o & _OBV(10)));
+ WRITEBIT(PORTB, PB1,!(o & _OBV(8)));
 #endif
+
+ WRITEBIT(PORTC, PC5, (o & _OBV(9)));  //ADD_IO1
+ WRITEBIT(PORTA, PA4, (o & _OBV(10)));  //ADD_IO2
 
  //BL
  if (o & _OBV(12)) {
@@ -167,29 +205,93 @@ void set_outputs(uint16_t o)
  else {
   WRITEBIT(PORTC, PC2, 1); }             //pull up input
  WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
+
+#else //---SECU-3i---
+
+ WRITEBIT(PORTD, PD4, !(o & _OBV(0)));  //IGN_O1
+ WRITEBIT(PORTD, PD5, !(o & _OBV(1)));  //IGN_O2
+ WRITEBIT(PORTC, PC0, !(o & _OBV(2)));  //IGN_O3
+ WRITEBIT(PORTC, PC1, !(o & _OBV(3)));  //IGN_O4
+ WRITEBIT(PORTC, PC5, !(o & _OBV(4)));  //IGN_O5
+ WRITEBIT(PORTD, PD7, (o & _OBV(5)));  //ECF
+ WRITEBIT(PORTB, PB1, (o & _OBV(6)));  //INJ_O1
+ WRITEBIT(PORTC, PC6, (o & _OBV(7)));  //INJ_O2
+ WRITEBIT(PORTB, PB2, (o & _OBV(8)));  //INJ_O3
+ WRITEBIT(PORTC, PC7, (o & _OBV(9)));  //INJ_O4
+ WRITEBIT(PORTB, PB0, (o & _OBV(10))); //INJ_O5
+
+ //BL
+ if (o & _OBV(12)) {
+  WRITEBIT(PORTC, PC3, (o & _OBV(11))); }
+ else {
+  WRITEBIT(PORTC, PC3, 1); }             //pull up input
+ WRITEBIT(DDRC, DDC3, (o & _OBV(12)));   //select mode: input/output
+
+ //DE
+ if (o & _OBV(14)) {
+  WRITEBIT(PORTC, PC2, (o & _OBV(13))); }
+ else {
+  WRITEBIT(PORTC, PC2, 1); }             //pull up input
+ WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
+
+ WRITEBIT(spi_PORTB, 1, (o & _OBV(15))); //STBL_O
+ WRITEBIT(spi_PORTB, 5, (o & _OBV(16))); //CEL_O
+ WRITEBIT(spi_PORTB, 3, (o & _OBV(17))); //FPMP_O
+ WRITEBIT(spi_PORTB, 2, (o & _OBV(18))); //PWRR_O
+ WRITEBIT(spi_PORTB, 6, (o & _OBV(19))); //EVAP_O
+ WRITEBIT(spi_PORTB, 7, (o & _OBV(20))); //O2SH_O
+ WRITEBIT(spi_PORTB, 4, (o & _OBV(21))); //COND_O
+ WRITEBIT(spi_PORTB, 0, (o & _OBV(22))); //ADD_O2
+
+#endif
+
 }
 
 /**Initialization of digital inputs in diagnostic mode*/
 void init_digital_inputs(void)
 {
+#ifdef SECU3T
  //GAS_V, CKPS, REF_S, PS
  DDRC&=~(_BV(DDC6));
- DDRD&=~(_BV(DDD6)|_BV(DDD2));
- DDRD&=~(_BV(DDB3));
+ DDRD&=~(_BV(DDD6)|_BV(DDD2)|_BV(DDD3));
  //BL jmp, DE jmp
  DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
  PORTC|= _BV(PC3)|_BV(PC2);
+#else //---SECU-3i---
+
+ //CKPS, REF_S, PS
+ DDRD&=~(_BV(DDD6)|_BV(DDD2)|_BV(DDD3));
+
+ //BL jmp, DE jmp
+ DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
+ PORTC|= _BV(PC3)|_BV(PC2);
+
+ //GAS_V, IGN_I, COND_I, EPAS_I without pull-up resistors
+ spi_IODIRA|= (_BV(3)|_BV(2)|_BV(1)|_BV(0));
+ spi_GPPUA &= ~(_BV(3)|_BV(2)|_BV(1)|_BV(0));
+
+#endif
 }
 
 /**Get states of inputs
  * \return bits containing state of digital inputs
  */
-uint8_t get_inputs(void)
+uint16_t get_inputs(void)
 {
+#ifdef SECU3T
  //GAS_V, CKPS, REF_S, PS
- uint8_t i = _IBV((!!CHECKBIT(PINC, PINC6)), 0) | _IBV((!!CHECKBIT(PIND, PIND6)), 1) | _IBV((!!CHECKBIT(PIND, PIND2)), 2) |
-             _IBV((!!CHECKBIT(PIND, PIND3)), 3) |
-             _IBV((!!CHECKBIT(PINC, PINC3)), 4) | _IBV((!!CHECKBIT(PINC, PINC2)), 5);  //BL jmp, DE jmp
+ uint16_t i = _IBV((!!CHECKBIT(PINC, PINC6)), 0) | _IBV((!!CHECKBIT(PIND, PIND6)), 1) | _IBV((!!CHECKBIT(PIND, PIND2)), 2) |
+              _IBV((!!CHECKBIT(PIND, PIND3)), 3) |
+              _IBV((!!CHECKBIT(PINC, PINC3)), 4) | _IBV((!!CHECKBIT(PINC, PINC2)), 5);  //BL jmp, DE jmp
+
+#else //---SECU-3i---
+
+ uint16_t i = _IBV((!!CHECKBIT(spi_PORTA, 0)), 0) | _IBV((!!CHECKBIT(PIND, PIND6)), 1) | _IBV((!!CHECKBIT(PIND, PIND2)), 2) |
+              _IBV((!!CHECKBIT(PIND, PIND3)), 3) | //GAS_V, CKPS, REF_S, PS
+              _IBV((!!CHECKBIT(PINC, PINC3)), 4) | _IBV((!!CHECKBIT(PINC, PINC2)), 5) |  //BL jmp, DE jmp
+              _IBV((!!CHECKBIT(spi_PORTA, 3)), 6) | _IBV((!!CHECKBIT(spi_PORTA, 2)), 7) | _IBV((!!CHECKBIT(spi_PORTA, 1)), 8); //IGN_I, COND_I, EPAS_I
+
+#endif
  return i;
 }
 
@@ -206,6 +308,10 @@ void diagnost_process(struct ecudata_t* d)
 
  //perform initialization of digital inputs
  init_digital_inputs();
+
+#ifndef SECU3T
+ knock_expander_initialize();
+#endif
 
  //Diasable unneeded interrupts
  TIMSK0&=~(_BV(OCIE0A)|_BV(OCIE0B)|_BV(TOIE0));
@@ -273,8 +379,12 @@ void diagnost_process(struct ecudata_t* d)
    d->diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.ks_1 = _ADC_COMPENSATE(diag.knock_value[0], ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.add_io1 = _ADC_COMPENSATE(adc_get_add_io1_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.add_io2 = _ADC_COMPENSATE(adc_get_add_io2_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.add_i1 = _ADC_COMPENSATE(adc_get_add_i1_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.add_i2 = _ADC_COMPENSATE(adc_get_add_i2_value(), ADC_VREF_FACTOR, 0.0);
+#ifndef SECU3T
+   d->diag_inp.add_i3 = _ADC_COMPENSATE(adc_get_add_i3_value(), ADC_VREF_FACTOR, 0.0);
+   d->diag_inp.add_i4 = 0; //reserved
+#endif
    d->diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
    d->diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
 

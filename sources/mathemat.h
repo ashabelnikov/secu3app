@@ -62,7 +62,7 @@ int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t
  */
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
 
-#if defined(FUEL_INJECTION) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Calculate 1/x function using Newton-Raphson method, 2 iterations
  * \param x  8...24, value * 1024
  * \return 1/x * 32768
@@ -70,7 +70,7 @@ void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_
 uint16_t nr_1x_afr(uint16_t x);
 #endif
 
-#if defined(FUEL_INJECTION) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Square root calculation
  * \param input Input value
  * \return SQRT(input)

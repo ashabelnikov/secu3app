@@ -50,7 +50,7 @@ void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_
   *io_value = i_bottom_limit;
 }
 
-#if defined(FUEL_INJECTION) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint16_t nr_1x_afr(uint16_t x)
 {
  uint16_t r;
@@ -75,9 +75,9 @@ uint16_t nr_1x_afr(uint16_t x)
  return r;
 }
 
-#endif //FUEL_INJECTION || GD_CONTROL
+#endif //FUEL_INJECT || GD_CONTROL
 
-#if defined(FUEL_INJECTION) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint16_t ui32_sqrt(uint32_t input)
 {
  unsigned long mask = 0x40000000, sqr = 0, temp;
@@ -95,4 +95,4 @@ uint16_t ui32_sqrt(uint32_t input)
  return (uint16_t)sqr;
 }
 
-#endif //FUEL_INJECTION || GD_CONTROL
+#endif //FUEL_INJECT || GD_CONTROL

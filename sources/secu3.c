@@ -229,8 +229,8 @@ void init_modules(void)
  uart_init(edat.param.uart_divisor);
 
 #ifdef BLUETOOTH_SUPP
- //Initialization of Bluetooth related module
- bt_init(edat.param.bt_flags & (1 << 1));
+ //Initialization of Bluetooth related module. BT baud rate can't be set if user selected to use parameters from FLASH
+ bt_init(CHECKBIT(edat.param.bt_flags, BTF_SET_BBR) && !CHECKBIT(edat.param.bt_flags, BTF_USE_RESPAR));
 #endif
 
  //initialization of cam module, must precede ckps initialization

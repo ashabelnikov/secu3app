@@ -99,19 +99,26 @@ void load_eeprom_params(struct ecudata_t* d)
 {
  if (jumper_get_defeeprom_state())
  {
-  //«агружаем параметры из EEPROM, а затем провер€ем целостность.
-  //ѕри подсчете контрольной суммы не учитываем байты самой контрольной суммы
-  //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
-  eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params_t));
-
-  if (crc16((uint8_t*)&d->param, (sizeof(params_t)-PAR_CRC_SIZE))!=d->param.crc)
+  if (fw_data.def_param.bt_flags & BTF_USE_RESPAR)
   {
+   //User selected to use parameters from a FLASH  only
    memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
-   ce_set_error(ECUERROR_EEPROM_PARAM_BROKEN);
   }
+  else
+  {
+   //User selected to use paramaters from EEPROM
+   //«агружаем параметры из EEPROM, а затем провер€ем целостность.
+   //ѕри подсчете контрольной суммы не учитываем байты самой контрольной суммы
+   //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
+   eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params_t));
 
-  //инициализируем кеш параметров, иначе после старта программы произойдет ненужное
-  //их сохранение.
+   if (crc16((uint8_t*)&d->param, (sizeof(params_t)-PAR_CRC_SIZE))!=d->param.crc)
+   {
+    memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
+    ce_set_error(ECUERROR_EEPROM_PARAM_BROKEN);
+   }
+  }
+  //Initialize parameters' cache. In the opposite case unnecessary saving of parameters will occur after start of firmware
   memcpy(d->eeprom_parameters_cache, &d->param, sizeof(params_t));
  }
  else

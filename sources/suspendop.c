@@ -96,7 +96,7 @@ void sop_execute_operations(struct ecudata_t* d)
   {
    //для обеспечения атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
    memcpy(d->eeprom_parameters_cache,&d->param,sizeof(params_t));
-   ((params_t*)d->eeprom_parameters_cache)->crc=crc16(d->eeprom_parameters_cache,sizeof(params_t)-PAR_CRC_SIZE); //считаем контролбную сумму
+   ((params_t*)d->eeprom_parameters_cache)->crc=crc16(d->eeprom_parameters_cache,sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
    eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, d->eeprom_parameters_cache, sizeof(params_t));
 
    //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут

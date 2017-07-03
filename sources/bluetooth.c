@@ -30,6 +30,7 @@
 #include "port/avrio.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
+#include "bitmask.h"
 #include "bluetooth.h"
 #include "ecudata.h"
 #include "suspendop.h"
@@ -188,7 +189,7 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
    {
     next_state_with_new_baud(baud);//return old baud rate back
     //reset flag and save parameters
-    d->param.bt_flags&=~(1 << 1);
+    CLEARBIT(d->param.bt_flags, BTF_SET_BBR);
     sop_set_operation(SOP_SAVE_PARAMETERS);
    }
    return 0;

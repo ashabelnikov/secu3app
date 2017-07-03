@@ -39,7 +39,7 @@
  * speed up corresponding ISR
  */
 #ifdef COOLINGFAN_PWM
-#ifdef REV9_BOARD
+#if defined(REV9_BOARD) || !defined(SECU3T)
  #define COOLINGFAN_TURNON()  CLEARBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() SETBIT(PORTD, PD7)
 #else //REV6

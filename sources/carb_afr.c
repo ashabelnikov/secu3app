@@ -35,6 +35,7 @@
 #include "funconv.h"
 #include "lambda.h"
 #include "magnitude.h"
+#include "mathemat.h"
 //#include "dbgvar.h"
 
 #ifdef FUEL_INJECT

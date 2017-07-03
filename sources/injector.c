@@ -45,8 +45,14 @@
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
 
-#define INJ_ON  0   //!< Injector is turned on
-#define INJ_OFF 1   //!< Injector is turned off
+#ifdef SECU3T
+ #define INJ_ON  0   //!< Injector is turned on
+ #define INJ_OFF 1   //!< Injector is turned off
+#else //SECU-3i
+ #define INJ_ON  1   //!< Injector is turned on
+ #define INJ_OFF 0   //!< Injector is turned off
+#endif
+
 
 /**COMPB interrupt calibration*/
 #define INJ_COMPB_CALIB 2

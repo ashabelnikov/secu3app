@@ -43,6 +43,9 @@ void intkheat_init(void);
  */
 void intkheat_control(struct ecudata_t *d);
 
+/***/
+void intkheat_cog_changed_notification(void);
+
 #endif //INTK_HEATING
 
 #endif //_INTKHEAT_H_

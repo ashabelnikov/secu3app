@@ -44,6 +44,7 @@ typedef struct
  uint16_t aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment implementation
  uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
+ uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
@@ -56,6 +57,7 @@ void ignlogic_init(void)
  lgs.aftstr_enrich_counter = 0;
  lgs.prime_delay_tmr = s_timer_gtc();
  lgs.prime_ready = 0;
+ lgs.cog_changed = 0;
 #endif
 }
 
@@ -90,12 +92,24 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
  {
   case EM_START: //cranking mode
 #ifdef FUEL_INJECT
-   //fire prime pulse before cranking
-   if (!lgs.prime_ready && ((s_timer_gtc() - lgs.prime_delay_tmr) >= ((uint16_t)d->param.inj_prime_delay*10)))
+   if (d->param.inj_prime_delay)
    {
-    if (!ckps_is_cog_changed() && d->param.inj_prime_cold) //skip prime pulse if cranking has started or if it is disabled (=0)
-     inject_open_inj(inj_prime_pw(d));                     //start prime pulse
-    lgs.prime_ready = 1;
+    //fire prime pulse before cranking
+    if (!lgs.prime_ready && ((s_timer_gtc() - lgs.prime_delay_tmr) >= ((uint16_t)d->param.inj_prime_delay*10)))
+    {
+     if (!lgs.cog_changed && d->param.inj_prime_cold) //skip prime pulse if cranking has started or if it is disabled (=0)
+      inject_open_inj(inj_prime_pw(d));               //start prime pulse
+     lgs.prime_ready = 1;
+    }
+   }
+   else //inj_prime_delay == 0
+   {
+    if (!lgs.prime_ready && lgs.cog_changed)
+    {
+     if (d->param.inj_prime_cold)                    //output prime pulse only if cranking has started and if it is not disabled (=0)
+      inject_open_inj(inj_prime_pw(d));              //start prime pulse
+     lgs.prime_ready = 1;
+    }
    }
 
    d->corr.inj_timing = d->param.inj_timing_crk;
@@ -251,5 +265,12 @@ void ignlogic_stroke_event_notification(struct ecudata_t* d)
  //update afterstart enrichemnt counter
  if (lgs.aftstr_enrich_counter)
   --lgs.aftstr_enrich_counter;
+#endif
+}
+
+void ignlogic_cog_changed_notification(void)
+{
+#ifdef FUEL_INJECT
+ lgs.cog_changed = 1;
 #endif
 }

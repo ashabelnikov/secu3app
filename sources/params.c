@@ -30,6 +30,7 @@
 #include "port/port.h"
 
 #include <string.h>
+#include "bitmask.h"
 #include "ce_errors.h"
 #include "crc16.h"
 #include "ecudata.h"
@@ -99,7 +100,7 @@ void load_eeprom_params(struct ecudata_t* d)
 {
  if (jumper_get_defeeprom_state())
  {
-  if (fw_data.def_param.bt_flags & BTF_USE_RESPAR)
+  if (CHECKBIT(fw_data.def_param.bt_flags, BTF_USE_RESPAR))
   {
    //User selected to use parameters from a FLASH  only
    memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));

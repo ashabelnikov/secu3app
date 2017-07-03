@@ -55,4 +55,7 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d);
  */
 void ignlogic_stroke_event_notification(struct ecudata_t* d);
 
+/***/
+void ignlogic_cog_changed_notification(void);
+
 #endif //_IGNLOGIC_H_

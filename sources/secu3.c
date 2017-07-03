@@ -370,7 +370,13 @@ MAIN()
  while(1)
  {
   if (ckps_is_cog_changed())
+  {
    s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
+   ignlogic_cog_changed_notification();
+   #ifdef INTK_HEATING
+   intkheat_cog_changed_notification();
+   #endif
+  }
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
   { //двигатель остановился (его обороты ниже критических)

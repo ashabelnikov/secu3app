@@ -28,7 +28,6 @@
 #ifdef INTK_HEATING
 
 #include "port/port.h"
-#include "ckps.h"
 #include "ecudata.h"
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -45,6 +44,7 @@ typedef struct
 {
  uint8_t state;     //!< Needed by finite state machine (current state)
  uint16_t strt_t1;  //!< Used for timing
+ uint8_t cog_changed;
 }ih_state_t;
 
 /**Global instance of state variables */
@@ -58,6 +58,7 @@ void intkheat_init_ports(void)
 void intkheat_init(void)
 {
  ih.state = 0;
+ ih.cog_changed = 0;
 }
 
 void intkheat_control(struct ecudata_t *d)
@@ -77,7 +78,7 @@ void intkheat_control(struct ecudata_t *d)
    break;
 
   case 1: //wait 10 minutes and turn off heating or it will be turned off immediatelly if crankshaft begin to revolve
-   if (((s_timer_gtc() - ih.strt_t1) >= HEATING_TIME) || ckps_is_cog_changed())
+   if (((s_timer_gtc() - ih.strt_t1) >= HEATING_TIME) || ih.cog_changed)
    {
     IOCFG_SET(IOP_INTK_HEAT, 0);                                                          // turn off heating
     ih.state = 2;
@@ -93,6 +94,11 @@ void intkheat_control(struct ecudata_t *d)
     IOCFG_SET(IOP_INTK_HEAT, 0);
    break;
  }
+}
+
+void intkheat_cog_changed_notification(void)
+{
+ ih.cog_changed = 1;
 }
 
 #endif //INTK_HEATING

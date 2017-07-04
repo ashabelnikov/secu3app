@@ -421,11 +421,11 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
  restrict_value_to(&choke_regstate.int_state, -28000, 28000); //restrict integràtor output
 
  *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 12; //additional 4 shift bits to reduce regulator's influence
- if (0)
+/* if (0)
  {
   #define _PROPFACT(x) ((int16_t)(x * 8))
   (*p_prev_corr)+= (error * _PROPFACT(0.5)) >> 3; //proportional part
- }
+ }*/
  restrict_value_to(p_prev_corr, -d->param.sm_steps, d->param.sm_steps); //range must be: +/- d->param.sm_steps
 
  return *p_prev_corr;

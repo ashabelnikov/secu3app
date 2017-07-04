@@ -86,10 +86,10 @@ void reset_eeprom_params(struct ecudata_t* d)
  eeprom_write(&crc, EEPROM_PARAM_START+(sizeof(params_t)-PAR_CRC_SIZE), PAR_CRC_SIZE);
 
  wdt_reset_timer();
- ce_clear_errors(); //сбрасываем сохраненные ошибки
+ ce_clear_errors(); //reset saved errors
  wdt_reset_timer();
 #ifdef REALTIME_TABLES
- eeprom_write_P(&tt_def_data, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+ eeprom_write_P(/*&tt_def_data*/&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 #endif
  //write 4 bytes of magic number identifying platform
  eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
@@ -128,7 +128,7 @@ void load_eeprom_params(struct ecudata_t* d)
   memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
   ce_clear_errors(); //сбрасываем сохраненные ошибки
 #ifdef REALTIME_TABLES
-  eeprom_write_P(&tt_def_data, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+  eeprom_write_P(/*&tt_def_data*/&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 #endif
   //write 4 bytes of magic number identifying platform
   eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);

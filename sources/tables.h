@@ -573,9 +573,11 @@ typedef struct fw_data_t
 /**All firmware data */
 PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
 
+#if 0
 #ifdef REALTIME_TABLES
 /**Default data for tunable tables stored in the EEPROM */
 PGM_DECLARE(extern f_data_t tt_def_data);
+#endif
 #endif
 
 /*fwinfo*/

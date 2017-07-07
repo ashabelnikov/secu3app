@@ -564,39 +564,39 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   //CE settings
   {
-   .map_v_min = VOLTAGE_MAGNITUDE(0.10),
-   .map_v_max = VOLTAGE_MAGNITUDE(4.80),
-   .map_v_em = VOLTAGE_MAGNITUDE(1.40),
+   .map_v_min = VOLTAGE_MAGNITUDE(0.0),
+   .map_v_max = VOLTAGE_MAGNITUDE(4.97),
+   .map_v_em = VOLTAGE_MAGNITUDE(1.00),
 
-   .vbat_v_min = VOLTAGE_MAGNITUDE(11.70),
-   .vbat_v_max = VOLTAGE_MAGNITUDE(15.50),
-   .vbat_v_em = VOLTAGE_MAGNITUDE(13.60),
+   .vbat_v_min = VOLTAGE_MAGNITUDE(8.00),
+   .vbat_v_max = VOLTAGE_MAGNITUDE(16.00),
+   .vbat_v_em = VOLTAGE_MAGNITUDE(14.00),
 
 #ifdef THERMISTOR_CS
-   .cts_v_min = VOLTAGE_MAGNITUDE(0.20), //2.28 (for LM235 sensor)
-   .cts_v_max = VOLTAGE_MAGNITUDE(4.7),  //3.93 (for LM235 sensor)
-   .cts_v_em = VOLTAGE_MAGNITUDE(3.20),
+   .cts_v_min = VOLTAGE_MAGNITUDE(0.01), //2.28 (for LM235 sensor)
+   .cts_v_max = VOLTAGE_MAGNITUDE(4.97), //3.93 (for LM235 sensor)
+   .cts_v_em = VOLTAGE_MAGNITUDE(0.48),
 #else
    .cts_v_min = VOLTAGE_MAGNITUDE(2.28),
    .cts_v_max = VOLTAGE_MAGNITUDE(3.93),
    .cts_v_em = VOLTAGE_MAGNITUDE(3.20),
 #endif
 
-   .ks_v_min = VOLTAGE_MAGNITUDE(0.50),
-   .ks_v_max = VOLTAGE_MAGNITUDE(4.90),
-   .ks_v_em = VOLTAGE_MAGNITUDE(1.00),
+   .ks_v_min = VOLTAGE_MAGNITUDE(0.00),
+   .ks_v_max = VOLTAGE_MAGNITUDE(4.97),
+   .ks_v_em = VOLTAGE_MAGNITUDE(0.10),
 
-   .tps_v_min = VOLTAGE_MAGNITUDE(0.10),
-   .tps_v_max = VOLTAGE_MAGNITUDE(5.0),
-   .tps_v_em = VOLTAGE_MAGNITUDE(2.5),
+   .tps_v_min = VOLTAGE_MAGNITUDE(0.00),
+   .tps_v_max = VOLTAGE_MAGNITUDE(4.97),
+   .tps_v_em = VOLTAGE_MAGNITUDE(0.675),
 
-   .add_i1_v_min = VOLTAGE_MAGNITUDE(0.05),
-   .add_i1_v_max = VOLTAGE_MAGNITUDE(1.30),
-   .add_i1_v_em = VOLTAGE_MAGNITUDE(0.48),
+   .add_i1_v_min = VOLTAGE_MAGNITUDE(0.00),
+   .add_i1_v_max = VOLTAGE_MAGNITUDE(1.10),
+   .add_i1_v_em = VOLTAGE_MAGNITUDE(0.43),
 
-   .add_i2_v_min = VOLTAGE_MAGNITUDE(0.20),
-   .add_i2_v_max = VOLTAGE_MAGNITUDE(4.70),
-   .add_i2_v_em = VOLTAGE_MAGNITUDE(3.20),
+   .add_i2_v_min = VOLTAGE_MAGNITUDE(0.00),
+   .add_i2_v_max = VOLTAGE_MAGNITUDE(4.97),
+   .add_i2_v_em = VOLTAGE_MAGNITUDE(3.65),
   },
 
   /**reserved bytes*/

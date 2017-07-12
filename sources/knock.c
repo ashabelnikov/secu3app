@@ -405,7 +405,7 @@ ISR(SPI_STC_vect)
 {
  //signal processor requires transition of CS into high level after each sent
  //byte, at least for 200ns
-#ifndef SECU3T //---SECU-3i---
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
  if (ksp.ksp_interrupt_state < 5)
 #endif
  { SET_KSP_CS(1); }
@@ -613,6 +613,7 @@ ISR(SPI_STC_vect)
    _NO_OPERATION();
     SET_CAN_CS(0);
     SPDR = SPI_RTS | ((ksp.can_buff_addr == 0) ? 1 : ksp.can_buff_addr);
+    ++ksp.ksp_interrupt_state;
     break;
    case 20:
     ksp.can_pending_msg = 0;

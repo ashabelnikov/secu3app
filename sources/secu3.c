@@ -60,6 +60,7 @@
 #include "magnitude.h"
 #include "measure.h"
 #include "mathemat.h"
+#include "obd.h"
 #include "params.h"
 #include "procuart.h"
 #include "pwrrelay.h"
@@ -214,7 +215,7 @@ void init_modules(void)
   }
  edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
 
-#ifndef SECU3T //---SECU-3i---
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
  knock_expander_initialize();
 #endif
 
@@ -301,6 +302,10 @@ void init_modules(void)
 
 #ifdef CARB_AFR
  carbafr_init();
+#endif
+
+#ifdef OBD_SUPPORT
+ obd_init();
 #endif
 
  s_timer_init();
@@ -479,6 +484,10 @@ MAIN()
 
 #ifdef DIAGNOSTICS
   diagnost_process(&edat);
+#endif
+
+#ifdef OBD_SUPPORT
+  obd_process(&edat);
 #endif
   //------------------------------------------------------------------------
 

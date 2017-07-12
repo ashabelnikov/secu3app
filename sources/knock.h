@@ -69,7 +69,7 @@ void knock_set_channel(uint8_t channel);
  */
 void knock_start_settings_latching(void);
 
-#ifndef SECU3T //---SECU-3i---
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
 void knock_start_expander_latching(void);
 #endif
 
@@ -87,12 +87,20 @@ void knock_reset_error(void);
  */
 uint8_t knock_module_initialize(void);
 
-#ifndef SECU3T //---SECU-3i---
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
 
 /** Initialization of expander chip MCP23S17
  * \return 1 - if testing performed succesfully (chip works), otherwise 0.
  */
 uint8_t knock_expander_initialize(void);
+#endif
+
+#ifdef OBD_SUPPORT
+struct can_t;
+/** Push CAN message for sending
+ * \param msg message to be sent
+ */
+void knock_push_can_message(struct can_t* msg);
 #endif
 
 #define KNOCK_INTMODE_INT  1 //!< code for integration mode (used with knock_set_integration_mode())

@@ -92,7 +92,7 @@ extern uint8_t cafr_soft_cnt;
  */
 ISR(TIMER2_OVF_vect)
 {
-#ifndef SECU3T //---SECU-3i---
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
  knock_start_expander_latching();
 #endif
 

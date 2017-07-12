@@ -197,4 +197,18 @@
  #define COPT_SECU3T 0
 #endif
 
+/** Build firmware with CAN support */
+#ifdef OBD_SUPPORT
+ #define COPT_OBD_SUPPORT 1
+#else
+ #define COPT_OBD_SUPPORT 0
+#endif
+
+/**ATmega644 target */
+#ifdef _PLATFORM_M644_
+ #define COPT_ATMEGA644 1
+#else
+ #define COPT_ATMEGA644 0
+#endif
+
 #endif //_COMPILOPT_H_

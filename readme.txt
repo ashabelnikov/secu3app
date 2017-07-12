@@ -113,6 +113,9 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          used in kawasaki ZX6R)
                          Синхронизация от задающего диска N+1, например 2+1
 
+    OBD_SUPPORT          OBD support (send data to the CAN network)
+                         Поддержка OBD (cлать данные в CAN сеть)
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600. Note! Will not take effect
                          without reprogramming using ISP programmator.

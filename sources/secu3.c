@@ -400,6 +400,7 @@ MAIN()
 
    edat.corr.curr_angle = calc_adv_ang;
    meas_update_values_buffers(&edat, 1, &fw_data.exdata.cesd);  //<-- update RPM only
+   s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 
   //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего

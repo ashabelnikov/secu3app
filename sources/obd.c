@@ -56,6 +56,8 @@ void obd_init(void)
  */
 static uint16_t calc_speed(struct ecudata_t* d)
 {
+ if (d->sens.speed == 0xFFFF)
+  return 0;
  //TODO: use 1/speed approximation instead of division, so division will be replaced by multiplication
  return ((((uint32_t)d->param.vss_period_dist) * 1098) / d->sens.speed);   //V = (period_dist * 1125000) / period_tics, 112500 = (3600 * 312500) / 1000
 }

@@ -647,7 +647,8 @@ void ProcessFallingEdge(uint16_t tmr)
    hall.knkwnd_mode = 0;
   }
 
-  knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
+  if (CHECKBIT(flags, F_USEKNK))
+   knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
   adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
  }
 #ifdef DWELL_CONTROL

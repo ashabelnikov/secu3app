@@ -491,6 +491,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .hall_degrees_btdc =           60*32,                //60° BTDC
 
+  .vss_period_dist =             0.16666*32768,       //0.16666m per pulse
+
   .reserved =                    {0},
   .crc =                         0
  },

@@ -486,10 +486,12 @@ typedef struct params_t
 
   uint16_t  hall_degrees_btdc;           //!< Degrees BTDC, used for synchronization from a hall sensor (value * ANGLE_MULTIPLIER)
 
+  uint16_t  vss_period_dist;             //!< VSS period distance im meters (value * 32768)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[44];
+  uint8_t  reserved[42];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

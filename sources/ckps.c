@@ -158,6 +158,7 @@ typedef struct
   */
  volatile uint8_t  wheel_latch_btdc;
  volatile uint16_t degrees_per_cog;   //!< Number of degrees which corresponds to the 1 tooth (количество градусов приходящееся на один зуб диска)
+ volatile uint16_t degrees_per_cog_r; //!< Reciprocal of the degrees_per_cog, value * 65536
  volatile uint16_t cogs_per_chan;     //!< Number of teeth per 1 ignition channel (it is fractional number * 256)
  volatile int16_t start_angle;        //!< Precalculated value of the advance angle at 66° (at least) BTDC
 #ifdef STROBOSCOPE
@@ -587,13 +588,16 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 #ifdef PHASE_SENSOR
  uint16_t err_thrd = (norm_num * 2) + (norm_num >> 3); //+ 12.5%
 #endif
- uint16_t cogs_per_chan, degrees_per_cog;
+ uint16_t cogs_per_chan, degrees_per_cog, degrees_per_cog_r;
 
  //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
  cogs_per_chan = (((uint32_t)(norm_num * 2)) << 8) / ckps.chan_number;
 
  //precalculate value of degrees per 1 cog, it is fractional number multiplied by ANGLE_MULTIPLIER
  degrees_per_cog = (((((uint32_t)360) << 8) / norm_num) * ANGLE_MULTIPLIER) >> 8;
+
+ //precalculate value of 1 / degrees_per_cog (reciprocal), result value multiplied by ~65536
+ degrees_per_cog_r = (1*65535) / degrees_per_cog;
 
  //precalculate value and round it always to the upper bound,
  //e.g. for 60-2 crank wheel result = 11 (66°), for 36-1 crank wheel result = 7 (70°)
@@ -613,6 +617,7 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  //set other precalculated values
  ckps.wheel_latch_btdc = dr.quot + (dr.rem > 0);
  ckps.degrees_per_cog = degrees_per_cog;
+ ckps.degrees_per_cog_r = degrees_per_cog_r; //reciprocal of the degrees_per_cog
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
 #ifdef PHASE_SENSOR
@@ -734,7 +739,7 @@ ISR(TIMER1_COMPA_vect)
   ckps.acc_delay-= ckps.cr_acc_time;    //apply dwell time
   ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
 
-  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0 ;
+  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0;
   CLEARBIT(flags2, F_ADDPTK);
   SETBIT(flags, F_NTSCHB);
 
@@ -782,10 +787,10 @@ ISR(TIMER1_COMPB_vect)
 INLINE
 void set_timer0(uint16_t value)
 {
-  OCR0A = TCNT0 + _AB(value, 0);
-  TCNT0_H = _AB(value, 1);
-  SETBIT(TIMSK0, OCIE0A);
-  SETBIT(TIFR0, OCF0A);
+ OCR0A = TCNT0 + _AB(value, 0);
+ TCNT0_H = _AB(value, 1);
+ SETBIT(TIMSK0, OCIE0A);
+ SETBIT(TIFR0, OCF0A);
 }
 
 /**Helpful function, used at the startup of engine
@@ -852,7 +857,7 @@ static void process_ckps_cogs(void)
   //Because ICR1 can not be less than tmrval_saved we are using addition modulo 65535
   //to calculate difference (elapsed time).
   if (!CHECKBIT(flags2, F_ADDPTK))
-  {
+ {
    ckps.acc_delay-=((uint16_t)(~ckps.tmrval_saved)) + 1 + GetICR();
    SETBIT(flags2, F_ADDPTK);
   }
@@ -956,11 +961,7 @@ static void process_ckps_cogs(void)
   {
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
    //(до запуска зажигания осталось отсчитать меньше 2-x зубьев. Необходимо подготовить модуль сравнения)
-   //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
-   if (ckps.period_curr < 128)
-    OCR1A = GetICR() + ((diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
-   else
-    OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
+   OCR1A = GetICR() + ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
    TIFR1 = _BV(OCF1A);
    TIMSK1|=_BV(OCIE1A);       // enable Compare A interrupt
    CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)

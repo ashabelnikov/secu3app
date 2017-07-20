@@ -33,6 +33,8 @@
 #include "knock.h"
 #include "obd.h"   //can_t struct
 #include <string.h>
+#include "tables.h"    //IOP_CAN_CS
+#include "ioconfig.h"  //IOP_CAN_CS
 
 //----------------------------------------------------------------------------
 #ifdef OBD_SUPPORT
@@ -48,9 +50,11 @@
 #define CANCTRL          0x0F
 //Chip select signal pin. In SECU-3T we use PB3. In SECU-3i we use any pin remapped to CAN_CS
 #ifdef SECU3T
+ #define INIT_CAN_CS() SET_CAN_CS(1);
  #define SET_CAN_CS(v) SET_KSP_TEST(v)
 #else //SECU-3i
- #define SET_CAN_CS(v) TODO??????
+ #define INIT_CAN_CS() IOCFG_INIT(IOP_CAN_CS, 1)
+ #define SET_CAN_CS(v) IOCFG_SET(IOP_CAN_CS, (v))
 #endif
 #endif //OBD_SUPPORT
 //----------------------------------------------------------------------------
@@ -644,7 +648,7 @@ void knock_init_ports(void)
  DDRB |= _BV(DDB7)|_BV(DDB5)|_BV(DDB4)|_BV(DDB3);
  DDRC |= _BV(DDC4);
 #ifdef OBD_SUPPORT
- SET_CAN_CS(1);
+ INIT_CAN_CS();
 #endif
 }
 

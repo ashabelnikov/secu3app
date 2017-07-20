@@ -42,6 +42,10 @@
 
 #include "knock.h"
 
+#ifdef STROBOSCOPE
+#define STROBE_PW 31    //!< Strobe pulse width (100uS), value in tics ot timer, 1 tick = 3.2uS
+#endif
+
 //PHASED_IGNITION can't be used without PHASE_SENSOR
 #if defined(PHASED_IGNITION) && !defined(PHASE_SENSOR)
  #error "You can not use phased ignition without phase sensor. Define PHASE_SENSOR if it is present in the system or do not use phased ignition!"
@@ -59,13 +63,6 @@
 /** number of teeth that will be skipped at the start before synchronization
  * (количество зубьев которое будет пропускаться при старте перед синхронизацией) */
 #define CKPS_ON_START_SKIP_COGS      5
-
-/** Access Input Capture Register */
-#define GetICR() (ICR1)
-
-/** Used to indicate that none from ignition channels are selected
- * (используется для указания того что ни один канал зажигания не выбран) */
-#define CKPS_CHANNEL_MODENA  255
 
 //Define values for controlling of outputs
 #define IGN_OUTPUTS_INIT_VAL 1        //!< value used for initialization
@@ -90,21 +87,18 @@
 #define F_ISSYNC    2                 //!< indicates that synchronization has been completed (missing teeth found)
 #define F_STROKE    3                 //!< flag for synchronization with rotation (флаг синхронизации с вращением)
 #define F_USEKNK    4                 //!< flag which indicates using of knock channel (признак использования канала детонации)
-#define F_NTSCHA    5                 //!< indicates that it is necessary to set channel
+#define F_PNDSPK    5                 //!< indicates that it is necessary to set compare channel for spark (finish of dwell)
 #ifdef DWELL_CONTROL
- #define F_NTSCHB   6                 //!< Indicates that it is necessary to set channel (COMPB) 
+ #define F_PNDDWL   6                 //!< Indicates that it is necessary to set compare channel for dwell (start of dwell)
 #endif
 #define F_IGNIEN    7                 //!< Ignition enabled/disabled
 
 //Additional flags (see flags2 variable)
-#ifdef DWELL_CONTROL
- #define F_ADDPTK    0                //!< indicates that time between spark and next cog was taken into account
-#endif
 #ifdef PHASED_IGNITION
  #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
 #endif
-#define F_CALTIM     2                //!< Indicates that time calculation is started before the spark
-#define F_SPSIGN     3                //!< Sign of the measured stroke period (time between TDCs)
+#define F_SPSIGN     2                //!< Sign of the measured stroke period (time between TDCs)
+#define F_SINGCH     3                //!< indicates that single ignition channel is used
 
 /** State variables */
 typedef struct
@@ -129,15 +123,14 @@ typedef struct
  uint32_t frq_calc_dividend;          //!< divident for calculating RPM (делимое для расчета частоты вращения)
 #ifdef DWELL_CONTROL
  volatile uint16_t cr_acc_time;       //!< accumulation time for dwell control (timer's ticks)
- uint8_t  channel_mode_b;             //!< determines which channel of the ignition to start accumulate at the moment (определяет какой канал зажигания будет накапливать энергию в данный момент)
- uint32_t acc_delay;                  //!< delay between last ignition and next accumulation
- uint16_t tmrval_saved;               //!< value of timer at the moment of each spark
- uint16_t period_saved;               //!< inter-tooth period at the moment of each spark
+ uint8_t  channel_mode_b;             //!< determines which channel of the ignition to start accumulate at the moment
  volatile uint8_t rising_edge_spark;  //!< flag, indicates that rising edge of ignition pulse will be generated at the moment of spark
- volatile uint8_t ignout_on_val;
- volatile uint8_t ignout_off_val;
+ volatile uint8_t ignout_on_val;      //!< value used to turn on ignition channel
+ volatile uint8_t ignout_off_val;     //!< value used to turn off ignition channel
+ volatile uint16_t degrees_per_chan;  //!< number of degrees per one channel (degrees between two spark events)
+ volatile uint8_t eq_tail;            //!< event queue tail (index in a static array)
+ volatile uint8_t eq_head;            //!< event queue head (index), queue is empty if head = tail
 #endif
- volatile uint8_t chan_mask;          //!< mask used to disable multi-channel mode and use single channel
 #ifdef HALL_OUTPUT
  int8_t   hop_offset;                 //!< Hall output: start of pulse in teeth of wheel relatively to TDC
  uint8_t  hop_duration;               //!< Hall output: duration of pulse in teeth of wheel
@@ -227,35 +220,89 @@ PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
  //     1          2          3          4         5         6         7         8
  {0, 37500000L, 18750000L, 12500000L, 9375000L, 7500000L, 6250000L, 5357143L, 4687500L};
 
+#ifdef DWELL_CONTROL
+
+#define DWL_DEAD_TIME 156        //!< 500uS dead time
+
+/**Maximum queue size for ignition events, MUST BE power of two (2,4,8 etc) */
+#define IGN_QUEUE_SIZE 4
+
+#define QID_DWELL  0             //!< start dwell
+#define QID_SPARK  1             //!< finish dwell (spark)
+#define QID_STROBE 2             //!< finish strobe pulse
+
+/**Describes event queue entry for T1 COMPA channel*/
+typedef struct
+{
+ uint16_t end_time;              //!< End time of event in ticks of free running timer 1
+ uint8_t  id;                    //!< pending action Id
+}ign_queue_t;
+
+/**Event queue for scheduling of ignition spark events (T1 COMPA) */
+ign_queue_t ign_eq[IGN_QUEUE_SIZE];
+
+/** Reset specified queue (makes it empty) */
+#define QUEUE_RESET()  ckps.eq_tail = ckps.eq_head = 0;
+
+/** Add event into the queue (add to head)
+ * r Timer's register (TCNT1 or ICR1)
+ * time Time in tics of timer 1 after which event should fire
+ * aid ID of pending action, which shold be performed
+ */
+#define QUEUE_ADD(r, time, aid) \
+    ign_eq[ckps.eq_head].end_time = (r) + (time); \
+    ign_eq[ckps.eq_head].id = (aid); \
+    ckps.eq_head = (ckps.eq_head + 1) & (IGN_QUEUE_SIZE-1);
+
+/** Remove event from the queue (remove from tail)*/
+#define QUEUE_REMOVE() ckps.eq_tail = (ckps.eq_tail + 1) & (IGN_QUEUE_SIZE-1)
+
+/** Get tail item value from queue */
+#define QUEUE_TAIL() ign_eq[ckps.eq_tail]
+
+/** Test is queue empty */
+#define QUEUE_IS_EMPTY() (ckps.eq_head==ckps.eq_tail)
+
+#endif //DWELL_CONTROL
+
+/**Set T1 COMPA channel of timer
+ * r Timer's register (TCNT1 or ICR1)
+ * v Time in tics of timer 1 after which event should fire
+ */
+#define SET_T1COMPA(r, v) \
+     OCR1A = (r) + (v); \
+     TIFR1 = _BV(OCF1A); \
+     SETBIT(TIMSK1, OCIE1A);
+
+
 void ckps_init_state_variables(void)
 {
 #ifndef DWELL_CONTROL
  uint8_t i;
  _BEGIN_ATOMIC_BLOCK();
  //Set to value that means to do nothing with outputs
- //(Установка в хначение изначающее ничего не делать с выходами) 
  for(i = 0; i < IGN_CHANNELS_MAX; ++i)
   chanstate[i].ignition_pulse_cogs = 255;
 #else
  _BEGIN_ATOMIC_BLOCK();
  ckps.cr_acc_time = 0;
- ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
- CLEARBIT(flags, F_NTSCHB);
+ ckps.channel_mode_b = 0; //prevent missing spark on first ignition event
+ CLEARBIT(flags, F_PNDDWL);
+ QUEUE_RESET();
 #endif
 
  ckps.cog = ckps.cog360 = 0;
  ckps.stroke_period = 0xFFFF;
  ckps.advance_angle = ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
- ckps.channel_mode = CKPS_CHANNEL_MODENA;
+ ckps.channel_mode = 0;
 #ifdef PHASED_IGNITION
  CLEARBIT(flags2, F_CAMISS);
 #endif
- CLEARBIT(flags, F_NTSCHA);
+ CLEARBIT(flags, F_PNDSPK);
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
- CLEARBIT(flags2, F_CALTIM);
  CLEARBIT(flags2, F_SPSIGN);
 
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
@@ -317,7 +364,7 @@ void ckps_init_ports(void)
  IOCFG_INIT(IOP_HALL_OUT, 1);
 #endif
 
- //init I/O for stroboscope
+//init I/O for stroboscope
 #ifdef STROBOSCOPE
  IOCFG_INIT(IOP_STROBE, 0);
 #endif
@@ -472,6 +519,21 @@ static fnptr_t get_callback(uint8_t index)
  return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_IGNPLG_OFF);
 }
 
+/** Tune channels for single output mode
+ */
+static void set_channels_sc(void)
+{
+ uint8_t i = 0;
+ fnptr_t value = IOCFG_CB(0); //use only 1-st channel
+ for(; i < ckps.chan_number; ++i)
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  chanstate[i].io_callback1 = value;
+  ((iocfg_pfn_set)get_callback(i))(IGN_OUTPUTS_ON_VAL); //turn of other channels
+  _END_ATOMIC_BLOCK();
+ }
+}
+
 #ifndef PHASED_IGNITION
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
 static void set_channels_ss(void)
@@ -517,13 +579,20 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
  ckps.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
 
- //We have to retune I/O configuration after changing of cylinder number
+ if (CHECKBIT(flags2, F_SINGCH))
+ { //single channel
+  set_channels_sc();
+ }
+ else
+ {
+  //We have to retune I/O configuration after changing of cylinder number
 #ifndef PHASED_IGNITION
- set_channels_ss();  // Tune for semi-sequential mode
+  set_channels_ss();  // Tune for semi-sequential mode
 #else //phased ignition
- //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
- set_channels_fs(cams_is_ready());
+  //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
+  set_channels_fs(cams_is_ready());
 #endif
+ }
 
  //unused channels must be turned off
  if (i > i_cyl_number)
@@ -559,7 +628,19 @@ void ckps_enable_ignition(uint8_t i_cutoff)
 
 void ckps_set_merge_outs(uint8_t i_merge)
 {
- ckps.chan_mask = i_merge ? 0x00 : 0xFF;
+ WRITEBIT(flags2, F_SINGCH, i_merge);
+ if (CHECKBIT(flags2, F_SINGCH))
+ { //single channel
+  set_channels_sc();
+ }
+ else
+ {
+#ifndef PHASED_IGNITION
+  set_channels_ss();  // Tune for semi-sequential mode
+#else //phased ignition
+  set_channels_fs(cams_is_ready()); //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
+#endif
+ }
 }
 
 #ifdef HALL_OUTPUT
@@ -599,6 +680,11 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  //precalculate value of 1 / degrees_per_cog (reciprocal), result value multiplied by ~65536
  degrees_per_cog_r = (1*65535) / degrees_per_cog;
 
+#ifdef DWELL_CONTROL
+ //precalculate value of degrees per channel, value * ANGLE_MULTIPLIER
+ uint16_t degrees_per_chan = ((uint32_t)cogs_per_chan * degrees_per_cog) >> 8;
+#endif
+
  //precalculate value and round it always to the upper bound,
  //e.g. for 60-2 crank wheel result = 11 (66°), for 36-1 crank wheel result = 7 (70°)
  dr = div(ANGLE_MAGNITUDE(66), degrees_per_cog);
@@ -618,6 +704,9 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_latch_btdc = dr.quot + (dr.rem > 0);
  ckps.degrees_per_cog = degrees_per_cog;
  ckps.degrees_per_cog_r = degrees_per_cog_r; //reciprocal of the degrees_per_cog
+#ifdef DWELL_CONTROL
+ ckps.degrees_per_chan = degrees_per_chan;
+#endif
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
 #ifdef PHASE_SENSOR
@@ -669,114 +758,129 @@ void turn_off_ignition_channel(uint8_t i_channel)
 #endif
 }
 
-/**Forces ignition spark if corresponding interrupt is pending*/
-#ifdef PHASED_IGNITION
-#define force_pending_spark() \
- if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
- { \
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);\
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGNOUTCB_ON_VAL);\
- }
-#else
-#define force_pending_spark() \
- if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)))\
-  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);
-#endif
-
-/**Interrupt handler for Compare/Match channel A of timer T1
- * вектор прерывания по совпадению канала А таймера Т1
+/**Interrupt handler for Compare/Match channel A of timer T1. Used for spark output, strobe and dwell time control
  */
 ISR(TIMER1_COMPA_vect)
 {
+ TIMSK1&= ~_BV(OCIE1A); //disable this interrupt
+
 #ifdef DWELL_CONTROL
- ckps.tmrval_saved = TCNT1;
+ switch(QUEUE_TAIL().id) //what exactly happen?
+ {
+  case QID_DWELL: //start accumulation
+   //line of port is high level, now we set it into a low level
+   turn_off_ignition_channel(ckps.channel_mode_b);
+   break;
+
+  case QID_SPARK:
+   //line of port in the low level, now set it into a high level - makes the transistor to close and coil to stop 
+   //the accumulation of energy (spark)
+   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);
+#ifdef PHASED_IGNITION
+   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGNOUTCB_ON_VAL);
 #endif
 
- TIMSK1&= ~_BV(OCIE1A); //disable interrupt (запрещаем прерывание)
+#ifdef STROBOSCOPE
+   if (1==ckps.strobe)
+   {
+    IOCFG_SET(IOP_STROBE, 1);  //start pulse
+    if (QUEUE_IS_EMPTY())
+    {
+     SET_T1COMPA(TCNT1, STROBE_PW); //strobe pulse is 100uS by default
+    }
+    QUEUE_ADD(TCNT1, STROBE_PW, QID_STROBE);
+    ckps.strobe = 0;           //and reset flag
+   }
+#endif
+   int32_t acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
 
- //line of port in the low level, now set it into a high level - makes the igniter to stop 
- //the accumulation of energy and close the transistor (spark)
- //(линия порта в низком уровне, теперь переводим её в высокий уровень - заставляем коммутатор прекратить
- //накопление энергии и закрыть транзистор (искра)).
- if (CKPS_CHANNEL_MODENA == ckps.channel_mode)
-  return; //none of channels selected (никакой канал не выбран)
+   if (ckps.rising_edge_spark)
+   { //CDI mode
+    ckps.channel_mode_b = ckps.channel_mode;
+    uint16_t acc_time = (ckps.cr_acc_time > acc_delay-DWL_DEAD_TIME) ? ((uint16_t)acc_delay-DWL_DEAD_TIME) : ckps.cr_acc_time;
+    if (QUEUE_IS_EMPTY())
+    {
+     SET_T1COMPA(TCNT1, acc_time);
+    }
+    QUEUE_ADD(TCNT1, acc_time, QID_DWELL);
+    CLEARBIT(flags, F_PNDDWL);
+   }
+   else
+   { //IDI mode
+    acc_delay-= ckps.cr_acc_time;    //apply dwell time
+    if (acc_delay < DWL_DEAD_TIME)
+     acc_delay = DWL_DEAD_TIME;
+
+    ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0;
+    SETBIT(flags, F_PNDDWL);
+
+    //if less than 1 teeth remains to the accumulation beginning we have to program compare channel
+    if (acc_delay < (ckps.period_curr << 1))
+    {
+     if (QUEUE_IS_EMPTY())
+     {
+      SET_T1COMPA(TCNT1, (uint16_t)acc_delay);
+     }
+     QUEUE_ADD(TCNT1, (uint16_t)acc_delay, QID_DWELL);
+     CLEARBIT(flags, F_PNDDWL);
+    }
+   }
+   break;
+
+#ifdef STROBOSCOPE
+  case QID_STROBE:
+   IOCFG_SET(IOP_STROBE, 0);  //end pulse
+   break;
+#endif
+ }
+
+ //Remove already processed event from queue. After that, is queue is not empty, then start
+ //next event in chain. Also, prevent effects when event alredy expired.
+ QUEUE_REMOVE();
+ if (!QUEUE_IS_EMPTY())
+ {
+  uint16_t t = (QUEUE_TAIL().end_time-(uint16_t)2) - TCNT1;
+  if (t > 65520)             //end_time < TCNT1, so, it is expired (forbidden range is 65520...65535)
+   t = 2;
+  SET_T1COMPA(TCNT1, t);
+ }
+
+#else //just use trigger whell teeth instead of dwell control
 
 #ifdef STROBOSCOPE
  if (1==ckps.strobe)
  {
-  IOCFG_SET(IOP_STROBE, 1); //start pulse
-  ckps.strobe = 2;          //and set flag to next state
-  OCR1A = TCNT1 + 31;       //We will generate 100uS pulse
-  TIMSK1|= _BV(OCIE1A);     //pulse will be ended in the next interrupt
+  IOCFG_SET(IOP_STROBE, 1);      //start pulse
+  ++ckps.strobe;                 //and set flag to next state
+  SET_T1COMPA(TCNT1, STROBE_PW); //We will generate 100uS pulse, pulse will be ended in the next interrupt
  }
  else if (2==ckps.strobe)
  {
-  IOCFG_SET(IOP_STROBE, 0); //end pulse
-  ckps.strobe = 0;          //and reset flag
+  IOCFG_SET(IOP_STROBE, 0);      //end pulse
+  ckps.strobe = 0;               //and reset flag
   return;
  }
 #endif
 
+ //line of port in the low level, now set it into a high level - makes the igniter to stop 
+ //the accumulation of energy and close the transistor (spark)
  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(IGNOUTCB_ON_VAL);
 #ifdef PHASED_IGNITION
  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(IGNOUTCB_ON_VAL);
 #endif
 
-#ifdef DWELL_CONTROL
- ckps.acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
- if (ckps.cr_acc_time > ckps.acc_delay-120)
-  ckps.cr_acc_time = ckps.acc_delay-120;  //restrict accumulation time. Dead band = 500us
-
- if (ckps.rising_edge_spark)
- {
-  ckps.channel_mode_b = ckps.channel_mode;
-  OCR1B = ckps.tmrval_saved + ckps.cr_acc_time;
-  TIFR1 = _BV(OCF1B);
-  TIMSK1|= _BV(OCIE1B);
- }
- else
- {
-  ckps.acc_delay-= ckps.cr_acc_time;    //apply dwell time
-  ckps.period_saved = ckps.period_curr; //remember current inter-tooth period
-
-  ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0;
-  CLEARBIT(flags2, F_ADDPTK);
-  SETBIT(flags, F_NTSCHB);
-
-  //if less than 2 teeth remains to the accumulation beginning we have to program compare channel in advance, otherwise
-  //we may lose spark in some cases
-  if (ckps.acc_delay < (ckps.period_curr << 1))
-  {
-   OCR1B = GetICR() + ckps.acc_delay;
-   TIFR1 = _BV(OCF1B);
-   TIMSK1|= _BV(OCIE1B);
-  }
-
-  //We remembered value of TCNT1 at the top of of this function. But input capture event
-  //may occur when interrupts were already disabled (by hardware) but value of timer is still
-  //not saved. Another words, ICR1 must not be less than tmrval_saved.
-  if (TIFR1 & _BV(ICF1))
-   ckps.tmrval_saved = ICR1;
- }
- ckps.channel_mode_b&= ckps.chan_mask;
-#else
- //start counting the duration of pulse in the teeth (начинаем отсчет длительности импульса в зубьях)
- chanstate[ckps.channel_mode].ignition_pulse_cogs = 0;
+ chanstate[ckps.channel_mode].ignition_pulse_cogs = 0; //start counting the duration of pulse in the teeth
 #endif
-
- CLEARBIT(flags2, F_CALTIM); //we already output the spark, so calculation of time is finished
 }
 
-#ifdef DWELL_CONTROL
-/**Interrupt handler for Compare/Match channel B of timer T1. Used for dwell control.
- * вектор прерывания по совпадению канала B таймера Т1. Используется для управления накоплением энергии КЗ.
+
+#ifdef FUEL_INJECT
+/**Interrupt handler for Compare/Match channel B of timer T1. Used for injection timing
  */
 ISR(TIMER1_COMPB_vect)
 {
  TIMSK1&= ~_BV(OCIE1B);//disable interrupt
- //start accumulation
- turn_off_ignition_channel(ckps.channel_mode_b);
- ckps.channel_mode_b = CKPS_CHANNEL_MODENA;
+ //TODO: inj.timing
 }
 #endif
 
@@ -817,7 +921,10 @@ static uint8_t sync_at_startup(void)
    cams_detect_edge();
    if (cams_is_event_r())
    {
-    set_channels_fs(1);     //set full sequential mode
+    if (CHECKBIT(flags2, F_SINGCH))
+     set_channels_sc(); //single channel mode
+    else
+     set_channels_fs(1);     //set full sequential mode
     SETBIT(flags2, F_CAMISS);
     ckps.starting_mode = 2;
    }
@@ -835,7 +942,7 @@ static uint8_t sync_at_startup(void)
    }
    break;
  }
- ckps.icr_prev = GetICR();
+ ckps.icr_prev = ICR1;
  ckps.period_prev = ckps.period_curr;
  ++ckps.cog;
  return 0; //continue process of synchronization (продолжение процесса синхронизации)
@@ -848,35 +955,28 @@ static void process_ckps_cogs(void)
 {
  uint8_t i;
 
- force_pending_spark();
-
 #ifdef DWELL_CONTROL
- if (ckps.channel_mode_b != CKPS_CHANNEL_MODENA && !ckps.rising_edge_spark)
+ if (CHECKBIT(flags, F_PNDDWL) && !ckps.rising_edge_spark)
  {
-  //We must take into account time elapsed between last spark and following tooth.
-  //Because ICR1 can not be less than tmrval_saved we are using addition modulo 65535
-  //to calculate difference (elapsed time).
-  if (!CHECKBIT(flags2, F_ADDPTK))
- {
-   ckps.acc_delay-=((uint16_t)(~ckps.tmrval_saved)) + 1 + GetICR();
-   SETBIT(flags2, F_ADDPTK);
-  }
-  //Correct our prediction on each cog
-  ckps.acc_delay+=((int32_t)ckps.period_curr - ckps.period_saved);
+  //calculate delay between current tooth and next spark
+  int32_t angle_to_spark = (((int32_t)_normalize_tn(chanstate[ckps.channel_mode_b].cogs_btdc - ckps.cog)) * ckps.degrees_per_cog) - ckps.advance_angle;
+  int32_t delay =  (angle_to_spark * (((int32_t)ckps.period_curr * ckps.degrees_per_cog_r) >> 10)) >> 6; //convert angle to delay
+  delay-= ckps.cr_acc_time;    //apply dwell time
 
-  //Do we have to set COMPB ? (We have to set COMPB if less than 2 periods remain)
-  if (CHECKBIT(flags, F_NTSCHB) && ckps.acc_delay <= (ckps.period_curr << 1))
+  if (delay < (ckps.period_curr<<1))
   {
-   OCR1B = GetICR() + ckps.acc_delay + ((int32_t)ckps.period_curr - ckps.period_saved);
-   TIFR1 = _BV(OCF1B);
-   TIMSK1|= _BV(OCIE1B);
-   CLEARBIT(flags, F_NTSCHB); // To avoid entering into setup mode (чтобы не войти в режим настройки ещё раз)
+   if (delay < DWL_DEAD_TIME)
+    delay = DWL_DEAD_TIME; //restrict accumulation time.
+
+   if (QUEUE_IS_EMPTY())
+   {
+    SET_T1COMPA(ICR1, (uint16_t)delay);
+   }
+   QUEUE_ADD(ICR1, (uint16_t)delay, QID_DWELL);
+   CLEARBIT(flags, F_PNDDWL);  // To avoid entering into setup mode
   }
-  ckps.acc_delay-=ckps.period_curr;
  }
 #endif
-
- force_pending_spark();
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
@@ -902,8 +1002,8 @@ static void process_ckps_cogs(void)
   //до этого хранился во временном буфере.
   if (ckps.cog == chanstate[i].cogs_latch)
   {
-   ckps.channel_mode = (i & ckps.chan_mask); //remember number of channel (запоминаем номер канала)
-   SETBIT(flags, F_NTSCHA);                  //establish an indication that it is need to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
+   ckps.channel_mode = i;                    //remember number of channel
+   SETBIT(flags, F_PNDSPK);                  //establish an indication that it is need to count advance angle (устанавливаем признак того, что нужно отсчитывать УОЗ)
    //start counting of advance angle (начинаем отсчет угла опережения)
    ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
@@ -916,8 +1016,6 @@ static void process_ckps_cogs(void)
 #endif
   }
 
-  force_pending_spark();
-
   //teeth of end/beginning of the measurement of rotation period - TDC Read and save the measured period,
   //then remember current value of count for the next measurement
   //(зубья завершения/начала измерения периодов вращения  - в.м.т. считывание и сохранение измеренного периода,
@@ -927,12 +1025,12 @@ static void process_ckps_cogs(void)
    //save period value if it is correct
    if (CHECKBIT(flags, F_VHTPER))
    {
-    ckps.stroke_period = (GetICR() - ckps.measure_start_value);
-    WRITEBIT(flags2, F_SPSIGN, GetICR() < ckps.measure_start_value); //save sign
+    ckps.stroke_period = (ICR1 - ckps.measure_start_value);
+    WRITEBIT(flags2, F_SPSIGN, ICR1 < ckps.measure_start_value); //save sign
     ckps.t1oc_s = ckps.t1oc, ckps.t1oc = 0; //save value and reset counter
    }
 
-   ckps.measure_start_value = GetICR();
+   ckps.measure_start_value = ICR1;
    SETBIT(flags, F_VHTPER);
    SETBIT(flags, F_STROKE); //set the stroke-synchronozation event (устанавливаем событие тактовой синхронизации)
   }
@@ -950,22 +1048,24 @@ static void process_ckps_cogs(void)
 #endif
  }
 
- force_pending_spark();
-
  //Preparing to start the ignition for the current channel (if the right moment became)
- //подготовка к запуску зажигания для текущего канала (если наступил нужный момент)
- if (CHECKBIT(flags, F_NTSCHA) && ckps.channel_mode!= CKPS_CHANNEL_MODENA)
+ if (CHECKBIT(flags, F_PNDSPK))
  {
   uint16_t diff = ckps.current_angle - ckps.advance_angle;
   if (diff <= (ckps.degrees_per_cog << 1))
   {
+   uint16_t delay = ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
+#ifdef DWELL_CONTROL
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
-   //(до запуска зажигания осталось отсчитать меньше 2-x зубьев. Необходимо подготовить модуль сравнения)
-   OCR1A = GetICR() + ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
-   TIFR1 = _BV(OCF1A);
-   TIMSK1|=_BV(OCIE1A);       // enable Compare A interrupt
-   CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
-   SETBIT(flags2, F_CALTIM);  // Set indication that we begin to calculate the time
+   if (QUEUE_IS_EMPTY())
+   {
+    SET_T1COMPA(ICR1, delay);
+   }
+   QUEUE_ADD(ICR1, (uint16_t)delay, QID_SPARK);
+#else
+   SET_T1COMPA(ICR1, delay);
+#endif
+   CLEARBIT(flags, F_PNDSPK); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
   }
  }
 
@@ -997,7 +1097,6 @@ static void process_ckps_cogs(void)
  cams_detect_edge();
 #endif
 #ifdef PHASED_IGNITION
- force_pending_spark();
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
@@ -1007,7 +1106,10 @@ static void process_ckps_cogs(void)
   //Turn on full sequential mode because Cam sensor is OK
   if (!CHECKBIT(flags2, F_CAMISS))
   {
-   set_channels_fs(1);
+   if (CHECKBIT(flags2, F_SINGCH))
+    set_channels_sc(); //single channel mode
+   else
+    set_channels_fs(1);
    SETBIT(flags2, F_CAMISS);
   }
  }
@@ -1016,13 +1118,14 @@ static void process_ckps_cogs(void)
   //Turn off full sequential mode because cam semsor is not OK
   if (CHECKBIT(flags2, F_CAMISS))
   {
-   set_channels_fs(0); //<--valid only for engines with even number of cylinders
+   if (CHECKBIT(flags2, F_SINGCH))
+    set_channels_sc(); //single channel mode
+   else
+    set_channels_fs(0); //<--valid only for engines with even number of cylinders
    CLEARBIT(flags2, F_CAMISS);
   }
  }
 #endif
-
- force_pending_spark();
 }
 
 /**Input capture interrupt of timer 1 (called at passage of each tooth)
@@ -1030,9 +1133,7 @@ static void process_ckps_cogs(void)
  */
 ISR(TIMER1_CAPT_vect)
 {
- force_pending_spark();
-
- ckps.period_curr = GetICR() - ckps.icr_prev;
+ ckps.period_curr = ICR1 - ckps.icr_prev;
 
  //At the start of engine, skipping a certain number of teeth for initializing
  //the memory of previous periods. Then look for missing teeth.
@@ -1041,7 +1142,12 @@ ISR(TIMER1_CAPT_vect)
  if (!CHECKBIT(flags, F_ISSYNC))
  {
   if (sync_at_startup())
+  {
+#ifdef DWELL_CONTROL
+   SETBIT(flags, F_PNDDWL); //it is need to set compare channel for dwell start
+#endif
    goto sync_enter;
+  }
   return;
  }
 
@@ -1081,10 +1187,8 @@ sync_enter:
  process_ckps_cogs();
  ++ckps.cog360;
 
- ckps.icr_prev = GetICR();
+ ckps.icr_prev = ICR1;
  ckps.period_prev = ckps.period_curr;
-
- force_pending_spark();
 }
 
 /**Purpose of this interrupt handler is to supplement timer up to 16 bits and call procedure

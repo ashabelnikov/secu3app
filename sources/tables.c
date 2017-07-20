@@ -405,7 +405,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .knock_int_time_const =        23,
   .knock_retard_step =           128,
   .knock_advance_step =          8,
-  .knock_max_retard =            512,
+  .knock_max_retard =            128,
   .knock_threshold =             1000,
   .knock_recovery_delay =        2,
 

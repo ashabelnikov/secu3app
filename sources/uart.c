@@ -40,15 +40,6 @@
 #include "ufcodes.h"
 #include "wdt.h"
 
-//User's debug variables. See also dbgvar.h header file.
-//Default values are zero.
-#ifdef DEBUG_VARIABLES
-uint16_t dbg_var1 = 0;   /**User's debug variable 1*/
-uint16_t dbg_var2 = 0;   /**User's debug variable 2*/
-uint16_t dbg_var3 = 0;   /**User's debug variable 3*/
-uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
-#endif
-
 #define ETMT_NAME_STR 0     //!< name of tables's set id
 //ignition maps
 #define ETMT_STRT_MAP 1     //!< start map id

@@ -53,7 +53,9 @@ pwrstate_t pwrs;   //!< instance of state variables
 void pwrrelay_init_ports(void)
 {
  IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on (реле включено)
+#ifdef SECU3T  //see also initialization in measure.c
  IOCFG_INIT(IOP_IGN, 1);      //init IGN input
+#endif
 }
 
 void pwrrelay_init(void)

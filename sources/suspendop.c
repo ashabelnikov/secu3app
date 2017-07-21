@@ -39,38 +39,32 @@
 #include "wdt.h"
 
 /**Maximum allowed number of suspended operations */
-//#define SUSPENDED_OPERATIONS_SIZE 17
+#define SUSPENDED_OPERATIONS_SIZE 32
 
 /**Contains queue of suspended operations. Each operation can appear one time */
-//uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
-uint32_t suspended_opcodes;
+uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 
 /*INLINE*/
 void sop_set_operation(uint8_t opcode)
 {
-//suspended_opcodes[(opcode)] = (opcode);
-//suspended_opcodes |= _BV32(opcode);
- _AB(suspended_opcodes, (opcode >> 3))|= (1 << (opcode % 8));
+ suspended_opcodes[(opcode)] = (opcode);
 }
 
-INLINE
+/*INLINE*/
 void sop_reset_operation(uint8_t opcode)
 {
-//suspended_opcodes[opcode] = SOP_NA;
- suspended_opcodes &= ~_BV32(opcode);
+ suspended_opcodes[opcode] = SOP_NA;
 }
 
-INLINE
+/*INLINE*/
 uint8_t sop_is_operation_active(uint8_t opcode)
 {
-//return (suspended_opcodes[(opcode)] == (opcode));
- return 0 != (suspended_opcodes & _BV32(opcode));
+ return (suspended_opcodes[(opcode)] == (opcode));
 }
 
 void sop_init_operations(void)
 {
-//memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE);
- suspended_opcodes = 0;
+ memset(suspended_opcodes, SOP_NA, SUSPENDED_OPERATIONS_SIZE);
 }
 
 /**Delay 25ms*/

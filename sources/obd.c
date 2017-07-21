@@ -115,7 +115,10 @@ void obd_process(struct ecudata_t* d)
    {
     uint8_t FAILS = 0, BATT = _BV(0);
     WRITEBIT(FAILS, 0, d->ce_state); //CE lamp control
+    WRITEBIT(FAILS, 2, !d->sens.oilpress_ok); //oil pressure failure
     WRITEBIT(FAILS, 3, d->sens.temperat > TEMPERATURE_MAGNITUDE(110.0)); //engine overheat lamp control
+
+    WRITEBIT(BATT, 1, !d->sens.generator_ok); //dynamo generator failure
 
     obd.msg.id = 0x551;
     obd.msg.flags.rtr = 0;

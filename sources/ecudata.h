@@ -98,6 +98,11 @@ typedef struct sensors_t
  int16_t tpsdot;                         //!< Speed of TPS movement (d%/dt = %/s), positive when acceleration, negative when deceleration
 #endif
 
+#ifndef SECU3T //SECU-3i
+ uint8_t oilpress_ok;                    //!< Flag.1 - oil pressure is OK, 0 - failure
+ uint8_t generator_ok;                   //!< Flag.1 - dynamo generator is OK, 0 - failure
+#endif
+
  //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor
  int16_t  voltage_raw;                   //!< raw ADC value from voltage

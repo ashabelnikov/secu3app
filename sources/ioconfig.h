@@ -266,8 +266,8 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_COND_I       29     //!< COND_I          (input)    spi
 #define IOP_EPAS_I       30     //!< EPAS_I          (input)    spi
 //reserved slots
-#define IOP_RESERVED1    31     //!< reserved slot   ()
-#define IOP_RESERVED2    32     //!< reserved slot   ()
+#define IOP_OILP_I       31     //!< OILP_I          (input)    spi
+#define IOP_GENS_I       32     //!< GENS_I          (input)    spi
 #define IOP_RESERVED3    33     //!< reserved slot   ()
 #define IOP_RESERVED4    34     //!< reserved slot   ()
 #define IOP_RESERVED5    35     //!< reserved slot   ()
@@ -463,6 +463,17 @@ void iocfg_i_epas_i(uint8_t value);      //!< init EPAS_I input
 void iocfg_i_epas_ii(uint8_t value);     //!< init EPAS_I input       (inverted)
 uint8_t iocfg_g_epas_i(void);            //!< get EPAS_I input value
 uint8_t iocfg_g_epas_ii(void);           //!< get EPAS_I input value  (inverted)
+
+//OILP_I
+void iocfg_i_oilp_i(uint8_t value);      //!< init OILP_I input
+void iocfg_i_oilp_ii(uint8_t value);     //!< init OILP_I input        (inverted)
+uint8_t iocfg_g_oilp_i(void);            //!< get OILP_I input value
+uint8_t iocfg_g_oilp_ii(void);           //!< get OILP_I input value   (inverted)
+//GENS_I
+void iocfg_i_gens_i(uint8_t value);      //!< init GENS_I input
+void iocfg_i_gens_ii(uint8_t value);     //!< init GENS_I input        (inverted)
+uint8_t iocfg_g_gens_i(void);            //!< get GENS_I input value
+uint8_t iocfg_g_gens_ii(void);           //!< get GENS_I input value   (inverted)
 
 #endif
 

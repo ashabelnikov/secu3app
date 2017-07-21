@@ -1209,4 +1209,50 @@ uint8_t iocfg_g_epas_ii(void)           //!< get EPAS_I input value  (inverted)
 }
 //-----------------------------------------------------------------------------
 
+void iocfg_i_oilp_i(uint8_t value)      //!< init OILP_I input
+{
+ WRITEBIT(spi_GPPUA, 4, value);         //controlls pullup resistor
+ SETBIT(spi_IODIRA, 4);                 //input
+}
+
+void iocfg_i_oilp_ii(uint8_t value)     //!< init OILP_I input       (inverted)
+{
+ WRITEBIT(spi_GPPUA, 4, value);         //controlls pullup resistor
+ SETBIT(spi_IODIRA, 4);                 //input
+}
+
+uint8_t iocfg_g_oilp_i(void)            //!< get OILP_I input value
+{
+ return !!CHECKBIT(spi_PORTA, 4);
+}
+
+uint8_t iocfg_g_oilp_ii(void)           //!< get OILP_I input value  (inverted)
+{
+ return !CHECKBIT(spi_PORTA, 4);
+}
+//-----------------------------------------------------------------------------
+
+void iocfg_i_gens_i(uint8_t value)      //!< init GENS_I input
+{
+ WRITEBIT(spi_GPPUA, 5, value);         //controlls pullup resistor
+ SETBIT(spi_IODIRA, 5);                 //input
+}
+
+void iocfg_i_gens_ii(uint8_t value)     //!< init GENS_I input       (inverted)
+{
+ WRITEBIT(spi_GPPUA, 5, value);         //controlls pullup resistor
+ SETBIT(spi_IODIRA, 5);                 //input
+}
+
+uint8_t iocfg_g_gens_i(void)            //!< get GENS_I input value
+{
+ return !!CHECKBIT(spi_PORTA, 5);
+}
+
+uint8_t iocfg_g_gens_ii(void)           //!< get GENS_I input value  (inverted)
+{
+ return !CHECKBIT(spi_PORTA, 5);
+}
+//-----------------------------------------------------------------------------
+
 #endif

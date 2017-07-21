@@ -91,6 +91,13 @@ uint16_t ai3_circular_buffer[AI3_AVERAGING];      //!< Ring buffer for averaging
 void meas_init_ports(void)
 {
  IOCFG_INIT(IOP_GAS_V, 0);    //don't use internal pullup resistor
+#ifndef SECU3T //SECU-3i
+ IOCFG_INIT(IOP_IGN, 0);      //don't use internal pullup resistor
+ IOCFG_INIT(IOP_COND_I, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_EPAS_I, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_OILP_I, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_GENS_I, 0);   //don't use internal pullup resistor
+#endif
  //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB) because they are initialised by default
  //and we don't need pullup resistors for them
 }
@@ -354,5 +361,10 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
 //  else
 //   select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
 // }
+#endif
+
+#ifndef SECU3T //SECU-3i
+ d->sens.oilpress_ok = IOCFG_GET(IOP_OILP_I); //oil pressure sensor
+ d->sens.generator_ok = IOCFG_GET(IOP_GENS_I); //generator status
 #endif
 }

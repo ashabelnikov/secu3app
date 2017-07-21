@@ -191,12 +191,6 @@ void init_ports(void)
 #ifdef CARB_AFR
  carbafr_init_ports();
 #endif
-
-//temporary stub
-#ifndef SECU3T
-IOCFG_INIT(IOP_COND_I, 0);
-IOCFG_INIT(IOP_EPAS_I, 0);
-#endif
 }
 
 /**Initialization of system modules

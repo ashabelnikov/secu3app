@@ -30,6 +30,17 @@
 #include "bitmask.h"
 #include <stdint.h>
 
+/* Can save up to 200 bytes of program memory
+#include "port/pgmspace.h"
+#include "ioconfig.h"
+#include "tables.h"
+
+void IOCFG_INIT(uint8_t io_id, uint8_t io_state)
+{
+ ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state);
+}
+*/
+
 uint8_t iocfg_g_stub(void)
 {
  //this is a stub! Always return 0

@@ -59,6 +59,14 @@ void delay_hom(uint8_t hom)
  }while(--hom);
 }
 
+void blink(void)
+{
+ ce_set_state(CE_STATE_ON);
+ delay_hom(2);
+ ce_set_state(CE_STATE_OFF);
+ delay_hom(2);
+}
+
 /** Displays single 2 digit blink code
  * \param bc blink code 0...99 (in Hex!)
  */
@@ -70,10 +78,7 @@ void disp_code(uint8_t bc)
  i = bc >> 4;
  do
  {
-  ce_set_state(CE_STATE_ON);
-  delay_hom(2);
-  ce_set_state(CE_STATE_OFF);
-  delay_hom(2);
+  blink();
  }while(--i);
 
  delay_hom(10);
@@ -82,10 +87,7 @@ void disp_code(uint8_t bc)
  i = bc & 0xF;
  do
  {
-  ce_set_state(CE_STATE_ON);
-  delay_hom(2);
-  ce_set_state(CE_STATE_OFF);
-  delay_hom(2);
+  blink();
  }while(--i);
 }
 

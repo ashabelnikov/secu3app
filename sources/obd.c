@@ -119,7 +119,7 @@ void obd_process(struct ecudata_t* d)
 
 #ifndef SECU3T //SECU-3i
     WRITEBIT(FAILS, 2, !d->sens.oilpress_ok); //oil pressure failure
-    WRITEBIT(BATT, 0, !d->sens.generator_ok); //dynamo generator failure
+    WRITEBIT(BATT, 0, d->sens.generator_ok); //dynamo generator failure
 #endif
 
     obd.msg.id = 0x551;

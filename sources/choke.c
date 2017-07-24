@@ -405,11 +405,10 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
        chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d->param.idl_reg_p)) >> (8+7));
      }
 #endif
-
      chks.prev_rpm_error = error; //save for further calculation of derror
-     restrict_value_to(&chks.iac_pos, ((uint16_t)d->param.idl_iacminpos) << 2, ((uint16_t)d->param.idl_iacmaxpos) << 2); //do we actually need this restriction?
     }
-
+    //Restrict IAC position using specified limits
+    restrict_value_to(&chks.iac_pos, ((uint16_t)d->param.idl_iacminpos) << 2, ((uint16_t)d->param.idl_iacmaxpos) << 2);
    }
    else
    { //open loop mode

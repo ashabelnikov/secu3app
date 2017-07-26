@@ -116,8 +116,8 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
 #ifdef SPEED_SENSOR
  static uint8_t  spd_ai = SPD_AVERAGING-1;
 #endif
-#if !defined(SECU3T) && defined(PA4_INP_IGNTIM)
-  static uint8_t  ai3_ai  = AI3_AVERAGING-1;
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+ static uint8_t  ai3_ai  = AI3_AVERAGING-1;
 #endif
 
  freq_circular_buffer[frq_ai] = d->sens.inst_frq;
@@ -154,8 +154,8 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
  ai2_circular_buffer[ai2_ai] = adc_get_add_i2_value();
  (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
 
-#if !defined(SECU3T) && defined(PA4_INP_IGNTIM)
- ai3_circular_buffer[pa4_ai] = adc_get_add_i3_value();
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+ ai3_circular_buffer[ai3_ai] = adc_get_add_i3_value();
  (ai3_ai==0) ? (ai3_ai = AI3_AVERAGING - 1): ai3_ai--;
 #endif
 

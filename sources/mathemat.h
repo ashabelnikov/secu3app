@@ -51,9 +51,10 @@ int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t
  * \param y_s second argument value at the beginning of interval
  * \param x_l length of interval in x
  * \param y_l length of interval in y
+ * \param m function multiplier
  * \return interpolated value of function * 16
  */
-int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t a3,int16_t a4,int16_t x_s,int16_t y_s,int16_t x_l,int16_t y_l);
+int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t a3,int16_t a4,int16_t x_s,int16_t y_s,int16_t x_l,int16_t y_l, uint8_t m);
 
 /** Restricts specified value to specified limits
  * \param io_value pointer to value to be restricted. This parameter will also receive result.

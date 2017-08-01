@@ -211,4 +211,8 @@
  #define COPT_ATMEGA644 0
 #endif
 
+#if defined(REV9_BOARD) && !defined(SECU3T)
+ #error "REV9_BOARD option doesn't take any sense for SECU-3i! Remove it if you build for SECU-3i."
+#endif
+
 #endif //_COMPILOPT_H_

@@ -40,19 +40,21 @@
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
 #endif
 
+ #define secu3_offsetof(type,member)   ((size_t)(&((type *)0)->member))
 //For use with fn_dat pointer, because it can point either to FLASH or RAM
 #ifdef REALTIME_TABLES
- #define secu3_offsetof(type,member)   ((size_t)(&((type *)0)->member))
  /**Macro for abstraction under getting bytes from RAM or FLASH (RAM version) */
  #define _GB(x) ((int8_t)d->mm_ptr8(secu3_offsetof(struct f_data_t, x)))
  #define _GW(x) ((int16_t)d->mm_ptr16(secu3_offsetof(struct f_data_t, x)))
  #define _GBU(x) (d->mm_ptr8(secu3_offsetof(struct f_data_t, x)))
  #define _GWU(x) (d->mm_ptr16(secu3_offsetof(struct f_data_t, x)))
+ #define _GWU12(x,i,j) (d->mm_ptr12(secu3_offsetof(struct f_data_t, x), (i*16+j) )) //note: hard coded size of array
 #else
  #define _GB(x) ((int8_t)(PGM_GET_BYTE(&d->fn_dat->x)))    //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
  #define _GW(x) ((int16_t)(PGM_GET_WORD(&d->fn_dat->x)))   //!< Macro for abstraction under getting words from RAM or FLASH (FLASH version)
  #define _GBU(x) (PGM_GET_BYTE(&d->fn_dat->x))             //!< Unsigned version of _GB
  #define _GWU(x) (PGM_GET_WORD(&d->fn_dat->x))             //!< Unsigned version of _GW
+ #define _GWU12(x,i,j) (mm_get_w12_pgm(secu3_offsetof(struct f_data_t, x), (i*16+j))) //note: hard coded size of array
 #endif
 
 // Реализует функцию УОЗ от оборотов для холостого хода
@@ -135,7 +137,7 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient);
+        gradient, 16);
 }
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
@@ -583,19 +585,19 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  uint32_t pw32 = ((uint32_t)(d->sens.map >> nsht) * d->param.inj_sd_igl_const) / (inj_corrected_mat(d) + TEMPERATURE_MAGNITUDE(273.15));
 
- pw32>>=(2-nsht);     //after this shift pw32 value is basic pulse width * 4
+ pw32>>=(4-nsht);  //after this shift pw32 value is basic pulse width, nsht compensates previous divide of MAP
 
- //apply VE table, bilinear_interpolation() returns value * 16, we additionally divide it by 4 to avoid oveflow
+ //apply VE table
  pw32*= bilinear_interpolation(rpm, discharge,
-        _GBU(inj_ve[l][f]),   //values in table are unsigned
-        _GBU(inj_ve[lp1][f]),
-        _GBU(inj_ve[lp1][fp1]),
-        _GBU(inj_ve[l][fp1]),
+        _GWU12(inj_ve,l,f),   //values in table are unsigned (12-bit!)
+        _GWU12(inj_ve,lp1,f),
+        _GWU12(inj_ve,lp1,fp1),
+        _GWU12(inj_ve,l,fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient) >> 2;
- pw32>>=(7+4);
+        gradient, 8) >> 3;
+ pw32>>=(11);
 
  //apply AFR table
  afr = bilinear_interpolation(rpm, discharge,
@@ -606,7 +608,7 @@ uint16_t inj_base_pw(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient);
+        gradient, 16);
  afr+=(8*256);
 
  pw32=(pw32 * nr_1x_afr(afr << 2)) >> 15;
@@ -695,14 +697,14 @@ int16_t inj_timing_lookup(struct ecudata_t* d)
  fp1 = f + 1;
 
  return bilinear_interpolation(rpm, discharge,
-        _GBU(inj_timing[l][f]),
-        _GBU(inj_timing[lp1][f]),
-        _GBU(inj_timing[lp1][fp1]),
-        _GBU(inj_timing[l][fp1]),
+        _GWU12(inj_timing,l,f),
+        _GWU12(inj_timing,lp1,f),
+        _GWU12(inj_timing,lp1,fp1),
+        _GWU12(inj_timing,l,fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient) * 3 * 2;
+        gradient, 8);
 }
 
 #endif //FUEL_INJECT
@@ -982,16 +984,16 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
  if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[INJ_VE_POINTS_F-1]);
   fp1 = f + 1;
 
- //apply VE table, bilinear_interpolation() returns value * 16
+ //apply VE table, bilinear_interpolation() returns value * 8
  corr = bilinear_interpolation(rpm, discharge,
-        _GBU(inj_ve[l][f]),   //values in table are unsigned
-        _GBU(inj_ve[lp1][f]),
-        _GBU(inj_ve[lp1][fp1]),
-        _GBU(inj_ve[l][fp1]),
+        _GWU12(inj_ve,l,f),   //values in table are unsigned
+        _GWU12(inj_ve,lp1,f),
+        _GWU12(inj_ve,lp1,fp1),
+        _GWU12(inj_ve,l,fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient);
+        gradient, 8);
 
  //calculate AFR value, returned value * 16
  afr = bilinear_interpolation(rpm, discharge,
@@ -1002,13 +1004,13 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (gradient * l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        gradient);
+        gradient, 16);
 
  afr+=(8*256); //offset by 8 to obtain normal value
 
  corr=(corr * ((uint16_t)d->param.gd_lambda_stoichval)) >> 7; // multiply by stoichiometry AFR value specified by user
 
- corr=(corr * nr_1x_afr(afr << 2)) >> 15;  //apply AFR value
+ corr=(corr * nr_1x_afr(afr << 2)) >> 15+3;  //apply AFR value, shift by additional 3 bits, because now corr is multiplied by 2048*8 = 16384
 
  d->corr.afr = afr >> 1; //update value of AFR
 

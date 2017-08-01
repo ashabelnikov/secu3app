@@ -29,11 +29,11 @@
 #include "mathemat.h"
 
 int16_t bilinear_interpolation(int16_t x, int16_t y, int16_t a1, int16_t a2, int16_t a3, int16_t a4,
-                               int16_t x_s, int16_t y_s, int16_t x_l, int16_t y_l)
+                               int16_t x_s, int16_t y_s, int16_t x_l, int16_t y_l, uint8_t m)
 {
  int16_t a23,a14;
- a23 = ((a2 * 16) + (((int32_t)(a3 - a2) * 16) * (x - x_s)) / x_l);
- a14 = (a1 * 16) + (((int32_t)(a4 - a1) * 16) * (x - x_s)) / x_l;
+ a23 = ((a2 * m) + (((int32_t)(a3 - a2) * m) * (x - x_s)) / x_l);
+ a14 = (a1 * m) + (((int32_t)(a4 - a1) * m) * (x - x_s)) / x_l;
  return (a14 + ((((int32_t)(a23 - a14)) * (y - y_s)) / y_l));
 }
 

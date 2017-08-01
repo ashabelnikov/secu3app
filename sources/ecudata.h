@@ -33,12 +33,15 @@
 #ifdef REALTIME_TABLES
 typedef uint8_t  (*mm_func8_ptr_t)(uint16_t);
 typedef uint16_t (*mm_func16_ptr_t)(uint16_t);
+typedef uint16_t (*mm_func12_ptr_t)(uint16_t,uint8_t);
 
 uint8_t mm_get_byte_ram(uint16_t offset);
 uint8_t mm_get_byte_pgm(uint16_t offset);
 uint16_t mm_get_word_ram(uint16_t offset);
+uint16_t mm_get_w12_ram(uint16_t offset, uint8_t off);
 uint16_t mm_get_word_pgm(uint16_t offset);
 #endif
+uint16_t mm_get_w12_pgm(uint16_t offset, uint8_t off);
 
 #ifdef DIAGNOSTICS
 /**Describes diagnostics inputs data */
@@ -163,6 +166,7 @@ typedef struct ecudata_t
  f_data_t tables_ram;                    //!< set of tables in RAM
  mm_func8_ptr_t mm_ptr8;                 //!< callback, returns 8 bit result, unsigned
  mm_func16_ptr_t mm_ptr16;               //!< callback, return 16 bit result, unsigned
+ mm_func12_ptr_t mm_ptr12;               //!< callback, return 12 bit result, unsigned
 #endif
  f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
 

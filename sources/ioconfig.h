@@ -37,8 +37,11 @@
  * io_id - ID of I/O to be initialized
  * io_state - Initial state of I/O (On/off)
  */
+#ifdef IOCFG_FUNC_INIT
+void IOCFG_INIT(uint8_t io_id, uint8_t io_state);
+#else
 #define IOCFG_INIT(io_id, io_state) ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state)
-//void IOCFG_INIT(uint8_t io_id, uint8_t io_state);
+#endif
 
 /**Set value of specified I/O
  * io_id - ID of I/O to be set to specified value

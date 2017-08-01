@@ -98,7 +98,7 @@ int16_t gdp_function(struct ecudata_t* d)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
         (TPS_AXIS_STEP*t),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        TPS_AXIS_STEP) >> 4;
+        TPS_AXIS_STEP, 16) >> 4;
 }
 
 /** Calculates AE value for gas doser

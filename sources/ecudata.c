@@ -27,6 +27,7 @@
 #include "port/port.h"
 #include "ecudata.h"
 #include "eculogic.h"   //EM_START
+#include "bitmask.h"
 
 /**ECU data structure. Contains all related data and state information */
 struct ecudata_t edat;
@@ -49,11 +50,31 @@ uint16_t mm_get_word_ram(uint16_t offset)
  return *((uint16_t*)(((uint8_t*)&edat.tables_ram) + offset));
 }
 
+/** Get 12-bit word from SRAM
+ * \param offset offset of the array from the beginning of structure
+ * \param off offset of cell from the beginning of array
+ */
+uint16_t mm_get_w12_ram(uint16_t offset, uint8_t off)
+{
+ uint16_t word = *((uint16_t*)(((uint8_t*)&edat.tables_ram) + offset + ((uint16_t)off+(off>>1)) ));
+ return ((off & 0x0001) ? word >> 4 : word) & 0x0FFF;
+}
+
 uint16_t mm_get_word_pgm(uint16_t offset)
 {
  return PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)edat.fn_dat) + offset));
 }
 #endif
+
+/** Get 12-bit word from flash
+ * \param offset offset of the array from the beginning of structure
+ * \param off offset of cell from the beginning of array
+ */
+uint16_t mm_get_w12_pgm(uint16_t offset, uint8_t off)
+{
+ uint16_t word = (PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)edat.fn_dat) + offset + ((uint16_t)off+(off>>1)) )));
+ return ((off & 0x0001) ? word >> 4 : word) & 0x0FFF;
+}
 
 
 /**Initialization of variables and data structures

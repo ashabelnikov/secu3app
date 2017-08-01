@@ -293,12 +293,14 @@ static void select_table_set(struct ecudata_t *d, uint8_t set_index)
  {
   d->mm_ptr8 = mm_get_byte_ram;
   d->mm_ptr16 = mm_get_word_ram;
+  d->mm_ptr12 = mm_get_w12_ram;
  }
  else
  {
   d->fn_dat = &fw_data.tables[set_index];
   d->mm_ptr8 = mm_get_byte_pgm;
   d->mm_ptr16 = mm_get_word_pgm;
+  d->mm_ptr12 = mm_get_w12_pgm;
  }
 }
 #endif

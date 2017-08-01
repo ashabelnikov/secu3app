@@ -148,18 +148,20 @@
 //CKPS flags
 #define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark
 
-/**Describes one set(family) of chracteristics (maps), discrete = 0.5 degr.*/
+/**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
 {
   uint8_t name[F_NAME_SIZE];                        //!< associated name of tables' set, displayed in user interface
   //ignition maps
-  int8_t f_str[F_STR_POINTS];                       //!< function of advance angle at start
-  int8_t f_idl[F_IDL_POINTS];                       //!< function of advance angle at idling
-  int8_t f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     //!< working function of advance angle
-  int8_t f_tmp[F_TMP_POINTS];                       //!< coolant temper. correction of advance angle
+  int8_t f_str[F_STR_POINTS];                       //!< function of advance angle at start, discrete = 0.5 degr.
+  int8_t f_idl[F_IDL_POINTS];                       //!< function of advance angle at idling, discrete = 0.5 degr.
+  int8_t f_wrk[F_WRK_POINTS_L][F_WRK_POINTS_F];     //!< working function of advance angle, discrete = 0.5 degr.
+  int8_t f_tmp[F_TMP_POINTS];                       //!< coolant temper. correction of advance angle, discrete = 0.5 degr.
   //fuel injection maps
-  uint8_t inj_ve[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Volumetric efficiency lookup table, value * 128
+  uint8_t inj_ve[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< Volumetric efficiency lookup table, value * 2048 (12-bit)
   uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];//!< Air-Fuel ratio lookup table, (value - 8) * 16
+  uint8_t inj_timing[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< injection timing in crankshaft degrees, value * 4 (12-bit), 0...720 deg.
+
   uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];//!< Injector pulse width used when engine is starting up (cranking)
   uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE]; //!< Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00
   uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE]; //!< Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS
@@ -177,8 +179,6 @@ typedef struct f_data_t
 
   uint8_t inj_aftstr[INJ_AFTSTR_LOOKUP_TABLE_SIZE];      //!< afterstart enrichment vs coolant temperature lookup table, value * 128.0, 128 = 1.00 and means 100% will be adde to fuel
 
-  uint8_t inj_timing[INJ_VE_POINTS_L][INJ_VE_POINTS_F];  //!< injection timing in crankshaft degrees (value / 3.0), 0...720 deg.
-
   uint8_t inj_target_rpm[INJ_TARGET_RPM_TABLE_SIZE];  //!< target RPM on idling (value / 10)
 
   uint16_t inj_idl_rigidity[INJ_IDL_RIGIDITY_SIZE];   //!< table containing idling regulator's rigidity function (value * 128)
@@ -195,7 +195,7 @@ typedef struct f_data_t
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[320];
+  uint8_t reserved[64];
 }f_data_t;
 
 

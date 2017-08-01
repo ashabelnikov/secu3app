@@ -790,8 +790,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      break;
 
     case ETMT_VE_MAP:
-     build_i8h(wrk_index*INJ_VE_POINTS_L);
-     build_rb((uint8_t*)&d->tables_ram.inj_ve[wrk_index][0], INJ_VE_POINTS_F);
+     build_i8h(wrk_index*INJ_VE_POINTS_F); //cell address
+     build_rb((uint8_t*)&d->tables_ram.inj_ve[wrk_index][0], (INJ_VE_POINTS_F*3)/2); //24 bytes per packet (row), INJ_VE_POINTS_L rows
      if (wrk_index >= INJ_VE_POINTS_L-1 )
      {
       wrk_index = 0;
@@ -866,8 +866,8 @@ void uart_send_packet(struct ecudata_t* d, uint8_t send_mode)
      state = ETMT_IT_MAP;
      break;
     case ETMT_IT_MAP:
-     build_i8h(wrk_index*INJ_VE_POINTS_L);
-     build_rb((uint8_t*)&d->tables_ram.inj_timing[wrk_index][0], INJ_VE_POINTS_F);
+     build_i8h(wrk_index*INJ_VE_POINTS_F); //cell address
+     build_rb((uint8_t*)&d->tables_ram.inj_timing[wrk_index][0], (INJ_VE_POINTS_F*3)/2); //24 bytes per packet (row), INJ_VE_POINTS_L rows
      if (wrk_index >= INJ_VE_POINTS_L-1 )
      {
       wrk_index = 0;
@@ -1293,7 +1293,7 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
   case EDITAB_PAR:
   {
    uint8_t state = recept_i8h();  //map type
-   uint8_t addr = recept_i8h();   //address
+   uint8_t addr = recept_i8h();   //address (address of cell)
    switch(state)
    {
     case ETMT_STRT_MAP: //start map
@@ -1311,8 +1311,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
     case ETMT_NAME_STR: //name
      recept_rs((d->tables_ram.name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/
      break;
-    case ETMT_VE_MAP:   //VE
-     recept_rb(((uint8_t*)&d->tables_ram.inj_ve[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
+    case ETMT_VE_MAP:   //VE, 12-bit per cell
+     recept_rb(((uint8_t*)&d->tables_ram.inj_ve[0][0]) + (((uint16_t)addr)+(((uint16_t)addr)>>1)), (INJ_VE_POINTS_F*3)/2); /*INJ_VE_POINTS_F*1.5 max*/
      break;
     case ETMT_AFR_MAP:  //AFR
      recept_rb(((uint8_t*)&d->tables_ram.inj_afr[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
@@ -1341,8 +1341,8 @@ uint8_t uart_recept_packet(struct ecudata_t* d)
     case ETMT_AFTSTR_MAP: //afterstart enrichment map
      recept_rb(((uint8_t*)&d->tables_ram.inj_aftstr) + addr, INJ_AFTSTR_LOOKUP_TABLE_SIZE); /*INJ_AFTSTR_LOOKUP_TABLE_SIZE max*/
      break;
-    case ETMT_IT_MAP:   //Injection timing
-     recept_rb(((uint8_t*)&d->tables_ram.inj_timing[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
+    case ETMT_IT_MAP:   //Injection timing, 12 bit per cell
+     recept_rb(((uint8_t*)&d->tables_ram.inj_timing[0][0]) + (((uint16_t)addr)+(((uint16_t)addr)>>1)), (INJ_VE_POINTS_F*3)/2); /*INJ_VE_POINTS_F*1.5 max*/
      break;
     case ETMT_ITRPM_MAP: //Idling RPM map
      recept_rb(((uint8_t*)&d->tables_ram.inj_target_rpm) + addr, INJ_TARGET_RPM_TABLE_SIZE); /*INJ_TARGET_RPM_TABLE_SIZE max*/

@@ -380,7 +380,8 @@ int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
     // go out from the closed loop
     else if (CHECKBIT(chks.flags, CF_CL_LOOP) && ((d->engine_mode != EM_IDLE) || (d->sens.inst_frq > rpm_thrd2)))
     {
-     chks.iac_pos += (((uint16_t)d->param.idl_to_run_add) << 2); //x4
+   //chks.iac_pos += (((uint16_t)d->param.idl_to_run_add) << 2); //x4
+     chks.iac_pos = ((((uint16_t)inj_iac_pos_lookup(d, &chks.prev_temp, 1)) + ((uint16_t)d->param.idl_to_run_add)) << 2); //x4
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit
     }
 

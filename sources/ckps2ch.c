@@ -78,9 +78,17 @@
 #define IGN_OUTPUTS_ON_VAL   1        //!< value used to turn on ignition channel
 #define IGN_OUTPUTS_OFF_VAL  0        //!< value used to turn off ignition channel
 
-/**Задержка входа в прерывание COMPA и установки уровня на соотв. линии порта в тиках таймера.
- * Используется для компенсации времени. */
+/**Delay of entering COMPA interrupt and setting required level on the corresponding output.
+ * Used for compensation of time for increasing of accuracy
+ */
 #define COMPA_VECT_DELAY 2
+
+#ifdef FUEL_INJECT
+/**Delay of entering COMPB interrupt and setting required level on the corresponding output.
+ * Used for compensation of time for increasing of accuracy
+ */
+#define COMPB_VECT_DELAY 2
+#endif
 
 // Flags (see flags variable)
 #define F_ERROR     0                 //!< CKP error flag, set in the CKP's interrupt, reset after processing (признак ошибки ДПКВ, устанавливается в прерывании от ДПКВ, сбрасывается после обработки) 
@@ -120,7 +128,8 @@ typedef struct
  uint8_t  hop_duration;               //!< Hall output: duration of pulse in tooth of wheel
 #endif
 #ifdef FUEL_INJECT
- int16_t  inj_phase;                  //!< Injection timing: start of pulse in teeth of wheel relatively to TDC
+ int16_t  inj_phase;                  //!< Injection timing: start of pulse in crankshaft degrees relatively BTDC, value * ANGLE_MULTIPLIER
+ uint8_t  inj_chidx;                  //!< index of channel to fire
 #endif
 
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including absent (количество зубьев, включая отсутствующие)
@@ -136,6 +145,7 @@ typedef struct
   */
  volatile uint8_t  wheel_latch_btdc;
  volatile uint16_t degrees_per_cog;   //!< Number of degrees which corresponds to the 1 tooth (количество градусов приходящееся на один зуб диска)
+ volatile uint16_t degrees_per_cog_r; //!< Reciprocal of the degrees_per_cog, value * 65536
  volatile uint16_t cogs_per_chan;     //!< Number of teeth per 1 ignition channel (it is fractional number * 256)
  volatile int16_t start_angle;        //!< Precalculated value of the advance angle at 66° (at least) BTDC
 #ifdef STROBOSCOPE
@@ -162,7 +172,9 @@ typedef struct
 #endif
 
 #ifdef FUEL_INJECT
- volatile uint16_t inj_begin_cog;      //!< Injection timing: tooth number that corresponds to the beginning of pulse
+ volatile uint16_t inj_angle;          //!< Injection timing
+ volatile uint16_t inj_angle_safe;     //!< Injection timing, safe (synchronized)
+ volatile uint8_t inj_skipth;          //!< Number of teeth to skip after setting of COMPB
 #endif
 
  /** Determines number of tooth (relatively to TDC) at which "latching" of data is performed (определяет номер зуба (относительно в.м.т.) на котором происходит "защелкивание" данных) */
@@ -200,6 +212,26 @@ PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
  //     1          2          3          4         5         6         7         8
  {0, 37500000L, 18750000L, 12500000L, 9375000L, 7500000L, 6250000L, 5357143L, 4687500L};
 
+/**Set T1 COMPA channel of timer
+ * r Timer's register (TCNT1 or ICR1)
+ * v Time in tics of timer 1 after which event should fire
+ */
+#define SET_T1COMPA(r, v) \
+     OCR1A = (r) + (v); \
+     TIFR1 = _BV(OCF1A); \
+     SETBIT(TIMSK1, OCIE1A);
+
+#ifdef FUEL_INJECT
+/**Set T1 COMPB channel of timer
+ * r Timer's register (TCNT1 or ICR1)
+ * v Time in tics of timer 1 after which event should fire
+ */
+#define SET_T1COMPB(r, v) \
+     OCR1B = (r) + (v); \
+     TIFR1 = _BV(OCF1B); \
+     SETBIT(TIMSK1, OCIE1B);
+#endif
+
 void ckps_init_state_variables(void)
 {
  _BEGIN_ATOMIC_BLOCK();
@@ -214,6 +246,14 @@ void ckps_init_state_variables(void)
  SETBIT(flags, F_IGNIEN);
  CLEARBIT(flags2, F_CALTIM);
  CLEARBIT(flags2, F_SPSIGN);
+#ifdef FUEL_INJECT
+ ckps.inj_chidx = 0;
+ {
+ uint8_t i;
+ for(i = 0; i < IGN_CHANNELS_MAX; ++i)
+  chanstate[i].inj_skipth = 0;
+ }
+#endif
 
  TIMSK1|=_BV(TOIE1);                   //enable Timer 1 overflow interrupt. Used for correcting calculation of very low RPM
 
@@ -330,6 +370,29 @@ static uint16_t _normalize_tn(int16_t i_tn)
  return i_tn;
 }
 
+#ifdef FUEL_INJECT
+/** Ensures that angle will be in the allowed range
+ * \param angle
+ * \return
+ */
+static uint16_t _normalize_angle(int16_t angle)
+{
+ if (angle < 0)
+  return ANGLE_MAGNITUDE(720) + angle;
+ return angle;
+}
+
+/** Synchronize injection angle values */
+static void sync_inj_angle(void)
+{
+ uint8_t i;
+ _BEGIN_ATOMIC_BLOCK();
+ for(i = 0; i < ckps.chan_number; ++i)
+  chanstate[i].inj_angle_safe = chanstate[i].inj_angle;
+ _END_ATOMIC_BLOCK();
+}
+#endif
+
 void ckps_set_cogs_btdc(uint8_t cogs_btdc)
 {
  uint8_t _t, i;
@@ -348,7 +411,7 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
   chanstate[i].hop_end_cog = _normalize_tn(chanstate[i].hop_begin_cog + ckps.hop_duration);
 #endif
 #ifdef FUEL_INJECT
-  chanstate[i].inj_begin_cog = _normalize_tn(tdc - ckps.inj_phase);
+  chanstate[i].inj_angle = _normalize_angle((tdc * ckps.degrees_per_cog) -  ckps.inj_phase);
 #endif
  }
  ckps.cogs_btdc = cogs_btdc;
@@ -530,13 +593,16 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 #ifdef PHASE_SENSOR
  uint16_t err_thrd = (norm_num * 2) + (norm_num >> 3); //+ 12.5%
 #endif
- uint16_t cogs_per_chan, degrees_per_cog;
+ uint16_t cogs_per_chan, degrees_per_cog, degrees_per_cog_r;
 
  //precalculate number of cogs per 1 ignition channel, it is fractional number multiplied by 256
  cogs_per_chan = (((uint32_t)(norm_num * 2)) << 8) / ckps.chan_number;
 
  //precalculate value of degrees per 1 cog, it is fractional number multiplied by ANGLE_MULTIPLIER
  degrees_per_cog = (((((uint32_t)360) << 8) / norm_num) * ANGLE_MULTIPLIER) >> 8;
+
+ //precalculate value of 1 / degrees_per_cog (reciprocal), result value multiplied by ~65536
+ degrees_per_cog_r = (1*65535) / degrees_per_cog;
 
  //precalculate value and round it always to the upper bound,
  //e.g. for 60-2 crank wheel result = 11 (66°), for 36-1 crank wheel result = 7 (70°)
@@ -556,6 +622,7 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  //set other precalculated values
  ckps.wheel_latch_btdc = dr.quot + (dr.rem > 0);
  ckps.degrees_per_cog = degrees_per_cog;
+ ckps.degrees_per_cog_r = degrees_per_cog_r; //reciprocal of the degrees_per_cog
  ckps.cogs_per_chan = cogs_per_chan;
  ckps.start_angle = ckps.degrees_per_cog * ckps.wheel_latch_btdc;
 #ifdef PHASE_SENSOR
@@ -570,20 +637,18 @@ void ckps_set_inj_timing(int16_t phase)
  uint8_t _t, i;
  //TODO: We can do some optimization in the future - set timing only if it is not equal to current (already set one)
 
- //convert from 0..720 BTDC to -360...360
- phase-= ANGLE_MAGNITUDE(360);
+ if (phase > ANGLE_MAGNITUDE(720.0))
+  phase-= ANGLE_MAGNITUDE(720.0);     //phase is periodical
 
- //save values because we will access them from other function
- //Also, convert form crank degrees to teeth
- ckps.inj_phase = phase / ((int16_t)ckps.degrees_per_cog);
+ ckps.inj_phase = phase;
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
   uint16_t tdc = (((uint16_t)ckps.cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
-  uint16_t timing = _normalize_tn(tdc - ckps.inj_phase); //current inj.timing
+  uint16_t angle = _normalize_angle((tdc * ckps.degrees_per_cog) -  ckps.inj_phase);
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
-  chanstate[i].inj_begin_cog = timing;
+  chanstate[i].inj_angle = angle;
  _RESTORE_INTERRUPT(_t);
  }
 }
@@ -635,6 +700,16 @@ ISR(TIMER1_COMPA_vect)
 
  CLEARBIT(flags2, F_CALTIM); //we already output the spark, so calculation of time is finished
 }
+
+#ifdef FUEL_INJECT
+/**Interrupt handler for Compare/Match channel B of timer T1. Used for injection timing
+ */
+ISR(TIMER1_COMPB_vect)
+{
+ TIMSK1&= ~_BV(OCIE1B);            //disable interrupt
+ inject_start_inj(ckps.inj_chidx); //start fuel injection
+}
+#endif
 
 /**Initialize timer 0 using specified value and start it, clock = 312.5kHz
  * It is assumed that this function called when all interrupts are disabled
@@ -757,8 +832,21 @@ static void process_ckps_cogs(void)
 #endif
 
 #ifdef FUEL_INJECT
-  if (ckps.cog == chanstate[i].inj_begin_cog)
-   inject_start_inj(i);      //start fuel injection for current channel
+  //control injection timing using teeth and COMPB timer channel
+  if (!chanstate[i].inj_skipth)
+  {
+   uint16_t diff = _normalize_angle(((int16_t)chanstate[i].inj_angle_safe) -  ((int16_t)(ckps.cog * ckps.degrees_per_cog)));
+   if (diff <= (ckps.degrees_per_cog << 1))
+   {
+    ckps.inj_chidx = i;  //remember number of channel to be fired
+    uint16_t delay = ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPB_VECT_DELAY;
+    SET_T1COMPB(ICR1, delay);
+    sync_inj_angle();
+    chanstate[i].inj_skipth = 4;  //skip 4 teeth
+   }
+  }
+  else
+   --(chanstate[i].inj_skipth);
 #endif
  }
 
@@ -772,14 +860,8 @@ static void process_ckps_cogs(void)
   if (diff <= (ckps.degrees_per_cog << 1))
   {
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
-   //(до запуска зажигания осталось отсчитать меньше 2-x зубьев. Необходимо подготовить модуль сравнения)
-   //TODO: replace heavy division by multiplication with magic number. This will reduce up to 40uS !
-   if (ckps.period_curr < 128)
-    OCR1A = GetICR() + ((diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
-   else
-    OCR1A = GetICR() + (((uint32_t)diff * (ckps.period_curr)) / ckps.degrees_per_cog) - COMPA_VECT_DELAY;
-   TIFR1 = _BV(OCF1A);
-   TIMSK1|= _BV(OCIE1A);      // enable Compare A interrupt (разрешаем прерывание)
+   uint16_t delay = ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
+   SET_T1COMPA(ICR1, delay);
    CLEARBIT(flags, F_NTSCHA); // For avoiding to enter into setup mode (чтобы не войти в режим настройки ещё раз)
    SETBIT(flags2, F_CALTIM);  // Set indication that we begin to calculate the time
   }
@@ -814,7 +896,12 @@ ISR(TIMER1_CAPT_vect)
  if (!CHECKBIT(flags, F_ISSYNC))
  {
   if (sync_at_startup())
+  {
+#ifdef FUEL_INJECT
+   sync_inj_angle();
+#endif
    goto sync_enter;
+  }
   return;
  }
 

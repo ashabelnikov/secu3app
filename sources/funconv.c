@@ -186,22 +186,33 @@ void idling_regulator_init(void)
 // Возвращает значение угла опережения в целом виде * 32.
 int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 {
- int16_t error,factor;
+ int16_t error,factor,idling_rpm;
  //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
  uint16_t capture_range = 200;
  #define IRUSDIV 1
 
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
- if (!CHECKBIT(d->param.idl_flags, IRF_USE_REGULATOR) || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use))
+ if (!CHECKBIT(d->param.idl_flags, IRF_USE_REGULATOR) || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use
+#ifdef FUEL_INJECT
+  && d->param.idling_rpm  //Don't use temperature turn on threshold if lookup table used
+#endif
+    ))
   return 0;
 
  //don't use regulator on gas if specified in parameters
  if (d->sens.gas && !CHECKBIT(d->param.idl_flags, IRF_USE_REGONGAS))
   return 0;
 
+#ifdef FUEL_INJECT
+ //if param.idling_rpm == 0 then use target RPM from lookup table
+ idling_rpm = d->param.idling_rpm ? d->param.idling_rpm : inj_idling_rpm(d);
+#else
+ idling_rpm = d->param.idling_rpm;
+#endif
+
  //regulator will be turned on with delay
- if (d->sens.frequen < (d->param.idling_rpm + capture_range))
+ if (d->sens.frequen < (idling_rpm + capture_range))
  {
   switch(idl_prstate.enter_state)
   {
@@ -224,7 +235,7 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 
  //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне
  //нечувствительности, то используем расчитанную ранее коррекцию.
- error = d->param.idling_rpm - d->sens.frequen;
+ error = idling_rpm - d->sens.frequen;
  restrict_value_to(&error, -200, 200);
  if (abs(error) <= d->param.MINEFR)
   return idl_prstate.output_state >> IRUSDIV;

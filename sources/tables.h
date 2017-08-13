@@ -123,6 +123,7 @@
 #define INJCFG_2BANK_ALTERN             2           //!< 2 banks alternating injection
 #define INJCFG_SEMISEQUENTIAL           3           //!< Semi-sequential injection
 #define INJCFG_FULLSEQUENTIAL           4           //!< Full-sequential injection
+#define INJCFG_SEMISEQSEPAR             5           //!< semi-sequential injection with separate channels
 
 //Injection flags (see inj_flags variable)
 #define INJFLG_USETIMINGMAP             0           //!< Use injection timing map instead of simple constant

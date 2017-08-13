@@ -92,6 +92,7 @@ typedef struct
 {
  /**Address of callback which will be used for settiong of I/O */
  volatile fnptr_t io_callback1;  //!< callback pointer (function which sets corresponding I/O)
+ volatile fnptr_t io_callback2;  //!< second callback to allo semi-sequential mode with separate outputs
  uint8_t io_map;                 //!< for mapping of channel number to a particular I/O
 }inj_chanstate_t;
 
@@ -137,57 +138,66 @@ inj_queue_t inj_eq2[INJ_CH_QUEUE_SIZE];
 #define QUEUE_RESET(q)  inj.eq_tail##q = inj.eq_head##q = 0;
 
 
-/**Tune channels' I/O for semi-sequential injection mode */
-static void set_channels_ss(void)
+/** Get value of I/O callback by index. This function is necessary for supporting of 5,6 inj. channels for SECU-3T and 6,7,8 inj.channels for SECU-3i
+ * \param index Index of callback */
+INLINE
+static fnptr_t get_callback(uint8_t index)
 {
- if (inj.num_squirts == inj.cyl_number)
- { //normal semi-sequential mode (number of squirts = number of cylinders)
-  uint8_t _t, i = 0, chan = inj.cyl_number / 2;
-  for(; i < chan; ++i)
-  {
-   fnptr_t value = IOCFG_CB(IOP_INJ_OUT1 + i);
-   _t=_SAVE_INTERRUPT();
-   _DISABLE_INTERRUPT();
-   inj_chanstate[i].io_callback1 = value;
+#ifdef SECU3T
+ return (index < (IOP_INJ_OUT4+1)) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_INJPLG_OFF);
+#else //SECU-3i
+ return (index < (IOP_INJ_OUT5+1)) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_INJPLG_OFF);
+#endif
+}
+
+/**Tune channels' I/O for semi-sequential mode with separate channels or full sequential injection mode 
+ * \param fs_mode 0 - semi-sequential, 1 - full sequential
+ */
+static void set_channels_fs(uint8_t fs_mode)
+{
+ uint8_t _t, i = 0, ch = 0, ch2 = fs_mode ? 0 : inj.cyl_number / 2, iss;
+ uint8_t idxNum = (inj.num_squirts == inj.cyl_number && !fs_mode) ? ch2 : inj.cyl_number;
+ for(; i < inj.cyl_number; ++i)
+ {
+  iss = (ch + ch2);
+  if (iss >= inj.cyl_number)
+   iss-=inj.cyl_number;
+
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  if (CHECKBIT(inj.squirt_mask, i)) {
+   inj_chanstate[i].io_callback1 = get_callback(IOP_INJ_OUT1 + ch);
+   inj_chanstate[i].io_callback2 = get_callback(IOP_INJ_OUT1 + iss);
    inj_chanstate[i].io_map = i;
-   inj_chanstate[i + chan].io_callback1 = value;
-   inj_chanstate[i + chan].io_map = i;
-   _RESTORE_INTERRUPT(_t);
+   ++ch;
   }
- }
- else
- { //number of squirts is half of number of cylinders
-  uint8_t _t, i = 0, ch = 0;
-  for(; i < inj.cyl_number; ++i)
-  {
-   fnptr_t value = IOCFG_CB(IOP_INJ_OUT1 + ch);
-   _t=_SAVE_INTERRUPT();
-   _DISABLE_INTERRUPT();
-   if (CHECKBIT(inj.squirt_mask, i)) {
-    inj_chanstate[i].io_callback1 = value;
-    inj_chanstate[i].io_map = i;
-    ++ch;
-   }
-   _RESTORE_INTERRUPT(_t);
-  }
+  _RESTORE_INTERRUPT(_t);
+  if (ch >= idxNum)
+   ch = 0;
  }
 }
 
-/**Set channels' I/O for 2 banks alternating injection mode */
-static void set_channels_2bnk(void)
+/**Tune channels' I/O for semi-sequential or 2 banks alternating injection mode
+ * \param _2bnk 0 - set to semi-sequential mode, 1 - set to 2 banks alternating mode
+ */
+static void set_channels_ss(uint8_t _2bnk)
 {
+ uint8_t idxNum = (inj.num_squirts == inj.cyl_number) ? inj.cyl_number / 2 : inj.cyl_number;
  uint8_t _t, i = 0, ch = 0;
  for(; i < inj.cyl_number; ++i)
  {
-  fnptr_t value = IOCFG_CB(IOP_INJ_OUT1 + ch);
+  fnptr_t value = get_callback(IOP_INJ_OUT1 + ch);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   if (CHECKBIT(inj.squirt_mask, i)) {
    inj_chanstate[i].io_callback1 = value;
+   inj_chanstate[i].io_callback2 = value;
    inj_chanstate[i].io_map = i;
-   ch ^= 1;
+   ch = _2bnk ? ch ^ 1 : ch + 1;
   }
   _RESTORE_INTERRUPT(_t);
+  if (ch >= idxNum)
+   ch = 0;
  }
 }
 
@@ -204,12 +214,40 @@ void inject_init_state(void)
  QUEUE_RESET(2);   //head = tail
 }
 
+#ifdef SECU3T
+/*Turn on/off all injectors **/
+#define SET_ALL_INJ(state) \
+   IOCFG_SET(IOP_INJ_OUT1, (state));           /*injector 1 */ \
+   IOCFG_SET(IOP_INJ_OUT2, (state));           /*injector 2 */ \
+   IOCFG_SET(IOP_INJ_OUT3, (state));           /*injector 3 */ \
+   IOCFG_SET(IOP_INJ_OUT4, (state));           /*injector 4 */ \
+   IOCFG_SET(IOP_INJ_OUT5, (state));           /*injector 5 */ \
+   IOCFG_SET(IOP_INJ_OUT6, (state));           /*injector 6 */
+#else //SECU-3i
+/*Turn on/off all injectors **/
+#define SET_ALL_INJ(state) \
+   IOCFG_SET(IOP_INJ_OUT1, (state));           /*injector 1 */ \
+   IOCFG_SET(IOP_INJ_OUT2, (state));           /*injector 2 */ \
+   IOCFG_SET(IOP_INJ_OUT3, (state));           /*injector 3 */ \
+   IOCFG_SET(IOP_INJ_OUT4, (state));           /*injector 4 */ \
+   IOCFG_SET(IOP_INJ_OUT5, (state));           /*injector 5 */ \
+   IOCFG_SET(IOP_INJ_OUT6, (state));           /*injector 6 */ \
+   IOCFG_SET(IOP_INJ_OUT7, (state));           /*injector 7 */ \
+   IOCFG_SET(IOP_INJ_OUT8, (state));           /*injector 8 */
+#endif
+
 void inject_init_ports(void)
 {
  IOCFG_INIT(IOP_INJ_OUT1, INJ_OFF);           //injector 1 is turned off
  IOCFG_INIT(IOP_INJ_OUT2, INJ_OFF);           //injector 2 is turned off
  IOCFG_INIT(IOP_INJ_OUT3, INJ_OFF);           //injector 3 is turned off
  IOCFG_INIT(IOP_INJ_OUT4, INJ_OFF);           //injector 4 is turned off
+ IOCFG_INIT(IOP_INJ_OUT5, INJ_OFF);           //injector 5 is turned off
+ IOCFG_INIT(IOP_INJ_OUT6, INJ_OFF);           //injector 6 is turned off
+#ifndef SECU3T //only in SECU-3i
+ IOCFG_INIT(IOP_INJ_OUT7, INJ_OFF);           //injector 7 is turned off
+ IOCFG_INIT(IOP_INJ_OUT8, INJ_OFF);           //injector 8 is turned off
+#endif
 }
 
 /** Updates squirt mask */
@@ -235,9 +273,15 @@ void inject_set_cyl_number(uint8_t cylnum)
  inj.cyl_number = cylnum;
  calc_squirt_mask();                          //update squirt mask
  if (inj.cfg == INJCFG_2BANK_ALTERN)
-  set_channels_2bnk();                        //2 banks, alternating
- else if (inj.cfg == INJCFG_SEMISEQUENTIAL)   //semi-sequential mode
-  set_channels_ss();
+  set_channels_ss(1);                         //2 banks, alternating
+ else if (inj.cfg == INJCFG_SEMISEQUENTIAL)
+  set_channels_ss(0);                         //semi-sequential mode
+ else if (inj.cfg == INJCFG_SEMISEQSEPAR)
+  set_channels_fs(0);                         //semi-sequential with separate channels
+/*
+ else if (inj.cfg == INJCFG_FULLSEQUENTIAL)
+  set_channels_fs(1);                         //full sequential
+*/
  _END_ATOMIC_BLOCK();
 }
 
@@ -271,9 +315,15 @@ void inject_set_config(uint8_t cfg)
 {
  inj.cfg = cfg;
  if (cfg == INJCFG_2BANK_ALTERN)
-  set_channels_2bnk();                             //2 banks, alternating
- else if (cfg == INJCFG_SEMISEQUENTIAL)            //semi-sequential mode
-  set_channels_ss();
+  set_channels_ss(1);                               //2 banks, alternating
+ else if (cfg == INJCFG_SEMISEQUENTIAL)
+  set_channels_ss(0);                               //semi-sequential mode
+ else if (cfg == INJCFG_SEMISEQSEPAR)
+  set_channels_fs(0);                               //semi-sequential with separate channels
+/*
+ else if (cfg == INJCFG_FULLSEQUENTIAL)
+  set_channels_fs(1);                               //full sequential
+*/
 }
 
 void inject_start_inj(uint8_t chan)
@@ -289,10 +339,7 @@ void inject_start_inj(uint8_t chan)
    _BEGIN_ATOMIC_BLOCK();
    OCR2B = TCNT2 + _AB(inj.inj_time, 0);
    inj.tmr2b_h = _AB(inj.inj_time, 1);
-   IOCFG_SET(IOP_INJ_OUT1, INJ_ON);           //turn on injector 1
-   IOCFG_SET(IOP_INJ_OUT2, INJ_ON);           //turn on injector 2
-   IOCFG_SET(IOP_INJ_OUT3, INJ_ON);           //turn on injector 3
-   IOCFG_SET(IOP_INJ_OUT4, INJ_ON);           //turn on injector 4
+   SET_ALL_INJ(INJ_ON);                       //turn on injector 1-8
    SETBIT(TIMSK2, OCIE2B);
    SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
    _END_ATOMIC_BLOCK();
@@ -303,6 +350,7 @@ void inject_start_inj(uint8_t chan)
    { //use 1-st timer channel
     _BEGIN_ATOMIC_BLOCK();
     ((iocfg_pfn_set)inj_chanstate[chan].io_callback1)(INJ_ON);//turn on current injector pair
+    ((iocfg_pfn_set)inj_chanstate[chan].io_callback2)(INJ_ON);
 
     if (CHECKBIT(inj.active_chan, inj_chanstate[chan].io_map))
      CLEARBIT(inj.mask_chan, inj_chanstate[chan].io_map); //mask it if it is still active
@@ -325,6 +373,7 @@ void inject_start_inj(uint8_t chan)
     uint16_t t = inj.inj_time << 1;           //this timer has 1 tick = 3.2uS
     _BEGIN_ATOMIC_BLOCK();
     ((iocfg_pfn_set)inj_chanstate[chan].io_callback1)(INJ_ON); //turn on current injector pair
+    ((iocfg_pfn_set)inj_chanstate[chan].io_callback2)(INJ_ON);
 
     if (CHECKBIT(inj.active_chan, inj_chanstate[chan].io_map))
      CLEARBIT(inj.mask_chan, inj_chanstate[chan].io_map); //mask it if it is still active
@@ -355,10 +404,7 @@ void inject_open_inj(uint16_t time)
   _BEGIN_ATOMIC_BLOCK();
   OCR2B = TCNT2 + _AB(time, 0);
   inj.tmr2b_h = _AB(time, 1);
-  IOCFG_SET(IOP_INJ_OUT1, INJ_ON);            //turn on injector 1
-  IOCFG_SET(IOP_INJ_OUT2, INJ_ON);            //turn on injector 2
-  IOCFG_SET(IOP_INJ_OUT3, INJ_ON);            //turn on injector 3
-  IOCFG_SET(IOP_INJ_OUT4, INJ_ON);            //turn on injector 4
+  SET_ALL_INJ(INJ_ON);                        //turn on injector 1-8
   SETBIT(TIMSK2, OCIE2B);
   SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
   inj.prime_pulse = 1;
@@ -376,10 +422,7 @@ ISR(TIMER2_COMPB_vect)
  {
   if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse)
   {//central/simultaneous
-   IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 1
-   IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 2
-   IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 3
-   IOCFG_SET(IOP_INJ_OUT4, INJ_OFF);          //turn off injector 4
+   SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
    CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
    inj.prime_pulse = 0;
   }
@@ -389,6 +432,7 @@ ISR(TIMER2_COMPB_vect)
    //Do not turn off channel if it is masked
    if (CHECKBIT(inj.mask_chan, inj_chanstate[chan_idx].io_map)) {
     ((iocfg_pfn_set)inj_chanstate[chan_idx].io_callback1)(INJ_OFF); //turn off current injector pair
+    ((iocfg_pfn_set)inj_chanstate[chan_idx].io_callback2)(INJ_OFF);
     CLEARBIT(inj.active_chan, inj_chanstate[chan_idx].io_map);
    }
    SETBIT(inj.mask_chan, inj_chanstate[chan_idx].io_map); //unmask
@@ -425,11 +469,6 @@ ISR(TIMER0_COMPB_vect)
  {
   if (inj.cfg < INJCFG_2BANK_ALTERN)
   { //central/simultaneous
-   IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);          //turn off injector 1
-   IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);          //turn off injector 2
-   IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);          //turn off injector 3
-   IOCFG_SET(IOP_INJ_OUT4, INJ_OFF);          //turn off injector 4
-   CLEARBIT(TIMSK0, OCIE0B);                  //disable this interrupt
   }
   else
   { //semi-sequential
@@ -437,6 +476,7 @@ ISR(TIMER0_COMPB_vect)
    //Do not turn off channel if it is masked
    if (CHECKBIT(inj.mask_chan, inj_chanstate[chan_idx].io_map)) {
     ((iocfg_pfn_set)inj_chanstate[chan_idx].io_callback1)(INJ_OFF); //turn off current injector pair
+    ((iocfg_pfn_set)inj_chanstate[chan_idx].io_callback2)(INJ_OFF);
     CLEARBIT(inj.active_chan, inj_chanstate[chan_idx].io_map);
    }
    SETBIT(inj.mask_chan, inj_chanstate[chan_idx].io_map); //unmask

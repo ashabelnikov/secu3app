@@ -144,13 +144,14 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_GD_DIR       60     //!< GD_DIR          (output)
 #define IOP_GD_STP       61     //!< GD_STP          (output)
 #define IOP_GD_PWM       62     //!< PWM gas valve   (output)
-#define IOP_RESERVED24   63     //!< reserved plug   ()
-#define IOP_RESERVED25   64     //!< reserved plug   ()
+#define IOP_INJ_OUT5     63     //!< INJ_OUT5        (output)
+#define IOP_INJ_OUT6     64     //!< INJ_OUT6        (output)
 #define IOP_RESERVED26   65     //!< reserved plug   ()
 #define IOP_RESERVED27   66     //!< reserved plug   ()
 #define IOP_RESERVED28   67     //!< reserved plug   ()
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT7-(IOP_IGN_OUT6+1)) //!< needed by ckps.c
+#define IOP_INJPLG_OFF   (IOP_INJ_OUT5-(IOP_INJ_OUT4+1)) //!< needed by injector.c
 
 //List all I/O functions. These functions must be used only inside tables.c
 void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1
@@ -300,9 +301,9 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_LAMBDA       57     //!< LAMBDA          (input)
 #define IOP_AIR_TEMP     58     //!< AIR_TEMP        (input)
 #define IOP_CAN_CS       59     //!< CS for MCP2515  (output)
-#define IOP_RESERVED8    60     //!< reserved plug   ()
-#define IOP_RESERVED9    61     //!< reserved plug   ()
-#define IOP_RESERVED10   62     //!< reserved plug   ()
+#define IOP_INJ_OUT6     60     //!< INJ_OUT6        (output)
+#define IOP_INJ_OUT7     61     //!< INJ_OUT7        (output)
+#define IOP_INJ_OUT8     62     //!< INJ_OUT8        (output)
 #define IOP_RESERVED11   63     //!< reserved plug   ()
 #define IOP_RESERVED12   64     //!< reserved plug   ()
 #define IOP_RESERVED13   65     //!< reserved plug   ()
@@ -310,6 +311,7 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_RESERVED15   67     //!< reserved plug   ()
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c
+#define IOP_INJPLG_OFF   (IOP_INJ_OUT6-(IOP_INJ_OUT5+1)) //!< needed by injector.c
 
 //List all I/O functions. These functions must be used only inside tables.c
 void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_O1

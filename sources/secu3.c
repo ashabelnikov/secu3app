@@ -528,7 +528,7 @@ MAIN()
 
 #ifdef FUEL_INJECT
    //set current injection time and fuel cut state
-   inject_set_inj_time(edat.inj_pw);
+   inject_set_inj_time(edat.inj_pw_raw, edat.inj_dt);
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
    inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim && pwrrelay_get_state() && !(edat.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(edat.param.flpmp_flags, FPF_INJONGAS))));

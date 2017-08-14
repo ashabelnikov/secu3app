@@ -199,6 +199,8 @@ typedef struct ecudata_t
 
 #ifdef FUEL_INJECT
  uint16_t inj_pw;                        //!< current value of injector pulse width
+ uint16_t inj_pw_raw;                    //!< current value of injector pulse width without dead time
+ uint16_t inj_dt;                        //!< current value of injector's dead time
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

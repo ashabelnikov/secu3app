@@ -21,8 +21,7 @@
 
 /** \file injector.c
  * \author Alexey A. Shabelnikov
- * Implementation of fuel injector control
- * (Реализация управления топливной форсункой).
+ * Implementation of fuel injectors' control
  */
 
 #ifdef FUEL_INJECT
@@ -32,10 +31,12 @@
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
 #include "port/pgmspace.h"
+#include "camsens.h"
 #include "bitmask.h"
 #include "injector.h"
 #include "ioconfig.h"
 #include "tables.h"
+#include "ecudata.h"
 
 #ifndef AIRTEMP_SENS
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
@@ -85,6 +86,8 @@ typedef struct
 
  volatile uint8_t active_chan;   //!< active channels
  volatile uint8_t mask_chan;     //!< for masking of channels
+
+ volatile uint8_t shrinktime;    //!< flag, indicates that injection time should be reduced: 0 - no changes, 1 - 2 times, 2 - N times (N = number of cylinders)
 }inj_state_t;
 
 /**Describes injector channels*/
@@ -157,6 +160,13 @@ static void set_channels_fs(uint8_t fs_mode)
 {
  uint8_t _t, i = 0, ch = 0, ch2 = fs_mode ? 0 : inj.cyl_number / 2, iss;
  uint8_t idxNum = (inj.num_squirts == inj.cyl_number && !fs_mode) ? ch2 : inj.cyl_number;
+
+ //set flag indicating that injection time must be reduced by 2 or N times (depending on number of cylinders)
+ if (inj.cfg == INJCFG_FULLSEQUENTIAL && !fs_mode)
+  inj.shrinktime = (inj.cyl_number & 1) ? 2 : 1;
+ else
+  inj.shrinktime = 0;
+
  for(; i < inj.cyl_number; ++i)
  {
   iss = (ch + ch2);
@@ -210,6 +220,7 @@ void inject_init_state(void)
  inj.tmr_chan = 0;
  inj.active_chan = 0;
  inj.mask_chan = 0xFF;
+ inj.shrinktime = 0;
  QUEUE_RESET(1);   //head = tail
  QUEUE_RESET(2);   //head = tail
 }
@@ -278,10 +289,10 @@ void inject_set_cyl_number(uint8_t cylnum)
   set_channels_ss(0);                         //semi-sequential mode
  else if (inj.cfg == INJCFG_SEMISEQSEPAR)
   set_channels_fs(0);                         //semi-sequential with separate channels
-/*
+#ifdef PHASE_SENSOR
  else if (inj.cfg == INJCFG_FULLSEQUENTIAL)
-  set_channels_fs(1);                         //full sequential
-*/
+  set_channels_fs(cams_is_ready());             //full sequential
+#endif
  _END_ATOMIC_BLOCK();
 }
 
@@ -293,10 +304,21 @@ void inject_set_num_squirts(uint8_t numsqr)
  _END_ATOMIC_BLOCK();
 }
 
-void inject_set_inj_time(uint16_t time)
+void inject_set_inj_time(uint16_t time, uint16_t dead_time)
 {
- if (time < 16)                               //restrict minimum injection time to 50uS
-  time = 16;
+ //shrink injection time in the forced semi-sequential mode (if cam sensor isn't ready)
+ if (inj.shrinktime == 1)
+  time>>=1;
+ else if (inj.shrinktime == 2)
+ {
+  if (inj.cyl_number == 5)
+   time = ((uint32_t)time * 13107) >> 16;  //divide by 5 (13107 = (1/5)*65536)
+  else if (inj.cyl_number == 3)
+   time = ((uint32_t)time * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
+ }
+
+ time+= dead_time; //apply injector's dead time
+
  time = (time >> 1) - INJ_COMPB_CALIB;        //subtract calibration ticks
  if (0==_AB(time, 0))                         //avoid strange bug which appears when OCR2B is set to the same value as TCNT2
   (_AB(time, 0))++;
@@ -320,10 +342,10 @@ void inject_set_config(uint8_t cfg)
   set_channels_ss(0);                               //semi-sequential mode
  else if (cfg == INJCFG_SEMISEQSEPAR)
   set_channels_fs(0);                               //semi-sequential with separate channels
-/*
+#ifdef PHASE_SENSOR
  else if (cfg == INJCFG_FULLSEQUENTIAL)
-  set_channels_fs(1);                               //full sequential
-*/
+  set_channels_fs(cams_is_ready());                 //full sequential
+#endif
 }
 
 void inject_start_inj(uint8_t chan)
@@ -333,7 +355,7 @@ void inject_start_inj(uint8_t chan)
 
  if (CHECKBIT(inj.squirt_mask, chan))
  {
-  if (inj.cfg < INJCFG_2BANK_ALTERN)
+  if (inj.cfg < INJCFG_2BANK_ALTERN || inj.shrinktime == 2)
   {//central/simultaneous, We use only one timer channel
    //interrupts must be disabled!
    _BEGIN_ATOMIC_BLOCK();
@@ -420,7 +442,7 @@ ISR(TIMER2_COMPB_vect)
  }
  else
  {
-  if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse)
+  if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse || inj.shrinktime == 2)
   {//central/simultaneous
    SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
    CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
@@ -500,5 +522,13 @@ ISR(TIMER0_COMPB_vect)
  }
 }
 
+void inject_set_fullsequential(uint8_t mode)
+{
+ if (inj.cfg == INJCFG_FULLSEQUENTIAL)
+ {
+  set_channels_fs(mode);
+  inject_set_inj_time(edat.inj_pw_raw, edat.inj_dt);
+ }
+}
 
 #endif

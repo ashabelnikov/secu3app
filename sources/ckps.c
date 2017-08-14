@@ -54,14 +54,13 @@
 /**Maximum number of ignition channels */
 #define IGN_CHANNELS_MAX      8
 
-/** Barrier for detecting of missing teeth (барьер для селекции синхрометки) 
+/** Barrier threshold for detecting of missing teeth
  * e.g. for 60-2 crank wheel, p * 2.5
  *      for 36-1 crank wheel, p * 1.5
  */
 #define CKPS_GAP_BARRIER(p) ( ((p) << (ckps.miss_cogs_num==2)) + ((p) >> 1) )
 
-/** number of teeth that will be skipped at the start before synchronization
- * (количество зубьев которое будет пропускаться при старте перед синхронизацией) */
+/** number of teeth that will be skipped at the start of cranking before synchronization */
 #define CKPS_ON_START_SKIP_COGS      5
 
 //Define values for controlling of outputs
@@ -102,7 +101,7 @@
 #define F_IGNIEN    7                 //!< Ignition enabled/disabled
 
 //Additional flags (see flags2 variable)
-#ifdef PHASED_IGNITION
+#if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
  #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
 #endif
 #define F_SPSIGN     2                //!< Sign of the measured stroke period (time between TDCs)
@@ -317,7 +316,7 @@ void ckps_init_state_variables(void)
  ckps.advance_angle = ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = 0;
-#ifdef PHASED_IGNITION
+#if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
  CLEARBIT(flags2, F_CAMISS);
 #endif
  CLEARBIT(flags, F_PNDSPK);
@@ -977,6 +976,9 @@ static uint8_t sync_at_startup(void)
     else
      set_channels_fs(1);     //set full sequential mode
     SETBIT(flags2, F_CAMISS);
+#ifdef FUEL_INJECT
+   inject_set_fullsequential(1);
+#endif
     ckps.starting_mode = 2;
    }
    break;
@@ -1160,7 +1162,7 @@ static void process_ckps_cogs(void)
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
 #endif
-#ifdef PHASED_IGNITION
+#if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
@@ -1170,22 +1172,32 @@ static void process_ckps_cogs(void)
   //Turn on full sequential mode because Cam sensor is OK
   if (!CHECKBIT(flags2, F_CAMISS))
   {
+#ifdef PHASED_IGNITION
    if (CHECKBIT(flags2, F_SINGCH))
     set_channels_sc(); //single channel mode
    else
     set_channels_fs(1);
+#endif
+#ifdef FUEL_INJECT
+   inject_set_fullsequential(1);
+#endif
    SETBIT(flags2, F_CAMISS);
   }
  }
  if (cams_is_error())
  {
-  //Turn off full sequential mode because cam semsor is not OK
+  //Turn off full sequential mode because cam sensor is not OK
   if (CHECKBIT(flags2, F_CAMISS))
   {
+#ifdef PHASED_IGNITION
    if (CHECKBIT(flags2, F_SINGCH))
     set_channels_sc(); //single channel mode
    else
     set_channels_fs(0); //<--valid only for engines with even number of cylinders
+#endif
+#ifdef FUEL_INJECT
+   inject_set_fullsequential(0);
+#endif
    CLEARBIT(flags2, F_CAMISS);
   }
  }

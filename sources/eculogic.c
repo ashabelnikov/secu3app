@@ -63,6 +63,14 @@ void ignlogic_init(void)
 
 #ifdef FUEL_INJECT
 
+/**Limit value of injection PW
+ * \return limited value (16 bit)
+ */
+static uint16_t lim_inj_pw(uint32_t *value)
+{
+ return (*value) > 65535 ? 65535 : (*value);
+}
+
 /** Calculates AE value.
  * \param d Pointer to ECU data structure
  * \return AE value in PW units
@@ -84,6 +92,27 @@ static int32_t calc_acc_enrich(struct ecudata_t* d)
  return (pwnc * aef) >> 7;                         //apply AE factor to the normal conditions PW
 }
 #endif
+
+/** Perform fuel calculations used on idling and work
+ */
+static void fuel_calc(struct ecudata_t* d)
+{
+   uint32_t pw = inj_base_pw(d);
+   pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichemnt factor
+   if (lgs.aftstr_enrich_counter)
+    pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
+   pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
+   pw= (pw * inj_iacmixtcorr_lookup(d)) >> 13;      //apply mixture correction vs IAC
+   pw+= calc_acc_enrich(d);                         //add acceleration enrichment
+   if (((int32_t)pw) < 0)
+    pw = 0;
+   d->inj_pw_raw = lim_inj_pw(&pw);
+   d->inj_dt = inj_dead_time(d);
+   pw+= d->inj_dt;
+   if (d->ie_valve && !d->fc_revlim)
+    d->inj_pw = lim_inj_pw(&pw);
+   else d->inj_pw = 0;
+}
 
 int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 {
@@ -130,8 +159,10 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 #ifdef FUEL_INJECT
    { //PW = CRANKING + DEADTIME
    uint32_t pw = inj_cranking_pw(d);
-   pw+= inj_dead_time(d);
-   d->inj_pw = pw > 65535 ? 65535 : pw;
+   d->inj_pw_raw = lim_inj_pw(&pw);
+   d->inj_dt = inj_dead_time(d);
+   pw+= d->inj_dt;
+   d->inj_pw = lim_inj_pw(&pw);
    d->acceleration = 0; //no acceleration
    }
 #endif
@@ -167,25 +198,14 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
-   uint32_t pw = inj_base_pw(d);
-   pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichemnt factor
-   if (lgs.aftstr_enrich_counter)
-    pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
-   pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
-   pw= (pw * inj_iacmixtcorr_lookup(d)) >> 13;      //apply mixture correction vs IAC
-   pw+= calc_acc_enrich(d);                         //add acceleration enrichment
-   if (((int32_t)pw) < 0)
-    pw = 0;
-   pw+= inj_dead_time(d);
-   if (d->ie_valve && !d->fc_revlim)
-    d->inj_pw = pw > 65535 ? 65535 : pw;
-   else d->inj_pw = 0;
+    fuel_calc(d);
    }
 
    d->corr.inj_timing = CHECKBIT(d->param.inj_flags, INJFLG_USETIMINGMAP) ? inj_timing_lookup(d) : d->param.inj_timing;
 #endif
    break;
 
+  default:
   case EM_WORK: //work mode (load)
    if (!d->sens.carb)//gas pedal released - go in to idling mode
    {
@@ -229,30 +249,10 @@ int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
-   uint32_t pw = inj_base_pw(d);
-   pw = (pw * inj_warmup_en(d)) >> 7;               //apply warmup enrichment factor
-   if (lgs.aftstr_enrich_counter)
-    pw= (pw * (128 + scale_aftstr_enrich(d, lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
-   pw= (pw * (512 + d->corr.lambda)) >> 9;          //apply lambda correction additive factor (signed)
-   pw= (pw * inj_iacmixtcorr_lookup(d)) >> 13;      //apply mixture correction vs IAC
-   pw+= calc_acc_enrich(d);                         //add acceleration enrichment
-   if (((int32_t)pw) < 0)
-    pw = 0;
-   pw+= inj_dead_time(d);
-   if (d->ie_valve && !d->fc_revlim)
-    d->inj_pw = pw > 65535 ? 65535 : pw;
-   else d->inj_pw = 0;
+    fuel_calc(d);
    }
 
    d->corr.inj_timing = CHECKBIT(d->param.inj_flags, INJFLG_USETIMINGMAP) ? inj_timing_lookup(d) : d->param.inj_timing;
-#endif
-
-   break;
-
-  default:  //undefined situation - zero ignition timing
-   angle = 0;
-#ifdef FUEL_INJECT
-   d->inj_pw = 0;
 #endif
    break;
  }

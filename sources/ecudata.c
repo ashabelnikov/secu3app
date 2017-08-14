@@ -108,6 +108,8 @@ void init_ecu_data(void)
  edat.sys_locked = 0; //unlocked
 #ifdef FUEL_INJECT
  edat.inj_pw = 0;
+ edat.inj_pw_raw = 0;
+ edat.inj_dt = 0;
  edat.corr.afr = 0;
  edat.corr.inj_timing = 0;
 #endif

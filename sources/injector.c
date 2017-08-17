@@ -283,16 +283,7 @@ void inject_set_cyl_number(uint8_t cylnum)
  _BEGIN_ATOMIC_BLOCK();
  inj.cyl_number = cylnum;
  calc_squirt_mask();                          //update squirt mask
- if (inj.cfg == INJCFG_2BANK_ALTERN)
-  set_channels_ss(1);                         //2 banks, alternating
- else if (inj.cfg == INJCFG_SEMISEQUENTIAL)
-  set_channels_ss(0);                         //semi-sequential mode
- else if (inj.cfg == INJCFG_SEMISEQSEPAR)
-  set_channels_fs(0);                         //semi-sequential with separate channels
-#ifdef PHASE_SENSOR
- else if (inj.cfg == INJCFG_FULLSEQUENTIAL)
-  set_channels_fs(cams_is_ready());             //full sequential
-#endif
+ inject_set_config(inj.cfg);                  //update inj. config
  _END_ATOMIC_BLOCK();
 }
 

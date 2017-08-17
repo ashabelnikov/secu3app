@@ -1161,8 +1161,7 @@ static void process_ckps_cogs(void)
 #ifdef PHASE_SENSOR
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
-#endif
-#if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
+#if defined(PHASED_IGNITION) || defined(FUEL_INJECT)
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
@@ -1201,6 +1200,7 @@ static void process_ckps_cogs(void)
    CLEARBIT(flags2, F_CAMISS);
   }
  }
+#endif
 #endif
 }
 

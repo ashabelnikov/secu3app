@@ -73,6 +73,9 @@ void cams_reset_error(void);
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_is_event_r(void);
 
+/**Enable/disable cam sensor processing*/
+void cams_enable_cam(uint8_t enable);
+
 #endif //PHASE_SENSOR
 
 #endif //_CAMSENS_H_

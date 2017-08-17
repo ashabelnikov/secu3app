@@ -87,6 +87,9 @@ void process_uart_interface(struct ecudata_t* d)
    case INJCTR_PAR:
     inject_set_num_squirts(d->param.inj_config & 0xF);  //number of squirts
     inject_set_config(d->param.inj_config >> 4);        //type of injection
+#if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
+    cams_enable_cam((d->param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
+#endif
    case ACCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);

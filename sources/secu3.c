@@ -289,6 +289,9 @@ void init_modules(void)
  inject_set_num_squirts(edat.param.inj_config & 0xF);
  inject_set_fuelcut(!edat.sys_locked);
  inject_set_config(edat.param.inj_config >> 4);
+#if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
+ cams_enable_cam((edat.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
+#endif
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  lambda_init_state();

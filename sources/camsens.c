@@ -70,6 +70,7 @@ typedef struct
  uint16_t cam_err_threshold;          //!< error threshold in teeth
  volatile uint16_t cam_err_counter;   //!< teeth counter
  volatile uint8_t cam_event;          //!< flag which indicates Hall cam sensor's event
+ volatile uint8_t cam_enable;         //!< flag, indicates that cam sensor processing is enabled
 #endif
 
  //VSS sensor only stuff
@@ -111,6 +112,7 @@ void cams_init_state(void)
  cams_init_state_variables();
 #ifdef PHASE_SENSOR
  camstate.cam_error = 0; //no errors
+ camstate.cam_enable = 1; //enabled by default
 #endif
 #ifdef SPEED_SENSOR
  camstate.spdsens_counter = 0;
@@ -363,8 +365,8 @@ void cams_set_error_threshold(uint16_t threshold)
 
 void cams_detect_edge(void)
 {
- if (!CHECKBIT(flags, F_USECAM))
-  return; //do nothing if cam sensor is not mapped to PS or remapped to REF_S
+ if (!CHECKBIT(flags, F_USECAM) || !camstate.cam_enable)
+  return; //do nothing if cam sensor is not mapped to PS or remapped to REF_S or not used currently
 
  if (++camstate.cam_err_counter > camstate.cam_err_threshold)
  {
@@ -397,6 +399,19 @@ uint8_t cams_is_event_r(void)
  camstate.cam_event = 0; //reset event flag
  _END_ATOMIC_BLOCK();
  return result;
+}
+
+void cams_enable_cam(uint8_t enable)
+{
+ camstate.cam_enable = enable;
+ if (camstate.ref_s_inpalt == 3) //cam sensor on the REF_S
+ {
+  WRITEBIT(EIMSK, INT0, enable);
+ }
+ else if ((camstate.ps_inpalt == 1)) //cam sensor on the PS
+ {
+  WRITEBIT(EIMSK, INT1, enable);
+ }
 }
 #endif //PHASE_SENSOR
 

@@ -100,6 +100,9 @@
 #define F_IGNIEN    7                 //!< Ignition enabled/disabled
 
 //Additional flags (see flags2 variable)
+#if defined(PHASE_SENSOR) && defined(FUEL_INJECT)
+ #define F_CAMISS    1                //!< Indicates that system has already obtained event from a cam sensor
+#endif
 #define F_CALTIM     2                //!< Indicates that time calculation is started before the spark
 #define F_SPSIGN     3                //!< Sign of the measured stroke period (time between TDCs)
 
@@ -244,6 +247,9 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
+#if defined(PHASE_SENSOR) && defined(FUEL_INJECT)
+ CLEARBIT(flags2, F_CAMISS);
+#endif
  CLEARBIT(flags2, F_CALTIM);
  CLEARBIT(flags2, F_SPSIGN);
 #ifdef FUEL_INJECT
@@ -875,6 +881,30 @@ static void process_ckps_cogs(void)
 #ifdef PHASE_SENSOR
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
+#ifdef FUEL_INJECT
+ if (cams_is_event_r())
+ {
+  //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
+  if (ckps.cog < ckps.wheel_cogs_nump1)
+   ckps.cog+= ckps.wheel_cogs_num;
+
+  //Turn on full sequential mode because Cam sensor is OK
+  if (!CHECKBIT(flags2, F_CAMISS))
+  {
+   inject_set_fullsequential(1);
+   SETBIT(flags2, F_CAMISS);
+  }
+ }
+ if (cams_is_error())
+ {
+  //Turn off full sequential mode because cam sensor is not OK
+  if (CHECKBIT(flags2, F_CAMISS))
+  {
+   inject_set_fullsequential(0);
+   CLEARBIT(flags2, F_CAMISS);
+  }
+ }
+#endif
 #endif
 
  force_pending_spark();

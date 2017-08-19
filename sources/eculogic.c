@@ -95,6 +95,7 @@ static int32_t calc_acc_enrich(struct ecudata_t* d)
 
 /** Perform fuel calculations used on idling and work
  */
+#ifdef FUEL_INJECT
 static void fuel_calc(struct ecudata_t* d)
 {
    uint32_t pw = inj_base_pw(d);
@@ -113,6 +114,7 @@ static void fuel_calc(struct ecudata_t* d)
     d->inj_pw = lim_inj_pw(&pw);
    else d->inj_pw = 0;
 }
+#endif
 
 int16_t ignlogic_system_state_machine(struct ecudata_t* d)
 {

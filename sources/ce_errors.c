@@ -70,7 +70,7 @@ void ce_clear_error(uint8_t error)
 
 uint8_t ce_is_error(uint8_t error)
 {
- return CHECKBIT(ce_state.ecuerrors, error);
+ return !!CHECKBIT(ce_state.ecuerrors, error);
 }
 
 /** Internal function. Contains checking logic 

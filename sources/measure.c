@@ -257,7 +257,7 @@ void meas_average_measured_values(struct ecudata_t* d, ce_sett_t _PGM *cesd)
 
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
-  d->sens.air_temp = ats_lookup(ce_is_error(ECUERROR_ADD_I2_SENSOR) ? cesd->add_i2_v_em : d->sens.add_i2_raw);   //ADD_IO2 input
+  d->sens.air_temp = ats_lookup(d->sens.add_i2);   //ADD_I2 input selected as MAT sensor
  else
   d->sens.air_temp = 0; //input is not selected
 #endif

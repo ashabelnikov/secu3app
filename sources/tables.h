@@ -125,6 +125,11 @@
 #define INJCFG_FULLSEQUENTIAL           4           //!< Full-sequential injection
 #define INJCFG_SEMISEQSEPAR             5           //!< semi-sequential injection with separate channels
 
+//Inj.pulse origin
+#define INJANGLESPEC_BEGIN              0           //!< Beginning of pulse
+#define INJANGLESPEC_MIDDLE             1           //!< Middle of pulse
+#define INJANGLESPEC_END                2           //!< End of pulse
+
 //Injection flags (see inj_flags variable)
 #define INJFLG_USETIMINGMAP             0           //!< Use injection timing map instead of simple constant
 
@@ -489,10 +494,12 @@ typedef struct params_t
 
   uint16_t  vss_period_dist;             //!< VSS period distance im meters (value * 32768)
 
+  uint8_t inj_anglespec;                 //!< Specifies how inj.timing coupled with inj.pulse (beginning, middle, end)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[42];
+  uint8_t  reserved[41];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

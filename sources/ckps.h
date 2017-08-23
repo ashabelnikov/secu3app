@@ -178,8 +178,10 @@ void ckps_set_degrees_btdc(int16_t degrees_btdc);
 #ifdef FUEL_INJECT
 /** Set injection timing relatively to TDC (value in crankshaft degrees BTDC)
  * \param phase Injection timing in degrees of wheel * ANGLE_MULTIPLIER
+ * \param pw Current value of inj. PW
+ * \param mode 0, 1, 2
  */
-void ckps_set_inj_timing(int16_t phase);
+void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode);
 #endif
 
 #endif //_CKPS_H_

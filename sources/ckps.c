@@ -767,10 +767,24 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 }
 
 #ifdef FUEL_INJECT
-void ckps_set_inj_timing(int16_t phase)
+void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
 {
  uint8_t _t, i;
  //TODO: We can do some optimization in the future - set timing only if it is not equal to current (already set one)
+
+ //Apply selected injection pulse option: begin of squirt, middle of squirt or end of squirt
+ if (mode > INJANGLESPEC_BEGIN)
+ {
+  //convert delay to angle (value * ANGLE_MULTIPLIER). TODO: how to escape from slow division?
+  uint16_t pw_angle = (((uint32_t)pw) * ckps.degrees_per_cog) / ckps.period_curr;
+  if (mode == INJANGLESPEC_MIDDLE)
+   pw_angle>>= 1;
+  //apply, rotate angle if need
+  phase-=pw_angle;
+  if (phase < 0)
+   phase+=ANGLE_MAGNITUDE(720.0);
+ }
+ //---------------------------------------------------------
 
  if (phase > ANGLE_MAGNITUDE(720.0))
   phase-= ANGLE_MAGNITUDE(720.0);     //phase is periodical
@@ -1099,7 +1113,7 @@ static void process_ckps_cogs(void)
    //control injection timing using teeth and COMPB timer channel
    if (!chanstate[i].inj_skipth)
    {
-    uint16_t diff = _normalize_angle(((int16_t)chanstate[i].inj_angle_safe) -  ((int16_t)(ckps.cog * ckps.degrees_per_cog)));
+    uint16_t diff = _normalize_angle(((int16_t)chanstate[i].inj_angle_safe) - ((int16_t)(ckps.cog * ckps.degrees_per_cog)));
     if (diff <= (ckps.degrees_per_cog << 1))
     {
      ckps.inj_chidx = i;  //remember number of channel to be fired

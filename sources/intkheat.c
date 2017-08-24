@@ -61,9 +61,9 @@ void intkheat_init(void)
  ih.cog_changed = 0;
 }
 
-void intkheat_control(struct ecudata_t *d)
+void intkheat_control(void)
 {
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
  {
   IOCFG_INIT(IOP_INTK_HEAT, 0);
   return;
@@ -72,7 +72,7 @@ void intkheat_control(struct ecudata_t *d)
  switch(ih.state)
  {
   case 0: //turn on heating and start timer
-   IOCFG_SET(IOP_INTK_HEAT, (d->sens.temperat < TEMPERATURE_MAGNITUDE(HEATING_T_OFF)));   // control heating
+   IOCFG_SET(IOP_INTK_HEAT, (d.sens.temperat < TEMPERATURE_MAGNITUDE(HEATING_T_OFF)));   // control heating
    ih.strt_t1 = s_timer_gtc();
    ih.state = 1;
    break;
@@ -86,9 +86,9 @@ void intkheat_control(struct ecudata_t *d)
    break;
 
   case 2: //control heating if engine is running, otherwise turn it off
-   if (d->st_block)
+   if (d.st_block)
    { //engine is running
-    IOCFG_SET(IOP_INTK_HEAT, (d->sens.temperat < TEMPERATURE_MAGNITUDE(HEATING_T_OFF)));  // control heating
+    IOCFG_SET(IOP_INTK_HEAT, (d.sens.temperat < TEMPERATURE_MAGNITUDE(HEATING_T_OFF)));  // control heating
    }
    else
     IOCFG_SET(IOP_INTK_HEAT, 0);

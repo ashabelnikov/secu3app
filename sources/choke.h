@@ -31,8 +31,6 @@
 
 #include <stdint.h>
 
-struct ecudata_t;
-
 /** Initialization of used I/O ports */
 void choke_init_ports(void);
 
@@ -40,9 +38,9 @@ void choke_init_ports(void);
 void choke_init(void);
 
 /** Does control of choke
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void choke_control(struct ecudata_t* d);
+void choke_control(void);
 
 #ifdef SM_CONTROL
 /** Used in power management
@@ -51,9 +49,9 @@ void choke_control(struct ecudata_t* d);
 uint8_t choke_is_ready(void);
 
 /**Init stepper motor
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void choke_init_motor(struct ecudata_t* d);
+void choke_init_motor(void);
 #endif
 
 #endif

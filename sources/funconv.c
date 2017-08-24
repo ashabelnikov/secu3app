@@ -44,29 +44,29 @@
 //For use with fn_dat pointer, because it can point either to FLASH or RAM
 #ifdef REALTIME_TABLES
  /**Macro for abstraction under getting bytes from RAM or FLASH (RAM version) */
- #define _GB(x) ((int8_t)d->mm_ptr8(secu3_offsetof(struct f_data_t, x)))
- #define _GW(x) ((int16_t)d->mm_ptr16(secu3_offsetof(struct f_data_t, x)))
- #define _GBU(x) (d->mm_ptr8(secu3_offsetof(struct f_data_t, x)))
- #define _GWU(x) (d->mm_ptr16(secu3_offsetof(struct f_data_t, x)))
- #define _GWU12(x,i,j) (d->mm_ptr12(secu3_offsetof(struct f_data_t, x), (i*16+j) )) //note: hard coded size of array
+ #define _GB(x) ((int8_t)d.mm_ptr8(secu3_offsetof(struct f_data_t, x)))
+ #define _GW(x) ((int16_t)d.mm_ptr16(secu3_offsetof(struct f_data_t, x)))
+ #define _GBU(x) (d.mm_ptr8(secu3_offsetof(struct f_data_t, x)))
+ #define _GWU(x) (d.mm_ptr16(secu3_offsetof(struct f_data_t, x)))
+ #define _GWU12(x,i,j) (d.mm_ptr12(secu3_offsetof(struct f_data_t, x), (i*16+j) )) //note: hard coded size of array
 #else
- #define _GB(x) ((int8_t)(PGM_GET_BYTE(&d->fn_dat->x)))    //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
- #define _GW(x) ((int16_t)(PGM_GET_WORD(&d->fn_dat->x)))   //!< Macro for abstraction under getting words from RAM or FLASH (FLASH version)
- #define _GBU(x) (PGM_GET_BYTE(&d->fn_dat->x))             //!< Unsigned version of _GB
- #define _GWU(x) (PGM_GET_WORD(&d->fn_dat->x))             //!< Unsigned version of _GW
+ #define _GB(x) ((int8_t)(PGM_GET_BYTE(&d.fn_dat->x)))    //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
+ #define _GW(x) ((int16_t)(PGM_GET_WORD(&d.fn_dat->x)))   //!< Macro for abstraction under getting words from RAM or FLASH (FLASH version)
+ #define _GBU(x) (PGM_GET_BYTE(&d.fn_dat->x))             //!< Unsigned version of _GB
+ #define _GWU(x) (PGM_GET_WORD(&d.fn_dat->x))             //!< Unsigned version of _GW
  #define _GWU12(x,i,j) (mm_get_w12_pgm(secu3_offsetof(struct f_data_t, x), (i*16+j))) //note: hard coded size of array
 #endif
 
 // Реализует функцию УОЗ от оборотов для холостого хода
 // Возвращает значение угла опережения в целом виде * 32. 2 * 16 = 32.
-int16_t idling_function(struct ecudata_t* d)
+int16_t idling_function(void)
 {
  int8_t i;
- int16_t rpm = d->sens.inst_frq;
+ int16_t rpm = d.sens.inst_frq;
 
  //находим узлы интерполяции, вводим ограничение если обороты выходят за пределы
  for(i = F_IDL_POINTS-2; i >= 0; i--)
-  if (d->sens.inst_frq >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i])) break;
+  if (d.sens.inst_frq >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[i])) break;
 
  if (i < 0)  {i = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
  if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_IDL_POINTS-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_IDL_POINTS-1]);
@@ -78,9 +78,9 @@ int16_t idling_function(struct ecudata_t* d)
 
 // Реализует функцию УОЗ от оборотов для пуска двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t start_function(struct ecudata_t* d)
+int16_t start_function(void)
 {
- int16_t i, i1, rpm = d->sens.inst_frq;
+ int16_t i, i1, rpm = d.sens.inst_frq;
 
  if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов
 
@@ -94,17 +94,17 @@ int16_t start_function(struct ecudata_t* d)
 
 // Реализует функцию УОЗ от оборотов(мин-1) и нагрузки(кПа) для рабочего режима двигателя
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
+int16_t work_function(uint8_t i_update_airflow_only)
 {
- int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
+ int16_t  gradient, discharge, rpm = d.sens.inst_frq, l;
  int8_t f, fp1, lp1;
 
- discharge = (d->param.map_upper_pressure - d->sens.map);
+ discharge = (d.param.map_upper_pressure - d.sens.map);
  if (discharge < 0) discharge = 0;
 
  //map_upper_pressure - value of the upper pressure
  //map_lower_pressure - value of the lower pressure
- gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (F_WRK_POINTS_L-1); //divide by number of points on the MAP axis - 1
+ gradient = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (F_WRK_POINTS_L-1); //divide by number of points on the MAP axis - 1
  if (gradient < 1)
   gradient = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
  l = (discharge / gradient);
@@ -115,7 +115,7 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
   lp1 = l + 1;
 
  //update air flow variable
- d->airflow = 16 - l;
+ d.airflow = 16 - l;
 
  if (i_update_airflow_only)
   return 0; //выходим если вызвавший указал что мы должны обновить только расход воздуха
@@ -142,11 +142,11 @@ int16_t work_function(struct ecudata_t* d, uint8_t i_update_airflow_only)
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t coolant_function(struct ecudata_t* d)
+int16_t coolant_function(void)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 0;   //нет коррекции, если блок неукомплектован ДТОЖ-ом
 
  //-30 - минимальное значение температуры
@@ -184,7 +184,7 @@ void idling_regulator_init(void)
 
 //Интегральный регулятор (интегрирование по выходу) для регулирования оборотов ХХ углом опережения зажигания
 // Возвращает значение угла опережения в целом виде * 32.
-int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
+int16_t idling_pregulator(volatile s_timer8_t* io_timer)
 {
  int16_t error,factor,idling_rpm;
  //зона "подхвата" регулятора при возвращени двигателя из рабочего режима в ХХ
@@ -193,26 +193,26 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
- if (!CHECKBIT(d->param.idl_flags, IRF_USE_REGULATOR) || (d->sens.temperat < d->param.idlreg_turn_on_temp && d->param.tmp_use
+ if (!CHECKBIT(d.param.idl_flags, IRF_USE_REGULATOR) || (d.sens.temperat < d.param.idlreg_turn_on_temp && d.param.tmp_use
 #ifdef FUEL_INJECT
-  && d->param.idling_rpm  //Don't use temperature turn on threshold if lookup table used
+  && d.param.idling_rpm  //Don't use temperature turn on threshold if lookup table used
 #endif
     ))
   return 0;
 
  //don't use regulator on gas if specified in parameters
- if (d->sens.gas && !CHECKBIT(d->param.idl_flags, IRF_USE_REGONGAS))
+ if (d.sens.gas && !CHECKBIT(d.param.idl_flags, IRF_USE_REGONGAS))
   return 0;
 
 #ifdef FUEL_INJECT
  //if param.idling_rpm == 0 then use target RPM from lookup table
- idling_rpm = d->param.idling_rpm ? d->param.idling_rpm : inj_idling_rpm(d);
+ idling_rpm = d.param.idling_rpm ? d.param.idling_rpm : inj_idling_rpm();
 #else
- idling_rpm = d->param.idling_rpm;
+ idling_rpm = d.param.idling_rpm;
 #endif
 
  //regulator will be turned on with delay
- if (d->sens.frequen < (idling_rpm + capture_range))
+ if (d.sens.frequen < (idling_rpm + capture_range))
  {
   switch(idl_prstate.enter_state)
   {
@@ -235,29 +235,29 @@ int16_t idling_pregulator(struct ecudata_t* d, volatile s_timer8_t* io_timer)
 
  //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне
  //нечувствительности, то используем расчитанную ранее коррекцию.
- error = idling_rpm - d->sens.frequen;
+ error = idling_rpm - d.sens.frequen;
  restrict_value_to(&error, -200, 200);
- if (abs(error) <= d->param.MINEFR)
+ if (abs(error) <= d.param.MINEFR)
   return idl_prstate.output_state >> IRUSDIV;
 
  //select corresponding coefficient depending on sign of error
  if (error > 0)
-  factor = d->param.ifac1;
+  factor = d.param.ifac1;
  else
-  factor = d->param.ifac2;
+  factor = d.param.ifac2;
 
  //update regulator's value only by timer events
  if (s_timer_is_action(*io_timer))
  {
   s_timer_set(*io_timer, IDLE_PERIOD_TIME_VALUE);
 
-  if (CHECKBIT(d->param.idl_flags, IRF_PREG_MODE))
+  if (CHECKBIT(d.param.idl_flags, IRF_PREG_MODE))
    idl_prstate.output_state = (((int32_t)error) * factor) >> 8; //P-regulator mode
   else
    idl_prstate.output_state+= (((int32_t)error) * factor) >> 8; //factor multiplied by 256
  }
  //limit correction by min and max values, specified by user
- restrict_value_to(&idl_prstate.output_state, d->param.idlreg_min_angle << IRUSDIV, d->param.idlreg_max_angle << IRUSDIV);
+ restrict_value_to(&idl_prstate.output_state, d.param.idlreg_min_angle << IRUSDIV, d.param.idlreg_max_angle << IRUSDIV);
 
  return idl_prstate.output_state >> IRUSDIV;
 }
@@ -292,9 +292,9 @@ int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_stat
 // Реализует функцию коэффициента усиления аттенюатора от оборотов
 // Возвращает код 0...63 соответсутвующий определенному коэфф. усиления
 //(см. HIP9011 datasheet).
-uint8_t knock_attenuator_function(struct ecudata_t* d)
+uint8_t knock_attenuator_function()
 {
- int16_t i, i1, rpm = d->sens.inst_frq;
+ int16_t i, i1, rpm = d.sens.inst_frq;
 
  if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов по оси
 
@@ -310,9 +310,9 @@ uint8_t knock_attenuator_function(struct ecudata_t* d)
 }
 
 #ifdef DWELL_CONTROL
-uint16_t accumulation_time(struct ecudata_t* d)
+uint16_t accumulation_time(void)
 {
- int16_t i, i1, voltage = d->sens.voltage;
+ int16_t i, i1, voltage = d.sens.voltage;
 
  if (voltage < VOLTAGE_MAGNITUDE(5.4))
   voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - минимальное значение напряжения в таблице предусмотренной для 12В бортовой сети
@@ -359,11 +359,11 @@ int16_t thermistor_lookup(uint16_t adcvalue)
 #endif
 
 #ifdef SM_CONTROL
-uint8_t choke_closing_lookup(struct ecudata_t* d, int16_t* p_prev_temp)
+uint8_t choke_closing_lookup(int16_t* p_prev_temp)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 0;   //блок не укомплектован ДТОЖ-ом
 
  //if difference between current and previous temperature values is less than +/-0.5,
@@ -408,11 +408,11 @@ void chokerpm_regulator_init(void)
  choke_regstate.int_state = 0;
 }
 
-int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
+int16_t choke_rpm_regulator(int16_t* p_prev_corr)
 {
- int16_t error, rpm, t = d->sens.temperat;
+ int16_t error, rpm, t = d.sens.temperat;
 
- if (0==d->param.choke_rpm[0])
+ if (0==d.param.choke_rpm[0])
  {
   *p_prev_corr = 0;
   return 0; //regulator is turned off, return zero correction
@@ -423,23 +423,23 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
  restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(70));
 
  //calculate target RPM value for regulator
- rpm = simple_interpolation(t, d->param.choke_rpm[0], d->param.choke_rpm[1],
+ rpm = simple_interpolation(t, d.param.choke_rpm[0], d.param.choke_rpm[1],
  TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(75), 4) >> 2;
 
- error = rpm - d->sens.frequen;
+ error = rpm - d.sens.frequen;
  if (abs(error) <= 50)   //dead band is +/-50 RPM
   return *p_prev_corr;
 
  choke_regstate.int_state+= error >> 2; //update integrator's state
  restrict_value_to(&choke_regstate.int_state, -28000, 28000); //restrict integrаtor output
 
- *p_prev_corr = (((int32_t)d->param.choke_rpm_if) * choke_regstate.int_state) >> 12; //additional 4 shift bits to reduce regulator's influence
+ *p_prev_corr = (((int32_t)d.param.choke_rpm_if) * choke_regstate.int_state) >> 12; //additional 4 shift bits to reduce regulator's influence
 /* if (0)
  {
   #define _PROPFACT(x) ((int16_t)(x * 8))
   (*p_prev_corr)+= (error * _PROPFACT(0.5)) >> 3; //proportional part
  }*/
- restrict_value_to(p_prev_corr, -d->param.sm_steps, d->param.sm_steps); //range must be: +/- d->param.sm_steps
+ restrict_value_to(p_prev_corr, -d.param.sm_steps, d.param.sm_steps); //range must be: +/- d.param.sm_steps
 
  return *p_prev_corr;
 }
@@ -448,9 +448,9 @@ int16_t choke_rpm_regulator(struct ecudata_t* d, int16_t* p_prev_corr)
 #ifdef AIRTEMP_SENS
 //Реализует функцию коррекции УОЗ по температуре воздуха(°C)
 // Возвращает значение угла опережения в целом виде * 32
-int16_t airtemp_function(struct ecudata_t* d)
+int16_t airtemp_function(void)
 {
- int16_t i, i1, t = d->sens.air_temp;
+ int16_t i, i1, t = d.sens.air_temp;
 
  if (!IOCFG_CHECK(IOP_AIR_TEMP))
   return 0;   //do not use correcton if air temperature sensor is turned off
@@ -495,11 +495,11 @@ int16_t ats_lookup(uint16_t adcvalue)
 
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-uint16_t inj_cranking_pw(struct ecudata_t* d)
+uint16_t inj_cranking_pw(void)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
  //-30 - minimum value of temperature corresponding to the first point in table
@@ -524,10 +524,10 @@ uint16_t inj_cranking_pw(struct ecudata_t* d)
  * \param d Pointer to ECU data structure
  * \return corrected MAT value (temperature units, Celsius)
  */
-static int16_t inj_corrected_mat(struct ecudata_t* d)
+static int16_t inj_corrected_mat(void)
 {
  int16_t i, i1; uint16_t x;
- uint32_t x_raw = ((int32_t)d->sens.inst_frq * d->sens.map) >> (6+5); //value / 32
+ uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.sens.map) >> (6+5); //value / 32
  x = (x_raw > 65535) ? 65535 : x_raw;
 
  //air flow value at the start of axis
@@ -555,19 +555,19 @@ static int16_t inj_corrected_mat(struct ecudata_t* d)
 
  //Corrected MAT = (CTS - IAT) * coefficient(load*rpm) + IAT,
  //at this point coefficient is multiplied by 16384
- return (int16_t)(((int32_t)(d->sens.temperat - d->sens.air_temp) * coeff) >> (13+1)) + d->sens.air_temp;
+ return (int16_t)(((int32_t)(d.sens.temperat - d.sens.air_temp) * coeff) >> (13+1)) + d.sens.air_temp;
 }
 
-uint16_t inj_base_pw(struct ecudata_t* d)
+uint16_t inj_base_pw(void)
 {
- int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
+ int16_t  gradient, discharge, rpm = d.sens.inst_frq, l, afr;
  int8_t f, fp1, lp1;
 
  //calculate lookup table indexes. VE and AFR tables have same size
- discharge = (d->param.map_upper_pressure - d->sens.map);
+ discharge = (d.param.map_upper_pressure - d.sens.map);
  if (discharge < 0) discharge = 0;
 
- gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (INJ_VE_POINTS_L-1);
+ gradient = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (INJ_VE_POINTS_L-1);
  if (gradient < 1)
   gradient = 1;
  l = (discharge / gradient);
@@ -589,12 +589,12 @@ uint16_t inj_base_pw(struct ecudata_t* d)
  //Note that inj_sd_igl_const constant must not exceed 524288
 
  uint8_t nsht = 0; //no division
- if (d->sens.map > PRESSURE_MAGNITUDE(250.0))
+ if (d.sens.map > PRESSURE_MAGNITUDE(250.0))
   nsht = 2;        //pressure will be divided by 4
- else if (d->sens.map > PRESSURE_MAGNITUDE(125.0))
+ else if (d.sens.map > PRESSURE_MAGNITUDE(125.0))
   nsht = 1;        //pressure will be devided by 2
 
- uint32_t pw32 = ((uint32_t)(d->sens.map >> nsht) * d->param.inj_sd_igl_const) / (inj_corrected_mat(d) + TEMPERATURE_MAGNITUDE(273.15));
+ uint32_t pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
 
  pw32>>=(4-nsht);  //after this shift pw32 value is basic pulse width, nsht compensates previous divide of MAP
 
@@ -624,15 +624,15 @@ uint16_t inj_base_pw(struct ecudata_t* d)
 
  pw32=(pw32 * nr_1x_afr(afr << 2)) >> 15;
 
- d->corr.afr = afr >> 1;     //update value of AFR
+ d.corr.afr = afr >> 1;     //update value of AFR
 
  //return restricted value (16 bit)
  return ((pw32 > 65535) ? 65535 : pw32);
 }
 
-uint16_t inj_dead_time(struct ecudata_t* d)
+uint16_t inj_dead_time(void)
 {
- int16_t i, i1, voltage = d->sens.voltage;
+ int16_t i, i1, voltage = d.sens.voltage;
 
  if (voltage < VOLTAGE_MAGNITUDE(5.4))
   voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - minimum voltage value corresponding to 1st value in table for 12V board voltage
@@ -646,11 +646,11 @@ uint16_t inj_dead_time(struct ecudata_t* d)
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
-uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mode)
+uint8_t inj_iac_pos_lookup(int16_t* p_prev_temp, uint8_t mode)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 0;   //блок не укомплектован ДТОЖ-ом
 
  //if difference between current and previous temperature values is less than +/-0.5,
@@ -678,17 +678,17 @@ uint8_t inj_iac_pos_lookup(struct ecudata_t* d, int16_t* p_prev_temp, uint8_t mo
    (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
-int16_t inj_timing_lookup(struct ecudata_t* d)
+int16_t inj_timing_lookup(void)
 {
- int16_t  gradient, discharge, rpm = d->sens.inst_frq, l;
+ int16_t  gradient, discharge, rpm = d.sens.inst_frq, l;
  int8_t f, fp1, lp1;
 
- discharge = (d->param.map_upper_pressure - d->sens.map);
+ discharge = (d.param.map_upper_pressure - d.sens.map);
  if (discharge < 0) discharge = 0;
 
  //map_upper_pressure - value of the upper pressure
  //map_lower_pressure - value of the lower pressure
- gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (INJ_VE_POINTS_L-1); //divide by number of points on the MAP axis - 1
+ gradient = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (INJ_VE_POINTS_L-1); //divide by number of points on the MAP axis - 1
  if (gradient < 1)
   gradient = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
  l = (discharge / gradient);
@@ -721,11 +721,11 @@ int16_t inj_timing_lookup(struct ecudata_t* d)
 #endif //FUEL_INJECT
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-uint8_t inj_aftstr_en(struct ecudata_t* d)
+uint8_t inj_aftstr_en(void)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
 
  //-30 - минимальное значение температуры
@@ -742,11 +742,11 @@ uint8_t inj_aftstr_en(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
-uint8_t inj_warmup_en(struct ecudata_t* d)
+uint8_t inj_warmup_en(void)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
 
  //-30 - минимальное значение температуры
@@ -763,13 +763,13 @@ uint8_t inj_warmup_en(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
-int16_t inj_ae_tps_lookup(struct ecudata_t* d)
+int16_t inj_ae_tps_lookup(void)
 {
  int8_t i;
- int16_t tpsdot = d->sens.tpsdot;  //%/s
+ int16_t tpsdot = d.sens.tpsdot;  //%/s
 
  for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
-  if (d->sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
+  if (d.sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
 
  if (i < 0)  {i = 0; tpsdot = (int16_t)_GB(inj_ae_tps_bins[0])*10;}
  if (tpsdot > ((int16_t)_GB(inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE-1])*10)) tpsdot = ((int16_t)_GB(inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE-1])*10);
@@ -779,13 +779,13 @@ int16_t inj_ae_tps_lookup(struct ecudata_t* d)
              (int16_t)_GB(inj_ae_tps_bins[i])*10,(int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]))*10, 164) >> 7; //*1.28, so output value will be x 128
 }
 
-uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
+uint8_t inj_ae_rpm_lookup(void)
 {
  int8_t i;
- int16_t rpm = d->sens.inst_frq; //min-1
+ int16_t rpm = d.sens.inst_frq; //min-1
 
  for(i = INJ_AE_RPM_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
-  if (d->sens.inst_frq >= _GBU(inj_ae_rpm_bins[i])*100) break;
+  if (d.sens.inst_frq >= _GBU(inj_ae_rpm_bins[i])*100) break;
 
  if (i < 0)  {i = 0; rpm = _GBU(inj_ae_rpm_bins[0])*100;}
  if (rpm > _GBU(inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE-1])*100) rpm = _GBU(inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE-1])*100;
@@ -797,11 +797,11 @@ uint8_t inj_ae_rpm_lookup(struct ecudata_t* d)
 #endif
 
 #ifdef FUEL_INJECT
-uint16_t inj_ae_clt_corr(struct ecudata_t* d)
+uint16_t inj_ae_clt_corr(void)
 {
- int16_t t = d->sens.temperat; //clt
+ int16_t t = d.sens.temperat; //clt
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 128;   //coolant temperature sensor is not enabled (or not installed), no correction
 
  //-30 - temperature when correction factor is as specified by inj_ae_coldacc_mult
@@ -809,30 +809,30 @@ uint16_t inj_ae_clt_corr(struct ecudata_t* d)
  restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70));
 
  return simple_interpolation(t,
-             ((int16_t)(d->param.inj_ae_coldacc_mult))+128, 128,
+             ((int16_t)(d.param.inj_ae_coldacc_mult))+128, 128,
              TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 32) >> 5;
 }
 
-uint16_t inj_prime_pw(struct ecudata_t* d)
+uint16_t inj_prime_pw(void)
 {
- int16_t t = d->sens.temperat; //clt
+ int16_t t = d.sens.temperat; //clt
 
- if (!d->param.tmp_use)
-  return d->param.inj_prime_hot;   //coolant temperature sensor is not enabled (or not installed), use hot PW
+ if (!d.param.tmp_use)
+  return d.param.inj_prime_hot;   //coolant temperature sensor is not enabled (or not installed), use hot PW
 
  //-30 - temperature for "cold" PW
  // 70 - temperature for "hot" PW
  restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70));
 
- return simple_interpolation(t, d->param.inj_prime_cold, d->param.inj_prime_hot,
+ return simple_interpolation(t, d.param.inj_prime_cold, d.param.inj_prime_hot,
              TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 1);
 }
 
-uint16_t inj_idling_rpm(struct ecudata_t* d)
+uint16_t inj_idling_rpm(void)
 {
- int16_t i, i1, t = d->sens.temperat;
+ int16_t i, i1, t = d.sens.temperat;
 
- if (!d->param.tmp_use)
+ if (!d.param.tmp_use)
   return 900;   //coolant temperature sensor is not enabled (or not installed)
 
  //-30 - minimal value of temperature on the horizontal axis
@@ -849,7 +849,7 @@ uint16_t inj_idling_rpm(struct ecudata_t* d)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
 }
 
-uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t targ_rpm)
+uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
  //if targ_map == 0, then do not use load component
@@ -858,8 +858,8 @@ uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t ta
  //normalize values (function argument components)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
- int16_t dload = (((int32_t)abs(d->sens.map - targ_map) * (int16_t)128 * k_load) / (d->param.map_upper_pressure - d->param.map_lower_pressure)) >> 2;
- int16_t drpm = (((int32_t)abs(d->sens.inst_frq - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
+ int16_t dload = (((int32_t)abs(d.sens.map - targ_map) * (int16_t)128 * k_load) / (d.param.map_upper_pressure - d.param.map_lower_pressure)) >> 2;
+ int16_t drpm = (((int32_t)abs(d.sens.inst_frq - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)
  int16_t i, i1, R = ui32_sqrt(((int32_t)dload * dload) + ((int32_t)drpm * drpm));
@@ -876,9 +876,9 @@ uint16_t inj_idlreg_rigidity(struct ecudata_t* d, uint16_t targ_map, uint16_t ta
         (i * RAD_MAG(0.1428)), RAD_MAG(0.1428), 8) >> 3;
 }
 
-uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d)
+uint16_t inj_iacmixtcorr_lookup(void)
 {
- int16_t i, i1, x = d->choke_pos << 6; //value * 128
+ int16_t i, i1, x = d.choke_pos << 6; //value * 128
 
  //IAC pos. value at the start of axis
  uint16_t x_start = _GW(inj_iac_corr[INJ_IAC_CORR_SIZE]);
@@ -900,7 +900,7 @@ uint16_t inj_iacmixtcorr_lookup(struct ecudata_t* d)
 
  //Calculate weight coefficient:
 
- x = d->sens.tps << 6; //value * 128
+ x = d.sens.tps << 6; //value * 128
 
  //IAC pos. value at the start of axis
  x_start = (_GBU(inj_iac_corr_w[INJ_IAC_CORR_W_SIZE])) << 6;
@@ -968,17 +968,17 @@ int16_t pa4_function(uint16_t adcvalue)
 /**Use VE and AFR tables for gas dosator. Result = VE * AFR * K, where K is stoichiometry constant
  * \return value * 2048
  */
-uint16_t gd_ve_afr(struct ecudata_t* d)
+uint16_t gd_ve_afr(void)
 {
- int16_t  gradient, discharge, rpm = d->sens.inst_frq, l, afr;
+ int16_t  gradient, discharge, rpm = d.sens.inst_frq, l, afr;
  int8_t f, fp1, lp1;
  int32_t corr;
 
  //calculate lookup table indexes. VE and AFR tables have same size
- discharge = (d->param.map_upper_pressure - d->sens.map);
+ discharge = (d.param.map_upper_pressure - d.sens.map);
  if (discharge < 0) discharge = 0;
 
- gradient = (d->param.map_upper_pressure - d->param.map_lower_pressure) / (INJ_VE_POINTS_L-1);
+ gradient = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (INJ_VE_POINTS_L-1);
  if (gradient < 1)
   gradient = 1;
  l = (discharge / gradient);
@@ -1019,11 +1019,11 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
 
  afr+=(8*256); //offset by 8 to obtain normal value
 
- corr=(corr * ((uint16_t)d->param.gd_lambda_stoichval)) >> 7; // multiply by stoichiometry AFR value specified by user
+ corr=(corr * ((uint16_t)d.param.gd_lambda_stoichval)) >> 7; // multiply by stoichiometry AFR value specified by user
 
  corr=(corr * nr_1x_afr(afr << 2)) >> 15+3;  //apply AFR value, shift by additional 3 bits, because now corr is multiplied by 2048*8 = 16384
 
- d->corr.afr = afr >> 1; //update value of AFR
+ d.corr.afr = afr >> 1; //update value of AFR
 
  return corr; //return correction value * 2048
 }
@@ -1032,9 +1032,9 @@ uint16_t gd_ve_afr(struct ecudata_t* d)
 
 
 #if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
-int16_t ego_curve_lookup(struct ecudata_t* d)
+int16_t ego_curve_lookup(void)
 {
- int16_t i, i1, voltage = d->sens.add_i1; /*d->sens.inst_add_i1*/
+ int16_t i, i1, voltage = d.sens.add_i1; /*d.sens.inst_add_i1*/
 
  //Voltage value at the start of axis in ADC discretes
  uint16_t v_start = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE]);
@@ -1055,27 +1055,27 @@ int16_t ego_curve_lookup(struct ecudata_t* d)
         (i * v_step) + v_start, v_step, 4)) >> 2;
 }
 
-int16_t ego_curve_min(struct ecudata_t* d)
+int16_t ego_curve_min(void)
 {
  int16_t a = _GWU(inj_ego_curve[0]);
  int16_t b = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE-1]);
  return  a < b ? a : b;
 }
 
-int16_t ego_curve_max(struct ecudata_t* d)
+int16_t ego_curve_max(void)
 {
  int16_t a = _GWU(inj_ego_curve[0]);
  int16_t b = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE-1]);
  return a > b ? a : b;
 }
 
-uint8_t scale_aftstr_enrich(struct ecudata_t* d, uint16_t enrich_counter)
+uint8_t scale_aftstr_enrich(uint16_t enrich_counter)
 {
- int16_t aftstr_strokes = (d->param.inj_aftstr_strokes << 1);
+ int16_t aftstr_strokes = (d.param.inj_aftstr_strokes << 1);
  //do scaling of ASE factor (scale down)
  int16_t counter = aftstr_strokes - enrich_counter; //convert decreasing to increasing
  if (counter < 0) counter = 0;
- return ((uint16_t)inj_aftstr_en(d) * (aftstr_strokes - counter)) / aftstr_strokes;
+ return ((uint16_t)inj_aftstr_en() * (aftstr_strokes - counter)) / aftstr_strokes;
 }
 
 #endif

@@ -98,27 +98,27 @@ void carbafr_init(void)
 }
 
 /** Get discharge in kPa units
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \return discharge value in kPa
  */
-static int16_t get_discharge(struct ecudata_t* d)
+static int16_t get_discharge(void)
 {
- int16_t discharge = (d->param.map_upper_pressure - d->sens.map);
+ int16_t discharge = (d.param.map_upper_pressure - d.sens.map);
  return (discharge < 0) ? 0 : discharge;
 }
 
 /** Control two actuators depending on current mode
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \param mode Mode of operation: 1 - work, 0 - idling
  */
-static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
+static void control_iv_and_pv(uint8_t mode)
 {
  if (mode)
  { //work, control FE, but also control IE if FE=0 and mixture is still rich
-   if (d->corr.lambda > -256)
+   if (d.corr.lambda > -256)
    { //control AFR using power valve only, normal mode
     int16_t pv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-    pv_duty = (((uint32_t)pv_duty) * (512 + d->corr.lambda)) >> 9;
+    pv_duty = (((uint32_t)pv_duty) * (512 + d.corr.lambda)) >> 9;
     restrict_value_to(&pv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
     SET_PV_DUTY(pv_duty); //control power valve
     SET_IV_DUTY(CAFR_PWM_STEPS-1); //idle cut-off valve is 100% opened
@@ -126,7 +126,7 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
    else
    { //mixture is too rich and power valve is not enough to make it lean, then use idle cut-off valve to additionally lean it
     int16_t iv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-    iv_duty = (((uint32_t)iv_duty) * (512 + d->corr.lambda)) >> 8; //div. by 256
+    iv_duty = (((uint32_t)iv_duty) * (512 + d.corr.lambda)) >> 8; //div. by 256
     iv_duty+= (CAFR_PWM_STEPS/4);
     restrict_value_to(&iv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
     SET_IV_DUTY(iv_duty); //control
@@ -136,22 +136,22 @@ static void control_iv_and_pv(struct ecudata_t* d, uint8_t mode)
  else
  { //idling, control IE only, FE = 50%
    int16_t duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-   duty = (((uint32_t)duty) * (512 + d->corr.lambda)) >> 9;
+   duty = (((uint32_t)duty) * (512 + d.corr.lambda)) >> 9;
    restrict_value_to(&duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
    SET_IV_DUTY(duty); //control
    SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
  }
 }
 
-void carbafr_control(struct ecudata_t* d)
+void carbafr_control(void)
 {
 #ifdef GD_CONTROL
  //Don't use AFR control when gas doser is activated and fuel type is gas
- if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
+ if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP))
   return; //no AFR control
 #endif
 
- if (d->sens.frequen < d->param.inj_lambda_rpm_thrd) //100 min-1
+ if (d.sens.frequen < d.param.inj_lambda_rpm_thrd) //100 min-1
  {
    //both valves are fully opened
    SET_IV_DUTY(CAFR_PWM_STEPS-1); //100%
@@ -163,11 +163,11 @@ void carbafr_control(struct ecudata_t* d)
   //otherwise use 50% value for both valves
   //
   //(discharge > threshold) means engine is not under full load
-  if (lambda_is_activated() && (d->sens.temperat > d->param.inj_lambda_temp_thrd) && (d->sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge(d) > d->param.fe_on_threshold))
+  if (lambda_is_activated() && (d.sens.temperat > d.param.inj_lambda_temp_thrd) && (d.sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge(d) > d.param.fe_on_threshold))
   {
-   if (d->sens.carb)
+   if (d.sens.carb)
    { //throttle is opened
-    if (d->sens.inst_frq > CAFR_IDL_RPM_THRD)
+    if (d.sens.inst_frq > CAFR_IDL_RPM_THRD)
     {
      //control FE,--> IE=100%
      control_iv_and_pv(d, 1); //IE can be used to additionally lean mixture
@@ -183,7 +183,7 @@ void carbafr_control(struct ecudata_t* d)
      switch(cas.state)
      {
       case 0:
-       if (d->sens.inst_frq > d->param.ie_hit)  //todo: use idle cut off threshold
+       if (d.sens.inst_frq > d.param.ie_hit)  //todo: use idle cut off threshold
         cas.state = 1;
        else
        {
@@ -192,7 +192,7 @@ void carbafr_control(struct ecudata_t* d)
        }
        break;
       case 1:
-       if (d->sens.inst_frq < d->param.ie_lot)  //todo: use idle cut off threshold
+       if (d.sens.inst_frq < d.param.ie_lot)  //todo: use idle cut off threshold
         cas.state = 0;
        else
        {

@@ -29,16 +29,16 @@
 
 #ifdef DIAGNOSTICS
 
-struct ecudata_t;
-
 /** Start diagnostics */
 void diagnost_start(void);
 
 /** Stop diagnostics */
 void diagnost_stop(void);
 
-/** Contains diagnostic loop */
-void diagnost_process(struct ecudata_t* d);
+/** Contains diagnostic loop 
+ * Uses d ECU data structure
+ */
+void diagnost_process(void);
 
 #endif //DIAGNOSTICS
 

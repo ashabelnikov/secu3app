@@ -30,8 +30,6 @@
 
 #include <stdint.h>
 
-struct ecudata_t;
-
 /** CAN message */
 typedef struct can_t
 {
@@ -59,8 +57,10 @@ typedef struct can_t
 
 /***/
 void obd_init(void);
-/***/
-void obd_process(struct ecudata_t* d);
+/**
+ * Uses d ECU data structure
+ */
+void obd_process(void);
 
 #endif //_OBD_H_
 

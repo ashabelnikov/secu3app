@@ -52,18 +52,19 @@ void obd_init(void)
 
 #ifdef SPEED_SENSOR
 /** Calculate vehicle speed (km/h)
+ * Uses d ECU data structure
  * \return vehicle speed, value * 32
  */
-static uint16_t calc_speed(struct ecudata_t* d)
+static uint16_t calc_speed(void)
 {
- if (d->sens.speed == 0xFFFF || d->sens.speed == 0)
+ if (d.sens.speed == 0xFFFF || d.sens.speed == 0)
   return 0; //return 0 if speed is too low (overflow) or SPD_SENS is not mapped to real I/O
  //TODO: use 1/speed approximation instead of division, so division will be replaced by multiplication
- return ((((uint32_t)d->param.vss_period_dist) * 1098) / d->sens.speed);   //V = (period_dist * 1125000) / period_tics, 112500 = (3600 * 312500) / 1000
+ return ((((uint32_t)d.param.vss_period_dist) * 1098) / d.sens.speed);   //V = (period_dist * 1125000) / period_tics, 112500 = (3600 * 312500) / 1000
 }
 #endif
 
-void obd_process(struct ecudata_t* d)
+void obd_process(void)
 {
  switch(obd.state)
  {
@@ -74,7 +75,7 @@ void obd_process(struct ecudata_t* d)
     obd.msg.id = 0x180;   //Engine RPM
     obd.msg.flags.rtr = 0;
     obd.msg.length = 8;
-    obd.msg.data[0] = ((d->sens.frequen > 8100) ? 8100 : d->sens.frequen) >> 5; // limit to 8100, rpm / 32
+    obd.msg.data[0] = ((d.sens.frequen > 8100) ? 8100 : d.sens.frequen) >> 5; // limit to 8100, rpm / 32
     obd.msg.data[1] = 0x00;
     obd.msg.data[2] = 0x00;
     obd.msg.data[3] = 0x00;
@@ -96,7 +97,7 @@ void obd_process(struct ecudata_t* d)
     obd.msg.data[0] = 0x00;
     obd.msg.data[1] = 0x00;
 #ifdef SPEED_SENSOR
-    obd.msg.data[2] = (((uint32_t)((calc_speed(d) > 240*32) ? 240*32 : calc_speed(d))) * 410) >> 15; // divide by 2.5, so 1 discrete = 2.5kmH, 0.4 * 1024 = 410
+    obd.msg.data[2] = (((uint32_t)((calc_speed() > 240*32) ? 240*32 : calc_speed())) * 410) >> 15; // divide by 2.5, so 1 discrete = 2.5kmH, 0.4 * 1024 = 410
 #else
     obd.msg.data[2] = 0;  //no speed sensor
 #endif
@@ -114,12 +115,12 @@ void obd_process(struct ecudata_t* d)
    if ((s_timer_gtc() - obd.send_tmr) >= (OBD_SEND_PERIOD_MSG*2))
    {
     uint8_t FAILS = 0, BATT = _BV(0);
-    WRITEBIT(FAILS, 0, d->ce_state); //CE lamp control
-    WRITEBIT(FAILS, 3, d->sens.temperat > TEMPERATURE_MAGNITUDE(110.0)); //engine overheat lamp control
+    WRITEBIT(FAILS, 0, d.ce_state); //CE lamp control
+    WRITEBIT(FAILS, 3, d.sens.temperat > TEMPERATURE_MAGNITUDE(110.0)); //engine overheat lamp control
 
 #ifndef SECU3T //SECU-3i
-    WRITEBIT(FAILS, 2, !d->sens.oilpress_ok); //oil pressure failure
-    WRITEBIT(BATT, 0, d->sens.generator_ok); //dynamo generator failure
+    WRITEBIT(FAILS, 2, !d.sens.oilpress_ok); //oil pressure failure
+    WRITEBIT(BATT, 0, d.sens.generator_ok); //dynamo generator failure
 #endif
 
     obd.msg.id = 0x551;

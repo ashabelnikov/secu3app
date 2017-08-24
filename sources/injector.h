@@ -76,6 +76,7 @@ void inject_open_inj(uint16_t time);
 void inject_set_config(uint8_t cfg);
 
 /** Set full sequential mode 
+ * Uses d ECU data structure
  * \param mode - 0 - semi-sequential, 1 - full sequential
  */
 void inject_set_fullsequential(uint8_t mode);

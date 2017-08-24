@@ -28,15 +28,13 @@
 #ifndef _STARTER_H_
 #define _STARTER_H_
 
-struct ecudata_t;
-
 /** Initialization of used I/O ports (инициализация используемых портов) */
 void starter_init_ports(void);
 
 /** Control of starter (управление стартером)
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void starter_control(struct ecudata_t* d);
+void starter_control(void);
 
 /** Blocking/unblocking of starter (блокировка/разблокировка стартера)
  * \param i_state 1 - block, 0 - unblock

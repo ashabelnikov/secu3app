@@ -44,13 +44,13 @@
 #include "vstimer.h"
 #include "wdt.h"
 
-void save_param_if_need(struct ecudata_t* d)
+void save_param_if_need(void)
 {
  //параметры не изменились за заданное время?
  if (s_timer16_is_action(save_param_timeout_counter))
  {
   //текущие и сохраненные параметры отличаются?
-  if (memcmp(d->eeprom_parameters_cache, &d->param, sizeof(params_t)-PAR_CRC_SIZE))
+  if (memcmp(d.eeprom_parameters_cache, &d.param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }
@@ -59,14 +59,14 @@ void save_param_if_need(struct ecudata_t* d)
 void ckps_enable_ignition(uint8_t);
 void ckps_init_ports(void);
 
-void reset_eeprom_params(struct ecudata_t* d)
+void reset_eeprom_params(void)
 {
  uint16_t crc;
  uint16_t i = 5000; //5 seconds max
 
  ckps_enable_ignition(0);        //turn off ignition
  ckps_init_ports();
- vent_turnoff(d);                //turn off ventilator
+ vent_turnoff();                 //turn off ventilator
  starter_set_blocking_state(1);  //block starter
  IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
@@ -96,14 +96,14 @@ void reset_eeprom_params(struct ecudata_t* d)
  wdt_reset_device(); //reboot!
 }
 
-void load_eeprom_params(struct ecudata_t* d)
+void load_eeprom_params(void)
 {
  if (jumper_get_defeeprom_state())
  {
   if (CHECKBIT(fw_data.def_param.bt_flags, BTF_USE_RESPAR))
   {
    //User selected to use parameters from a FLASH  only
-   memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
+   memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
   }
   else
   {
@@ -111,21 +111,21 @@ void load_eeprom_params(struct ecudata_t* d)
    //Загружаем параметры из EEPROM, а затем проверяем целостность.
    //При подсчете контрольной суммы не учитываем байты самой контрольной суммы
    //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
-   eeprom_read(&d->param,EEPROM_PARAM_START,sizeof(params_t));
+   eeprom_read(&d.param,EEPROM_PARAM_START,sizeof(params_t));
 
-   if (crc16((uint8_t*)&d->param, (sizeof(params_t)-PAR_CRC_SIZE))!=d->param.crc)
+   if (crc16((uint8_t*)&d.param, (sizeof(params_t)-PAR_CRC_SIZE))!=d.param.crc)
    {
-    memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
+    memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
     ce_set_error(ECUERROR_EEPROM_PARAM_BROKEN);
    }
   }
   //Initialize parameters' cache. In the opposite case unnecessary saving of parameters will occur after start of firmware
-  memcpy(d->eeprom_parameters_cache, &d->param, sizeof(params_t));
+  memcpy(d.eeprom_parameters_cache, &d.param, sizeof(params_t));
  }
  else
  {//перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены, а также
   //загружаем в EEPROM данные по умолчанию для редактируемых наборов таблиц
-  memcpy_P(&d->param, &fw_data.def_param, sizeof(params_t));
+  memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
   ce_clear_errors(); //сбрасываем сохраненные ошибки
 #ifdef REALTIME_TABLES
   eeprom_write_P(/*&tt_def_data*/&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
@@ -136,13 +136,13 @@ void load_eeprom_params(struct ecudata_t* d)
 }
 
 #ifdef REALTIME_TABLES
-void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t index)
+void load_specified_tables_into_ram(uint8_t index)
 {
  //load tables depending on index, if index is FLASH, then load from FLASH, if index is EEPROM, then load from EEPROM
  if (index < TABLES_NUMBER_PGM)
-  memcpy_P(&d->tables_ram, &fw_data.tables[index], sizeof(f_data_t));
+  memcpy_P(&d.tables_ram, &fw_data.tables[index], sizeof(f_data_t));
  else
-  eeprom_read(&d->tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+  eeprom_read(&d.tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 
  //будет послано уведомление о том, что загружен новый набор таблиц
  //notification will be sent about that new set of tables has been loaded

@@ -42,15 +42,15 @@ void pwrvalve_init_ports(void)
  IOCFG_INIT(IOP_FE, 0); //FE valve is off
 }
 
-void pwrvalve_control(struct ecudata_t* d)
+void pwrvalve_control(void)
 {
  int16_t discharge;
 
- discharge = (d->param.map_upper_pressure - d->sens.map);
+ discharge = (d.param.map_upper_pressure - d.sens.map);
  if (discharge < 0)
   discharge = 0;
- d->fe_valve = discharge < d->param.fe_on_threshold;
- SET_FE_VALVE_STATE(d->fe_valve);
+ d.fe_valve = discharge < d.param.fe_on_threshold;
+ SET_FE_VALVE_STATE(d.fe_valve);
 }
 
 #endif //CARB_AFR

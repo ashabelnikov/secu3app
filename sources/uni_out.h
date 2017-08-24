@@ -31,8 +31,6 @@
 
 #include <stdint.h>
 
-struct ecudata_t;
-
 /**Initialization of used I/O lines*/
 void uniout_init_ports(void);
 
@@ -40,9 +38,9 @@ void uniout_init_ports(void);
 void uniout_init(void);
 
 /** Does control of universal programmable output
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void uniout_control(struct ecudata_t *d);
+void uniout_control(void);
 
 #endif //UNI_OUTPUT
 

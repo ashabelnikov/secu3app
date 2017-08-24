@@ -31,8 +31,6 @@
 
 #include <stdint.h>
 
-struct ecudata_t;
-
 /** Initialization of used I/O ports */
 void gasdose_init_ports(void);
 
@@ -40,9 +38,9 @@ void gasdose_init_ports(void);
 void gasdose_init(void);
 
 /** Does control of gas dosator
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void gasdose_control(struct ecudata_t* d);
+void gasdose_control(void);
 
 /** Used in power management
  * \return 1 - gas dose actuator is ready, 0 - not ready
@@ -50,14 +48,14 @@ void gasdose_control(struct ecudata_t* d);
 uint8_t gasdose_is_ready(void);
 
 /** Must be called from the main loop to notify about stroke events
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void gasdose_stroke_event_notification(struct ecudata_t* d);
+void gasdose_stroke_event_notification(void);
 
 /**Init stepper motor
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void gasdose_init_motor(struct ecudata_t* d);
+void gasdose_init_motor(void);
 
 #endif
 

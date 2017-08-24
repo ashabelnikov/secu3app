@@ -28,23 +28,21 @@
 #ifndef _VENTILATOR_H_
 #define _VENTILATOR_H_
 
-struct ecudata_t;
-
 /**Initialization of used I/O ports (инициализация используемых портов)*/
 void vent_init_ports(void);
 
 /**Control of cooling fan (управление вентилятором охлаждения двигателя).
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void vent_control(struct ecudata_t *d);
+void vent_control(void);
 
 /**Initialization of internal state (инициализация состояния)*/
 void vent_init_state(void);
 
 /**Turn off cooling fan (used inside bc_input unit)
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void vent_turnoff(struct ecudata_t *d);
+void vent_turnoff(void);
 
 /**Set PWM frequency
  * \param period value of PWM period (period = 1/f * 524288)

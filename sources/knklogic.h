@@ -41,11 +41,11 @@ typedef struct retard_state_t
 struct ecudata_t;
 
 /** Implements alrogithms for knock detection
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param p_rs poiter to state variables used by algorithm
  * \return: 0 - detonation is absent, 1 - detonation is present
  */
-uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs);
+uint8_t knklogic_detect(retard_state_t* p_rs);
 
 /** Initialization of state variables (инициализация переменных состояния)
  * \param p_rs poiter to state variables used by algorithm
@@ -53,9 +53,9 @@ uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs);
 void knklogic_init(retard_state_t* p_rs);
 
 /** Called in each work stroke (вызывается в каждом рабочем такте)
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param p_rs poiter to state variables used by algorithm
  */
-void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs);
+void knklogic_retard(retard_state_t* p_rs);
 
 #endif //_KNKLOGIC_H_

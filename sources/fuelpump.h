@@ -30,8 +30,6 @@
 
 #ifdef FUEL_PUMP
 
-struct ecudata_t;
-
 /** Initialization of used I/O ports (инициализаци€ используемых портов) */
 void fuelpump_init_ports(void);
 
@@ -39,9 +37,9 @@ void fuelpump_init_ports(void);
 void fuelpump_init(void);
 
 /** Does control of fuel pump (”правление бензонасосом)
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void fuelpump_control(struct ecudata_t* d);
+void fuelpump_control(void);
 
 #endif //FUEL_PUMP
 #endif //_FUELPUMP_H_

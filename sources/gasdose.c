@@ -68,12 +68,12 @@ static gasdose_st_t gds = {0};
 #define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(GASDOSE_POS_TPS_SIZE-1))
 
 /** Calculation of gas dosator position, based on (TPS,RPM)
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \return Gas dosator position in % (value * 2)
  */
-int16_t gdp_function(struct ecudata_t* d)
+static int16_t gdp_function(void)
 {
- int16_t rpm = d->sens.inst_frq, tps = (TPS_MAGNITUDE(100.0) - d->sens.tps) * 16;
+ int16_t rpm = d.sens.inst_frq, tps = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
  int8_t t = (tps / TPS_AXIS_STEP), f, tp1, fp1;
 
  if (t >= (GASDOSE_POS_TPS_SIZE - 1))
@@ -102,51 +102,51 @@ int16_t gdp_function(struct ecudata_t* d)
 }
 
 /** Calculates AE value for gas doser
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \return AE value in %
  */
-static int16_t calc_gd_acc_enrich(struct ecudata_t* d)
+static int16_t calc_gd_acc_enrich(void)
 {
  int32_t gdnc = GD_MAGNITUDE(100.0);               //normal conditions %
- int16_t aef = inj_ae_tps_lookup(d);               //calculate basic AE factor value
+ int16_t aef = inj_ae_tps_lookup();                //calculate basic AE factor value
 
 //------------------------------
- int16_t int_m_thrd = d->param.inj_lambda_swt_point + d->param.inj_lambda_dead_band;
- int16_t int_p_thrd = ((int16_t)d->param.inj_lambda_swt_point) - d->param.inj_lambda_dead_band;
+ int16_t int_m_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;
+ int16_t int_p_thrd = ((int16_t)d.param.inj_lambda_swt_point) - d.param.inj_lambda_dead_band;
  if (int_p_thrd < 0)
   int_p_thrd = 0;
 
- if (((d->sens.tpsdot > d->param.inj_ae_tpsdot_thrd) && (d->sens.add_i1 < int_m_thrd)) ||
-     ((d->sens.tpsdot < (-d->param.inj_ae_tpsdot_thrd)) && (d->sens.add_i1 > int_p_thrd)))
+ if (((d.sens.tpsdot > d.param.inj_ae_tpsdot_thrd) && (d.sens.add_i1 < int_m_thrd)) ||
+     ((d.sens.tpsdot < (-d.param.inj_ae_tpsdot_thrd)) && (d.sens.add_i1 > int_p_thrd)))
  {
-  d->acceleration  = 1;
+  d.acceleration  = 1;
   gds.acc_strokes = 5; //init acceleration strokes counter
  }
 
- if (((d->sens.tpsdot < d->param.inj_ae_tpsdot_thrd) && ((d->sens.add_i1 > int_m_thrd) || (gds.acc_strokes == 0))) ||
-     ((d->sens.tpsdot > (-d->param.inj_ae_tpsdot_thrd)) && ((d->sens.add_i1 < int_p_thrd) || (gds.acc_strokes == 0))))
+ if (((d.sens.tpsdot < d.param.inj_ae_tpsdot_thrd) && ((d.sens.add_i1 > int_m_thrd) || (gds.acc_strokes == 0))) ||
+     ((d.sens.tpsdot > (-d.param.inj_ae_tpsdot_thrd)) && ((d.sens.add_i1 < int_p_thrd) || (gds.acc_strokes == 0))))
  {
-  d->acceleration = 0;
+  d.acceleration = 0;
  }
 
- if (!d->acceleration)
+ if (!d.acceleration)
   return 0; //no acceleration enrichment
 //------------------------------
 
 /*
- if (abs(d->sens.tpsdot) < d->param.inj_ae_tpsdot_thrd) {
-  d->acceleration = 0;
+ if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd) {
+  d.acceleration = 0;
   return 0;                                        //no acceleration or deceleration
  }
- d->acceleration = 1;
+ d.acceleration = 1;
 */
 
 
  //For now we don't use CLT correction factor
 /*
- aef = ((int32_t)aef * inj_ae_clt_corr(d)) >> 7;   //apply CLT correction factor to AE factor
+ aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;    //apply CLT correction factor to AE factor
 */
- aef = ((int32_t)aef * inj_ae_rpm_lookup(d)) >> 7; //apply RPM correction factor to AE factor
+ aef = ((int32_t)aef * inj_ae_rpm_lookup()) >> 7;  //apply RPM correction factor to AE factor
 
  return (gdnc * aef) >> 7;                         //apply AE factor to the normal conditions
 }
@@ -181,24 +181,24 @@ static uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
 
 /** Set stepper motor to initial position. Because we have no position feedback, we
  * must use number of steps more than stepper actually has.
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param dir Direction (see description on gdstpmot_dir() function)
  */
-static void initial_pos(struct ecudata_t* d, uint8_t dir)
+static void initial_pos(uint8_t dir)
 {
  gdstpmot_dir(dir);                                           //set direction
- gdstpmot_run(d->param.gd_steps + (d->param.gd_steps >> 4));  //run using number of steps + 6%
+ gdstpmot_run(d.param.gd_steps + (d.param.gd_steps >> 4));  //run using number of steps + 6%
 }
 
 //TODO: redundant to simular function in choke.c, remove this redundant copy in the future
 /** Stepper motor control for normal working mode
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param pos current calculated (target) position of stepper motor
  */
-static void sm_motion_control(struct ecudata_t* d, int16_t pos)
+static void sm_motion_control(int16_t pos)
 {
  int16_t diff;
- restrict_value_to(&pos, 0, d->param.gd_steps);
+ restrict_value_to(&pos, 0, d.param.gd_steps);
  if (CHECKBIT(gds.flags, CF_SMDIR_CHG))                       //direction has changed
  {
   if (!gdstpmot_is_busy())
@@ -235,19 +235,19 @@ static void sm_motion_control(struct ecudata_t* d, int16_t pos)
 }
 
 /** Calculate stepper motor position for normal mode
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param pwm 0 - stepper valve, 1 - PWM valve
  * \return stepper motor position in steps or PWM duty (depending on pwm input parameter)
  */
-static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
+static int16_t calc_sm_position(uint8_t pwm)
 {
  int16_t corr, pos;
 
- if (d->engine_mode==EM_START)
+ if (d.engine_mode==EM_START)
  {
-  gds.aftstr_enrich_counter = d->param.inj_aftstr_strokes << 1; //init engine strokes counter
+  gds.aftstr_enrich_counter = d.param.inj_aftstr_strokes << 1; //init engine strokes counter
 
-  uint16_t pw = inj_cranking_pw(d); //use Cranking PW injection map to define GD position on cranking
+  uint16_t pw = inj_cranking_pw();    //use Cranking PW injection map to define GD position on cranking
   if (pw > 3125)
    pw = 3125; //10ms max.
 
@@ -257,37 +257,37 @@ static int16_t calc_sm_position(struct ecudata_t* d, uint8_t pwm)
   goto cranking_pos;
  }
 
- pos = gdp_function(d); //basic position, value in %
+ pos = gdp_function(); //basic position, value in %
 
  //apply correction from VE and AFR maps
- pos = (((int32_t)pos) * gd_ve_afr(d)) >> 11;
+ pos = (((int32_t)pos) * gd_ve_afr()) >> 11;
 
  //apply warmup enrichemnt factor
- pos = (((int32_t)pos) * inj_warmup_en(d)) >> 7;
+ pos = (((int32_t)pos) * inj_warmup_en()) >> 7;
 
  //apply correction from IAT sensor, use approximation instead of division
- //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d->sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
- //int16_t corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d->sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d->sens.air_temp * 10); //my
- corr = (d->sens.air_temp < TEMPERATURE_MAGNITUDE(30)) ? TEMPERATURE_MAGNITUDE(4110) - (d->sens.air_temp * 15) : TEMPERATURE_MAGNITUDE(3970) - (d->sens.air_temp * 10);   //alvikagal
+ //pos = (((int32_t)pos) * TEMPERATURE_MAGNITUDE(273.15)) / (d.sens.air_temp + TEMPERATURE_MAGNITUDE(273.15));
+ //int16_t corr = (d.sens.air_temp < TEMPERATURE_MAGNITUDE(20)) ? TEMPERATURE_MAGNITUDE(4116) - (d.sens.air_temp * 17) : TEMPERATURE_MAGNITUDE(3990) - (d.sens.air_temp * 10); //my
+ corr = (d.sens.air_temp < TEMPERATURE_MAGNITUDE(30)) ? TEMPERATURE_MAGNITUDE(4110) - (d.sens.air_temp * 15) : TEMPERATURE_MAGNITUDE(3970) - (d.sens.air_temp * 10);   //alvikagal
  pos = ((int32_t)pos * (corr)) >> 14;
 
- if (d->sens.gas) //gas valve will function when petrol is used, but in very limited mode
+ if (d.sens.gas) //gas valve will function when petrol is used, but in very limited mode
  {
-  //pos = (((int32_t)pos) * (512 + d->corr.lambda)) >> 9; //apply EGO correction
-  pos = pos + ((GD_MAGNITUDE(100.0) * d->corr.lambda) >> 9); //proposed by alvikagal
+  //pos = (((int32_t)pos) * (512 + d.corr.lambda)) >> 9; //apply EGO correction
+  pos = pos + ((GD_MAGNITUDE(100.0) * d.corr.lambda) >> 9); //proposed by alvikagal
   if (pos > GD_MAGNITUDE(100.0))
    pos = GD_MAGNITUDE(100.0);
 
-  pos+= calc_gd_acc_enrich(d);    //apply acceleration enrichment
+  pos+= calc_gd_acc_enrich();    //apply acceleration enrichment
 
-  if (d->engine_mode == EM_START)
-   gds.aftstr_enrich_counter = d->param.inj_aftstr_strokes << 1; //init engine strokes counter
+  if (d.engine_mode == EM_START)
+   gds.aftstr_enrich_counter = d.param.inj_aftstr_strokes << 1; //init engine strokes counter
   else if (gds.aftstr_enrich_counter)
-   pos= ((int32_t)pos * (128 + scale_aftstr_enrich(d, gds.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
+   pos= ((int32_t)pos * (128 + scale_aftstr_enrich(gds.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
 
-  pos = pos - (d->ie_valve ? 0 : d->param.gd_fc_closing); //apply fuel cut flag
+  pos = pos - (d.ie_valve ? 0 : d.param.gd_fc_closing); //apply fuel cut flag
 
-  pos = (d->fc_revlim ? 0 : pos); //apply rev.limit flag
+  pos = (d.fc_revlim ? 0 : pos); //apply rev.limit flag
  }
 
 cranking_pos:
@@ -295,16 +295,16 @@ cranking_pos:
  if (pwm)
   return ((((int32_t)256) * pos) / 200); //convert percentage position to PWM duty
  else
-  return ((((int32_t)d->param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
+  return ((((int32_t)d.param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
 }
 
-void gasdose_control(struct ecudata_t* d)
+void gasdose_control(void)
 {
  if (IOCFG_CHECK(IOP_GD_PWM))
  { //use PWM valve
-  uint16_t  pos = calc_sm_position(d, 1);                     //calculate PWM duty
+  uint16_t  pos = calc_sm_position(1);                       //calculate PWM duty
   if (pos > 255) pos = 255;
-  d->gasdose_pos = calc_percent_pos(pos, 256);                //update position value
+  d.gasdose_pos = calc_percent_pos(pos, 256);                //update position value
   vent_set_duty8(pos);
   return;
  }
@@ -316,12 +316,12 @@ void gasdose_control(struct ecudata_t* d)
  {
   case 0:                                                     //Initialization of stepper motor position
    if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
-    initial_pos(d, INIT_POS_DIR);
+    initial_pos(INIT_POS_DIR);
    gds.state = 2;
    break;
 
   case 1:                                                     //system is being preparing to power-down
-   initial_pos(d, INIT_POS_DIR);
+   initial_pos(INIT_POS_DIR);
    gds.state = 2;
    break;
 
@@ -346,9 +346,9 @@ void gasdose_control(struct ecudata_t* d)
    break;
 
   case 5:                                                     //normal working mode
-   if (d->gasdose_testing)
+   if (d.gasdose_testing)
    {
-    initial_pos(d, INIT_POS_DIR);
+    initial_pos(INIT_POS_DIR);
     gds.state = 6;                                            //start testing
    }
    else
@@ -356,28 +356,28 @@ void gasdose_control(struct ecudata_t* d)
     int16_t pos;
     if (!CHECKBIT(gds.flags, CF_MAN_CNTR))
     {
-     pos = calc_sm_position(d, 0);                            //calculate stepper motor position
-     if (d->gasdose_manpos_d)
+     pos = calc_sm_position(0);                               //calculate stepper motor position
+     if (d.gasdose_manpos_d)
       SETBIT(gds.flags, CF_MAN_CNTR);                         //enter manual mode
     }
     else
     { //manual control
-     pos = gds.smpos + d->gasdose_manpos_d;
-     d->gasdose_manpos_d = 0;
+     pos = gds.smpos + d.gasdose_manpos_d;
+     d.gasdose_manpos_d = 0;
     }
 
-    sm_motion_control(d, pos);                                //SM command execution
+    sm_motion_control(pos);                                   //SM command execution
    }
-   d->gasdose_pos = calc_percent_pos(gds.smpos, d->param.gd_steps);//update position value
+   d.gasdose_pos = calc_percent_pos(gds.smpos, d.param.gd_steps);//update position value
    goto check_pwr;
 
   //     Testing modes
   case 6:                                                     //initialization of stepper motor
    if (!gdstpmot_is_busy())                                   //ready?
    {
-    d->gasdose_pos = GD_MAGNITUDE(0);                         //update position value
+    d.gasdose_pos = GD_MAGNITUDE(0);                          //update position value
     gdstpmot_dir(SM_DIR_CCW);
-    gdstpmot_run(d->param.gd_steps);
+    gdstpmot_run(d.param.gd_steps);
     gds.state = 7;
    }
    goto check_tst;
@@ -385,16 +385,16 @@ void gasdose_control(struct ecudata_t* d)
   case 7:
    if (!gdstpmot_is_busy())                                   //ready?
    {
-    d->gasdose_pos = GD_MAGNITUDE(100.0);                     //update position value
+    d.gasdose_pos = GD_MAGNITUDE(100.0);                     //update position value
     gdstpmot_dir(SM_DIR_CW);
-    gdstpmot_run(d->param.gd_steps);
+    gdstpmot_run(d.param.gd_steps);
     gds.state = 6;
    }
    goto check_tst;
 
   default:
   check_tst:
-   if (!d->gasdose_testing)
+   if (!d.gasdose_testing)
     gds.state = 1;                                            //exit stepper motor testing mode
   check_pwr:
    if (!pwrrelay_get_state())
@@ -411,7 +411,7 @@ uint8_t gasdose_is_ready(void)
  return (gds.state == 5 || gds.state == 3) || !IOCFG_CHECK(IOP_GD_STP);
 }
 
-void gasdose_stroke_event_notification(struct ecudata_t* d)
+void gasdose_stroke_event_notification(void)
 {
  if (gds.acc_strokes)
   --gds.acc_strokes;
@@ -421,9 +421,9 @@ void gasdose_stroke_event_notification(struct ecudata_t* d)
   --gds.aftstr_enrich_counter;
 }
 
-void gasdose_init_motor(struct ecudata_t* d)
+void gasdose_init_motor(void)
 {
- initial_pos(d, INIT_POS_DIR);
+ initial_pos(INIT_POS_DIR);
 }
 
 #endif //GD_CONTROL

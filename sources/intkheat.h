@@ -30,8 +30,6 @@
 
 #ifdef INTK_HEATING
 
-struct ecudata_t;
-
 /** Initialization of used I/O ports (Инициализация используемых портов) */
 void intkheat_init_ports(void);
 
@@ -39,9 +37,9 @@ void intkheat_init_ports(void);
 void intkheat_init(void);
 
 /** Performs control of intake manifold heating
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void intkheat_control(struct ecudata_t *d);
+void intkheat_control(void);
 
 /***/
 void intkheat_cog_changed_notification(void);

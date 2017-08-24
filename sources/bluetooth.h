@@ -31,28 +31,26 @@
 
 #include <stdint.h>
 
-struct ecudata_t;
-
 /**Module initialization
  * \param en_set_baud Enable bluetooth baud rate setting after initialization
  */
 void bt_init(uint8_t en_set_baud);
 
 /** Sets bluetooth baud rate. Must be called subsequently until it return non-zero
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \param baud ID of baud rate (see uart.h for more information)
  * \return value > 0 if baud rate is set, 0 if baud rate is not set yet
  */
-uint8_t bt_set_baud(struct ecudata_t* d, uint16_t baud);
+uint8_t bt_set_baud(uint16_t baud);
 
 /** Starts setting of name  and password to bluetooth */
 void bt_start_set_namepass(void);
 
 /** Sets bluetooth name and password. Must be called subsequently until it return non-zero
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \return value > 0 if name and password are set, 0 if name and password are not set yet
  */
-uint8_t bt_set_namepass(struct ecudata_t* d);
+uint8_t bt_set_namepass(void);
 
 #endif //BLUETOOTH_SUPP
 

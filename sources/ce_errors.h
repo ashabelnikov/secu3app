@@ -50,10 +50,10 @@
 struct ecudata_t;
 
 /**checks for errors and manages the CE lamp
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param ce_control_time_counter time counter object
  */
-void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter);
+void ce_check_engine(volatile s_timer8_t* ce_control_time_counter);
 
 /**Set specified error (number of bit)
  * \param error code of error

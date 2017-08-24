@@ -85,13 +85,13 @@ uint8_t sop_is_operation_active(uint8_t opcode);
 void sop_init_operations(void);
 
 /**Process queue of suspended operations (обработка очереди отложенных операций) 
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void sop_execute_operations(struct ecudata_t* d);
+void sop_execute_operations(void);
 
 /** Send confirmation saying that firmare has finished all preparations and is going to start a boot loader
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void sop_send_gonna_bl_start(struct ecudata_t* d);
+void sop_send_gonna_bl_start(void);
 
 #endif //#define _SUSPOP_H_

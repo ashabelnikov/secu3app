@@ -80,7 +80,7 @@ void delay_25ms(void)
 }
 
 //Обработка операций которые могут требовать или требуют оложенного выполнения.
-void sop_execute_operations(struct ecudata_t* d)
+void sop_execute_operations(void)
 {
  if (sop_is_operation_active(SOP_SAVE_PARAMETERS))
  {
@@ -89,9 +89,9 @@ void sop_execute_operations(struct ecudata_t* d)
   if (eeprom_is_idle())
   {
    //для обеспечения атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
-   memcpy(d->eeprom_parameters_cache,&d->param,sizeof(params_t));
-   ((params_t*)d->eeprom_parameters_cache)->crc=crc16(d->eeprom_parameters_cache,sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
-   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, d->eeprom_parameters_cache, sizeof(params_t));
+   memcpy(d.eeprom_parameters_cache,&d.param,sizeof(params_t));
+   ((params_t*)d.eeprom_parameters_cache)->crc=crc16(d.eeprom_parameters_cache,sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
+   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, d.eeprom_parameters_cache, sizeof(params_t));
 
    //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
    //записаны новые параметры с корректной контрольной суммой
@@ -121,8 +121,8 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_EEPROM_PARAM_SAVE;
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_EEPROM_PARAM_SAVE;
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SEND_NC_PARAMETERS_SAVED);
@@ -133,7 +133,7 @@ void sop_execute_operations(struct ecudata_t* d)
  {
   if (eeprom_is_idle())
   {
-   ce_save_merged_errors(&d->ecuerrors_saved_transfer);
+   ce_save_merged_errors(&d.ecuerrors_saved_transfer);
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SAVE_CE_ERRORS);
@@ -145,8 +145,8 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_CE_SAVE_ERRORS;
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_CE_SAVE_ERRORS;
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SEND_NC_CE_ERRORS_SAVED);
@@ -157,7 +157,7 @@ void sop_execute_operations(struct ecudata_t* d)
  {
   if (eeprom_is_idle())
   {
-   eeprom_read(&d->ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint16_t));
+   eeprom_read(&d.ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint16_t));
    sop_set_operation(SOP_TRANSMIT_CE_ERRORS);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_READ_CE_ERRORS);
@@ -169,7 +169,7 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   uart_send_packet(d, CE_SAVED_ERR);    //теперь передатчик озабочен передачей данных
+   uart_send_packet(CE_SAVED_ERR);    //теперь передатчик озабочен передачей данных
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_TRANSMIT_CE_ERRORS);
   }
@@ -180,7 +180,7 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   uart_send_packet(d, FWINFO_DAT);    //теперь передатчик озабочен передачей данных
+   uart_send_packet(FWINFO_DAT);    //теперь передатчик озабочен передачей данных
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SEND_FW_SIG_INFO);
   }
@@ -192,9 +192,9 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_LOAD_TABLSET;
-   _AB(d->op_comp_code, 1) = 0; //not used
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_LOAD_TABLSET;
+   _AB(d.op_comp_code, 1) = 0; //not used
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SEND_NC_TABLSET_LOADED);
@@ -203,14 +203,14 @@ void sop_execute_operations(struct ecudata_t* d)
 
  if (sop_is_operation_active(SOP_LOAD_TABLSET))
  {
-  //TODO: d->op_actn_code may become overwritten while we are waiting here...
+  //TODO: d.op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
    //bits: aaaabbbb
    // aaaa - not used
    // bbbb - index of tables set to load from, begins from FLASH's indexes
-   uint8_t index = (_AB(d->op_actn_code, 1) & 0xF);
-   load_specified_tables_into_ram(d, index);
+   uint8_t index = (_AB(d.op_actn_code, 1) & 0xF);
+   load_specified_tables_into_ram(index);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_LOAD_TABLSET);
   }
@@ -221,9 +221,9 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_SAVE_TABLSET;
-   _AB(d->op_comp_code, 1) = 0; //not used
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_SAVE_TABLSET;
+   _AB(d.op_comp_code, 1) = 0; //not used
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SEND_NC_TABLSET_SAVED);
@@ -232,10 +232,10 @@ void sop_execute_operations(struct ecudata_t* d)
 
  if (sop_is_operation_active(SOP_SAVE_TABLSET))
  {
-  //TODO: d->op_actn_code may become overwritten while we are waiting here...
+  //TODO: d.op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
-   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START, &d->tables_ram, sizeof(f_data_t));
+   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START, &d.tables_ram, sizeof(f_data_t));
 
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_SAVE_TABLSET);
@@ -250,7 +250,7 @@ void sop_execute_operations(struct ecudata_t* d)
   //Is sender busy (передатчик занят)?
   if (!uart_is_sender_busy())
   {
-   uart_send_packet(d, DBGVAR_DAT);    //send packet with debug information
+   uart_send_packet(DBGVAR_DAT);    //send packet with debug information
    //"delete" this operation from list because it has already completed
    sop_reset_operation(SOP_DBGVAR_SENDING);
   }
@@ -263,8 +263,8 @@ void sop_execute_operations(struct ecudata_t* d)
   //Is sender busy (передатчик занят)?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_DIAGNOST_ENTER;
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_DIAGNOST_ENTER;
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
    //"delete" this operation from list because it has already completed
    sop_reset_operation(SOP_SEND_NC_ENTER_DIAG);
   }
@@ -274,8 +274,8 @@ void sop_execute_operations(struct ecudata_t* d)
   //Is sender busy (передатчик занят)?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_DIAGNOST_LEAVE;
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_DIAGNOST_LEAVE;
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
    delay_25ms();       //wait 25ms because of pending UART packet
    wdt_reset_device(); //wait for death :-)
   }
@@ -287,11 +287,11 @@ void sop_execute_operations(struct ecudata_t* d)
   //передатчик занят?
   if (!uart_is_sender_busy())
   {
-   _AB(d->op_comp_code, 0) = OPCODE_RESET_EEPROM;
-   _AB(d->op_comp_code, 1) = 0x55;
-   uart_send_packet(d, OP_COMP_NC);    //теперь передатчик озабочен передачей данных
+   _AB(d.op_comp_code, 0) = OPCODE_RESET_EEPROM;
+   _AB(d.op_comp_code, 1) = 0x55;
+   uart_send_packet(OP_COMP_NC);    //теперь передатчик озабочен передачей данных
    delay_25ms();           //wait 25ms because of pending UART packet
-   reset_eeprom_params(d); //no back way!
+   reset_eeprom_params();  //no back way!
   }
  }
 
@@ -314,12 +314,12 @@ void sop_execute_operations(struct ecudata_t* d)
  }
 }
 
-void sop_send_gonna_bl_start(struct ecudata_t* d)
+void sop_send_gonna_bl_start(void)
 {
  //send confirmation that firmware is ready to start boot loader
- _AB(d->op_comp_code, 0) = OPCODE_BL_CONFIRM;
- _AB(d->op_comp_code, 1) = 0xBC;
- uart_send_packet(d, OP_COMP_NC);
+ _AB(d.op_comp_code, 0) = OPCODE_BL_CONFIRM;
+ _AB(d.op_comp_code, 1) = 0xBC;
+ uart_send_packet(OP_COMP_NC);
  //delay 25ms
  delay_25ms();
 }

@@ -116,7 +116,7 @@ void next_state_with_new_baud(uint16_t baud)
  bts.strt_t1 = s_timer_gtc();    //set timer
 }
 
-uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
+uint8_t bt_set_baud(uint16_t baud)
 {
  baud = convert_id_to_br(baud);
 
@@ -189,7 +189,7 @@ uint8_t bt_set_baud(struct ecudata_t *d, uint16_t baud)
    {
     next_state_with_new_baud(baud);//return old baud rate back
     //reset flag and save parameters
-    CLEARBIT(d->param.bt_flags, BTF_SET_BBR);
+    CLEARBIT(d.param.bt_flags, BTF_SET_BBR);
     sop_set_operation(SOP_SAVE_PARAMETERS);
    }
    return 0;
@@ -229,7 +229,7 @@ static void append_tx_buff_with_at_pass_cmd(uint8_t* pass)
  build_rs(&pass[1], pass[0]);
 }
 
-uint8_t bt_set_namepass(struct ecudata_t *d)
+uint8_t bt_set_namepass(void)
 {
  switch(bts.btnp_mode)
  {
@@ -244,7 +244,7 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
 
   //Send command to change name
   case 2:
-   append_tx_buff_with_at_name_cmd(d->bt_name);
+   append_tx_buff_with_at_name_cmd(d.bt_name);
    ++bts.btnp_mode;
    bts.strt_t1 = s_timer_gtc();    //set timer
    break;                          //send!
@@ -254,7 +254,7 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
 
   //Send command to change password (pin)
   case 4:
-   append_tx_buff_with_at_pass_cmd(d->bt_pass);
+   append_tx_buff_with_at_pass_cmd(d.bt_pass);
    ++bts.btnp_mode;
    bts.strt_t1 = s_timer_gtc();    //set timer
    break;                          //send!
@@ -262,7 +262,7 @@ uint8_t bt_set_namepass(struct ecudata_t *d)
    next_state_if_tmr_expired_np();
    if (bts.btnp_mode > 5)
    {
-    d->bt_name[0] = 0, d->bt_pass[0] = 0;
+    d.bt_name[0] = 0, d.bt_pass[0] = 0;
     return 1; //finished!
    }
    return 0;

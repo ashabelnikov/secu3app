@@ -28,13 +28,11 @@
 #ifndef _BC_INPUT_H_
 #define _BC_INPUT_H_
 
-struct ecudata_t;
-
 /** Check BC_INPUT and if it is active, then enter blink codes 
  * indication mode. This mode has its own infinite loop.
  * Note that in this mode interrupts must be disabled!
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void bc_indication_mode(struct ecudata_t *d);
+void bc_indication_mode(void);
 
 #endif //_BC_INPUT_H_

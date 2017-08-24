@@ -518,7 +518,7 @@ void inject_set_fullsequential(uint8_t mode)
  if (inj.cfg == INJCFG_FULLSEQUENTIAL)
  {
   set_channels_fs(mode);
-  inject_set_inj_time(edat.inj_pw_raw, edat.inj_dt);
+  inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
  }
 }
 

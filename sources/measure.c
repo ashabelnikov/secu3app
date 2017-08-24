@@ -103,7 +103,7 @@ void meas_init_ports(void)
 }
 
 //обновление буферов усреднения (частота вращения, датчики...)
-void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t _PGM *cesd)
+void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 {
  uint16_t rawval;
  static uint8_t  map_ai  = MAP_AVERAGING-1;
@@ -120,22 +120,22 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
  static uint8_t  ai3_ai  = AI3_AVERAGING-1;
 #endif
 
- freq_circular_buffer[frq_ai] = d->sens.inst_frq;
+ freq_circular_buffer[frq_ai] = d.sens.inst_frq;
  (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
 
  if (rpm_only)
   return;
 
- map_circular_buffer[map_ai] = (d->param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value();
+ map_circular_buffer[map_ai] = (d.param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value();
 #ifdef SEND_INST_VAL
- rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : adc_compensate(_RESDIV(map_circular_buffer[map_ai], 2, 1), d->param.map_adc_factor, d->param.map_adc_correction);
- d->sens.inst_map = map_adc_to_kpa(rawval, d->param.map_curve_offset, d->param.map_curve_gradient);
+ rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : adc_compensate(_RESDIV(map_circular_buffer[map_ai], 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ d.sens.inst_map = map_adc_to_kpa(rawval, d.param.map_curve_offset, d.param.map_curve_gradient);
 #endif
  (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;
 
  ubat_circular_buffer[bat_ai] = adc_get_ubat_value();
 #ifdef SEND_INST_VAL
- d->sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : adc_compensate(ubat_circular_buffer[bat_ai] * 6, d->param.ubat_adc_factor, d->param.ubat_adc_correction);
+ d.sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : adc_compensate(ubat_circular_buffer[bat_ai] * 6, d.param.ubat_adc_factor, d.param.ubat_adc_correction);
 #endif
  (bat_ai==0) ? (bat_ai = BAT_AVERAGING - 1): bat_ai--;
 
@@ -147,7 +147,7 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
 
  ai1_circular_buffer[ai1_ai] = adc_get_add_i1_value();
 #ifdef SEND_INST_VAL
- d->sens.inst_add_i1 = adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d->param.ai1_adc_factor, d->param.ai1_adc_correction);
+ d.sens.inst_add_i1 = adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
 #endif
  (ai1_ai==0) ? (ai1_ai = AI1_AVERAGING - 1): ai1_ai--;
 
@@ -159,113 +159,113 @@ void meas_update_values_buffers(struct ecudata_t* d, uint8_t rpm_only, ce_sett_t
  (ai3_ai==0) ? (ai3_ai = AI3_AVERAGING - 1): ai3_ai--;
 #endif
 
- if (d->param.knock_use_knock_channel)
+ if (d.param.knock_use_knock_channel)
  {
 #ifdef VREF_5V
-  d->sens.knock_raw = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
+  d.sens.knock_raw = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
 #else //internal 2.56V
-  d->sens.knock_raw = adc_get_knock_value() * 2;
+  d.sens.knock_raw = adc_get_knock_value() * 2;
 #endif
-  d->sens.knock_k = ce_is_error(ECUERROR_KSP_CHIP_FAILED) ? cesd->ks_v_em : d->sens.knock_raw;
+  d.sens.knock_k = ce_is_error(ECUERROR_KSP_CHIP_FAILED) ? cesd->ks_v_em : d.sens.knock_raw;
  }
  else
-  d->sens.knock_k = 0; //knock signal value must be zero if knock detection turned off
+  d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off
 
 #ifdef SPEED_SENSOR
  spd_circular_buffer[spd_ai] = spdsens_get_period();
  (spd_ai==0) ? (spd_ai = SPD_AVERAGING - 1): spd_ai--;
- d->sens.distance = spdsens_get_pulse_count();
+ d.sens.distance = spdsens_get_pulse_count();
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
- if (d->engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
+ if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
  {
-  d->sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d->param.tps_adc_factor, 0);
-  d->sens.tpsdot = tpsdot_adc_to_pc(d->sens.tpsdot, d->param.tps_curve_gradient);
+  d.sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d.param.tps_adc_factor, 0);
+  d.sens.tpsdot = tpsdot_adc_to_pc(d.sens.tpsdot, d.param.tps_curve_gradient);
  }
  else
-  d->sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
+  d.sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
 #endif
 }
 
 
 //усреднение измеряемых величин используя текущие значения кольцевых буферов усреднения, компенсация
 //погрешностей АЦП, перевод измеренных значений в физические величины.
-void meas_average_measured_values(struct ecudata_t* d, ce_sett_t _PGM *cesd)
+void meas_average_measured_values(ce_sett_t _PGM *cesd)
 {
  uint8_t i;  uint32_t sum;
 
  for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
   sum+=map_circular_buffer[i];
- d->sens.map_raw = adc_compensate(_RESDIV((sum/MAP_AVERAGING), 2, 1), d->param.map_adc_factor, d->param.map_adc_correction);
- d->sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : d->sens.map_raw, d->param.map_curve_offset, d->param.map_curve_gradient);
+ d.sens.map_raw = adc_compensate(_RESDIV((sum/MAP_AVERAGING), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
 
  for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
   sum+=ubat_circular_buffer[i];
- d->sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING) * 6, d->param.ubat_adc_factor,d->param.ubat_adc_correction);
- d->sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : d->sens.voltage_raw);
+ d.sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
+ d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : d.sens.voltage_raw);
 
- if (d->param.tmp_use)
+ if (d.param.tmp_use)
  {
   for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
    sum+=temp_circular_buffer[i];
-  d->sens.temperat_raw = adc_compensate(_RESDIV(sum/TMP_AVERAGING, 5, 3),d->param.temp_adc_factor,d->param.temp_adc_correction);
+  d.sens.temperat_raw = adc_compensate(_RESDIV(sum/TMP_AVERAGING, 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
 #ifndef THERMISTOR_CS
-  d->sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d->sens.temperat_raw);
+  d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
 #else
-  if (!d->param.cts_use_map) //use linear sensor
-   d->sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d->sens.temperat_raw);
+  if (!d.param.cts_use_map) //use linear sensor
+   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
   else //use lookup table (actual for thermistor sensors)
-   d->sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d->sens.temperat_raw);
+   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
 #endif
  }
  else                                       //ДТОЖ не используется
-  d->sens.temperat = 0;
+  d.sens.temperat = 0;
 
  for (sum=0,i = 0; i < FRQ_AVERAGING; i++)  //усредняем частоту вращения коленвала
   sum+=freq_circular_buffer[i];
- d->sens.frequen=(sum/FRQ_AVERAGING);
+ d.sens.frequen=(sum/FRQ_AVERAGING);
 
 #ifdef SPEED_SENSOR
  for (sum=0,i = 0; i < SPD_AVERAGING; i++)  //average periods from speed sensor
   sum+=spd_circular_buffer[i];
- d->sens.speed=(sum/SPD_AVERAGING);
+ d.sens.speed=(sum/SPD_AVERAGING);
 #endif
 
  for (sum=0,i = 0; i < TPS_AVERAGING; i++)   //average throttle position
   sum+=tps_circular_buffer[i];
- d->sens.tps_raw = adc_compensate(_RESDIV((sum/TPS_AVERAGING), 2, 1), d->param.tps_adc_factor, d->param.tps_adc_correction);
- d->sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) ? cesd->tps_v_em : d->sens.tps_raw, d->param.tps_curve_offset, d->param.tps_curve_gradient);
- if (d->sens.tps > TPS_MAGNITUDE(100))
-  d->sens.tps = TPS_MAGNITUDE(100);
+ d.sens.tps_raw = adc_compensate(_RESDIV((sum/TPS_AVERAGING), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
+ if (d.sens.tps > TPS_MAGNITUDE(100))
+  d.sens.tps = TPS_MAGNITUDE(100);
 
  for (sum=0,i = 0; i < AI1_AVERAGING; i++)   //average ADD_I1 input
   sum+=ai1_circular_buffer[i];
- d->sens.add_i1_raw = adc_compensate(_RESDIV((sum/AI1_AVERAGING), 2, 1), d->param.ai1_adc_factor, d->param.ai1_adc_correction);
- d->sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : d->sens.add_i1_raw;
+ d.sens.add_i1_raw = adc_compensate(_RESDIV((sum/AI1_AVERAGING), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : d.sens.add_i1_raw;
 
  for (sum=0,i = 0; i < AI2_AVERAGING; i++)   //average ADD_I2 input
   sum+=ai2_circular_buffer[i];
- d->sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d->param.ai2_adc_factor, d->param.ai2_adc_correction);
- d->sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) ? cesd->add_i2_v_em : d->sens.add_i2_raw;
+ d.sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
+ d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) ? cesd->add_i2_v_em : d.sens.add_i2_raw;
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
  for (sum=0,i = 0; i < AI3_AVERAGING; i++)   //average ADD_I3 input (PA4)
   sum+=ai3_circular_buffer[i];
- d->sens.add_i3 = adc_compensate((sum/AI3_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
+ d.sens.add_i3 = adc_compensate((sum/AI3_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
 #endif
 
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
-  d->sens.air_temp = ats_lookup(d->sens.add_i2);   //ADD_I2 input selected as MAT sensor
+  d.sens.air_temp = ats_lookup(d.sens.add_i2);   //ADD_I2 input selected as MAT sensor
  else
-  d->sens.air_temp = 0; //input is not selected
+  d.sens.air_temp = 0; //input is not selected
 #endif
 }
 
 //Вызывать для предварительного измерения перед пуском двигателя. Вызывать только после
 //инициализации АЦП.
-void meas_initial_measure(struct ecudata_t* d)
+void meas_initial_measure(void)
 {
  uint8_t _t,i = 16;
  _t = _SAVE_INTERRUPT();
@@ -275,67 +275,67 @@ void meas_initial_measure(struct ecudata_t* d)
   adc_begin_measure(0); //<--normal speed
   while(!adc_is_measure_ready());
 
-  meas_update_values_buffers(d, 0, &fw_data.exdata.cesd); //<-- all
+  meas_update_values_buffers(0, &fw_data.exdata.cesd); //<-- all
  }while(--i);
  _RESTORE_INTERRUPT(_t);
- meas_average_measured_values(d, &fw_data.exdata.cesd);
+ meas_average_measured_values(&fw_data.exdata.cesd);
 }
 
 
 #ifdef REALTIME_TABLES
 /** Selects set of tables specified by index, sets corresponding flag depending on where tables' set resides: RAM or FLASH
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \param set_index Index of tables' set to be selected
  */
-static void select_table_set(struct ecudata_t *d, uint8_t set_index)
+static void select_table_set(uint8_t set_index)
 {
  if (set_index > (TABLES_NUMBER_PGM-1))
  {
-  d->mm_ptr8 = mm_get_byte_ram;
-  d->mm_ptr16 = mm_get_word_ram;
-  d->mm_ptr12 = mm_get_w12_ram;
+  d.mm_ptr8 = mm_get_byte_ram;
+  d.mm_ptr16 = mm_get_word_ram;
+  d.mm_ptr12 = mm_get_w12_ram;
  }
  else
  {
-  d->fn_dat = &fw_data.tables[set_index];
-  d->mm_ptr8 = mm_get_byte_pgm;
-  d->mm_ptr16 = mm_get_word_pgm;
-  d->mm_ptr12 = mm_get_w12_pgm;
+  d.fn_dat = &fw_data.tables[set_index];
+  d.mm_ptr8 = mm_get_byte_pgm;
+  d.mm_ptr16 = mm_get_word_pgm;
+  d.mm_ptr12 = mm_get_w12_pgm;
  }
 }
 #endif
 
 
-void meas_take_discrete_inputs(struct ecudata_t *d)
+void meas_take_discrete_inputs(void)
 {
  //--инверсия концевика карбюратора если необходимо
- if (0==d->param.tps_threshold)
-  d->sens.carb=d->param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
+ if (0==d.param.tps_threshold)
+  d.sens.carb=d.param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
  else
  {//using TPS (привязываемся к ДПДЗ)
-  d->sens.carb=d->param.carb_invers^(d->sens.tps > d->param.tps_threshold);
+  d.sens.carb=d.param.carb_invers^(d.sens.tps > d.param.tps_threshold);
  }
 
  //read state of gas valve input (считываем и сохраняем состояние газового клапана)
  //if GAS_V input remapped to other function, then petrol
- d->sens.gas = IOCFG_GET(IOP_GAS_V);
+ d.sens.gas = IOCFG_GET(IOP_GAS_V);
 
  //переключаем тип топлива в зависимости от состояния газового клапана и дополнительного входа (если переназначен)
 #ifndef REALTIME_TABLES
  if (!IOCFG_CHECK(IOP_MAPSEL0))
  { //without additioanl selection input
-  if (d->sens.gas)
-   d->fn_dat = &fw_data.tables[d->param.fn_gas];     //на газе
+  if (d.sens.gas)
+   d.fn_dat = &fw_data.tables[d.param.fn_gas];     //на газе
   else
-   d->fn_dat = &fw_data.tables[d->param.fn_gasoline];//на бензине
+   d.fn_dat = &fw_data.tables[d.param.fn_gasoline];//на бензине
  }
  else
  { //use! additional selection input
   uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
-  if (d->sens.gas) //на газе
-   d->fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d->param.fn_gas];
+  if (d.sens.gas) //на газе
+   d.fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d.param.fn_gas];
   else             //на бензине
-   d->fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d->param.fn_gasoline];
+   d.fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d.param.fn_gasoline];
  }
 #else //use tables from RAM
 
@@ -344,29 +344,29 @@ void meas_take_discrete_inputs(struct ecudata_t *d)
 // {
   if (!IOCFG_CHECK(IOP_MAPSEL0))
   { //without additioanl selection input
-   select_table_set(d, d->sens.gas ? d->param.fn_gas : d->param.fn_gasoline);   //gas/petrol
+   select_table_set(d.sens.gas ? d.param.fn_gas : d.param.fn_gasoline);   //gas/petrol
   }
   else
   { //use! additional selection input or power mode
    uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
-   if (d->sens.gas)
-    select_table_set(d, mapsel0 ? 1 : d->param.fn_gas);          //on gas
+   if (d.sens.gas)
+    select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
    else
-    select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
+    select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
   }
 // }
 // else
 // { //use power mode
-//  uint8_t mapsel0 = (d->sens.tps > TPS_MAGNITUDE(60.0));        //use second set of maps for current fuel if TPS > 60%
-//  if (d->sens.gas)
-//   select_table_set(d, mapsel0 ? 1 : d->param.fn_gas);          //on gas
+//  uint8_t mapsel0 = (d.sens.tps > TPS_MAGNITUDE(60.0));        //use second set of maps for current fuel if TPS > 60%
+//  if (d.sens.gas)
+//   select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
 //  else
-//   select_table_set(d, mapsel0 ? 0 : d->param.fn_gasoline);     //on petrol
+//   select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
 // }
 #endif
 
 #ifndef SECU3T //SECU-3i
- d->sens.oilpress_ok = IOCFG_GET(IOP_OILP_I); //oil pressure sensor
- d->sens.generator_ok = IOCFG_GET(IOP_GENS_I); //generator status
+ d.sens.oilpress_ok = IOCFG_GET(IOP_OILP_I); //oil pressure sensor
+ d.sens.generator_ok = IOCFG_GET(IOP_GENS_I); //generator status
 #endif
 }

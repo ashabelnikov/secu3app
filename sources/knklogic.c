@@ -36,15 +36,15 @@
 /**Delay in strokes*/
 #define KNK_STRT_DELAY 150
 
-uint8_t knklogic_detect(struct ecudata_t* d, retard_state_t* p_rs)
+uint8_t knklogic_detect(retard_state_t* p_rs)
 {
- if (d->sens.frequen > d->param.starter_off && d->sens.temperat > TEMPERATURE_MAGNITUDE(70.0))
+ if (d.sens.frequen > d.param.starter_off && d.sens.temperat > TEMPERATURE_MAGNITUDE(70.0))
  {
   if (0==p_rs->sd_counter)
   {
    //This is a very simple algorithm to determine is knock present. We must
    //improve it in the nearest future.
-   p_rs->knock_flag = (d->sens.knock_k > d->param.knock_threshold);
+   p_rs->knock_flag = (d.sens.knock_k > d.param.knock_threshold);
   }
   else
    --p_rs->sd_counter;
@@ -69,24 +69,24 @@ void knklogic_init(retard_state_t* p_rs)
  p_rs->sd_counter = KNK_STRT_DELAY;
 }
 
-void knklogic_retard(struct ecudata_t* d, retard_state_t* p_rs)
+void knklogic_retard(retard_state_t* p_rs)
 {
  if (p_rs->knock_flag)
  { //detonation is present
-  d->corr.knock_retard+= d->param.knock_retard_step;//retard
+  d.corr.knock_retard+= d.param.knock_retard_step;//retard
   p_rs->knock_flag = 0;
-  p_rs->delay_counter = d->param.knock_recovery_delay; //reset delay
+  p_rs->delay_counter = d.param.knock_recovery_delay; //reset delay
  }
  else
  { //detonation is absent
   if (p_rs->delay_counter == 0)
   {
-   d->corr.knock_retard-= d->param.knock_advance_step;//advance
-   p_rs->delay_counter = d->param.knock_recovery_delay;
+   d.corr.knock_retard-= d.param.knock_advance_step;//advance
+   p_rs->delay_counter = d.param.knock_recovery_delay;
   }
  }
  //restrict knock retard value
- restrict_value_to(&d->corr.knock_retard, 0, d->param.knock_max_retard);
+ restrict_value_to(&d.corr.knock_retard, 0, d.param.knock_max_retard);
 
  if (p_rs->delay_counter != 0)
   p_rs->delay_counter--;

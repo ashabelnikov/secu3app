@@ -32,8 +32,6 @@
 
 #define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
 
-struct ecudata_t;
-
 /**Write data to EEPROM - the process is very slow. It will take place in parallel with
  * the execution of the program. Storing data in the EEPROM will only happen if for a given
  * time, there was not a single receive operation of parameters via UART, and saved settings
@@ -41,32 +39,32 @@ struct ecudata_t;
  * Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы.
  * Сохранение данных в EEPROM произойдет только если за заданное время не произошло ни одной операции приема параметров
  * из UART-a и сохраненные параметры отличаются от текущих.
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void save_param_if_need(struct ecudata_t* d);
+void save_param_if_need(void);
 
 /**Loads the parameters from the EEPROM, and verifies the integrity of the data if they spoiled
  * it takes a backup instance from the FLASH.
  * Call this function only when EEPROM is idle!
  * Загружает параметры из EEPROM, проверяет целостность данных и если они испорчены то
  * берет резервную копию из FLASH.
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void load_eeprom_params(struct ecudata_t* d);
+void load_eeprom_params(void);
 
 #ifdef REALTIME_TABLES
 /** Loads tables into RAM depending on specified index
  *  Call this function only when EEPROM is idle!
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \param index index of tables set to load into RAM
  */
-void load_specified_tables_into_ram(struct ecudata_t* d, uint8_t index);
+void load_specified_tables_into_ram(uint8_t index);
 #endif
 
 /** Resets EEPROM contents to default values and resets device, this function has same effect as
  *  closed jumper "Default EEPROM"
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void reset_eeprom_params(struct ecudata_t* d);
+void reset_eeprom_params(void);
 
 #endif //_PARAMS_H_

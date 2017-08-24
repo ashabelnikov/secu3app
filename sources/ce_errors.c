@@ -74,16 +74,16 @@ uint8_t ce_is_error(uint8_t error)
 }
 
 /** Internal function. Contains checking logic 
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \param cesd Pointer to the CE settings data structure
  */
-void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
+void check(ce_sett_t _PGM *cesd)
 {
  //If error of CKP sensor was, then set corresponding bit of error
  if (ckps_is_error())
  {
   //ignore error in case of stall of an engine
-  if (!(((d->st_block) && (d->sens.inst_frq < d->param.starter_off)) || (d->sens.inst_frq < 30)))
+  if (!(((d.st_block) && (d.sens.inst_frq < d.param.starter_off)) || (d.sens.inst_frq < 30)))
    ce_set_error(ECUERROR_CKPS_MALFUNCTION);
   ckps_reset_error();
  }
@@ -105,14 +105,14 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
 #endif
 
  //if error of knock channel was
- if (d->param.knock_use_knock_channel)
+ if (d.param.knock_use_knock_channel)
  {
   if (knock_is_error())
   {
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
    knock_reset_error();
   }
-  else if ((d->sens.knock_k < cesd->ks_v_min || d->sens.knock_k > cesd->ks_v_max) && d->sens.frequen > 1000)
+  else if ((d.sens.knock_k < cesd->ks_v_min || d.sens.knock_k > cesd->ks_v_max) && d.sens.frequen > 1000)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   else
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
@@ -121,15 +121,15 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
   ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
 
  //checking MAP sensor. TODO: implement additional check
- if (((d->sens.map_raw < cesd->map_v_min) || (d->sens.map_raw > cesd->map_v_max)) && d->sens.carb)
+ if (((d.sens.map_raw < cesd->map_v_min) || (d.sens.map_raw > cesd->map_v_max)) && d.sens.carb)
   ce_set_error(ECUERROR_MAP_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
 
  //checking coolant temperature sensor
- if (d->param.tmp_use)
+ if (d.param.tmp_use)
  {
-  if (d->sens.temperat_raw < cesd->cts_v_min || d->sens.temperat_raw > cesd->cts_v_max)
+  if (d.sens.temperat_raw < cesd->cts_v_min || d.sens.temperat_raw > cesd->cts_v_max)
    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
   else
    ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
@@ -140,11 +140,11 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
  //checking the voltage using simple state machine
  if (0==ce_state.bv_eds) //voltage is OK
  {
-  if (d->sens.voltage_raw < cesd->vbat_v_min)
+  if (d.sens.voltage_raw < cesd->vbat_v_min)
   { //below normal
    ce_state.bv_dev = 0, ce_state.bv_eds = 1;
   }
-  else if (d->sens.voltage_raw > cesd->vbat_v_max)
+  else if (d.sens.voltage_raw > cesd->vbat_v_max)
   { //above normal
    ce_state.bv_dev = 1, ce_state.bv_eds = 1;
   }
@@ -158,8 +158,8 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
   //use simple debouncing techique to eliminate errors during normal transients (e.g. switching ignition off) 
   if (ce_state.bv_tdc)
   {//state changed? If so, then reset state machine (start again)
-   if ((0==ce_state.bv_dev && d->sens.voltage_raw > cesd->vbat_v_min) ||
-       (1==ce_state.bv_dev && d->sens.voltage_raw < cesd->vbat_v_max))
+   if ((0==ce_state.bv_dev && d.sens.voltage_raw > cesd->vbat_v_min) ||
+       (1==ce_state.bv_dev && d.sens.voltage_raw < cesd->vbat_v_max))
     ce_state.bv_eds = 0;
 
    --ce_state.bv_tdc;
@@ -167,7 +167,7 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
   else
   { //debouncing counter is expired
    //error if U > 4 and RPM > 2500
-   if (d->sens.voltage_raw > ROUND(4.0 / ADC_DISCRETE) && d->sens.inst_frq > 2500)
+   if (d.sens.voltage_raw > ROUND(4.0 / ADC_DISCRETE) && d.sens.inst_frq > 2500)
     ce_set_error(ECUERROR_VOLT_SENSOR_FAIL);
    else
     ce_clear_error(ECUERROR_VOLT_SENSOR_FAIL);
@@ -177,19 +177,19 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
  }
 
  //checking TPS sensor
- if ((d->sens.tps_raw < cesd->tps_v_min) || (d->sens.tps_raw > cesd->tps_v_max))
+ if ((d.sens.tps_raw < cesd->tps_v_min) || (d.sens.tps_raw > cesd->tps_v_max))
   ce_set_error(ECUERROR_TPS_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_TPS_SENSOR_FAIL);
 
  //checking ADD_I1 sensor
- if ((d->sens.add_i1_raw < cesd->add_i1_v_min) || (d->sens.add_i1_raw > cesd->add_i1_v_max))
+ if ((d.sens.add_i1_raw < cesd->add_i1_v_min) || (d.sens.add_i1_raw > cesd->add_i1_v_max))
   ce_set_error(ECUERROR_ADD_I1_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I1_SENSOR);
 
  //checking ADD_I2 sensor
- if ((d->sens.add_i2_raw < cesd->add_i2_v_min) || (d->sens.add_i2_raw > cesd->add_i2_v_max))
+ if ((d.sens.add_i2_raw < cesd->add_i2_v_min) || (d.sens.add_i2_raw > cesd->add_i2_v_max))
   ce_set_error(ECUERROR_ADD_I2_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I2_SENSOR);
@@ -198,17 +198,17 @@ void check(struct ecudata_t* d, ce_sett_t _PGM *cesd)
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
 //then the CE will be turned on continuously. At the start of program CE lights up for 0.5 seconds. for indicating
 //of the operability.
-void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_counter)
+void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
 {
  uint16_t temp_errors;
 
- check(d, &fw_data.exdata.cesd);
+ check(&fw_data.exdata.cesd);
 
  //If the timer counted the time, then turn off the CE
  if (s_timer_is_action(*ce_control_time_counter))
  {
   ce_set_state(CE_STATE_OFF);
-  d->ce_state = 0; //<--doubling
+  d.ce_state = 0; //<--doubling
  }
 
  //If at least one error is present  - turn on CE and start timer
@@ -216,7 +216,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  {
   s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
   ce_set_state(CE_STATE_ON);
-  d->ce_state = 1;  //<--doubling
+  d.ce_state = 1;  //<--doubling
  }
 
  temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
@@ -232,7 +232,7 @@ void ce_check_engine(struct ecudata_t* d, volatile s_timer8_t* ce_control_time_c
  ce_state.merged_errors = temp_errors;
 
  //copy error's bits into the cache for transferring
- d->ecuerrors_for_transfer|= ce_state.ecuerrors;
+ d.ecuerrors_for_transfer|= ce_state.ecuerrors;
 }
 
 void ce_save_merged_errors(uint16_t* p_merged_errors)

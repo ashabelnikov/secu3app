@@ -36,14 +36,14 @@ struct ecudata_t;
 void lambda_init_state(void);
 
 /**Control of lambda correction
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void lambda_control(struct ecudata_t* d);
+void lambda_control(void);
 
 /** Must be called from the main loop to notify about stroke events
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void lambda_stroke_event_notification(struct ecudata_t* d);
+void lambda_stroke_event_notification(void);
 
 /** Check for activation of lambda sensor (heated-up)
  * \return 1 - activated, 0 - still not activated

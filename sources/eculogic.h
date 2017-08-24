@@ -30,8 +30,6 @@
 
 #include <stdint.h>
 
-struct ecudata_t;
-
 /** Start mode of engine (used by state machine) */
 #define EM_START 0
 
@@ -45,15 +43,15 @@ struct ecudata_t;
 void ignlogic_init(void);
 
 /**Implements state machine of engine's modes (конечный автомат режимов двигателя)
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  * \return advance angle
  */
-int16_t ignlogic_system_state_machine(struct ecudata_t* d);
+int16_t ignlogic_system_state_machine(void);
 
 /** Must be called from main loop to notify about stroke events
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void ignlogic_stroke_event_notification(struct ecudata_t* d);
+void ignlogic_stroke_event_notification(void);
 
 /***/
 void ignlogic_cog_changed_notification(void);

@@ -87,57 +87,57 @@ void control_engine_units(struct ecudata_t *d)
 {
 #if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
  //Idle fuel cut-off control or fuel cut-off
- fuelcut_control(d);
+ fuelcut_control();
 #endif
 
  //Starter blocking control
- starter_control(d);
+ starter_control();
 
  //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе
- vent_control(d);
+ vent_control();
 
 #ifndef CARB_AFR //Carb. AFR control supersede power valve functionality
  //Power valve control
- pwrvalve_control(d);
+ pwrvalve_control();
 #endif
 
 #ifdef FUEL_PUMP
  //Controlling of electric fuel pump (Управление электробензонасосом)
- fuelpump_control(d);
+ fuelpump_control();
 #endif
 
  //power management
- pwrrelay_control(d);
+ pwrrelay_control();
 
 #if defined(SM_CONTROL) || defined(FUEL_INJECT)
  //choke control
- choke_control(d);
+ choke_control();
 #endif
 
 #if defined(GD_CONTROL)
  //gas dosator control
- gasdose_control(d);
+ gasdose_control();
 #endif
 
  //Cam sensor control
  cams_control();
 
 #ifdef INTK_HEATING
- intkheat_control(d);
+ intkheat_control();
 #endif
 
 #ifdef UNI_OUTPUT
  //Universal programmable output control
- uniout_control(d);
+ uniout_control();
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
- lambda_control(d);
+ lambda_control();
 #endif
 
 #ifdef CARB_AFR
  //Carburetor AFR control
- carbafr_control(d);
+ carbafr_control();
 #endif
 }
 
@@ -198,16 +198,16 @@ void init_ports(void)
 void init_modules(void)
 {
  //предварительная инициализация параметров сигнального процессора детонации
- knock_set_band_pass(edat.param.knock_bpf_frequency);
+ knock_set_band_pass(d.param.knock_bpf_frequency);
  knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
- knock_set_int_time_constant(edat.param.knock_int_time_const);
+ knock_set_int_time_constant(d.param.knock_int_time_const);
  knock_set_channel(0);
- if (edat.param.knock_use_knock_channel)
+ if (d.param.knock_use_knock_channel)
   if (!knock_module_initialize())
   {//чип сигнального процессора детонации неисправен - зажигаем СЕ
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
- edat.use_knock_channel_prev = edat.param.knock_use_knock_channel;
+ d.use_knock_channel_prev = d.param.knock_use_knock_channel;
 
 #if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
  knock_expander_initialize();
@@ -221,11 +221,11 @@ void init_modules(void)
  starter_set_blocking_state(0);
 
  //Initialization of UART (инициализируем UART)
- uart_init(edat.param.uart_divisor);
+ uart_init(d.param.uart_divisor);
 
 #ifdef BLUETOOTH_SUPP
  //Initialization of Bluetooth related module. BT baud rate can't be set if user selected to use parameters from FLASH
- bt_init(CHECKBIT(edat.param.bt_flags, BTF_SET_BBR) && !CHECKBIT(edat.param.bt_flags, BTF_USE_RESPAR));
+ bt_init(CHECKBIT(d.param.bt_flags, BTF_SET_BBR) && !CHECKBIT(d.param.bt_flags, BTF_USE_RESPAR));
 #endif
 
  //initialization of cam module, must precede ckps initialization
@@ -259,38 +259,38 @@ void init_modules(void)
 
  //инициализируем модуль ДПКВ
  ckps_init_state();
- ckps_set_cyl_number(edat.param.ckps_engine_cyl);
- ckps_set_cogs_num(edat.param.ckps_cogs_num, edat.param.ckps_miss_num);
- ckps_set_edge_type(edat.param.ckps_edge_type);     //CKPS edge (Фронт ДПКВ)
- cams_vr_set_edge_type(edat.param.ref_s_edge_type); //REF_S edge (Фронт ДНО)
- ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--only partial initialization
+ ckps_set_cyl_number(d.param.ckps_engine_cyl);
+ ckps_set_cogs_num(d.param.ckps_cogs_num, d.param.ckps_miss_num);
+ ckps_set_edge_type(d.param.ckps_edge_type);     //CKPS edge (Фронт ДПКВ)
+ cams_vr_set_edge_type(d.param.ref_s_edge_type); //REF_S edge (Фронт ДНО)
+ ckps_set_cogs_btdc(d.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL
- ckps_set_ignition_cogs(edat.param.ckps_ignit_cogs);
+ ckps_set_ignition_cogs(d.param.ckps_ignit_cogs);
 #else
- ckps_set_rising_spark(CHECKBIT(edat.param.hall_flags, CKPF_RISING_SPARK));
+ ckps_set_rising_spark(CHECKBIT(d.param.hall_flags, CKPF_RISING_SPARK));
 #endif
- ckps_set_knock_window(edat.param.knock_k_wnd_begin_angle,edat.param.knock_k_wnd_end_angle);
- ckps_use_knock_channel(edat.param.knock_use_knock_channel);
- ckps_set_cogs_btdc(edat.param.ckps_cogs_btdc); //<--now valid initialization
- ckps_set_merge_outs(edat.param.merge_ign_outs);
+ ckps_set_knock_window(d.param.knock_k_wnd_begin_angle,d.param.knock_k_wnd_end_angle);
+ ckps_use_knock_channel(d.param.knock_use_knock_channel);
+ ckps_set_cogs_btdc(d.param.ckps_cogs_btdc); //<--now valid initialization
+ ckps_set_merge_outs(d.param.merge_ign_outs);
 #ifdef HALL_OUTPUT
- ckps_set_hall_pulse(edat.param.hop_start_cogs, edat.param.hop_durat_cogs);
+ ckps_set_hall_pulse(d.param.hop_start_cogs, d.param.hop_durat_cogs);
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
- ckps_set_shutter_wnd_width(edat.param.hall_wnd_width);
- ckps_set_degrees_btdc(edat.param.hall_degrees_btdc);
+ ckps_set_shutter_wnd_width(d.param.hall_wnd_width);
+ ckps_set_degrees_btdc(d.param.hall_degrees_btdc);
  ckps_set_advance_angle(0);
 #endif
 
 #ifdef FUEL_INJECT
- ckps_set_inj_timing(edat.param.inj_timing_crk, edat.inj_pw, edat.param.inj_anglespec); //use inj.timing on cranking
+ ckps_set_inj_timing(d.param.inj_timing_crk, d.inj_pw, d.param.inj_anglespec); //use inj.timing on cranking
  inject_init_state();
- inject_set_cyl_number(edat.param.ckps_engine_cyl);
- inject_set_num_squirts(edat.param.inj_config & 0xF);
- inject_set_fuelcut(!edat.sys_locked);
- inject_set_config(edat.param.inj_config >> 4);
+ inject_set_cyl_number(d.param.ckps_engine_cyl);
+ inject_set_num_squirts(d.param.inj_config & 0xF);
+ inject_set_fuelcut(!d.sys_locked);
+ inject_set_config(d.param.inj_config >> 4);
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
- cams_enable_cam((edat.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
+ cams_enable_cam((d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
 #endif
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
@@ -309,16 +309,16 @@ void init_modules(void)
  ignlogic_init();
 
  vent_init_state();
- vent_set_pwmfrq(edat.param.vent_pwmfrq);
+ vent_set_pwmfrq(d.param.vent_pwmfrq);
 
  //check and enter blink codes indication mode
- bc_indication_mode(&edat);
+ bc_indication_mode();
 
  //Initialization of the suspended operations module
  sop_init_operations();
 
  //проводим несколько циклов измерения датчиков для инициализации данных
- meas_initial_measure(&edat);
+ meas_initial_measure();
 }
 
 /**Main function of firmware - entry point. Contains initialization and main loop 
@@ -349,16 +349,16 @@ MAIN()
  wdt_start_timer();
 
  //Read all system parameters (читаем все параметры системы)
- load_eeprom_params(&edat);
+ load_eeprom_params();
 
 #ifdef IMMOBILIZER
  //If enabled, reads and checks security keys, performs system lock/unlock
- immob_check_state(&edat);
+ immob_check_state();
 #endif
 
 #ifdef REALTIME_TABLES
  //load tables' set from EEPROM into RAM
- load_specified_tables_into_ram(&edat, TABLES_NUMBER - 1);
+ load_specified_tables_into_ram(TABLES_NUMBER - 1);
 #endif
 
  //perform initialization of all system modules
@@ -388,15 +388,15 @@ MAIN()
 #endif
    ckps_init_state_variables();
    cams_init_state_variables();
-   edat.engine_mode = EM_START; //режим пуска
+   d.engine_mode = EM_START; //режим пуска
 
    knklogic_init(&retard_state);
 
-   if (edat.param.knock_use_knock_channel)
+   if (d.param.knock_use_knock_channel)
     knock_start_settings_latching();
 
-   edat.corr.curr_angle = calc_adv_ang;
-   meas_update_values_buffers(&edat, 1, &fw_data.exdata.cesd);  //<-- update RPM only
+   d.corr.curr_angle = calc_adv_ang;
+   meas_update_values_buffers(1, &fw_data.exdata.cesd);  //<-- update RPM only
    s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 
@@ -405,7 +405,7 @@ MAIN()
   //определенную величину, то это условие перестанет выполняться.
   if (s_timer_is_action(force_measure_timeout_counter))
   {
-   if (!edat.param.knock_use_knock_channel)
+   if (!d.param.knock_use_knock_channel)
    {
     _DISABLE_INTERRUPT();
     adc_begin_measure(0);  //normal speed
@@ -427,132 +427,132 @@ MAIN()
    }
 
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-   meas_update_values_buffers(&edat, 0, &fw_data.exdata.cesd);
+   meas_update_values_buffers(0, &fw_data.exdata.cesd);
   }
 
   //----------непрерывное выполнение-----------------------------------------
   //выполнение отложенных операций
-  sop_execute_operations(&edat);
+  sop_execute_operations();
   //управление фиксированием и индицированием возникающих ошибок
-  ce_check_engine(&edat, &ce_control_time_counter);
+  ce_check_engine(&ce_control_time_counter);
   //обработка приходящих/уходящих данных последовательного порта
-  process_uart_interface(&edat);
+  process_uart_interface();
   //управление сохранением настроек
-  save_param_if_need(&edat);
+  save_param_if_need();
   //расчет мгновенной частоты вращения коленвала
-  edat.sens.inst_frq = ckps_calculate_instant_freq();
+  d.sens.inst_frq = ckps_calculate_instant_freq();
   //усреднение физических величин хранящихся в кольцевых буферах
-  meas_average_measured_values(&edat, &fw_data.exdata.cesd);
+  meas_average_measured_values(&fw_data.exdata.cesd);
   //cчитываем дискретные входы системы и переключаем тип топлива
-  meas_take_discrete_inputs(&edat);
+  meas_take_discrete_inputs();
   //управление периферией
-  control_engine_units(&edat);
+  control_engine_units(&d);
   //КА состояний системы (диспетчер режимов - сердце основного цикла)
-  calc_adv_ang = ignlogic_system_state_machine(&edat);
+  calc_adv_ang = ignlogic_system_state_machine();
   //добавляем к УОЗ октан-коррекцию
-  calc_adv_ang+=edat.param.angle_corr;
+  calc_adv_ang+=d.param.angle_corr;
   //------------------------------
-  edat.corr.octan_aac = edat.param.angle_corr;
+  d.corr.octan_aac = d.param.angle_corr;
   //------------------------------
   //ограничиваем получившийся УОЗ установленными пределами
-  restrict_value_to(&calc_adv_ang, edat.param.min_angle, edat.param.max_angle);
+  restrict_value_to(&calc_adv_ang, d.param.min_angle, d.param.max_angle);
   //Если стоит режим нулевого УОЗ, то 0
-  if (edat.param.zero_adv_ang)
+  if (d.param.zero_adv_ang)
    calc_adv_ang = 0;
 
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //Double dwell time if RPM is low and non-stable
-  ckps_set_acc_time(edat.st_block ? accumulation_time(&edat) : accumulation_time(&edat) << 1);
+  ckps_set_acc_time(d.st_block ? accumulation_time(&d) : accumulation_time(&d) << 1);
 #else
   //calculate and update accumulation time (dwell control)
-  ckps_set_acc_time(accumulation_time(&edat));
+  ckps_set_acc_time(accumulation_time());
 #endif
 #endif
-  if (edat.sys_locked)
+  if (d.sys_locked)
    ckps_enable_ignition(0);
   else
   {
    //Если разрешено, то делаем отсечку зажигания при превышении определенных оборотов
-   if (edat.param.ign_cutoff)
-    ckps_enable_ignition(edat.sens.inst_frq < edat.param.ign_cutoff_thrd);
+   if (d.param.ign_cutoff)
+    ckps_enable_ignition(d.sens.inst_frq < d.param.ign_cutoff_thrd);
    else
     ckps_enable_ignition(1);
   }
 
 #ifdef DIAGNOSTICS
-  diagnost_process(&edat);
+  diagnost_process();
 #endif
 
 #ifdef OBD_SUPPORT
-  obd_process(&edat);
+  obd_process();
 #endif
   //------------------------------------------------------------------------
 
   //выполняем операции которые необходимо выполнять строго для каждого рабочего такта.
   if (ckps_is_stroke_event_r())
   {
-   meas_update_values_buffers(&edat, 0, &fw_data.exdata.cesd);
+   meas_update_values_buffers(0, &fw_data.exdata.cesd);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    //Ограничиваем быстрые изменения УОЗ, он не может измениться больше чем на определенную величину
    //за один рабочий такт. В режиме пуска фильтр УОЗ отключен.
-   if (EM_START == edat.engine_mode)
+   if (EM_START == d.engine_mode)
    {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    int16_t strt_map_angle = start_function(&edat);
+    int16_t strt_map_angle = start_function(&d);
     ckps_set_shutter_spark(0==strt_map_angle);
-    edat.corr.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
+    d.corr.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
 #else
-    edat.corr.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
+    d.corr.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
 #endif
    }
    else
    {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    ckps_set_shutter_spark(edat.sens.frequen < 200 && 0==start_function(&edat));
+    ckps_set_shutter_spark(d.sens.frequen < 200 && 0==start_function(&d));
 #endif
-    edat.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, edat.param.angle_inc_speed, edat.param.angle_dec_speed);
+    d.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
    }
 
    //----------------------------------------------
-   if (edat.param.knock_use_knock_channel)
+   if (d.param.knock_use_knock_channel)
    {
-    knklogic_detect(&edat, &retard_state);
-    knklogic_retard(&edat, &retard_state);
+    knklogic_detect(&retard_state);
+    knklogic_retard(&retard_state);
    }
    else
-    edat.corr.knock_retard = 0;
+    d.corr.knock_retard = 0;
    //----------------------------------------------
 
    //сохраняем УОЗ для реализации в ближайшем по времени такте зажигания
-   ckps_set_advance_angle(edat.corr.curr_angle);
+   ckps_set_advance_angle(d.corr.curr_angle);
 
 #ifdef FUEL_INJECT
    //set current injection time and fuel cut state
-   inject_set_inj_time(edat.inj_pw_raw, edat.inj_dt);
+   inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
-   inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim && pwrrelay_get_state() && !(edat.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(edat.param.flpmp_flags, FPF_INJONGAS))));
+   inject_set_fuelcut(d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))));
 #else
-   inject_set_fuelcut(edat.ie_valve && !edat.sys_locked && !edat.fc_revlim && pwrrelay_get_state() && !(edat.sens.gas && CHECKBIT(edat.param.flpmp_flags, FPF_INJONGAS)));
+   inject_set_fuelcut(d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)));
 #endif
    //set injection timing depending on current mode of engine
-   ckps_set_inj_timing(edat.corr.inj_timing, edat.inj_pw, edat.param.inj_anglespec);
+   ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, d.param.inj_anglespec);
 #endif
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
-   lambda_stroke_event_notification(&edat);
+   lambda_stroke_event_notification();
 #endif
 
-   ignlogic_stroke_event_notification(&edat);
+   ignlogic_stroke_event_notification();
 
 #ifdef GD_CONTROL
-   gasdose_stroke_event_notification(&edat);
+   gasdose_stroke_event_notification();
 #endif
 
    //управляем усилением аттенюатора в зависимости от оборотов
-   if (edat.param.knock_use_knock_channel)
-    knock_set_gain(knock_attenuator_function(&edat));
+   if (d.param.knock_use_knock_channel)
+    knock_set_gain(knock_attenuator_function());
 
    // индицирование этих ошибок прекращаем при начале вращения двигателя
    //(при прошествии N-го количества тактов)

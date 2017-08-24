@@ -210,7 +210,7 @@ typedef struct ecudata_t
 }ecudata_t;
 
 
-extern struct ecudata_t edat;            //!< ECU data structure. Contains all related data and state information
+extern struct ecudata_t d;               //!< ECU data structure. Contains all related data and state information
 
 /**Initialization of variables and data structures
  * \param d pointer to ECU data structure

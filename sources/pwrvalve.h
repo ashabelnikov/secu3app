@@ -29,15 +29,13 @@
 
 #ifndef CARB_AFR //power valve functionality isn't needed when carburetor AFR control is used
 
-struct ecudata_t;
-
 /**Initialization of I/O ports*/
 void pwrvalve_init_ports(void);
 
 /**Implements control algorithm
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void pwrvalve_control(struct ecudata_t* d);
+void pwrvalve_control(void);
 
 #endif
 

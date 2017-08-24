@@ -22,7 +22,6 @@
 /** \file bc_input.c
  * \author Alexey A. Shabelnikov
  * Implementation of CE errors information output using blink codes
- * (Реализация выдачи информации об ошибках СЕ используя блинк коды).
  */
 
 #include "port/avrio.h"
@@ -104,7 +103,7 @@ void disp_start(void)
  }while(--i);
 }
 
-void bc_indication_mode(struct ecudata_t *d)
+void bc_indication_mode(void)
 {
  uint8_t i = 5;
  if (!IOCFG_CHECK(IOP_BC_INPUT))
@@ -121,7 +120,7 @@ void bc_indication_mode(struct ecudata_t *d)
  _DISABLE_INTERRUPT();
  ce_set_state(CE_STATE_OFF);
 
- vent_turnoff(d);                //turn off ventilator
+ vent_turnoff();                 //turn off ventilator
  starter_set_blocking_state(1);  //block starter
  IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid

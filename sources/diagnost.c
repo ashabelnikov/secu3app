@@ -295,7 +295,7 @@ uint16_t get_inputs(void)
  return i;
 }
 
-void diagnost_process(struct ecudata_t* d)
+void diagnost_process(void)
 {
  if (0==diag.diag_started)
   return; //normal mode
@@ -325,9 +325,9 @@ void diagnost_process(struct ecudata_t* d)
  while(1)
  {
   //check & execute suspended operations
-  sop_execute_operations(d);
+  sop_execute_operations();
   //process data being received and sent via serial port
-  process_uart_interface(d);
+  process_uart_interface();
 
   switch(diag.fsm_state)
   {
@@ -375,24 +375,24 @@ void diagnost_process(struct ecudata_t* d)
   if (diag.skip_loops == 0)
   {
    //analog inputs
-   d->diag_inp.voltage = _ADC_COMPENSATE(adc_get_ubat_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.ks_1 = _ADC_COMPENSATE(diag.knock_value[0], ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.add_i1 = _ADC_COMPENSATE(adc_get_add_i1_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.add_i2 = _ADC_COMPENSATE(adc_get_add_i2_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.voltage = _ADC_COMPENSATE(adc_get_ubat_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.ks_1 = _ADC_COMPENSATE(diag.knock_value[0], ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.add_i1 = _ADC_COMPENSATE(adc_get_add_i1_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.add_i2 = _ADC_COMPENSATE(adc_get_add_i2_value(), ADC_VREF_FACTOR, 0.0);
 #ifndef SECU3T
-   d->diag_inp.add_i3 = _ADC_COMPENSATE(adc_get_add_i3_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.add_i4 = 0; //reserved
+   d.diag_inp.add_i3 = _ADC_COMPENSATE(adc_get_add_i3_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.add_i4 = 0; //reserved
 #endif
-   d->diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
-   d->diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
 
    //digital inputs
-   d->diag_inp.bits = get_inputs();
+   d.diag_inp.bits = get_inputs();
 
    //outputs
-   set_outputs(d->diag_out);
+   set_outputs(d.diag_out);
   }
   else
    --diag.skip_loops;

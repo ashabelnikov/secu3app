@@ -28,12 +28,9 @@
 #ifndef _PROCUART_H_
 #define _PROCUART_H_
 
-struct ecudata_t;
-
 /** Process sent/received frames from UART. Should be called from main loop!
- *(обрабатывает передаваемые/принимаемые фреймы UART-a. Должна вызыватся из главного цикла программы)
- * \param d pointer to ECU data structure
+  * Uses d ECU data structure
  */
-void process_uart_interface(struct ecudata_t* d);
+void process_uart_interface(void);
 
 #endif //_PROCUART_H_

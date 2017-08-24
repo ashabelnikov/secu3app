@@ -64,7 +64,7 @@ void pwrrelay_init(void)
  pwrs.pwrdown = 0;
 }
 
-void pwrrelay_control(struct ecudata_t* d)
+void pwrrelay_control(void)
 {
  //if this feature is disabled, then do nothing
  if (!IOCFG_CHECK(IOP_PWRRELAY))
@@ -77,16 +77,16 @@ void pwrrelay_control(struct ecudata_t* d)
   //We will wait while temperature is high only if temperature sensor is enabled
   //and control of electric cooling fan is used.
   uint8_t temperature_ok = 1;
-  if (d->param.tmp_use && IOCFG_CHECK(IOP_ECF))
+  if (d.param.tmp_use && IOCFG_CHECK(IOP_ECF))
   {
 #ifdef COOLINGFAN_PWM
-   if (d->param.vent_pwm) //PWM is available and enabled
-    temperature_ok = (d->sens.temperat <= (d->param.vent_on - TEMPERATURE_MAGNITUDE(2.0)));
+   if (d.param.vent_pwm) //PWM is available and enabled
+    temperature_ok = (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(2.0)));
    else //PWM is available, but disabled
-    temperature_ok = (d->sens.temperat <= (d->param.vent_off));
+    temperature_ok = (d.sens.temperat <= (d.param.vent_off));
 #else
    //PWM is not available
-   temperature_ok = (d->sens.temperat <= (d->param.vent_off));
+   temperature_ok = (d.sens.temperat <= (d.param.vent_off));
 #endif
 
    //set timeout
@@ -111,7 +111,7 @@ void pwrrelay_control(struct ecudata_t* d)
   pwrs.state = 0;
 
  //if IGN input is not available, then we will check board voltage
- pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d->sens.voltage < VOLTAGE_MAGNITUDE(4.5));
+ pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d.sens.voltage < VOLTAGE_MAGNITUDE(4.5));
 }
 
 uint8_t pwrrelay_get_state(void)
@@ -119,7 +119,7 @@ uint8_t pwrrelay_get_state(void)
  return (pwrs.pwrdown == 0);
 }
 
-void pwrrelay_init_steppers(struct ecudata_t* d)
+void pwrrelay_init_steppers(void)
 {
  int cnt = 6000;
 
@@ -128,11 +128,11 @@ void pwrrelay_init_steppers(struct ecudata_t* d)
 
 #ifdef SM_CONTROL
  if (IOCFG_CHECK(IOP_SM_STP))
-  choke_init_motor(d);   //send initialization command to choke/IAC motor
+  choke_init_motor();   //send initialization command to choke/IAC motor
 #endif
 #ifdef GD_CONTROL
  if (IOCFG_CHECK(IOP_GD_STP))
-  gasdose_init_motor(d); //send initialization command to stepper gas valve motor
+  gasdose_init_motor(); //send initialization command to stepper gas valve motor
 #endif
 
  //wait while at least one of the motors is busy, but no more than several seconds

@@ -41,27 +41,27 @@
 
 #if !defined(CARB_AFR) || defined(GD_CONTROL)
 /** Fuel cut control logic for carburetor or gas doser
- * \param d Pointer to ECU data structure
+ * Uses d ECU data structure
  * \param apply Apply to phisical output - 1, or not - 0 (IE will be turned off)
  */
-static void simple_fuel_cut(struct ecudata_t* d, uint8_t apply)
+static void simple_fuel_cut(uint8_t apply)
 {
  //if throttle gate is opened, then open valve,reload timer and exit from condition
- if (d->sens.carb)
+ if (d.sens.carb)
  {
-  d->ie_valve = 1;
-  s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
+  d.ie_valve = 1;
+  s_timer_set(epxx_delay_time_counter, d.param.shutoff_delay);
  }
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  else
-  if (d->sens.gas) //gas
-   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d->sens.inst_frq > d->param.ie_lot_g)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit_g)))?0:1;
+  if (d.sens.gas) //gas
+   d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+   &&(((d.sens.inst_frq > d.param.ie_lot_g)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit_g)))?0:1;
   else //petrol
-   d->ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d->sens.inst_frq > d->param.ie_lot)&&(!d->ie_valve))||(d->sens.inst_frq > d->param.ie_hit)))?0:1;
+   d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+   &&(((d.sens.inst_frq > d.param.ie_lot)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit)))?0:1;
  if (apply)
-  IOCFG_SET(IOP_IE, d->ie_valve);
+  IOCFG_SET(IOP_IE, d.ie_valve);
  else
   IOCFG_SET(IOP_IE, 0); //turn off valve
 }
@@ -78,54 +78,54 @@ void fuelcut_init_ports(void)
  //empty
 }
 
-void fuelcut_control(struct ecudata_t* d)
+void fuelcut_control(void)
 {
 #ifdef GD_CONTROL
- if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
+ if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP))
  {
-  simple_fuel_cut(d, 1);   //fuel cut off for gas doser
+  simple_fuel_cut(1);   //fuel cut off for gas doser
   goto revlim;
  }
 #endif
 
  //fuel cut off for fuel injection
- if (d->sens.inst_frq > d->param.ie_hit)
+ if (d.sens.inst_frq > d.param.ie_hit)
  {
   //When RPM > hi threshold, then check TPS, CTS and MAP
-  if ((!d->sens.carb) && (d->sens.temperat > d->param.fuelcut_cts_thrd) && (d->sens.map < d->param.fuelcut_map_thrd))
+  if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd))
   {
    if (0==state)
    {
-    s_timer_set(epxx_delay_time_counter, d->param.shutoff_delay);
+    s_timer_set(epxx_delay_time_counter, d.param.shutoff_delay);
     state = 1;
    }
    else
    {
     if (s_timer_is_action(epxx_delay_time_counter))
-     d->ie_valve = 0;  //Cut fuel
+     d.ie_valve = 0;  //Cut fuel
    }
   }
   else
   {
-   d->ie_valve = 1;   //normal operation
+   d.ie_valve = 1;   //normal operation
    state = 0;
   }
  }
- else if (d->sens.inst_frq < d->param.ie_lot || d->sens.carb)
+ else if (d.sens.inst_frq < d.param.ie_lot || d.sens.carb)
  { //always turn on fuel when RPM < low threshold or throttle is opened
-  d->ie_valve = 1;
+  d.ie_valve = 1;
   state = 0;
  }
 
 revlim:
  //simple Rev. limitter
- if (d->sens.inst_frq > d->param.revlim_hit)
+ if (d.sens.inst_frq > d.param.revlim_hit)
  {
-  d->fc_revlim = 1; //cut fuel
+  d.fc_revlim = 1; //cut fuel
  }
- else if (d->sens.inst_frq < d->param.revlim_lot)
+ else if (d.sens.inst_frq < d.param.revlim_lot)
  {
-  d->fc_revlim = 0; //restore fuel
+  d.fc_revlim = 0; //restore fuel
  }
 }
 
@@ -143,26 +143,26 @@ void fuelcut_init_ports(void)
 //Implementation of Idle Cut-off valve control. If throttle gate is closed AND frq > [up.threshold] OR
 //throttle gate is closed AND frq > [lo.threshold] BUT valve is already closed, THEN turn off
 //fuel supply by stopping to apply voltage to valve's coil. ELSE - fuel supply is turned on.
-void fuelcut_control(struct ecudata_t* d)
+void fuelcut_control(void)
 {
 #ifdef CARB_AFR
  //In case of carb. AFR control, fuel cut for gas doser must be used only 
  //when gas doser is activated and fuel type is gas
- if (d->sens.gas && IOCFG_CHECK(IOP_GD_STP))
+ if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP))
  {
 #endif
   uint8_t off_icv_on_gas = IOCFG_CHECK(IOP_GD_STP); //turn off carburetor's idle cut off valve when gas doser is active
-  simple_fuel_cut(d, (!d->sens.gas || !off_icv_on_gas));
+  simple_fuel_cut((!d.sens.gas || !off_icv_on_gas));
 
 #ifdef GD_CONTROL
   //simple Rev. limitter used only for gas doser
-  if (d->sens.inst_frq > d->param.revlim_hit)
+  if (d.sens.inst_frq > d.param.revlim_hit)
   {
-   d->fc_revlim = 1; //cut fuel
+   d.fc_revlim = 1; //cut fuel
   }
-  else if (d->sens.inst_frq < d->param.revlim_lot)
+  else if (d.sens.inst_frq < d.param.revlim_lot)
   {
-   d->fc_revlim = 0; //restore fuel
+   d.fc_revlim = 0; //restore fuel
   }
 #endif
 

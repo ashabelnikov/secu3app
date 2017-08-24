@@ -29,15 +29,13 @@
 
 #if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
 
-struct ecudata_t;
-
 /** Initialization of used I/O ports */
 void fuelcut_init_ports(void);
 
 /** Does control of valve or fuel cut
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void fuelcut_control(struct ecudata_t* d);
+void fuelcut_control(void);
 
 #endif //!CARB_AFR || GD_CONTROL
 

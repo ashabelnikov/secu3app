@@ -140,45 +140,45 @@ ISR(TIMER2_COMPA_vect)
 
 //Control of electric cooling fan (engine cooling), only in case if coolant temperature
 //sensor is present in system
-void vent_control(struct ecudata_t *d)
+void vent_control(void)
 {
  //exit if coolant temperature sensor is disabled or there is no I/O assigned to
  //electric cooling fan
- if (!d->param.tmp_use || !IOCFG_CHECK(IOP_ECF))
+ if (!d.param.tmp_use || !IOCFG_CHECK(IOP_ECF))
   return;
 
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
- if (d->sens.temperat >= d->param.vent_on)
-  IOCFG_SET(IOP_ECF, 1), d->cool_fan = 1; //turn on
- if (d->sens.temperat <= d->param.vent_off)
-  IOCFG_SET(IOP_ECF, 0), d->cool_fan = 0; //turn off
+ if (d.sens.temperat >= d.param.vent_on)
+  IOCFG_SET(IOP_ECF, 1), d.cool_fan = 1; //turn on
+ if (d.sens.temperat <= d.param.vent_off)
+  IOCFG_SET(IOP_ECF, 0), d.cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
- if (!d->param.vent_pwm)
+ if (!d.param.vent_pwm)
  { //relay
   //We don't need interrupts for relay control
   _DISABLE_INTERRUPT();
   TIMSK2&=~_BV(OCIE2A);
   _ENABLE_INTERRUPT();
 
-  if (d->sens.temperat >= d->param.vent_on)
-   IOCFG_SET(IOP_ECF, 1), d->cool_fan = 1; //turn on
-  if (d->sens.temperat <= d->param.vent_off)
-   IOCFG_SET(IOP_ECF, 0), d->cool_fan = 0; //turn off
+  if (d.sens.temperat >= d.param.vent_on)
+   IOCFG_SET(IOP_ECF, 1), d.cool_fan = 1; //turn on
+  if (d.sens.temperat <= d.param.vent_off)
+   IOCFG_SET(IOP_ECF, 0), d.cool_fan = 0; //turn off
  }
  else
  {
   uint16_t d_val;
   //note: We skip 1 and 24 values of duty
-  int16_t dd = d->param.vent_on - d->sens.temperat;
+  int16_t dd = d.param.vent_on - d.sens.temperat;
   if (dd < 2)
    dd = 0;         //restrict to max.
   if (dd > (PWM_STEPS-2))
   {
    dd = PWM_STEPS; //restrict to min.
-   d->cool_fan = 0; //turned off
+   d.cool_fan = 0; //turned off
   }
   else
-   d->cool_fan = 1; //turned on
+   d.cool_fan = 1; //turned on
 
   d_val = ((uint16_t)(PWM_STEPS - dd) * 256) / PWM_STEPS;
   if (d_val > 255) d_val = 255;
@@ -188,12 +188,12 @@ void vent_control(struct ecudata_t *d)
 #endif
 }
 
-void vent_turnoff(struct ecudata_t *d)
+void vent_turnoff(void)
 {
 #ifndef COOLINGFAN_PWM
  IOCFG_SET(IOP_ECF, 0);
 #else
- if (!d->param.vent_pwm && !IOCFG_CHECK(IOP_IAC_PWM) && !IOCFG_CHECK(IOP_GD_PWM))
+ if (!d.param.vent_pwm && !IOCFG_CHECK(IOP_IAC_PWM) && !IOCFG_CHECK(IOP_GD_PWM))
   IOCFG_SET(IOP_ECF, 0);
  else
   COOLINGFAN_TURNOFF();

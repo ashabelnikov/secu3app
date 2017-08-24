@@ -30,24 +30,24 @@
 #include "bitmask.h"
 
 /**ECU data structure. Contains all related data and state information */
-struct ecudata_t edat;
+struct ecudata_t d;
 /* Cache for buffering parameters used during suspended EEPROM operations */
 uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
 
 #ifdef REALTIME_TABLES
 uint8_t mm_get_byte_ram(uint16_t offset)
 {
- return *(((uint8_t*)&edat.tables_ram) + offset);
+ return *(((uint8_t*)&d.tables_ram) + offset);
 }
 
 uint8_t mm_get_byte_pgm(uint16_t offset)
 {
- return PGM_GET_BYTE(((uint8_t _PGM*)edat.fn_dat) + offset);
+ return PGM_GET_BYTE(((uint8_t _PGM*)d.fn_dat) + offset);
 }
 
 uint16_t mm_get_word_ram(uint16_t offset)
 {
- return *((uint16_t*)(((uint8_t*)&edat.tables_ram) + offset));
+ return *((uint16_t*)(((uint8_t*)&d.tables_ram) + offset));
 }
 
 /** Get 12-bit word from SRAM
@@ -56,13 +56,13 @@ uint16_t mm_get_word_ram(uint16_t offset)
  */
 uint16_t mm_get_w12_ram(uint16_t offset, uint8_t off)
 {
- uint16_t word = *((uint16_t*)(((uint8_t*)&edat.tables_ram) + offset + ((uint16_t)off+(off>>1)) ));
+ uint16_t word = *((uint16_t*)(((uint8_t*)&d.tables_ram) + offset + ((uint16_t)off+(off>>1)) ));
  return ((off & 0x0001) ? word >> 4 : word) & 0x0FFF;
 }
 
 uint16_t mm_get_word_pgm(uint16_t offset)
 {
- return PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)edat.fn_dat) + offset));
+ return PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)d.fn_dat) + offset));
 }
 #endif
 
@@ -72,7 +72,7 @@ uint16_t mm_get_word_pgm(uint16_t offset)
  */
 uint16_t mm_get_w12_pgm(uint16_t offset, uint8_t off)
 {
- uint16_t word = (PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)edat.fn_dat) + offset + ((uint16_t)off+(off>>1)) )));
+ uint16_t word = (PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)d.fn_dat) + offset + ((uint16_t)off+(off>>1)) )));
  return ((off & 0x0001) ? word >> 4 : word) & 0x0FFF;
 }
 
@@ -82,43 +82,43 @@ uint16_t mm_get_w12_pgm(uint16_t offset, uint8_t off)
  */
 void init_ecu_data(void)
 {
- edat.op_comp_code = 0;
- edat.op_actn_code = 0;
- edat.sens.inst_frq = 0;
- edat.corr.curr_angle = 0;
- edat.corr.knock_retard = 0;
- edat.ecuerrors_for_transfer = 0;
- edat.eeprom_parameters_cache = &eeprom_parameters_cache[0];
- edat.engine_mode = EM_START;
- edat.ce_state = 0;
- edat.cool_fan = 0;
- edat.st_block = 0; //starter is not blocked
- edat.sens.tps = edat.sens.tps_raw = 0;
- edat.sens.add_i1 = edat.sens.add_i1_raw = 0;
- edat.sens.add_i2 = edat.sens.add_i2_raw = 0;
- edat.choke_testing = 0;
- edat.choke_pos = 0;
- edat.choke_manpos_d = 0;
- edat.choke_rpm_reg = 0;
- edat.gasdose_testing = 0;    //GD
- edat.gasdose_pos = 0;        //GD
- edat.gasdose_manpos_d = 0;   //GD
- edat.bt_name[0] = 0;
- edat.bt_pass[0] = 0;
- edat.sys_locked = 0; //unlocked
+ d.op_comp_code = 0;
+ d.op_actn_code = 0;
+ d.sens.inst_frq = 0;
+ d.corr.curr_angle = 0;
+ d.corr.knock_retard = 0;
+ d.ecuerrors_for_transfer = 0;
+ d.eeprom_parameters_cache = &eeprom_parameters_cache[0];
+ d.engine_mode = EM_START;
+ d.ce_state = 0;
+ d.cool_fan = 0;
+ d.st_block = 0; //starter is not blocked
+ d.sens.tps = d.sens.tps_raw = 0;
+ d.sens.add_i1 = d.sens.add_i1_raw = 0;
+ d.sens.add_i2 = d.sens.add_i2_raw = 0;
+ d.choke_testing = 0;
+ d.choke_pos = 0;
+ d.choke_manpos_d = 0;
+ d.choke_rpm_reg = 0;
+ d.gasdose_testing = 0;    //GD
+ d.gasdose_pos = 0;        //GD
+ d.gasdose_manpos_d = 0;   //GD
+ d.bt_name[0] = 0;
+ d.bt_pass[0] = 0;
+ d.sys_locked = 0; //unlocked
 #ifdef FUEL_INJECT
- edat.inj_pw = 0;
- edat.inj_pw_raw = 0;
- edat.inj_dt = 0;
- edat.corr.afr = 0;
- edat.corr.inj_timing = 0;
+ d.inj_pw = 0;
+ d.inj_pw_raw = 0;
+ d.inj_dt = 0;
+ d.corr.afr = 0;
+ d.corr.inj_timing = 0;
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL) || defined(CARB_AFR)
- edat.corr.lambda = 0;
+ d.corr.lambda = 0;
 #endif
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
- edat.fc_revlim = 0;
- edat.acceleration = 0;
+ d.fc_revlim = 0;
+ d.acceleration = 0;
 #endif
 }

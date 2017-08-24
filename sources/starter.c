@@ -43,19 +43,19 @@ void starter_init_ports(void)
  IOCFG_INIT(IOP_ST_BLOCK, 0); //starter is blocked (стартер заблокирован)
 }
 
-void starter_control(struct ecudata_t* d)
+void starter_control(void)
 {
- if (d->sys_locked)
+ if (d.sys_locked)
  { //system locked by immobilizer
-  starter_set_blocking_state(1), d->st_block = 1;
+  starter_set_blocking_state(1), d.st_block = 1;
   return;
  }
 
  //control of starter's blocking (starter is blocked after reaching the specified RPM, but will not turn back!)
  //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)
- if (d->sens.frequen > d->param.starter_off)
-  starter_set_blocking_state(1), d->st_block = 1;
+ if (d.sens.frequen > d.param.starter_off)
+  starter_set_blocking_state(1), d.st_block = 1;
 
- if (d->sens.frequen < 30)
-  starter_set_blocking_state(0), d->st_block = 0; //unblock starter (снимаем блокировку стартера)
+ if (d.sens.frequen < 30)
+  starter_set_blocking_state(0), d.st_block = 0; //unblock starter (снимаем блокировку стартера)
 }

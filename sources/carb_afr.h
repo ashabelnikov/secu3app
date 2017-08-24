@@ -29,8 +29,6 @@
 
 #ifdef CARB_AFR   //if carburetor AFR control enabled
 
-struct ecudata_t;
-
 /**Initialization of I/O ports*/
 void carbafr_init_ports(void);
 
@@ -38,9 +36,9 @@ void carbafr_init_ports(void);
 void carbafr_init(void);
 
 /**Implements control algorithm
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void carbafr_control(struct ecudata_t* d);
+void carbafr_control(void);
 
 #endif //CARB_AFR
 

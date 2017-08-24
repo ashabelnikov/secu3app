@@ -47,8 +47,6 @@
 #define ECUERROR_ADD_I1_SENSOR         11  //!< ADD_I1 input error
 #define ECUERROR_ADD_I2_SENSOR         12  //!< ADD_I2 input error
 
-struct ecudata_t;
-
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure
  * \param ce_control_time_counter time counter object

@@ -29,8 +29,6 @@
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 
-struct ecudata_t;
-
 /** Initialization of state variables
  */
 void lambda_init_state(void);

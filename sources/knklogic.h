@@ -38,8 +38,6 @@ typedef struct retard_state_t
  uint8_t sd_counter;    //!< used to count time after engine startup
 }retard_state_t;
 
-struct ecudata_t;
-
 /** Implements alrogithms for knock detection
  * Uses d ECU data structure
  * \param p_rs poiter to state variables used by algorithm

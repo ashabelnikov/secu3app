@@ -81,9 +81,9 @@
 #endif
 
 /**Control of certain units of engine (управление отдельными узлами двигателя).
- * \param d pointer to ECU data structure
+ * Uses d ECU data structure
  */
-void control_engine_units(struct ecudata_t *d)
+void control_engine_units(void)
 {
 #if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
  //Idle fuel cut-off control or fuel cut-off
@@ -446,7 +446,7 @@ MAIN()
   //cчитываем дискретные входы системы и переключаем тип топлива
   meas_take_discrete_inputs();
   //управление периферией
-  control_engine_units(&d);
+  control_engine_units();
   //КА состояний системы (диспетчер режимов - сердце основного цикла)
   calc_adv_ang = ignlogic_system_state_machine();
   //добавляем к УОЗ октан-коррекцию
@@ -463,7 +463,7 @@ MAIN()
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //Double dwell time if RPM is low and non-stable
-  ckps_set_acc_time(d.st_block ? accumulation_time(&d) : accumulation_time(&d) << 1);
+  ckps_set_acc_time(d.st_block ? accumulation_time() : accumulation_time() << 1);
 #else
   //calculate and update accumulation time (dwell control)
   ckps_set_acc_time(accumulation_time());
@@ -500,7 +500,7 @@ MAIN()
    if (EM_START == d.engine_mode)
    {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    int16_t strt_map_angle = start_function(&d);
+    int16_t strt_map_angle = start_function();
     ckps_set_shutter_spark(0==strt_map_angle);
     d.corr.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
 #else
@@ -510,7 +510,7 @@ MAIN()
    else
    {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    ckps_set_shutter_spark(d.sens.frequen < 200 && 0==start_function(&d));
+    ckps_set_shutter_spark(d.sens.frequen < 200 && 0==start_function());
 #endif
     d.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
    }

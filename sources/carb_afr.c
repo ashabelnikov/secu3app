@@ -163,19 +163,19 @@ void carbafr_control(void)
   //otherwise use 50% value for both valves
   //
   //(discharge > threshold) means engine is not under full load
-  if (lambda_is_activated() && (d.sens.temperat > d.param.inj_lambda_temp_thrd) && (d.sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge(d) > d.param.fe_on_threshold))
+  if (lambda_is_activated() && (d.sens.temperat > d.param.inj_lambda_temp_thrd) && (d.sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge() > d.param.fe_on_threshold))
   {
    if (d.sens.carb)
    { //throttle is opened
     if (d.sens.inst_frq > CAFR_IDL_RPM_THRD)
     {
      //control FE,--> IE=100%
-     control_iv_and_pv(d, 1); //IE can be used to additionally lean mixture
+     control_iv_and_pv(1); //IE can be used to additionally lean mixture
     }
     else
     {
      //control IE, FE = 50%
-     control_iv_and_pv(d, 0);
+     control_iv_and_pv(0);
     }
    }
    else
@@ -188,7 +188,7 @@ void carbafr_control(void)
        else
        {
         //control IE, FE = 50%
-        control_iv_and_pv(d, 0);
+        control_iv_and_pv(0);
        }
        break;
       case 1:

@@ -68,7 +68,6 @@
 #endif
 #define OPCODE_RESET_EEPROM       0xCF    //!< reset EEPROM, second byte must be 0xAA
 #define OPCODE_BL_CONFIRM         0xCB    //!< boot loader starting confirmation
-struct ecudata_t;
 
 /**Set specified operation to execution queue (установка указанной рперации в очередь на выполнение)
  * \param opcode code of operation to be executed

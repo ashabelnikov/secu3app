@@ -412,7 +412,7 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 }
 
 #ifdef FUEL_INJECT
-void ckps_set_inj_timing(int16_t phase)
+void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
 {
  //not supported in this implementation
 }

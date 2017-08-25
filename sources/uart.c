@@ -975,7 +975,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.diag_inp.add_i2);
 #ifndef SECU3T
    build_i16h(d.diag_inp.add_i3);
-   build_i16h(0); //reserved for ADD_I4
+#ifdef TPIC8101
+   build_i16h(d.diag_inp.add_i4);
+#else
+   build_i16h(0); //busy by HIP9011
+#endif
 #else //SECU-3T
    build_i16h(0); //stub
    build_i16h(0); //stub

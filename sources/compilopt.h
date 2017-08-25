@@ -215,4 +215,11 @@
  #error "REV9_BOARD option doesn't take any sense for SECU-3i! Remove it if you build for SECU-3i."
 #endif
 
+/**Build firmware for TPIC8101 */
+#ifdef TPIC8101
+ #define COPT_TPIC8101 1
+#else
+ #define COPT_TPIC8101 0
+#endif
+
 #endif //_COMPILOPT_H_

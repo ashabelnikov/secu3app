@@ -88,7 +88,9 @@ typedef struct
  volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
- uint8_t  measure_all;           //!< если 1, то производится измерение всех значений
+#ifndef TPIC8101
+ uint8_t  waste_meas;            //!< if 1, then waste measurement will be performed for knock
+#endif
 }adcstate_t;
 
 /** переменные состояния АЦП */
@@ -188,10 +190,8 @@ uint16_t adc_get_knock_value(void)
 
 void adc_begin_measure(uint8_t speed2x)
 {
- //мы не можем запускать новое измерение, если еще не завершилось
- //предыдущее измерение
  if (!adc.sensors_ready)
-  return;
+  return; //We can't start new measurement while previous one is not finished yet
 
  adc.sensors_ready = 0;
  ADMUX = ADCI_MAP|ADC_VREF_TYPE;
@@ -202,15 +202,15 @@ void adc_begin_measure(uint8_t speed2x)
  SETBIT(ADCSRA, ADSC);
 }
 
+#ifndef TPIC8101
+//This function is used for HIP9011 only, it is not used for TPIC8101
 void adc_begin_measure_knock(uint8_t speed2x)
 {
- //мы не можем запускать новое измерение, если еще не завершилось
- //предыдущее измерение
  if (!adc.sensors_ready)
-  return;
+  return; //We can't start new measurement while previous one is not finished yet
 
  adc.sensors_ready = 0;
- adc.measure_all = 1;   //<--one measurement delay will be used
+ adc.waste_meas = 1;   //<--one measurement delay will be used
  ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
  if (speed2x)
   CLEARBIT(ADCSRA, ADPS0); //250kHz
@@ -218,12 +218,7 @@ void adc_begin_measure_knock(uint8_t speed2x)
   SETBIT(ADCSRA, ADPS0);   //125kHz
  SETBIT(ADCSRA, ADSC);
 }
-
-void adc_begin_measure_all(void)
-{
- adc.measure_all = 1;
- adc_begin_measure(0); //<--normal speed
-}
+#endif
 
 uint8_t adc_is_measure_ready(void)
 {
@@ -233,9 +228,11 @@ uint8_t adc_is_measure_ready(void)
 void adc_init(void)
 {
  adc.knock_value = 0;
- adc.measure_all = 0;
+#ifndef TPIC8101
+ adc.waste_meas = 0;
+#endif
 
- //инициализация АЦП, параметры: f = 125.000 kHz,
+ //initialization of ADC, f = 125.000 kHz,
  //внутренний источник опорного напряжения или внешний зависит от опции VREF_5V, прерывание разрешено
  ADMUX=ADC_VREF_TYPE;
  ADCSRA=_BV(ADEN)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
@@ -243,7 +240,7 @@ void adc_init(void)
  //модуль АЦП готов к новому измерению
  adc.sensors_ready = 1;
 
- //запрещаем компаратор - он нам не нужен
+ //disable comparator - it is not needed
  ACSR=_BV(ACD);
 }
 
@@ -307,27 +304,28 @@ ISR(ADC_vect)
   case ADCI_ADD_I3:
    adc.add_i3_value = ADC;
 #endif
-   if (0==adc.measure_all)
-   {
-    ADMUX = ADCI_MAP|ADC_VREF_TYPE;
-    adc.sensors_ready = 1; //finished
-   }
-   else
-   { //continue (knock)
-    adc.measure_all = 0;
-    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
-    SETBIT(ADCSRA,ADSC);
-   }
+
+#ifndef TPIC8101
+   ADMUX = ADCI_MAP|ADC_VREF_TYPE;
+   adc.sensors_ready = 1; //finished
+#else
+   //continue (as additional analog input)
+   ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
+   SETBIT(ADCSRA, ADSC);
+#endif
    break;
 
-  case ADCI_KNOCK://закончено измерение сигнала с интегратора канала детонации
-   if (adc.measure_all)
-   {                      //waste measurement is required (for delay)
-    adc.measure_all = 0;
-    SETBIT(ADCSRA,ADSC);  //change nothing and start ADC again
+  //note: we can fall here either from adc_beign_measure_knock() or previous state
+  //if defined TPIC8101, then ADCI_KNOCK used for ADD_I4
+  case ADCI_KNOCK:  //measurement of the int. output voltage finished
+#ifndef TPIC8101
+   if (adc.waste_meas)
+   {                       //waste measurement is required (for delay)
+    adc.waste_meas = 0;
+    SETBIT(ADCSRA, ADSC);  //change nothing and start ADC again
     break;
    }
-
+#endif
    adc.knock_value = ADC;
    adc.sensors_ready = 1;
    break;

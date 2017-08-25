@@ -331,16 +331,14 @@ void diagnost_process(void)
 
   switch(diag.fsm_state)
   {
-   //start measurements (sensors), start KSP settings latching
+   //start measurements (sensors)
    case 0:
-    if (diag.ksp_channel > KSP_CHANNEL_1)
-     diag.ksp_channel = KSP_CHANNEL_0;
+    //select next channel
     knock_set_channel(diag.ksp_channel);
-    //start the process of downloading the settings into the HIP9011
-    knock_start_settings_latching();
-    //start the process of measuring analog input values
+    if (++diag.ksp_channel > KSP_CHANNEL_1)
+     diag.ksp_channel = KSP_CHANNEL_0;
     adc_begin_measure(0); //<--normal speed
-    diag.fsm_state = 1;
+    ++diag.fsm_state;
     break;
 
    //wait for completion of measurements, start integration of current knock channel's signal
@@ -349,23 +347,35 @@ void diagnost_process(void)
     {
      knock_set_integration_mode(KNOCK_INTMODE_INT);
      _DELAY_US(1000);   //1ms
-     diag.fsm_state = 2;
+     ++diag.fsm_state;
     }
     break;
 
    //start measurements (knock signal)
    case 2:
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
-    adc_begin_measure_knock(0);
-    diag.fsm_state = 3;
+
+    //start the process of downloading the settings into the HIP9011 (and getting ADC result for TPIC8101)
+    knock_start_settings_latching();
+#ifndef TPIC8101
+    adc_begin_measure_knock(0); //HIP9011 only
+#endif
+    ++diag.fsm_state;
     break;
 
    //wait for completion of measurements, and reinitialize state machine
+   //for TPIC8101 we wait for latching of settings
+   //for HIP9011 we wait for ADC measurement
    case 3:
+#ifdef TPIC8101
+    if (knock_is_latching_idle())
+    {
+     diag.knock_value[diag.ksp_channel] = knock_get_adc_value(); //get ADC value read from TPIC8101
+#else //HIP9011
     if (adc_is_measure_ready())
     {
      diag.knock_value[diag.ksp_channel] = adc_get_knock_value();
-     ++diag.ksp_channel;  //select next channel
+#endif
      _DELAY_US(100);
      diag.fsm_state = 0;
     }
@@ -379,14 +389,16 @@ void diagnost_process(void)
    d.diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
    d.diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);
    d.diag_inp.ks_1 = _ADC_COMPENSATE(diag.knock_value[0], ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
    d.diag_inp.add_i1 = _ADC_COMPENSATE(adc_get_add_i1_value(), ADC_VREF_FACTOR, 0.0);
    d.diag_inp.add_i2 = _ADC_COMPENSATE(adc_get_add_i2_value(), ADC_VREF_FACTOR, 0.0);
 #ifndef SECU3T
    d.diag_inp.add_i3 = _ADC_COMPENSATE(adc_get_add_i3_value(), ADC_VREF_FACTOR, 0.0);
-   d.diag_inp.add_i4 = 0; //reserved
+#ifdef TPIC8101
+   d.diag_inp.add_i4 = _ADC_COMPENSATE(adc_get_knock_value(), ADC_VREF_FACTOR, 0.0);
+#endif
 #endif
    d.diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
-   d.diag_inp.ks_2 = _ADC_COMPENSATE(diag.knock_value[1], ADC_VREF_FACTOR, 0.0);
 
    //digital inputs
    d.diag_inp.bits = get_inputs();

@@ -647,8 +647,6 @@ void ProcessFallingEdge(uint16_t tmr)
    hall.knkwnd_mode = 0;
   }
 
-  if (CHECKBIT(flags, F_USEKNK))
-   knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
   adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
  }
 #ifdef DWELL_CONTROL
@@ -828,7 +826,10 @@ ISR(TIMER0_COMPA_vect)
   else
   {//finish listening a detonation (closing the window) and start the process of measuring integrated value
    knock_set_integration_mode(KNOCK_INTMODE_HOLD);
+   knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (and getting ADC result from TPIC8101)
+#ifndef TPIC8101
    adc_begin_measure_knock(_AB(hall.stroke_period, 1) < 4);
+#endif
    hall.knkwnd_mode = 0;
   }
  }

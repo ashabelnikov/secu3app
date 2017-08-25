@@ -799,7 +799,11 @@ static void process_ckps_cogs(void)
    if (ckps.cog == chanstate[i].knock_wnd_end)
    {
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
-    adc_begin_measure_knock(_AB(ckps.stroke_period, 1) < 4);
+    if (CHECKBIT(flags, F_USEKNK))
+     knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (and getting ADC result for TPIC8101)
+#ifndef TPIC8101
+    adc_begin_measure_knock(_AB(ckps.stroke_period, 1) < 4); //for HIP9011 only
+#endif
    }
   }
 
@@ -814,8 +818,6 @@ static void process_ckps_cogs(void)
    //start counting of advance angle (начинаем отсчет угла опережения)
    ckps.current_angle = ckps.start_angle; // those same 66° (те самые 66°)
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)(опережение со всеми корректировками (допустим, 15°))
-   if (CHECKBIT(flags, F_USEKNK))
-    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (запускаем процесс загрузки настроек в HIP)
    adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values (запуск процесса измерения значений аналоговых входов)
 #ifdef STROBOSCOPE
    if (0==i)

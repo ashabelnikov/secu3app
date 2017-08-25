@@ -83,7 +83,9 @@ extern uint8_t  spi_GPPUB;   //!< Pull-up resistors control register B
 // Question. How to use T - bits, how many diagnostic modes we have? Datasheet doesn't contain
 //such information...
 // SO directly corresponds to SI,(if enabled) without delay.
-
+#ifdef TPIC8101
+#define KSP_SET_ADVANCED       0x71   //!< 01110001, Set SPI configuration to the advanced mode (TPIC8101 only)
+#endif
 
 //SO status values
 #define KSP_SO_TERMINAL_ACTIVE 0x00   //!< code for activation of SO terminal
@@ -116,6 +118,10 @@ typedef struct
  can_t can_msg;                         //!< CAN message
  uint8_t can_data_idx;
  uint8_t can_buff_addr;
+#endif
+#ifdef TPIC8101
+ volatile uint16_t adc_value;           //!< Complete 10-bit ADC value read via SPI
+ volatile uint8_t adc_low;              //!< Low byte of ADC value read via SPI
 #endif
 }kspstate_t;
 
@@ -181,7 +187,7 @@ uint8_t knock_module_initialize(void)
  SET_KSP_CS(1);
 
  spi_master_init();
- ksp.ksp_interrupt_state = 0; //init state machine
+ ksp.ksp_interrupt_state = 0; //init state machine, stopped
  ksp.ksp_error = 0;
 
  CLEARBIT(SPCR, CPOL);
@@ -209,6 +215,13 @@ uint8_t knock_module_initialize(void)
    return 0; //error - chip doesn't respond!
   }
  }
+
+#ifdef TPIC8101
+ //Finally, go into the advanced mode. In this mode we will be able to read int.output via SPI
+ SET_KSP_CS(0);
+ spi_master_transmit(KSP_SET_ADVANCED);
+ SET_KSP_CS(1);
+#endif
 
  _RESTORE_INTERRUPT(_t);
  //Initialization completed successfully
@@ -308,7 +321,7 @@ void knock_start_settings_latching(void)
   //interrupt's state machine
   SPCR|= _BV(SPIE);
  }
- else if (ksp.ksp_interrupt_state < 5)
+ else if (ksp.ksp_interrupt_state < 6)
   ksp.ksp_error = 1; //previous latching is not finished yet
 #ifndef SECU3T //---SECU-3i---
  else
@@ -334,7 +347,7 @@ void knock_start_expander_latching(void)
  _NO_OPERATION();
 #ifdef SECU3T
   SET_CAN_CS(0);
-  ksp.ksp_interrupt_state = 11;
+  ksp.ksp_interrupt_state = 12;
  _NO_OPERATION();
  _NO_OPERATION();
  _NO_OPERATION();
@@ -342,7 +355,7 @@ void knock_start_expander_latching(void)
   SPDR = SPI_READ_STATUS;
 #else //SECU-3i
   SET_KSP_TEST(0);
-  ksp.ksp_interrupt_state = 5;
+  ksp.ksp_interrupt_state = 6;
  _NO_OPERATION();
  _NO_OPERATION();
  _NO_OPERATION();
@@ -353,7 +366,7 @@ void knock_start_expander_latching(void)
   //interrupt's state machine
   SPCR|= _BV(SPIE);
  }
- else if (ksp.ksp_interrupt_state > 4)
+ else if (ksp.ksp_interrupt_state > 5)
   ksp.ksp_error = 1; //previous latching is not finished yet
  else
   ksp.pending_request = 1; //if busy by HIP9011, then set request flag and exit
@@ -410,7 +423,7 @@ ISR(SPI_STC_vect)
  //signal processor requires transition of CS into high level after each sent
  //byte, at least for 200ns
 #if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
- if (ksp.ksp_interrupt_state < 5)
+ if (ksp.ksp_interrupt_state < 6)
 #endif
  { SET_KSP_CS(1); }
 
@@ -433,16 +446,28 @@ ISR(SPI_STC_vect)
   case 2: //Gain loaded
    SET_KSP_CS(0);
    ++ksp.ksp_interrupt_state;
-   SPDR = ksp.ksp_inttime;
+   SPDR = KSP_SET_PRESCALER | KSP_PRESCALER_VALUE | KSP_SO_TERMINAL_ACTIVE;
    break;
 
-  case 3: //Int.Time loaded
+  case 3: //prescaler and SDO status loaded
    SET_KSP_CS(0);
    ++ksp.ksp_interrupt_state;
    SPDR = ksp.ksp_channel;
    break;
 
   case 4: //channel number loaded
+#ifdef TPIC8101
+   ksp.adc_low = SPDR; //save D7-D0 bits of ADC result
+#endif
+   SET_KSP_CS(0);
+   ++ksp.ksp_interrupt_state;
+   SPDR = ksp.ksp_inttime;
+   break;
+
+  case 5: //Int.Time loaded
+#ifdef TPIC8101
+   ksp.adc_value = (((uint16_t)SPDR) << 2) | ksp.adc_low; //save complete 10-bit value
+#endif
 #ifdef SECU3T
 #ifdef OBD_SUPPORT
    if (ksp.pending_request)
@@ -450,7 +475,7 @@ ISR(SPI_STC_vect)
     SETBIT(SPCR, CPOL);
     SET_CAN_CS(0);
     ksp.pending_request = 0;
-    ksp.ksp_interrupt_state = 11; // busy (state = 11)
+    ksp.ksp_interrupt_state = 12; // busy (state = 12)
     SPDR = SPI_READ_STATUS;
    }
    else
@@ -468,7 +493,7 @@ ISR(SPI_STC_vect)
     SETBIT(SPCR, CPOL);
     SET_KSP_TEST(0);
     ksp.pending_request = 0;
-    ++ksp.ksp_interrupt_state; // busy (state = 5)
+    ++ksp.ksp_interrupt_state; // busy (state = 6)
     SPDR = 0x40; //write opcode
    }
    else
@@ -479,15 +504,15 @@ ISR(SPI_STC_vect)
    }
    break;
 
-  case 5: //expander, opcode loaded
+  case 6: //expander, opcode loaded
    SPDR = 0x13; //address of the GPIOB
    ++ksp.ksp_interrupt_state;
    break;
-  case 6: //GPIOB address loaded
+  case 7: //GPIOB address loaded
    SPDR = spi_PORTB;
    ++ksp.ksp_interrupt_state;
    break;
-  case 7: //GPIOB wrote!
+  case 8: //GPIOB wrote!
 
    SET_KSP_TEST(1); //deselect the device
    ++ksp.ksp_interrupt_state;
@@ -502,15 +527,15 @@ ISR(SPI_STC_vect)
    _NO_OPERATION();
    SPDR = 0x41;  //read opcode
    break;
-  case 8: //expander, opcode loaded
+  case 9: //expander, opcode loaded
    SPDR = 0x12; //address of the GPIOA
    ++ksp.ksp_interrupt_state;
    break;
-  case 9: //GPIOA address loaded
+  case 10: //GPIOA address loaded
    SPDR = 0x00;  //shift read register
    ++ksp.ksp_interrupt_state;
    break;
-  case 10: //GPIOA read!
+  case 11: //GPIOA read!
    spi_PORTA = SPDR;
    SET_KSP_TEST(1);
 #ifdef OBD_SUPPORT
@@ -519,7 +544,7 @@ ISR(SPI_STC_vect)
     SET_CAN_CS(0);
     _NO_OPERATION();
     _NO_OPERATION();
-    ksp.ksp_interrupt_state = 11; // busy (state = 11)
+    ksp.ksp_interrupt_state = 12; // busy (state = 12)
     SPDR = SPI_READ_STATUS;
    }
    else
@@ -544,11 +569,11 @@ ISR(SPI_STC_vect)
 #endif
 
 #ifdef OBD_SUPPORT
-   case 11:
+   case 12:
     SPDR = 0xFF; //shift read register
     ++ksp.ksp_interrupt_state;
     break;
-   case 12: //read status!
+   case 13: //read status!
     SET_CAN_CS(1);
    _NO_OPERATION();
    _NO_OPERATION();
@@ -575,16 +600,12 @@ ISR(SPI_STC_vect)
     SPDR = SPI_WRITE_TX | ksp.can_buff_addr;
     ++ksp.ksp_interrupt_state;
     break;
-   case 13:
+   case 14:
     SPDR = (ksp.can_msg.id >> 3);
     ++ksp.ksp_interrupt_state;
     break;
-   case 14:
-    SPDR = (ksp.can_msg.id << 5);
-    ++ksp.ksp_interrupt_state;
-    break;
    case 15:
-    SPDR = 0;
+    SPDR = (ksp.can_msg.id << 5);
     ++ksp.ksp_interrupt_state;
     break;
    case 16:
@@ -592,10 +613,14 @@ ISR(SPI_STC_vect)
     ++ksp.ksp_interrupt_state;
     break;
    case 17:
+    SPDR = 0;
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 18:
     if (ksp.can_msg.flags.rtr)
     {
      SPDR = _BV(RTR) | ksp.can_msg.length;
-     ksp.ksp_interrupt_state = 19;
+     ksp.ksp_interrupt_state = 20;
     }
     else
     {
@@ -604,12 +629,12 @@ ISR(SPI_STC_vect)
      ++ksp.ksp_interrupt_state;
     }
     break;
-   case 18: //length set!
+   case 19: //length set!
     SPDR = ksp.can_msg.data[ksp.can_data_idx++];
     if (ksp.can_data_idx >= ksp.can_msg.length)
      ++ksp.ksp_interrupt_state;
     break;
-   case 19:
+   case 20:
     SET_CAN_CS(1);
    _NO_OPERATION();
    _NO_OPERATION();
@@ -619,7 +644,7 @@ ISR(SPI_STC_vect)
     SPDR = SPI_RTS | ((ksp.can_buff_addr == 0) ? 1 : ksp.can_buff_addr);
     ++ksp.ksp_interrupt_state;
     break;
-   case 20:
+   case 21:
     ksp.can_pending_msg = 0;
     SET_CAN_CS(1);
     if (ksp.pending_request)
@@ -662,3 +687,12 @@ void knock_push_can_message(struct can_t* msg)
 }
 #endif
 
+#ifdef TPIC8101
+uint16_t knock_get_adc_value(void)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ uint16_t value = ksp.adc_value;
+ _END_ATOMIC_BLOCK();
+ return value;
+}
+#endif

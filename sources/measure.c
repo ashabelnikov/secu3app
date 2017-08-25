@@ -40,6 +40,9 @@
 #include "magnitude.h"
 #include "measure.h"
 #include "tables.h"  //for ce_sett_t type
+#ifdef TPIC8101
+#include "knock.h"
+#endif
 
 #ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
  /**Special macro for compensating of voltage division (without voltage divider)*/
@@ -159,17 +162,21 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  (ai3_ai==0) ? (ai3_ai = AI3_AVERAGING - 1): ai3_ai--;
 #endif
 
- if (d.param.knock_use_knock_channel)
+ if (d.param.knock_use_knock_channel && d.sens.frequen > 200)
  {
+#ifdef TPIC8101
+  d.sens.knock_raw = adc_compensate(knock_get_adc_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
+#else
 #ifdef VREF_5V
   d.sens.knock_raw = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
 #else //internal 2.56V
   d.sens.knock_raw = adc_get_knock_value() * 2;
 #endif
+#endif
   d.sens.knock_k = ce_is_error(ECUERROR_KSP_CHIP_FAILED) ? cesd->ks_v_em : d.sens.knock_raw;
  }
  else
-  d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off
+  d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off or engine is stopped
 
 #ifdef SPEED_SENSOR
  spd_circular_buffer[spd_ai] = spdsens_get_period();

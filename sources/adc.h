@@ -94,8 +94,8 @@ uint16_t adc_get_carb_value(void);
 int16_t adc_get_tpsdot_value(void);
 #endif
 
-/** Получение последнего измеренного значения сигнала c датчика(ов) детонации
- * \return значение в дискретах АЦП
+/** Get last measured value from the knock sensor(s) or ADD_I4 (if TPIC8101 option defined)
+ * \return value in ADC discretes
  */
 uint16_t adc_get_knock_value(void);
 
@@ -105,6 +105,7 @@ uint16_t adc_get_knock_value(void);
  */
 void adc_begin_measure(uint8_t speed2x);
 
+#ifndef TPIC8101
 /**запускает измерение значения с интегратора канала детонации. Так как после установки
  * сигнала INT/HOLD в 0 выход INTOUT перейдет в полностью корректное состояние только через
  * 20мкс (приблизительно), а запуск измерения может быть произведен сразу, то делаем первое
@@ -112,11 +113,7 @@ void adc_begin_measure(uint8_t speed2x);
  * \param speed2x Double ADC clock (0,1) (Удвоение тактовой частоты АЦП)
  */
 void adc_begin_measure_knock(uint8_t speed2x);
-
-/**запускает измерение значений с датчиков и сигнала с ДД. Первыми снимаются значения
- * с датчиков, последним сигнал с ДД
- */
-void adc_begin_measure_all(void);
+#endif
 
 /**проверка готовности АЦП
  *\return возвращает не 0 если измерение готово (АЦП не занято)

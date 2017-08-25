@@ -54,7 +54,7 @@ void knock_set_int_time_constant(uint8_t inttime);
 
 //channel selection values
 #define KSP_CHANNEL_0          0x00   //!< code for select 0 channel
-#define KSP_CHANNEL_1          0x01   //!< code for select 1 channel (available in SECU-3T)
+#define KSP_CHANNEL_1          0x01   //!< code for select 1 channel
 
 /**Set channel number
  * \param Channel number to set active (0,1)
@@ -114,5 +114,12 @@ void knock_set_integration_mode(uint8_t mode);
 
 /**Initialization of used I/O ports */
 void knock_init_ports(void);
+
+#ifdef TPIC8101
+/** Get ADC value read from TPIC8101
+ * \return 10-bit ADC value
+ */
+uint16_t knock_get_adc_value(void);
+#endif
 
 #endif //_KNOCK_H_

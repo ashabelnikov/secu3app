@@ -405,27 +405,9 @@ MAIN()
   //определенную величину, то это условие перестанет выполняться.
   if (s_timer_is_action(force_measure_timeout_counter))
   {
-   if (!d.param.knock_use_knock_channel)
-   {
-    _DISABLE_INTERRUPT();
-    adc_begin_measure(0);  //normal speed
-    _ENABLE_INTERRUPT();
-   }
-   else
-   {
-    //если сейчас происходит загрузка настроек в HIP, то нужно дождаться ее завершения.
-    while(!knock_is_latching_idle());
-    _DISABLE_INTERRUPT();
-    //включаем режим интегрирования и ждем около 20мкс, пока интегратор начнет интегрировать (напряжение
-    //на его выходе упадет до минимума). В данном случае нет ничего страшного в том, что мы держим прерывания
-    //запрещенными 20-25мкс, так как это проискодит на очень маленьких оборотах.
-    knock_set_integration_mode(KNOCK_INTMODE_INT);
-    _DELAY_US(22);
-    knock_set_integration_mode(KNOCK_INTMODE_HOLD);
-    adc_begin_measure_all(); //измеряем сигнал с ДД тоже
-    _ENABLE_INTERRUPT();
-   }
-
+   _DISABLE_INTERRUPT();
+   adc_begin_measure(0);  //normal speed
+   _ENABLE_INTERRUPT();
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
   }

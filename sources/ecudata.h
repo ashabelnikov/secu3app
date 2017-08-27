@@ -52,9 +52,11 @@ typedef struct diagnost_inp_t
  uint16_t temp;                          //!< coolant temperature
  uint16_t add_i1;                        //!< additional input 1 (analog)
  uint16_t add_i2;                        //!< additional input 2 (analog)
-#ifndef SECU3T
+#ifndef SECU3T //SECU-3i
  uint16_t add_i3;                        //!< additional input 3 (analog)
- uint16_t add_i4;                        //!< reserved
+#ifdef TPIC8101
+ uint16_t add_i4;                        //!< additional input 4 (analog)
+#endif
 #endif
  uint16_t carb;                          //!< carburetor switch, throttle position sensor (analog)
  uint16_t bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp (plus IGN_I, COND_I, EPAS_I for SECU-3i)
@@ -89,6 +91,10 @@ typedef struct sensors_t
  uint16_t add_i3;                        //!< ADD_I3 input voltage
 #endif
 
+#if !defined(SECU3T) && defined(TPIC8101)
+ uint16_t add_i4;                        //!< ADD_I4 input voltage
+#endif
+
 #ifdef SPEED_SENSOR
  uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 4us)
  uint32_t distance;                      //!< Distance expressed by number of speed sensor pulses since last ignition turn on
@@ -113,6 +119,12 @@ typedef struct sensors_t
  int16_t  tps_raw;                       //!< raw ADC value from TPS sensor
  int16_t  add_i1_raw;                    //!< raw ADC value from ADD_I1 input
  int16_t  add_i2_raw;                    //!< raw ADC value from ADD_I2 input
+#ifndef SECU3T //SECU-3i
+ int16_t  add_i3_raw;                    //!< raw ADC value from ADD_I3 input
+#ifdef TPIC8101
+ int16_t  add_i4_raw;                    //!< raw ADC value from ADD_I4 input
+#endif
+#endif
  int16_t  knock_raw;                     //!< raw value of signal from KS chip
 }sensors_t;
 

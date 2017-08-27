@@ -96,6 +96,12 @@ void init_ecu_data(void)
  d.sens.tps = d.sens.tps_raw = 0;
  d.sens.add_i1 = d.sens.add_i1_raw = 0;
  d.sens.add_i2 = d.sens.add_i2_raw = 0;
+#ifndef SECU3T //SECU3i
+ d.sens.add_i3 = d.sens.add_i3_raw = 0;
+#ifdef TPIC8101
+ d.sens.add_i4 = d.sens.add_i4_raw = 0;
+#endif
+#endif
  d.choke_testing = 0;
  d.choke_pos = 0;
  d.choke_manpos_d = 0;

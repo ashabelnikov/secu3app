@@ -596,6 +596,17 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.sens.tps_raw);
    build_i16h(d.sens.add_i1_raw);
    build_i16h(d.sens.add_i2_raw);
+#ifndef SECU3T
+   build_i16h(d.sens.add_i3_raw);
+#ifdef TPIC8101
+   build_i16h(d.sens.add_i4_raw);
+#else
+   build_i16h(0);  //stub
+#endif
+#else
+   build_i16h(0);  //stub for ADD_I3
+   build_i16h(0);  //stub for ADD_I4
+#endif
    break;
 
   case CKPS_PAR:

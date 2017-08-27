@@ -76,6 +76,10 @@
 #define AI3_AVERAGING           4                 //!< Number of values for averaging of ADD_I3
 #endif
 
+#if !defined(SECU3T) && defined(TPIC8101)
+#define AI4_AVERAGING           4                 //!< Number of values for averaging of ADD_I4
+#endif
+
 uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
 uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaging of MAP sensor (буфер усреднения абсолютного давления)
 uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaging of voltage (буфер усреднения напряжения бортовой сети)
@@ -89,6 +93,10 @@ uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
 uint16_t ai3_circular_buffer[AI3_AVERAGING];      //!< Ring buffer for averaging of ADD_I3
+#endif
+
+#if !defined(SECU3T) && defined(TPIC8101)
+uint16_t ai4_circular_buffer[AI4_AVERAGING];      //!< Ring buffer for averaging of ADD_I4
 #endif
 
 void meas_init_ports(void)
@@ -121,6 +129,10 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 #endif
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
  static uint8_t  ai3_ai  = AI3_AVERAGING-1;
+#endif
+
+#if !defined(SECU3T) && defined(TPIC8101)
+ static uint8_t  ai4_ai  = AI4_AVERAGING-1;
 #endif
 
  freq_circular_buffer[frq_ai] = d.sens.inst_frq;
@@ -160,6 +172,11 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
  ai3_circular_buffer[ai3_ai] = adc_get_add_i3_value();
  (ai3_ai==0) ? (ai3_ai = AI3_AVERAGING - 1): ai3_ai--;
+#endif
+
+#if !defined(SECU3T) && defined(TPIC8101)
+ ai4_circular_buffer[ai4_ai] = adc_get_knock_value();
+ (ai4_ai==0) ? (ai4_ai = AI4_AVERAGING - 1): ai4_ai--;
 #endif
 
  if (d.param.knock_use_knock_channel && d.sens.frequen > 200)
@@ -260,6 +277,12 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  for (sum=0,i = 0; i < AI3_AVERAGING; i++)   //average ADD_I3 input (PA4)
   sum+=ai3_circular_buffer[i];
  d.sens.add_i3 = adc_compensate((sum/AI3_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
+#endif
+
+#if !defined(SECU3T) && defined(TPIC8101)
+ for (sum=0,i = 0; i < AI4_AVERAGING; i++)   //average ADD_I4 input
+  sum+=ai4_circular_buffer[i];
+ d.sens.add_i4 = adc_compensate((sum/AI4_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
 #endif
 
 #ifdef AIRTEMP_SENS

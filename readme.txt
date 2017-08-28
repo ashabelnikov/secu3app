@@ -148,6 +148,10 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          ignition timing
 
     SEND_INST_VAL *      Send instant values (RPM, voltage) instead of averaged
+                         Передавать мгновенные значения, без усреднения
+
+    EVAP_CONTROL  *      Canister purge valve control
+                         Управление клапаном продувки адсорбера
 
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager

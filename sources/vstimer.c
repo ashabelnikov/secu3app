@@ -87,6 +87,13 @@ extern volatile uint8_t cafr_pv_duty;
 extern uint8_t cafr_soft_cnt;
 #endif
 
+#if defined(EVAP_CONTROL) && !defined(SECU3T)
+//see evap.c for more information
+extern uint8_t evap_comp;
+extern volatile uint8_t evap_duty;
+extern uint8_t evap_soft_cnt;
+#endif
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
@@ -153,6 +160,18 @@ ISR(TIMER2_OVF_vect)
   IOCFG_SET(IOP_IE, 0); //OFF
  if (cafr_pv_comp == cafr_soft_cnt)
   IOCFG_SET(IOP_FE, 0); //OFF
+#endif
+
+//PWM for canister purge valve control (~19 Hz, 32 discretes)
+#if defined(EVAP_CONTROL) && !defined(SECU3T)
+ evap_soft_cnt = (evap_soft_cnt + 1) & 0x1F; //increment modulo 32
+ if (evap_soft_cnt == 0)
+ {
+  evap_comp = evap_duty;
+  IOCFG_SET(IOP_EVAP_O, 1); //ON
+ }
+ if (evap_comp == evap_soft_cnt)
+  IOCFG_SET(IOP_EVAP_O, 0); //OFF
 #endif
 
  if (divider > 0)

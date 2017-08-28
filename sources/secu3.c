@@ -44,6 +44,7 @@
 #include "ecudata.h"
 #include "eculogic.h"
 #include "eeprom.h"
+#include "evap.h"
 #include "gasdose.h"
 #include "pwrvalve.h"
 #include "fuelpump.h"
@@ -139,6 +140,10 @@ void control_engine_units(void)
  //Carburetor AFR control
  carbafr_control();
 #endif
+
+#if defined(EVAP_CONTROL) && !defined(SECU3T)
+ evap_control(); //canister purge valve control
+#endif
 }
 
 /** Check firmware integrity (CRC) and set error indication if code or data is damaged
@@ -190,6 +195,9 @@ void init_ports(void)
 #endif
 #ifdef CARB_AFR
  carbafr_init_ports();
+#endif
+#if defined(EVAP_CONTROL) && !defined(SECU3T)
+ evap_init_ports();
 #endif
 }
 
@@ -303,6 +311,10 @@ void init_modules(void)
 
 #ifdef OBD_SUPPORT
  obd_init();
+#endif
+
+#if defined(EVAP_CONTROL) && !defined(SECU3T)
+ evap_init();
 #endif
 
  s_timer_init();

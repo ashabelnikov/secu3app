@@ -19,7 +19,7 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file carb_afr.h
+/** \file carb_afr.c
  * \author Alexey A. Shabelnikov
  * Implementation of AFR control on carburetor using electronic actuators driven by PWM
  */

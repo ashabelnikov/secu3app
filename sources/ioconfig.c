@@ -27,6 +27,8 @@
 
 #include "port/avrio.h"
 #include "port/port.h"
+#include "port/interrupt.h"
+#include "port/intrinsic.h"
 #include "bitmask.h"
 #include <stdint.h>
 
@@ -836,12 +838,16 @@ void iocfg_i_st_blocki(uint8_t value)   //!< init STBL_O           (inverted)
 
 void iocfg_s_st_block(uint8_t value)    //!< set  STBL_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 1, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_st_blocki(uint8_t value)   //!< set  STBL_O           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 1, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_ce(uint8_t value)          //!< init CEL_O
@@ -858,12 +864,16 @@ void iocfg_i_cei(uint8_t value)         //!< init CEL_O            (inverted)
 
 void iocfg_s_ce(uint8_t value)          //!< set  CEL_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 5, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_cei(uint8_t value)         //!< set  CEL_O            (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 5, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_fpmp_o(uint8_t value)      //!< init FPMP_O
@@ -880,12 +890,16 @@ void iocfg_i_fpmp_oi(uint8_t value)     //!< init FPMP_O           (inverted)
 
 void iocfg_s_fpmp_o(uint8_t value)      //!< set  FPMP_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 3, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_fpmp_oi(uint8_t value)     //!< set  FPMP_O           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 3, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_pwrr_o(uint8_t value)      //!< init PWRR_O
@@ -902,12 +916,16 @@ void iocfg_i_pwrr_oi(uint8_t value)     //!< init PWRR_O           (inverted)
 
 void iocfg_s_pwrr_o(uint8_t value)      //!< set  PWRR_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 2, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_pwrr_oi(uint8_t value)     //!< set  PWRR_O           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 2, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_evap_o(uint8_t value)      //!< init EVAP_O
@@ -924,12 +942,16 @@ void iocfg_i_evap_oi(uint8_t value)     //!< init EVAP_O           (inverted)
 
 void iocfg_s_evap_o(uint8_t value)      //!< set  EVAP_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 6, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_evap_oi(uint8_t value)     //!< set  EVAP_O           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 6, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_o2sh_o(uint8_t value)      //!< init O2SH_OP
@@ -946,12 +968,16 @@ void iocfg_i_o2sh_oi(uint8_t value)     //!< init O2SH_O           (inverted)
 
 void iocfg_s_o2sh_o(uint8_t value)      //!< set  O2SH_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 7, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_o2sh_oi(uint8_t value)     //!< set  O2SH_O           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 7, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_cond_o(uint8_t value)      //!< init COND_O
@@ -968,12 +994,16 @@ void iocfg_i_cond_oi(uint8_t value)     //!< init COND_O           (inverted)
 
 void iocfg_s_cond_o(uint8_t value)      //!< set  COND_O
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 4, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_cond_oi(uint8_t value)     //!< set  COND_O           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 4, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_add_o2(uint8_t value)      //!< init ADD_O2
@@ -990,12 +1020,16 @@ void iocfg_i_add_o2i(uint8_t value)     //!< init ADD_O2           (inverted)
 
 void iocfg_s_add_o2(uint8_t value)      //!< set  ADD_O2
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 0, value);
+ _END_ATOMIC_BLOCK();
 }
 
 void iocfg_s_add_o2i(uint8_t value)     //!< set  ADD_O2           (inverted)
 {
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
  WRITEBIT(spi_PORTB, 0, !value);
+ _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
 

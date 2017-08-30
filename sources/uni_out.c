@@ -492,7 +492,7 @@ static uint8_t process_output(uint8_t index, uint8_t action)
  //apply specified logic function and update output state
  state1 = logic_function(p_out_param->flags >> 4, state1, state2);
  if (action)
-  IOCFG_SET(index + IOP_UNI_OUT0, state1);
+  IOCFG_SETF(index + IOP_UNI_OUT0, state1);
  return state1;
 }
 
@@ -507,7 +507,7 @@ void uniout_control(void)
    uint8_t state1 = process_output(i++, 0);
    uint8_t state2 = process_output(i++, 0);
    state1 = logic_function(d.param.uniout_12lf, state1, state2);
-   IOCFG_SET(IOP_UNI_OUT0, state1);
+   IOCFG_SETF(IOP_UNI_OUT0, state1);
   }
  }
  for(; i < UNI_OUTPUT_NUMBER; ++i)

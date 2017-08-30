@@ -43,22 +43,36 @@ void IOCFG_INIT(uint8_t io_id, uint8_t io_state);
 #define IOCFG_INIT(io_id, io_state) ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state)
 #endif
 
+
 /**Set value of specified I/O
  * io_id - ID of I/O to be set to specified value
  * io_value - Value for I/O (On/Off)
  */
 #define IOCFG_SET(io_id, io_value) ((iocfg_pfn_set)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(io_value)
+#ifdef IOCFG_FUNC_INIT
+void IOCFG_SETF(uint8_t io_id, uint8_t io_value);
+#else
+#define IOCFG_SETF(io_id, io_value) IOCFG_SET(io_id, io_value)
+#endif
 
 /**Get value of specified I/O. Applicable only for plugs which are inputs.
  * io_id - ID of I/O to be set to specified value
  */
+#ifdef IOCFG_FUNC_INIT
+uint8_t IOCFG_GET(uint8_t io_id);
+#else
 #define IOCFG_GET(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))()
+#endif
 
 /**Checks specified I/O for availability. If specified I/O is not available it means that it is not
  * plugged into a real I/O slot.
  * returns 1 - available, 0 - not available
  */
+#ifdef IOCFG_FUNC_INIT
+uint8_t IOCFG_CHECK(uint8_t io_id);
+#else
 #define IOCFG_CHECK(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))
+#endif
 
 /**Get specified I/O callback address
  * io_id - ID of I/O to be set to specified value

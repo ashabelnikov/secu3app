@@ -56,7 +56,7 @@ void gdstpmot_dir(uint8_t dir)
 {
  //Speaking about L297, CW/~CCW input synchronized internally therefore
  //direction can be changed at any time
- IOCFG_SET(IOP_GD_DIR, dir);
+ IOCFG_SETF(IOP_GD_DIR, dir);
 }
 
 void gdstpmot_run(uint16_t steps)

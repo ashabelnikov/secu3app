@@ -35,7 +35,7 @@
 
 void starter_set_blocking_state(uint8_t i_state)
 {
- IOCFG_SET(IOP_ST_BLOCK, !i_state);
+ IOCFG_SETF(IOP_ST_BLOCK, !i_state);
 }
 
 void starter_init_ports(void)

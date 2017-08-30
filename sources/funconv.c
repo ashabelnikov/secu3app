@@ -520,15 +520,20 @@ uint16_t inj_cranking_pw(void)
 
 #ifdef FUEL_INJECT
 
+uint16_t calc_airflow(void)
+{
+ uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.sens.map) >> (6+5); //value / 32
+ return (x_raw > 65535) ? 65535 : x_raw;
+}
+
 /** Calculates corrected MAT based on the coefficient from a lookup table, IAT and CTS sensors
  * \param d Pointer to ECU data structure
  * \return corrected MAT value (temperature units, Celsius)
  */
 static int16_t inj_corrected_mat(void)
 {
- int16_t i, i1; uint16_t x;
- uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.sens.map) >> (6+5); //value / 32
- x = (x_raw > 65535) ? 65535 : x_raw;
+ int16_t i, i1; uint16_t x = calc_airflow();
+ //x contains value of air flow * 32
 
  //air flow value at the start of axis
  uint16_t x_start = _GWU(inj_iatclt_corr[INJ_IATCLT_CORR_SIZE]);

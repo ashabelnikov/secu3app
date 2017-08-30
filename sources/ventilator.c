@@ -149,9 +149,9 @@ void vent_control(void)
 
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
  if (d.sens.temperat >= d.param.vent_on)
-  IOCFG_SET(IOP_ECF, 1), d.cool_fan = 1; //turn on
+  IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
  if (d.sens.temperat <= d.param.vent_off)
-  IOCFG_SET(IOP_ECF, 0), d.cool_fan = 0; //turn off
+  IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
  if (!d.param.vent_pwm)
  { //relay
@@ -161,9 +161,9 @@ void vent_control(void)
   _ENABLE_INTERRUPT();
 
   if (d.sens.temperat >= d.param.vent_on)
-   IOCFG_SET(IOP_ECF, 1), d.cool_fan = 1; //turn on
+   IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
   if (d.sens.temperat <= d.param.vent_off)
-   IOCFG_SET(IOP_ECF, 0), d.cool_fan = 0; //turn off
+   IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
  }
  else
  {
@@ -191,10 +191,10 @@ void vent_control(void)
 void vent_turnoff(void)
 {
 #ifndef COOLINGFAN_PWM
- IOCFG_SET(IOP_ECF, 0);
+ IOCFG_SETF(IOP_ECF, 0);
 #else
  if (!d.param.vent_pwm && !IOCFG_CHECK(IOP_IAC_PWM) && !IOCFG_CHECK(IOP_GD_PWM))
-  IOCFG_SET(IOP_ECF, 0);
+  IOCFG_SETF(IOP_ECF, 0);
  else
   COOLINGFAN_TURNOFF();
 #endif

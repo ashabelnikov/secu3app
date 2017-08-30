@@ -496,10 +496,13 @@ typedef struct params_t
 
   uint8_t inj_anglespec;                 //!< Specifies how inj.timing coupled with inj.pulse (beginning, middle, end)
 
+  uint16_t evap_afbegin;                 //!< Air flow value when evap starts to open (PWM duty = 0%), value = (rpm * load) / 32, 32 - number of PWM steps
+  uint16_t evap_afslope;                 //!< Slope value = (32 / (afend - afbegin)) * 65536, user should see only afend = (32 / afslope) + afbegin
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[41];
+  uint8_t  reserved[37];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

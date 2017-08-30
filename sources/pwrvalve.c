@@ -34,7 +34,7 @@
 #include "ioconfig.h"
 
 /** Open/Close FE valve */
-#define SET_FE_VALVE_STATE(s) IOCFG_SET(IOP_FE, s)
+#define SET_FE_VALVE_STATE(s) IOCFG_SETF(IOP_FE, s)
 
 void pwrvalve_init_ports(void)
 {

@@ -506,6 +506,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_anglespec =               INJANGLESPEC_BEGIN,   //beginning of pulse
 
+
+  .evap_afbegin =                938,                  //rpm*load = 30000
+  .evap_afslope =                41,                   //0.00064
+
   .reserved =                    {0},
   .crc =                         0
  },

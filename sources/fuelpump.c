@@ -42,7 +42,7 @@
 #define FP_TURNOFF_TIMEOUT_STOP 300
 
 /** Turn on/turn off fuel pump */
-#define TURN_ON_ELPUMP(s) IOCFG_SET(IOP_FL_PUMP, s)
+#define TURN_ON_ELPUMP(s) IOCFG_SETF(IOP_FL_PUMP, s)
 
 typedef struct
 {

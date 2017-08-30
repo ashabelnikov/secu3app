@@ -42,6 +42,21 @@ void IOCFG_INIT(uint8_t io_id, uint8_t io_state)
 {
  ((iocfg_pfn_init)_IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))(io_state);
 }
+
+uint8_t IOCFG_CHECK(uint8_t io_id)
+{
+ return (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]));
+}
+
+void IOCFG_SETF(uint8_t io_id, uint8_t io_value)
+{
+ ((iocfg_pfn_set)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(io_value);
+}
+
+uint8_t IOCFG_GET(uint8_t io_id)
+{
+ return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))();
+}
 #endif
 
 uint8_t iocfg_g_stub(void)

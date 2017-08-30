@@ -84,6 +84,6 @@ void ce_init_ports(void);
 #define CE_STATE_OFF 0  //!< CE is Off
 
 /**Turns on/off CE lamp */
-#define ce_set_state(s) IOCFG_SET(IOP_CE, s)
+#define ce_set_state(s) IOCFG_SETF(IOP_CE, s)
 
 #endif //_CE_ERRORS_H_

@@ -56,7 +56,7 @@ void stpmot_dir(uint8_t dir)
 {
  //Speaking about L297, CW/~CCW input synchronized internally therefore
  //direction can be changed at any time
- IOCFG_SET(IOP_SM_DIR, dir);
+ IOCFG_SETF(IOP_SM_DIR, dir);
 }
 
 void stpmot_run(uint16_t steps)

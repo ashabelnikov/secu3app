@@ -105,7 +105,7 @@ void pwrrelay_control(void)
       && gasdose_is_ready()
 #endif
       ) || s_timer16_is_action(powerdown_timeout_counter))
-   IOCFG_SET(IOP_PWRRELAY, 0); //turn off relay
+   IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay
  }
  else
   pwrs.state = 0;

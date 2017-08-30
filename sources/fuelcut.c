@@ -61,9 +61,9 @@ static void simple_fuel_cut(uint8_t apply)
    d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d.sens.inst_frq > d.param.ie_lot)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit)))?0:1;
  if (apply)
-  IOCFG_SET(IOP_IE, d.ie_valve);
+  IOCFG_SETF(IOP_IE, d.ie_valve);
  else
-  IOCFG_SET(IOP_IE, 0); //turn off valve
+  IOCFG_SETF(IOP_IE, 0); //turn off valve
 }
 #endif
 

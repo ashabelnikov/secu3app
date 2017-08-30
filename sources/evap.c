@@ -98,7 +98,7 @@ void evap_control(void)
 
  //Position of valve (PWM duty) depends on the inlet air flow, but also following conditions must be met, otherwise valve will be closed:
  //engine is warm, no idling, no full load, no fuel cut, not rev.limitting, oxygen sensor is warm, speed of vehicle > 10km/h
- if ((d.sens.temperat > TEMPERATURE_MAGNITUDE(75.0)) && (d.sens.tps > TPS_MAGNITUDE(4.0)) && (d.sens.tps < 98.0) && d.ie_valve && !d.fc_revlim && lambda_is_activated()
+ if ((d.sens.temperat > TEMPERATURE_MAGNITUDE(75.0)) && (d.sens.tps > TPS_MAGNITUDE(4.0)) && (d.sens.tps < TPS_MAGNITUDE(98.0)) && d.ie_valve && !d.fc_revlim && lambda_is_activated()
 #ifdef SPEED_SENSOR
    && evap.state
 #endif
@@ -108,10 +108,9 @@ void evap_control(void)
   //calculate current duty, based on the current air flow and limits specified by user
   if (af < d.param.evap_afbegin)
    af = d.param.evap_afbegin;
-  uint16_t duty = (((uint32_t)(af - d.param.evap_afbegin)) * d.param.evap_afslope) >> 16;
+  uint16_t duty = (((uint32_t)(af - d.param.evap_afbegin)) * d.param.evap_afslope) >> 20;
   if (duty > EVAP_PWM_STEPS)
    duty = EVAP_PWM_STEPS;
-
   SET_EVAP_DUTY(duty); //set evap duty!
  }
  else

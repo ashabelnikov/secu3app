@@ -99,10 +99,6 @@ extern uint8_t evap_soft_cnt;
  */
 ISR(TIMER2_OVF_vect)
 {
-#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
- knock_start_expander_latching();
-#endif
-
  _ENABLE_INTERRUPT();
 
 #ifdef SM_CONTROL
@@ -192,6 +188,11 @@ ISR(TIMER2_OVF_vect)
   s_timer_update(powerdown_timeout_counter);
   ++sys_counter;
  }
+
+ _DISABLE_INTERRUPT();
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
+ knock_start_expander_latching();
+#endif
 }
 
 void s_timer_init(void)

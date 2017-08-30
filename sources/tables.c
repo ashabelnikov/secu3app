@@ -508,7 +508,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
 
   .evap_afbegin =                938,                  //rpm*load = 30000
-  .evap_afslope =                41,                   //0.00064
+  .evap_afslope =                6320,                 //0.0060
 
   .reserved =                    {0},
   .crc =                         0

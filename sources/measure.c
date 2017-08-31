@@ -158,11 +158,17 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;
 
  tps_circular_buffer[tps_ai] = adc_get_carb_value();
+#ifdef SEND_INST_VAL
+ rawval = adc_compensate(_RESDIV(tps_circular_buffer[tps_ai], 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ d.sens.inst_tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) ? cesd->tps_v_em : rawval, d.param.tps_curve_offset, d.param.tps_curve_gradient);
+ if (d.sens.inst_tps > TPS_MAGNITUDE(100))
+  d.sens.inst_tps = TPS_MAGNITUDE(100);
+#endif
  (tps_ai==0) ? (tps_ai = TPS_AVERAGING - 1): tps_ai--;
 
  ai1_circular_buffer[ai1_ai] = adc_get_add_i1_value();
 #ifdef SEND_INST_VAL
- d.sens.inst_add_i1 = adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
 #endif
  (ai1_ai==0) ? (ai1_ai = AI1_AVERAGING - 1): ai1_ai--;
 

@@ -513,7 +513,13 @@ void uart_send_packet(uint8_t send_mode)
 #else
              (0 << 7));
 #endif
+
+#ifdef SEND_INST_VAL
+   build_i8h(d.sens.inst_tps);           // instant TPS (0...100%, x2)
+#else
    build_i8h(d.sens.tps);                // TPS (0...100%, x2)
+#endif
+
 #ifdef SEND_INST_VAL
    build_i16h(d.sens.inst_add_i1);       // instant ADD_I1 voltage
 #else

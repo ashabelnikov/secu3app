@@ -39,7 +39,7 @@ volatile uint8_t sm_latch = 0;
 uint16_t sm_steps_b = 0;
 uint8_t sm_pulse_state = 0;
 volatile uint16_t sm_steps_cnt = 0;
-
+volatile uint8_t sm_freq = 0;
 
 void stpmot_init_ports(void)
 {
@@ -91,6 +91,11 @@ uint16_t stpmot_stpcnt(void)
  count = sm_steps_cnt;
  _ENABLE_INTERRUPT();
  return count;
+}
+
+void stpmot_freq(uint8_t freq)
+{
+ sm_freq = freq;
 }
 
 #endif

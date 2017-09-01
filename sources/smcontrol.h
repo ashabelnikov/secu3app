@@ -64,6 +64,11 @@ uint8_t stpmot_is_busy(void);
  */
 uint16_t stpmot_stpcnt(void);
 
+/** Set frequency of STEP pulses
+ * \param freq Frequency code: 0, 1, 2, 3
+ */
+void stpmot_freq(uint8_t freq);
+
 #endif
 
 #endif //_SMCONTROL_H_

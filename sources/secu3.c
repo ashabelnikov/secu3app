@@ -73,6 +73,7 @@
 #include "ventilator.h"
 #include "vstimer.h"
 #include "wdt.h"
+#include "smcontrol.h"
 
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
@@ -249,6 +250,9 @@ void init_modules(void)
 
 #if defined(SM_CONTROL) || defined(FUEL_INJECT)
  choke_init();
+#endif
+#ifdef SM_CONTROL
+ stpmot_freq(d.param.sm_freq);
 #endif
 
 #if defined(GD_CONTROL)

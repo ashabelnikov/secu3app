@@ -45,6 +45,7 @@
 #include "ufcodes.h"
 #include "ventilator.h"
 #include "vstimer.h"
+#include "smcontrol.h"
 
 void process_uart_interface(void)
 {
@@ -75,11 +76,17 @@ void process_uart_interface(void)
    case ANGLES_PAR:
    case STARTR_PAR:
    case ADCCOR_PAR:
-   case CHOKE_PAR:
 #ifdef GD_CONTROL
    case GASDOSE_PAR:
 #endif
     //если были изменены параметры то сбрасываем счетчик времени
+    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    break;
+
+   case CHOKE_PAR:
+#ifdef SM_CONTROL
+    stpmot_freq(d.param.sm_freq);
+#endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 

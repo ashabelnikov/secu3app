@@ -67,6 +67,8 @@ extern volatile uint8_t sm_latch;
 extern uint16_t sm_steps_b;
 extern uint8_t sm_pulse_state;
 extern volatile uint16_t sm_steps_cnt;
+extern volatile uint8_t sm_freq;
+uint8_t sm_divider = 0;
 #endif
 
 #ifdef GD_CONTROL
@@ -102,22 +104,29 @@ ISR(TIMER2_OVF_vect)
  _ENABLE_INTERRUPT();
 
 #ifdef SM_CONTROL
- if (!sm_pulse_state && sm_latch) {
-  sm_steps_b = sm_steps;
-  sm_latch = 0;
- }
-
- if (sm_steps_b)
+ if (sm_divider > 0)
+  --sm_divider;
+ else
  {
-  if (!sm_pulse_state) {
-   IOCFG_SET(IOP_SM_STP, 1); //falling edge
-   sm_pulse_state = 1;
+  sm_divider = sm_freq;
+
+  if (!sm_pulse_state && sm_latch) {
+   sm_steps_b = sm_steps;
+   sm_latch = 0;
   }
-  else {//The step occurs on the rising edge of ~CLOCK signal
-   IOCFG_SET(IOP_SM_STP, 0); //rising edge
-   sm_pulse_state = 0;
-   --sm_steps_b;
-   ++sm_steps_cnt; //count processed steps
+
+  if (sm_steps_b)
+  {
+   if (!sm_pulse_state) {
+    IOCFG_SET(IOP_SM_STP, 1); //falling edge
+    sm_pulse_state = 1;
+   }
+   else {//The step occurs on the rising edge of ~CLOCK signal
+    IOCFG_SET(IOP_SM_STP, 0); //rising edge
+    sm_pulse_state = 0;
+    --sm_steps_b;
+    ++sm_steps_cnt; //count processed steps
+   }
   }
  }
 #endif

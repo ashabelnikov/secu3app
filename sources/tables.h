@@ -499,10 +499,12 @@ typedef struct params_t
   uint16_t evap_afbegin;                 //!< Air flow value when evap starts to open (PWM duty = 0%), value = (rpm * load) / 32, 32 - number of PWM steps
   uint16_t evap_afslope;                 //!< Slope value = (32 / (afend - afbegin)) * 1048576, user should see only afend = (32 / afslope) + afbegin
 
+  uint8_t sm_freq;                       //!< Frequency of stepper motor's pulses (choke, stepper IAC). 0 - 300Hz, 1 - 150Hz, 2 - 100 Hz, 3 - 75Hz
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[37];
+  uint8_t  reserved[36];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -282,13 +282,15 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
  for (sum=0,i = 0; i < AI3_AVERAGING; i++)   //average ADD_I3 input (PA4)
   sum+=ai3_circular_buffer[i];
- d.sens.add_i3 = adc_compensate((sum/AI3_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
+ d.sens.add_i3_raw = adc_compensate((sum/AI3_AVERAGING), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
+ d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) ? cesd->add_i3_v_em : d.sens.add_i3_raw;
 #endif
 
 #if !defined(SECU3T) && defined(TPIC8101)
  for (sum=0,i = 0; i < AI4_AVERAGING; i++)   //average ADD_I4 input
   sum+=ai4_circular_buffer[i];
- d.sens.add_i4 = adc_compensate((sum/AI4_AVERAGING), ADC_COMP_FACTOR(ADC_VREF_FACTOR), 0);
+ d.sens.add_i4_raw = adc_compensate((sum/AI4_AVERAGING), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
+ d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) ? cesd->add_i4_v_em : d.sens.add_i4_raw;
 #endif
 
 #ifdef AIRTEMP_SENS

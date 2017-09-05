@@ -46,6 +46,8 @@
 #define ECUERROR_TPS_SENSOR_FAIL       10  //!< TPS sensor does not work
 #define ECUERROR_ADD_I1_SENSOR         11  //!< ADD_I1 input error
 #define ECUERROR_ADD_I2_SENSOR         12  //!< ADD_I2 input error
+#define ECUERROR_ADD_I3_SENSOR         13  //!< ADD_I3 input error
+#define ECUERROR_ADD_I4_SENSOR         14  //!< ADD_I4 input error
 
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure

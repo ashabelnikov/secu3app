@@ -235,6 +235,14 @@ typedef struct ce_sett_t
  uint16_t add_i2_v_min;
  uint16_t add_i2_v_max;
  uint16_t add_i2_v_em;
+
+ uint16_t add_i3_v_min;
+ uint16_t add_i3_v_max;
+ uint16_t add_i3_v_em;
+
+ uint16_t add_i4_v_min;
+ uint16_t add_i4_v_max;
+ uint16_t add_i4_v_em;
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware
@@ -281,7 +289,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1750];
+  uint8_t reserved[1738];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -501,10 +509,15 @@ typedef struct params_t
 
   uint8_t sm_freq;                       //!< Frequency of stepper motor's pulses (choke, stepper IAC). 0 - 300Hz, 1 - 150Hz, 2 - 100 Hz, 3 - 75Hz
 
+  int16_t  ai3_adc_factor;               //!< ADC error compensation factor for ADD_I3 input
+  int32_t  ai3_adc_correction;           //!< ADC error compensation correction for ADD_I3 input
+  int16_t  ai4_adc_factor;               //!< ADC error compensation factor for ADD_I4 input
+  int32_t  ai4_adc_correction;           //!< ADC error compensation correction for ADD_I4 input
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[36];
+  uint8_t  reserved[24];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

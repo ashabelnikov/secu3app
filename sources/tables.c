@@ -512,6 +512,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .sm_freq =                     0,                    //300Hz
 
+  .ai3_adc_factor =              _ACF,
+  .ai3_adc_correction =          _ACC,
+  .ai4_adc_factor =              _ACF,
+  .ai4_adc_correction =          _ACC,
+
   .reserved =                    {0},
   .crc =                         0
  },

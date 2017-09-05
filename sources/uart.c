@@ -585,13 +585,16 @@ void uart_send_packet(uint8_t send_mode)
    build_i32h(d.param.ubat_adc_correction);
    build_i16h(d.param.temp_adc_factor);
    build_i32h(d.param.temp_adc_correction);
-   //todo: In the future if we will have a lack of RAM we can split this packet into 2 pieces and decrease size of buffers
    build_i16h(d.param.tps_adc_factor);
    build_i32h(d.param.tps_adc_correction);
    build_i16h(d.param.ai1_adc_factor);
    build_i32h(d.param.ai1_adc_correction);
    build_i16h(d.param.ai2_adc_factor);
    build_i32h(d.param.ai2_adc_correction);
+   build_i16h(d.param.ai3_adc_factor);
+   build_i32h(d.param.ai3_adc_correction);
+   build_i16h(d.param.ai4_adc_factor);
+   build_i32h(d.param.ai4_adc_correction);
    break;
 
   case ADCRAW_DAT:
@@ -1156,13 +1159,16 @@ uint8_t uart_recept_packet(void)
    d.param.ubat_adc_correction= recept_i32h();
    d.param.temp_adc_factor    = recept_i16h();
    d.param.temp_adc_correction= recept_i32h();
-   //todo: In the future if we will have a lack of RAM we can split this packet into 2 pieces and decrease size of buffers
    d.param.tps_adc_factor     = recept_i16h();
    d.param.tps_adc_correction = recept_i32h();
    d.param.ai1_adc_factor     = recept_i16h();
    d.param.ai1_adc_correction = recept_i32h();
    d.param.ai2_adc_factor     = recept_i16h();
    d.param.ai2_adc_correction = recept_i32h();
+   d.param.ai3_adc_factor     = recept_i16h();
+   d.param.ai3_adc_correction = recept_i32h();
+   d.param.ai4_adc_factor     = recept_i16h();
+   d.param.ai4_adc_correction = recept_i32h();
    break;
 
   case CKPS_PAR:

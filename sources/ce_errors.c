@@ -193,6 +193,21 @@ void check(ce_sett_t _PGM *cesd)
   ce_set_error(ECUERROR_ADD_I2_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I2_SENSOR);
+
+#ifndef SECU3T //SECU-3i
+ //checking ADD_I3 sensor
+ if ((d.sens.add_i3_raw < cesd->add_i3_v_min) || (d.sens.add_i3_raw > cesd->add_i3_v_max))
+  ce_set_error(ECUERROR_ADD_I3_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I3_SENSOR);
+#ifdef TPIC8101
+ //checking ADD_I4 sensor
+ if ((d.sens.add_i4_raw < cesd->add_i4_v_min) || (d.sens.add_i4_raw > cesd->add_i4_v_max))
+  ce_set_error(ECUERROR_ADD_I4_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I4_SENSOR);
+#endif
+#endif
 }
 
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),

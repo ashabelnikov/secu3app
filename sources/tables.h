@@ -514,10 +514,13 @@ typedef struct params_t
   int16_t  ai4_adc_factor;               //!< ADC error compensation factor for ADD_I4 input
   int32_t  ai4_adc_correction;           //!< ADC error compensation correction for ADD_I4 input
 
+  uint16_t cond_pvt_on;                  //!< Voltage threshold from pressure sensor when air conditioner clutch should be turned on (e.g. turn off if V < 1.6V) in case of pending request
+  uint16_t cond_pvt_off;                 //!< Voltage threshold from pressure sensor when air conditioner clutch should be turned off (e.g. turn off if V > 2.5V)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[24];
+  uint8_t  reserved[20];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

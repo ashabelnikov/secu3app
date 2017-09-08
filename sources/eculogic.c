@@ -45,6 +45,7 @@ typedef struct
  uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
  uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
+ uint8_t  ae_decay_counter;      //!< AE decay counter
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
@@ -58,6 +59,7 @@ void ignlogic_init(void)
  lgs.prime_delay_tmr = s_timer_gtc();
  lgs.prime_ready = 0;
  lgs.cog_changed = 0;
+ lgs.ae_decay_counter = 0;
 #endif
 }
 
@@ -81,11 +83,18 @@ static int32_t calc_acc_enrich(void)
  int32_t pwnc = (ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*14.7*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d.param.inj_sd_igl_const) >> 12;
  int16_t aef = inj_ae_tps_lookup();               //calculate basic AE factor value
 
- if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd) {
-  d.acceleration = 0;
-  return 0;                                       //no acceleration or deceleration
+ if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
+ {
+  if (d.acceleration)
+  {
+   lgs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
+   d.acceleration = 0;
+  }
+  //apply decay factor
+  aef = (((int32_t)aef) * lgs.ae_decay_counter) / d.param.inj_ae_decay_time; //TODO: replace division by multiplication with 1 / inj_ae_decay_time constant
  }
- d.acceleration = 1;
+ else
+  d.acceleration = 1;
 
  aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
  aef = ((int32_t)aef * inj_ae_rpm_lookup()) >> 7; //apply RPM correction factor to AE factor
@@ -267,6 +276,8 @@ void ignlogic_stroke_event_notification(void)
  //update afterstart enrichemnt counter
  if (lgs.aftstr_enrich_counter)
   --lgs.aftstr_enrich_counter;
+ if (lgs.ae_decay_counter)
+  --lgs.ae_decay_counter;
 #endif
 }
 

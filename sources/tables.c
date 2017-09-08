@@ -517,8 +517,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ai4_adc_factor =              _ACF,
   .ai4_adc_correction =          _ACC,
 
-  .cond_pvt_on =                VOLTAGE_MAGNITUDE(1.6),
-  .cond_pvt_off =               VOLTAGE_MAGNITUDE(2.5),
+  .cond_pvt_on =                 VOLTAGE_MAGNITUDE(1.6),
+  .cond_pvt_off =                VOLTAGE_MAGNITUDE(2.5),
+
+  .inj_ae_decay_time =           50,
 
   .reserved =                    {0},
   .crc =                         0

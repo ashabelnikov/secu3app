@@ -46,6 +46,7 @@ typedef struct
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
  uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
  uint8_t  ae_decay_counter;      //!< AE decay counter
+ uint16_t aef_decay;             //!< AE fqactor value at the start of decay
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
@@ -60,6 +61,7 @@ void ignlogic_init(void)
  lgs.prime_ready = 0;
  lgs.cog_changed = 0;
  lgs.ae_decay_counter = 0;
+ lgs.aef_decay = 0;
 #endif
 }
 
@@ -88,10 +90,11 @@ static int32_t calc_acc_enrich(void)
   if (d.acceleration)
   {
    lgs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
+   lgs.aef_decay = aef;
    d.acceleration = 0;
   }
   //apply decay factor
-  aef = (((int32_t)aef) * lgs.ae_decay_counter) / d.param.inj_ae_decay_time; //TODO: replace division by multiplication with 1 / inj_ae_decay_time constant
+  aef = (((int32_t)lgs.aef_decay) * lgs.ae_decay_counter) / d.param.inj_ae_decay_time; //TODO: replace division by multiplication with 1 / inj_ae_decay_time constant
  }
  else
   d.acceleration = 1;

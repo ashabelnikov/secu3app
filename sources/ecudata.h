@@ -120,8 +120,12 @@ typedef struct sensors_t
  int16_t  tps_raw;                       //!< raw ADC value from TPS sensor
  int16_t  add_i1_raw;                    //!< raw ADC value from ADD_I1 input
  int16_t  add_i2_raw;                    //!< raw ADC value from ADD_I2 input
-#ifndef SECU3T //SECU-3i
+
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
  int16_t  add_i3_raw;                    //!< raw ADC value from ADD_I3 input
+#endif
+
+#ifndef SECU3T //SECU-3i
 #ifdef TPIC8101
  int16_t  add_i4_raw;                    //!< raw ADC value from ADD_I4 input
 #endif

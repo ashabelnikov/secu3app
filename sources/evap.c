@@ -67,7 +67,7 @@ evap_st_t evap = {0};
 
 void evap_init_ports(void)
 {
- IOCFG_INIT(IOP_ECF, 0); //valve is turned off
+ IOCFG_INIT(IOP_EVAP_O, 0); //valve is turned off
 }
 
 void evap_init(void)

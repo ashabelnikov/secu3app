@@ -30,6 +30,7 @@
 #include "port/port.h"
 
 #include "adc.h"
+#include "aircond.h"
 #include "bc_input.h"
 #include "bitmask.h"
 #include "bluetooth.h"
@@ -145,6 +146,10 @@ void control_engine_units(void)
 #if defined(EVAP_CONTROL) && !defined(SECU3T)
  evap_control(); //canister purge valve control
 #endif
+
+#if defined(AIRCONDIT) && !defined(SECU3T)
+ aircond_control(); //air conditioner control
+#endif
 }
 
 /** Check firmware integrity (CRC) and set error indication if code or data is damaged
@@ -199,6 +204,9 @@ void init_ports(void)
 #endif
 #if defined(EVAP_CONTROL) && !defined(SECU3T)
  evap_init_ports();
+#endif
+#if defined(AIRCONDIT) && !defined(SECU3T)
+ aircond_init_ports();
 #endif
 }
 
@@ -319,6 +327,10 @@ void init_modules(void)
 
 #if defined(EVAP_CONTROL) && !defined(SECU3T)
  evap_init();
+#endif
+
+#if defined(AIRCONDIT) && !defined(SECU3T)
+ aircond_init();
 #endif
 
  s_timer_init();

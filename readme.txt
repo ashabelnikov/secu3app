@@ -153,6 +153,9 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     EVAP_CONTROL  *      Canister purge valve control
                          Управление клапаном продувки адсорбера
 
+    AIRCONDIT     *      Air conditioner control
+                         Управление кондиционером
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager
   означает что опция является внутренней и не отображается в списке опций в

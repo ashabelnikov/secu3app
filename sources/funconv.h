@@ -246,7 +246,10 @@ uint16_t inj_iacmixtcorr_lookup(void);
 #endif
 
 #ifdef PA4_INP_IGNTIM
-/**Ignition timing correction vs voltage at the PA4 input */
+/**Ignition timing correction vs voltage (specified by adcvalue)
+ * \param adcvalue Voltage from the selected input
+ * \return ignition timing value * ANGLE_MULTIPLIER
+ */
 int16_t pa4_function(uint16_t adcvalue);
 #endif
 

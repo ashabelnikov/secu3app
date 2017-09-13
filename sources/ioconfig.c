@@ -1181,6 +1181,28 @@ uint8_t iocfg_g_add_i3i(void)           //!< set  ADD_I3 input       (inverted)
  return !CHECKBIT(PINA, PINA4);
 }
 //-----------------------------------------------------------------------------
+void iocfg_i_add_i4(uint8_t value)      //!< init ADD_I4 input
+{
+ WRITEBIT(PORTA, PA3, value);           //controlls pullup resistor
+ CLEARBIT(DDRA, DDA3);                  //input
+}
+
+void iocfg_i_add_i4i(uint8_t value)     //!< init ADD_I4 input       (inverted)
+{
+ WRITEBIT(PORTA, PA3, value);           //controlls pullup resistor
+ CLEARBIT(DDRA, DDA3);                  //input
+}
+
+uint8_t iocfg_g_add_i4(void)            //!< set  ADD_I4 input
+{
+ return !!CHECKBIT(PINA, PINA3);
+}
+
+uint8_t iocfg_g_add_i4i(void)           //!< set  ADD_I4 input       (inverted)
+{
+ return !CHECKBIT(PINA, PINA3);
+}
+//-----------------------------------------------------------------------------
 void iocfg_i_gas_v(uint8_t value)       //!< init GAS_V input
 {
  WRITEBIT(spi_GPPUA, 0, value);         //controlls pullup resistor

@@ -34,6 +34,7 @@
 #include "injector.h"
 #include "magnitude.h"
 #include "vstimer.h"
+#include "ioconfig.h"
 
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
@@ -113,6 +114,28 @@ static int32_t calc_acc_enrich(void)
  return (pwnc * aef) >> 7;                        //apply AE factor to the normal conditions PW
 }
 #endif
+
+#ifdef PA4_INP_IGNTIM
+/** Calculates manual ignition timing correction value depending on the selected input (PA4 for SECU-3T or ADD_I3|ADD_I4 for SECU-3i)
+ * \return value * ANGLE_MULTIPLIER
+ */
+int16_t manual_igntim(void)
+{
+#ifdef SECU3T
+ return pa4_function(d.sens.add_i3); //PA4 only, can't be remapped
+#else //SECU-3i
+ if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3i)
+  return pa4_function(d.sens.add_i3);
+#ifdef TPIC8101
+ else if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4i)
+  return pa4_function(d.sens.add_i4);
+#endif
+ else
+  return 0; //not mapped to real I/O
+#endif
+}
+#endif
+
 
 /** Perform fuel calculations used on idling and work
  */
@@ -212,7 +235,7 @@ int16_t ignlogic_system_state_machine(void)
    d.corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   d.corr.pa4_aac = pa4_function(d.sens.add_i3);
+   d.corr.pa4_aac = manual_igntim();
    angle+=d.corr.pa4_aac;
 #endif
    d.corr.idlreg_aac = idling_pregulator(&idle_period_time_counter);//add correction from idling regulator
@@ -263,7 +286,7 @@ int16_t ignlogic_system_state_machine(void)
    d.corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   d.corr.pa4_aac = pa4_function(d.sens.add_i3);
+   d.corr.pa4_aac = manual_igntim();
    angle+=d.corr.pa4_aac;
 #endif
    //substract correction obtained from detonation regulator

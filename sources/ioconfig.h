@@ -284,10 +284,10 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_IGN          28     //!< IGN_I           (input)    spi
 #define IOP_COND_I       29     //!< COND_I          (input)    spi
 #define IOP_EPAS_I       30     //!< EPAS_I          (input)    spi
+#define IOP_ADD_I4       31     //!< ADD_I4          (input)
+#define IOP_OILP_I       32     //!< OILP_I          (input)    spi
+#define IOP_GENS_I       33     //!< GENS_I          (input)    spi
 //reserved slots
-#define IOP_OILP_I       31     //!< OILP_I          (input)    spi
-#define IOP_GENS_I       32     //!< GENS_I          (input)    spi
-#define IOP_RESERVED3    33     //!< reserved slot   ()
 #define IOP_RESERVED4    34     //!< reserved slot   ()
 #define IOP_RESERVED5    35     //!< reserved slot   ()
 #define IOP_RESERVED6    36     //!< reserved slot   ()
@@ -318,7 +318,7 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_INJ_OUT6     60     //!< INJ_OUT6        (output)
 #define IOP_INJ_OUT7     61     //!< INJ_OUT7        (output)
 #define IOP_INJ_OUT8     62     //!< INJ_OUT8        (output)
-#define IOP_RESERVED11   63     //!< reserved plug   ()
+#define IOP_IGNTIM       63     //!< IGNTIM          (input)
 #define IOP_RESERVED12   64     //!< reserved plug   ()
 #define IOP_RESERVED13   65     //!< reserved plug   ()
 #define IOP_RESERVED14   66     //!< reserved plug   ()
@@ -463,6 +463,11 @@ void iocfg_i_add_i3(uint8_t value);      //!< init ADD_I3 input
 void iocfg_i_add_i3i(uint8_t value);     //!< init ADD_I3 input       (inverted)
 uint8_t iocfg_g_add_i3(void);            //!< set  ADD_I3 input
 uint8_t iocfg_g_add_i3i(void);           //!< set  ADD_I3 input       (inverted)
+
+void iocfg_i_add_i4(uint8_t value);      //!< init ADD_I4 input
+void iocfg_i_add_i4i(uint8_t value);     //!< init ADD_I4 input       (inverted)
+uint8_t iocfg_g_add_i4(void);            //!< set  ADD_I4 input
+uint8_t iocfg_g_add_i4i(void);           //!< set  ADD_I4 input       (inverted)
 
 void iocfg_i_gas_v(uint8_t value);       //!< init GAS_V input
 void iocfg_i_gas_vi(uint8_t value);      //!< init GAS_V input        (inverted)

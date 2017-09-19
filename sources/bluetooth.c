@@ -118,8 +118,6 @@ void next_state_with_new_baud(uint16_t baud)
 
 uint8_t bt_set_baud(uint16_t baud)
 {
- baud = convert_id_to_br(baud);
-
  if (255 == bts.btbr_mode)
   return 1; //not enabled/stopped
 

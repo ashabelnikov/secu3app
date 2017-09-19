@@ -406,7 +406,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .hop_start_cogs =              0,
   .hop_durat_cogs =              10,
 
-  .uart_divisor =                CBRID_57600,
+  .uart_divisor =                CBR_57600,
   .uart_period_t_ms =            2,
 
   .knock_use_knock_channel =     0,

@@ -59,6 +59,9 @@
 /**AFR value multiplier*/
 #define AFRVAL_MULTIPLIER 128
 
+/**One discrete of the system timer is 10ms*/
+#define SYSTIM_MULTIPLIER 100
+
 /* Following macros are necessary when transforming floating point constant-values into integers.
  * Values of phisical magnitudes stored in integers
  * (данные макросы необходимы для преобразования числел-констант с плавающей запятой
@@ -90,5 +93,8 @@
 
 /** For AFR value representation in program */
 #define AFRVAL_MAG(afr) ROUND((afr)*AFRVAL_MULTIPLIER)
+
+/** For representation of system timer's values */
+#define SYSTIM_MAGS(v) ROUND((v) * SYSTIM_MULTIPLIER)
 
 #endif //_MAGNITUDE_H_

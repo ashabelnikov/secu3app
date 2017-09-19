@@ -127,4 +127,9 @@ void init_ecu_data(void)
  d.fc_revlim = 0;
  d.acceleration = 0;
 #endif
+
+#ifdef AIRCONDIT
+ d.cond_req_rpm = 0;
+ d.cond_req_fan = 0;
+#endif
 }

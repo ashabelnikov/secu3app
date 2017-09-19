@@ -519,10 +519,12 @@ typedef struct params_t
 
   uint8_t inj_ae_decay_time;             //!< AE decay time in strokes
 
+  uint16_t cond_min_rpm;                 //!< minimum RPM required for turning on of the air conditioner
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[19];
+  uint8_t  reserved[17];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

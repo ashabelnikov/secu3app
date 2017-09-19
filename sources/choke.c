@@ -359,10 +359,14 @@ int16_t calc_sm_position(uint8_t pwm)
     chks.rpmreg_t1 = tmr;  //reset timer
 
     //TODO:
-    //      1. коррекция наполнения по положению РХХ (чтобы смесь не уходила)
     //      2. Смещение РХХ при включении вентилятора
 
     int16_t rpm = inj_idling_rpm(); //target RPM depending on the coolant temperature
+
+#ifdef AIRCONDIT
+    if (rpm < d.cond_req_rpm)
+     rpm = d.cond_req_rpm;         //increase RPM to the minimum required value
+#endif
 
     //use addition value when vehicle starts to run
 #ifdef SPEED_SENSOR

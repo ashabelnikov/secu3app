@@ -40,6 +40,11 @@ void aircond_init(void);
  */
 void aircond_control(void);
 
+/** Must be called from the main loop to notify about stroke events
+ * Uses d ECU data structure
+ */
+void aircond_stroke_event_notification(void);
+
 #endif //AIRCONDIT
 
 #endif //_AIRCOND_H_

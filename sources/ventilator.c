@@ -148,9 +148,13 @@ void vent_control(void)
   return;
 
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
- if (d.sens.temperat >= d.param.vent_on)
+ if (d.sens.temperat >= d.param.vent_on
+#ifdef AIRCONDIT
+     || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
+#endif
+    )
   IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
- if (d.sens.temperat <= d.param.vent_off)
+ else if (d.sens.temperat <= d.param.vent_off)
   IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
  if (!d.param.vent_pwm)
@@ -160,17 +164,25 @@ void vent_control(void)
   TIMSK2&=~_BV(OCIE2A);
   _ENABLE_INTERRUPT();
 
-  if (d.sens.temperat >= d.param.vent_on)
+  if (d.sens.temperat >= d.param.vent_on
+#ifdef AIRCONDIT
+     || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
+#endif
+     )
    IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
-  if (d.sens.temperat <= d.param.vent_off)
+  else if (d.sens.temperat <= d.param.vent_off)
    IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
  }
  else
  {
   uint16_t d_val;
-  //note: We skip 1 and 24 values of duty
+  //note: We skip 1 and 30 values of duty
   int16_t dd = d.param.vent_on - d.sens.temperat;
-  if (dd < 2)
+  if (dd < 2
+#ifdef AIRCONDIT
+     || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
+#endif
+     )
    dd = 0;         //restrict to max.
   if (dd > (PWM_STEPS-2))
   {

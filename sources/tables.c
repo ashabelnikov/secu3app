@@ -522,6 +522,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_ae_decay_time =           50,
 
+  .cond_min_rpm =                1200,
+
   .reserved =                    {0},
   .crc =                         0
  },

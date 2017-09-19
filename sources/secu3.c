@@ -560,6 +560,10 @@ MAIN()
    gasdose_stroke_event_notification();
 #endif
 
+#ifdef AIRCONDIT
+   aircond_stroke_event_notification();
+#endif
+
    //управляем усилением аттенюатора в зависимости от оборотов
    if (d.param.knock_use_knock_channel)
     knock_set_gain(knock_attenuator_function());

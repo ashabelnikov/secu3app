@@ -22,7 +22,6 @@
 /** \file ventilator.c
  * \author Alexey A. Shabelnikov
  * Implementation of cooling fan's control related functions.
- * (Реализация функций для управления электрическим вентилятором).
  */
 
 #include "port/avrio.h"
@@ -67,7 +66,7 @@ void vent_init_ports(void)
 void vent_init_state(void)
 {
  pwm_state = 0;  //begin from active level
- pwm_steps = 31;
+ pwm_steps = PWM_STEPS;
  pwm_duty_1 = 0;
  pwm_duty_2 = 0;
  tmr2a_h = 0;
@@ -205,9 +204,9 @@ void vent_turnoff(void)
 #ifndef COOLINGFAN_PWM
  IOCFG_SETF(IOP_ECF, 0);
 #else
- if (!d.param.vent_pwm && !IOCFG_CHECK(IOP_IAC_PWM) && !IOCFG_CHECK(IOP_GD_PWM))
+ if (!d.param.vent_pwm)
   IOCFG_SETF(IOP_ECF, 0);
- else
+ if (d.param.vent_pwm || (IOCFG_CHECK(IOP_IAC_PWM) || IOCFG_CHECK(IOP_GD_PWM)))
   COOLINGFAN_TURNOFF();
 #endif
 }

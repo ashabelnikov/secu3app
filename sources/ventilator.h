@@ -22,24 +22,24 @@
 /** \file ventilator.h
  * \author Alexey A. Shabelnikov
  * Cooling fan's control related functions.
- * (‘ункции дл€ управлени€ вентил€тором).
  */
 
 #ifndef _VENTILATOR_H_
 #define _VENTILATOR_H_
 
-/**Initialization of used I/O ports (инициализаци€ используемых портов)*/
+/**Initialization of used I/O ports*/
 void vent_init_ports(void);
 
-/**Control of cooling fan (управление вентил€тором охлаждени€ двигател€).
+/**Control of cooling fan.
  * Uses d ECU data structure
  */
 void vent_control(void);
 
-/**Initialization of internal state (инициализаци€ состо€ни€)*/
+/**Initialization of internal state */
 void vent_init_state(void);
 
-/**Turn off cooling fan (used inside bc_input unit)
+/**Turn off cooling fan (used inside bc_input unit). This function also turns off
+ * IAC_PWM and GD_PWM (if one of them mapped to ECF)
  * Uses d ECU data structure
  */
 void vent_turnoff(void);

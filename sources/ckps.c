@@ -166,10 +166,12 @@ typedef struct
  uint8_t strobe;                      //!< Flag indicates that strobe pulse must be output on pending ignition stroke
 #endif
 
+ volatile uint8_t TCNT0_H;            //!< For supplementing timer/counter 0 up to 16 bits
+
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
 }ckpsstate_t;
- 
+
 /**Precalculated data (reference points) and state data for a single channel plug
  * Предрасчитанные данные(опорные точки) и данные состояния для отдельного канала зажигания
  */
@@ -215,13 +217,6 @@ chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's st
 //  note: may be not effective on other MCUs or even case bugs! Be aware.
 #define flags  GPIOR0                 //!< ATmega644 has one general purpose I/O register and we use it for first flags variable
 #define flags2 TWBR                   //!< Second flags variable in I/O register
-
-/** Supplement timer/counter 0 up to 16 bits, use R15 (для дополнения таймера/счетчика 0 до 16 разрядов, используем R15) */
-#ifdef __ICCAVR__
- __no_init __regvar uint8_t TCNT0_H@15;
-#else //GCC
- uint8_t TCNT0_H __attribute__((section (".noinit")));
-#endif
 
 /**Accessor macro for RPM dividents table*/
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
@@ -956,7 +951,7 @@ INLINE
 void set_timer0(uint16_t value)
 {
  OCR0A = TCNT0 + _AB(value, 0);
- TCNT0_H = _AB(value, 1);
+ ckps.TCNT0_H = _AB(value, 1);
  SETBIT(TIMSK0, OCIE0A);
  SETBIT(TIFR0, OCF0A);
 }
@@ -1292,9 +1287,9 @@ sync_enter:
  * обработки зубьев по истечении установленного 16-ти разрядного таймера). */
 ISR(TIMER0_COMPA_vect)
 {
- if (TCNT0_H)  //Did high byte exhaust (старший байт не исчерпан) ?
+ if (ckps.TCNT0_H)  //Did high byte exhaust (старший байт не исчерпан) ?
  {
-  --TCNT0_H;
+  --ckps.TCNT0_H;
  }
  else
  {//the countdown is over (отсчет времени закончился)

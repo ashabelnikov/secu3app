@@ -126,6 +126,8 @@ typedef struct
  volatile uint8_t ignout_off_val;
 #endif
  uint8_t ckps_inpalt;                 //!< indicates that CKPS is not remapped
+
+ volatile uint8_t TCNT0_H;            //!< For supplementing timer/counter 0 up to 16 bits
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -135,13 +137,6 @@ hallstate_t hall;                     //!< instance of state variables
  */
 #define flags  GPIOR0                 //ATmega644 has one general purpose I/O register
 #define flags2 TWBR
-
-/** Supplement timer/counter 0 up to 16 bits, use R15 */
-#ifdef __ICCAVR__
- __no_init __regvar uint8_t TCNT0_H@15;
-#else //GCC
- uint8_t TCNT0_H __attribute__((section (".noinit")));
-#endif
 
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
@@ -544,7 +539,7 @@ INLINE
 void set_timer0(uint16_t value)
 {
   OCR0A = TCNT0 + _AB(value, 0);
-  TCNT0_H = _AB(value, 1);
+  hall.TCNT0_H = _AB(value, 1);
   SETBIT(TIMSK0, OCIE0A);
   SETBIT(TIFR0, OCF0A);
 }
@@ -688,10 +683,10 @@ void ProcessInterrupt0(void)
  */
 ISR(TIMER0_COMPA_vect)
 {
- if (TCNT0_H!=0)  //Did high byte exhaust ?
+ if (hall.TCNT0_H!=0)  //Did high byte exhaust ?
  {
   TCNT0 = 0;
-  --TCNT0_H;
+  --hall.TCNT0_H;
  }
  else
  {//the countdown is over

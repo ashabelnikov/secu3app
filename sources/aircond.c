@@ -36,10 +36,6 @@
 #include "magnitude.h"
 #include "vstimer.h"
 
-#ifdef SECU3T
- #error "Air conditioner is not supported in the SECU-3T, use SECU-3i (undefine SECU3T)"
-#endif
-
 #ifndef FUEL_INJECT
  #error "Air conditioner is not supported without fuel injection, define FUEL_INJECT"
 #endif
@@ -58,7 +54,9 @@ aircond_t ac = {0};
 
 void aircond_init_ports(void)
 {
+#ifndef SECU3T
  IOCFG_INIT(IOP_COND_O, 0); //conditioner is turned off
+#endif
 }
 
 void aircond_init(void)
@@ -68,15 +66,18 @@ void aircond_init(void)
 
 void aircond_control(void)
 {
- if (!IOCFG_CHECK(IOP_COND_O) || !IOCFG_CHECK(IOP_COND_I))
-  return; //COND_O or COND_I remapped to other function
+ if (!IOCFG_CHECK(IOP_COND_I))
+  return; //COND_I remapped to other function. Air conditioner control is totally impossible
+ //if COND_O mapped to other function, then simple control algorithm will be used. For SECU-3T only simple algorithm can be used.
 
  if (!d.st_block)
  { //reset timer if engine is not running
   ac.t1 = s_timer_gtc();
   ac.state = 0;
   d.cond_req_fan = 0, d.cond_req_rpm = 0; //reset cooling fan and RPM requests
+#ifndef SECU3T
   IOCFG_SETF(IOP_COND_O, 0);
+#endif
  }
 
  switch(ac.state)
@@ -88,8 +89,12 @@ void aircond_control(void)
 
   case 1: //wait for turn on request
    d.cond_req_fan = 0; //reset cooling fan request
+#ifdef SECU3T
+   if (IOCFG_GET(IOP_COND_I))
+#else
    IOCFG_SETF(IOP_COND_O, 0); //turned off
-   if (IOCFG_GET(IOP_COND_I) && (d.sens.add_i3 < d.param.cond_pvt_on) && !ce_is_error(ECUERROR_ADD_I3_SENSOR) && (d.sens.temperat > TEMPERATURE_MAGNITUDE(75.0)) && (d.sens.tps < TPS_MAGNITUDE(68.0)))
+   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && (d.sens.add_i3 < d.param.cond_pvt_on) && !ce_is_error(ECUERROR_ADD_I3_SENSOR) && (d.sens.temperat > TEMPERATURE_MAGNITUDE(75.0)) && (d.sens.tps < TPS_MAGNITUDE(68.0))))
+#endif
    {
     if (d.sens.frequen < d.param.cond_min_rpm)
     {
@@ -99,7 +104,9 @@ void aircond_control(void)
     else
     {
      ac.state = 3; //RPM already ok, skip 2 state
+#ifndef SECU3T
      IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
+#endif
      ac.t1 = s_timer_gtc();
     }
    }
@@ -109,12 +116,18 @@ void aircond_control(void)
    if (d.cond_req_rpm >= d.param.cond_min_rpm)
    {
     ++ac.state;
+#ifndef SECU3T
     IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
+#endif
     ac.t1 = s_timer_gtc();
    }
 
   case 3: //conditioner is turned on, check for turn off conditions
-   if (!IOCFG_GET(IOP_COND_I) || (d.sens.add_i3 > d.param.cond_pvt_off) || ce_is_error(ECUERROR_ADD_I3_SENSOR) || (d.sens.tps > TPS_MAGNITUDE(70.0)))
+#ifdef SECU3T
+   if (!IOCFG_GET(IOP_COND_I))
+#else
+   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || (d.sens.add_i3 > d.param.cond_pvt_off) || ce_is_error(ECUERROR_ADD_I3_SENSOR) || (d.sens.tps > TPS_MAGNITUDE(70.0)))))
+#endif
     ac.state = 1;
    if ((s_timer_gtc() - ac.t1) > SYSTIM_MAGS(1.5) && ac.state == 3)
     d.cond_req_fan = 1; //turn on cooling fan after 1.5 seconds

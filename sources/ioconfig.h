@@ -160,7 +160,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_GD_PWM       62     //!< PWM gas valve   (output)
 #define IOP_INJ_OUT5     63     //!< INJ_OUT5        (output)
 #define IOP_INJ_OUT6     64     //!< INJ_OUT6        (output)
-#define IOP_RESERVED26   65     //!< reserved plug   ()
+#define IOP_COND_I       65     //!< COND_I          (input)
 #define IOP_RESERVED27   66     //!< reserved plug   ()
 #define IOP_RESERVED28   67     //!< reserved plug   ()
 

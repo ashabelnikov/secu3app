@@ -22,7 +22,6 @@
 /** \file measure.c
  * \author Alexey A. Shabelnikov
  * Implementation pf processing (averaging, corrections etc) of data comes from ADC and sensors
- * (Реализация обработки (усреднение, корректировки и т.д.) данных поступающих от АЦП и датчиков).
  */
 
 #include "port/avrio.h"
@@ -52,52 +51,72 @@
  #define _RESDIV(v, n, d) (((n) * (v)) / (d))
 #endif
 
-/**Reads state of throttle gate (only the value, without inversion)
- * считывает состояние дроссельной заслонки (только значение, без инверсии)
- */
+/**Reads state of throttle gate (only the value, without inversion) */
 #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
 
-/**Number of values for averaging of RPM for tachometer
- * кол-во значений для усреднения частоты вращения к.в. для оборотов тахометра */
-#define FRQ_AVERAGING           4
+// Size of each ring buffer
+#define FRQ_AVERAGING        4                 //!< Number of values for averaging of RPM for tachometer
+#define MAP_AVERAGING        4                 //!< Number of values for averaging of pressure (MAP)
+#define BAT_AVERAGING        4                 //!< Number of values for averaging of board voltage
+#define TMP_AVERAGING        8                 //!< Number of values for averaging of coolant temperature
+#define TPS_AVERAGING        4                 //!< Number of values for averaging of throttle position
+#define AI1_AVERAGING        4                 //!< Number of values for averaging of ADD_I1
+#define AI2_AVERAGING        4                 //!< Number of values for averaging of ADD_I2
+#define SPD_AVERAGING        8                 //!< Number of values for averaging of speed sensor periods (SPEED_SENSOR option must be included)
+#define AI3_AVERAGING        4                 //!< Number of values for averaging of ADD_I3 (SECU3T option must be excluded OR PA4_INP_IGNTIM option must be included)
+#define AI4_AVERAGING        4                 //!< Number of values for averaging of ADD_I4 (SECU3T option must be excluded AND TPIC8101 option must be included)
 
-//размер буферов усреднения по каждому аналоговому датчику
-#define MAP_AVERAGING           4                 //!< Number of values for averaging of pressure (MAP)
-#define BAT_AVERAGING           4                 //!< Number of values for averaging of board voltage
-#define TMP_AVERAGING           8                 //!< Number of values for averaging of coolant temperature
-#define TPS_AVERAGING           4                 //!< Number of values for averaging of throttle position
-#define AI1_AVERAGING           4                 //!< Number of values for averaging of ADD_I1
-#define AI2_AVERAGING           4                 //!< Number of values for averaging of ADD_I2
-#ifdef SPEED_SENSOR
-#define SPD_AVERAGING           8                 //!< Number of values for averaging of speed sensor periods
-#endif
+//Index of each ring buffer
+#define FRQ_INPIDX           0                 //!< Index of ring buffer for RPM
+#define MAP_INPIDX           1                 //!< Index of ring buffer for MAP
+#define BAT_INPIDX           2                 //!< Index of ring buffer for board voltage
+#define TMP_INPIDX           3                 //!< Index of ring buffer for CTS
+#define TPS_INPIDX           4                 //!< Index of ring buffer for TPS
+#define AI1_INPIDX           5                 //!< Index of ring buffer for ADD_I1
+#define AI2_INPIDX           6                 //!< Index of ring buffer for ADD_I2
+#define SPD_INPIDX           7                 //!< Index of ring buffer for VSS
+#define AI3_INPIDX           8                 //!< Index of ring buffer for ADD_I3
+#define AI4_INPIDX           9                 //!< Index of ring buffer for ADD_I4
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
-#define AI3_AVERAGING           4                 //!< Number of values for averaging of ADD_I3
-#endif
+#define CIRCBUFFMAX 8                          //!< Maximum size of ring buffer in items
+#define INPUTNUM 10                            //!< number of ring buffers
 
-#if !defined(SECU3T) && defined(TPIC8101)
-#define AI4_AVERAGING           4                 //!< Number of values for averaging of ADD_I4
-#endif
+/**Describes ring buffer for one input*/
+typedef struct
+{
+ uint16_t buff[CIRCBUFFMAX];                    //!< Ring buffer
+ uint8_t ai;                                    //!< index in buffer
+}meas_input_t;
 
-uint16_t freq_circular_buffer[FRQ_AVERAGING];     //!< Ring buffer for RPM averaging for tachometer (буфер усреднения частоты вращения коленвала для тахометра)
-uint16_t map_circular_buffer[MAP_AVERAGING];      //!< Ring buffer for averaging of MAP sensor (буфер усреднения абсолютного давления)
-uint16_t ubat_circular_buffer[BAT_AVERAGING];     //!< Ring buffer for averaging of voltage (буфер усреднения напряжения бортовой сети)
-uint16_t temp_circular_buffer[TMP_AVERAGING];     //!< Ring buffer for averaging of coolant temperature (буфер усреднения температуры охлаждающей жидкости)
-uint16_t tps_circular_buffer[TPS_AVERAGING];      //!< Ring buffer for averaging of TPS
-uint16_t ai1_circular_buffer[AI1_AVERAGING];      //!< Ring buffer for averaging of ADD_I1
-uint16_t ai2_circular_buffer[AI2_AVERAGING];      //!< Ring buffer for averaging of ADD_I2
-#ifdef SPEED_SENSOR
-uint16_t spd_circular_buffer[SPD_AVERAGING];      //!< Ring buffer for averaging of speed sensor periods
-#endif
+/**Ring buffers for all inputs */
+meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
+/**Number of averages for each input. Values must be a degree of 2 (see average_buffer() for more information)*/
+PGM_DECLARE(uint8_t avnum[INPUTNUM]) = {FRQ_AVERAGING, MAP_AVERAGING, BAT_AVERAGING, TMP_AVERAGING, TPS_AVERAGING, AI1_AVERAGING, AI2_AVERAGING, SPD_AVERAGING, AI3_AVERAGING, AI4_AVERAGING};
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
-uint16_t ai3_circular_buffer[AI3_AVERAGING];      //!< Ring buffer for averaging of ADD_I3
-#endif
+static uint16_t update_buffer(uint8_t idx, uint16_t value)
+{
+ meas[idx].buff[meas[idx].ai] = value;
+ (meas[idx].ai==0) ? (meas[idx].ai = PGM_GET_BYTE(&avnum[idx]) - 1): meas[idx].ai--;
+ return value;
+}
 
-#if !defined(SECU3T) && defined(TPIC8101)
-uint16_t ai4_circular_buffer[AI4_AVERAGING];      //!< Ring buffer for averaging of ADD_I4
-#endif
+static uint16_t average_buffer(uint8_t idx)
+{
+ uint8_t i = PGM_GET_BYTE(&avnum[idx]) - 1;  uint32_t sum = 0;
+ do
+ {
+  sum+=meas[idx].buff[i];
+ }while(i--);
+
+ //We use shifts instead of division.
+ uint8_t sht = 4; // sum/16
+ if (PGM_GET_BYTE(&avnum[idx])==4)
+  sht = 2;
+ if (PGM_GET_BYTE(&avnum[idx])==8)
+  sht = 3;
+ return sum >> sht;
+//return sum / PGM_GET_BYTE(&avnum[idx]);
+}
 
 void meas_init_ports(void)
 {
@@ -109,80 +128,55 @@ void meas_init_ports(void)
  IOCFG_INIT(IOP_OILP_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GENS_I, 0);   //don't use internal pullup resistor
 #endif
- //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB) because they are initialised by default
+ //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB, ADD_I3, ADD_I4) because they are initialised by default
  //and we don't need pullup resistors for them
 }
 
-//обновление буферов усреднения (частота вращения, датчики...)
+//Update ring buffers
 void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 {
  uint16_t rawval;
- static uint8_t  map_ai  = MAP_AVERAGING-1;
- static uint8_t  bat_ai  = BAT_AVERAGING-1;
- static uint8_t  tmp_ai  = TMP_AVERAGING-1;
- static uint8_t  frq_ai  = FRQ_AVERAGING-1;
- static uint8_t  tps_ai  = TPS_AVERAGING-1;
- static uint8_t  ai1_ai  = AI1_AVERAGING-1;
- static uint8_t  ai2_ai  = AI2_AVERAGING-1;
-#ifdef SPEED_SENSOR
- static uint8_t  spd_ai = SPD_AVERAGING-1;
-#endif
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
- static uint8_t  ai3_ai  = AI3_AVERAGING-1;
-#endif
 
-#if !defined(SECU3T) && defined(TPIC8101)
- static uint8_t  ai4_ai  = AI4_AVERAGING-1;
-#endif
-
- freq_circular_buffer[frq_ai] = d.sens.inst_frq;
- (frq_ai==0) ? (frq_ai = FRQ_AVERAGING - 1): frq_ai--;
+ update_buffer(FRQ_INPIDX, d.sens.inst_frq);
 
  if (rpm_only)
   return;
 
- map_circular_buffer[map_ai] = (d.param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value();
+ rawval = update_buffer(MAP_INPIDX, (d.param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value());
+
 #ifdef SEND_INST_VAL
- rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : adc_compensate(_RESDIV(map_circular_buffer[map_ai], 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : adc_compensate(_RESDIV(rawval, 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
  d.sens.inst_map = map_adc_to_kpa(rawval, d.param.map_curve_offset, d.param.map_curve_gradient);
 #endif
- (map_ai==0) ? (map_ai = MAP_AVERAGING - 1): map_ai--;
 
- ubat_circular_buffer[bat_ai] = adc_get_ubat_value();
+ rawval = update_buffer(BAT_INPIDX, adc_get_ubat_value());
 #ifdef SEND_INST_VAL
- d.sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : adc_compensate(ubat_circular_buffer[bat_ai] * 6, d.param.ubat_adc_factor, d.param.ubat_adc_correction);
+ d.sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : adc_compensate(rawval * 6, d.param.ubat_adc_factor, d.param.ubat_adc_correction);
 #endif
- (bat_ai==0) ? (bat_ai = BAT_AVERAGING - 1): bat_ai--;
 
- temp_circular_buffer[tmp_ai] = adc_get_temp_value();
- (tmp_ai==0) ? (tmp_ai = TMP_AVERAGING - 1): tmp_ai--;
+ update_buffer(TMP_INPIDX, adc_get_temp_value());
 
- tps_circular_buffer[tps_ai] = adc_get_carb_value();
+ rawval = update_buffer(TPS_INPIDX, adc_get_carb_value());
 #ifdef SEND_INST_VAL
- rawval = adc_compensate(_RESDIV(tps_circular_buffer[tps_ai], 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ rawval = adc_compensate(_RESDIV(rawval, 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
  d.sens.inst_tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) ? cesd->tps_v_em : rawval, d.param.tps_curve_offset, d.param.tps_curve_gradient);
  if (d.sens.inst_tps > TPS_MAGNITUDE(100))
   d.sens.inst_tps = TPS_MAGNITUDE(100);
 #endif
- (tps_ai==0) ? (tps_ai = TPS_AVERAGING - 1): tps_ai--;
 
- ai1_circular_buffer[ai1_ai] = adc_get_add_i1_value();
+ rawval = update_buffer(AI1_INPIDX, adc_get_add_i1_value());
 #ifdef SEND_INST_VAL
- d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : adc_compensate(_RESDIV(ai1_circular_buffer[ai1_ai], 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : adc_compensate(_RESDIV(rawval, 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
 #endif
- (ai1_ai==0) ? (ai1_ai = AI1_AVERAGING - 1): ai1_ai--;
 
- ai2_circular_buffer[ai2_ai] = adc_get_add_i2_value();
- (ai2_ai==0) ? (ai2_ai = AI2_AVERAGING - 1): ai2_ai--;
+ update_buffer(AI2_INPIDX, adc_get_add_i2_value());
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
- ai3_circular_buffer[ai3_ai] = adc_get_add_i3_value();
- (ai3_ai==0) ? (ai3_ai = AI3_AVERAGING - 1): ai3_ai--;
+ update_buffer(AI3_INPIDX, adc_get_add_i3_value());
 #endif
 
 #if !defined(SECU3T) && defined(TPIC8101)
- ai4_circular_buffer[ai4_ai] = adc_get_knock_value();
- (ai4_ai==0) ? (ai4_ai = AI4_AVERAGING - 1): ai4_ai--;
+ update_buffer(AI4_INPIDX, adc_get_knock_value());
 #endif
 
  if (d.param.knock_use_knock_channel && d.sens.frequen > 200)
@@ -202,8 +196,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
   d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off or engine is stopped
 
 #ifdef SPEED_SENSOR
- spd_circular_buffer[spd_ai] = spdsens_get_period();
- (spd_ai==0) ? (spd_ai = SPD_AVERAGING - 1): spd_ai--;
+ update_buffer(SPD_INPIDX, spdsens_get_period());
  d.sens.distance = spdsens_get_pulse_count();
 #endif
 
@@ -218,28 +211,18 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 #endif
 }
 
-
-//усреднение измеряемых величин используя текущие значения кольцевых буферов усреднения, компенсация
-//погрешностей АЦП, перевод измеренных значений в физические величины.
+//Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values
 void meas_average_measured_values(ce_sett_t _PGM *cesd)
 {
- uint8_t i;  uint32_t sum;
-
- for (sum=0,i = 0; i < MAP_AVERAGING; i++)  //усредняем значение с датчика абсолютного давления
-  sum+=map_circular_buffer[i];
- d.sens.map_raw = adc_compensate(_RESDIV((sum/MAP_AVERAGING), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(MAP_INPIDX), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
  d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
 
- for (sum=0,i = 0; i < BAT_AVERAGING; i++)   //усредняем напряжение бортовой сети
-  sum+=ubat_circular_buffer[i];
- d.sens.voltage_raw = adc_compensate((sum/BAT_AVERAGING) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
+ d.sens.voltage_raw = adc_compensate(average_buffer(BAT_INPIDX) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
  d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : d.sens.voltage_raw);
 
  if (d.param.tmp_use)
  {
-  for (sum=0,i = 0; i < TMP_AVERAGING; i++) //усредняем температуру (ДТОЖ)
-   sum+=temp_circular_buffer[i];
-  d.sens.temperat_raw = adc_compensate(_RESDIV(sum/TMP_AVERAGING, 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
+  d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(TMP_INPIDX), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
 #ifndef THERMISTOR_CS
   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
 #else
@@ -249,47 +232,33 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
    d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
 #endif
  }
- else                                       //ДТОЖ не используется
+ else                                       //CTS is not used
   d.sens.temperat = 0;
 
- for (sum=0,i = 0; i < FRQ_AVERAGING; i++)  //усредняем частоту вращения коленвала
-  sum+=freq_circular_buffer[i];
- d.sens.frequen=(sum/FRQ_AVERAGING);
+ d.sens.frequen=average_buffer(FRQ_INPIDX);
 
 #ifdef SPEED_SENSOR
- for (sum=0,i = 0; i < SPD_AVERAGING; i++)  //average periods from speed sensor
-  sum+=spd_circular_buffer[i];
- d.sens.speed=(sum/SPD_AVERAGING);
+ d.sens.speed=average_buffer(SPD_INPIDX);
 #endif
 
- for (sum=0,i = 0; i < TPS_AVERAGING; i++)   //average throttle position
-  sum+=tps_circular_buffer[i];
- d.sens.tps_raw = adc_compensate(_RESDIV((sum/TPS_AVERAGING), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(TPS_INPIDX), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
  d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
  if (d.sens.tps > TPS_MAGNITUDE(100))
   d.sens.tps = TPS_MAGNITUDE(100);
 
- for (sum=0,i = 0; i < AI1_AVERAGING; i++)   //average ADD_I1 input
-  sum+=ai1_circular_buffer[i];
- d.sens.add_i1_raw = adc_compensate(_RESDIV((sum/AI1_AVERAGING), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ d.sens.add_i1_raw = adc_compensate(_RESDIV(average_buffer(AI1_INPIDX), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
  d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) ? cesd->add_i1_v_em : d.sens.add_i1_raw;
 
- for (sum=0,i = 0; i < AI2_AVERAGING; i++)   //average ADD_I2 input
-  sum+=ai2_circular_buffer[i];
- d.sens.add_i2_raw = adc_compensate(_RESDIV((sum/AI2_AVERAGING), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
+ d.sens.add_i2_raw = adc_compensate(_RESDIV(average_buffer(AI2_INPIDX), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
  d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) ? cesd->add_i2_v_em : d.sens.add_i2_raw;
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
- for (sum=0,i = 0; i < AI3_AVERAGING; i++)   //average ADD_I3 input (PA4)
-  sum+=ai3_circular_buffer[i];
- d.sens.add_i3_raw = adc_compensate((sum/AI3_AVERAGING), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
+ d.sens.add_i3_raw = adc_compensate(average_buffer(AI3_INPIDX), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
  d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) ? cesd->add_i3_v_em : d.sens.add_i3_raw;
 #endif
 
 #if !defined(SECU3T) && defined(TPIC8101)
- for (sum=0,i = 0; i < AI4_AVERAGING; i++)   //average ADD_I4 input
-  sum+=ai4_circular_buffer[i];
- d.sens.add_i4_raw = adc_compensate((sum/AI4_AVERAGING), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
+ d.sens.add_i4_raw = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
  d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) ? cesd->add_i4_v_em : d.sens.add_i4_raw;
 #endif
 
@@ -301,11 +270,11 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #endif
 }
 
-//Вызывать для предварительного измерения перед пуском двигателя. Вызывать только после
-//инициализации АЦП.
-void meas_initial_measure(void)
+//Call this function for making preliminary measurements before starting of engine. Call it only after
+//initialization of ADC!
+void meas_init(void)
 {
- uint8_t _t,i = 16;
+ uint8_t _t, i = 16;
  _t = _SAVE_INTERRUPT();
  _ENABLE_INTERRUPT();
  do
@@ -346,26 +315,26 @@ static void select_table_set(uint8_t set_index)
 
 void meas_take_discrete_inputs(void)
 {
- //--инверсия концевика карбюратора если необходимо
+ //--do inversion of throttle limit switch if necessary
  if (0==d.param.tps_threshold)
-  d.sens.carb=d.param.carb_invers^GET_THROTTLE_GATE_STATE(); //результат: 0 - дроссель закрыт, 1 - открыт
+  d.sens.carb=d.param.carb_invers^GET_THROTTLE_GATE_STATE(); //result: 0 - throttle is closed, 1 - opened
  else
- {//using TPS (привязываемся к ДПДЗ)
+ {//using a TPS (emulate limit switch)
   d.sens.carb=d.param.carb_invers^(d.sens.tps > d.param.tps_threshold);
  }
 
- //read state of gas valve input (считываем и сохраняем состояние газового клапана)
+ //read state of gas valve input
  //if GAS_V input remapped to other function, then petrol
  d.sens.gas = IOCFG_GET(IOP_GAS_V);
 
- //переключаем тип топлива в зависимости от состояния газового клапана и дополнительного входа (если переназначен)
+ //switch set of maps (or fuel type) depending on the state of GAS_V input (gas valve) and additional input (MAPSEL0)
 #ifndef REALTIME_TABLES
  if (!IOCFG_CHECK(IOP_MAPSEL0))
  { //without additioanl selection input
   if (d.sens.gas)
-   d.fn_dat = &fw_data.tables[d.param.fn_gas];     //на газе
+   d.fn_dat = &fw_data.tables[d.param.fn_gas];     //on gas
   else
-   d.fn_dat = &fw_data.tables[d.param.fn_gasoline];//на бензине
+   d.fn_dat = &fw_data.tables[d.param.fn_gasoline];//on petrol
  }
  else
  { //use! additional selection input

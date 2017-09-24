@@ -345,8 +345,8 @@ void init_modules(void)
  //Initialization of the suspended operations module
  sop_init_operations();
 
- //проводим несколько циклов измерения датчиков для инициализации данных
- meas_initial_measure();
+ //Initialize measurement's unit and perform several measure cycles for setting of ring buffers to correct values
+ meas_init();
 }
 
 /**Main function of firmware - entry point. Contains initialization and main loop 

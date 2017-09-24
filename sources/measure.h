@@ -49,7 +49,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd);
 /**Initialization of ring buffers. Performs initial measurements. Used before start of engine
  * Uses d ECU data structure
  */
-void meas_initial_measure(void);
+void meas_init(void);
 
 /**Performs reading of discrete inputs and switching of fuel type (sets of maps)
  * Uses d ECU data structure

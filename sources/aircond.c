@@ -50,18 +50,13 @@ typedef struct
 }aircond_t;
 
 /**Instance of state variables */
-aircond_t ac = {0};
+aircond_t ac = {0,0};
 
 void aircond_init_ports(void)
 {
 #ifndef SECU3T
  IOCFG_INIT(IOP_COND_O, 0); //conditioner is turned off
 #endif
-}
-
-void aircond_init(void)
-{
- ac.state = 0;
 }
 
 void aircond_control(void)

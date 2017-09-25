@@ -48,7 +48,7 @@ typedef struct
  uint8_t pwrdown;  //!< power-down flag
 }pwrstate_t;
 
-pwrstate_t pwrs;   //!< instance of state variables
+pwrstate_t pwrs = {0,0};   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
@@ -56,12 +56,6 @@ void pwrrelay_init_ports(void)
 #ifdef SECU3T  //see also initialization in measure.c
  IOCFG_INIT(IOP_IGN, 1);      //init IGN input
 #endif
-}
-
-void pwrrelay_init(void)
-{
- pwrs.state = 0;
- pwrs.pwrdown = 0;
 }
 
 void pwrrelay_control(void)

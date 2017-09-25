@@ -34,9 +34,6 @@
 /**Initialization of used I/O lines*/
 void uniout_init_ports(void);
 
-/**Initialization of the module*/
-void uniout_init(void);
-
 /** Does control of universal programmable output
  * Uses d ECU data structure
  */

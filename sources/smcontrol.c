@@ -47,11 +47,6 @@ void stpmot_init_ports(void)
  IOCFG_INIT(IOP_SM_STP, 0); //high level at the output
 }
 
-void stpmot_init(void)
-{
- //todo
-}
-
 void stpmot_dir(uint8_t dir)
 {
  //Speaking about L297, CW/~CCW input synchronized internally therefore

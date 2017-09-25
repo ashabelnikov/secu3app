@@ -48,17 +48,11 @@ typedef struct
 }ih_state_t;
 
 /**Global instance of state variables */
-ih_state_t ih;
+ih_state_t ih = {0,0,0};
 
 void intkheat_init_ports(void)
 {
  IOCFG_INIT(IOP_INTK_HEAT, 0);  //<-- heating is off
-}
-
-void intkheat_init(void)
-{
- ih.state = 0;
- ih.cog_changed = 0;
 }
 
 void intkheat_control(void)

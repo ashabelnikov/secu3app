@@ -47,11 +47,6 @@ void gdstpmot_init_ports(void)
  IOCFG_INIT(IOP_GD_STP, 0); //high level at the output
 }
 
-void gdstpmot_init(void)
-{
- //todo
-}
-
 void gdstpmot_dir(uint8_t dir)
 {
  //Speaking about L297, CW/~CCW input synchronized internally therefore

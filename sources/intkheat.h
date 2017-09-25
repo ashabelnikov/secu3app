@@ -33,9 +33,6 @@
 /** Initialization of used I/O ports (Инициализация используемых портов) */
 void intkheat_init_ports(void);
 
-/** Initialization of the module */
-void intkheat_init(void);
-
 /** Performs control of intake manifold heating
  * Uses d ECU data structure
  */

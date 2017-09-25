@@ -52,7 +52,7 @@ typedef struct
 }uni_out_state_t;
 
 /**Instance of internal state variables structure*/
-static uni_out_state_t uni;
+static uni_out_state_t uni = {{{{0,0,0,0},{0,0,0,0}},{{0,0,0,0},{0,0,0,0}},{{0,0,0,0},{0,0,0,0}}}};
 
 /** Condition function for coolant temperature sensor
  * \param d pointer to ECU data structure
@@ -437,12 +437,6 @@ void uniout_init_ports(void)
  IOCFG_INIT(IOP_UNI_OUT0, 0); //turned OFF
  IOCFG_INIT(IOP_UNI_OUT1, 0); //turned OFF
  IOCFG_INIT(IOP_UNI_OUT2, 0); //turned OFF
-}
-
-void uniout_init(void)
-{
- //Default state of all outputs is OFF
- memset(&uni.states, 0, sizeof(uni.states));
 }
 
 /** Calculates specified logic function

@@ -32,9 +32,6 @@
 /**Initialization of I/O ports*/
 void evap_init_ports(void);
 
-/** Initialization of the module (state variables etc)*/
-void evap_init(void);
-
 /**Implements control algorithm
  * Uses d ECU data structure
  */

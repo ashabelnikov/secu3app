@@ -34,9 +34,6 @@
 /** Initialization of used I/O ports */
 void gasdose_init_ports(void);
 
-/** Initialization of the module (state variables etc)*/
-void gasdose_init(void);
-
 /** Does control of gas dosator
  * Uses d ECU data structure
  */

@@ -35,9 +35,6 @@
 /** Initialization of used I/O ports (инициализация используемых портов) */
 void gdstpmot_init_ports(void);
 
-/** Initialization of the module */
-void gdstpmot_init(void);
-
 /** ID of the clockwise direction (направление по часовой стрелке) */
 #ifndef SM_DIR_CW
 #define SM_DIR_CW   0

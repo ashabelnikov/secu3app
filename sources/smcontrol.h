@@ -34,9 +34,6 @@
 /** Initialization of used I/O ports (инициализация используемых портов) */
 void stpmot_init_ports(void);
 
-/** Initialization of the module */
-void stpmot_init(void);
-
 /** ID of the clockwise direction (направление по часовой стрелке) */
 #define SM_DIR_CW   0
 

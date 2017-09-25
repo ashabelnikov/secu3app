@@ -33,9 +33,6 @@
 /** Initialization of used I/O ports (инициализация используемых портов) */
 void pwrrelay_init_ports(void);
 
-/** Initialization of the module */
-void pwrrelay_init(void);
-
 /** Control of power relay (управление реле питания)
  * Uses d ECU data structure
  */

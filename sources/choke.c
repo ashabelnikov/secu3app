@@ -115,32 +115,19 @@ typedef struct
 }choke_st_t;
 
 /**Instance of state variables */
-choke_st_t chks = {0};
+choke_st_t chks = {0,0,0,0,0,0,0,0,0
+#ifndef FUEL_INJECT
+                   ,0,0
+#endif
+#ifdef FUEL_INJECT
+                   ,0,0
+#endif
+                  };
 
 void choke_init_ports(void)
 {
 #ifdef SM_CONTROL
  stpmot_init_ports();
-#endif
-}
-
-void choke_init(void)
-{
- chks.state = 0;
- chks.strt_mode = 0;
-#ifdef SM_CONTROL
- stpmot_init();
- CLEARBIT(chks.flags, CF_POWERDOWN);
- CLEARBIT(chks.flags, CF_MAN_CNTR);
-#endif
-#ifndef FUEL_INJECT
- chks.rpmreg_prev = 0;
- CLEARBIT(chks.flags, CF_RPMREG_ENEX);
-#endif
-#ifdef FUEL_INJECT
- CLEARBIT(chks.flags, CF_CL_LOOP);
- chks.prev_rpm_error = 0;
- chks.iac_pos = 0;
 #endif
 }
 

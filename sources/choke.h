@@ -34,9 +34,6 @@
 /** Initialization of used I/O ports */
 void choke_init_ports(void);
 
-/** Initialization of the module (state variables etc)*/
-void choke_init(void);
-
 /** Does control of choke
  * Uses d ECU data structure
  */

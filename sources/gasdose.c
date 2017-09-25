@@ -61,7 +61,7 @@ typedef struct
 }gasdose_st_t;
 
 /**Instance of state variables */
-static gasdose_st_t gds = {0};
+static gasdose_st_t gds = {0,0,0,0,0,0,0};
 
 
 /**TPS % between two interpolation points, additionally multiplied by 16 */
@@ -157,15 +157,6 @@ static int16_t calc_gd_acc_enrich(void)
 void gasdose_init_ports(void)
 {
  gdstpmot_init_ports();
-}
-
-void gasdose_init(void)
-{
- gds.state = 0;
- gdstpmot_init();
- CLEARBIT(gds.flags, CF_POWERDOWN);
- CLEARBIT(gds.flags, CF_MAN_CNTR);
- gds.aftstr_enrich_counter = 0;
 }
 
 /** Calculates actuator position (%*2) from step value

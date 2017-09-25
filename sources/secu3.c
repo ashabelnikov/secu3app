@@ -253,28 +253,8 @@ void init_modules(void)
  fuelpump_init();
 #endif
 
- //initialization of power management unit
- pwrrelay_init();
-
-#if defined(SM_CONTROL) || defined(FUEL_INJECT)
- choke_init();
-#endif
 #ifdef SM_CONTROL
  stpmot_freq(d.param.sm_freq);
-#endif
-
-#if defined(GD_CONTROL)
- gasdose_init();
-#endif
-
- //initialization of intake manifold heating unit
-#ifdef INTK_HEATING
- intkheat_init();
-#endif
-
- //initialization of an universal programmable output
-#ifdef UNI_OUTPUT
- uniout_init();
 #endif
 
  //инициализируем модуль ДПКВ
@@ -313,9 +293,6 @@ void init_modules(void)
  cams_enable_cam((d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
 #endif
 #endif
-#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
- lambda_init_state();
-#endif
 
 #ifdef CARB_AFR
  carbafr_init();
@@ -323,14 +300,6 @@ void init_modules(void)
 
 #ifdef OBD_SUPPORT
  obd_init();
-#endif
-
-#if defined(EVAP_CONTROL) && !defined(SECU3T)
- evap_init();
-#endif
-
-#if defined(AIRCONDIT) && !defined(SECU3T)
- aircond_init();
 #endif
 
  s_timer_init();

@@ -47,9 +47,9 @@
 #define EVAP_PWM_STEPS 32      //!< software PWM steps (0...31)
 
 //see code in vstimer.c for more information about these variables
-uint8_t evap_comp;             //!< Compare register for PWM
-volatile uint8_t evap_duty;    //!< PWM duty
-uint8_t evap_soft_cnt;         //!< Counter for PWM
+uint8_t evap_comp = 0;             //!< Compare register for PWM
+volatile uint8_t evap_duty = 0;    //!< PWM duty
+uint8_t evap_soft_cnt = 0;         //!< Counter for PWM
 
 /** Set canister purge valve's PWM duty */
 #define SET_EVAP_DUTY(v) { \
@@ -68,13 +68,6 @@ evap_st_t evap = {0};
 void evap_init_ports(void)
 {
  IOCFG_INIT(IOP_EVAP_O, 0); //valve is turned off
-}
-
-void evap_init(void)
-{
- //EVAP is fully closed
- evap_duty = evap_comp = evap_soft_cnt = 0;
- evap.state = 0;
 }
 
 void evap_control(void)

@@ -29,10 +29,6 @@
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 
-/** Initialization of state variables
- */
-void lambda_init_state(void);
-
 /**Control of lambda correction
  * Uses d ECU data structure
  */

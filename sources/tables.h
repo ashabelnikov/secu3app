@@ -521,10 +521,12 @@ typedef struct params_t
 
   uint16_t cond_min_rpm;                 //!< minimum RPM required for turning on of the air conditioner
 
+  uint8_t inj_lambda_htgdet;             //!< Flag, indicates that system should determine oxygen sensor's heating by monitoring voltage from it
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[17];
+  uint8_t  reserved[16];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

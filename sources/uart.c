@@ -765,6 +765,7 @@ void uart_send_packet(uint8_t send_mode)
   build_i16h(d.param.inj_lambda_dead_band);
   build_i8h(d.param.inj_lambda_senstype);
   build_i8h(d.param.inj_lambda_ms_per_stp);
+  build_i8h(d.param.inj_lambda_htgdet);
   break;
 #endif
 
@@ -1319,6 +1320,7 @@ uint8_t uart_recept_packet(void)
   d.param.inj_lambda_dead_band = recept_i16h();
   d.param.inj_lambda_senstype = recept_i8h();
   d.param.inj_lambda_ms_per_stp = recept_i8h();
+  d.param.inj_lambda_htgdet = recept_i8h();
   break;
 #endif
 

@@ -51,16 +51,7 @@ typedef struct
 }lambda_state_t;
 
 /**Instance of internal state variables structure*/
-static lambda_state_t ego;
-
-void lambda_init_state(void)
-{
- ego.stroke_counter = 0;
- ego.enabled = 0;
- ego.fc_delay = 0;
- ego.gasv_prev = 0;
- ego.ms_mask = 0;
-}
+static lambda_state_t ego = {0,0,0,0,0,0,0};
 
 void lambda_control(void)
 {
@@ -73,7 +64,20 @@ void lambda_control(void)
  else
  {
   if ((s_timer_gtc() - ego.lambda_t1) >= (d.param.inj_lambda_activ_delay*100))
-   ego.enabled = 1;
+  {
+   if (d.param.inj_lambda_htgdet)
+   { //deternime oxygen sensor's heating by monitoring voltage.
+    int16_t top_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;
+    int16_t bot_thrd = ((int16_t)d.param.inj_lambda_swt_point) - d.param.inj_lambda_dead_band;
+    if (bot_thrd < 0)
+     bot_thrd = 0;
+
+    if (d.sens.add_i1 < bot_thrd || d.sens.add_i1 > top_thrd)
+     ego.enabled = 1;
+   }
+   else
+    ego.enabled = 1;
+  }
  }
 }
 
@@ -86,68 +90,67 @@ static uint8_t lambda_iteration(uint8_t mask)
 {
  uint8_t updated = 0;
 ////////////////////////////////////////////////////////////////////////////////////////
-    if (d.param.inj_lambda_senstype==0)
-    { //NBO sensor type
-     //update EGO correction (with deadband)
-     int16_t int_m_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;
-     int16_t int_p_thrd = ((int16_t)d.param.inj_lambda_swt_point) - d.param.inj_lambda_dead_band;
-     if (int_p_thrd < 0)
-      int_p_thrd = 0;
+ if (d.param.inj_lambda_senstype==0)
+ { //NBO sensor type
+  //update EGO correction (with deadband)
+  int16_t int_m_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;
+  int16_t int_p_thrd = ((int16_t)d.param.inj_lambda_swt_point) - d.param.inj_lambda_dead_band;
+  if (int_p_thrd < 0)
+   int_p_thrd = 0;
 
-     if (d.sens.add_i1 /*d.sens.inst_add_i1*/ > int_m_thrd)
-     {
-      if (1!=mask)
-      {
-       d.corr.lambda-=d.param.inj_lambda_step_size_m;
-       updated = 1;
-      }
-     }
-     else if (d.sens.add_i1 /*d.sens.inst_add_i1*/ < int_p_thrd)
-     {
-      if (2!=mask)
-      {
-       d.corr.lambda+=d.param.inj_lambda_step_size_p;
-       updated = 2;
-      }
-     }
-    }
-    else
-    { //WBO sensor type (or emulation)
-     uint16_t sens_afr = ego_curve_lookup();
+  if (d.sens.add_i1 /*d.sens.inst_add_i1*/ > int_m_thrd)
+  {
+   if (1!=mask)
+   {
+    d.corr.lambda-=d.param.inj_lambda_step_size_m;
+    updated = 1;
+   }
+  }
+  else if (d.sens.add_i1 /*d.sens.inst_add_i1*/ < int_p_thrd)
+  {
+   if (2!=mask)
+   {
+    d.corr.lambda+=d.param.inj_lambda_step_size_p;
+    updated = 2;
+   }
+  }
+ }
+ else
+ { //WBO sensor type (or emulation)
+  uint16_t sens_afr = ego_curve_lookup();
 
-     int16_t int_m_thrd = d.corr.afr - AFRVAL_MAG(0.05);
-     int16_t int_p_thrd = d.corr.afr + AFRVAL_MAG(0.05);
-     if (int_m_thrd < 0)
-      int_m_thrd = 0;
+  int16_t int_m_thrd = d.corr.afr - AFRVAL_MAG(0.05);
+  int16_t int_p_thrd = d.corr.afr + AFRVAL_MAG(0.05);
+  if (int_m_thrd < 0)
+   int_m_thrd = 0;
 
-     if (sens_afr < int_m_thrd)
-     {
-      if (1!=mask)
-      {
-       d.corr.lambda-=d.param.inj_lambda_step_size_m;
-       updated = 1;
-      }
-     }
-     else if (sens_afr > int_p_thrd)
-     {
-      if (2!=mask)
-      {
-       d.corr.lambda+=d.param.inj_lambda_step_size_p;
-       updated = 2;
-      }
-     }
-    }
+  if (sens_afr < int_m_thrd)
+  {
+   if (1!=mask)
+   {
+    d.corr.lambda-=d.param.inj_lambda_step_size_m;
+    updated = 1;
+   }
+  }
+  else if (sens_afr > int_p_thrd)
+  {
+   if (2!=mask)
+   {
+    d.corr.lambda+=d.param.inj_lambda_step_size_p;
+    updated = 2;
+   }
+  }
+ }
 ////////////////////////////////////////////////////////////////////////////////////////
 
-
 #ifdef GD_CONTROL
-    //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))
-    if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP) && ((IOCFG_CHECK(IOP_SM_STP) && (d.choke_pos > 0)) || (!IOCFG_CHECK(IOP_SM_STP) && d.sens.temperat <= d.param.idlreg_turn_on_temp)))
-     restrict_value_to(&d.corr.lambda, -d.param.gd_lambda_corr_limit_m, d.param.gd_lambda_corr_limit_p);
-    else
-     restrict_value_to(&d.corr.lambda, -d.param.inj_lambda_corr_limit_m, d.param.inj_lambda_corr_limit_p);
+ //Use special limits when (gas doser is active) AND ((choke control used AND choke not fully opened) OR (choke control isn't used AND engine is not heated))
+ if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP) && ((IOCFG_CHECK(IOP_SM_STP) && (d.choke_pos > 0)) || (!IOCFG_CHECK(IOP_SM_STP) && d.sens.temperat <= d.param.idlreg_turn_on_temp)))
+  restrict_value_to(&d.corr.lambda, -d.param.gd_lambda_corr_limit_m, d.param.gd_lambda_corr_limit_p);
+ else
+  restrict_value_to(&d.corr.lambda, -d.param.inj_lambda_corr_limit_m, d.param.inj_lambda_corr_limit_p);
 #else
-    restrict_value_to(&d.corr.lambda, -d.param.inj_lambda_corr_limit_m, d.param.inj_lambda_corr_limit_p);
+ restrict_value_to(&d.corr.lambda, -d.param.inj_lambda_corr_limit_m, d.param.inj_lambda_corr_limit_p);
 #endif
  return updated;
 }
@@ -239,40 +242,32 @@ void lambda_stroke_event_notification(void)
   return; //exit from this iteration
  }
 
- if (d.sens.inst_frq > d.param.inj_lambda_rpm_thrd)    //RPM > threshold
+ if ((d.sens.inst_frq > d.param.inj_lambda_rpm_thrd) && (d.sens.temperat > d.param.inj_lambda_temp_thrd))    //RPM > threshold && coolant temperature > threshold
  {
-  if (d.sens.temperat > d.param.inj_lambda_temp_thrd)  //coolant temperature > threshold
-  {
-
-   if (d.param.inj_lambda_str_per_stp > 0)
-   {//using strokes
-    if (ego.stroke_counter)
-     ego.stroke_counter--;
-    else
-    {
-     ego.stroke_counter = d.param.inj_lambda_str_per_stp;
-     lambda_iteration(0);
-    }
-   }
+  if (d.param.inj_lambda_str_per_stp > 0)
+  {//using strokes
+   if (ego.stroke_counter)
+    ego.stroke_counter--;
    else
-   { //using ms
-
-    uint8_t updated = lambda_iteration(ego.ms_mask);
-    if (updated)
-    {
-     ego.lambda_t2 = s_timer_gtc();
-     ego.ms_mask = updated;
-    }
-    else
-    {
-     if ((s_timer_gtc() - ego.lambda_t2) >= (d.param.inj_lambda_ms_per_stp))
-      ego.ms_mask = 0;
-    }
-
+   {
+    ego.stroke_counter = d.param.inj_lambda_str_per_stp;
+    lambda_iteration(0);
    }
   }
   else
-   d.corr.lambda = 0;
+  { //using ms
+   uint8_t updated = lambda_iteration(ego.ms_mask);
+   if (updated)
+   {
+    ego.lambda_t2 = s_timer_gtc();
+    ego.ms_mask = updated;
+   }
+   else
+   {
+    if ((s_timer_gtc() - ego.lambda_t2) >= (d.param.inj_lambda_ms_per_stp))
+     ego.ms_mask = 0;
+   }
+  }
  }
  else
   d.corr.lambda = 0;

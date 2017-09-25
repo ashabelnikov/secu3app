@@ -64,6 +64,7 @@
 #define CF_SMDIR_CHG    2  //!< flag, indicates that stepper motor direction has changed during motion
 #endif
 #define CF_CL_LOOP      3  //!< IAC closed loop flag
+#define CF_ADDACT       4  //!<
 
 #else // Carburetor's choke stuff
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
@@ -110,6 +111,7 @@ typedef struct
 #ifdef FUEL_INJECT
  int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
  int16_t   iac_pos;        //!< IAC pos between call of the closed loop regulator
+ int16_t   iac_add;        //!< Smoothly increased value
 #endif
 
 }choke_st_t;
@@ -120,7 +122,7 @@ choke_st_t chks = {0,0,0,0,0,0,0,0,0
                    ,0,0
 #endif
 #ifdef FUEL_INJECT
-                   ,0,0
+                   ,0,0,0
 #endif
                   };
 
@@ -373,8 +375,18 @@ int16_t calc_sm_position(uint8_t pwm)
     else if (CHECKBIT(chks.flags, CF_CL_LOOP) && ((d.engine_mode != EM_IDLE) || (d.sens.inst_frq > rpm_thrd2)))
     {
    //chks.iac_pos += (((uint16_t)d.param.idl_to_run_add) << 2); //x4
-     chks.iac_pos = ((((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) + ((uint16_t)d.param.idl_to_run_add)) << 2); //x4
+     chks.iac_add = ((((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) + ((uint16_t)d.param.idl_to_run_add)) << 2); //x4
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit
+     SETBIT(chks.flags, CF_ADDACT);
+    }
+    else if (CHECKBIT(chks.flags, CF_ADDACT))
+    {
+     chks.iac_pos+=8; //1% step
+     if (chks.iac_pos > chks.iac_add)
+     {
+      chks.iac_pos = chks.iac_add;
+      CLEARBIT(chks.flags, CF_ADDACT);
+     }
     }
 
     //closed loop mode is active

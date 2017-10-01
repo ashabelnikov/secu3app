@@ -443,12 +443,14 @@ static uint16_t _normalize_tn(int16_t i_tn)
 }
 
 #ifdef FUEL_INJECT
-/** Ensures that angle will be in the allowed range
- * \param angle
- * \return
+/** Ensures that angle will be in the allowed range (0...720)
+ * \param angle Angle to be normalized, may be negative
+ * \return Normalized and correct value of angle
  */
 static uint16_t _normalize_angle(int16_t angle)
 {
+ if (angle > ANGLE_MAGNITUDE(720))
+  return angle - ANGLE_MAGNITUDE(720);
  if (angle < 0)
   return ANGLE_MAGNITUDE(720) + angle;
  return angle;

@@ -106,7 +106,9 @@
 #endif
 #define F_SPSIGN     2                //!< Sign of the measured stroke period (time between TDCs)
 #define F_SINGCH     3                //!< indicates that single ignition channel is used
-
+#ifdef PHASE_SENSOR
+#define F_CAMREF     4                //!< Specifies to use camshaft sensor as reference
+#endif
 /** State variables */
 typedef struct
 {
@@ -800,6 +802,13 @@ void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
 }
 #endif
 
+#ifdef PHASE_SENSOR
+void ckps_use_cam_ref_s(uint8_t i_camref)
+{
+ WRITEBIT(flags2, F_CAMREF, i_camref);
+}
+#endif
+
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
  */
@@ -969,28 +978,45 @@ static uint8_t sync_at_startup(void)
   case 0: //skip certain number of teeth (пропуск определенного кол-ва зубьев)
    CLEARBIT(flags, F_VHTPER);
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS)
+   {
+#ifdef PHASE_SENSOR
+    if (CHECKBIT(flags2, F_CAMREF))
+     ckps.starting_mode = 1; //switch to this mode if cam reference was enabled
+    else
+#endif
 #ifdef PHASED_IGNITION
     //if cylinder number is even, then cam synchronization will be performed later
     ckps.starting_mode = (ckps.chan_number & 1) ? 1 : 2;
 #else
     ckps.starting_mode = 2; //even number of cylinders only
 #endif
+    //note: for full sequential injection (even for odd cyl. number engines) we don't need to wait for cam sensor pulse, because we start with simultateous injection mode.
+   }
    break;
 
-#ifdef PHASED_IGNITION
-  case 1: //we fall into this state only if number of cylinders is odd
+#ifdef PHASE_SENSOR
+  case 1: //we fall into this state only if number of cylinders is odd (in full-sequential ignition mode) or if cam sensor was selected as reference
    cams_detect_edge();
    if (cams_is_event_r())
    {
+#ifdef PHASED_IGNITION
     if (CHECKBIT(flags2, F_SINGCH))
      set_channels_sc(); //single channel mode
     else
      set_channels_fs(1);     //set full sequential mode
     SETBIT(flags2, F_CAMISS);
-#ifdef FUEL_INJECT
-   inject_set_fullsequential(1);
 #endif
-    ckps.starting_mode = 2;
+#ifdef FUEL_INJECT
+   inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
+#endif
+    if (CHECKBIT(flags2, F_CAMREF))
+    {
+     SETBIT(flags, F_ISSYNC);
+     ckps.cog = ckps.cog360 = 1; //first tooth
+     return 1; //finish
+    }
+    else
+     ckps.starting_mode = 2;
    }
    break;
 #endif
@@ -1175,6 +1201,8 @@ static void process_ckps_cogs(void)
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
 #if defined(PHASED_IGNITION) || defined(FUEL_INJECT)
+ if (!CHECKBIT(flags2, F_CAMREF))
+ {
  if (cams_is_event_r())
  {
   //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
@@ -1213,6 +1241,7 @@ static void process_ckps_cogs(void)
    CLEARBIT(flags2, F_CAMISS);
   }
  }
+ }
 #endif
 #endif
 }
@@ -1243,6 +1272,21 @@ ISR(TIMER1_CAPT_vect)
   return;
  }
 
+#ifdef PHASE_SENSOR
+ if (CHECKBIT(flags2, F_CAMREF))
+ {
+  if ((ckps.cog360 == ckps.wheel_cogs_nump1))
+   ckps.cog360 = 1;
+  if (cams_is_event_r())
+  {
+   if (ckps.cog != ckps.wheel_cogs_num2p1) //check if sync is correct
+    SETBIT(flags, F_ERROR); //ERROR
+   ckps.cog = 1; //each 720°
+  }
+ }
+ else
+#endif
+ {
  //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input),
  //Otherwise:
  //Each period, check for missing teeth, and if, after discovering of missing teeth
@@ -1264,8 +1308,13 @@ ISR(TIMER1_CAPT_vect)
    ckps.cog = 1;
   ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
  }
+}
 
 sync_enter:
+#ifdef PHASE_SENSOR
+ if (!CHECKBIT(flags2, F_CAMREF))
+#endif
+ {
  //If the last tooth before missing teeth, we begin the countdown for
  //the restoration of missing teeth, as the initial data using the last
  //value of inter-teeth period.
@@ -1274,6 +1323,7 @@ sync_enter:
  //последнее значение межзубного периода).
  if (ckps.miss_cogs_num && ckps.cog360 == ckps.wheel_last_cog)
   set_timer0(ckps.period_curr);
+ }
 
  //call handler for normal teeth (вызываем обработчик для нормальных зубьев)
  process_ckps_cogs();

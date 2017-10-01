@@ -184,4 +184,11 @@ void ckps_set_degrees_btdc(int16_t degrees_btdc);
 void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode);
 #endif
 
+#ifdef PHASE_SENSOR
+/** Set sync. mode when cam sensor is used as reference sensor with non-missing tooth wheel.
+ * \param i_camref 1 - use cam as reference sensor, 0 - use separate ref.sensor or missing tooth wheel
+ */
+void ckps_use_cam_ref_s(uint8_t i_camref);
+#endif
+
 #endif //_CKPS_H_

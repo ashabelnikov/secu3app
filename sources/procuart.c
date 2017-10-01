@@ -95,7 +95,11 @@ void process_uart_interface(void)
     inject_set_num_squirts(d.param.inj_config & 0xF);  //number of squirts
     inject_set_config(d.param.inj_config >> 4);        //type of injection
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
-    cams_enable_cam((d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
+    cams_enable_cam(
+#ifdef FUEL_INJECT
+    (d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL ||
+#endif
+    CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
    case ACCEL_PAR:
     //если были изменены параметры то сбрасываем счетчик времени
@@ -198,6 +202,10 @@ void process_uart_interface(void)
 
 #ifdef FUEL_INJECT
     inject_set_cyl_number(d.param.ckps_engine_cyl);
+#endif
+
+#ifdef PHASE_SENSOR
+    ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
     break;
 

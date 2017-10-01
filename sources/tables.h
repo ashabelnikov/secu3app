@@ -153,6 +153,7 @@
 
 //CKPS flags
 #define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark
+#define CKPF_USE_CAM_REF                1           //!< Use cam sensor as reference sensor
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t

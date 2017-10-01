@@ -281,6 +281,9 @@ void init_modules(void)
  ckps_set_degrees_btdc(d.param.hall_degrees_btdc);
  ckps_set_advance_angle(0);
 #endif
+#ifdef PHASE_SENSOR
+ ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
+#endif
 
 #ifdef FUEL_INJECT
  ckps_set_inj_timing(d.param.inj_timing_crk, d.inj_pw, d.param.inj_anglespec); //use inj.timing on cranking
@@ -290,7 +293,11 @@ void init_modules(void)
  inject_set_fuelcut(!d.sys_locked);
  inject_set_config(d.param.inj_config >> 4);
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
- cams_enable_cam((d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL);
+ cams_enable_cam(
+#ifdef FUEL_INJECT
+ (d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL ||
+#endif
+ CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
 #endif
 

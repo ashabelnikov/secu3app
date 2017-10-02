@@ -282,7 +282,7 @@ void init_modules(void)
  ckps_set_advance_angle(0);
 #endif
 #ifdef PHASE_SENSOR
- ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
+ ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF) && !d.param.ckps_miss_num);
 #endif
 
 #ifdef FUEL_INJECT

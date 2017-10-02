@@ -204,7 +204,7 @@ void process_uart_interface(void)
 #endif
 
 #ifdef PHASE_SENSOR
-    ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
+    ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF) && !d.param.ckps_miss_num);
 #endif
     break;
 

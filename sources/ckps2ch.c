@@ -104,6 +104,9 @@
 #endif
 #define F_CALTIM     2                //!< Indicates that time calculation is started before the spark
 #define F_SPSIGN     3                //!< Sign of the measured stroke period (time between TDCs)
+#ifdef PHASE_SENSOR
+#define F_CAMREF     4                //!< Specifies to use camshaft sensor as reference
+#endif
 
 /** State variables */
 typedef struct
@@ -364,12 +367,14 @@ static uint16_t _normalize_tn(int16_t i_tn)
 }
 
 #ifdef FUEL_INJECT
-/** Ensures that angle will be in the allowed range
- * \param angle
- * \return
+/** Ensures that angle will be in the allowed range (0...720)
+ * \param angle Angle to be normalized, may be negative
+ * \return Normalized and correct value of angle
  */
 static uint16_t _normalize_angle(int16_t angle)
 {
+ if (angle > ANGLE_MAGNITUDE(720))
+  return angle - ANGLE_MAGNITUDE(720);
  if (angle < 0)
   return ANGLE_MAGNITUDE(720) + angle;
  return angle;
@@ -661,6 +666,13 @@ void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
 }
 #endif
 
+#ifdef PHASE_SENSOR
+void ckps_use_cam_ref_s(uint8_t i_camref)
+{
+ WRITEBIT(flags2, F_CAMREF, i_camref);
+}
+#endif
+
 /**Forces ignition spark if corresponding interrupt is pending*/
 #define force_pending_spark() \
  if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)) && CHECKBIT(flags, F_IGNIEN))\
@@ -738,10 +750,32 @@ static uint8_t sync_at_startup(void)
   case 0: //skip certain number of teeth
    CLEARBIT(flags, F_VHTPER);
    if (ckps.cog >= CKPS_ON_START_SKIP_COGS)
-    ckps.starting_mode = 1;
+   {
+#ifdef PHASE_SENSOR
+    if (CHECKBIT(flags2, F_CAMREF))
+     ckps.starting_mode = 1; //switch to this mode if cam reference was enabled
+    else
+#endif
+     ckps.starting_mode = 2;
+   }
    break;
 
-  case 1: //find out missing teeth
+#ifdef PHASE_SENSOR
+  case 1: //we fall into this state only if cam sensor was selected as reference
+   cams_detect_edge();
+   if (cams_is_event_r())
+   {
+#ifdef FUEL_INJECT
+    inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
+#endif
+    SETBIT(flags, F_ISSYNC);
+    ckps.cog = ckps.cog360 = 1; //first tooth
+    return 1; //finish
+   }
+   break;
+#endif
+
+  case 2: //find out missing teeth
 
    //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
    if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
@@ -872,26 +906,29 @@ static void process_ckps_cogs(void)
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
 #ifdef FUEL_INJECT
- if (cams_is_event_r())
+ if (!CHECKBIT(flags2, F_CAMREF))
  {
-  //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
-  if (ckps.cog < ckps.wheel_cogs_nump1)
-   ckps.cog+= ckps.wheel_cogs_num;
+  if (cams_is_event_r())
+  {
+   //Synchronize. We rely that cam sensor event (e.g. falling edge) coming before missing teeth
+   if (ckps.cog < ckps.wheel_cogs_nump1)
+    ckps.cog+= ckps.wheel_cogs_num;
 
-  //Turn on full sequential mode because Cam sensor is OK
-  if (!CHECKBIT(flags2, F_CAMISS))
-  {
-   inject_set_fullsequential(1);
-   SETBIT(flags2, F_CAMISS);
+   //Turn on full sequential mode because Cam sensor is OK
+   if (!CHECKBIT(flags2, F_CAMISS))
+   {
+    inject_set_fullsequential(1);
+    SETBIT(flags2, F_CAMISS);
+   }
   }
- }
- if (cams_is_error())
- {
-  //Turn off full sequential mode because cam sensor is not OK
-  if (CHECKBIT(flags2, F_CAMISS))
+  if (cams_is_error())
   {
-   inject_set_fullsequential(0);
-   CLEARBIT(flags2, F_CAMISS);
+   //Turn off full sequential mode because cam sensor is not OK
+   if (CHECKBIT(flags2, F_CAMISS))
+   {
+    inject_set_fullsequential(0);
+    CLEARBIT(flags2, F_CAMISS);
+   }
   }
  }
 #endif
@@ -922,32 +959,52 @@ ISR(TIMER1_CAPT_vect)
   return;
  }
 
- //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input),
- //Otherwise:
- //Each period, check for missing teeth, and if, after discovering of missing teeth
- //count of teeth being found incorrect, then set error flag.
- if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
+#ifdef PHASE_SENSOR
+ if (CHECKBIT(flags2, F_CAMREF))
  {
-  if ((ckps.cog360 != ckps.wheel_cogs_nump1)) //also taking into account recovered teeth
+  if ((ckps.cog360 == ckps.wheel_cogs_nump1))
+   ckps.cog360 = 1;
+  if (cams_is_event_r())
   {
-   SETBIT(flags, F_ERROR); //ERROR
-   ckps.cog = 1;
-   //TODO: maybe we need to turn off full sequential mode
+   if (ckps.cog != ckps.wheel_cogs_num2p1) //check if sync is correct
+    SETBIT(flags, F_ERROR); //ERROR
+   ckps.cog = 1; //each 720°
   }
-  //Reset 360° tooth counter to the first tooth (1-ι ησα)
-  ckps.cog360 = 1;
-  //Also reset 720° tooth counter
-  if (ckps.cog == ckps.wheel_cogs_num2p1)
-   ckps.cog = 1;
-  ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
  }
-
+ else
+#endif
+ {
+  //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input),
+  //Otherwise:
+  //Each period, check for missing teeth, and if, after discovering of missing teeth
+  //count of teeth being found incorrect, then set error flag.
+  if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
+  {
+   if ((ckps.cog360 != ckps.wheel_cogs_nump1)) //also taking into account recovered teeth
+   {
+    SETBIT(flags, F_ERROR); //ERROR
+    ckps.cog = 1;
+    //TODO: maybe we need to turn off full sequential mode
+   }
+   //Reset 360° tooth counter to the first tooth (1-ι ησα)
+   ckps.cog360 = 1;
+   //Also reset 720° tooth counter
+   if (ckps.cog == ckps.wheel_cogs_num2p1)
+    ckps.cog = 1;
+   ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
+  }
+ }
 sync_enter:
- //If the last tooth before missing teeth, we begin the countdown for
- //the restoration of missing teeth, as the initial data using the last
- //value of inter-teeth period.
- if (ckps.miss_cogs_num && ckps.cog360 == ckps.wheel_last_cog)
-  set_timer0(ckps.period_curr);
+#ifdef PHASE_SENSOR
+ if (!CHECKBIT(flags2, F_CAMREF))
+#endif
+ {
+  //If the last tooth before missing teeth, we begin the countdown for
+  //the restoration of missing teeth, as the initial data using the last
+  //value of inter-teeth period.
+  if (ckps.miss_cogs_num && ckps.cog360 == ckps.wheel_last_cog)
+   set_timer0(ckps.period_curr);
+ }
 
  //call handler for normal teeth
  process_ckps_cogs();

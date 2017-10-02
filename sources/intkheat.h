@@ -22,7 +22,6 @@
 /** \file intkheat.h
  * \author Alexey A. Shabelnikov
  * Intake manifold heating control.
- * (Управление подогревом впускного коллектора).
  */
 
 #ifndef _INTKHEAT_H_
@@ -30,7 +29,7 @@
 
 #ifdef INTK_HEATING
 
-/** Initialization of used I/O ports (Инициализация используемых портов) */
+/** Initialization of used I/O ports */
 void intkheat_init_ports(void);
 
 /** Performs control of intake manifold heating

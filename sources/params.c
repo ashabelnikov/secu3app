@@ -22,7 +22,6 @@
 /** \file params.c
  * \author Alexey A. Shabelnikov
  * Implementation of functionality for work with parameters (save/restore/check)
- * (–еализаци€ функциональности дл€ работы с параметрами (сохранение/восстановление/проверка)).
  */
 
 #include "port/avrio.h"
@@ -46,10 +45,10 @@
 
 void save_param_if_need(void)
 {
- //параметры не изменились за заданное врем€?
+ //did parameters chane during specified time?
  if (s_timer16_is_action(save_param_timeout_counter))
  {
-  //текущие и сохраненные параметры отличаютс€?
+  //Are current and seved parameters differ?
   if (memcmp(d.eeprom_parameters_cache, &d.param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
@@ -108,9 +107,9 @@ void load_eeprom_params(void)
   else
   {
    //User selected to use paramaters from EEPROM
-   //«агружаем параметры из EEPROM, а затем провер€ем целостность.
-   //ѕри подсчете контрольной суммы не учитываем байты самой контрольной суммы
-   //если контрольные суммы не совпадают - загружаем резервные параметры из FLASH
+   //Load parameters from EEPROM, and after, check integrity of them
+   //Don't take into account bytes of CRC when calculating check sum
+   //If check sums don't match, then load default (reserve) parameters from flash
    eeprom_read(&d.param,EEPROM_PARAM_START,sizeof(params_t));
 
    if (crc16((uint8_t*)&d.param, (sizeof(params_t)-PAR_CRC_SIZE))!=d.param.crc)
@@ -123,10 +122,9 @@ void load_eeprom_params(void)
   memcpy(d.eeprom_parameters_cache, &d.param, sizeof(params_t));
  }
  else
- {//перемычка закрыта - загружаем дефаултные параметры, которые позже будут сохранены, а также
-  //загружаем в EEPROM данные по умолчанию дл€ редактируемых наборов таблиц
+ {//jumper is closed - load default parameters, which will be saved soon. Also, load default data into EEPROM for editable set of tables
   memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
-  ce_clear_errors(); //сбрасываем сохраненные ошибки
+  ce_clear_errors(); //clear saved CE errors
 #ifdef REALTIME_TABLES
   eeprom_write_P(/*&tt_def_data*/&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 #endif
@@ -144,7 +142,6 @@ void load_specified_tables_into_ram(uint8_t index)
  else
   eeprom_read(&d.tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 
- //будет послано уведомление о том, что загружен новый набор таблиц
  //notification will be sent about that new set of tables has been loaded
  sop_set_operation(SOP_SEND_NC_TABLSET_LOADED);
 }

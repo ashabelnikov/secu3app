@@ -31,13 +31,13 @@
 
 #include <stdint.h>
 
-/** Initialization of used I/O ports (инициализация используемых портов) */
+/** Initialization of used I/O ports */
 void stpmot_init_ports(void);
 
-/** ID of the clockwise direction (направление по часовой стрелке) */
+/** ID of the clockwise direction */
 #define SM_DIR_CW   0
 
-/** ID of the counterclockwise direction (направление против часовой стрелки) */
+/** ID of the counterclockwise direction */
 #define SM_DIR_CCW  1
 
 /** Set stepper motor direction

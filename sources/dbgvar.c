@@ -22,7 +22,6 @@
 /** \file uart.c
  * \author Alexey A. Shabelnikov
  * Implementation of service for performing communication via UART.
- * (Реализация поддержки обмена данными через UART).
  */
 
 #ifdef DEBUG_VARIABLES

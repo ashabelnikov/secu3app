@@ -22,7 +22,6 @@
 /** \file jumper.h
  * \author Alexey A. Shabelnikov
  * Process jumpers which user can open/close to do some actions
- * (Обработка перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
  */
 
 #ifndef _JUMPER_H_
@@ -30,10 +29,10 @@
 
 #include <stdint.h>
 
-/** Initialization of used I/O ports (инициализация используемых портов)*/
+/** Initialization of used I/O ports */
 void jumper_init_ports(void);
 
-/**Get state of "Default EEPROM" jumper which was at the moment of start up (получение состояния перемычки "Default EEPROM" которое было на момент старта системы)
+/**Get state of "Default EEPROM" jumper which was at the moment of start up
  * \return 0 - closed, 1 - opened.
  */
 uint8_t jumper_get_defeeprom_state(void);

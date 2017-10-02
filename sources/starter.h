@@ -21,22 +21,21 @@
 
 /** \file starter.h
  * \author Alexey A. Shabelnikov
- * Working with starter
- * (Работа со стартером).
+ * Working with starter relay
  */
 
 #ifndef _STARTER_H_
 #define _STARTER_H_
 
-/** Initialization of used I/O ports (инициализация используемых портов) */
+/** Initialization of used I/O ports */
 void starter_init_ports(void);
 
-/** Control of starter (управление стартером)
+/** Control of starter relay
  * Uses d ECU data structure
  */
 void starter_control(void);
 
-/** Blocking/unblocking of starter (блокировка/разблокировка стартера)
+/** Blocking/unblocking of starter
  * \param i_state 1 - block, 0 - unblock
  */
 void starter_set_blocking_state(uint8_t i_state);

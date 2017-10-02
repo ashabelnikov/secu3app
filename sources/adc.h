@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * ADC related functions (API).
  * Functions for read values from ADC, perform conversion to phisical values etc
- * (Функции для работы с АЦП, считывание значений, преобразование в физические величины и т.д.).
  */
 
 #ifndef _ADC_H_
@@ -31,13 +30,13 @@
 
 #include <stdint.h>
 
-/**одна дискрета АЦП в вольтах (ADC discrete in Volts)*/
+/** ADC discrete in Volts */
 #define ADC_DISCRETE            0.0025
 
-/**наклон прямой датчика температуры вольт/градус */
+/**Slope of curve of the coolant temperature sensor volt/degree */
 #define TSENS_SLOPP             0.01
 
-/**напряжение на выходе датчика температуры при 0 градусов цельсия */
+/**Voltage on the output of coolant temperature sensor at 0 degrees */
 #define TSENS_ZERO_POINT        2.73
 
 //константа для выбора источника опорного напряжения и коэфф. компенсации опорного напряжения

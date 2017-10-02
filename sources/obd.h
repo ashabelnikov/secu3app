@@ -20,6 +20,7 @@
 */
 
 /** \file obd.h
+ * \author Alexey A. Shabelnikov
  * OBD support
  */
 

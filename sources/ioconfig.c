@@ -22,7 +22,6 @@
 /** \file ioconfig.c
  * \author Alexey A. Shabelnikov
  * Implementation of I/O configuration. Allows I/O functions remapping
- * (Реализация переназначения выводов).
  */
 
 #include "port/avrio.h"

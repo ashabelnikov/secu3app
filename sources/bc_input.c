@@ -38,8 +38,7 @@
 #include "ventilator.h"
 #include "wdt.h"
 
-/**Определяем блинк коды. Индекс в массиве должен соответствовать номеру бита 
- * соответствующей ошибки в ф. ce_errors.h */
+/**Declare blink codes. Indexes in the array must correspond to numbers of bits of corresponding CE errors in ce_errors.h */
 PGM_DECLARE(uint8_t blink_codes[16]) =
  {0x21, 0x13, 0x14, 0x31, 0x32, 0x22, 0x23, 0x24, 0x41, 0x25, 0x26, 0x27, 0x28, 0x51, 0x52, 0};
 

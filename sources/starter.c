@@ -40,7 +40,7 @@ void starter_set_blocking_state(uint8_t i_state)
 
 void starter_init_ports(void)
 {
- IOCFG_INIT(IOP_ST_BLOCK, 0); //starter is blocked (стартер заблокирован)
+ IOCFG_INIT(IOP_ST_BLOCK, 0); //starter is blocked
 }
 
 void starter_control(void)
@@ -52,10 +52,9 @@ void starter_control(void)
  }
 
  //control of starter's blocking (starter is blocked after reaching the specified RPM, but will not turn back!)
- //управление блокировкой стартера (стартер блокируется после достижения указанных оборотов, но обратно не включается!)
  if (d.sens.frequen > d.param.starter_off)
   starter_set_blocking_state(1), d.st_block = 1;
 
  if (d.sens.frequen < 30)
-  starter_set_blocking_state(0), d.st_block = 0; //unblock starter (снимаем блокировку стартера)
+  starter_set_blocking_state(0), d.st_block = 0; //unblock starter
 }

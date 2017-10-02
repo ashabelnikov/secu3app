@@ -22,7 +22,6 @@
 /** \file uart.h
  * \author Alexey A. Shabelnikov
  * Service for performing communication via UART.
- * (Поддержка обмена данными через UART).
  */
 
 #ifndef  _UART_H_
@@ -58,18 +57,15 @@
 
 /**Builds a packet depending of type of the current descriptor and launches it on the transfer.
  * Function does not check the transmitter is busy or not, it should be done before the call
- * (Cтроит пакет в зависимости от текущего дескриптора и запускает его на передачу. Функция не
- * проверяет занят передатчик или нет, это должно быть сделано до вызова функции).
  * Uses d ECU data structure
  * \param send_mode code of descriptor of packet to be send
  */
  void uart_send_packet(uint8_t send_mode);
 
 /**This function does not check was or wasn't frame received, checking must be done before the
- * call (Эта функция не проверяет, был или не был принят фрейм, проверка должна быть произведена
- * до вызова функции).
+ * call.
  * Uses d ECU data structure
- * \return Descriptor of processed frame (Возвращает дескриптор обработанного фрейма)
+ * \return Descriptor of processed frame
  */
  uint8_t uart_recept_packet(void);
 

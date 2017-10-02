@@ -22,7 +22,6 @@
 /** \file knklogic.c
  * \author Alexey A. Shabelnikov
  * The module implements all the regulation logic of advance angle by detonation
- * (Модуль реализующий всю логику регулирования УОЗ по детонации).
  */
 
 #include "port/avrio.h"

@@ -22,7 +22,6 @@
 /** \file params.h
  * \author Alexey A. Shabelnikov
  * Functionality for work with parameters (save/restore/check)
- * (Функциональность для работы с параметрами (сохранение/восстановление/проверка)).
  */
 
 #ifndef _PARAMS_H_
@@ -36,9 +35,6 @@
  * the execution of the program. Storing data in the EEPROM will only happen if for a given
  * time, there was not a single receive operation of parameters via UART, and saved settings
  * are different from current.
- * Запись данных в EEPROM - процесс очень медленный. Он будет проходить параллельно с выполнением программы.
- * Сохранение данных в EEPROM произойдет только если за заданное время не произошло ни одной операции приема параметров
- * из UART-a и сохраненные параметры отличаются от текущих.
  * Uses d ECU data structure
  */
 void save_param_if_need(void);
@@ -46,8 +42,6 @@ void save_param_if_need(void);
 /**Loads the parameters from the EEPROM, and verifies the integrity of the data if they spoiled
  * it takes a backup instance from the FLASH.
  * Call this function only when EEPROM is idle!
- * Загружает параметры из EEPROM, проверяет целостность данных и если они испорчены то
- * берет резервную копию из FLASH.
  * Uses d ECU data structure
  */
 void load_eeprom_params(void);

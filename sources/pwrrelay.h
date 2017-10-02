@@ -23,17 +23,15 @@
  * \author Alexey A. Shabelnikov
  * Power management using external relay, allows SECU-3 to be turned on some time
  * after ignition is off. So, for instance electric colling fan can work even ignition is off
- * (Управление питанием используя внешнее реле, позволяет SECU-3 оставаться включенным еще
- * некоторое время после выключения зажигания).
  */
 
 #ifndef _PWRRELAY_H_
 #define _PWRRELAY_H_
 
-/** Initialization of used I/O ports (инициализация используемых портов) */
+/** Initialization of used I/O ports */
 void pwrrelay_init_ports(void);
 
-/** Control of power relay (управление реле питания)
+/** Control of power relay
  * Uses d ECU data structure
  */
 void pwrrelay_control(void);

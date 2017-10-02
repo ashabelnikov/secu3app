@@ -22,7 +22,6 @@
 /** \file suspendop.h
  * \author Alexey A. Shabelnikov
  * Execution of suspended operations
- * (Выполнение отложенных операций).
  */
 
 #ifndef _SUSPOP_H_
@@ -69,21 +68,21 @@
 #define OPCODE_RESET_EEPROM       0xCF    //!< reset EEPROM, second byte must be 0xAA
 #define OPCODE_BL_CONFIRM         0xCB    //!< boot loader starting confirmation
 
-/**Set specified operation to execution queue (установка указанной рперации в очередь на выполнение)
+/**Set specified operation to execution queue
  * \param opcode code of operation to be executed
  */
 void sop_set_operation(uint8_t opcode);
 
-/**Check for specified operation is pending (проверка - ждет выполнения или выполняется операция)
+/**Check for specified operation is pending
  * \param opcode code of operation
  * \return 1 - operation is active, 0 - not in queque (or finished)
  */
 uint8_t sop_is_operation_active(uint8_t opcode);
 
-/**Module initialization (инициализация модуля) */
+/**Module initialization */
 void sop_init_operations(void);
 
-/**Process queue of suspended operations (обработка очереди отложенных операций) 
+/**Process queue of suspended operations
  * Uses d ECU data structure
  */
 void sop_execute_operations(void);

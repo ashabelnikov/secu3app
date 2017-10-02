@@ -19,6 +19,11 @@
               email: shabelnikov@secu-3.org
 */
 
+/** \file obd.c
+ * \author Alexey A. Shabelnikov
+ * OBD support implementation
+ */
+
 #ifdef OBD_SUPPORT
 
 #include "port/avrio.h"

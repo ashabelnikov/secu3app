@@ -22,7 +22,6 @@
 /** \file vstimer.h
  * \author Alexey A. Shabelnikov
  * Virtual system timers
- * (Виртуальные системные таймеры).
  */
 
 #ifndef _VSTIMER_H_

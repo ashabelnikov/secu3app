@@ -22,7 +22,6 @@
 /** \file knklogic.h
  * \author Alexey A. Shabelnikov
  * The module contains all the regulation logic of advance angle by detonation
- * (Модуль содержащий всю логику регулирования УОЗ по детонации).
  */
 
 #ifndef _KNKLOGIC_H_
@@ -45,12 +44,12 @@ typedef struct retard_state_t
  */
 uint8_t knklogic_detect(retard_state_t* p_rs);
 
-/** Initialization of state variables (инициализация переменных состояния)
+/** Initialization of state variables
  * \param p_rs poiter to state variables used by algorithm
  */
 void knklogic_init(retard_state_t* p_rs);
 
-/** Called in each work stroke (вызывается в каждом рабочем такте)
+/** Called in each work stroke
  * Uses d ECU data structure
  * \param p_rs poiter to state variables used by algorithm
  */

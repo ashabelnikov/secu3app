@@ -255,7 +255,7 @@ void init_digital_inputs(void)
  DDRC&=~(_BV(DDC6));
  DDRD&=~(_BV(DDD6)|_BV(DDD2)|_BV(DDD3));
  //BL jmp, DE jmp
- DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
+ DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs
  PORTC|= _BV(PC3)|_BV(PC2);
 #else //---SECU-3i---
 
@@ -263,7 +263,7 @@ void init_digital_inputs(void)
  DDRD&=~(_BV(DDD6)|_BV(DDD2)|_BV(DDD3));
 
  //BL jmp, DE jmp
- DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
+ DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs
  PORTC|= _BV(PC3)|_BV(PC2);
 
  //GAS_V, IGN_I, COND_I, EPAS_I without pull-up resistors

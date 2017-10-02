@@ -22,7 +22,6 @@
 /** \file vstimer.c
  * \author Alexey A. Shabelnikov
  * Implementation of virtual system timers
- * (Реализация виртуальных системных таймеров).
  */
 
 #include "port/avrio.h"

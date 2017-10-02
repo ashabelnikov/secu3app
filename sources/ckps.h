@@ -22,7 +22,6 @@
 /** \file ckps.h
  * \author Alexey A. Shabelnikov
  * Processing of crankshaft position sensor.
- * (Обработка датчика положения коленвала).
  */
 
 #ifndef _CKPS_H_
@@ -31,43 +30,35 @@
 #include <stdint.h>
 
 /**Scaling factor of crankshaft rotation angle, appears in the calculations and operations of the division
- * so it should be a multiple of degree of 2 (коэффициент масштабирования углов поворота коленвала, фигурирует
- * в вычислениях и операциях деления поэтому он должен быть кратен степени 2).
+ * so it should be a multiple of degree of 2.
  */
 #define ANGLE_MULTIPLIER   32
 
 /**Initialization of CKP module (hardware & variables)
- * (инициализирет структуру данных/состояния ДПКВ и железо на которое он мапится)
  */
 void ckps_init_state(void);
 
-/** Set edge type for CKP sensor (Установить тип фронта ДПКВ)
- * \param edge_type 0 - falling (отрицательный), 1 - rising (положительный)
+/** Set edge type for CKP sensor
+ * \param edge_type 0 - falling, 1 - rising
  */
 void ckps_set_edge_type(uint8_t edge_type);
 
 /** Set count of teeth before TDC.
- * \param cogs_btdc E.g values for 60-2 wheel: 17,18,19,20,21,22,23 
+ * \param cogs_btdc E.g values for 60-2 wheel: 17,18,19,20,21,22,23
                                for 36-1 wheel: 8,9,10,11,12,13,14
  * \details For 4-cylinder engine. If the crankshaft is in a position corresponding to top dead center (tdc) of the first cylinder's piston,
  * then according to the standards the middle of 20th tooth of sync wheel must be in the opposite to the CKP's core
  * (counting out against the direction of rotation from the place of the cutout).
- * (Для 4-х цилиндрового двигателя. Если коленчатый вал установлен в положение, соответствующее верхней мертвой точке(t.d.c.) поршня первого цилиндра, то
- * по стандарту напротив середины сердечника ДПКВ должен находиться 20-й зуб диска синхронизации (считаем против
- * направления вращения от места выреза)).
  */
 void ckps_set_cogs_btdc(uint8_t cogs_btdc);
 
 
 #ifndef DWELL_CONTROL
-/** Set duration of ignition pulse drive (устанавливает длительность импульса зажигания в зубьях)
+/** Set duration of ignition pulse drive
  * \param cogs duration of pulse, countable in the teeth of wheel
  * \details For standard igniters duration of driving pulses must be 1/3, when significant deviation to the smaller side
  * is present then igniters can became out of action. If you connect two outputs together to one igniter, you must put
  * a value of 10, if double channel mode then 40. The values given for the 60-2 wheel and 4 cylinder engine.
- * (Для стандартных коммутаторов длительность импульса запуска должна быть 1/3, при значительном отклонении в меньшую сторону
- * возможен выход коммутатора из строя.  Если соединять два выхода вместе для одного коммутатора, то необходимо ставить
- * значение 10, если двухканальный режим то 40. Значения указаны для шкива 60-2 и 4-х цилиндрового двигателя).
  */
 void ckps_set_ignition_cogs(uint8_t cogs);
 #else
@@ -82,24 +73,22 @@ void ckps_set_rising_spark(uint8_t rising_edge);
 #endif
 
 /** Set andvance angle
- * (устанавливает УОЗ для реализации в алгоритме)
  * \param angle advance angle * ANGLE_MULTIPLIER
  */
 void ckps_set_advance_angle(int16_t angle);
 
 /** Calculate instant RPM using last measured period
- * (Высчитывание мгновенной частоты вращения коленвала основываясь на последнем измеренном значении периода)
  * \return RPM (min-1)
  */
 uint16_t ckps_calculate_instant_freq(void);
 
-/** Set pahse selection window for detonation (установка окна фазовой селекции детонации)
- * \param begin begin of window (degrees relatively to t.d.c) (Начало окна в градусах относительно в.м.т)
- * \param end end of window (degrees relatively to t.d.c) (Конец окна в градусах относительно в.м.т)
+/** Set pahse selection window for detonation
+ * \param begin begin of window (degrees relatively to t.d.c)
+ * \param end end of window (degrees relatively to t.d.c)
  */
 void ckps_set_knock_window(int16_t begin, int16_t end);
 
-/** Set to use or not to use knock detection (устанавливает обслуживать или не обслуживать канал детонации)
+/** Set to use or not to use knock detection
  * \param use_knock_channel 1 - use, 0 - do not use
  */
 void ckps_use_knock_channel(uint8_t use_knock_channel);
@@ -111,7 +100,6 @@ uint8_t ckps_is_error(void);
 void ckps_reset_error(void);
 
 /**\return 1 if there was engine stroke and reset flag!
- * (эта функция возвращает 1 если был новый такт зажигания и сразу сбрасывает событие!)
  * \details Used to perform synchronization with rotation of crankshaft.
  */
 uint8_t ckps_is_stroke_event_r(void);
@@ -120,17 +108,16 @@ uint8_t ckps_is_stroke_event_r(void);
 void ckps_init_state_variables(void);
 
 /** \return returns 1 if number of current tooth has been changed
- *  (возвращает 1, если номер текущего зуба изменился)
  */
 uint8_t ckps_is_cog_changed(void);
 
-/** Set number of engine's cylinders (установка кол-ва цилиндров двигателя (четное число))
+/** Set number of engine's cylinders
  * \param i_cyl_number allowed values(допустимые значения): *1,2,*3,4,*5,6,8
  * * these values are allowed only if firmware compliled with PHASED_IGNITION option
  */
 void ckps_set_cyl_number(uint8_t i_cyl_number);
 
-/** Initialization of used I/O ports (производит инициализацию линий портов) */
+/** Initialization of used I/O ports */
 void ckps_init_ports(void);
 
 /** Enable/disable ignition

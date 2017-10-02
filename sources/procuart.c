@@ -22,7 +22,6 @@
 /** \file procuart.c
  * \author Alexey A. Shabelnikov
  * Implementation of functionality for processing of pending data which is sent/received via serial interface (UART)
- * (Реализация обработки поступающих данных для приема/передачи через последовательный интерфейс (UART)).
  */
 
 #include "port/pgmspace.h"

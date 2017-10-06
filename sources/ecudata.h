@@ -193,9 +193,6 @@ typedef struct ecudata_t
  uint16_t ecuerrors_saved_transfer;      //!< Buffering of error codes for read/write from/to EEPROM which is being sent/received (буферизирует коды ошибок дл€ чтени€/записи в EEPROM, передаваемые/принимаемые через UART)
  uint8_t  use_knock_channel_prev;        //!< Previous state of knock channel's usage flag (предыдущее состо€ние признака использовани€ канала детонации)
 
- //TODO: To reduce memory usage it is possible to use crc or some simple hash algorithms to control state of memory(changes). So this variable becomes unneeded.
- uint8_t* eeprom_parameters_cache;       //!< Pointer to an array of EEPROM parameters cache (reduces redundant write operations)
-
  uint8_t engine_mode;                    //!< Current engine mode(start, idle, work) (текущий режим двигател€ (пуск, ’’, нагрузка))
 
 #ifdef DIAGNOSTICS
@@ -233,10 +230,7 @@ typedef struct ecudata_t
 
 
 extern struct ecudata_t d;               //!< ECU data structure. Contains all related data and state information
+extern uint8_t eeprom_parameters_cache[];//!< Cache for buffering of EEPROM parameters
 
-/**Initialization of variables and data structures
- * \param d pointer to ECU data structure
- */
-void init_ecu_data(void);
 
 #endif //_ECUDATA_H_

@@ -335,7 +335,6 @@ MAIN()
  wdt_turnoff_timer();
 
  //подготовка структуры данных переменных состояния системы
- init_ecu_data();
  knklogic_init(&retard_state);
 
  //Perform I/O ports configuration/initialization (конфигурируем порты ввода/вывода)

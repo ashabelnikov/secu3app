@@ -29,10 +29,78 @@
 #include "eculogic.h"   //EM_START
 #include "bitmask.h"
 
-/**ECU data structure. Contains all related data and state information */
-struct ecudata_t d;
+//TODO: To reduce memory usage it is possible to use crc or some simple hash algorithms to control state of memory(changes). So this variable becomes unneeded.
 /* Cache for buffering parameters used during suspended EEPROM operations */
 uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
+
+/**ECU data structure. Contains all related data and state information */
+struct ecudata_t d =
+{
+ .param = {0},
+ .sens = {0},
+ .corr = {0},
+
+ .ie_valve = 0,
+ .fe_valve = 0,
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ .fc_revlim = 0,
+#endif
+ .cool_fan = 0,
+ .st_block = 0,   //starter is not blocked
+ .ce_state = 0,
+ .airflow = 0,
+ .choke_pos = 0,
+ .gasdose_pos = 0,  //GD
+
+#ifdef REALTIME_TABLES
+ .tables_ram = {0},
+ .mm_ptr8 = 0,
+ .mm_ptr16 = 0,
+ .mm_ptr12 = 0,
+#endif
+ .fn_dat = 0,
+
+ .op_comp_code = 0,
+ .op_actn_code = 0,
+ .ecuerrors_for_transfer = 0,
+ .ecuerrors_saved_transfer = 0,
+ .use_knock_channel_prev = 0,
+
+ .engine_mode = EM_START,
+
+#ifdef DIAGNOSTICS
+ .diag_inp = {0},
+ .diag_out = 0,
+#endif
+
+ .choke_testing = 0,
+ .choke_manpos_d = 0,
+ .choke_rpm_reg = 0,
+
+ .gasdose_testing = 0,  //GD
+ .gasdose_manpos_d = 0, //GD
+
+ .bt_name = {0,0,0,0,0,0,0,0,0},
+ .bt_pass = {0,0,0,0,0,0,0},
+ .sys_locked = 0     //unlocked
+
+#ifdef FUEL_INJECT
+ ,.inj_pw = 0,
+ .inj_pw_raw = 0,
+ .inj_dt = 0
+#endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ ,.acceleration = 0
+#endif
+
+#ifdef AIRCONDIT
+ ,.cond_req_rpm = 0,
+ .cond_req_fan = 0
+#endif
+
+};
+
 
 #ifdef REALTIME_TABLES
 uint8_t mm_get_byte_ram(uint16_t offset)
@@ -74,62 +142,4 @@ uint16_t mm_get_w12_pgm(uint16_t offset, uint8_t off)
 {
  uint16_t word = (PGM_GET_WORD((uint16_t _PGM*)(((uint8_t _PGM*)d.fn_dat) + offset + ((uint16_t)off+(off>>1)) )));
  return ((off & 0x0001) ? word >> 4 : word) & 0x0FFF;
-}
-
-
-/**Initialization of variables and data structures
- * \param d pointer to ECU data structure
- */
-void init_ecu_data(void)
-{
- d.op_comp_code = 0;
- d.op_actn_code = 0;
- d.sens.inst_frq = 0;
- d.corr.curr_angle = 0;
- d.corr.knock_retard = 0;
- d.ecuerrors_for_transfer = 0;
- d.eeprom_parameters_cache = &eeprom_parameters_cache[0];
- d.engine_mode = EM_START;
- d.ce_state = 0;
- d.cool_fan = 0;
- d.st_block = 0; //starter is not blocked
- d.sens.tps = d.sens.tps_raw = 0;
- d.sens.add_i1 = d.sens.add_i1_raw = 0;
- d.sens.add_i2 = d.sens.add_i2_raw = 0;
-#ifndef SECU3T //SECU3i
- d.sens.add_i3 = d.sens.add_i3_raw = 0;
-#ifdef TPIC8101
- d.sens.add_i4 = d.sens.add_i4_raw = 0;
-#endif
-#endif
- d.choke_testing = 0;
- d.choke_pos = 0;
- d.choke_manpos_d = 0;
- d.choke_rpm_reg = 0;
- d.gasdose_testing = 0;    //GD
- d.gasdose_pos = 0;        //GD
- d.gasdose_manpos_d = 0;   //GD
- d.bt_name[0] = 0;
- d.bt_pass[0] = 0;
- d.sys_locked = 0; //unlocked
-#ifdef FUEL_INJECT
- d.inj_pw = 0;
- d.inj_pw_raw = 0;
- d.inj_dt = 0;
- d.corr.afr = 0;
- d.corr.inj_timing = 0;
-#endif
-
-#if defined(FUEL_INJECT) || defined(GD_CONTROL) || defined(CARB_AFR)
- d.corr.lambda = 0;
-#endif
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
- d.fc_revlim = 0;
- d.acceleration = 0;
-#endif
-
-#ifdef AIRCONDIT
- d.cond_req_rpm = 0;
- d.cond_req_fan = 0;
-#endif
 }

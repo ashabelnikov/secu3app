@@ -88,7 +88,15 @@ typedef struct
 }camstate_t;
 
 /** Global instance of cam sensor state variables */
-camstate_t camstate;
+camstate_t camstate = {0,
+#ifdef PHASE_SENSOR
+ 0,0,0,0,0,1,
+#endif
+#ifdef SPEED_SENSOR
+ 0,0xFFFF,0xFFFF,0,0,0,
+#endif
+ 0,0
+};
 
 void cams_init_ports()
 {
@@ -109,18 +117,6 @@ void cams_init_state_variables(void)
 void cams_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
- cams_init_state_variables();
-#ifdef PHASE_SENSOR
- camstate.cam_error = 0; //no errors
- camstate.cam_enable = 1; //enabled by default
-#endif
-#ifdef SPEED_SENSOR
- camstate.spdsens_counter = 0;
- camstate.spdsens_period = 0xFFFF;
- camstate.spdsens_period_buff = 0xFFFF;
- camstate.spdsens_event = 0;
- camstate.spdsens_state = 0;
-#endif
 
  //Collect information about remapping of REF_S input.
  //Interrupt edge for VR input depends on REF_S inversion, but will be overriden by cams_vr_set_edge_type() if REF_S is not remapped.

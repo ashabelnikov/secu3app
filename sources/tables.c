@@ -527,6 +527,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_freq =                     0,                    //300Hz
 
+  .gd_maxfreqinit =              0,
+
   .reserved =                    {0},
   .crc =                         0
  },

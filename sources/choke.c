@@ -248,6 +248,7 @@ int16_t calc_startup_corr(void)
  */
 static void initial_pos(uint8_t dir)
 {
+ stpmot_freq(CHECKBIT(d.param.choke_flags, CKF_MAXFREQINIT) ? 0 : d.param.sm_freq);
  stpmot_dir(dir);                                             //set direction
  if (0==d.sens.carb && CHECKBIT(d.param.choke_flags, CKF_USETHROTTLEPOS))
   stpmot_run(d.param.sm_steps >> 2);                         //run using number of steps = 25%
@@ -510,6 +511,7 @@ void choke_control(void)
      d.choke_manpos_d = 0;
     }
 
+    stpmot_freq(d.param.sm_freq);
     sm_motion_control(pos);                                //SM command execution
    }
    d.choke_pos = calc_percent_pos(chks.smpos, d.param.sm_steps);//update position value
@@ -520,6 +522,7 @@ void choke_control(void)
    if (!stpmot_is_busy())                                     //ready?
    {
     d.choke_pos = 0;//update position value
+    stpmot_freq(d.param.sm_freq);
     stpmot_dir(SM_DIR_CCW);
     stpmot_run(d.param.sm_steps);
     chks.state = 7;
@@ -530,6 +533,7 @@ void choke_control(void)
    if (!stpmot_is_busy())                                     //ready?
    {
     d.choke_pos = 200;//update position value
+    stpmot_freq(d.param.sm_freq);
     stpmot_dir(SM_DIR_CW);
     stpmot_run(d.param.sm_steps);
     chks.state = 6;

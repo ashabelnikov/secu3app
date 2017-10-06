@@ -177,6 +177,7 @@ static uint8_t calc_percent_pos(uint16_t value, uint16_t steps)
  */
 static void initial_pos(uint8_t dir)
 {
+ gdstpmot_freq(d.param.gd_maxfreqinit ? 0 : d.param.gd_freq);
  gdstpmot_dir(dir);                                           //set direction
  gdstpmot_run(d.param.gd_steps + (d.param.gd_steps >> 4));  //run using number of steps + 6%
 }
@@ -357,6 +358,7 @@ void gasdose_control(void)
      d.gasdose_manpos_d = 0;
     }
 
+    gdstpmot_freq(d.param.gd_freq);
     sm_motion_control(pos);                                   //SM command execution
    }
    d.gasdose_pos = calc_percent_pos(gds.smpos, d.param.gd_steps);//update position value
@@ -367,6 +369,7 @@ void gasdose_control(void)
    if (!gdstpmot_is_busy())                                   //ready?
    {
     d.gasdose_pos = GD_MAGNITUDE(0);                          //update position value
+    gdstpmot_freq(d.param.gd_freq);
     gdstpmot_dir(SM_DIR_CCW);
     gdstpmot_run(d.param.gd_steps);
     gds.state = 7;
@@ -377,6 +380,7 @@ void gasdose_control(void)
    if (!gdstpmot_is_busy())                                   //ready?
    {
     d.gasdose_pos = GD_MAGNITUDE(100.0);                     //update position value
+    gdstpmot_freq(d.param.gd_freq);
     gdstpmot_dir(SM_DIR_CW);
     gdstpmot_run(d.param.gd_steps);
     gds.state = 6;

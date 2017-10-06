@@ -143,6 +143,7 @@
 #define CKF_OFFSTRTADDONGAS             0           //!< Turn off additional startup closing of choke when fuel type is gas
 #define CKF_OFFRPMREGONGAS              1           //!< Turn off RPM regulator when fuel type is gas
 #define CKF_USETHROTTLEPOS              2           //!< Use throttle limit switch in choke initialization
+#define CKF_MAXFREQINIT                 3           //!< Use maximum frequency at initialization
 
 //Idling regulator flags
 #define IRF_USE_REGULATOR               0           //!< Use regulator (keep selected idling RPM by alternating advance angle)
@@ -526,10 +527,12 @@ typedef struct params_t
 
   uint8_t gd_freq;                       //!< Frequency of GD stepper motor's pulses (stepper gas valve). 0 - 300Hz, 1 - 150Hz, 2 - 100 Hz, 3 - 75Hz
 
+  uint8_t gd_maxfreqinit;                //!< Flag, indicate using of maximum frequency for GD at initialization
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[15];
+  uint8_t  reserved[14];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

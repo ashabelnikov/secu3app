@@ -76,22 +76,11 @@ void process_uart_interface(void)
    case ANGLES_PAR:
    case STARTR_PAR:
    case ADCCOR_PAR:
-    //если были изменены параметры то сбрасываем счетчик времени
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
-    break;
-
+   case CHOKE_PAR:
 #ifdef GD_CONTROL
    case GASDOSE_PAR:
-    gdstpmot_freq(d.param.gd_freq);
-    //Reset timer because parameters changed
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
-    break;
 #endif
-
-   case CHOKE_PAR:
-#ifdef SM_CONTROL
-    stpmot_freq(d.param.sm_freq);
-#endif
+    //если были изменены параметры то сбрасываем счетчик времени
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 

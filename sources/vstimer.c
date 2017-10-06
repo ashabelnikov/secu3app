@@ -68,6 +68,8 @@ extern uint8_t sm_pulse_state;
 extern volatile uint16_t sm_steps_cnt;
 extern volatile uint8_t sm_freq;
 uint8_t sm_divider = 0;
+extern volatile uint8_t gd_freq;
+uint8_t gd_divider = 0;
 #endif
 
 #ifdef GD_CONTROL
@@ -131,22 +133,29 @@ ISR(TIMER2_OVF_vect)
 #endif
 
 #ifdef GD_CONTROL
- if (!gdsm_pulse_state && gdsm_latch) {
-  gdsm_steps_b = gdsm_steps;
-  gdsm_latch = 0;
- }
-
- if (gdsm_steps_b)
+ if (gd_divider > 0)
+  --gd_divider;
+ else
  {
-  if (!gdsm_pulse_state) {
-   IOCFG_SET(IOP_GD_STP, 1); //falling edge
-   gdsm_pulse_state = 1;
+  gd_divider = gd_freq;
+
+  if (!gdsm_pulse_state && gdsm_latch) {
+   gdsm_steps_b = gdsm_steps;
+   gdsm_latch = 0;
   }
-  else {//The step occurs on the rising edge of ~CLOCK signal
-   IOCFG_SET(IOP_GD_STP, 0); //rising edge
-   gdsm_pulse_state = 0;
-   --gdsm_steps_b;
-   ++gdsm_steps_cnt; //count processed steps
+
+  if (gdsm_steps_b)
+  {
+   if (!gdsm_pulse_state) {
+    IOCFG_SET(IOP_GD_STP, 1); //falling edge
+    gdsm_pulse_state = 1;
+   }
+   else {//The step occurs on the rising edge of ~CLOCK signal
+    IOCFG_SET(IOP_GD_STP, 0); //rising edge
+    gdsm_pulse_state = 0;
+    --gdsm_steps_b;
+    ++gdsm_steps_cnt; //count processed steps
+   }
   }
  }
 #endif

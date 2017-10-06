@@ -708,6 +708,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.gd_lambda_corr_limit_p);
    build_i16h(d.param.gd_lambda_corr_limit_m);
    build_i16h(d.param.gd_lambda_stoichval);
+   build_i8h(d.param.gd_freq);
    break;
 #endif
 
@@ -1252,6 +1253,7 @@ uint8_t uart_recept_packet(void)
    d.param.gd_lambda_corr_limit_p = recept_i16h();
    d.param.gd_lambda_corr_limit_m = recept_i16h();
    d.param.gd_lambda_stoichval = recept_i16h();
+   d.param.gd_freq = recept_i8h();
    break;
 #endif
 

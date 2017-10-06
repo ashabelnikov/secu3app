@@ -75,6 +75,7 @@
 #include "vstimer.h"
 #include "wdt.h"
 #include "smcontrol.h"
+#include "gdcontrol.h"
 
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
@@ -255,6 +256,10 @@ void init_modules(void)
 
 #ifdef SM_CONTROL
  stpmot_freq(d.param.sm_freq);
+#endif
+
+#ifdef GD_CONTROL
+ gdstpmot_freq(d.param.gd_freq);
 #endif
 
  //инициализируем модуль ДПКВ

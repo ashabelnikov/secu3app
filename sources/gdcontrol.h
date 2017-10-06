@@ -22,7 +22,6 @@
 /** \file gdcontrol.h
  * \author Alexey A. Shabelnikov
  * Stepper motor control for gas dose control
- * (Управление шаговым двигателем для дозатора газа).
  */
 
 #ifndef _GDCONTROL_H_
@@ -32,15 +31,15 @@
 
 #include <stdint.h>
 
-/** Initialization of used I/O ports (инициализация используемых портов) */
+/** Initialization of used I/O ports */
 void gdstpmot_init_ports(void);
 
-/** ID of the clockwise direction (направление по часовой стрелке) */
+/** ID of the clockwise direction */
 #ifndef SM_DIR_CW
 #define SM_DIR_CW   0
 #endif
 
-/** ID of the counterclockwise direction (направление против часовой стрелки) */
+/** ID of the counterclockwise direction */
 #ifndef SM_DIR_CCW
 #define SM_DIR_CCW  1
 #endif
@@ -65,6 +64,11 @@ uint8_t gdstpmot_is_busy(void);
  * \return number of actually processed steps
  */
 uint16_t gdstpmot_stpcnt(void);
+
+/** Set frequency of STEP pulses
+ * \param freq Frequency code: 0 - 300Hz, 1 - 150Hz, 2 - 100Hz, 3 - 75Hz
+ */
+void gdstpmot_freq(uint8_t freq);
 
 #endif
 

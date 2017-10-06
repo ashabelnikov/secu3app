@@ -22,7 +22,6 @@
 /** \file gdcontrol.c
  * \author Alexey A. Shabelnikov
  * Implementation of stepper motor control
- * (Реализация управления шаговым двигателем).
  */
 
 #ifdef GD_CONTROL
@@ -39,7 +38,7 @@ volatile uint8_t gdsm_latch = 0;
 uint16_t gdsm_steps_b = 0;
 uint8_t gdsm_pulse_state = 0;
 volatile uint16_t gdsm_steps_cnt = 0;
-
+volatile uint8_t gd_freq = 0;
 
 void gdstpmot_init_ports(void)
 {
@@ -86,6 +85,11 @@ uint16_t gdstpmot_stpcnt(void)
  count = gdsm_steps_cnt;
  _ENABLE_INTERRUPT();
  return count;
+}
+
+void gdstpmot_freq(uint8_t freq)
+{
+ gd_freq = freq;
 }
 
 #endif

@@ -325,7 +325,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   sizeof(cd_data_t)
  },
 
- /**Резервные параметры Fill reserve parameters with default values */
+ /** Fill reserve parameters with default values */
  {
   .starter_off =                 600,
   .smap_abandon =                650,
@@ -524,6 +524,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .cond_min_rpm =                1200,
 
   .inj_lambda_htgdet =           0,
+
+  .gd_freq =                     0,                    //300Hz
 
   .reserved =                    {0},
   .crc =                         0

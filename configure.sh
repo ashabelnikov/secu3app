@@ -36,7 +36,7 @@ fi
 if [ $1 = "M644" ]
 then
  CFG_BL_START="F800"
- CFG_FWD_START="D004"
+ CFG_FWD_START="D580"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm644s.xcl"
 else

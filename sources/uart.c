@@ -77,7 +77,7 @@ typedef struct
 }uartstate_t;
 
 /**State variables */
-uartstate_t uart;
+uartstate_t uart = {0,{0},{0},0,0,0,0};
 
 #ifdef UART_BINARY //binary mode
 // There are several special reserved symbols in binary mode: 0x21, 0x40, 0x0D, 0x0A
@@ -536,6 +536,11 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
    build_i24h(0);
+#endif
+#ifdef FUEL_INJECT
+   build_i16h(d.inj_fff);                // instant fuel flow (frequency: 16000 pulses per 1L of burnt fuel)
+#else
+   build_i16h(0);
 #endif
 #ifdef AIRTEMP_SENS
    if (IOCFG_CHECK(IOP_AIR_TEMP))
@@ -1035,9 +1040,8 @@ void pwrrelay_init_steppers(void);
 
 uint8_t uart_recept_packet(void)
 {
- //буфер приемника содержит дескриптор пакета и данные
- uint8_t temp;
- uint8_t descriptor;
+ //receiver's buffer contains packet descriptor and data
+ uint8_t temp, descriptor;
 
  uart.recv_index = 0;
 
@@ -1524,8 +1528,6 @@ void uart_init(uint16_t baud)
  UCSRC=/*_BV(USBS)|*/_BV(UCSZ1)|_BV(UCSZ0);                  //8 бит, 1 стоп, нет контроля четности
 #endif
 
- uart.send_size = 0;                                         //передатчик ни чем не озабочен
- uart.recv_size = 0;                                         //нет принятых данных
  uart.send_mode = SENSOR_DAT;
 }
 

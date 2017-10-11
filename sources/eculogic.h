@@ -22,7 +22,6 @@
 /** \file eculogic.h
  * \author Alexey A. Shabelnikov
  * Logic determining calculation and regulation of anvance angle
- * (Логика определяющая вычисление и регулирование угла опережения).
  */
 
 #ifndef _IGNLOGIC_H_
@@ -42,18 +41,20 @@
 /**Initialization of state variables */
 void ignlogic_init(void);
 
-/**Implements state machine of engine's modes (конечный автомат режимов двигателя)
+/**Implements state machine of engine's modes
  * Uses d ECU data structure
- * \return advance angle
  */
-int16_t ignlogic_system_state_machine(void);
+void ignlogic_system_state_machine(void);
 
 /** Must be called from main loop to notify about stroke events
  * Uses d ECU data structure
  */
 void ignlogic_stroke_event_notification(void);
 
-/***/
+/**Called from main loop when system detects changing of cog number*/
 void ignlogic_cog_changed_notification(void);
+
+/**called from main loop when system detects engine stop*/
+void ignlogic_eng_stopped_notification(void);
 
 #endif //_IGNLOGIC_H_

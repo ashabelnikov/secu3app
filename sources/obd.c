@@ -47,12 +47,11 @@ typedef struct
 }obd_state_t;
 
 /**State variables*/
-obd_state_t obd;
+obd_state_t obd = {{0},0,0};
 
 void obd_init(void)
 {
  obd.send_tmr = s_timer_gtc();
- obd.state = 0;
 }
 
 #ifdef SPEED_SENSOR

@@ -51,7 +51,7 @@
 #define  CBR_57600               0x002A //!< 57600 baud
 
 #define  UART_RECV_BUFF_SIZE     110    //!< Size of receiver's buffer
-#define  UART_SEND_BUFF_SIZE     112    //!< Size of transmitter's buffer
+#define  UART_SEND_BUFF_SIZE     116    //!< Size of transmitter's buffer
 
 // Interface of the module (интерфейс модуля)
 

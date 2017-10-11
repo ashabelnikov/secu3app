@@ -54,6 +54,8 @@
  #define INJ_OFF 0   //!< Injector is turned off
 #endif
 
+//from ckps.c
+uint16_t ckps_get_stroke_period(void);
 
 /**COMPB interrupt calibration*/
 #define INJ_COMPB_CALIB 2
@@ -68,6 +70,7 @@
 typedef struct
 {
  volatile uint16_t inj_time;     //!< Current injection time, used in interrupts
+ uint16_t inj_time_raw;          //!< Injection mode aware inj.time, but without calibration delay and dead time
  volatile uint8_t tmr2b_h;       //!< used in timer2 COMPB interrupt to perform 16-bit timing
  volatile uint8_t tmr0b_h;       //!< used in timer0 COMPB interrupt to perform 16-bit timing
  volatile uint8_t cyl_number;    //!< number of engine cylinders
@@ -108,7 +111,7 @@ typedef struct
 }inj_queue_t;
 
 /** Global instance of injector state variable structure*/
-inj_state_t inj;
+inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /** I/O information for each channel */
 inj_chanstate_t inj_chanstate[INJ_CHANNELS_MAX];
@@ -307,6 +310,8 @@ void inject_set_inj_time(uint16_t time, uint16_t dead_time)
   else if (inj.cyl_number == 3)
    time = ((uint32_t)time * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
  }
+
+ inj.inj_time_raw = time;                 //required for fuel flow calculations
 
  time+= dead_time; //apply injector's dead time
 
@@ -520,6 +525,48 @@ void inject_set_fullsequential(uint8_t mode)
   set_channels_fs(mode);
   inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
  }
+}
+
+void inject_calc_fuel_flow(void)
+{
+ //TODO: limit inj.PW if it exceed period between successive injections (case when injector(s) is always turned on)
+ //TODO: How to take into account prime pulse injection?
+ //TODO: maybe we need avaraging of inj_fff?
+
+ //stroke period measured between spark strokes (not each stroke). So, for 1 cyl. engine it is 2 revolutions, for 2 cylinder engine it is 1 revolution and so on.
+ uint32_t cycleper = ((uint32_t)ckps_get_stroke_period()) * d.param.ckps_engine_cyl;
+
+ //calculate value of Nsi variable (Nsi - number of simultaneously working injectors)
+ uint8_t Nsi = d.param.ckps_engine_cyl; //for [central] or [simultaneous] or [full sequential without cam sensor on the odd-cylinder num. engines]
+ if (inj.cfg == INJCFG_2BANK_ALTERN)
+  Nsi = Nsi >> 1; // = Ncyl / 2
+ else if (inj.cfg == INJCFG_SEMISEQUENTIAL || inj.cfg == INJCFG_SEMISEQSEPAR)
+  Nsi = 2;       //two injectors work simultaneously
+ else if (inj.cfg == INJCFG_FULLSEQUENTIAL)
+ {
+  if (inj.shrinktime == 0)
+   Nsi = 1; //normal full sequential
+  else if (inj.shrinktime == 1)
+   Nsi = 2; //even-cylinder num. engines, like for semi-sequential (full sequential without cam sensor - failure mode)
+  //p.s. we don't change default value of Nsi (set at the top) if shrinktime = 2
+ }
+
+ //Formula: frq = Ifr * Kduty * k, Kduty = (PW * Nsqr * Nsi) / Tc;
+ // frq - frequency in Hz
+ // Ifr - injector flow rate in cc/min
+ // Kduty - Koefficient of duty
+ // k - constant, which is equal to 16000/(1000*60)
+ // PW - current injection PW, excluding dead time
+ // Nsqr - number of squirts per cycle
+ // Nsi - Number of simultaneously working injectors
+ // Tc - current period of engine cycle
+
+ //calculate and save result
+ //inj_flow_rate * 64, fff_const * 65536, result must be * 256
+ if (inj.fuelcut && d.eng_running)
+  d.inj_fff = (((((((uint32_t)inj.inj_time_raw) * d.param.inj_flow_rate) / cycleper) * inj.num_squirts) * Nsi) * d.param.fff_const) >> 14;
+ else
+  d.inj_fff = 0; //no flow of fuel, because injector(s) are turned off
 }
 
 #endif

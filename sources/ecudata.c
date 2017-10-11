@@ -82,23 +82,25 @@ struct ecudata_t d =
 
  .bt_name = {0,0,0,0,0,0,0,0,0},
  .bt_pass = {0,0,0,0,0,0,0},
- .sys_locked = 0     //unlocked
+ .sys_locked = 0,      //unlocked
 
 #ifdef FUEL_INJECT
- ,.inj_pw = 0,
+ .inj_pw = 0,
  .inj_pw_raw = 0,
- .inj_dt = 0
+ .inj_dt = 0,
+ .inj_fff = 0,
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
- ,.acceleration = 0
+ .acceleration = 0,
 #endif
 
 #ifdef AIRCONDIT
- ,.cond_req_rpm = 0,
- .cond_req_fan = 0
+ .cond_req_rpm = 0,
+ .cond_req_fan = 0,
 #endif
 
+ .eng_running = 0           //fully stopped
 };
 
 

@@ -35,6 +35,7 @@
 #include "magnitude.h"
 #include "vstimer.h"
 #include "ioconfig.h"
+#include "mathemat.h"
 
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
@@ -49,22 +50,18 @@ typedef struct
  uint8_t  ae_decay_counter;      //!< AE decay counter
  uint16_t aef_decay;             //!< AE factor value at the start of decay
  uint8_t  aef_started;           //!< flag, indicates that decay will be started
+ int16_t  calc_adv_ang;          //!< calculated advance angle
+ int16_t  advance_angle_inhibitor_state; //!<
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
-static logic_state_t lgs;
+static logic_state_t lgs = {0,0,0,0,0,0,0,0,0};
 #endif
 
 void ignlogic_init(void)
 {
 #ifdef FUEL_INJECT
- lgs.aftstr_enrich_counter = 0;
  lgs.prime_delay_tmr = s_timer_gtc();
- lgs.prime_ready = 0;
- lgs.cog_changed = 0;
- lgs.ae_decay_counter = 0;
- lgs.aef_decay = 0;
- lgs.aef_started = 0;
 #endif
 }
 
@@ -142,27 +139,27 @@ int16_t manual_igntim(void)
 #ifdef FUEL_INJECT
 static void fuel_calc(void)
 {
-   uint32_t pw = inj_base_pw();
-   pw = (pw * inj_warmup_en()) >> 7;              //apply warmup enrichemnt factor
-   if (lgs.aftstr_enrich_counter)
-    pw= (pw * (128 + scale_aftstr_enrich(lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
-   pw= (pw * (512 + d.corr.lambda)) >> 9;         //apply lambda correction additive factor (signed)
-   pw= (pw * inj_iacmixtcorr_lookup()) >> 13;     //apply mixture correction vs IAC
-   pw+= calc_acc_enrich();                        //add acceleration enrichment
-   if (((int32_t)pw) < 0)
-    pw = 0;
-   d.inj_pw_raw = lim_inj_pw(&pw);
-   d.inj_dt = inj_dead_time();
-   pw+= d.inj_dt;
-   if (d.ie_valve && !d.fc_revlim)
-    d.inj_pw = lim_inj_pw(&pw);
-   else d.inj_pw = 0;
+ uint32_t pw = inj_base_pw();
+ pw = (pw * inj_warmup_en()) >> 7;              //apply warmup enrichemnt factor
+ if (lgs.aftstr_enrich_counter)
+  pw= (pw * (128 + scale_aftstr_enrich(lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
+ pw= (pw * (512 + d.corr.lambda)) >> 9;         //apply lambda correction additive factor (signed)
+ pw= (pw * inj_iacmixtcorr_lookup()) >> 13;     //apply mixture correction vs IAC
+ pw+= calc_acc_enrich();                        //add acceleration enrichment
+ if (((int32_t)pw) < 0)
+  pw = 0;
+ d.inj_pw_raw = lim_inj_pw(&pw);
+ d.inj_dt = inj_dead_time();
+ pw+= d.inj_dt;
+ if (d.ie_valve && !d.fc_revlim && d.eng_running)
+  d.inj_pw = lim_inj_pw(&pw);
+ else d.inj_pw = 0;
 }
 #endif
 
-int16_t ignlogic_system_state_machine(void)
+void ignlogic_system_state_machine(void)
 {
- int16_t angle;
+ int16_t angle = 0;
  switch(d.engine_mode)
  {
   case EM_START: //cranking mode
@@ -208,7 +205,10 @@ int16_t ignlogic_system_state_machine(void)
    d.inj_pw_raw = lim_inj_pw(&pw);
    d.inj_dt = inj_dead_time();
    pw+= d.inj_dt;
-   d.inj_pw = lim_inj_pw(&pw);
+   if (d.eng_running)
+    d.inj_pw = lim_inj_pw(&pw);
+   else
+    d.inj_pw = 0;
    d.acceleration = 0; //no acceleration
    }
 #endif
@@ -302,15 +302,46 @@ int16_t ignlogic_system_state_machine(void)
 #endif
    break;
  }
- return angle; //return calculated advance angle
+
+ //Add octane correction (constant value specified by user) and remember it in the octan_aac variable
+ angle+=d.param.angle_corr;
+ d.corr.octan_aac = d.param.angle_corr;
+ //Limit ignition timing using set limits
+ restrict_value_to(&angle, d.param.min_angle, d.param.max_angle);
+ //If zero ignition timing mode is set, then 0
+ if (d.param.zero_adv_ang)
+  angle = 0;
+
+ lgs.calc_adv_ang = angle; //save calculated advance angle
 }
 
 void ignlogic_stroke_event_notification(void)
 {
+ //Limit fast transients of ignition timing (filtering). So, it can not change more than specified value during 1 engine stroke
+ //Filtering is turned off on cranking
+ if (EM_START == d.engine_mode)
+ {
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
+  int16_t strt_map_angle = start_function();
+  ckps_set_shutter_spark(0==strt_map_angle);
+  d.corr.curr_angle = lgs.advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : lgs.calc_adv_ang);
+#else
+  d.corr.curr_angle = lgs.advance_angle_inhibitor_state = lgs.calc_adv_ang;
+#endif
+ }
+ else
+ {
+#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
+  ckps_set_shutter_spark(d.sens.frequen < 200 && 0==start_function());
+#endif
+  d.corr.curr_angle = advance_angle_inhibitor(lgs.calc_adv_ang, &lgs.advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
+ }
+
 #ifdef FUEL_INJECT
  //update afterstart enrichemnt counter
  if (lgs.aftstr_enrich_counter)
   --lgs.aftstr_enrich_counter;
+ //update AE decay counter
  if (lgs.ae_decay_counter)
   --lgs.ae_decay_counter;
 #endif
@@ -320,5 +351,15 @@ void ignlogic_cog_changed_notification(void)
 {
 #ifdef FUEL_INJECT
  lgs.cog_changed = 1;
+ d.eng_running = 1; //running
+#endif
+}
+
+void ignlogic_eng_stopped_notification(void)
+{
+ d.engine_mode = EM_START; //cranking
+ d.corr.curr_angle = lgs.calc_adv_ang;
+#ifdef FUEL_INJECT
+ d.eng_running = 0; //stopped
 #endif
 }

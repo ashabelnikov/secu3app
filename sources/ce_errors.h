@@ -88,4 +88,7 @@ void ce_init_ports(void);
 /**Turns on/off CE lamp */
 #define ce_set_state(s) IOCFG_SETF(IOP_CE, s)
 
+/**Called each stroke*/
+void ce_stroke_event_notification(void);
+
 #endif //_CE_ERRORS_H_

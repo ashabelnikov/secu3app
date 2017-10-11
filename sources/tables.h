@@ -529,10 +529,12 @@ typedef struct params_t
 
   uint8_t gd_maxfreqinit;                //!< Flag, indicate using of maximum frequency for GD at initialization
 
+  uint16_t fff_const;                    //!< Constant for calculating frequency value of fuel flow rate (value  = (kf/(1000*60))*65536, e.g kf = 16000)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[14];
+  uint8_t  reserved[12];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

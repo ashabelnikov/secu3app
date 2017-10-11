@@ -22,7 +22,6 @@
 /** \file secu3.c
  * \author Alexey A. Shabelnikov
  * Implementation of main module of the firmware.
- * (Реализация главного модуля прошивки).
  */
 
 #include "port/avrio.h"
@@ -95,7 +94,7 @@ void control_engine_units(void)
  //Starter blocking control
  starter_control();
 
- //управление электро вентилятором охлаждения двигателя, при условии что ДТОЖ присутствует в системе
+ //Control of electric cooling fan (only if CTS is present in the system)
  vent_control();
 
 #ifndef CARB_AFR //Carb. AFR control supersede power valve functionality
@@ -104,7 +103,7 @@ void control_engine_units(void)
 #endif
 
 #ifdef FUEL_PUMP
- //Controlling of electric fuel pump (Управление электробензонасосом)
+ //Controlling of electric fuel pump
  fuelpump_control();
 #endif
 
@@ -213,14 +212,14 @@ void init_ports(void)
  */
 void init_modules(void)
 {
- //предварительная инициализация параметров сигнального процессора детонации
+ //preliminary initialization of the knock signal processor
  knock_set_band_pass(d.param.knock_bpf_frequency);
  knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));
  knock_set_int_time_constant(d.param.knock_int_time_const);
  knock_set_channel(0);
  if (d.param.knock_use_knock_channel)
   if (!knock_module_initialize())
-  {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+  {//knock signal processor failure - light up CE lamp
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
  d.use_knock_channel_prev = d.param.knock_use_knock_channel;
@@ -232,11 +231,10 @@ void init_modules(void)
  //Initialization of ADC
  adc_init();
 
-
- //Take away of starter blocking (снимаем блокировку стартера)
+ //Take away of starter blocking
  starter_set_blocking_state(0);
 
- //Initialization of UART (инициализируем UART)
+ //Initialization of UART
  uart_init(d.param.uart_divisor);
 
 #ifdef BLUETOOTH_SUPP
@@ -252,12 +250,12 @@ void init_modules(void)
  fuelpump_init();
 #endif
 
- //инициализируем модуль ДПКВ
+ //Initialize CKPS unit
  ckps_init_state();
  ckps_set_cyl_number(d.param.ckps_engine_cyl);
  ckps_set_cogs_num(d.param.ckps_cogs_num, d.param.ckps_miss_num);
- ckps_set_edge_type(d.param.ckps_edge_type);     //CKPS edge (Фронт ДПКВ)
- cams_vr_set_edge_type(d.param.ref_s_edge_type); //REF_S edge (Фронт ДНО)
+ ckps_set_edge_type(d.param.ckps_edge_type);     //CKPS edge
+ cams_vr_set_edge_type(d.param.ref_s_edge_type); //REF_S edge
  ckps_set_cogs_btdc(d.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL
  ckps_set_ignition_cogs(d.param.ckps_ignit_cogs);
@@ -321,32 +319,27 @@ void init_modules(void)
 }
 
 /**Main function of firmware - entry point. Contains initialization and main loop 
- * (Главная функция в коде прошивки. С нее начинается выполнение программы, она содержит
- * код инициализации и главный цикл)
  */
 MAIN()
 {
- int16_t calc_adv_ang = 0;
- uint8_t turnout_low_priority_errors_counter = 255;
- int16_t advance_angle_inhibitor_state = 0;
- retard_state_t retard_state;
+ retard_state_t retard_state; //knock control
 
  //We need this because we might been reset by WDT
  wdt_turnoff_timer();
 
- //подготовка структуры данных переменных состояния системы
+ //initialize knock control logic
  knklogic_init(&retard_state);
 
- //Perform I/O ports configuration/initialization (конфигурируем порты ввода/вывода)
+ //Perform I/O ports configuration/initialization
  init_ports();
 
- //If firmware code is damaged then turn on CE (если код программы испорчен - зажигаем СЕ)
+ //If firmware code is damaged then turn on CE
  check_firmware_integrity();
 
- //Start watchdog timer! (запускаем сторожевой таймер)
+ //Start watchdog timer!
  wdt_start_timer();
 
- //Read all system parameters (читаем все параметры системы)
+ //Read all system parameters
  load_eeprom_params();
 
 #ifdef IMMOBILIZER
@@ -363,7 +356,6 @@ MAIN()
  init_modules();
 
  //Enable all interrupts globally before we fall in main loop
- //разрешаем глобально прерывания перед запуском основного цикла программы
  _ENABLE_INTERRUPT();
 
  //------------------------------------------------------------------------
@@ -379,28 +371,26 @@ MAIN()
   }
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
-  { //двигатель остановился (его обороты ниже критических)
+  { //engine is stopped (RPM is below crytical threshold)
 #ifdef DWELL_CONTROL
-   ckps_init_ports();           //чтобы IGBT не зависли в открытом состоянии
-   //TODO: Сделать мягкую отсечку для избавления от нежелательной искры. Как?
+   ckps_init_ports();           //prevent permanent current through coils
+   //TODO: Make soft cutoff of possible active current in coil to eliminate undesirable spark. How?
 #endif
    ckps_init_state_variables();
    cams_init_state_variables();
-   d.engine_mode = EM_START; //режим пуска
+   ignlogic_eng_stopped_notification(); //set cranking mode
 
    knklogic_init(&retard_state);
 
    if (d.param.knock_use_knock_channel)
     knock_start_settings_latching();
 
-   d.corr.curr_angle = calc_adv_ang;
    meas_update_values_buffers(1, &fw_data.exdata.cesd);  //<-- update RPM only
    s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 
-  //запускаем измерения АЦП, через равные промежутки времени. При обнаружении каждого рабочего
-  //такта этот таймер переинициализируется. Таким образом, когда частота вращения двигателя превысит
-  //определенную величину, то это условие перестанет выполняться.
+  //Start ADC measurements at regular intervals of time. This timer reinitialize each time of detecting of new stroke.
+  //Thus, when RPM exceed spcified value, this condition will cease to be carried out.
   if (s_timer_is_action(force_measure_timeout_counter))
   {
    _DISABLE_INTERRUPT();
@@ -410,35 +400,25 @@ MAIN()
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
   }
 
-  //----------непрерывное выполнение-----------------------------------------
-  //выполнение отложенных операций
+  //----------continious execution-----------------------------------------
+  //process and execute suspended operations
   sop_execute_operations();
-  //управление фиксированием и индицированием возникающих ошибок
+  //Detection and recording of errors (checking engine)
   ce_check_engine(&ce_control_time_counter);
-  //обработка приходящих/уходящих данных последовательного порта
+  //processing of ingoing and outgoing data via UART
   process_uart_interface();
-  //управление сохранением настроек
+  //detection of changes in parameters and its saving
   save_param_if_need();
-  //расчет мгновенной частоты вращения коленвала
+  //calculation of instant RPM
   d.sens.inst_frq = ckps_calculate_instant_freq();
-  //усреднение физических величин хранящихся в кольцевых буферах
+  //averaging of phisical magnitudes stored in the circular buffers
   meas_average_measured_values(&fw_data.exdata.cesd);
-  //cчитываем дискретные входы системы и переключаем тип топлива
+  //read discrete inputs of the system and switching of fuel type (sets of maps)
   meas_take_discrete_inputs();
-  //управление периферией
+  //control peripheral devices (actuators)
   control_engine_units();
-  //КА состояний системы (диспетчер режимов - сердце основного цикла)
-  calc_adv_ang = ignlogic_system_state_machine();
-  //добавляем к УОЗ октан-коррекцию
-  calc_adv_ang+=d.param.angle_corr;
-  //------------------------------
-  d.corr.octan_aac = d.param.angle_corr;
-  //------------------------------
-  //ограничиваем получившийся УОЗ установленными пределами
-  restrict_value_to(&calc_adv_ang, d.param.min_angle, d.param.max_angle);
-  //Если стоит режим нулевого УОЗ, то 0
-  if (d.param.zero_adv_ang)
-   calc_adv_ang = 0;
+  //System's state machine core (dispatcher of modes)
+  ignlogic_system_state_machine();
 
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
@@ -460,71 +440,31 @@ MAIN()
     ckps_enable_ignition(1);
   }
 
-#ifdef DIAGNOSTICS
-  diagnost_process();
-#endif
-
-#ifdef OBD_SUPPORT
-  obd_process();
-#endif
   //------------------------------------------------------------------------
 
-  //выполняем операции которые необходимо выполнять строго для каждого рабочего такта.
+  //execute some operations, which require execution one time per engine stroke
   if (ckps_is_stroke_event_r())
   {
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
-   //Ограничиваем быстрые изменения УОЗ, он не может измениться больше чем на определенную величину
-   //за один рабочий такт. В режиме пуска фильтр УОЗ отключен.
-   if (EM_START == d.engine_mode)
-   {
-#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    int16_t strt_map_angle = start_function();
-    ckps_set_shutter_spark(0==strt_map_angle);
-    d.corr.curr_angle = advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : calc_adv_ang);
-#else
-    d.corr.curr_angle = advance_angle_inhibitor_state = calc_adv_ang;
-#endif
-   }
-   else
-   {
-#if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-    ckps_set_shutter_spark(d.sens.frequen < 200 && 0==start_function());
-#endif
-    d.corr.curr_angle = advance_angle_inhibitor(calc_adv_ang, &advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
-   }
+   ignlogic_stroke_event_notification();
 
-   //----------------------------------------------
-   if (d.param.knock_use_knock_channel)
-   {
-    knklogic_detect(&retard_state);
-    knklogic_retard(&retard_state);
-   }
-   else
-    d.corr.knock_retard = 0;
-   //----------------------------------------------
-
-   //сохраняем УОЗ для реализации в ближайшем по времени такте зажигания
-   ckps_set_advance_angle(d.corr.curr_angle);
+   ce_stroke_event_notification();
 
 #ifdef FUEL_INJECT
-   //set current injection time and fuel cut state
-   inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
    inject_set_fuelcut(d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))));
 #else
    inject_set_fuelcut(d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)));
 #endif
-   //set injection timing depending on current mode of engine
-   ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, d.param.inj_anglespec);
 #endif
+
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_stroke_event_notification();
 #endif
 
-   ignlogic_stroke_event_notification();
 
 #ifdef GD_CONTROL
    gasdose_stroke_event_notification();
@@ -534,20 +474,39 @@ MAIN()
    aircond_stroke_event_notification();
 #endif
 
-   //управляем усилением аттенюатора в зависимости от оборотов
+   //----------------------------------------------
    if (d.param.knock_use_knock_channel)
-    knock_set_gain(knock_attenuator_function());
-
-   // индицирование этих ошибок прекращаем при начале вращения двигателя
-   //(при прошествии N-го количества тактов)
-   if (turnout_low_priority_errors_counter == 1)
    {
-    ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
-    ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);
+    knklogic_detect(&retard_state);
+    knklogic_retard(&retard_state);
+    //control KS signal attenuation depending on current RPM
+    knock_set_gain(knock_attenuator_function());
    }
-   if (turnout_low_priority_errors_counter > 0)
-    turnout_low_priority_errors_counter--;
+   else
+    d.corr.knock_retard = 0;
+   //----------------------------------------------
   }
+
+  //save ignition timing for applying in the nearest ignition stroke
+  ckps_set_advance_angle(d.corr.curr_angle);
+#ifdef FUEL_INJECT
+  //set current injection time and fuel cut state
+  inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
+  //set injection timing depending on current mode of engine
+  ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, d.param.inj_anglespec);
+#endif
+
+#ifdef FUEL_INJECT
+  inject_calc_fuel_flow();
+#endif
+
+#ifdef DIAGNOSTICS
+  diagnost_process();
+#endif
+
+#ifdef OBD_SUPPORT
+  obd_process();
+#endif
 
   wdt_reset_timer();
  }//main loop

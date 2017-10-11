@@ -529,6 +529,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_maxfreqinit =              0,
 
+  .fff_const =                   17476,               // = (16000 / (1000 * 60)) * 65536
+
   .reserved =                    {0},
   .crc =                         0
  },

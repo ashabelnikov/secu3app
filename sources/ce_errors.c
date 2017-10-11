@@ -50,10 +50,11 @@ typedef struct
  uint16_t bv_tdc;            //!< board voltage debouncong counter for eliminating of false errors during normal transients
  uint8_t  bv_eds;            //!< board voltage error detecting state, used for state machine
  uint8_t  bv_dev;            //!< board voltage deviation flag, if 0, then voltage is below normal, if 1, then voltage is above normal
+ uint8_t  turnout_low_priority_errors_counter;
 }ce_state_t;
 
 /**State variables */
-ce_state_t ce_state = {0,0,0,0,0,0};
+ce_state_t ce_state = {0,0,0,0,0,0,255};
 
 //operations under errors
 /*#pragma inline*/
@@ -277,4 +278,16 @@ void ce_clear_errors(void)
 void ce_init_ports(void)
 {
  IOCFG_INIT(IOP_CE, CE_STATE_ON); //CE is ON (for checking)
+}
+
+void ce_stroke_event_notification(void)
+{
+ //Stop to indicate these errors after starting of engine (after a certain number of strokes)
+ if (ce_state.turnout_low_priority_errors_counter == 1)
+ {
+  ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
+  ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);
+ }
+ if (ce_state.turnout_low_priority_errors_counter > 0)
+  ce_state.turnout_low_priority_errors_counter--;
 }

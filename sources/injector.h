@@ -80,6 +80,10 @@ void inject_set_config(uint8_t cfg);
  */
 void inject_set_fullsequential(uint8_t mode);
 
+/** Calculates fuel flow and stores it into d.inj_fff
+ */
+void inject_calc_fuel_flow(void);
+
 #endif //FUEL_INJECT
 
 #endif //_INJECTOR_H_

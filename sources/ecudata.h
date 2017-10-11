@@ -135,8 +135,8 @@ typedef struct sensors_t
 
 typedef struct correct_t
 {
- int16_t curr_angle;                     //!< Current advance angle (текущий угол опережения)
- int16_t knock_retard;                   //!< Correction of advance angle from knock detector (поправка УОЗ от регулятора по детонации)
+ int16_t curr_angle;                     //!< Current advance angle
+ int16_t knock_retard;                   //!< Correction of advance angle from knock detector
  int16_t idlreg_aac;                     //!< Idle regulator advance angle correction
  int16_t octan_aac;                      //!< Octane advance angle correction
  int16_t strt_aalt;                      //!< Advance angle from start map
@@ -215,6 +215,7 @@ typedef struct ecudata_t
  uint16_t inj_pw;                        //!< current value of injector pulse width
  uint16_t inj_pw_raw;                    //!< current value of injector pulse width without dead time
  uint16_t inj_dt;                        //!< current value of injector's dead time
+ uint16_t inj_fff;                       //!< Instant fuel flow as frequency (Hz), 16000 pulses per 1L of burnt fuel (value * 256)
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
@@ -226,6 +227,7 @@ typedef struct ecudata_t
  uint8_t  cond_req_fan;                  //!< Flag, indicates request from air conditioner to turn on cooling fan
 #endif
 
+ uint8_t  eng_running;                   //!< flag, indicates that engine is operating now (running)
 }ecudata_t;
 
 

@@ -178,4 +178,9 @@ void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode);
 void ckps_use_cam_ref_s(uint8_t i_camref);
 #endif
 
+#ifdef FUEL_INJECT
+/** Get current period of 1 stroke*/
+uint16_t ckps_get_stroke_period(void);
+#endif
+
 #endif //_CKPS_H_

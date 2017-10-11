@@ -257,6 +257,15 @@ uint16_t ckps_calculate_instant_freq(void)
   return hall.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
+uint16_t ckps_get_stroke_period(void)
+{
+ uint16_t period;
+ _DISABLE_INTERRUPT();
+ period = hall.stroke_period;        //stroke period
+ _ENABLE_INTERRUPT();
+ return period;
+}
+
 void ckps_set_edge_type(uint8_t edge_type)
 {
  //Set edge of CKPS input only if it is not remapped

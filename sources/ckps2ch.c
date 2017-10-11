@@ -343,6 +343,15 @@ uint16_t ckps_calculate_instant_freq(void)
   return ckps.frq_calc_dividend / ((((int32_t)ovfcnt) * 65536) + period);
 }
 
+uint16_t ckps_get_stroke_period(void)
+{
+ uint16_t period;
+ _DISABLE_INTERRUPT();
+ period = ckps.stroke_period;        //stroke period
+ _ENABLE_INTERRUPT();
+ return period;
+}
+
 void ckps_set_edge_type(uint8_t edge_type)
 {
  _BEGIN_ATOMIC_BLOCK();

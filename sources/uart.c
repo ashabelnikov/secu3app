@@ -754,6 +754,7 @@ void uart_send_packet(uint8_t send_mode)
   build_i16h(d.param.inj_timing);
   build_i16h(d.param.inj_timing_crk);
   build_i8h(d.param.inj_anglespec);
+  build_i16h(d.param.fff_const);
   break;
 #endif
 
@@ -1310,6 +1311,7 @@ uint8_t uart_recept_packet(void)
   d.param.inj_timing = recept_i16h();
   d.param.inj_timing_crk = recept_i16h();
   d.param.inj_anglespec = recept_i8h();
+  d.param.fff_const = recept_i16h();
   break;
 #endif
 

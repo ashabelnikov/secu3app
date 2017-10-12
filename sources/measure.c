@@ -329,7 +329,7 @@ void meas_take_discrete_inputs(void)
 
  //switch set of maps (or fuel type) depending on the state of GAS_V input (gas valve) and additional input (MAPSEL0)
 #ifndef REALTIME_TABLES
- if (!IOCFG_CHECK(IOP_MAPSEL0))
+ if (!IOCFG_CHECK(IOP_MAPSEL0) && d.param.mapsel_uni == 0xFF)
  { //without additioanl selection input
   if (d.sens.gas)
    d.fn_dat = &fw_data.tables[d.param.fn_gas];     //on gas
@@ -339,37 +339,50 @@ void meas_take_discrete_inputs(void)
  else
  { //use! additional selection input
   uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
-  if (d.sens.gas) //на газе
+  if (d.sens.gas) //on gas
+  {
+#ifdef UNI_OUTPUT
+   if ((d.mapsel_uni1 & 0xF0) != 0xF0)
+    mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
+#endif
    d.fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d.param.fn_gas];
-  else             //на бензине
+  }
+  else             //on petrol
+  {
+#ifdef UNI_OUTPUT
+   if ((d.mapsel_uni0 & 0x0F) != 0x0F)
+    mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
+#endif
    d.fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d.param.fn_gasoline];
+  }
  }
 #else //use tables from RAM
 
-// uint8_t power_mode_sw = 0; //switch tables for different load modes
-// if (!power_mode_sw)
-// {
-  if (!IOCFG_CHECK(IOP_MAPSEL0))
-  { //without additioanl selection input
+  if (!IOCFG_CHECK(IOP_MAPSEL0) && d.param.mapsel_uni == 0xFF)
+  { //without additioanl selection input or univ.outputs conditions
    select_table_set(d.sens.gas ? d.param.fn_gas : d.param.fn_gasoline);   //gas/petrol
   }
   else
   { //use! additional selection input or power mode
    uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0);
    if (d.sens.gas)
+   {
+#ifdef UNI_OUTPUT
+    if ((d.mapsel_uni1 & 0xF0) != 0xF0)
+     mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
+#endif
     select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
+   }
    else
+   {
+#ifdef UNI_OUTPUT
+    if ((d.mapsel_uni0 & 0x0F) != 0x0F)
+     mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
+#endif
     select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
+   }
   }
-// }
-// else
-// { //use power mode
-//  uint8_t mapsel0 = (d.sens.tps > TPS_MAGNITUDE(60.0));        //use second set of maps for current fuel if TPS > 60%
-//  if (d.sens.gas)
-//   select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
-//  else
-//   select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
-// }
+
 #endif
 
 #ifndef SECU3T //SECU-3i

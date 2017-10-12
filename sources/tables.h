@@ -531,10 +531,12 @@ typedef struct params_t
 
   uint16_t fff_const;                    //!< Constant for calculating frequency value of fuel flow rate (value  = (kf/(1000*60))*65536, e.g kf = 16000)
 
+  uint8_t mapsel_uni;                    //!< Selection of universal outputs used as conditions for selection set map sets (7-4 bits: for gas, 3-0 bits: for petrol). Allowed values: 0,1,2,0xFF, 0xFF means disabled
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[12];
+  uint8_t  reserved[11];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

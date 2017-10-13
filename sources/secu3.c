@@ -208,6 +208,14 @@ void init_ports(void)
 #endif
 }
 
+/** Checks for conditions activating engine blowing mode
+ * \return 1 - engine blowing should be active, 0 - not active
+ */
+static uint8_t engine_blowing_cond(void)
+{
+ return (d.sens.tps > TPS_MAGNITUDE(70.0)) && (d.engine_mode == EM_START);
+}
+
 /**Initialization of system modules
  */
 void init_modules(void)
@@ -283,7 +291,6 @@ void init_modules(void)
  inject_init_state();
  inject_set_cyl_number(d.param.ckps_engine_cyl);
  inject_set_num_squirts(d.param.inj_config & 0xF);
- inject_set_fuelcut(!d.sys_locked);
  inject_set_config(d.param.inj_config >> 4);
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
  cams_enable_cam(
@@ -316,6 +323,11 @@ void init_modules(void)
 
  //Initialize measurement's unit and perform several measure cycles for setting of ring buffers to correct values
  meas_init();
+
+#ifdef FUEL_INJECT
+ //must be called after meas_init()
+ inject_set_fuelcut(!d.sys_locked && !engine_blowing_cond());
+#endif
 }
 
 /**Main function of firmware - entry point. Contains initialization and main loop 
@@ -455,9 +467,9 @@ MAIN()
 #ifdef FUEL_INJECT
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
-   inject_set_fuelcut(d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))));
+   inject_set_fuelcut(!engine_blowing_cond() && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))));
 #else
-   inject_set_fuelcut(d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)));
+   inject_set_fuelcut(!engine_blowing_cond() && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)));
 #endif
 #endif
 

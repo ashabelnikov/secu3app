@@ -40,9 +40,9 @@
 /**Reserved value used to indicate that value is not used in corresponding mode*/
 #define AAV_NOTUSED 0x7FFF
 
-#ifdef FUEL_INJECT
 typedef struct
 {
+#ifdef FUEL_INJECT
  uint16_t aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment implementation
  uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
@@ -50,13 +50,18 @@ typedef struct
  uint8_t  ae_decay_counter;      //!< AE decay counter
  uint16_t aef_decay;             //!< AE factor value at the start of decay
  uint8_t  aef_started;           //!< flag, indicates that decay will be started
+#endif
  int16_t  calc_adv_ang;          //!< calculated advance angle
  int16_t  advance_angle_inhibitor_state; //!<
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
-static logic_state_t lgs = {0,0,0,0,0,0,0,0,0};
+static logic_state_t lgs = {
+#ifdef FUEL_INJECT
+ 0,0,0,0,0,0,0,
 #endif
+ 0,0
+};
 
 void ignlogic_init(void)
 {

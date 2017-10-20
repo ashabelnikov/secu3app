@@ -312,7 +312,6 @@ static void select_table_set(uint8_t set_index)
 }
 #endif
 
-
 void meas_take_discrete_inputs(void)
 {
  //--do inversion of throttle limit switch if necessary
@@ -329,60 +328,41 @@ void meas_take_discrete_inputs(void)
 
  //switch set of maps (or fuel type) depending on the state of GAS_V input (gas valve) and additional input (MAPSEL0)
 #ifndef REALTIME_TABLES
-// if (!IOCFG_CHECK(IOP_MAPSEL0) && d.param.mapsel_uni == 0xFF)
-// { //without additioanl selection input
-//  if (d.sens.gas)
-//   d.fn_dat = &fw_data.tables[d.param.fn_gas];     //on gas
-//  else
-//   d.fn_dat = &fw_data.tables[d.param.fn_gasoline];//on petrol
-// }
-// else
-// { //use! additional selection input
-  uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0); //note: if not mapped to real I/O, then stub() will always return 0 (we rely on it)
-  if (d.sens.gas) //on gas
-  {
+ uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0); //note: if not mapped to real I/O, then stub() will always return 0 (we rely on it)
+ if (d.sens.gas) //on gas
+ {
 #ifdef UNI_OUTPUT
-   if ((d.mapsel_uni1 & 0xF0) != 0xF0)
-    mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
+  if ((d.mapsel_uni1 & 0xF0) != 0xF0)
+   mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
 #endif
-   d.fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d.param.fn_gas];
-  }
-  else             //on petrol
-  {
+  d.fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d.param.fn_gas];
+ }
+ else             //on petrol
+ {
 #ifdef UNI_OUTPUT
-   if ((d.mapsel_uni0 & 0x0F) != 0x0F)
-    mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
+  if ((d.mapsel_uni0 & 0x0F) != 0x0F)
+   mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
 #endif
-   d.fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d.param.fn_gasoline];
-  }
-// }
+  d.fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d.param.fn_gasoline];
+ }
 #else //use tables from RAM
-
-//  if (!IOCFG_CHECK(IOP_MAPSEL0) && d.param.mapsel_uni == 0xFF)
-//  { //without additioanl selection input or univ.outputs conditions
-//   select_table_set(d.sens.gas ? d.param.fn_gas : d.param.fn_gasoline);   //gas/petrol
-//  }
-//  else
-//  { //use! additional selection input or power mode
-   uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0); //note: if not mapped to real I/O, then stub() will always return 0  (we rely on it)
-   if (d.sens.gas)
-   {
+ uint8_t mapsel0 = IOCFG_GET(IOP_MAPSEL0); //note: if not mapped to real I/O, then stub() will always return 0  (we rely on it)
+ if (d.sens.gas)
+ {
 #ifdef UNI_OUTPUT
-    if ((d.mapsel_uni1 & 0xF0) != 0xF0)
-     mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
+  if ((d.param.mapsel_uni & 0xF0) != 0xF0)
+   mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
 #endif
-    select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
-   }
-   else
-   {
+  select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
+ }
+ else
+ {
 #ifdef UNI_OUTPUT
-    if ((d.mapsel_uni0 & 0x0F) != 0x0F)
-     mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
+  if ((d.param.mapsel_uni & 0x0F) != 0x0F)
+   mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
 #endif
-    select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
-   }
- // }
-
+  select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
+ }
 #endif
 
 #ifndef SECU3T //SECU-3i

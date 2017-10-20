@@ -34,7 +34,7 @@ rem Check validity of command line option
 IF %1 == M644 (
 set CFG_MCU=m644
 set CFG_BL_START=F800
-set CFG_FWD_START=D004
+set CFG_FWD_START=D580
 set CFG_EE_SIZE=2048
 set CFG_LNKXCL=lnkm644s.xcl
 ) else (

@@ -332,7 +332,7 @@ void meas_take_discrete_inputs(void)
  if (d.sens.gas) //on gas
  {
 #ifdef UNI_OUTPUT
-  if ((d.mapsel_uni1 & 0xF0) != 0xF0)
+  if ((d.param.mapsel_uni & 0xF0) != 0xF0)
    mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
 #endif
   d.fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d.param.fn_gas];
@@ -340,7 +340,7 @@ void meas_take_discrete_inputs(void)
  else             //on petrol
  {
 #ifdef UNI_OUTPUT
-  if ((d.mapsel_uni0 & 0x0F) != 0x0F)
+  if ((d.param.mapsel_uni & 0x0F) != 0x0F)
    mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
 #endif
   d.fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d.param.fn_gasoline];

@@ -130,6 +130,9 @@
 #define _BC(v) ROUND((v) * 4096.0)
 #define _BCX(v) ROUND((v) * 64)
 
+//Manual ign.timing correction
+#define _PA4LV(v) ROUND((v) * 2.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -659,6 +662,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {//
     _BC(1.0000),_BC(1.0000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.0000),_BC(1.000),_BC(1.000),_BC(1.000),
     _BCX(70.0),_BCX(110.0) //
+   },
+
+   /** Fill ignition timing vs voltage. Linear function with small dead band near to 2.5V */
+   {_PA4LV(-10.5),_PA4LV(-09.0),_PA4LV(-07.5),_PA4LV(-6.0),_PA4LV(-04.5),_PA4LV(-03.0),_PA4LV(-01.5),_PA4LV(00.0),
+    _PA4LV( 00.0),_PA4LV( 01.5),_PA4LV( 03.0),_PA4LV( 04.5),_PA4LV( 06.0),_PA4LV( 07.5),_PA4LV( 09.0),_PA4LV(10.5)
    },
 
   /**reserved bytes*/

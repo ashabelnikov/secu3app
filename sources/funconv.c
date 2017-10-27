@@ -1083,4 +1083,29 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter)
  return ((uint16_t)inj_aftstr_en() * (aftstr_strokes - counter)) / aftstr_strokes;
 }
 
+
+int16_t barocorr_lookup(void)
+{
+ int16_t i, i1, press = d.sens.baro_press;
+
+ //Pressure value at the start of axis
+ uint16_t p_start = PGM_GET_WORD(&fw_data.exdata.barocorr[BAROCORR_SIZE]);
+ //Pressure value at the end of axis
+ uint16_t p_end = PGM_GET_WORD(&fw_data.exdata.barocorr[BAROCORR_SIZE+1]);
+
+ uint16_t p_step = (p_end - p_start) / (BAROCORR_SIZE - 1);
+
+ if (press < p_start)
+  press = p_start;
+
+ i = (press - p_start) / p_step;
+
+ if (i >= BAROCORR_SIZE-1) i = i1 = BAROCORR_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(press, (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i1]), //<--values in table are signed
+        (i * p_step) + p_start, p_step, 4)) >> 2;
+}
+
+
 #endif

@@ -126,6 +126,10 @@
 #define _PACK16(v01,v02,v03,v04,v05,v06,v07,v08,v09,v10,v11,v12,v13,v14,v15,v16) \
  _PACK2(v01,v02),_PACK2(v03,v04),_PACK2(v05,v06),_PACK2(v07,v08),_PACK2(v09,v10),_PACK2(v11,v12),_PACK2(v13,v14),_PACK2(v15,v16)
 
+//Barometric correction
+#define _BC(v) ROUND((v) * 4096.0)
+#define _BCX(v) ROUND((v) * 64)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -291,7 +295,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
@@ -533,6 +537,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .mapsel_uni =                  0xFF,                //usage of univ. output conditions for selection of map sets disabled
 
+  .barocorr_type =               0,                   //no barometric correction
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -648,6 +654,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .add_i4_v_max = VOLTAGE_MAGNITUDE(5.10),
    .add_i4_v_em = VOLTAGE_MAGNITUDE(2.50),
   },
+
+   /**Fill barometric correction lookup table*/
+   {//
+    _BC(1.0000),_BC(1.0000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.0000),_BC(1.000),_BC(1.000),_BC(1.000),
+    _BCX(70.0),_BCX(110.0) //
+   },
 
   /**reserved bytes*/
   {0}

@@ -281,4 +281,10 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter);
 
 #endif
 
+/** Calculates barometric correction factor
+ * Uses d ECU data structure
+ * \return factor's value * 4096
+ */
+int16_t barocorr_lookup(void);
+
 #endif //_FUNCONV_H_

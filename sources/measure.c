@@ -268,6 +268,13 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  else
   d.sens.air_temp = 0; //input is not selected
 #endif
+
+#ifndef SECU3T //SECU-3i
+ if (IOCFG_CHECK(IOP_MAP2))
+  d.sens.map2 = map_adc_to_kpa(d.sens.add_i4, d.param.map_curve_offset, d.param.map_curve_gradient); //ADD_I4 input selected as MAP2 sensor
+ else
+  d.sens.map2 = 0; //input is not selected
+#endif
 }
 
 //Call this function for making preliminary measurements before starting of engine. Call it only after

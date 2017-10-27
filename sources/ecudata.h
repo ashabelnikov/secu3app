@@ -66,24 +66,23 @@ typedef struct diagnost_inp_t
 #endif
 
 /**Describes all system's inputs - theirs derivative and integral magnitudes
- * описывает все входы системы - их производные и интегральные величины
  */
 typedef struct sensors_t
 {
- uint16_t map;                           //!< Intake Manifold Pressure (давление во впускном коллекторе (усредненное))
- uint16_t voltage;                       //!< Board voltage (напряжение бортовой сети (усредненное))
+ uint16_t map;                           //!< Intake Manifold Pressure (averaged)
+ uint16_t voltage;                       //!< Board voltage (averaged)
 #ifdef SEND_INST_VAL
  uint16_t inst_voltage;                  //!< Instant valtage - not averaged
  uint16_t inst_map;                      //!< Intake Manifold Pressure - not averaged
  uint16_t inst_add_i1;                   //!< ADD_I1 input voltage - not averaged
  uint8_t  inst_tps;                      //!< TPS - not averaged
 #endif
- int16_t  temperat;                      //!< Coolant temperature (температура охлаждающей жидкости (усредненная))
- uint16_t frequen;                       //!< Averaged RPM (частота вращения коленвала (усредненная))
- uint16_t inst_frq;                      //!< Instant RPM - not averaged  (мгновенная частота вращения)
- uint8_t  carb;                          //!< State of carburetor's limit switch (состояние концевика карбюратора)
- uint8_t  gas;                           //!< State of gas valve (состояние газового клапана)
- uint16_t knock_k;                       //!< Knock signal level (уровень сигнала детонации)
+ int16_t  temperat;                      //!< Coolant temperature (averaged)
+ uint16_t frequen;                       //!< Averaged RPM
+ uint16_t inst_frq;                      //!< Instant RPM - not averaged
+ uint8_t  carb;                          //!< State of carburetor's limit switch (throttle limit switch)
+ uint8_t  gas;                           //!< State of gas valve
+ uint16_t knock_k;                       //!< Knock signal level
  uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage
@@ -113,7 +112,7 @@ typedef struct sensors_t
  uint8_t generator_ok;                   //!< Flag.1 - dynamo generator is OK, 0 - failure
 #endif
 
- //сырые значения датчиков (дискреты АЦП с компенсированными погрешностями)
+ //raw values of sensors (ADC discretes with compensated errors)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor
  int16_t  voltage_raw;                   //!< raw ADC value from voltage
  int16_t  temperat_raw;                  //!< raw ADC value from coolant temperature sensor
@@ -131,6 +130,12 @@ typedef struct sensors_t
 #endif
 #endif
  int16_t  knock_raw;                     //!< raw value of signal from KS chip
+
+#ifndef SECU3T //SECU-3i
+ uint16_t map2;                          //!< Secondary MAP sensor
+#endif
+
+ uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
 }sensors_t;
 
 typedef struct correct_t
@@ -163,19 +168,19 @@ typedef struct correct_t
  */
 typedef struct ecudata_t
 {
- struct params_t  param;                 //!< --parameters (параметры)
- struct sensors_t sens;                  //!< --sensors (сенсоры)
+ struct params_t  param;                 //!< --parameters
+ struct sensors_t sens;                  //!< --sensors
  struct correct_t corr;                  //!< --calculated corrections and lookup tables' values
 
- uint8_t  ie_valve;                      //!< State of Idle cut off valve (состояние клапана ЭПХХ)
- uint8_t  fe_valve;                      //!< State of Power valve (состояние клапана ЭМР)
+ uint8_t  ie_valve;                      //!< State of Idle cut off valve
+ uint8_t  fe_valve;                      //!< State of Power valve
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  uint8_t  fc_revlim;                     //!< Flag indicates fuel cut from rev. limitter
 #endif
- uint8_t  cool_fan;                      //!< State of the cooling fan (состояние электровентилятора)
- uint8_t  st_block;                      //!< State of the starter blocking output (состояние выхода блокировки стартера)
- uint8_t  ce_state;                      //!< State of CE lamp (состояние лампы "CE")
- uint8_t  airflow;                       //!< Air flow (расход воздуха)
+ uint8_t  cool_fan;                      //!< State of the cooling fan
+ uint8_t  st_block;                      //!< State of the starter blocking output (starter relay)
+ uint8_t  ce_state;                      //!< State of CE lamp
+ uint8_t  airflow;                       //!< Air flow (number of curve on the load axis in 3D tables)
  uint8_t  choke_pos;                     //!< Choke position in % * 2
  uint8_t  gasdose_pos;       /*GD*/      //!< Gas dosator position in % * 2
 
@@ -185,15 +190,15 @@ typedef struct ecudata_t
  mm_func16_ptr_t mm_ptr16;               //!< callback, return 16 bit result, unsigned
  mm_func12_ptr_t mm_ptr12;               //!< callback, return 12 bit result, unsigned
 #endif
- f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables (указатель на набор характеристик)
+ f_data_t _PGM *fn_dat;                  //!< Pointer to the set of tables
 
- uint16_t op_comp_code;                  //!< Contains code of operation for packet being sent - OP_COMP_NC (содержит код который посылается через UART (пакет OP_COMP_NC))
- uint16_t op_actn_code;                  //!< Contains code of operation for packet being received - OP_COMP_NC (содержит код который принимается через UART (пакет OP_COMP_NC))
- uint16_t ecuerrors_for_transfer;        //!< Buffering of error codes being sent via UART in real time (буферизирует коды ошибок передаваемые через UART в реальном времени)
- uint16_t ecuerrors_saved_transfer;      //!< Buffering of error codes for read/write from/to EEPROM which is being sent/received (буферизирует коды ошибок для чтения/записи в EEPROM, передаваемые/принимаемые через UART)
- uint8_t  use_knock_channel_prev;        //!< Previous state of knock channel's usage flag (предыдущее состояние признака использования канала детонации)
+ uint16_t op_comp_code;                  //!< Contains code of operation for packet being sent - OP_COMP_NC packet
+ uint16_t op_actn_code;                  //!< Contains code of operation for packet being received - OP_COMP_NC packet
+ uint16_t ecuerrors_for_transfer;        //!< Buffering of error codes being sent via UART in real time
+ uint16_t ecuerrors_saved_transfer;      //!< Buffering of error codes for read/write from/to EEPROM which is being sent/received
+ uint8_t  use_knock_channel_prev;        //!< Previous state of knock channel's usage flag
 
- uint8_t engine_mode;                    //!< Current engine mode(start, idle, work) (текущий режим двигателя (пуск, ХХ, нагрузка))
+ uint8_t engine_mode;                    //!< Current engine mode(start, idle, work)
 
 #ifdef DIAGNOSTICS
  diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs

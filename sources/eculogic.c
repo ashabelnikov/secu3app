@@ -153,6 +153,8 @@ static void fuel_calc(void)
  pw+= calc_acc_enrich();                        //add acceleration enrichment
  if (((int32_t)pw) < 0)
   pw = 0;
+ if (d.param.barocorr_type)
+  pw = (pw * barocorr_lookup()) >> 12;           //apply barometric correction
  d.inj_pw_raw = lim_inj_pw(&pw);
  d.inj_dt = inj_dead_time();
  pw+= d.inj_dt;
@@ -162,9 +164,28 @@ static void fuel_calc(void)
 }
 #endif
 
+/** Measures barometric pressure and stores result into d.baro_press variable
+ */
+void sample_baro_pressure(void)
+{
+ if (d.param.barocorr_type < 3)
+  d.sens.baro_press = d.sens.map;
+#ifndef SECU3T
+ else //additional MAP (SECU-3i only)
+  d.sens.baro_press = d.sens.map2;
+#endif
+
+ restrict_value_to((int16_t*)&d.sens.baro_press, PRESSURE_MAGNITUDE(70.0), PRESSURE_MAGNITUDE(120.0));
+}
+
 void ignlogic_system_state_machine(void)
 {
  int16_t angle = 0;
+
+ //Sample atmospheric pressure each loop if dynamic barocorrection selected (either from MAP1 or MAP2)
+ if (d.param.barocorr_type > 1)
+  sample_baro_pressure();
+
  switch(d.engine_mode)
  {
   case EM_START: //cranking mode
@@ -207,6 +228,8 @@ void ignlogic_system_state_machine(void)
 #ifdef FUEL_INJECT
    { //PW = CRANKING + DEADTIME
    uint32_t pw = inj_cranking_pw();
+   if (d.param.barocorr_type)
+    pw = (pw * barocorr_lookup()) >> 12;             //apply barometric correction
    d.inj_pw_raw = lim_inj_pw(&pw);
    d.inj_dt = inj_dead_time();
    pw+= d.inj_dt;
@@ -367,4 +390,7 @@ void ignlogic_eng_stopped_notification(void)
 #ifdef FUEL_INJECT
  d.eng_running = 0; //stopped
 #endif
+
+ //Sample atmospheric pressure which will be used for barometric correction.
+ sample_baro_pressure();
 }

@@ -383,7 +383,7 @@ MAIN()
   }
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
-  { //engine is stopped (RPM is below crytical threshold)
+  { //engine is stopped (RPM is below critical threshold)
 #ifdef DWELL_CONTROL
    ckps_init_ports();           //prevent permanent current through coils
    //TODO: Make soft cutoff of possible active current in coil to eliminate undesirable spark. How?

@@ -93,6 +93,7 @@
 #define INJ_IAC_CORR_W_SIZE             16          //!< IAC correction weight lookup table size
 #define INJ_IAC_CORR_SIZE               8           //!< IAC correction lookup table size
 #define INJ_IATCLT_CORR_SIZE            8           //!< IAT/CLT correction lookup table size
+#define BAROCORR_SIZE                   9           //!< Barometric correction map size
 
 #define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
 
@@ -288,10 +289,13 @@ typedef struct fw_ex_data_t
   /**CE settings data*/
   ce_sett_t cesd;
 
+  /**Barometric correction map (value * 4096), last two values are pressures (kPa*64) corresponding to the beginning and to the end of axis*/
+  uint16_t barocorr[BAROCORR_SIZE+2];
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[334];
+  uint8_t reserved[312];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -533,10 +537,12 @@ typedef struct params_t
 
   uint8_t mapsel_uni;                    //!< Selection of universal outputs used as conditions for selection set map sets (7-4 bits: for gas, 3-0 bits: for petrol). Allowed values: 0,1,2,0xFF, 0xFF means disabled
 
+  uint8_t barocorr_type;                 //!< Values: 0 - not barocorrection, 1 - static corr. using primary MAP, 2 - dynamic corr. using primary MAP, 3 - dynamic corr. using additional MAP (SECU-3i only)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[11];
+  uint8_t  reserved[10];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

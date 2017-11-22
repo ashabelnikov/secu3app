@@ -118,6 +118,7 @@
 #define BTF_SET_BBR                     1           //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
 #define BTF_USE_IMM                     2           //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 #define BTF_USE_RESPAR                  3           //!< Use reserve parameters instead of parameters stored in the EEPROM
+#define BTF_CHK_FWCRC                   4           //!< Check firmware CRC (time consuming operation)
 
 //Injection configuration constants
 #define INJCFG_THROTTLEBODY             0           //!< Throttle-body or central injection

@@ -63,44 +63,6 @@ typedef struct
 /**Instance of state variables */
 static gasdose_st_t gds = {0,0,0,0,0,0,0};
 
-
-/**TPS % between two interpolation points, additionally multiplied by 16 */
-#define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(GASDOSE_POS_TPS_SIZE-1))
-
-/** Calculation of gas dosator position, based on (TPS,RPM)
- * Uses d ECU data structure
- * \return Gas dosator position in % (value * 2)
- */
-static int16_t gdp_function(void)
-{
- int16_t rpm = d.sens.inst_frq, tps = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
- int8_t t = (tps / TPS_AXIS_STEP), f, tp1, fp1;
-
- if (t >= (GASDOSE_POS_TPS_SIZE - 1))
-  tp1 = t = GASDOSE_POS_TPS_SIZE - 1;
- else
-  tp1 = t + 1;
-
- //find interpolation points, then restrict RPM if it fall outside set range
- for(f = GASDOSE_POS_RPM_SIZE-2; f >= 0; f--)
-  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
-
- //Gas dose map works from rpm_grid_points[0] and upper
- if (f < 0)  {f = 0; rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
- if (rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[GASDOSE_POS_RPM_SIZE-1])) rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[GASDOSE_POS_RPM_SIZE-1]);
- fp1 = f + 1;
-
- return bilinear_interpolation(rpm, tps,  //note that tps is additionally multiplied by 16
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[t][f]),
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[tp1][f]),
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[tp1][fp1]),
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[t][fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f]),
-        (TPS_AXIS_STEP*t),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[f]),
-        TPS_AXIS_STEP, 16) >> 4;
-}
-
 /** Calculates AE value for gas doser
  * Uses d ECU data structure
  * \return AE value in %

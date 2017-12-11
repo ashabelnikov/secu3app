@@ -81,7 +81,7 @@
 #define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
 #endif
 
-/**Control of certain units of engine (управление отдельными узлами двигателя).
+/**Control of certain units of engine
  * Uses d ECU data structure
  */
 void control_engine_units(void)
@@ -430,6 +430,8 @@ MAIN()
   meas_average_measured_values(&fw_data.exdata.cesd);
   //read discrete inputs of the system and switching of fuel type (sets of maps)
   meas_take_discrete_inputs();
+  //calculate arguments for lookup tables
+  calc_lookup_args();
   //control peripheral devices (actuators)
   control_engine_units();
   //System's state machine core (dispatcher of modes)

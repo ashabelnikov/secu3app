@@ -48,10 +48,9 @@ int16_t idling_function(void);
 
 /** Calculates advance angle from "work" map
  * Uses d ECU data structure
- * \param i_update_airflow_only
  * \return value of advance angle * 32
  */
-int16_t work_function(uint8_t i_update_airflow_only);
+int16_t work_function(void);
 
 /** Calculates advance angle correction using coolant temperature
  * Uses d ECU data structure
@@ -260,6 +259,12 @@ int16_t pa4_function(uint16_t adcvalue);
  * \return value * 2048
  */
 uint16_t gd_ve_afr(void);
+
+/** Calculation of gas dosator position, based on (TPS,RPM)
+ * Uses d ECU data structure
+ * \return Gas dosator position in % (value * 2)
+ */
+int16_t gdp_function(void);
 #endif
 
 #if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
@@ -286,5 +291,8 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter);
  * \return factor's value * 4096
  */
 int16_t barocorr_lookup(void);
+
+/***/
+void calc_lookup_args(void);
 
 #endif //_FUNCONV_H_

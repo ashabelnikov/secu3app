@@ -252,7 +252,6 @@ void ignlogic_system_state_machine(void)
    {
     d.engine_mode = EM_WORK;
    }
-   work_function(1);                           //update air flow value
    angle = d.corr.idle_aalt = idling_function(); //basic ignition timing - idling map
    d.corr.temp_aalt = coolant_function();      //add CLT correction to ignition timing
    angle+=d.corr.temp_aalt;
@@ -288,20 +287,19 @@ void ignlogic_system_state_machine(void)
    }
 
 #if defined(SM_CONTROL) && !defined(FUEL_INJECT)
-   //air flow will be always 1 if choke RPM regulator is active
+   //use idling map if choke RPM regulator is active
    if (d.choke_rpm_reg)
    {
-    work_function(1);                      //update air flow value
     angle = d.corr.idle_aalt = idling_function();//basic ignition timing - idling map
     d.corr.work_aalt = AAV_NOTUSED;
    }
    else
    {
-    angle = d.corr.work_aalt = work_function(0);//basic ignition timing - work map
+    angle = d.corr.work_aalt = work_function();//basic ignition timing - work map
     d.corr.idle_aalt = AAV_NOTUSED;
    }
 #else
-   angle = d.corr.work_aalt = work_function(0);//basic ignition timing - work map
+   angle = d.corr.work_aalt = work_function();//basic ignition timing - work map
    d.corr.idle_aalt = AAV_NOTUSED;
 #endif
 

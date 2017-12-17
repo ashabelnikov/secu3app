@@ -265,8 +265,8 @@ void init_modules(void)
  ckps_init_state();
  ckps_set_cyl_number(d.param.ckps_engine_cyl);
  ckps_set_cogs_num(d.param.ckps_cogs_num, d.param.ckps_miss_num);
- ckps_set_edge_type(d.param.ckps_edge_type);     //CKPS edge
- cams_vr_set_edge_type(d.param.ref_s_edge_type); //REF_S edge
+ ckps_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_CKPS_EDGE));     //CKPS edge
+ cams_vr_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_REFS_EDGE));  //REF_S edge
  ckps_set_cogs_btdc(d.param.ckps_cogs_btdc); //<--only partial initialization
 #ifndef DWELL_CONTROL
  ckps_set_ignition_cogs(d.param.ckps_ignit_cogs);

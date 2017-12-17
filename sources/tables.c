@@ -398,13 +398,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ai2_adc_factor =              _ACF,
   .ai2_adc_correction =          _ACC,
 
-  .ckps_edge_type =              0,
   .ckps_cogs_btdc =              20,
   .ckps_ignit_cogs =             10,
   .ckps_engine_cyl =             4,
   .ckps_cogs_num =               60,
   .ckps_miss_num =               2,
-  .ref_s_edge_type =             0,
   .hall_flags =                  0x00,
   .hall_wnd_width =              1920,
 

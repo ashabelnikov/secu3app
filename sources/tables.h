@@ -158,6 +158,8 @@
 //CKPS flags
 #define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark
 #define CKPF_USE_CAM_REF                1           //!< Use cam sensor as reference sensor
+#define CKPF_CKPS_EDGE                  2           //!< Edge type for interrupt from CKP sensor (rising or falling edge). Depends on polarity of sensor
+#define CKPF_REFS_EDGE                  3           //!< Edge type of REF_S input
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
@@ -392,13 +394,11 @@ typedef struct params_t
   int32_t  ai2_adc_correction;           //!< ADC error compensation correction for ADD_IO2 input
 
   // Synchronization
-  uint8_t  ckps_edge_type;               //!< Edge type for interrupt from CKP sensor (rising or falling edge). Depends on polarity of sensor
   uint8_t  ckps_cogs_btdc;               //!< Teeth before TDC
   uint8_t  ckps_ignit_cogs;              //!< Duration of ignition driver's pulse countable in teeth of wheel
   uint8_t  ckps_engine_cyl;              //!< number of engine's cylinders
   uint8_t  ckps_cogs_num;                //!< number of crank wheel's teeth
   uint8_t  ckps_miss_num;                //!< number of missing crank wheel's teeth
-  uint8_t  ref_s_edge_type;              //!< Edge type of REF_S input
   uint8_t  hall_flags;                   //!< Hall sensor related flags (See CKPF_ defines)
   int16_t  hall_wnd_width;               //!< Hall sensor's shutter window width in degrees of crankshaft (advance value of distributor)
 
@@ -549,7 +549,7 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[10];
+  uint8_t  reserved[12];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

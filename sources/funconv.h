@@ -238,10 +238,15 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm);
 
 /** Calculates mixture correction coefficient based on the IAC and TPS positions
  * Uses d ECU data structure
- * \raturn value * 8192
+ * \return value * 8192
  */
 uint16_t inj_iacmixtcorr_lookup(void);
 
+/** Calculates TPS switch point depending on RPM using look up table
+ * Uses d ECU data structure
+ * \return TPS value in % * 2
+ */
+uint16_t tpsswt_function(void);
 #endif
 
 #ifdef PA4_INP_IGNTIM

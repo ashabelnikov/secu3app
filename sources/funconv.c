@@ -57,25 +57,56 @@
  #define _GWU12(x,i,j) (mm_get_w12_pgm(secu3_offsetof(struct f_data_t, x), (i*16+j))) //note: hard coded size of array
 #endif
 
-
-#if (F_WRK_POINTS_L != INJ_VE_POINTS_L) || (F_WRK_POINTS_L != F_IDL_POINTS)
+//not redundant sanity check...
+#if (F_WRK_POINTS_L != INJ_VE_POINTS_L) || (F_WRK_POINTS_L != GASDOSE_POS_TPS_SIZE)
  #error "Check related code!"
 #endif
+#if (F_WRK_POINTS_F != INJ_VE_POINTS_F) || (F_WRK_POINTS_F != F_IDL_POINTS) || (F_WRK_POINTS_F != GASDOSE_POS_RPM_SIZE)
+ #error "Check related code!"
+#endif
+
+/**TPS % between two interpolation points, additionally multiplied by 16 */
+#define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(F_WRK_POINTS_L-1))
 
 /**State variables, local use*/
 typedef struct
 {
- int16_t la_discharge;
- int16_t la_gradient;
- int16_t la_rpm;
- int16_t la_l;
- int8_t  la_lp1;
- int8_t  la_f;
- int8_t  la_fp1;
+ int16_t la_rpm;       //!< RPM axis argument
+ int16_t la_load;      //!< Load axis argument
+ int16_t la_grad;      //!< amount of load per one cell on the load axis
+ int16_t la_l;         //!< index on the load axis
+ int8_t  la_lp1;       //!< la_l + 1
+ int8_t  la_f;         //!< index on the rpm axis
+ int8_t  la_fp1;       //!< la_f + 1
 }fcs_t;
 
 /**Instance of state variables*/
 fcs_t fcs = {0};
+
+
+/*
+ * Uses d ECU data structure
+ */
+static void calc_sdl_args(void)
+{
+ fcs.la_load = (d.param.map_upper_pressure - d.sens.map);
+ if (fcs.la_load < 0) fcs.la_load = 0;
+
+ //map_upper_pressure - value of the upper pressure, map_lower_pressure - value of the lower pressure
+ //todo: replace division by 1/x multiplication
+ fcs.la_grad = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (F_WRK_POINTS_L-1); //divide by number of points on the MAP axis - 1
+ if (fcs.la_grad < 1)
+  fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
+}
+
+/*
+ * Uses d ECU data structure
+ */
+static void calc_anl_args(void)
+{
+ fcs.la_load = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
+ fcs.la_grad = TPS_AXIS_STEP;
+}
 
 /**Calculates argument values needed for some 2d and 3d lookup tables. Fills la_x values in the fcs_t structure
  * Uses d ECU data structure
@@ -83,25 +114,7 @@ fcs_t fcs = {0};
  */
 void calc_lookup_args(void)
 {
- fcs.la_discharge = (d.param.map_upper_pressure - d.sens.map);
-
- if (fcs.la_discharge < 0) fcs.la_discharge = 0;
-
- //map_upper_pressure - value of the upper pressure
- //map_lower_pressure - value of the lower pressure
- fcs.la_gradient = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (F_WRK_POINTS_L-1); //divide by number of points on the MAP axis - 1
- if (fcs.la_gradient < 1)
-  fcs.la_gradient = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
- fcs.la_l = (fcs.la_discharge / fcs.la_gradient);
-
- if (fcs.la_l >= (F_WRK_POINTS_L - 1))
-  fcs.la_lp1 = fcs.la_l = F_WRK_POINTS_L - 1;
- else
-  fcs.la_lp1 = fcs.la_l + 1;
-
- //update air flow variable
- d.airflow = F_WRK_POINTS_L - fcs.la_l;
-
+ //-----------------------------------------
  fcs.la_rpm = d.sens.inst_frq;
 
  //find interpolation points, then restrict RPM if it fall outside set range
@@ -112,6 +125,29 @@ void calc_lookup_args(void)
  if (fcs.la_f < 0)  {fcs.la_f = 0; fcs.la_rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
  if (fcs.la_rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_WRK_POINTS_F-1])) fcs.la_rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_WRK_POINTS_F-1]);
  fcs.la_fp1 = fcs.la_f + 1;
+
+ //-----------------------------------------
+ if (d.param.load_src_cfg == 0) //Speed-density
+  calc_sdl_args();
+ else if (d.param.load_src_cfg == 1) //Alpha-N
+  calc_anl_args();
+ else  //mixed (MAP+TPS)
+ {
+  if (d.sens.tps >= tpsswt_function())
+   calc_anl_args(); //TPS
+  else
+   calc_sdl_args(); //MAP
+ }
+
+ fcs.la_l = (fcs.la_load / fcs.la_grad);
+
+ if (fcs.la_l >= (F_WRK_POINTS_L - 1))
+  fcs.la_lp1 = fcs.la_l = F_WRK_POINTS_L - 1;
+ else
+  fcs.la_lp1 = fcs.la_l + 1;
+
+ //update air flow variable
+ d.airflow = F_WRK_POINTS_L - fcs.la_l;
 }
 
 // Implements function of ignition timing vs RPM for idling
@@ -143,15 +179,15 @@ int16_t start_function(void)
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
 int16_t work_function(void)
 {
- return bilinear_interpolation(fcs.la_rpm, fcs.la_discharge,
+ return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GB(f_wrk[fcs.la_l][fcs.la_f]),
         _GB(f_wrk[fcs.la_lp1][fcs.la_f]),
         _GB(f_wrk[fcs.la_lp1][fcs.la_fp1]),
         _GB(f_wrk[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_gradient * fcs.la_l),
+        (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_gradient, 16);
+        fcs.la_grad, 16);
 }
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
@@ -535,8 +571,19 @@ uint16_t inj_cranking_pw(void)
 #ifdef FUEL_INJECT
 
 uint16_t calc_airflow(void)
-{
- uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.sens.map) >> (6+5); //value / 32
+{/*
+ uint32_t x_raw;
+ if (d.param.load_src_cfg == 1) //Alpha-N
+  x_raw = ((int32_t)d.sens.inst_frq * d.sens.tps) >> 6; //value / 32
+ else //Speed-density or mixed
+  x_raw = ((int32_t)d.sens.inst_frq * d.sens.map) >> (6+5); //value / 32
+ return (x_raw > 65535) ? 65535 : x_raw;
+*/
+
+ uint16_t load = d.sens.map;
+ if (d.param.load_src_cfg == 1) //Alpha-N
+  load = d.sens.tps << 5;
+ uint32_t x_raw = ((int32_t)d.sens.inst_frq * load) >> (6+5); //value / 32
  return (x_raw > 65535) ? 65535 : x_raw;
 }
 
@@ -580,43 +627,51 @@ static int16_t inj_corrected_mat(void)
 uint16_t inj_base_pw(void)
 {
  int16_t  afr;
+ uint32_t pw32;
+ uint8_t  nsht = 0; //no division
 
- //Calculate basic pulse width. Calculations are based on the ideal gas law and precalulated constant
- //All Ideal gas law arguments except MAP and air temperature were drove in to the constant, this dramatically increases performance
- //Note that inj_sd_igl_const constant must not exceed 524288
+ if (d.param.load_src_cfg == 1) //Alpha-N
+ {
+  pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const /* TEMPERATURE_MAGNITUDE(293.15)*/) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+ }
+ else //Speed-density or mixed (Speed-density + Alpha-N)
+ {
+  //Calculate basic pulse width. Calculations are based on the ideal gas law and precalulated constant
+  //All Ideal gas law arguments except MAP and air temperature were drove in to the constant, this dramatically increases performance
+  //Note that inj_sd_igl_const constant must not exceed 524288
 
- uint8_t nsht = 0; //no division
- if (d.sens.map > PRESSURE_MAGNITUDE(250.0))
-  nsht = 2;        //pressure will be divided by 4
- else if (d.sens.map > PRESSURE_MAGNITUDE(125.0))
-  nsht = 1;        //pressure will be devided by 2
+  if (d.sens.map > PRESSURE_MAGNITUDE(250.0))
+   nsht = 2;        //pressure will be divided by 4
+  else if (d.sens.map > PRESSURE_MAGNITUDE(125.0))
+   nsht = 1;        //pressure will be devided by 2
 
- uint32_t pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+  pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+ }
 
  pw32>>=(4-nsht);  //after this shift pw32 value is basic pulse width, nsht compensates previous divide of MAP
 
  //apply VE table
- pw32*= bilinear_interpolation(fcs.la_rpm, fcs.la_discharge,
+ pw32*= bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_gradient * fcs.la_l),
+        (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_gradient, 8) >> 3;
+        fcs.la_grad, 8) >> 3;
  pw32>>=(11);
 
  //apply AFR table
- afr = bilinear_interpolation(fcs.la_rpm, fcs.la_discharge,
+ afr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
         _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
         _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
         _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_gradient * fcs.la_l),
+        (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_gradient, 16);
+        fcs.la_grad, 16);
  afr+=(8*256);
 
  pw32=(pw32 * nr_1x_afr(afr << 2)) >> 15;
@@ -677,15 +732,15 @@ uint8_t inj_iac_pos_lookup(int16_t* p_prev_temp, uint8_t mode)
 
 int16_t inj_timing_lookup(void)
 {
- return bilinear_interpolation(fcs.la_rpm, fcs.la_discharge,
+ return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_timing,fcs.la_l,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_timing,fcs.la_l,fcs.la_fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_gradient * fcs.la_l),
+        (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_gradient, 8);
+        fcs.la_grad, 8);
 }
 
 #endif //FUEL_INJECT
@@ -894,6 +949,12 @@ uint16_t inj_iacmixtcorr_lookup(void)
  return 8192 + (int16_t)(((int32_t)corr * corr_w) >> (8+5));
 }
 
+uint16_t tpsswt_function(void)
+{
+ return simple_interpolation(fcs.la_rpm, _GB(inj_tpsswt[fcs.la_f]), _GB(inj_tpsswt[fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+}
+
 #endif //FUEL_INJECT
 
 
@@ -933,26 +994,26 @@ uint16_t gd_ve_afr(void)
  int32_t corr;
 
  //apply VE table, bilinear_interpolation() returns value * 8
- corr = bilinear_interpolation(fcs.la_rpm, fcs.la_discharge,
+ corr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_gradient * fcs.la_l),
+        (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_gradient, 8);
+        fcs.la_grad, 8);
 
  //calculate AFR value, returned value * 16
- afr = bilinear_interpolation(fcs.la_rpm, fcs.la_discharge,
+ afr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
         _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
         _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
         _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_gradient * fcs.la_l),
+        (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_gradient, 16);
+        fcs.la_grad, 16);
 
  afr+=(8*256); //offset by 8 to obtain normal value
 
@@ -964,9 +1025,6 @@ uint16_t gd_ve_afr(void)
 
  return corr; //return correction value * 2048
 }
-
-/**TPS % between two interpolation points, additionally multiplied by 16 */
-#define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(GASDOSE_POS_TPS_SIZE-1))
 
 /** Calculation of gas dosator position, based on (TPS,RPM)
  * Uses d ECU data structure

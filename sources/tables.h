@@ -100,7 +100,7 @@
 
 #define GASDOSE_POS_RPM_SIZE            16          //!< RPM axis size
 #define GASDOSE_POS_TPS_SIZE            16          //!< TPS axis size
-
+#define INJ_TPSSWT_SIZE                 16          //!< Size of the TPS switch point lookup table
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -203,10 +203,12 @@ typedef struct f_data_t
 
   uint16_t inj_iatclt_corr[INJ_IATCLT_CORR_SIZE+2];   //!< IAT/CLT correction lookup table (value * 8192), the last two values are air flows (load*rpm) corresponding to the beginning and to the end of axis
 
+  uint8_t inj_tpsswt[INJ_TPSSWT_SIZE];                //!< Speed-density/Alpha-N switch point vs RPM
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[64];
+  uint8_t reserved[48];
 }f_data_t;
 
 
@@ -489,7 +491,7 @@ typedef struct params_t
 
   uint16_t inj_lambda_dead_band;         //!< lambda switch point dead band
 
-  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - TPS)
+  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - TPS, 2 - MAP+TPS)
 
   uint8_t  idl_to_run_add;               //!< Value (in %) added to IAC position when exiting from closed loop (value * 2)
   uint8_t  rpm_on_run_add;               //!< Value added to target RPM when vehicle starts to run (min-1, value / 10)

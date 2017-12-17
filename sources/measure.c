@@ -142,7 +142,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  if (rpm_only)
   return;
 
- rawval = update_buffer(MAP_INPIDX, (d.param.load_src_cfg==0) ? adc_get_map_value() : adc_get_carb_value());
+ rawval = update_buffer(MAP_INPIDX, adc_get_map_value());
 
 #ifdef SEND_INST_VAL
  rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) ? cesd->map_v_em : adc_compensate(_RESDIV(rawval, 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);

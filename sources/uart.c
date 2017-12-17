@@ -63,6 +63,7 @@
 #define ETMT_IACC_MAP 19    //!< mixture correction vs IAC pos
 #define ETMT_IACCW_MAP 20   //!< weight of misture correction vs TPS
 #define ETMT_IATCLT_MAP 21  //!< IAT/CLT correction vs air flow
+#define ETMT_TPSSWT_MAP 22  //!< MAP/TPS switch point
 
 /**Define internal state variables */
 typedef struct
@@ -252,7 +253,7 @@ static void build_rw(const uint16_t* ramBuffer, uint8_t size)
  while(size--) build_i16h(*ramBuffer++);
 }
 
-//----------вспомагательные функции для распознавания пакетов---------
+//----------Helpful functions for parsing of packets---------
 /**Recepts sequence of bytes from receiver's buffer and places it into the RAM buffer
  * can NOT be used for binary data */
 static void recept_rs(uint8_t* ramBuffer, uint8_t size)
@@ -962,10 +963,15 @@ void uart_send_packet(uint8_t send_mode)
      if (wrk_index >= 1)
      {
       wrk_index = 0;
-      state = ETMT_STRT_MAP;
+      state = ETMT_TPSSWT_MAP;
      }
      else
       ++wrk_index;
+     break;
+    case ETMT_TPSSWT_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_tpsswt, INJ_TPSSWT_SIZE);
+     state = ETMT_STRT_MAP;
      break;
    }
    break;
@@ -1152,7 +1158,7 @@ uint8_t uart_recept_packet(void)
    d.param.tps_curve_gradient = recept_i16h();
 
    temp = recept_i4h();
-   if (temp < 2)
+   if (temp < 3)
     d.param.load_src_cfg = temp;
 
    d.param.mapsel_uni = recept_i8h();
@@ -1418,6 +1424,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_IATCLT_MAP: //IAT/CLT correction vs air flow
      recept_rw(((uint16_t*)&d.tables_ram.inj_iatclt_corr) + addr, INJ_IATCLT_CORR_SIZE); /*INJ_IATCLT_CORR_SIZE max*/
+     break;
+    case ETMT_TPSSWT_MAP: //MAP/TPS switch point
+     recept_rb(((uint8_t*)&d.tables_ram.inj_tpsswt) + addr, INJ_TPSSWT_SIZE); /*INJ_TPSSWT_SIZE max*/
      break;
    }
   }

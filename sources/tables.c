@@ -442,11 +442,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .uniout_12lf =                 15,                   //logic function between 1st and 2nd outputs
 
   .inj_flags =                   0,                    //
-  .inj_config =                  0x12,                 //multi-point simultaneous injection, 2 squirts per cycle
-  .inj_flow_rate =               INJ_FLRT(200.0),      //200 cc/min          (for management software only)
+  .inj_config =                  {0x12, 0x12},         //multi-point simultaneous injection, 2 squirts per cycle
+  .inj_flow_rate =               {INJ_FLRT(200.0), INJ_FLRT(200.0)}, //200 cc/min          (for management software only)
   .inj_cyl_disp =                CYL_DISP(0.375),      //0.375L (1.5/4)      (for management software only)
-  .inj_sd_igl_const =            86207,                //((0.375L * 3.482 * 18750000) / 142g) * ((1 * 4) / (2 * 4)), petrol density is 0.71 g/cc, 1bank,4cyl,2squirts,4injectors
-
+  .inj_sd_igl_const =            {86207, 114192},      //((0.375L * 3.482 * 18750000) / 142g) * ((1 * 4) / (2 * 4)), petrol density is 0.71 g/cc, 1bank,4cyl,2squirts,4injectors
+                                                       //((0.375L * 3.482 * 18750000) / 107.2g) * ((1 * 4) / (2 * 4)), LPG density is 0.536 g/cc, 1bank,4cyl,2squirts,4injectors
   .inj_prime_cold =              _DLV(6.0),            //6 ms at -30°C
   .inj_prime_hot =               _DLV(2.0),            //2 ms at 70°C
   .inj_prime_delay =             SYS_TIMEX10_S(2.0),   //fire prime pulse after 2 seconds
@@ -467,7 +467,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_steps =                    256,                  //256 steps, gas dose number of steps
 
-  .inj_timing =                  0,                    //TDC (0 = 720°)
+  .inj_timing =                  {0,0},                //TDC (0 = 720°)
 
   .flpmp_flags =                 _BV(FPF_OFFONGAS),    //turn off fuel pump when GAS_V = 1
 
@@ -476,7 +476,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .revlim_lot =                  8000,                 // 8000 min-1
   .revlim_hit =                  8100,                 // 8100 min-1
 
-  .inj_timing_crk =              0,                    //TDC
+  .inj_timing_crk =              {0,0},                //TDC
 
   .gd_fc_closing =               GD_MAGNITUDE(30),     //close for 30%
 
@@ -511,8 +511,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .vss_period_dist =             0.16666*32768,        //0.16666m per pulse
 
-  .inj_anglespec =               INJANGLESPEC_BEGIN,   //beginning of pulse
-
+  .inj_anglespec =               ((INJANGLESPEC_BEGIN << 4) || INJANGLESPEC_BEGIN),   //beginning of pulse
 
   .evap_afbegin =                938,                  //rpm*load = 30000
   .evap_afslope =                6320,                 //0.0060

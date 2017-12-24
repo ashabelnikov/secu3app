@@ -135,6 +135,7 @@
 
 //Injection flags (see inj_flags variable)
 #define INJFLG_USETIMINGMAP             0           //!< Use injection timing map instead of simple constant
+#define INJFLG_USETIMINGMAP_G           1           //!< Use injection timing map instead of simple constant
 
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas
@@ -443,11 +444,11 @@ typedef struct params_t
   uint8_t uniout_12lf;                   //!< logic function between 1st and 2nd outputs
 
   // Fuel injection
-  uint8_t  inj_flags;                    //!< Fuel injection related flags
-  uint8_t  inj_config;                   //!< Configuration of injection (7-4 bits: inj. config., 3-0 bits: num of squitrs), inj.config: INJCFG_x constants
-  uint16_t inj_flow_rate;                //!< Injector flow rate (cc/min) * 64
+  uint8_t  inj_flags;                    //!< Fuel injection related flags (see INJFLG_x bits def.)
+  uint8_t  inj_config[2];                //!< Configuration of injection (7-4 bits: inj. config., 3-0 bits: num of squitrs), inj.config: INJCFG_x constants
+  uint16_t inj_flow_rate[2];             //!< Injector flow rate (cc/min) * 64
   uint16_t inj_cyl_disp;                 //!< The displacement of one cylinder in liters * 16384
-  uint32_t inj_sd_igl_const;             //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * ((Nbnk * Ncyl) / (Nsq * Ninj))
+  uint32_t inj_sd_igl_const[2];          //!< Constant used in speed-density algorithm to calculate PW. Const = ((CYL_DISP * 3.482 * 18750000) / Ifr ) * ((Nbnk * Ncyl) / (Nsq * Ninj))
 
   uint16_t inj_prime_cold;               //!< Prime pulse PW at cold (CLT=-30°C)
   uint16_t inj_prime_hot;                //!< Prime pulse PW at hot (CLT=70°C)
@@ -469,7 +470,7 @@ typedef struct params_t
 
   uint16_t gd_steps;                     //!< Number of steps of gas dosator stepper motor
 
-  int16_t  inj_timing;                   //!< Injection timing in crank degrees * ANGLE_MULTIPLIER
+  int16_t  inj_timing[2];                //!< Injection timing in crank degrees * ANGLE_MULTIPLIER
 
   uint8_t  flpmp_flags;                  //!< fuel pump flags
 
@@ -478,7 +479,7 @@ typedef struct params_t
   uint16_t revlim_lot;                   //!< lower threshold for rev.limitting (fuel injection)
   uint16_t revlim_hit;                   //!< upper threshold for rev.limitting (fuel injection)
 
-  int16_t  inj_timing_crk;               //!< Injection timing on cranking in crank degrees * ANGLE_MULTIPLIER
+  int16_t  inj_timing_crk[2];            //!< Injection timing on cranking in crank degrees * ANGLE_MULTIPLIER
 
   uint8_t  gd_fc_closing;                //!< How much close (in %) gas doser in fuel cut mode (relatively to current position)
 
@@ -504,7 +505,7 @@ typedef struct params_t
 
   uint8_t  inj_lambda_senstype;          //!< EGO sensor type (0 - NBO, 1 - WBO)
 
-  uint16_t gd_lambda_stoichval;          //!< Stoichiometric value of fuel used with stepper gas valve, value * 128
+  uint16_t gd_lambda_stoichval;          //!< Stoichiometric value of fuel used for second fuel (GAS_V=1), value * 128
 
   uint8_t  inj_lambda_ms_per_stp;        //!< Number of strokes per step for lambda control
 
@@ -515,7 +516,7 @@ typedef struct params_t
 
   uint16_t  vss_period_dist;             //!< VSS period distance im meters (value * 32768)
 
-  uint8_t inj_anglespec;                 //!< Specifies how inj.timing coupled with inj.pulse (beginning, middle, end)
+  uint8_t inj_anglespec;                 //!< Specifies how inj.timing coupled with inj.pulse (beginning, middle, end). 0-3 bits: first fuel, 4-7 bits: second fuel
 
   uint16_t evap_afbegin;                 //!< Air flow value when evap starts to open (PWM duty = 0%), value = (rpm * load) / 32, 32 - number of PWM steps
   uint16_t evap_afslope;                 //!< Slope value = (32 / (afend - afbegin)) * 1048576, user should see only afend = (32 / afslope) + afbegin
@@ -549,7 +550,7 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[12];
+  uint8_t  reserved[1];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -46,4 +46,13 @@ uint8_t lambda_is_activated(void);
 
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+
+/** Gets stoichiometric AFR value for current fuel
+ * Uses d ECU data structure
+ * \return AFR value * 128
+ */
+int16_t lambda_get_stoichval(void);
+#endif
+
 #endif //_LAMBDA_H_

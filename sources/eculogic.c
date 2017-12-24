@@ -35,6 +35,7 @@
 #include "magnitude.h"
 #include "vstimer.h"
 #include "ioconfig.h"
+#include "lambda.h"
 #include "mathemat.h"
 
 /**Reserved value used to indicate that value is not used in corresponding mode*/
@@ -80,14 +81,18 @@ static uint16_t lim_inj_pw(uint32_t *value)
  return (*value) > 65535 ? 65535 : (*value);
 }
 
+/**"Normal conditions" constant for calculating of NC pulse width, value of this constant = 1397*/
+#define PWNC_CONST ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER))
+
 /** Calculates AE value.
  * Uses d ECU data structure
  * \return AE value in PW units
  */
 static int32_t calc_acc_enrich(void)
 {
- //calculate normal conditions PW, MAP=100kPa, IAT=20°C, AFR=14.7 (petrol)
- int32_t pwnc = (ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*14.7*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER)) * d.param.inj_sd_igl_const) >> 12;
+ //calculate normal conditions PW, MAP=100kPa, IAT=20°C, AFR=14.7 (petrol) or d.param.gd_lambda_stoichval (gas).
+ //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
+ int32_t pwnc = (((((uint32_t)PWNC_CONST) * nr_1x_afr(lambda_get_stoichval() << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15;
  int16_t aef = inj_ae_tps_lookup();               //calculate basic AE factor value
 
  if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
@@ -178,6 +183,13 @@ void sample_baro_pressure(void)
  restrict_value_to((int16_t*)&d.sens.baro_press, PRESSURE_MAGNITUDE(70.0), PRESSURE_MAGNITUDE(120.0));
 }
 
+/**
+*/
+uint8_t get_use_injtim_map_flag(void)
+{
+ return (d.sens.gas ? CHECKBIT(d.param.inj_flags, INJFLG_USETIMINGMAP_G) : CHECKBIT(d.param.inj_flags, INJFLG_USETIMINGMAP));
+}
+
 void ignlogic_system_state_machine(void)
 {
  int16_t angle = 0;
@@ -210,7 +222,7 @@ void ignlogic_system_state_machine(void)
     }
    }
 
-   d.corr.inj_timing = d.param.inj_timing_crk;
+   d.corr.inj_timing = d.param.inj_timing_crk[d.sens.gas];
 
 #endif
    if (d.sens.inst_frq > d.param.smap_abandon)
@@ -274,7 +286,7 @@ void ignlogic_system_state_machine(void)
     fuel_calc();
    }
 
-   d.corr.inj_timing = CHECKBIT(d.param.inj_flags, INJFLG_USETIMINGMAP) ? inj_timing_lookup() : d.param.inj_timing;
+   d.corr.inj_timing = get_use_injtim_map_flag() ? inj_timing_lookup() : d.param.inj_timing[d.sens.gas];
 #endif
    break;
 
@@ -324,7 +336,7 @@ void ignlogic_system_state_machine(void)
     fuel_calc();
    }
 
-   d.corr.inj_timing = CHECKBIT(d.param.inj_flags, INJFLG_USETIMINGMAP) ? inj_timing_lookup() : d.param.inj_timing;
+   d.corr.inj_timing = get_use_injtim_map_flag() ? inj_timing_lookup() : d.param.inj_timing[d.sens.gas];
 #endif
    break;
  }

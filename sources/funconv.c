@@ -632,7 +632,7 @@ uint16_t inj_base_pw(void)
 
  if (d.param.load_src_cfg == 1) //Alpha-N
  {
-  pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const /* TEMPERATURE_MAGNITUDE(293.15)*/) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+  pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas] /* TEMPERATURE_MAGNITUDE(293.15)*/) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
  {
@@ -645,7 +645,7 @@ uint16_t inj_base_pw(void)
   else if (d.sens.map > PRESSURE_MAGNITUDE(125.0))
    nsht = 1;        //pressure will be devided by 2
 
-  pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+  pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const[d.sens.gas]) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
  }
 
  pw32>>=(4-nsht);  //after this shift pw32 value is basic pulse width, nsht compensates previous divide of MAP

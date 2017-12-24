@@ -155,6 +155,12 @@ static uint8_t lambda_iteration(uint8_t mask)
  return updated;
 }
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+int16_t lambda_get_stoichval(void)
+{
+ return (d.sens.gas ? d.param.gd_lambda_stoichval : AFRVAL_MAG(14.7));
+}
+#endif
 
 void lambda_stroke_event_notification(void)
 {
@@ -209,13 +215,7 @@ void lambda_stroke_event_notification(void)
  //used only by fuel injection and gas doser
  if (d.param.inj_lambda_senstype==0)
  { //NBO sensor type
-  int16_t afrerr = abs(d.corr.afr -
-#ifdef GD_CONTROL
-  ((d.sens.gas && IOCFG_CHECK(IOP_GD_STP)) ? d.param.gd_lambda_stoichval : AFRVAL_MAG(14.7))
-#else
-  AFRVAL_MAG(14.7) //14.7
-#endif
-  );
+  int16_t afrerr = abs(d.corr.afr - lambda_get_stoichval());
 
   if (afrerr > AFRVAL_MAG(0.05)) //EGO allowed only when AFR=14.7 for petrol, and 15.6 for LPG
   {

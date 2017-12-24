@@ -290,15 +290,17 @@ void init_modules(void)
 #endif
 
 #ifdef FUEL_INJECT
- ckps_set_inj_timing(d.param.inj_timing_crk, d.inj_pw, d.param.inj_anglespec); //use inj.timing on cranking
+ //We set some settings using first fuel's parameters, d.sens.gas_v = 0 now
+ //TODO: redundant code fragment
+ ckps_set_inj_timing(d.param.inj_timing_crk[0], d.inj_pw, d.param.inj_anglespec & 0xF); //use inj.timing on cranking, petrol
  inject_init_state();
  inject_set_cyl_number(d.param.ckps_engine_cyl);
- inject_set_num_squirts(d.param.inj_config & 0xF);
- inject_set_config(d.param.inj_config >> 4);
+ inject_set_num_squirts(d.param.inj_config[0] & 0xF); //petrol
+ inject_set_config(d.param.inj_config[0] >> 4);       //petrol
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
  cams_enable_cam(
 #ifdef FUEL_INJECT
- (d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL ||
+ (d.param.inj_config[0] >> 4) == INJCFG_FULLSEQUENTIAL || /*petrol*/
 #endif
  CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
@@ -510,7 +512,7 @@ MAIN()
   //set current injection time and fuel cut state
   inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
   //set injection timing depending on current mode of engine
-  ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, d.param.inj_anglespec);
+  ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, (d.sens.gas ? (d.param.inj_anglespec >> 4) : (d.param.inj_anglespec & 0xF)));
 #endif
 
 #ifdef FUEL_INJECT

@@ -35,6 +35,7 @@
 #include "eculogic.h"
 #include "spdsens.h"
 #include "funconv.h"    //thermistor_lookup(), ats_lookup
+#include "injector.h"   //inject_set_config(), inject_set_num_squirts()
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "measure.h"
@@ -333,7 +334,25 @@ void meas_take_discrete_inputs(void)
 
  //read state of gas valve input
  //if GAS_V input remapped to other function, then petrol
- d.sens.gas = IOCFG_GET(IOP_GAS_V);
+ uint8_t gas_v_trig = IOCFG_GET(IOP_GAS_V);
+ if (d.sens.gas != gas_v_trig)
+ {
+  d.sens.gas = gas_v_trig;
+  if (d.param.inj_config[0] != d.param.inj_config[1]) //update settings only if it is necessary!
+  {
+   //update some parameters which depend on type of fuel
+   //TODO: redundant code fragment
+   inject_set_num_squirts(d.param.inj_config[d.sens.gas] & 0xF);  //number of squirts
+   inject_set_config(d.param.inj_config[d.sens.gas] >> 4);        //type of injection
+#if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
+   cams_enable_cam(
+#ifdef FUEL_INJECT
+     (d.param.inj_config[d.sens.gas] >> 4) == INJCFG_FULLSEQUENTIAL ||
+#endif
+     CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
+#endif
+  }
+ }
 
  //switch set of maps (or fuel type) depending on the state of GAS_V input (gas valve) and additional input (MAPSEL0)
 #ifndef REALTIME_TABLES

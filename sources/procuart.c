@@ -86,12 +86,13 @@ void process_uart_interface(void)
 
 #ifdef FUEL_INJECT
    case INJCTR_PAR:
-    inject_set_num_squirts(d.param.inj_config & 0xF);  //number of squirts
-    inject_set_config(d.param.inj_config >> 4);        //type of injection
+    //TODO: redundant code fragment
+    inject_set_num_squirts(d.param.inj_config[d.sens.gas] & 0xF);  //number of squirts
+    inject_set_config(d.param.inj_config[d.sens.gas] >> 4);        //type of injection
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
     cams_enable_cam(
 #ifdef FUEL_INJECT
-    (d.param.inj_config >> 4) == INJCFG_FULLSEQUENTIAL ||
+    (d.param.inj_config[d.sens.gas] >> 4) == INJCFG_FULLSEQUENTIAL ||
 #endif
     CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif

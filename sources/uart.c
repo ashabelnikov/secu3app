@@ -747,13 +747,18 @@ void uart_send_packet(uint8_t send_mode)
 #ifdef FUEL_INJECT
  case INJCTR_PAR:
   build_i8h(d.param.inj_flags);
-  build_i8h(d.param.inj_config);
-  build_i16h(d.param.inj_flow_rate);
+  build_i8h(d.param.inj_config[0]);
+  build_i8h(d.param.inj_config[1]);
+  build_i16h(d.param.inj_flow_rate[0]);
+  build_i16h(d.param.inj_flow_rate[1]);
   build_i16h(d.param.inj_cyl_disp);
-  build_i32h(d.param.inj_sd_igl_const);
+  build_i32h(d.param.inj_sd_igl_const[0]);
+  build_i32h(d.param.inj_sd_igl_const[1]);
   build_i8h(d.param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
-  build_i16h(d.param.inj_timing);
-  build_i16h(d.param.inj_timing_crk);
+  build_i16h(d.param.inj_timing[0]);
+  build_i16h(d.param.inj_timing[1]);
+  build_i16h(d.param.inj_timing_crk[0]);
+  build_i16h(d.param.inj_timing_crk[1]);
   build_i8h(d.param.inj_anglespec);
   build_i16h(d.param.fff_const);
   break;
@@ -1310,13 +1315,18 @@ uint8_t uart_recept_packet(void)
 #ifdef FUEL_INJECT
  case INJCTR_PAR:
   d.param.inj_flags = recept_i8h();
-  d.param.inj_config = recept_i8h();
-  d.param.inj_flow_rate = recept_i16h();
+  d.param.inj_config[0] = recept_i8h();
+  d.param.inj_config[1] = recept_i8h();
+  d.param.inj_flow_rate[0] = recept_i16h();
+  d.param.inj_flow_rate[1] = recept_i16h();
   d.param.inj_cyl_disp = recept_i16h();
-  d.param.inj_sd_igl_const = recept_i32h();
+  d.param.inj_sd_igl_const[0] = recept_i32h();
+  d.param.inj_sd_igl_const[1] = recept_i32h();
   recept_i8h();      //stub
-  d.param.inj_timing = recept_i16h();
-  d.param.inj_timing_crk = recept_i16h();
+  d.param.inj_timing[0] = recept_i16h();
+  d.param.inj_timing[1] = recept_i16h();
+  d.param.inj_timing_crk[0] = recept_i16h();
+  d.param.inj_timing_crk[1] = recept_i16h();
   d.param.inj_anglespec = recept_i8h();
   d.param.fff_const = recept_i16h();
   break;

@@ -564,7 +564,7 @@ void inject_calc_fuel_flow(void)
  //calculate and save result
  //inj_flow_rate * 64, fff_const * 65536, result must be * 256
  if (inj.fuelcut && d.eng_running)
-  d.inj_fff = (((((((uint32_t)inj.inj_time_raw) * d.param.inj_flow_rate) / cycleper) * inj.num_squirts) * Nsi) * d.param.fff_const) >> 14;
+  d.inj_fff = (((((((uint32_t)inj.inj_time_raw) * d.param.inj_flow_rate[d.sens.gas]) / cycleper) * inj.num_squirts) * Nsi) * d.param.fff_const) >> 14;
  else
   d.inj_fff = 0; //no flow of fuel, because injector(s) are turned off
 }

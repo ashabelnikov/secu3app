@@ -118,9 +118,13 @@ static uint8_t lambda_iteration(uint8_t mask)
  else
  { //WBO sensor type (or emulation)
   uint16_t sens_afr = ego_curve_lookup();
-
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
   int16_t int_m_thrd = d.corr.afr - AFRVAL_MAG(0.05);
   int16_t int_p_thrd = d.corr.afr + AFRVAL_MAG(0.05);
+#else //CARB_AFR
+  int16_t int_m_thrd = AFRVAL_MAG(14.7) - AFRVAL_MAG(0.05);
+  int16_t int_p_thrd = AFRVAL_MAG(14.7) + AFRVAL_MAG(0.05);
+#endif
   if (int_m_thrd < 0)
    int_m_thrd = 0;
 

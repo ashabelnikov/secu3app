@@ -242,12 +242,13 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm);
  */
 uint16_t inj_iacmixtcorr_lookup(void);
 
+#endif
+
 /** Calculates TPS switch point depending on RPM using look up table
  * Uses d ECU data structure
  * \return TPS value in % * 2
  */
 uint16_t tpsswt_function(void);
-#endif
 
 #ifdef PA4_INP_IGNTIM
 /**Ignition timing correction vs voltage (specified by adcvalue)
@@ -272,12 +273,15 @@ uint16_t gd_ve_afr(void);
 int16_t gdp_function(void);
 #endif
 
-#if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 /** Converts ADC value (voltage) into AFR
  * Uses d ECU data structure
  * \return AFR * 128
  */
 int16_t ego_curve_lookup(void);
+#endif
+
+#if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
 int16_t ego_curve_min(void);
 int16_t ego_curve_max(void);
 
@@ -297,7 +301,9 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter);
  */
 int16_t barocorr_lookup(void);
 
-/***/
+/** Calculates arguments for some look up tables
+  * Uses d ECU data structure
+ */
 void calc_lookup_args(void);
 
 #endif //_FUNCONV_H_

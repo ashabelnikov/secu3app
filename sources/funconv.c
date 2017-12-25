@@ -949,14 +949,13 @@ uint16_t inj_iacmixtcorr_lookup(void)
  return 8192 + (int16_t)(((int32_t)corr * corr_w) >> (8+5));
 }
 
+#endif //FUEL_INJECT
+
 uint16_t tpsswt_function(void)
 {
  return simple_interpolation(fcs.la_rpm, _GB(inj_tpsswt[fcs.la_f]), _GB(inj_tpsswt[fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 }
-
-#endif //FUEL_INJECT
-
 
 #ifdef PA4_INP_IGNTIM
 int16_t pa4_function(uint16_t adcvalue)
@@ -1054,7 +1053,7 @@ int16_t gdp_function(void)
 #endif //GD_CONTROL
 
 
-#if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 int16_t ego_curve_lookup(void)
 {
  int16_t i, i1, voltage = d.sens.add_i1; /*d.sens.inst_add_i1*/
@@ -1077,7 +1076,9 @@ int16_t ego_curve_lookup(void)
  return (simple_interpolation(voltage, _GWU(inj_ego_curve[i]), _GWU(inj_ego_curve[i1]), //<--values in table are unsigned
         (i * v_step) + v_start, v_step, 4)) >> 2;
 }
+#endif
 
+#if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
 int16_t ego_curve_min(void)
 {
  int16_t a = _GWU(inj_ego_curve[0]);

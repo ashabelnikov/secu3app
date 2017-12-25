@@ -70,10 +70,10 @@ void pwrrelay_control(void)
   //We will wait while temperature is high only if temperature sensor is enabled
   //and control of electric cooling fan is used.
   uint8_t temperature_ok = 1;
-  if (d.param.tmp_use && IOCFG_CHECK(IOP_ECF))
+  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && IOCFG_CHECK(IOP_ECF))
   {
 #ifdef COOLINGFAN_PWM
-   if (d.param.vent_pwm) //PWM is available and enabled
+   if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM)) //PWM is available and enabled
     temperature_ok = (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(2.0)));
    else //PWM is available, but disabled
     temperature_ok = (d.sens.temperat <= (d.param.vent_off));

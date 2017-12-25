@@ -163,6 +163,11 @@
 #define CKPF_REFS_EDGE                  3           //!< Edge type of REF_S input
 #define CKPF_MERGE_OUTS                 4           //!< Merge ignition signals to single output flag
 
+//Temperature tab flags
+#define TMPF_CLT_USE                    0           //!< Flag of using coolant temperature sensor
+#define TMPF_CLT_MAP                    1           //!< Flag which indicates using of lookup table for coolant temperature sensor
+#define TMPF_VENT_PWM                   2           //!< Flag - control cooling fan by using PWM
+
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
 {
@@ -374,11 +379,9 @@ typedef struct params_t
   int16_t  idlreg_turn_on_temp;          //!< Idling regulator turn on temperature
 
   // Temperature and cooling fan control
-  uint8_t  tmp_use;                      //!< flag of using coolant sensor
+  uint8_t  tmp_flags;                    //!< flag of using coolant sensor (see TMPF_x defines)
   int16_t  vent_on;                      //!< cooling fan's turn on temperature
   int16_t  vent_off;                     //!< cooling fan's turn off temperature
-  uint8_t  vent_pwm;                     //!< flag - control cooling fan by using PWM
-  uint8_t  cts_use_map;                  //!< Flag which indicates using of lookup table for coolant temperature sensor
   uint16_t vent_pwmfrq;                  //!< PWM frequency (value = 1/f * 524288), 10....5000Hz
 
   // ADC corrections/compensations
@@ -550,7 +553,7 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[2];
+  uint8_t  reserved[4];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

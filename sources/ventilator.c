@@ -143,7 +143,7 @@ void vent_control(void)
 {
  //exit if coolant temperature sensor is disabled or there is no I/O assigned to
  //electric cooling fan
- if (!d.param.tmp_use || !IOCFG_CHECK(IOP_ECF))
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) || !IOCFG_CHECK(IOP_ECF))
   return;
 
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
@@ -156,7 +156,7 @@ void vent_control(void)
  else if (d.sens.temperat <= d.param.vent_off)
   IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
- if (!d.param.vent_pwm)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM))
  { //relay
   //We don't need interrupts for relay control
   _DISABLE_INTERRUPT();
@@ -204,9 +204,9 @@ void vent_turnoff(void)
 #ifndef COOLINGFAN_PWM
  IOCFG_SETF(IOP_ECF, 0);
 #else
- if (!d.param.vent_pwm)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM))
   IOCFG_SETF(IOP_ECF, 0);
- if (d.param.vent_pwm || (IOCFG_CHECK(IOP_IAC_PWM) || IOCFG_CHECK(IOP_GD_PWM)))
+ if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM) || (IOCFG_CHECK(IOP_IAC_PWM) || IOCFG_CHECK(IOP_GD_PWM)))
   COOLINGFAN_TURNOFF();
 #endif
 }

@@ -221,13 +221,13 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  d.sens.voltage_raw = adc_compensate(average_buffer(BAT_INPIDX) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
  d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) ? cesd->vbat_v_em : d.sens.voltage_raw);
 
- if (d.param.tmp_use)
+ if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
   d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(TMP_INPIDX), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
 #ifndef THERMISTOR_CS
   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
 #else
-  if (!d.param.cts_use_map) //use linear sensor
+  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_MAP)) //use linear sensor
    d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
   else //use lookup table (actual for thermistor sensors)
    d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);

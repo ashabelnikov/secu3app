@@ -128,7 +128,7 @@ void check(ce_sett_t _PGM *cesd)
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
 
  //checking coolant temperature sensor
- if (d.param.tmp_use)
+ if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
   if (d.sens.temperat_raw < cesd->cts_v_min || d.sens.temperat_raw > cesd->cts_v_max)
    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);

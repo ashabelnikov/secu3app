@@ -22,12 +22,12 @@
 /** \file intkheat.c
  * \author Alexey A. Shabelnikov
  * Implementation of intake manifold heating control.
- * (Реализация управления подогревом впускного коллектора).
  */
 
 #ifdef INTK_HEATING
 
 #include "port/port.h"
+#include "bitmask.h"
 #include "ecudata.h"
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -57,7 +57,7 @@ void intkheat_init_ports(void)
 
 void intkheat_control(void)
 {
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
   IOCFG_INIT(IOP_INTK_HEAT, 0);
   return;

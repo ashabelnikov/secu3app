@@ -378,11 +378,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idlreg_max_angle =            320,
   .idlreg_turn_on_temp =         200,
 
-  .tmp_use =                     1,
+  .tmp_flags =                   1,                  //use CLT sensor, don't use PWM, don't use CLT curce map
   .vent_on =                     392,
   .vent_off =                    384,
-  .vent_pwm =                    0,
-  .cts_use_map =                 0,
   .vent_pwmfrq =                 _FAN_PWMFRQ(5000),  //5000Hz
 
   .map_adc_factor =              _ACF,

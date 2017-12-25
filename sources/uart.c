@@ -372,9 +372,7 @@ void uart_send_packet(uint8_t send_mode)
  switch(send_mode)
  {
   case TEMPER_PAR:
-   build_i4h(d.param.tmp_use);
-   build_i4h(d.param.vent_pwm);
-   build_i4h(d.param.cts_use_map);
+   build_i8h(d.param.tmp_flags);
    build_i16h(d.param.vent_on);
    build_i16h(d.param.vent_off);
    build_i16h(d.param.vent_pwmfrq);
@@ -1088,9 +1086,7 @@ uint8_t uart_recept_packet(void)
    break;
 
   case TEMPER_PAR:
-   d.param.tmp_use   = recept_i4h();
-   d.param.vent_pwm  = recept_i4h();
-   d.param.cts_use_map = recept_i4h();
+   d.param.tmp_flags   = recept_i8h();
    d.param.vent_on   = recept_i16h();
    d.param.vent_off  = recept_i16h();
    d.param.vent_pwmfrq = recept_i16h();

@@ -196,7 +196,7 @@ int16_t coolant_function(void)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //нет коррекции, если блок неукомплектован ДТОЖ-ом
 
  //-30 - минимальное значение температуры
@@ -243,7 +243,7 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
 
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
  // или двигатель не прогрет то выходим  с нулевой корректировкой
- if (!CHECKBIT(d.param.idl_flags, IRF_USE_REGULATOR) || (d.sens.temperat < d.param.idlreg_turn_on_temp && d.param.tmp_use
+ if (!CHECKBIT(d.param.idl_flags, IRF_USE_REGULATOR) || (d.sens.temperat < d.param.idlreg_turn_on_temp && CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE)
 #ifdef FUEL_INJECT
   && d.param.idling_rpm  //Don't use temperature turn on threshold if lookup table used
 #endif
@@ -413,7 +413,7 @@ uint8_t choke_closing_lookup(int16_t* p_prev_temp)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //блок не укомплектован ДТОЖ-ом
 
  //if difference between current and previous temperature values is less than +/-0.5,
@@ -549,7 +549,7 @@ uint16_t inj_cranking_pw(void)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
  //-30 - minimum value of temperature corresponding to the first point in table
@@ -702,7 +702,7 @@ uint8_t inj_iac_pos_lookup(int16_t* p_prev_temp, uint8_t mode)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //блок не укомплектован ДТОЖ-ом
 
  //if difference between current and previous temperature values is less than +/-0.5,
@@ -750,7 +750,7 @@ uint8_t inj_aftstr_en(void)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
 
  //-30 - минимальное значение температуры
@@ -771,7 +771,7 @@ uint8_t inj_warmup_en(void)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
 
  //-30 - минимальное значение температуры
@@ -826,7 +826,7 @@ uint16_t inj_ae_clt_corr(void)
 {
  int16_t t = d.sens.temperat; //clt
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 128;   //coolant temperature sensor is not enabled (or not installed), no correction
 
  //-30 - temperature when correction factor is as specified by inj_ae_coldacc_mult
@@ -842,7 +842,7 @@ uint16_t inj_prime_pw(void)
 {
  int16_t t = d.sens.temperat; //clt
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return d.param.inj_prime_hot;   //coolant temperature sensor is not enabled (or not installed), use hot PW
 
  //-30 - temperature for "cold" PW
@@ -857,7 +857,7 @@ uint16_t inj_idling_rpm(void)
 {
  int16_t i, i1, t = d.sens.temperat;
 
- if (!d.param.tmp_use)
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 900;   //coolant temperature sensor is not enabled (or not installed)
 
  //-30 - minimal value of temperature on the horizontal axis

@@ -183,7 +183,7 @@ void carbafr_control(void)
      switch(cas.state)
      {
       case 0:
-       if (d.sens.inst_frq > d.param.ie_hit)  //todo: use idle cut off threshold
+       if (d.sens.inst_frq > d.param.ie_hit)
         cas.state = 1;
        else
        {
@@ -192,10 +192,11 @@ void carbafr_control(void)
        }
        break;
       case 1:
-       if (d.sens.inst_frq < d.param.ie_lot)  //todo: use idle cut off threshold
+       if (d.sens.inst_frq < d.param.ie_lot)
         cas.state = 0;
        else
        {
+        d.corr.lambda = 0; //reset lambda correction, because we are in the open-loop mode now
         SET_IV_DUTY(0); //0%
         SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
        }
@@ -205,6 +206,7 @@ void carbafr_control(void)
   }
   else
   {
+   d.corr.lambda = 0; //reset lambda correction, because we are in the open-loop mode now
    SET_IV_DUTY(CAFR_PWM_STEPS/2); //50%
    SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
   }

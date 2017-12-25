@@ -161,6 +161,7 @@
 #define CKPF_USE_CAM_REF                1           //!< Use cam sensor as reference sensor
 #define CKPF_CKPS_EDGE                  2           //!< Edge type for interrupt from CKP sensor (rising or falling edge). Depends on polarity of sensor
 #define CKPF_REFS_EDGE                  3           //!< Edge type of REF_S input
+#define CKPF_MERGE_OUTS                 4           //!< Merge ignition signals to single output flag
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
@@ -406,7 +407,6 @@ typedef struct params_t
   // Ignition outputs control
   uint8_t  ign_cutoff;                   //!< Cutoff ignition when RPM reaches specified threshold
   uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
-  uint8_t  merge_ign_outs;               //!< Merge ignition signals to single output flag
 
   // Hall emulation output
   int8_t   hop_start_cogs;               //!< Hall output: start of pulse in teeth relatively to TDC 
@@ -550,7 +550,7 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[1];
+  uint8_t  reserved[2];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

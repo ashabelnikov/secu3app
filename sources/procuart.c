@@ -181,7 +181,8 @@ void process_uart_interface(void)
     ckps_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_CKPS_EDGE));     //CKPS (CKP sensor)
     cams_vr_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_REFS_EDGE));  //REF_S (Reference sensor)
     ckps_set_cogs_btdc(d.param.ckps_cogs_btdc);
-    ckps_set_merge_outs(d.param.merge_ign_outs);
+    ckps_set_merge_outs(CHECKBIT(d.param.hall_flags, CKPF_MERGE_OUTS));
+
 
 #ifndef DWELL_CONTROL
     ckps_set_ignition_cogs(d.param.ckps_ignit_cogs);

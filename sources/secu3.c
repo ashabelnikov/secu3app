@@ -276,7 +276,7 @@ void init_modules(void)
  ckps_set_knock_window(d.param.knock_k_wnd_begin_angle,d.param.knock_k_wnd_end_angle);
  ckps_use_knock_channel(d.param.knock_use_knock_channel);
  ckps_set_cogs_btdc(d.param.ckps_cogs_btdc); //<--now valid initialization
- ckps_set_merge_outs(d.param.merge_ign_outs);
+ ckps_set_merge_outs(CHECKBIT(d.param.hall_flags, CKPF_MERGE_OUTS));
 #ifdef HALL_OUTPUT
  ckps_set_hall_pulse(d.param.hop_start_cogs, d.param.hop_durat_cogs);
 #endif

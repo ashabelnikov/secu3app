@@ -408,7 +408,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ign_cutoff =                  0,
   .ign_cutoff_thrd =             7500,
-  .merge_ign_outs =              0,
 
   .hop_start_cogs =              0,
   .hop_durat_cogs =              10,

@@ -344,6 +344,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .map_upper_pressure =          6400,
   .map_curve_offset =            54,
   .map_curve_gradient =          1089,
+  .map2_curve_offset =           54,
+  .map2_curve_gradient =         1089,
 
   .carb_invers =                 0,
   .tps_curve_offset =            160,
@@ -539,7 +541,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .barocorr_type =               0,                   //no barometric correction
 
-  .reserved =                    {0},
+//.reserved =                    {0},
   .crc =                         0
  },
 

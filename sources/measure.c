@@ -273,7 +273,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #ifndef SECU3T //SECU-3i
 #ifdef TPIC8101
  if (IOCFG_CHECK(IOP_MAP2))
-  d.sens.map2 = map_adc_to_kpa(d.sens.add_i4, d.param.map_curve_offset, d.param.map_curve_gradient); //ADD_I4 input selected as MAP2 sensor
+  d.sens.map2 = map_adc_to_kpa(d.sens.add_i4, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I4 input selected as MAP2 sensor
  else
 #endif
   d.sens.map2 = 0; //input is not selected

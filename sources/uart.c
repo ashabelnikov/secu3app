@@ -433,6 +433,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.map_upper_pressure);
    build_i16h(d.param.map_curve_offset);
    build_i16h(d.param.map_curve_gradient);
+   build_i16h(d.param.map2_curve_offset);   //map2
+   build_i16h(d.param.map2_curve_gradient); //map2
    build_i16h(d.param.tps_curve_offset);
    build_i16h(d.param.tps_curve_gradient);
    build_i4h(d.param.load_src_cfg);
@@ -1153,6 +1155,8 @@ uint8_t uart_recept_packet(void)
    d.param.map_upper_pressure = recept_i16h();
    d.param.map_curve_offset = recept_i16h();
    d.param.map_curve_gradient = recept_i16h();
+   d.param.map2_curve_offset = recept_i16h();   //map2
+   d.param.map2_curve_gradient = recept_i16h(); //map2
    d.param.tps_curve_offset = recept_i16h();
    d.param.tps_curve_gradient = recept_i16h();
 

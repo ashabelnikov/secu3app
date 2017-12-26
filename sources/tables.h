@@ -340,6 +340,8 @@ typedef struct params_t
   int16_t  map_upper_pressure;           //!< upper value of MAP at the axis of table(work map) (kPa)
   int16_t  map_curve_offset;             //!< offset of curve in volts, can be negative
   int16_t  map_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
+  int16_t  map2_curve_offset;            //!< offset of curve in volts, can be negative
+  int16_t  map2_curve_gradient;          //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
 
   // TPS sensor/limit switch
   uint8_t  carb_invers;                  //!< flag of inversion of carburetor's limit switch
@@ -553,7 +555,7 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[4];
+//uint8_t  reserved[0];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

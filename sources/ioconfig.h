@@ -319,7 +319,7 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_INJ_OUT8     62     //!< INJ_OUT8        (output)
 #define IOP_IGNTIM       63     //!< IGNTIM          (input)
 #define IOP_MAP2         64     //!< MAP2            (input)
-#define IOP_RESERVED13   65     //!< reserved plug   ()
+#define IOP_TMP2         65     //!< TMP2            (input)
 #define IOP_RESERVED14   66     //!< reserved plug   ()
 #define IOP_RESERVED15   67     //!< reserved plug   ()
 

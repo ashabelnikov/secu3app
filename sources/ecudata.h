@@ -135,6 +135,10 @@ typedef struct sensors_t
  uint16_t map2;                          //!< Secondary MAP sensor
 #endif
 
+#ifndef SECU3T //SECU-3i
+ int16_t tmp2;                           //!< Secondary temperature sensor (gas temperature)
+#endif
+
  uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
 }sensors_t;
 

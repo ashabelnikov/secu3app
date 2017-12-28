@@ -572,8 +572,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**Fill coolant temperature sensor lookup table*/
   {_TLV(120.0), _TLV(100.0), _TLV(81.0), _TLV(65.5), _TLV(56.0), _TLV(48.5), _TLV(42.0), _TLV(36.0),
-   _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0)},
-  ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE),
+   _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0),
+  ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)},
 
   /**Fill choke closing vs. temperarure lookup table*/
   {_CLV(100.0), _CLV(99.0), _CLV(98.0), _CLV(96.0), _CLV(95.0), _CLV(92.0), _CLV(86.0), _CLV(78.0),
@@ -581,8 +581,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**Fill air temperature sensor lookup table (temperature vs voltage)*/
   {_TLV(120.0), _TLV(100.0), _TLV(81.0), _TLV(65.5), _TLV(56.0), _TLV(48.5), _TLV(42.0), _TLV(36.0),
-   _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0)},
-   ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE),
+   _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)},
 
   /**Fill air temperature lookup table for advance angle correction*/
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -659,7 +659,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill barometric correction lookup table*/
    {//
-    _BC(1.0000),_BC(1.0000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.0000),_BC(1.000),_BC(1.000),_BC(1.000),
+    _BC(1.000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.000),_BC(1.000),
     _BCX(70.0),_BCX(110.0) //
    },
 
@@ -667,6 +667,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_PA4LV(-10.5),_PA4LV(-09.0),_PA4LV(-07.5),_PA4LV(-6.0),_PA4LV(-04.5),_PA4LV(-03.0),_PA4LV(-01.5),_PA4LV(00.0),
     _PA4LV( 00.0),_PA4LV( 01.5),_PA4LV( 03.0),_PA4LV( 04.5),_PA4LV( 06.0),_PA4LV( 07.5),_PA4LV( 09.0),_PA4LV(10.5)
    },
+
+  /**Fill TEMP2 sensor lookup table (temperature vs voltage)*/
+  {_TLV(120.0), _TLV(100.0), _TLV(81.0), _TLV(65.5), _TLV(56.0), _TLV(48.5), _TLV(42.0), _TLV(36.0),
+   _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)
+  },
 
   /**reserved bytes*/
   {0}

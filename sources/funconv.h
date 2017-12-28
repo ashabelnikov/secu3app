@@ -91,13 +91,13 @@ int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_stat
 uint16_t accumulation_time(void);
 #endif
 
-#ifdef THERMISTOR_CS
+#if defined(THERMISTOR_CS) || defined(AIRTEMP_SENS) || !defined(SECU3T)
 /**Converts ADC value into phisical magnitude - temperature (given from thermistor)
- * (переводит значение АЦП в физическую величину - температура для резистивного датчика (термистор))
- * \param adcvalue Voltage from sensor (напряжение с датчика - значение в дискретах АЦП))
- * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER
+ * \param adcvalue Voltage from sensor (in ADC discretes)
+ * \param lutab Pointer to related look up table
+ * \return physical magnitude * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER
  */
-int16_t thermistor_lookup(uint16_t adcvalue);
+int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
 #endif
 
 #ifdef SM_CONTROL
@@ -128,13 +128,6 @@ int16_t choke_rpm_regulator(int16_t* p_prev_corr);
  * \return value of advance angle * 32
  */
 int16_t airtemp_function(void);
-
-/**Converts ADC value into phisical magnitude - temperature (given from air temperature sensor)
- * (переводит значение АЦП в физическую величину - температура воздуха)
- * \param adcvalue Voltage from sensor (напряжение с датчика - значение в дискретах АЦП))
- * \return физическая величина * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER
- */
-int16_t ats_lookup(uint16_t adcvalue);
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

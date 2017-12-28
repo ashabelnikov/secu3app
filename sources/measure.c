@@ -34,7 +34,7 @@
 #include "ecudata.h"
 #include "eculogic.h"
 #include "spdsens.h"
-#include "funconv.h"    //thermistor_lookup(), ats_lookup
+#include "funconv.h"    //thermistor_lookup()
 #include "injector.h"   //inject_set_config(), inject_set_num_squirts()
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -230,7 +230,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_MAP)) //use linear sensor
    d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
   else //use lookup table (actual for thermistor sensors)
-   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw);
+   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) ? cesd->cts_v_em : d.sens.temperat_raw, fw_data.exdata.cts_curve);
 #endif
  }
  else                                       //CTS is not used
@@ -265,7 +265,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
-  d.sens.air_temp = ats_lookup(d.sens.add_i2);   //ADD_I2 input selected as MAT sensor
+  d.sens.air_temp = thermistor_lookup(d.sens.add_i2, fw_data.exdata.ats_curve);   //ADD_I2 input selected as MAT sensor
  else
   d.sens.air_temp = 0; //input is not selected
 #endif
@@ -278,6 +278,14 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #endif
   d.sens.map2 = 0; //input is not selected
 #endif
+
+#ifndef SECU3T //SECU-3i
+ if (IOCFG_CHECK(IOP_TMP2))
+  d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, fw_data.exdata.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
+ else
+  d.sens.tmp2 = 0; //input is not selected
+#endif
+
 }
 
 //Call this function for making preliminary measurements before starting of engine. Call it only after

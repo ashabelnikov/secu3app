@@ -377,21 +377,15 @@ uint16_t accumulation_time(void)
 }
 #endif
 
-#ifdef THERMISTOR_CS
-//Coolant sensor is thermistor (тип датчика температуры - термистор)
-//Note: We assume that voltage on the input of ADC depend on thermistor's resistance linearly.
-//Voltage on the input of ADC can be calculated as following (divider resistors are used):
-// U3=U1*Rt*R2/(Rp(Rt+R1+R2)+Rt(R1+R2));
-// Rt - thermistor, Rp - pulls up thermistor to voltage U1,
-// R1,R2 - voltage divider resistors.
-int16_t thermistor_lookup(uint16_t adcvalue)
+#if defined(THERMISTOR_CS) || defined(AIRTEMP_SENS) || !defined(SECU3T)
+int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab)
 {
  int16_t i, i1;
 
- //Voltage value at the start of axis in ADC discretes (значение напряжения в начале оси в дискретах АЦП)
- uint16_t v_start = PGM_GET_WORD(&fw_data.exdata.cts_vl_begin);
- //Voltage value at the end of axis in ADC discretes (значение напряжения в конце оси в дискретах АЦП)
- uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.cts_vl_end);
+ //Voltage value at the start of axis in ADC discretes
+ uint16_t v_start = PGM_GET_WORD(&lutab[THERMISTOR_LOOKUP_TABLE_SIZE-2]);
+ //Voltage value at the end of axis in ADC discretes
+ uint16_t v_end = PGM_GET_WORD(&lutab[THERMISTOR_LOOKUP_TABLE_SIZE-1]);
 
  uint16_t v_step = (v_end - v_start) / (THERMISTOR_LOOKUP_TABLE_SIZE - 1);
 
@@ -403,7 +397,7 @@ int16_t thermistor_lookup(uint16_t adcvalue)
  if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&fw_data.exdata.cts_curve[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.cts_curve[i1]), //<--values in table are signed
+ return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&lutab[i]), (int16_t)PGM_GET_WORD(&lutab[i1]), //<--values in table are signed
         (i * v_step) + v_start, v_step, 16)) >> 4;
 }
 #endif
@@ -519,30 +513,7 @@ int16_t airtemp_function(void)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
-int16_t ats_lookup(uint16_t adcvalue)
-{
- int16_t i, i1;
-
- //Voltage value at the start of axis in ADC discretes (значение напряжения в начале оси в дискретах АЦП)
- uint16_t v_start = PGM_GET_WORD(&fw_data.exdata.ats_vl_begin);
- //Voltage value at the end of axis in ADC discretes (значение напряжения в конце оси в дискретах АЦП)
- uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.ats_vl_end);
-
- uint16_t v_step = (v_end - v_start) / (THERMISTOR_LOOKUP_TABLE_SIZE - 1);
-
- if (adcvalue < v_start)
-  adcvalue = v_start;
-
- i = (adcvalue - v_start) / v_step;
-
- if (i >= THERMISTOR_LOOKUP_TABLE_SIZE-1) i = i1 = THERMISTOR_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&fw_data.exdata.ats_curve[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.ats_curve[i1]), //<--values in table are signed
-        (i * v_step) + v_start, v_step, 16)) >> 4;
-}
 #endif //AIRTEMP_SENS
-
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint16_t inj_cranking_pw(void)
@@ -1125,6 +1096,5 @@ int16_t barocorr_lookup(void)
  return (simple_interpolation(press, (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i1]), //<--values in table are signed
         (i * p_step) + p_start, p_step, 4)) >> 2;
 }
-
 
 #endif

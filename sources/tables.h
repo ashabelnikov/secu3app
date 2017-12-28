@@ -271,22 +271,14 @@ typedef struct fw_ex_data_t
   /**Table for dwell control. Accumulation(dwell) time depends on board voltage */
   uint16_t coil_on_time[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
 
-  /**Coolant temperature sensor lookup table */
-  int16_t cts_curve[THERMISTOR_LOOKUP_TABLE_SIZE];
-  /**Voltage corresponding to the beginning of axis*/
-  uint16_t cts_vl_begin;
-  /**Voltage corresponding to the end of axis*/
-  uint16_t cts_vl_end;
+  /**Coolant temperature sensor lookup table, last two values: voltages corresponding to the beginning and end of x-axis */
+  int16_t cts_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
 
   /**Choke closing versus coolant temperature */
   uint8_t choke_closing[CHOKE_CLOSING_LOOKUP_TABLE_SIZE];
 
-  /**Air temperature sensor lookup table*/
-  int16_t ats_curve[THERMISTOR_LOOKUP_TABLE_SIZE];
-  /**Voltage corresponding to the beginning of axis*/
-  uint16_t ats_vl_begin;
-  /**Voltage corresponding to the end of axis*/
-  uint16_t ats_vl_end;
+  /**Air temperature sensor lookup table, last two values: voltages corresponding to the beginning and end of x-axis */
+  int16_t ats_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
 
   /**Air temperature correction of advance angle*/
   int8_t ats_corr[ATS_CORR_LOOKUP_TABLE_SIZE];
@@ -308,10 +300,13 @@ typedef struct fw_ex_data_t
   /**Ignition timing vs voltage. By default linear function with small dead band near to 2.5V */
   int8_t pa4_igntim_corr[PA4_LOOKUP_TABLE_SIZE];
 
+  /**TEMP2 sensor's temperature vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+  int16_t tmp2_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[296];
+  uint8_t reserved[260];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

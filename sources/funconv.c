@@ -65,6 +65,11 @@
  #error "Check related code!"
 #endif
 
+//for CLT arguments checking
+#if (F_TMP_POINTS != INJ_CRANKING_LOOKUP_TABLE_SIZE) || (F_TMP_POINTS != INJ_IAC_POS_TABLE_SIZE) || (F_TMP_POINTS != INJ_AFTSTR_LOOKUP_TABLE_SIZE) || (F_TMP_POINTS != INJ_WARMUP_LOOKUP_TABLE_SIZE) || (F_TMP_POINTS != INJ_TARGET_RPM_TABLE_SIZE)
+ #error "Check related code!"
+#endif
+
 /**TPS % between two interpolation points, additionally multiplied by 16 */
 #define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(F_WRK_POINTS_L-1))
 
@@ -78,6 +83,10 @@ typedef struct
  int8_t  la_lp1;       //!< la_l + 1
  int8_t  la_f;         //!< index on the rpm axis
  int8_t  la_fp1;       //!< la_f + 1
+ //CLT args:
+ uint8_t ta_i;         //!< index
+ uint8_t ta_i1;        //!< index + 1
+ int16_t ta_clt;       //!< temperature (CLT)
 }fcs_t;
 
 /**Instance of state variables*/
@@ -148,6 +157,20 @@ void calc_lookup_args(void)
 
  //update air flow variable
  d.airflow = F_WRK_POINTS_L - fcs.la_l;
+
+ //-----------------------------------------
+ //Coolant temperature arguments:
+ fcs.ta_clt = d.sens.temperat;
+
+ //-30 - minimum value of temperature corresponding to the first point in table
+ if (fcs.ta_clt < TEMPERATURE_MAGNITUDE(-30))
+  fcs.ta_clt = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points in table
+ fcs.ta_i = (fcs.ta_clt - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (fcs.ta_i >= INJ_CRANKING_LOOKUP_TABLE_SIZE-1) fcs.ta_i = fcs.ta_i1 = INJ_CRANKING_LOOKUP_TABLE_SIZE-1;
+ else fcs.ta_i1 = fcs.ta_i + 1;
 }
 
 // Implements function of ignition timing vs RPM for idling
@@ -194,23 +217,11 @@ int16_t work_function(void)
 // ¬озвращает значение угла опережени€ в целом виде * 32, 2 * 16 = 32.
 int16_t coolant_function(void)
 {
- int16_t i, i1, t = d.sens.temperat;
-
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //нет коррекции, если блок неукомплектован ƒ“ќ∆-ом
 
- //-30 - минимальное значение температуры
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= F_TMP_POINTS-1) i = i1 = F_TMP_POINTS-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GB(f_tmp[i]), _GB(f_tmp[i1]),
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
+ return simple_interpolation(fcs.ta_clt, _GB(f_tmp[fcs.ta_i]), _GB(f_tmp[fcs.ta_i1]),
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
 //–егул€тор холостого хода –’’
@@ -402,7 +413,7 @@ int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab)
 }
 #endif
 
-#ifdef SM_CONTROL
+#if defined(SM_CONTROL) && !defined(FUEL_INJECT)
 uint8_t choke_closing_lookup(int16_t* p_prev_temp)
 {
  int16_t i, i1, t = d.sens.temperat;
@@ -417,14 +428,14 @@ uint8_t choke_closing_lookup(int16_t* p_prev_temp)
  else
   *p_prev_temp = t; //make it current
 
- //-5 - минимальное значение температуры
+ //-5 - minimum value on the tempature axis
  if (t < TEMPERATURE_MAGNITUDE(-5))
   t = TEMPERATURE_MAGNITUDE(-5);
 
- //5 - шаг между узлами интерпол€ции по температуре
+ //5 - step between interpolation points on the temperature axis
  i = (t - TEMPERATURE_MAGNITUDE(-5)) / TEMPERATURE_MAGNITUDE(5);
 
- if (i >= 15) i = i1 = 15;
+ if (i >= CHOKE_CLOSING_LOOKUP_TABLE_SIZE-1) i = i1 = CHOKE_CLOSING_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
  if ((t > TEMPERATURE_MAGNITUDE(70)) || (0==PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1])))
@@ -518,23 +529,11 @@ int16_t airtemp_function(void)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint16_t inj_cranking_pw(void)
 {
- int16_t i, i1, t = d.sens.temperat;
-
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
- //-30 - minimum value of temperature corresponding to the first point in table
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - step between interpolation points in table
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_CRANKING_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_CRANKING_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GWU(inj_cranking[i]), _GWU(inj_cranking[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
+ return simple_interpolation(fcs.ta_clt, _GWU(inj_cranking[fcs.ta_i]), _GWU(inj_cranking[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
 }
 
 #endif
@@ -669,36 +668,37 @@ uint16_t inj_dead_time(void)
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
-uint8_t inj_iac_pos_lookup(int16_t* p_prev_temp, uint8_t mode)
+void inj_init_prev_clt(prev_temp_t* p_pt)
 {
- int16_t i, i1, t = d.sens.temperat;
+ p_pt->clt = fcs.ta_clt;
+ p_pt->i = fcs.ta_i;
+ p_pt->i1 = fcs.ta_i1;
+}
+
+uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
+{
+ uint8_t i = fcs.ta_i, i1 = fcs.ta_i1;
+ int16_t t = fcs.ta_clt;
 
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //блок не укомплектован ƒ“ќ∆-ом
 
  //if difference between current and previous temperature values is less than +/-0.5,
  //then previous value will be used for calculations.
- if (abs(*p_prev_temp - t) < TEMPERATURE_MAGNITUDE(0.5))
-  t = *p_prev_temp;
+ if (abs(p_pt->clt - t) < TEMPERATURE_MAGNITUDE(0.5))
+ {
+  t = p_pt->clt;
+  i = p_pt->i;
+  i1 = p_pt->i1;
+ }
  else
-  *p_prev_temp = t; //make it current
+ {
+  inj_init_prev_clt(p_pt); //make it current
+ }
 
- //-30 - минимальное значение температуры
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_IAC_POS_TABLE_SIZE-1) i = i1 = INJ_IAC_POS_TABLE_SIZE-1;
- else i1 = i + 1;
-
- if (mode) //run
-  return simple_interpolation(t, _GBU(inj_iac_run_pos[i]), _GBU(inj_iac_run_pos[i1]),  //<--values in table are unsigned
-   (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
- else //cranking
-  return simple_interpolation(t, _GBU(inj_iac_crank_pos[i]), _GBU(inj_iac_crank_pos[i1]), //<--values in table are unsigned
-   (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+ //run/cranking
+ return simple_interpolation(fcs.ta_clt, mode ? _GBU(inj_iac_run_pos[fcs.ta_i]) : _GBU(inj_iac_crank_pos[fcs.ta_i]), mode ? _GBU(inj_iac_run_pos[fcs.ta_i1]) : _GBU(inj_iac_crank_pos[fcs.ta_i1]),  //<--values in table are unsigned
+  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
 int16_t inj_timing_lookup(void)
@@ -719,44 +719,20 @@ int16_t inj_timing_lookup(void)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint8_t inj_aftstr_en(void)
 {
- int16_t i, i1, t = d.sens.temperat;
-
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
 
- //-30 - минимальное значение температуры
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_AFTSTR_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_AFTSTR_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GBU(inj_aftstr[i]), _GBU(inj_aftstr[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+ return simple_interpolation(fcs.ta_clt, _GBU(inj_aftstr[fcs.ta_i]), _GBU(inj_aftstr[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
 uint8_t inj_warmup_en(void)
 {
- int16_t i, i1, t = d.sens.temperat;
-
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
 
- //-30 - минимальное значение температуры
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_WARMUP_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_WARMUP_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return simple_interpolation(t, _GBU(inj_warmup[i]), _GBU(inj_warmup[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+ return simple_interpolation(fcs.ta_clt, _GBU(inj_warmup[fcs.ta_i]), _GBU(inj_warmup[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
 int16_t inj_ae_tps_lookup(void)
@@ -826,23 +802,11 @@ uint16_t inj_prime_pw(void)
 
 uint16_t inj_idling_rpm(void)
 {
- int16_t i, i1, t = d.sens.temperat;
-
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 900;   //coolant temperature sensor is not enabled (or not installed)
 
- //-30 - minimal value of temperature on the horizontal axis
- if (t < TEMPERATURE_MAGNITUDE(-30))
-  t = TEMPERATURE_MAGNITUDE(-30);
-
- //10 - шаг между узлами интерпол€ции по температуре
- i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (i >= INJ_TARGET_RPM_TABLE_SIZE-1) i = i1 = INJ_TARGET_RPM_TABLE_SIZE-1;
- else i1 = i + 1;
-
- return (simple_interpolation(t, _GBU(inj_target_rpm[i]), _GBU(inj_target_rpm[i1]),  //<--values in table are unsigned
- (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+ return (simple_interpolation(fcs.ta_clt, _GBU(inj_target_rpm[fcs.ta_i]), _GBU(inj_target_rpm[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
 }
 
 uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)

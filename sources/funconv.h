@@ -22,7 +22,6 @@
 /** \file funconv.h
  * \author Alexey A. Shabelnikov
  * Core mathematics and regulation logic.
- * (Основная часть математического аппарата и логики регулирования).
  */
 
 #ifndef _FUNCONV_H_
@@ -100,9 +99,8 @@ uint16_t accumulation_time(void);
 int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
 #endif
 
-#ifdef SM_CONTROL
+#if defined(SM_CONTROL) && !defined(FUEL_INJECT)
 /** Obtains choke position (closing %) from coolant temperature using lookup table
- * Получает положение воздушной заслонки (% закрытия) по температре охлаждающей жидкости
  * Uses d ECU data structure
  * \param p_prev_temp pointer to state variable used to store temperature value between calls of
  * this function
@@ -157,15 +155,28 @@ uint16_t inj_base_pw(void);
  */
 uint16_t inj_dead_time(void);
 
+/***/
+typedef struct prev_temp_t
+{
+ int16_t clt;   //!< temperature
+ uint8_t i;     //!< index
+ uint8_t i1;    //!< index
+}prev_temp_t;
+
+/** Initialization of prev_temp_t structure
+ * \param p_pt Pointer to prev_temp_t structure to be initialized
+ */
+void inj_init_prev_clt(prev_temp_t* p_pt);
+
 /** Calculates IAC/PWM position vs coolant temperature using a lookup table.
  * This function is used in open-loop idle control algorithm.
  * Uses d ECU data structure
- * \param p_prev_temp pointer to state variable used to store temperature value between calls of
+ * \param p_pt pointer to state variable used to store temperature value between calls of
  * this function
  * \param mode 1 - run, 0 - cranking
  * \return position percentage (value * 2)
  */
-uint8_t inj_iac_pos_lookup(int16_t* p_prev_temp, uint8_t mode);
+uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode);
 
 /** Calculates injection timing from lookup table
  * Uses d ECU data structure

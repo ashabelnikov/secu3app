@@ -95,7 +95,6 @@ typedef struct
 {
  uint8_t   state;          //!< state machine state
  uint16_t  smpos;          //!< current position of stepper motor in steps
- int16_t   prev_temp;      //!< used for choke_closing_lookup()
  uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
  uint8_t   strt_mode;      //!< state machine state used for starting mode
@@ -106,23 +105,25 @@ typedef struct
 #ifndef FUEL_INJECT
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
+ int16_t   prev_temp;      //!< used for choke_closing_lookup()
 #endif
 
 #ifdef FUEL_INJECT
  int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
  int16_t   iac_pos;        //!< IAC pos between call of the closed loop regulator
  int16_t   iac_add;        //!< Smoothly increased value
+ prev_temp_t prev_temp;    //!< used for inj_iac_pos_lookup()
 #endif
 
 }choke_st_t;
 
 /**Instance of state variables */
-choke_st_t chks = {0,0,0,0,0,0,0,0,0
+choke_st_t chks = {0,0,0,0,0,0,0,0
 #ifndef FUEL_INJECT
-                   ,0,0
+                   ,0,0,0
 #endif
 #ifdef FUEL_INJECT
-                   ,0,0,0
+                   ,0,0,0,{0,0,0}
 #endif
                   };
 
@@ -462,7 +463,12 @@ void choke_control(void)
    if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
     initial_pos(INIT_POS_DIR);
    chks.state = 2;
+#ifdef FUEL_INJECT
+   inj_init_prev_clt(&chks.prev_temp);
+#else
    chks.prev_temp = d.sens.temperat;
+#endif
+
    break;
 
   case 1:                                                     //system is being preparing to power-down

@@ -370,20 +370,31 @@ uint8_t knock_attenuator_function()
         PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i1]), (i * 60) + 200, 60, 16) >> 4;
 }
 
-#ifdef DWELL_CONTROL
-uint16_t accumulation_time(void)
+#if defined(DWELL_CONTROL) || defined(FUEL_INJECT)
+
+#if (INJ_DT_LOOKUP_TABLE_SIZE != COIL_ON_TIME_LOOKUP_TABLE_SIZE)
+ #error "Check related code"
+#endif
+
+uint16_t accumulation_time(uint8_t mode)
 {
  int16_t i, i1, voltage = d.sens.voltage;
 
  if (voltage < VOLTAGE_MAGNITUDE(5.4))
-  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - минимальное значение напряжения в таблице предусмотренной для 12В бортовой сети
+  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 -  minimum voltage value corresponding to 1st value in table for 12V board voltage
 
- i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - шаг по напряжению
+ i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - voltage step
 
  if (i >= COIL_ON_TIME_LOOKUP_TABLE_SIZE-1) i = i1 = COIL_ON_TIME_LOOKUP_TABLE_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]),
+#ifdef FUEL_INJECT
+ if (mode) //dead time
+  return simple_interpolation(voltage, _GWU(inj_dead_time[i]), _GWU(inj_dead_time[i1]),  //<--values in table are unsigned
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
+ else //dwell time
+#endif
+  return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]),
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 4) >> 2;
 }
 #endif
@@ -650,22 +661,6 @@ uint16_t inj_base_pw(void)
 
  //return restricted value (16 bit)
  return ((pw32 > 65535) ? 65535 : pw32);
-}
-
-uint16_t inj_dead_time(void)
-{
- int16_t i, i1, voltage = d.sens.voltage;
-
- if (voltage < VOLTAGE_MAGNITUDE(5.4))
-  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 - minimum voltage value corresponding to 1st value in table for 12V board voltage
-
- i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - voltage step
-
- if (i >= INJ_DT_LOOKUP_TABLE_SIZE-1) i = i1 = INJ_DT_LOOKUP_TABLE_SIZE-1;
-  else i1 = i + 1;
-
- return simple_interpolation(voltage, _GWU(inj_dead_time[i]), _GWU(inj_dead_time[i1]),  //<--values in table are unsigned
-        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
 }
 
 void inj_init_prev_clt(prev_temp_t* p_pt)

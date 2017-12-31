@@ -442,10 +442,10 @@ MAIN()
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //Double dwell time if RPM is low and non-stable
-  ckps_set_acc_time(d.st_block ? accumulation_time() : accumulation_time() << 1);
+  ckps_set_acc_time(d.st_block ? accumulation_time(0) : accumulation_time(0) << 1);
 #else
   //calculate and update accumulation time (dwell control)
-  ckps_set_acc_time(accumulation_time());
+  ckps_set_acc_time(accumulation_time(0));
 #endif
 #endif
   if (d.sys_locked)

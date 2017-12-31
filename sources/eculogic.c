@@ -168,7 +168,7 @@ static void fuel_calc(void)
  }
 
  d.inj_pw_raw = lim_inj_pw(&pw);
- d.inj_dt = inj_dead_time();
+ d.inj_dt = accumulation_time(1);                //apply dead time
  pw+= d.inj_dt;
  if (d.ie_valve && !d.fc_revlim && d.eng_running)
   d.inj_pw = lim_inj_pw(&pw);
@@ -256,7 +256,7 @@ void ignlogic_system_state_machine(void)
     pw = (pw * inj_gps_pwcorr()) >> 7;               //apply gas pressure correction
    }
    d.inj_pw_raw = lim_inj_pw(&pw);
-   d.inj_dt = inj_dead_time();
+   d.inj_dt = accumulation_time(1);                  //apply dead time
    pw+= d.inj_dt;
    if (d.eng_running)
     d.inj_pw = lim_inj_pw(&pw);

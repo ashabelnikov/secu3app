@@ -82,12 +82,14 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer);
  */
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m);
 
-#ifdef DWELL_CONTROL
-/** Calculates current accumulation time (dwell control) using current board voltage
+#if defined(DWELL_CONTROL) || defined(FUEL_INJECT)
+/** Calculates current accumulation time (dwell control) / injector dead time using current board voltage
  * Uses d ECU data structure
- * \return accumulation time in timer's ticks (1 tick = 4uS, when clock is 16mHz and 1 tick = 3.2uS, when clock is 20mHz)
+ * \param mode Specifies what to calculate - dwell (mode=0) or dead time (mode=1)
+ * \return accumulation time in timer's ticks (1 tick = 4uS, when clock is 16mHz and 1 tick = 3.2uS, when clock is 20mHz) /
+ *         Injector dead time in tics of timer
  */
-uint16_t accumulation_time(void);
+uint16_t accumulation_time(uint8_t mode);
 #endif
 
 #if defined(THERMISTOR_CS) || defined(AIRTEMP_SENS) || !defined(SECU3T)
@@ -148,12 +150,6 @@ uint16_t calc_airflow(void);
  * \return Base injection time in ticks of timer (1 tick = 3.2uS)
  */
 uint16_t inj_base_pw(void);
-
-/** Calculates injector dead time using lookup table
- * Uses d ECU data structure
- * \return Injector dead time in tics of timer
- */
-uint16_t inj_dead_time(void);
 
 /***/
 typedef struct prev_temp_t

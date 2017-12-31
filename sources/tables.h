@@ -101,6 +101,8 @@
 #define GASDOSE_POS_RPM_SIZE            16          //!< RPM axis size
 #define GASDOSE_POS_TPS_SIZE            16          //!< TPS axis size
 #define INJ_TPSSWT_SIZE                 16          //!< Size of the TPS switch point lookup table
+#define INJ_GTS_CORR_SIZE               16          //!< Size of gas temperature correction map
+#define INJ_GPS_CORR_SIZE               9           //!< Size of gas pressure correction map
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -136,6 +138,7 @@
 //Injection flags (see inj_flags variable)
 #define INJFLG_USETIMINGMAP             0           //!< Use injection timing map instead of simple constant
 #define INJFLG_USETIMINGMAP_G           1           //!< Use injection timing map instead of simple constant
+#define INJFLG_USEADDCORRS              2           //!< Use additional corrections required for precise gas injection
 
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas
@@ -214,10 +217,14 @@ typedef struct f_data_t
 
   uint8_t inj_tpsswt[INJ_TPSSWT_SIZE];                //!< Speed-density/Alpha-N switch point vs RPM
 
+  uint8_t inj_gts_corr[INJ_GTS_CORR_SIZE];            //!< PW correction from gas temperature sensor, value * 128, max. 1.99
+
+  uint8_t inj_gps_corr[INJ_GPS_CORR_SIZE+2];          //!< PW correction from gas pressure sensor, value * 128, max. 1.99, last two values are pressures (value in kPa / 2)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[48];
+  uint8_t reserved[21];
 }f_data_t;
 
 
@@ -306,7 +313,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[260];
+  uint8_t reserved[52];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

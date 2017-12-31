@@ -697,8 +697,8 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
  }
 
  //run/cranking
- return simple_interpolation(fcs.ta_clt, mode ? _GBU(inj_iac_run_pos[fcs.ta_i]) : _GBU(inj_iac_crank_pos[fcs.ta_i]), mode ? _GBU(inj_iac_run_pos[fcs.ta_i1]) : _GBU(inj_iac_crank_pos[fcs.ta_i1]),  //<--values in table are unsigned
-  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+ return simple_interpolation(t, mode ? _GBU(inj_iac_run_pos[i]) : _GBU(inj_iac_crank_pos[i]), mode ? _GBU(inj_iac_run_pos[i1]) : _GBU(inj_iac_crank_pos[i1]),  //<--values in table are unsigned
+  (((int16_t)i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
 int16_t inj_timing_lookup(void)
@@ -1061,4 +1061,53 @@ int16_t barocorr_lookup(void)
         (i * p_step) + p_start, p_step, 4)) >> 2;
 }
 
+#endif
+
+#ifdef FUEL_INJECT
+uint8_t inj_gts_pwcorr(void)
+{
+ int16_t i, i1, t = d.sens.tmp2;
+
+ if (!IOCFG_CHECK(IOP_TMP2))
+  return 128;   //do not use correcton if gas temperature sensor is turned off
+
+ //-30 - minimum temperature value
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_GTS_CORR_SIZE-1) i = i1 = INJ_GTS_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GBU(inj_gts_corr[i]), _GBU(inj_gts_corr[i1]), //<--values in table are unsigned
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+}
+
+uint8_t inj_gps_pwcorr(void)
+{
+ int16_t i, i1, p = d.sens.map2;
+
+ if (!IOCFG_CHECK(IOP_MAP2))
+  return 128;   //do not use correcton if gas pressure sensor is turned off
+
+ //Pressure value at the start of axis
+ uint16_t p_start = ((uint16_t)_GBU(inj_gps_corr[INJ_GPS_CORR_SIZE])) * (2 * 64);
+ //Pressure value at the end of axis
+ uint16_t p_end = ((uint16_t)_GBU(inj_gps_corr[INJ_GPS_CORR_SIZE+1])) * (2 * 64);
+
+ uint16_t p_step = (p_end - p_start) / (INJ_GPS_CORR_SIZE - 1);
+
+ if (p < p_start)
+  p = p_start;
+
+ i = (p - p_start) / p_step;
+
+ if (i >= INJ_GPS_CORR_SIZE-1) i = i1 = INJ_GPS_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(p, _GBU(inj_gps_corr[i]), _GBU(inj_gps_corr[i1]), //<--values in table are unsigned
+        (i * p_step) + p_start, p_step, 64)) >> 6;
+}
 #endif

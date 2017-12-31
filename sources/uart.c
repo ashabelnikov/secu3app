@@ -64,6 +64,9 @@
 #define ETMT_IACCW_MAP 20   //!< weight of misture correction vs TPS
 #define ETMT_IATCLT_MAP 21  //!< IAT/CLT correction vs air flow
 #define ETMT_TPSSWT_MAP 22  //!< MAP/TPS switch point
+#define ETMT_GTSC_MAP 23    //!< PW correction from gas temperature
+#define ETMT_GPSC_MAP 24    //!< PW correction from gas pressure
+
 
 /**Define internal state variables */
 typedef struct
@@ -974,6 +977,16 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_TPSSWT_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_tpsswt, INJ_TPSSWT_SIZE);
+     state = ETMT_GTSC_MAP;
+     break;
+    case ETMT_GTSC_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_gts_corr, INJ_GTS_CORR_SIZE);
+     state = ETMT_GPSC_MAP;
+     break;
+    case ETMT_GPSC_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_gps_corr, INJ_GPS_CORR_SIZE+2);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -1433,6 +1446,12 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_TPSSWT_MAP: //MAP/TPS switch point
      recept_rb(((uint8_t*)&d.tables_ram.inj_tpsswt) + addr, INJ_TPSSWT_SIZE); /*INJ_TPSSWT_SIZE max*/
+     break;
+    case ETMT_GTSC_MAP: //PW correction from gas temperature
+     recept_rb(((uint8_t*)&d.tables_ram.inj_gts_corr) + addr, INJ_GTS_CORR_SIZE); /*INJ_GTS_CORR_SIZE max*/
+     break;
+    case ETMT_GPSC_MAP: //PW correction from gas pressure
+     recept_rb(((uint8_t*)&d.tables_ram.inj_gps_corr) + addr, INJ_GPS_CORR_SIZE+2); /*INJ_GPS_CORR_SIZE+2 max*/
      break;
    }
   }

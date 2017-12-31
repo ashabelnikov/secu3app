@@ -136,6 +136,8 @@
 //For specifying of throttle position
 #define _TP(v) ROUND((v) * 2.0)
 
+#define _GPSX(v) ROUND((v)/2)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -678,15 +680,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {0}
  },
 
- /**Данные в таблицах по умолчанию Fill tables with default data */
+ /**Fill tables with default data */
  {
   {
    {'2','1','0','8','3',' ','S','t','a','n','d','a','r','d',' ',' '},                  //name of set
-   //таблицы для зажигания
-   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x0C,0x10,0x14,0x14,0x14},  //пусковая карта
-   {0x14,0x14,0x14,0x14,0x14,0x14,0x17,0x1D,0x28,0x32,0x36,0x37,0x37,0x37,0x37,0x37},  //ХХ карта
+   //maps for ignition
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x0C,0x10,0x14,0x14,0x14},  //cranking map
+   {0x14,0x14,0x14,0x14,0x14,0x14,0x17,0x1D,0x28,0x32,0x36,0x37,0x37,0x37,0x37,0x37},  //idling map
    {
-    {0x04,0x05,0x06,0x07,0x0A,0x0C,0x10,0x15,0x1A,0x20,0x24,0x27,0x28,0x28,0x28,0x28}, //карта основного режима
+    {0x04,0x05,0x06,0x07,0x0A,0x0C,0x10,0x15,0x1A,0x20,0x24,0x27,0x28,0x28,0x28,0x28}, //working map
     {0x04,0x05,0x06,0x08,0x0B,0x0D,0x10,0x16,0x1B,0x21,0x26,0x29,0x2A,0x2A,0x2A,0x2A},
     {0x04,0x05,0x08,0x08,0x0C,0x0E,0x12,0x18,0x1E,0x23,0x28,0x2A,0x2C,0x2C,0x2C,0x2C},
     {0x04,0x06,0x08,0x0A,0x0C,0x10,0x14,0x1B,0x21,0x26,0x28,0x2A,0x2C,0x2C,0x2C,0x2D},
@@ -703,7 +705,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {0x1E,0x22,0x26,0x2C,0x31,0x39,0x40,0x46,0x48,0x4A,0x4A,0x4B,0x4D,0x4E,0x4E,0x4E},
     {0x1E,0x21,0x25,0x29,0x2F,0x36,0x3F,0x45,0x49,0x4B,0x4C,0x4D,0x4F,0x4F,0x4F,0x4F}
    },
-   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //карта температурной коррекции УОЗ
+   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //Correction of ignition timing vs CLT
 
    //Maps for fuel injection
    /**Fill VE lookup table, value can be in range 0...1.99 / Таблица задающая коэффициент наполнения цилиндра */
@@ -856,6 +858,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00)},
+
+   /**Fill gas temperature's correction lookup table, coefficient vs gas temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+   },
+
+   /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
+   {
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+   },
 
    /**reserved bytes */
    {0}
@@ -1037,6 +1052,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00)},
 
+   /**Fill gas temperature's correction lookup table, coefficient vs gas temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+   },
+
+   /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
+   {
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1216,6 +1244,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00)},
 
+   /**Fill gas temperature's correction lookup table, coefficient vs gas temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+   },
+
+   /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
+   {
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1394,6 +1435,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00)},
+
+   /**Fill gas temperature's correction lookup table, coefficient vs gas temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+   },
+
+   /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
+   {
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+   },
 
    /**reserved bytes */
    {0}
@@ -1603,6 +1657,19 @@ PGM_DECLARE(f_data_t tt_def_data) =
 
  //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
  {_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00)},
+
+ /**Fill gas temperature's correction lookup table, coefficient vs gas temperature */
+ {// -30         -20        -10         0        10            20         30        40
+  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+  //  50          60         70        80        90           100        110       120
+  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+ },
+
+ /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
+ {
+  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+  _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+ },
 
  /**reserved bytes */
  {0}

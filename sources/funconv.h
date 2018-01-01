@@ -306,7 +306,7 @@ int16_t barocorr_lookup(void);
  */
 void calc_lookup_args(void);
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) && !defined(SECU3T)
 /** Calculate PW correction from gas temperature using a lookup table
  * Uses d ECU data structure
  * \return coefficient * 128, range 0...1.99

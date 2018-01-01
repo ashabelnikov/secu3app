@@ -1058,7 +1058,7 @@ int16_t barocorr_lookup(void)
 
 #endif
 
-#ifdef FUEL_INJECT
+#if defined(FUEL_INJECT) && !defined(SECU3T)
 uint8_t inj_gts_pwcorr(void)
 {
  int16_t i, i1, t = d.sens.tmp2;

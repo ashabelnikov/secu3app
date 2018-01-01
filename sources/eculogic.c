@@ -161,11 +161,13 @@ static void fuel_calc(void)
  if (d.param.barocorr_type)
   pw = (pw * barocorr_lookup()) >> 12;           //apply barometric correction
 
+#ifndef SECU3T
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
  {
   pw = (pw * inj_gts_pwcorr()) >> 7;              //apply gas temperature correction
   pw = (pw * inj_gps_pwcorr()) >> 7;              //apply gas pressure correction
  }
+#endif
 
  d.inj_pw_raw = lim_inj_pw(&pw);
  d.inj_dt = accumulation_time(1);                //apply dead time
@@ -249,12 +251,13 @@ void ignlogic_system_state_machine(void)
    uint32_t pw = inj_cranking_pw();
    if (d.param.barocorr_type)
     pw = (pw * barocorr_lookup()) >> 12;             //apply barometric correction
-
+#ifndef SECU3T
    if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
    {
     pw = (pw * inj_gts_pwcorr()) >> 7;               //apply gas temperature correction
     pw = (pw * inj_gps_pwcorr()) >> 7;               //apply gas pressure correction
    }
+#endif
    d.inj_pw_raw = lim_inj_pw(&pw);
    d.inj_dt = accumulation_time(1);                  //apply dead time
    pw+= d.inj_dt;

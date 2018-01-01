@@ -211,6 +211,7 @@ void init_ports(void)
 #endif
 }
 
+#ifdef FUEL_INJECT
 /** Checks for conditions activating engine blowing mode
  * \return 1 - engine blowing should be active, 0 - not active
  */
@@ -218,6 +219,7 @@ static uint8_t engine_blowing_cond(void)
 {
  return (d.sens.tps > TPS_MAGNITUDE(70.0)) && (d.engine_mode == EM_START);
 }
+#endif
 
 /**Initialization of system modules
  */

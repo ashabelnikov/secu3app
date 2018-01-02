@@ -30,7 +30,13 @@ CFLAGS += -s9
 #CFLAGS += --cross_call_passes=1 --do_cross_call
 CFLAGS += --eeprom_size $(EE_SIZE)
 CFLAGS += --dlib_config "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.h"
-#CFLAGS += --diag_suppress Pa050
+
+# non-native end of line sequence detected (this diagnostic is only issued once)
+CFLAGS += --diag_suppress Pa050
+# this pragma must immediately precede a declaration
+CFLAGS += --diag_suppress Pe606
+# undefined behavior: the order of volatile accesses is undefined in this statement
+CFLAGS += --diag_suppress Pa082
 
 # Linker flags
 LDFLAGS = -Fintel-standard -xs -s main

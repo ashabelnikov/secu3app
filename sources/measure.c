@@ -30,6 +30,7 @@
 #include "port/port.h"
 #include <stdlib.h>
 #include "bitmask.h"
+#include "camsens.h"    //cams_enable_cam()
 #include "ce_errors.h"
 #include "ecudata.h"
 #include "eculogic.h"

@@ -73,6 +73,19 @@ void ignlogic_init(void)
 
 #ifdef FUEL_INJECT
 
+#ifndef SECU3T
+/** Applies gas temperature and pressure corrections (coefficients) to the inj. PW
+ * \param pw PW to be corrected
+ * \return Corrected PW
+ */
+uint32_t pw_gascorr(uint32_t pw)
+{
+ pw = (pw * inj_gts_pwcorr()) >> 7;              //apply gas temperature correction
+ pw = (pw * inj_gps_pwcorr()) >> 7;              //apply gas pressure correction
+ return pw;
+}
+#endif
+
 /**Limit value of injection PW
  * \return limited value (16 bit)
  */
@@ -163,10 +176,7 @@ static void fuel_calc(void)
 
 #ifndef SECU3T
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
- {
-  pw = (pw * inj_gts_pwcorr()) >> 7;              //apply gas temperature correction
-  pw = (pw * inj_gps_pwcorr()) >> 7;              //apply gas pressure correction
- }
+  pw = pw_gascorr(pw);                              //apply gas corrections
 #endif
 
  d.inj_pw_raw = lim_inj_pw(&pw);
@@ -253,10 +263,7 @@ void ignlogic_system_state_machine(void)
     pw = (pw * barocorr_lookup()) >> 12;             //apply barometric correction
 #ifndef SECU3T
    if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
-   {
-    pw = (pw * inj_gts_pwcorr()) >> 7;               //apply gas temperature correction
-    pw = (pw * inj_gps_pwcorr()) >> 7;               //apply gas pressure correction
-   }
+    pw = pw_gascorr(pw);                              //apply gas corrections
 #endif
    d.inj_pw_raw = lim_inj_pw(&pw);
    d.inj_dt = accumulation_time(1);                  //apply dead time

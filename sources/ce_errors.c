@@ -54,7 +54,7 @@ typedef struct
 }ce_state_t;
 
 /**State variables */
-ce_state_t ce_state = {0,0,0,0,0,0,255};
+ce_state_t ce_state = {0,0,0,0,0,0,0};
 
 //operations under errors
 /*#pragma inline*/
@@ -283,11 +283,11 @@ void ce_init_ports(void)
 void ce_stroke_event_notification(void)
 {
  //Stop to indicate these errors after starting of engine (after a certain number of strokes)
- if (ce_state.turnout_low_priority_errors_counter == 1)
+ if (ce_state.turnout_low_priority_errors_counter == 254)
  {
   ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
   ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);
  }
- if (ce_state.turnout_low_priority_errors_counter > 0)
-  ce_state.turnout_low_priority_errors_counter--;
+ if (ce_state.turnout_low_priority_errors_counter < 255)
+  ce_state.turnout_low_priority_errors_counter++;
 }

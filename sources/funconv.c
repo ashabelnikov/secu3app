@@ -405,9 +405,9 @@ int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab)
  int16_t i, i1;
 
  //Voltage value at the start of axis in ADC discretes
- uint16_t v_start = PGM_GET_WORD(&lutab[THERMISTOR_LOOKUP_TABLE_SIZE-2]);
+ uint16_t v_start = PGM_GET_WORD(&lutab[THERMISTOR_LOOKUP_TABLE_SIZE]);
  //Voltage value at the end of axis in ADC discretes
- uint16_t v_end = PGM_GET_WORD(&lutab[THERMISTOR_LOOKUP_TABLE_SIZE-1]);
+ uint16_t v_end = PGM_GET_WORD(&lutab[THERMISTOR_LOOKUP_TABLE_SIZE+1]);
 
  uint16_t v_step = (v_end - v_start) / (THERMISTOR_LOOKUP_TABLE_SIZE - 1);
 

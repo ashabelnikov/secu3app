@@ -239,6 +239,9 @@ static int16_t calc_sm_position(uint8_t pwm)
   else if (gds.aftstr_enrich_counter)
    pos= ((int32_t)pos * (128 + scale_aftstr_enrich(gds.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
 
+  if (d.param.barocorr_type)
+   pos = (((int32_t)pos) * barocorr_lookup()) >> 12;           //apply barometric correction
+
   pos = pos - (d.ie_valve ? 0 : d.param.gd_fc_closing); //apply fuel cut flag
 
   pos = (d.fc_revlim ? 0 : pos); //apply rev.limit flag

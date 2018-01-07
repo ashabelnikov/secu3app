@@ -176,6 +176,8 @@ typedef struct ecudata_t
  struct sensors_t sens;                  //!< --sensors
  struct correct_t corr;                  //!< --calculated corrections and lookup tables' values
 
+ uint16_t load;                          //!< value * 64
+
  uint8_t  ie_valve;                      //!< State of Idle cut off valve
  uint8_t  fe_valve;                      //!< State of Power valve
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

@@ -87,34 +87,35 @@ typedef struct
  uint8_t ta_i;         //!< index
  uint8_t ta_i1;        //!< index + 1
  int16_t ta_clt;       //!< temperature (CLT)
+ //precalculated values:
+ int16_t vecurr;       //!< current value of VE (value * 2048)
+ int16_t afrcurr;      //!< current value of AFR (value * 256)
 }fcs_t;
 
 /**Instance of state variables*/
 fcs_t fcs = {0};
 
-
-/*
+/* Calculates synthetic load values basing on MAP, TPS and TPS switch point table
  * Uses d ECU data structure
+ * \return load value in % * 64 (0...100%)
  */
-static void calc_sdl_args(void)
+static int16_t calc_synthetic_load(void)
 {
- fcs.la_load = (d.param.map_upper_pressure - d.sens.map);
- if (fcs.la_load < 0) fcs.la_load = 0;
+ int16_t load = ROUND(50.0 * 64); //50%
+ uint16_t pbaro = (((uint32_t)d.sens.baro_press) * ROUND(0.9*16384)) >> 14; //90% of barometric pressure
 
- //map_upper_pressure - value of the upper pressure, map_lower_pressure - value of the lower pressure
- //todo: replace division by 1/x multiplication
- fcs.la_grad = (d.param.map_upper_pressure - d.param.map_lower_pressure) / (F_WRK_POINTS_L-1); //divide by number of points on the MAP axis - 1
- if (fcs.la_grad < 1)
-  fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
-}
+ if (d.sens.map < pbaro)
+ { //find value on the load axis corresponding to current MAP
+  load = (((int32_t) d.sens.map * load) / pbaro);
+ }
+ else
+ {
+  uint16_t swtpt = tpsswt_function(); //% * 2
+  if (d.sens.tps >= swtpt) //find value on the load axis corresponding to current TPS
+   load = simple_interpolation(d.sens.tps, load, ROUND(100.0*64), swtpt, (TPS_MAGNITUDE(100.0) - swtpt), 4) >> 2;
+ }
 
-/*
- * Uses d ECU data structure
- */
-static void calc_anl_args(void)
-{
- fcs.la_load = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
- fcs.la_grad = TPS_AXIS_STEP;
+ return load;
 }
 
 /**Calculates argument values needed for some 2d and 3d lookup tables. Fills la_x values in the fcs_t structure
@@ -136,17 +137,22 @@ void calc_lookup_args(void)
  fcs.la_fp1 = fcs.la_f + 1;
 
  //-----------------------------------------
- if (d.param.load_src_cfg == 0) //Speed-density
-  calc_sdl_args();
+ if (d.param.load_src_cfg == 0)      //Speed-density
+  d.load = d.sens.map;
  else if (d.param.load_src_cfg == 1) //Alpha-N
-  calc_anl_args();
- else  //mixed (MAP+TPS)
- {
-  if (d.sens.tps >= tpsswt_function())
-   calc_anl_args(); //TPS
-  else
-   calc_sdl_args(); //MAP
- }
+  d.load = d.sens.tps << 5;
+ else                                //mixed (MAP+TPS)
+  d.load = calc_synthetic_load();
+
+ //Calculate arguments for load axis:
+ fcs.la_load = (d.param.load_upper - d.load);
+ if (fcs.la_load < 0) fcs.la_load = 0;
+
+ //load_upper - value of the upper load, load_lower - value of the lower load
+ //todo: replace division by 1/x multiplication
+ fcs.la_grad = (d.param.load_upper - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
+ if (fcs.la_grad < 1)
+  fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
 
  fcs.la_l = (fcs.la_load / fcs.la_grad);
 
@@ -547,24 +553,42 @@ uint16_t inj_cranking_pw(void)
  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
 }
 
+void calc_ve_afr(void)
+{
+ //look into VE table
+ fcs.vecurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
+        _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
+        _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
+        _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        fcs.la_grad, 8) >> 3;
+
+ //look into AFR table
+ fcs.afrcurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
+        _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
+        _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
+        _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        fcs.la_grad, 16);
+ fcs.afrcurr+=(8*256);
+
+ d.corr.afr = fcs.afrcurr >> 1; //update value of AFR
+}
+
 #endif
 
 #ifdef FUEL_INJECT
 
 uint16_t calc_airflow(void)
-{/*
- uint32_t x_raw;
- if (d.param.load_src_cfg == 1) //Alpha-N
-  x_raw = ((int32_t)d.sens.inst_frq * d.sens.tps) >> 6; //value / 32
- else //Speed-density or mixed
-  x_raw = ((int32_t)d.sens.inst_frq * d.sens.map) >> (6+5); //value / 32
- return (x_raw > 65535) ? 65535 : x_raw;
-*/
-
- uint16_t load = d.sens.map;
- if (d.param.load_src_cfg == 1) //Alpha-N
-  load = d.sens.tps << 5;
- uint32_t x_raw = ((int32_t)d.sens.inst_frq * load) >> (6+5); //value / 32
+{
+ uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.load) >> (6+5); //value / 32
+ x_raw = (x_raw * fcs.vecurr) >> 11; //apply VE
  return (x_raw > 65535) ? 65535 : x_raw;
 }
 
@@ -607,7 +631,6 @@ static int16_t inj_corrected_mat(void)
 
 uint16_t inj_base_pw(void)
 {
- int16_t  afr;
  uint32_t pw32;
  uint8_t  nsht = 0; //no division
 
@@ -624,40 +647,18 @@ uint16_t inj_base_pw(void)
   if (d.sens.map > PRESSURE_MAGNITUDE(250.0))
    nsht = 2;        //pressure will be divided by 4
   else if (d.sens.map > PRESSURE_MAGNITUDE(125.0))
-   nsht = 1;        //pressure will be devided by 2
+   nsht = 1;        //pressure will be divided by 2
 
   pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const[d.sens.gas]) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
  }
 
  pw32>>=(4-nsht);  //after this shift pw32 value is basic pulse width, nsht compensates previous divide of MAP
 
- //apply VE table
- pw32*= bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
-        _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
-        _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
-        _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 8) >> 3;
- pw32>>=(11);
+ //apply VE
+ pw32 = (pw32 * fcs.vecurr) >> 11;
 
- //apply AFR table
- afr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
-        _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
-        _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
-        _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 16);
- afr+=(8*256);
-
- pw32=(pw32 * nr_1x_afr(afr << 2)) >> 15;
-
- d.corr.afr = afr >> 1;     //update value of AFR
+ //apply AFR
+ pw32=(pw32 * nr_1x_afr(fcs.afrcurr << 2)) >> 15; //apply AFR table
 
  //return restricted value (16 bit)
  return ((pw32 > 65535) ? 65535 : pw32);
@@ -813,8 +814,8 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  //normalize values (function argument components)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
- int16_t dload = (((int32_t)abs(d.sens.map - targ_map) * (int16_t)128 * k_load) / (d.param.map_upper_pressure - d.param.map_lower_pressure)) >> 2;
- int16_t drpm = (((int32_t)abs(d.sens.inst_frq - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
+ int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)128 * k_load) / (d.param.load_upper - d.param.load_lower)) >> 2; //TODO: use d.sens.map or d.load ???
+ int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_frq) - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)
  int16_t i, i1, R = ui32_sqrt(((int32_t)dload * dload) + ((int32_t)drpm * drpm));
@@ -822,7 +823,7 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  if (R > RAD_MAG(1.0))
   R = RAD_MAG(1.0);
 
- i = R / RAD_MAG(0.1428);   //0.1428 - hirizontal axis step
+ i = R / RAD_MAG(0.1428);   //0.1428 - horizontal axis step
 
  if (i >= INJ_IDL_RIGIDITY_SIZE-1) i = i1 = INJ_IDL_RIGIDITY_SIZE-1;
   else i1 = i + 1;
@@ -919,38 +920,11 @@ int16_t pa4_function(uint16_t adcvalue)
  */
 uint16_t gd_ve_afr(void)
 {
- int16_t afr;
- int32_t corr;
-
- //apply VE table, bilinear_interpolation() returns value * 8
- corr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned
-        _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
-        _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
-        _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 8);
-
- //calculate AFR value, returned value * 16
- afr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
-        _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
-        _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
-        _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 16);
-
- afr+=(8*256); //offset by 8 to obtain normal value
+ int32_t corr = fcs.vecurr; //apply VE table
 
  corr=(corr * ((uint16_t)d.param.gd_lambda_stoichval)) >> 7; // multiply by stoichiometry AFR value specified by user
 
- corr=(corr * nr_1x_afr(afr << 2)) >> 15+3;  //apply AFR value, shift by additional 3 bits, because now corr is multiplied by 2048*8 = 16384
-
- d.corr.afr = afr >> 1; //update value of AFR
+ corr=(corr * nr_1x_afr(fcs.afrcurr << 2)) >> 15;  //apply AFR value
 
  return corr; //return correction value * 2048
 }

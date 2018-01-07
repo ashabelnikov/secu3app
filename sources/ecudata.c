@@ -40,6 +40,8 @@ struct ecudata_t d =
  .sens = {0},
  .corr = {0},
 
+ .load = 0,
+
  .ie_valve = 0,
  .fe_valve = 0,
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

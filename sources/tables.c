@@ -342,8 +342,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .starter_off =                 600,
   .smap_abandon =                650,
 
-  .map_lower_pressure =          1920,
-  .map_upper_pressure =          6400,
+  .load_lower =                  1920,
+  .load_upper =                  6400,
   .map_curve_offset =            54,
   .map_curve_gradient =          1089,
   .map2_curve_offset =           54,

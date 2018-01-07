@@ -136,6 +136,11 @@ int16_t airtemp_function(void);
  * \return Cranking pulse width in ticks of timer (1 tick = 3.2uS)
  */
 uint16_t inj_cranking_pw(void);
+
+/** Updates precalculated values of VE and AFR
+ * Uses d ECU data structure
+ */
+void calc_ve_afr(void);
 #endif
 
 #ifdef FUEL_INJECT

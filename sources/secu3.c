@@ -420,6 +420,7 @@ MAIN()
   }
 
   //----------continious execution-----------------------------------------
+  //note: order of calls matters! Pay special attention if you are going to change it!
   //process and execute suspended operations
   sop_execute_operations();
   //Detection and recording of errors (checking engine)
@@ -436,10 +437,10 @@ MAIN()
   meas_take_discrete_inputs();
   //calculate arguments for lookup tables
   calc_lookup_args();
-  //control peripheral devices (actuators)
-  control_engine_units();
   //System's state machine core (dispatcher of modes)
   ignlogic_system_state_machine();
+  //control peripheral devices (actuators)
+  control_engine_units();
 
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)

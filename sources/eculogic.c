@@ -188,14 +188,17 @@ static void fuel_calc(void)
 }
 #endif
 
-/** Measures barometric pressure and stores result into d.baro_press variable
+/** Measures barometric pressure and stores result into d.baro_press variable.
+ *  If barocorrection is turned off, then baro_press variable receives value = 101.3kPa
  */
 void sample_baro_pressure(void)
 {
- if (d.param.barocorr_type < 3)
+ if (d.param.barocorr_type == 0) //disabled
+  d.sens.baro_press = PRESSURE_MAGNITUDE(101.3); //default, use atmospheric pressure measured from sea level
+ else if (d.param.barocorr_type < 3)  //static or dynamic corr. using primary MAP
   d.sens.baro_press = d.sens.map;
 #ifndef SECU3T
- else //additional MAP (SECU-3i only)
+ else //additional MAP, dynamic corr. (SECU-3i only)
   d.sens.baro_press = d.sens.map2;
 #endif
 
@@ -216,6 +219,10 @@ void ignlogic_system_state_machine(void)
  //Sample atmospheric pressure each loop if dynamic barocorrection selected (either from MAP1 or MAP2)
  if (d.param.barocorr_type > 1)
   sample_baro_pressure();
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ calc_ve_afr();
+#endif
 
  switch(d.engine_mode)
  {

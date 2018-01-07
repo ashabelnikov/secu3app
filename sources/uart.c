@@ -432,8 +432,8 @@ void uart_send_packet(uint8_t send_mode)
   case FUNSET_PAR:
    build_i8h(d.param.fn_gasoline);
    build_i8h(d.param.fn_gas);
-   build_i16h(d.param.map_lower_pressure);
-   build_i16h(d.param.map_upper_pressure);
+   build_i16h(d.param.load_lower);
+   build_i16h(d.param.load_upper);
    build_i16h(d.param.map_curve_offset);
    build_i16h(d.param.map_curve_gradient);
    build_i16h(d.param.map2_curve_offset);   //map2
@@ -1172,8 +1172,8 @@ uint8_t uart_recept_packet(void)
    if (temp < TABLES_NUMBER)
     d.param.fn_gas = temp;
 
-   d.param.map_lower_pressure = recept_i16h();
-   d.param.map_upper_pressure = recept_i16h();
+   d.param.load_lower = recept_i16h();
+   d.param.load_upper = recept_i16h();
    d.param.map_curve_offset = recept_i16h();
    d.param.map_curve_gradient = recept_i16h();
    d.param.map2_curve_offset = recept_i16h();   //map2

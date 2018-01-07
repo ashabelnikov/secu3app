@@ -46,7 +46,7 @@ void pwrvalve_control(void)
 {
  int16_t discharge;
 
- discharge = (d.param.map_upper_pressure - d.sens.map);
+ discharge = (d.sens.baro_press - d.sens.map);
  if (discharge < 0)
   discharge = 0;
  d.fe_valve = discharge < d.param.fe_on_threshold;

@@ -338,8 +338,8 @@ typedef struct params_t
   uint16_t smap_abandon;                 //!< RPM when switching from start map(min-1)
 
   // MAP sensor
-  uint16_t map_lower_pressure;           //!< lower value of MAP at the axis of table(work map) (kPa)
-  int16_t  map_upper_pressure;           //!< upper value of MAP at the axis of table(work map) (kPa)
+  uint16_t load_lower;                   //!< value of load corresponding to the beginning of load axis in lookup tables
+  int16_t  load_upper;                   //!< value of load corresponding to the end of load axis in lookup tables
   int16_t  map_curve_offset;             //!< offset of curve in volts, can be negative
   int16_t  map_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
   int16_t  map2_curve_offset;            //!< offset of curve in volts, can be negative

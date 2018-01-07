@@ -97,13 +97,13 @@ void carbafr_init(void)
  cas.state = 0;
 }
 
-/** Get discharge in kPa units
+/** Get discharge in kPa units relatively to atmospheric pressure
  * Uses d ECU data structure
  * \return discharge value in kPa
  */
 static int16_t get_discharge(void)
 {
- int16_t discharge = (d.param.map_upper_pressure - d.sens.map);
+ int16_t discharge = (d.sens.baro_press - d.sens.map);
  return (discharge < 0) ? 0 : discharge;
 }
 

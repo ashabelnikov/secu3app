@@ -66,7 +66,7 @@
 #define ETMT_TPSSWT_MAP 22  //!< MAP/TPS switch point
 #define ETMT_GTSC_MAP 23    //!< PW correction from gas temperature
 #define ETMT_GPSC_MAP 24    //!< PW correction from gas pressure
-
+#define ETMT_ATSC_MAP 25    //!< PW correction from air temperature
 
 /**Define internal state variables */
 typedef struct
@@ -995,6 +995,11 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_GPSC_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_gps_corr, INJ_GPS_CORR_SIZE+2);
+     state = ETMT_ATSC_MAP;
+     break;
+    case ETMT_ATSC_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_ats_corr, INJ_ATS_CORR_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -1460,6 +1465,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_GPSC_MAP: //PW correction from gas pressure
      recept_rb(((uint8_t*)&d.tables_ram.inj_gps_corr) + addr, INJ_GPS_CORR_SIZE+2); /*INJ_GPS_CORR_SIZE+2 max*/
+     break;
+    case ETMT_ATSC_MAP: //PW correction from air temperature
+     recept_rb(((uint8_t*)&d.tables_ram.inj_ats_corr) + addr, INJ_ATS_CORR_SIZE); /*INJ_ATS_CORR_SIZE max*/
      break;
    }
   }

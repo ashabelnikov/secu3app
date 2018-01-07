@@ -872,6 +872,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
    },
 
+   /**Fill air temperature's correction lookup table (inj.), coefficient vs air temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1063,6 +1070,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+   },
+
+   /**Fill air temperature's correction lookup table (inj.), coefficient vs air temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
    },
 
    /**reserved bytes */
@@ -1257,6 +1271,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
    },
 
+   /**Fill air temperature's correction lookup table (inj.), coefficient vs air temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
+   },
+
    /**reserved bytes */
    {0}
   },
@@ -1447,6 +1468,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+   },
+
+   /**Fill air temperature's correction lookup table (inj.), coefficient vs air temperature */
+   {// -30         -20        -10         0        10            20         30        40
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    //  50          60         70        80        90           100        110       120
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
    },
 
    /**reserved bytes */
@@ -1669,6 +1697,13 @@ PGM_DECLARE(f_data_t tt_def_data) =
  {
   _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
   _ER(1.00), _GPSX(100.0), _GPSX(400.0),
+ },
+
+ /**Fill air temperature's correction lookup table (inj.), coefficient vs air temperature */
+ {// -30         -20        -10         0        10            20         30        40
+  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+  //  50          60         70        80        90           100        110       120
+  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
  },
 
  /**reserved bytes */

@@ -163,6 +163,10 @@ int16_t manual_igntim(void)
 static void fuel_calc(void)
 {
  uint32_t pw = inj_base_pw();
+
+ if (CHECKBIT(d.param.inj_flags, INJFLG_USEAIRDEN))
+  pw = (pw * inj_airtemp_corr()) >> 7;           //apply air density correction (if enabled)
+
  pw = (pw * inj_warmup_en()) >> 7;              //apply warmup enrichemnt factor
  if (lgs.aftstr_enrich_counter)
   pw= (pw * (128 + scale_aftstr_enrich(lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor

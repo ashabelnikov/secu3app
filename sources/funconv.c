@@ -581,10 +581,6 @@ void calc_ve_afr(void)
  d.corr.afr = fcs.afrcurr >> 1; //update value of AFR
 }
 
-#endif
-
-#ifdef FUEL_INJECT
-
 uint16_t calc_airflow(void)
 {
  uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.load) >> (6+5); //value / 32
@@ -628,6 +624,10 @@ static int16_t inj_corrected_mat(void)
  //at this point coefficient is multiplied by 16384
  return (int16_t)(((int32_t)(d.sens.temperat - d.sens.air_temp) * coeff) >> (13+1)) + d.sens.air_temp;
 }
+
+#endif
+
+#ifdef FUEL_INJECT
 
 uint16_t inj_base_pw(void)
 {
@@ -1006,7 +1006,6 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter)
  return ((uint16_t)inj_aftstr_en() * (aftstr_strokes - counter)) / aftstr_strokes;
 }
 
-
 int16_t barocorr_lookup(void)
 {
  int16_t i, i1, press = d.sens.baro_press;
@@ -1028,6 +1027,27 @@ int16_t barocorr_lookup(void)
 
  return (simple_interpolation(press, (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i1]), //<--values in table are signed
         (i * p_step) + p_start, p_step, 4)) >> 2;
+}
+
+uint8_t inj_airtemp_corr(void)
+{
+ int16_t i, i1, t = inj_corrected_mat(); //use corrected MAT instead of raw value
+
+ if (!IOCFG_CHECK(IOP_AIR_TEMP))
+  return 128;   //do not use correcton if air temperature sensor is turned off
+
+ //-30 - minimum temperature value
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_ATS_CORR_SIZE-1) i = i1 = INJ_ATS_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GBU(inj_ats_corr[i]), _GBU(inj_ats_corr[i1]), //<--values in table are signed
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
 #endif

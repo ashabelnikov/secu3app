@@ -38,8 +38,7 @@
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
 
-
-#if !defined(CARB_AFR) || defined(GD_CONTROL)
+#if (defined(FUEL_INJECT) && defined(GD_CONTROL)) || (!defined(FUEL_INJECT) && (!defined(CARB_AFR) || defined(GD_CONTROL)))
 /** Fuel cut control logic for carburetor or gas doser
  * Uses d ECU data structure
  * \param apply Apply to phisical output - 1, or not - 0 (IE will be turned off)
@@ -117,7 +116,9 @@ void fuelcut_control(void)
   state = 0;
  }
 
+#ifdef GD_CONTROL
 revlim:
+#endif
  //simple Rev. limitter
  if (d.sens.inst_frq > d.param.revlim_hit)
  {

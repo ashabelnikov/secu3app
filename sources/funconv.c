@@ -230,6 +230,15 @@ int16_t coolant_function(void)
  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
+int16_t crkclt_function(void)
+{
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return 0;   //no correction if CLT sensor is turned off
+
+ return simple_interpolation(fcs.ta_clt, (int8_t)PGM_GET_BYTE(&fw_data.exdata.cts_crkcorr[fcs.ta_i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.cts_crkcorr[fcs.ta_i1]),
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
+}
+
 //Регулятор холостого хода РХХ
 /**Describes state data for idling regulator */
 typedef struct

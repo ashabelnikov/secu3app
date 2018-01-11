@@ -676,6 +676,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)
   },
 
+  //Correction of ignition timing vs CLT on cranking
+  {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},
+
   /**reserved bytes*/
   {0}
  },

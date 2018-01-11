@@ -57,6 +57,12 @@ int16_t work_function(void);
  */
 int16_t coolant_function(void);
 
+/** Calculates advance angle correction for cranking using coolant temperature
+ * Uses d ECU data structure
+ * \return value of advance angle * 32
+ */
+int16_t crkclt_function(void);
+
 /** Knock attenuator look up table function
  * Uses d ECU data structure
  * \return

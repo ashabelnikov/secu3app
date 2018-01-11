@@ -104,6 +104,7 @@
 #define INJ_GTS_CORR_SIZE               16          //!< Size of gas temperature correction map
 #define INJ_GPS_CORR_SIZE               9           //!< Size of gas pressure correction map
 #define INJ_ATS_CORR_SIZE               16          //!< Size of air temperature correction map
+#define CTS_CRKCORR_SIZE                16          //!< Size of cranking ign.timing correction vs CLT map
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -314,10 +315,13 @@ typedef struct fw_ex_data_t
   /**TEMP2 sensor's temperature vs voltage. 16 points of function, plus two values for setting of x-axis range*/
   int16_t tmp2_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
 
+  /**CLT temperature correction of advance angle on cranking*/
+  int8_t cts_crkcorr[CTS_CRKCORR_SIZE];
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[52];
+  uint8_t reserved[36];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

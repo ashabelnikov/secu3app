@@ -543,7 +543,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .barocorr_type =               0,                   //no barometric correction
 
-//.reserved =                    {0},
+  .inj_floodclear_tps =          TPS_MAGNITUDE(75.0),
+
+  .reserved =                    {0},
   .crc =                         0
  },
 
@@ -880,10 +882,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   },
+   }//,
 
    /**reserved bytes */
-   {0}
+//   {0}
   },
 
   {
@@ -1080,10 +1082,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   },
+   }//,
 
    /**reserved bytes */
-   {0}
+//   {0}
   },
 
   {
@@ -1279,10 +1281,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   },
+   }//,
 
    /**reserved bytes */
-   {0}
+//   {0}
   },
 
   {//Ignition maps
@@ -1478,10 +1480,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   },
+   }//,
 
    /**reserved bytes */
-   {0}
+  // {0}
   }
  },
 
@@ -1707,10 +1709,10 @@ PGM_DECLARE(f_data_t tt_def_data) =
   _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
   //  50          60         70        80        90           100        110       120
   _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
- },
+ }//,
 
  /**reserved bytes */
- {0}
+// {0}
 };
 #endif
 #endif

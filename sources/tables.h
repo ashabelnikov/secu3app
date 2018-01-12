@@ -230,7 +230,7 @@ typedef struct f_data_t
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[5];
+//  uint8_t reserved[0];
 }f_data_t;
 
 
@@ -322,7 +322,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[36];
+  uint8_t reserved[51];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -563,10 +563,12 @@ typedef struct params_t
 
   uint8_t barocorr_type;                 //!< Values: 0 - not barocorrection, 1 - static corr. using primary MAP, 2 - dynamic corr. using primary MAP, 3 - dynamic corr. using additional MAP (SECU-3i only)
 
+  uint8_t inj_floodclear_tps;            //!< TPS Threshold for entering fllod clear mode before cranking, 0 - means that flood clear is disabled
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-//uint8_t  reserved[0];
+  uint8_t  reserved[4];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;
@@ -609,8 +611,7 @@ typedef struct cd_data_t
 }cd_data_t;
 
 
-/**Описывает все данные находящиеся в прошивке 
- * Describes all data residing in firmware */
+/** Describes all data residing in the firmware */
 typedef struct fw_data_t
 {
  cd_data_t cddata;                       //!< All data which is strongly coupled with code

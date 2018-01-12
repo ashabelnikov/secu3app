@@ -217,7 +217,7 @@ void init_ports(void)
  */
 static uint8_t engine_blowing_cond(void)
 {
- return (d.sens.tps > TPS_MAGNITUDE(70.0)) && (d.engine_mode == EM_START);
+ return ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
 }
 #endif
 

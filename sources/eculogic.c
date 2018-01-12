@@ -264,9 +264,9 @@ void ignlogic_system_state_machine(void)
 #endif
    }
    angle = d.corr.strt_aalt = start_function();     //basic ignition timing - cranking map
-   d.corr.cclt_aalt = crkclt_function();            //CLT corr.
-   angle+=d.corr.cclt_aalt;
-   d.corr.idle_aalt = d.corr.work_aalt = d.corr.temp_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
+   d.corr.temp_aalt = crkclt_function();            //CLT corr. on cranking
+   angle+=d.corr.temp_aalt;
+   d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
    d.airflow = 0;                                   //no "air flow" on cranking
 
 #ifdef FUEL_INJECT
@@ -300,7 +300,6 @@ void ignlogic_system_state_machine(void)
    {
     d.engine_mode = EM_WORK;
    }
-   d.corr.cclt_aalt = 0; //use only on cranking
    angle = d.corr.idle_aalt = idling_function(); //basic ignition timing - idling map
    d.corr.temp_aalt = coolant_function();      //add CLT correction to ignition timing
    angle+=d.corr.temp_aalt;

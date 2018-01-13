@@ -383,7 +383,7 @@ typedef struct params_t
 
   // Idling regulator (via advance angle)
   uint8_t  idl_flags;                    //!< Idling regulator flags (see IRF_x constants for more information)
-  uint16_t idling_rpm;                   //!< selected idling RPM regulated by using advance angle
+  uint16_t idling_rpm;                   //!< selected idling RPM regulated by using of advance angle
   int16_t  ifac1;                        //!< Idling regulator's factor for positive error (value * 256)
   int16_t  ifac2;                        //!< Idling regulator's factor for negative error (value * 256)
   int16_t  MINEFR;                       //!< dead band of idling regulator (min-1)

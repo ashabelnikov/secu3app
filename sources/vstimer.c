@@ -68,8 +68,6 @@ extern uint8_t sm_pulse_state;
 extern volatile uint16_t sm_steps_cnt;
 extern volatile uint8_t sm_freq;
 uint8_t sm_divider = 0;
-extern volatile uint8_t gd_freq;
-uint8_t gd_divider = 0;
 #endif
 
 #ifdef GD_CONTROL
@@ -79,6 +77,8 @@ extern volatile uint8_t gdsm_latch;
 extern uint16_t gdsm_steps_b;
 extern uint8_t gdsm_pulse_state;
 extern volatile uint16_t gdsm_steps_cnt;
+extern volatile uint8_t gd_freq;
+uint8_t gd_divider = 0;
 #endif
 
 #ifdef CARB_AFR

@@ -387,6 +387,7 @@ MAIN()
    #ifdef INTK_HEATING
    intkheat_cog_changed_notification();
    #endif
+   vent_cog_changed_notification();
   }
 
   if (s_timer_is_action(engine_rotation_timeout_counter))

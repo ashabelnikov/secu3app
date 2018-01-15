@@ -565,10 +565,12 @@ typedef struct params_t
 
   uint8_t inj_floodclear_tps;            //!< TPS Threshold for entering fllod clear mode before cranking, 0 - means that flood clear is disabled
 
+  uint16_t vent_tmr;                     //!< How long cooling fan will work on stopped engine, 1 discrete = 10ms
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[4];
+  uint8_t  reserved[2];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

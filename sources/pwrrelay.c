@@ -43,7 +43,7 @@
 /**Define state variables */
 typedef struct
 {
- uint8_t state;    //!< state mashine for managing of power states
+ uint8_t state;   //!< state mashine for managing of power states
  uint8_t pwrdown;  //!< power-down flag
 }pwrstate_t;
 
@@ -57,6 +57,29 @@ void pwrrelay_init_ports(void)
 #endif
 }
 
+/** Check for engine temperature is ready (Ok).
+  * Uses d ECU data structure
+  * \return 1 - ready, 0 - not ready (too hot). If CLT sensor is turned off or ECF reassigned to other function,
+  * then this function will always return 1 (ready).
+  */
+static uint8_t clt_is_ready(void)
+{
+ uint8_t temperature_ok = 1;
+ if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && IOCFG_CHECK(IOP_ECF))
+ {
+#ifdef COOLINGFAN_PWM
+  if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM)) //PWM is available and enabled
+   temperature_ok = (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(3.0)));
+  else //PWM is available, but disabled
+   temperature_ok = (d.sens.temperat <= (d.param.vent_off));
+#else
+  //PWM is not available
+  temperature_ok = (d.sens.temperat <= (d.param.vent_off));
+#endif
+ }
+ return temperature_ok;
+}
+
 void pwrrelay_control(void)
 {
  //if this feature is disabled, then do nothing
@@ -67,30 +90,17 @@ void pwrrelay_control(void)
  if (pwrs.pwrdown)
  {//ignition is off
 
-  //We will wait while temperature is high only if temperature sensor is enabled
-  //and control of electric cooling fan is used.
-  uint8_t temperature_ok = 1;
-  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && IOCFG_CHECK(IOP_ECF))
+  //set timeout
+  if (0==pwrs.state)
   {
-#ifdef COOLINGFAN_PWM
-   if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM)) //PWM is available and enabled
-    temperature_ok = (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(2.0)));
-   else //PWM is available, but disabled
-    temperature_ok = (d.sens.temperat <= (d.param.vent_off));
-#else
-   //PWM is not available
-   temperature_ok = (d.sens.temperat <= (d.param.vent_off));
-#endif
-
-   //set timeout
-   if (0==pwrs.state)
-   {
-    pwrs.state = 1;
-    s_timer16_set(powerdown_timeout_counter, 6000); //60 sec.
-   }
+   pwrs.state = 1;
+   s_timer16_set(powerdown_timeout_counter, 60000); //10 min. max. after ignition turn off
   }
 
-  if ((temperature_ok && eeprom_is_idle()
+  //We will wait while temperature is high (only if temperature sensor is enabled
+  //and control of electric cooling fan is used), EEPROM is busy, choke/IAC valve or stepper gas valve is busy.
+
+  if ((clt_is_ready() && eeprom_is_idle()
 #ifdef SM_CONTROL
       && choke_is_ready()
 #endif
@@ -98,7 +108,7 @@ void pwrrelay_control(void)
       && gasdose_is_ready()
 #endif
       ) || s_timer16_is_action(powerdown_timeout_counter))
-   IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay
+   IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay, there is no way back
  }
  else
   pwrs.state = 0;

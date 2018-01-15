@@ -56,4 +56,7 @@ void vent_set_pwmfrq(uint16_t period);
 void vent_set_duty8(uint8_t duty);
 #endif
 
+/**Called from main loop when system detects changing of cog number*/
+void vent_cog_changed_notification(void);
+
 #endif //_VENTILATOR_H_

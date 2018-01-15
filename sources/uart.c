@@ -382,6 +382,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.cond_pvt_on);
    build_i16h(d.param.cond_pvt_off);
    build_i16h(d.param.cond_min_rpm);
+   build_i16h(d.param.vent_tmr);
    break;
 
   case CARBUR_PAR:
@@ -1123,6 +1124,7 @@ uint8_t uart_recept_packet(void)
    d.param.cond_pvt_on = recept_i16h();
    d.param.cond_pvt_off = recept_i16h();
    d.param.cond_min_rpm = recept_i16h();
+   d.param.vent_tmr = recept_i16h();
    break;
 
   case CARBUR_PAR:

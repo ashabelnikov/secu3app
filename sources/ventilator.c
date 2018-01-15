@@ -32,6 +32,7 @@
 #include "ecudata.h"
 #include "ioconfig.h"
 #include "ventilator.h"
+#include "vstimer.h"
 
 /**Turns on/off cooling fan
  * This is redundant definitions (see ioconfig.c), but it is opportunity to
@@ -47,7 +48,7 @@
 #endif
 #endif //COOLINGFAN_PWM
 
-/**number of PWM discretes for 5kHz with 20mHz quartz */
+/**number of PWM discretes for 5kHz with 20MHz quartz */
 #define PWM_STEPS 31
 
 volatile uint8_t pwm_state;     //!< For state machine. 0 - passive, 1 - active
@@ -55,6 +56,8 @@ volatile uint16_t pwm_steps;    //!< number of timer ticks per PWM period
 volatile uint16_t pwm_duty_1;   //!< current duty value (+)
 volatile uint16_t pwm_duty_2;   //!< current duty value (-)
 volatile uint8_t tmr2a_h;       //!< used for extending OCR2A to 16 bit
+uint16_t vent_tmr;
+uint8_t vent_tmrexp;
 
 void vent_init_ports(void)
 {
@@ -70,6 +73,8 @@ void vent_init_state(void)
  pwm_duty_1 = 0;
  pwm_duty_2 = 0;
  tmr2a_h = 0;
+ vent_tmr = s_timer_gtc();
+ vent_tmrexp = 0;
 }
 
 #ifdef COOLINGFAN_PWM
@@ -146,14 +151,18 @@ void vent_control(void)
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) || !IOCFG_CHECK(IOP_ECF))
   return;
 
+ //set flag if timer is expired
+ if ((0 != d.param.vent_tmr) && ((s_timer_gtc() - vent_tmr) > d.param.vent_tmr))
+  vent_tmrexp = 1;
+
 #ifndef COOLINGFAN_PWM //control cooling fan by using relay only
- if (d.sens.temperat >= d.param.vent_on
+ if (!vent_tmrexp && (d.sens.temperat >= d.param.vent_on
 #ifdef AIRCONDIT
      || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
 #endif
-    )
+    ))
   IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
- else if (d.sens.temperat <= d.param.vent_off)
+ else if (vent_tmrexp || d.sens.temperat <= d.param.vent_off)
   IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
 #else //control cooling fan either by using relay or PWM
  if (!CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM))
@@ -163,13 +172,13 @@ void vent_control(void)
   TIMSK2&=~_BV(OCIE2A);
   _ENABLE_INTERRUPT();
 
-  if (d.sens.temperat >= d.param.vent_on
+  if (!vent_tmrexp && (d.sens.temperat >= d.param.vent_on
 #ifdef AIRCONDIT
      || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
 #endif
-     )
+     ))
    IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
-  else if (d.sens.temperat <= d.param.vent_off)
+  else if (vent_tmrexp || d.sens.temperat <= d.param.vent_off)
    IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
  }
  else
@@ -183,7 +192,7 @@ void vent_control(void)
 #endif
      )
    dd = 0;         //restrict to max.
-  if (dd > (PWM_STEPS-2))
+  if (vent_tmrexp || dd > (PWM_STEPS-2))
   {
    dd = PWM_STEPS; //restrict to min.
    d.cool_fan = 0; //turned off
@@ -226,3 +235,9 @@ void vent_set_duty8(uint8_t duty)
 #endif
 }
 #endif
+
+void vent_cog_changed_notification(void)
+{
+ vent_tmr = s_timer_gtc();
+ vent_tmrexp = 0;
+}

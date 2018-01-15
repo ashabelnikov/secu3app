@@ -35,6 +35,7 @@
 #include "magnitude.h"
 #include "mathemat.h"
 #include "vstimer.h"
+#include "eculogic.h"  //EM_START
 
 #if defined(FUEL_INJECT) && !defined(AIRTEMP_SENS)
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
@@ -1107,5 +1108,16 @@ uint8_t inj_gps_pwcorr(void)
 
  return (simple_interpolation(p, _GBU(inj_gps_corr[i]), _GBU(inj_gps_corr[i1]), //<--values in table are unsigned
         (i * p_step) + p_start, p_step, 64)) >> 6;
+}
+#endif
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL) || defined(GD_CONTROL)
+/** Checks for conditions activating engine blowing mode. Writes result value into d.floodclear flag
+ * \return 1 - engine blowing should be active, 0 - not active
+ */
+uint8_t engine_blowing_cond(void)
+{
+ d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
+ return d.floodclear;
 }
 #endif

@@ -433,7 +433,7 @@ int16_t calc_sm_position(uint8_t pwm)
   return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 800); //convert percentage position to SM steps
 
 #else //carburetor
- if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+ if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
   return ((((int32_t)d.param.sm_steps) * choke_closing_lookup(&chks.prev_temp)) / 200) + calc_startup_corr();
  else
   return 0; //fully opened

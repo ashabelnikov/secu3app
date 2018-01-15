@@ -245,11 +245,15 @@ static int16_t calc_sm_position(uint8_t pwm)
  }
 
 cranking_pos:
+ if (!d.floodclear)
+ {
+  if (pwm)
+   return ((((int32_t)256) * pos) / 200); //convert percentage position to PWM duty
+  else
+   return ((((int32_t)d.param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
+ }
 
- if (pwm)
-  return ((((int32_t)256) * pos) / 200); //convert percentage position to PWM duty
- else
-  return ((((int32_t)d.param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
+ return 0; //flood clear mode! Gas valve must be fully closed
 }
 
 void gasdose_control(void)

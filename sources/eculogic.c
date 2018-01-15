@@ -228,6 +228,10 @@ void ignlogic_system_state_machine(void)
  calc_ve_afr();
 #endif
 
+#if defined(FUEL_INJECT) || defined(SM_CONTROL) || defined(GD_CONTROL)
+ engine_blowing_cond(); //check for entering flood clear mode
+#endif
+
  switch(d.engine_mode)
  {
   case EM_START: //cranking mode

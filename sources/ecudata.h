@@ -243,6 +243,8 @@ typedef struct ecudata_t
  uint8_t mapsel_uni0;                   //!< for petrol maps
  uint8_t mapsel_uni1;                   //!< for gas maps
 #endif
+
+ uint8_t floodclear;                    //!< Flood clear mode flag
 }ecudata_t;
 
 

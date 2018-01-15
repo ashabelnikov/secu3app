@@ -211,16 +211,6 @@ void init_ports(void)
 #endif
 }
 
-#ifdef FUEL_INJECT
-/** Checks for conditions activating engine blowing mode
- * \return 1 - engine blowing should be active, 0 - not active
- */
-static uint8_t engine_blowing_cond(void)
-{
- return ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
-}
-#endif
-
 /**Initialization of system modules
  */
 void init_modules(void)
@@ -478,9 +468,9 @@ MAIN()
 #ifdef FUEL_INJECT
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
-   inject_set_fuelcut(!engine_blowing_cond() && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))));
+   inject_set_fuelcut(!d.floodclear && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))));
 #else
-   inject_set_fuelcut(!engine_blowing_cond() && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)));
+   inject_set_fuelcut(!d.floodclear && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)));
 #endif
 #endif
 

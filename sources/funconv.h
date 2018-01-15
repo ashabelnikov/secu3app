@@ -339,4 +339,11 @@ uint8_t inj_gts_pwcorr(void);
 uint8_t inj_gps_pwcorr(void);
 #endif
 
+#if defined(FUEL_INJECT) || defined(SM_CONTROL) || defined(GD_CONTROL)
+/** Checks for conditions activating engine blowing mode
+ * \return 1 - engine blowing should be active, 0 - not active
+ */
+uint8_t engine_blowing_cond(void);
+#endif
+
 #endif //_FUNCONV_H_

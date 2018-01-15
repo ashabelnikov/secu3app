@@ -107,6 +107,8 @@ struct ecudata_t d =
 ,.mapsel_uni0 = 0,
  .mapsel_uni1 = 0
 #endif
+
+ ,.floodclear = 0
 };
 
 #ifdef REALTIME_TABLES

@@ -1039,9 +1039,19 @@ int16_t barocorr_lookup(void)
         (i * p_step) + p_start, p_step, 4)) >> 2;
 }
 
-uint8_t inj_airtemp_corr(void)
+
+#endif
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL) || defined(GD_CONTROL)
+
+uint8_t inj_airtemp_corr(uint8_t rawmat)
 {
- int16_t i, i1, t = inj_corrected_mat(); //use corrected MAT instead of raw value
+ int16_t i, i1, t = rawmat ? d.sens.air_temp :
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ inj_corrected_mat(); //use corrected MAT or raw value
+#else //SM_CONTROL only (choke)
+ d.sens.air_temp; //use raw MAT value (rawmat ignored)
+#endif
 
  if (!IOCFG_CHECK(IOP_AIR_TEMP))
   return 128;   //do not use correcton if air temperature sensor is turned off

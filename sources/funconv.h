@@ -310,13 +310,17 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter);
  */
 int16_t barocorr_lookup(void);
 
+#endif
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL) || defined(GD_CONTROL)
 /** Calculate correction coefficient for PW, coefficient vs MAT.
- * This function uses corrected MAT value, based on air flow and CLT
+ * This function can use either corrected MAT value or raw MAt value, based on air flow and CLT
  * Uses d ECU data structure
+ * \param rawmat 1 - use raw MAT, 0 - use corrected MAT. If firmware compiled without FUEL_INJECT and GD_CONTROL options,
+ * then this parameter is ignored and function will always use raw MAT value
  * \return value * 128
  */
-uint8_t inj_airtemp_corr(void);
-
+uint8_t inj_airtemp_corr(uint8_t rawmat);
 #endif
 
 

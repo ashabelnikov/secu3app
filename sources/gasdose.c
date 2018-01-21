@@ -222,7 +222,7 @@ static int16_t calc_sm_position(uint8_t pwm)
  if (d.sens.gas) //gas valve will function when petrol is used, but in very limited mode
  {
   //apply correction from IAT sensor
-  pos = ((int32_t)pos * inj_airtemp_corr()) >> 7;
+  pos = ((int32_t)pos * inj_airtemp_corr(0)) >> 7; //use corrected MAT as argument to lookup table
 
   //pos = (((int32_t)pos) * (512 + d.corr.lambda)) >> 9; //apply EGO correction
   pos = pos + ((GD_MAGNITUDE(100.0) * d.corr.lambda) >> 9); //proposed by alvikagal

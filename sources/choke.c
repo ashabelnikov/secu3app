@@ -434,7 +434,10 @@ int16_t calc_sm_position(uint8_t pwm)
 
 #else //carburetor
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
-  return ((((int32_t)d.param.sm_steps) * choke_closing_lookup(&chks.prev_temp)) / 200) + calc_startup_corr();
+  {
+   uint16_t pos = (((uint32_t)choke_closing_lookup(&chks.prev_temp)) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
+   return ((((int32_t)d.param.sm_steps) * pos) / 200) + calc_startup_corr();
+  }
  else
   return 0; //fully opened
 #endif

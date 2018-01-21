@@ -165,7 +165,7 @@ static void fuel_calc(void)
  uint32_t pw = inj_base_pw();
 
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEAIRDEN))
-  pw = (pw * inj_airtemp_corr()) >> 7;           //apply air density correction (if enabled)
+  pw = (pw * inj_airtemp_corr(0)) >> 7;           //apply air density correction (if enabled)
 
  pw = (pw * inj_warmup_en()) >> 7;              //apply warmup enrichemnt factor
  if (lgs.aftstr_enrich_counter)

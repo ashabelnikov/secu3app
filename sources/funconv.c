@@ -138,9 +138,9 @@ void calc_lookup_args(void)
  fcs.la_fp1 = fcs.la_f + 1;
 
  //-----------------------------------------
- if (d.param.load_src_cfg == 0)      //Speed-density
+ if (d.param.load_src_cfg < 2)       //Speed-density or Speed-density (baro)
   d.load = d.sens.map;
- else if (d.param.load_src_cfg == 1) //Alpha-N
+ else if (d.param.load_src_cfg == 2) //Alpha-N
   d.load = d.sens.tps << 5;
  else                                //mixed (MAP+TPS)
   d.load = calc_synthetic_load();
@@ -151,7 +151,7 @@ void calc_lookup_args(void)
 
  //load_upper - value of the upper load, load_lower - value of the lower load
  //todo: replace division by 1/x multiplication
- fcs.la_grad = (d.param.load_upper - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
+ fcs.la_grad = (((d.param.load_src_cfg == 1) ? d.sens.baro_press : d.param.load_upper) - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
  if (fcs.la_grad < 1)
   fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
 
@@ -644,7 +644,7 @@ uint16_t inj_base_pw(void)
  uint32_t pw32;
  uint8_t  nsht = 0; //no division
 
- if (d.param.load_src_cfg == 1) //Alpha-N
+ if (d.param.load_src_cfg == 2) //Alpha-N
  {
   pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas] /* TEMPERATURE_MAGNITUDE(293.15)*/) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
  }

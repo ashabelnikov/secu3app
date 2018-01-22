@@ -69,6 +69,7 @@ void ignlogic_init(void)
 #ifdef FUEL_INJECT
  lgs.prime_delay_tmr = s_timer_gtc();
 #endif
+ d.sens.baro_press = PRESSURE_MAGNITUDE(101.3); //set default value to prevent wrong conditions when barometric pressure will not be sampled for some reasons
 }
 
 #ifdef FUEL_INJECT

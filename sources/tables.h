@@ -508,7 +508,7 @@ typedef struct params_t
 
   uint16_t inj_lambda_dead_band;         //!< lambda switch point dead band
 
-  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - TPS, 2 - MAP+TPS)
+  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - MAP(baro), 2 - TPS, 3 - MAP+TPS)
 
   uint8_t  idl_to_run_add;               //!< Value (in %) added to IAC position when exiting from closed loop (value * 2)
   uint8_t  rpm_on_run_add;               //!< Value added to target RPM when vehicle starts to run (min-1, value / 10)

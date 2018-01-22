@@ -1192,7 +1192,7 @@ uint8_t uart_recept_packet(void)
    d.param.tps_curve_gradient = recept_i16h();
 
    temp = recept_i4h();
-   if (temp < 3)
+   if (temp < 4)
     d.param.load_src_cfg = temp;
 
    d.param.mapsel_uni = recept_i8h();

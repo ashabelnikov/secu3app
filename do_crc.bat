@@ -7,7 +7,7 @@ rem Created by Alexey A. Shabelnikov, Kiev 26 September 2009.
 
 set HEXTOBIN=hextobin.exe
 set CODECRC=codecrc.exe
-set USAGE=Supported options: M16,M32,M64,M644
+set USAGE=Supported options: M64,M644,M1284
 set FW_SIZE=Undefined
 set CRC_ADDR=Undefined
 
@@ -18,18 +18,6 @@ exit 1
 )
 
 rem Check validity of command line option and set corresponding parameters
-IF %1 == M16 ( 
-set FW_SIZE=15870
-set CRC_ADDR=3DFE
-GOTO dowork
-)
-
-IF %1 == M32 ( 
-set FW_SIZE=31742
-set CRC_ADDR=7BFE
-GOTO dowork
-)
-
 IF %1 == M64 ( 
 set FW_SIZE=63486
 set CRC_ADDR=F7FE
@@ -39,6 +27,12 @@ GOTO dowork
 IF %1 == M644 ( 
 set FW_SIZE=63486
 set CRC_ADDR=F7FE
+GOTO dowork
+)
+
+IF %1 == M1284 ( 
+set FW_SIZE=129022
+set CRC_ADDR=1F7FE
 GOTO dowork
 )
 

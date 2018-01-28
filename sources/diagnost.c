@@ -149,8 +149,8 @@ void init_digital_outputs(void)
  DDRC|= (_BV(DDC7)|_BV(DDC6));
 
  //STBL_O, CEL_O, FPMP_O, PWRR_O, COND_O, O2SH_O, EVAP_O, ADD_O2
- spi_PORTB&= ~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0));
- spi_IODIRB&= ~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0));
+ spi_PORTB&= (uint8_t)(~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0)));
+ spi_IODIRB&= (uint8_t)(~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0)));
 
 #endif
 }

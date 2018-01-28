@@ -32,6 +32,10 @@
 
  //convert compiler-specific symbols to common symbols
  #if defined (__ATmega644__)
+  #define _PLATFORM_M644_
+  #define F_CPU 20000000UL
+ #elif defined (__ATmega1284__)
+  #define _PLATFORM_M1284_
   #define F_CPU 20000000UL
  #else
   #error "avrio.h: Wrong platform identifier!"
@@ -45,6 +49,10 @@
 
  //convert compiler-specific symbols to common symbols
  #if defined (__AVR_ATmega644__)
+  #define _PLATFORM_M644_
+  #define F_CPU 20000000UL
+ #elif defined (__AVR_ATmega1284__) || defined (__AVR_ATmega1284P__)
+  #define _PLATFORM_M1284_
   #define F_CPU 20000000UL
  #else
   #error "avrio.h: Wrong platform identifier!"

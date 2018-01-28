@@ -211,6 +211,13 @@
  #define COPT_ATMEGA644 0
 #endif
 
+/**ATmega1284 target */
+#ifdef _PLATFORM_M1284_
+ #define COPT_ATMEGA1284 1
+#else
+ #define COPT_ATMEGA1284 0
+#endif
+
 #if defined(REV9_BOARD) && !defined(SECU3T)
  #error "REV9_BOARD option doesn't take any sense for SECU-3i! Remove it if you build for SECU-3i."
 #endif

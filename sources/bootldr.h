@@ -38,12 +38,16 @@
 /**Define start address of boot loader in the firmware (in bytes),
  * FLASHEND defined in ioavr.h
  */
-#define SECU3BOOTSTART ((((unsigned int)FLASHEND) + 1) - BOOT_LOADER_SIZE)
+#define SECU3BOOTSTART (((FLASHEND) + 1) - (BOOT_LOADER_SIZE))
 
 /**Input point of boot loader used from programm (passing by jumper checking),
  * see source code of boot loader
  */
+#ifdef _PLATFORM_M644_
 #define boot_loader_start() if (0x94F8 == *((uint16_t _PGM *)((SECU3BOOTSTART+0xA)))) \
 CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x14);
+#else //M1284
+#define boot_loader_start() CALL_ADDRESS(SECU3BOOTSTART+0x14);
+#endif
 
 #endif //_BOOTLDR_H_

@@ -5,9 +5,10 @@
 # Script for building of the SECU-3 project firmware under Linux. This script will
 # configure Makefile for you and build project.
 # Created by Alexey A. Shabelnikov, Kiev 24 July 2011.
+# Updated 22 Jan 2018
 # Note: It requires AVR-GCC toolchain
 
-USAGE="USAGE: configure.sh <platform> <toolchain> \n Supported platforms: M644, Supported toolchains: IAR, GCC"
+USAGE="USAGE: configure.sh <platform> <toolchain> \n Supported platforms: M644, M1284, Supported toolchains: IAR, GCC"
 PLATFORM=Undefined
 CFGFILE="platform_cfg"
 MAKEFILE="Makefile_gcc"
@@ -39,6 +40,12 @@ then
  CFG_FWD_START="D650"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm644s.xcl"
+elif [ $1 = "M1284" ]
+then
+ CFG_BL_START="1F800"
+ CFG_FWD_START="1D650"
+ CFG_EE_SIZE="4096"
+ CFG_LNKXCL="lnkm1284s.xcl"
 else
  echo "Invalid platform!"
  echo " "$USAGE
@@ -50,6 +57,9 @@ then
  if [ $1 = "M644" ]
  then
   CFG_MCU="m644"
+ elif [ $1 = "M1284" ]
+ then
+  CFG_MCU="m1284"
  fi
  MAKEFILE="Makefile_iar"
 elif [ $TC = "GCC" ]
@@ -57,6 +67,9 @@ elif [ $TC = "GCC" ]
  if [ $1 = "M644" ]
  then
   CFG_MCU="atmega644"
+ elif [ $1 = "M1284" ]
+ then
+  CFG_MCU="atmega1284"
  fi
  MAKEFILE="Makefile_gcc"
 else

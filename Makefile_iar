@@ -29,7 +29,11 @@ CFLAGS += -ms -e --initializers_in_flash
 CFLAGS += -s9
 #CFLAGS += --cross_call_passes=1 --do_cross_call
 CFLAGS += --eeprom_size $(EE_SIZE)
+ifeq ($(MCU), m1284)
+CFLAGS += --dlib_config "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-n.h"
+else
 CFLAGS += --dlib_config "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.h"
+endif
 
 # non-native end of line sequence detected (this diagnostic is only issued once)
 CFLAGS += --diag_suppress Pa050
@@ -39,11 +43,15 @@ CFLAGS += --diag_suppress Pe606
 CFLAGS += --diag_suppress Pa082
 
 # Linker flags
-LDFLAGS = -Fintel-standard -xs -s main
+LDFLAGS = -Fintel-extended -xs -s main
 LDFLAGS += -f "$(IAR_HOME)/avr/config/$(LNKXCL)"
 LDFLAGS += -l $(OBJDIR)/secu3.map
 LDFLAGS += -Z.boot_loader=$(BL_START) -Z.firmware_data=$(FWD_START)
+ifeq ($(MCU), m1284)
+LIBS = "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-n.r90"
+else
 LIBS = "$(IAR_HOME)/avr/lib/dlib/dlAVR-3s-ec_mul-sf-n.r90"
+endif
 #LIBS = "$(IAR_HOME)/avr/lib/dlib/dl3s-ec-sf.r90"
 
 # Include Directories

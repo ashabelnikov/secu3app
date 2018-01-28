@@ -5,9 +5,10 @@ rem
 rem Batch file for build firmware of SECU-3 project under MS Windows. This script will
 rem configure Makefile for you and build project.
 rem Created by Alexey A. Shabelnikov, Kiev 17 July 2011.
+rem Updated 22 Jan 2018
 rem Note: It requires IAR compiler and linker or WinAvr (AVR-GCC)
 
-set USAGE=Supported platforms: M644  Supported toolchains: IAR,GCC
+set USAGE=Supported platforms: M644, M1284  Supported toolchains: IAR,GCC
 set PLATFORM=Undefined
 set CFGFILE=platform_cfg
 set MAKEFILE=Undefined
@@ -37,6 +38,12 @@ set CFG_BL_START=F800
 set CFG_FWD_START=D650
 set CFG_EE_SIZE=2048
 set CFG_LNKXCL=lnkm644s.xcl
+) else IF %1 == M1284 (
+set CFG_MCU=m1284
+set CFG_BL_START=1F800
+set CFG_FWD_START=1D650
+set CFG_EE_SIZE=4096
+set CFG_LNKXCL=lnkm1284s.xcl
 ) else (
 echo Invalid platform!
 echo %USAGE%
@@ -46,12 +53,16 @@ exit 1
 IF %2 == IAR (
 IF %1 == M644 (
 set CFG_MCU=m644
+) else IF %1 == M1284 (
+set CFG_MCU=m1284
 )
 set MAKEFILE=Makefile_iar
 GOTO build
 ) else IF %2 == GCC (
 IF %1 == M644 (
 set CFG_MCU=atmega644
+) else IF %1 == M1284 (
+set CFG_MCU=atmega1284
 )
 set MAKEFILE=Makefile_gcc
 GOTO build

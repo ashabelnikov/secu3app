@@ -99,14 +99,14 @@
 #endif
 
  //EE_READY_vect is defined instead of EE_RDY_vect in iom644.h
- #if defined(__ATmega644__)
+ #if defined(__ATmega644__) || defined(__ATmega1284__)
   #ifndef EE_RDY_vect
    #define EE_RDY_vect EE_READY_vect
   #endif
  #endif
 
  //USART0_RX_vect is defined instead of USART0_RXC_vect in iom644.h
- #if defined(__ATmega644__)
+ #if defined(__ATmega644__) || defined(__ATmega1284__)
   #ifndef USART0_RXC_vect
    #define USART0_RXC_vect USART0_RX_vect
   #endif
@@ -116,14 +116,14 @@
  #include <avr/io.h>    //device IO
 
  //Who can tell me why I must do this?
- #if defined(__AVR_ATmega64__) || defined(__AVR_ATmega644__)
+ #if defined(__AVR_ATmega64__) || defined(__AVR_ATmega644__) || defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__)
   #ifndef EE_RDY_vect
    #define EE_RDY_vect EE_READY_vect
   #endif
  #endif
 
  //Again...
- #if defined(__AVR_ATmega64__)  || defined(__AVR_ATmega644__)
+ #if defined(__AVR_ATmega64__)  || defined(__AVR_ATmega644__) || defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__)
   #ifndef USART0_RXC_vect
    #define USART0_RXC_vect USART0_RX_vect
   #endif
@@ -174,6 +174,138 @@
  #define EEMPE EEMWE
 #endif
 
+#endif
+
+//PORTA
+#ifndef PA0
+#define PA0 PORTA0
+#endif
+
+#ifndef PA1
+#define PA1 PORTA1
+#endif
+
+#ifndef PA2
+#define Pa2 PORTA2
+#endif
+
+#ifndef PA3
+#define PA3 PORTA3
+#endif
+
+#ifndef PA4
+#define PA4 PORTA4
+#endif
+
+#ifndef PA5
+#define PA5 PORTA5
+#endif
+
+#ifndef PA6
+#define PA6 PORTA6
+#endif
+
+#ifndef PA7
+#define PA7 PORTA7
+#endif
+
+//PORTB
+#ifndef PB0
+#define PB0 PORTB0
+#endif
+
+#ifndef PB1
+#define PB1 PORTB1
+#endif
+
+#ifndef PB2
+#define PB2 PORTB2
+#endif
+
+#ifndef PB3
+#define PB3 PORTB3
+#endif
+
+#ifndef PB4
+#define PB4 PORTB4
+#endif
+
+#ifndef PB5
+#define PB5 PORTB5
+#endif
+
+#ifndef PB6
+#define PB6 PORTB6
+#endif
+
+#ifndef PB7
+#define PB7 PORTB7
+#endif
+
+//PORTC
+#ifndef PC0
+#define PC0 PORTC0
+#endif
+
+#ifndef PC1
+#define PC1 PORTC1
+#endif
+
+#ifndef PC2
+#define PC2 PORTC2
+#endif
+
+#ifndef PC3
+#define PC3 PORTC3
+#endif
+
+#ifndef PC4
+#define PC4 PORTC4
+#endif
+
+#ifndef PC5
+#define PC5 PORTC5
+#endif
+
+#ifndef PC6
+#define PC6 PORTC6
+#endif
+
+#ifndef PC7
+#define PC7 PORTC7
+#endif
+
+//PORTD
+#ifndef PD0
+#define PD0 PORTD0
+#endif
+
+#ifndef PD1
+#define PD1 PORTD1
+#endif
+
+#ifndef PD2
+#define PD2 PORTD2
+#endif
+
+#ifndef PD3
+#define PD3 PORTD3
+#endif
+
+#ifndef PD4
+#define PD4 PORTD4
+#endif
+
+#ifndef PD5
+#define PD5 PORTD5
+#endif
+
+#ifndef PD6
+#define PD6 PORTD6
+#endif
+
+#ifndef PD7
+#define PD7 PORTD7
 #endif
 
 #endif //_SECU3_AVRIO_H_

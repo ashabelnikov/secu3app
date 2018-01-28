@@ -33,7 +33,7 @@
 //variant for RAM
 uint16_t crc16( uint8_t *buf, uint16_t num )
 {
- uint16_t i;
+ uint8_t i;
  uint16_t crc = 0xffff;
 
  while ( num-- )
@@ -52,9 +52,9 @@ uint16_t crc16( uint8_t *buf, uint16_t num )
 }
 
 //variant for FLASH
-uint16_t crc16f(uint8_t _PGM *buf, uint16_t num )
+uint16_t crc16f(uint8_t _HPGM *buf, pgmsize_t num)
 {
- uint16_t i;
+ uint8_t i;
  uint16_t crc = 0xffff;
 
  while ( num-- )

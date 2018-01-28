@@ -49,7 +49,7 @@ void save_param_if_need(void)
  if (s_timer16_is_action(save_param_timeout_counter))
  {
   //Are current and saved parameters differ?
-  if (memcmp(eeprom_parameters_cache, &d.param, sizeof(params_t)-PAR_CRC_SIZE))
+  if (memcmp(&eeprom_parameters_cache, &d.param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
   s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }
@@ -119,7 +119,7 @@ void load_eeprom_params(void)
    }
   }
   //Initialize parameters' cache. In the opposite case unnecessary saving of parameters will occur after start of firmware
-  memcpy(eeprom_parameters_cache, &d.param, sizeof(params_t));
+  memcpy(&eeprom_parameters_cache, &d.param, sizeof(params_t));
  }
  else
  {//jumper is closed - load default parameters, which will be saved soon. Also, load default data into EEPROM for editable set of tables

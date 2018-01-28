@@ -31,18 +31,29 @@
  #include <pgmspace.h>
  #include <stdint.h>
 
+#if defined(__ATmega1284__)
+ #define __flash__  __farflash
+ #define __hugeflash__  __hugeflash
+ typedef uint32_t pgmsize_t;
+#else //644
+ #define __flash__  __flash
+ #define __hugeflash__  __flash
+ typedef uint16_t pgmsize_t;
+#endif
+
  //Declare variable in FLASH at fixed address
  #define PGM_FIXED_ADDR_OBJ(variable, sect_name) _Pragma("object_attribute=__root") \
-__flash variable@sect_name
+__flash__ variable@sect_name
 
  //Declare variable in FLASH
- #define PGM_DECLARE(x) __flash x
+ #define PGM_DECLARE(x) __flash__ x
 
  #define PGM_GET_BYTE(addr) *(addr)
  #define PGM_GET_WORD(addr) *(addr)
  #define PGM_GET_DWORD(addr) *(addr)
 
- #define _PGM __flash
+ #define _PGM __flash__
+ #define _HPGM __hugeflash__
 
 #else //AVR GCC
  #include <avr/pgmspace.h>
@@ -60,6 +71,13 @@ __flash variable@sect_name
  //GCC doesn't support Harvard's architecture, so use const at least to indicate
  //that variable will be read-only
  #define _PGM const
+ #define _HPGM const
+
+ #if defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__)
+  typedef uint32_t pgmsize_t;
+ #else //644
+  typedef uint16_t pgmsize_t;
+ #endif
 
 #endif
 

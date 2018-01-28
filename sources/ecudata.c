@@ -31,7 +31,7 @@
 
 //TODO: To reduce memory usage it is possible to use crc or some simple hash algorithms to control state of memory(changes). So this variable becomes unneeded.
 /* Cache for buffering parameters used during suspended EEPROM operations */
-uint8_t eeprom_parameters_cache[sizeof(params_t) + 1];
+params_t eeprom_parameters_cache;
 
 /**ECU data structure. Contains all related data and state information */
 struct ecudata_t d =
@@ -55,7 +55,13 @@ struct ecudata_t d =
  .gasdose_pos = 0,  //GD
 
 #ifdef REALTIME_TABLES
- .tables_ram = {0},
+ .tables_ram = {{0},{0},{0},
+                {{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}}, //work
+                {0}, //temp
+                {{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}}, //VE
+                {{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}}, //AFR
+                {{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}}, //Timing
+                {0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}},
  .mm_ptr8 = 0,
  .mm_ptr16 = 0,
  .mm_ptr12 = 0,

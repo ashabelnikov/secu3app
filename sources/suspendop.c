@@ -88,9 +88,9 @@ void sop_execute_operations(void)
   if (eeprom_is_idle())
   {
    //дл€ обеспечени€ атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
-   memcpy(eeprom_parameters_cache,&d.param,sizeof(params_t));
-   ((params_t*)eeprom_parameters_cache)->crc=crc16(eeprom_parameters_cache,sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
-   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, eeprom_parameters_cache, sizeof(params_t));
+   memcpy(&eeprom_parameters_cache, &d.param, sizeof(params_t));
+   eeprom_parameters_cache.crc = crc16((uint8_t*)&eeprom_parameters_cache, sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
+   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, &eeprom_parameters_cache, sizeof(params_t));
 
    //если была соответствующа€ ошибка, то она тер€ет смысл после того как в EEPROM будут
    //записаны новые параметры с корректной контрольной суммой

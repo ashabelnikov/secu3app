@@ -40,6 +40,7 @@
 //       28800       0x2A          0x56
 //       38400       0x20          0x40
 //       57600       0x15          0x2A
+//       115200      0x0A          0x15
 
 #define  CBR_2400                0x0411 //!<  2400 baud
 #define  CBR_4800                0x0208 //!<  4800 baud
@@ -49,11 +50,12 @@
 #define  CBR_28800               0x0056 //!< 28800 baud
 #define  CBR_38400               0x0040 //!< 38400 baud
 #define  CBR_57600               0x002A //!< 57600 baud
+#define  CBR_115200              0x0015 //!< 115200 baud
 
 #define  UART_RECV_BUFF_SIZE     110    //!< Size of receiver's buffer
 #define  UART_SEND_BUFF_SIZE     120    //!< Size of transmitter's buffer
 
-// Interface of the module (интерфейс модуля)
+// Interface of the module
 
 /**Builds a packet depending of type of the current descriptor and launches it on the transfer.
  * Function does not check the transmitter is busy or not, it should be done before the call

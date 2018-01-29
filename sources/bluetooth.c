@@ -93,6 +93,7 @@ static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
  else if (baud == CBR_19200) uart_append_send_buff('5');
  else if (baud == CBR_38400) uart_append_send_buff('6');
  else if (baud == CBR_57600) uart_append_send_buff('7');
+ else if (baud == CBR_115200) uart_append_send_buff('8');
 }
 
 /** Increments SM state if timer expired (baud rate setting)*/
@@ -181,8 +182,21 @@ uint8_t bt_set_baud(uint16_t baud)
    next_state_if_tmr_expired_br();
    return 0;
 
-  //Finishing...
+  //Send command on 115200 baud
   case 10:
+   if (!uart_is_sender_busy())
+   {
+    append_tx_buff_with_at_baud_cmd(baud);
+    next_state_with_new_baud(CBR_115200);
+    break;
+   }
+   else return 0;                  //busy
+  case 11:                          //wait some time
+   next_state_if_tmr_expired_br();
+   return 0;
+
+  //Finishing...
+  case 12:
    if (!uart_is_sender_busy())
    {
     next_state_with_new_baud(baud);//return old baud rate back

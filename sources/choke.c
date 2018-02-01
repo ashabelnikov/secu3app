@@ -65,6 +65,7 @@
 #endif
 #define CF_CL_LOOP      3  //!< IAC closed loop flag
 #define CF_ADDACT       4  //!<
+#define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after in initialization and first movement
 
 #else // Carburetor's choke stuff
 #define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
@@ -87,6 +88,7 @@
 #ifdef USE_RPMREG_TURNON_DELAY
 #define CF_PRMREG_ENTO  4  //!< indicates that system is entered to RPM regulation mode
 #endif
+#define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after in initialization and first movement
 
 #endif //FUEL_INJECT
 
@@ -250,6 +252,7 @@ int16_t calc_startup_corr(void)
 static void initial_pos(uint8_t dir)
 {
  stpmot_freq(CHECKBIT(d.param.choke_flags, CKF_MAXFREQINIT) ? 0 : d.param.sm_freq);
+ CLEARBIT(chks.flags, CF_INITFRQ);
  stpmot_dir(dir);                                             //set direction
  if (0==d.sens.carb && CHECKBIT(d.param.choke_flags, CKF_USETHROTTLEPOS))
   stpmot_run(d.param.sm_steps >> 2);                         //run using number of steps = 25%
@@ -278,6 +281,10 @@ void sm_motion_control(int16_t pos)
   diff = pos - chks.smpos;
   if (!stpmot_is_busy())
   {
+   if (CHECKBIT(chks.flags, CF_INITFRQ))                      //set normal frequency after first complete movement
+    stpmot_freq(d.param.sm_freq);
+   SETBIT(chks.flags, CF_INITFRQ);
+
    if (diff != 0)
    {
     chks.cur_dir = diff < 0 ? SM_DIR_CW : SM_DIR_CCW;
@@ -520,7 +527,6 @@ void choke_control(void)
      d.choke_manpos_d = 0;
     }
 
-    stpmot_freq(d.param.sm_freq);
     sm_motion_control(pos);                                //SM command execution
    }
    d.choke_pos = calc_percent_pos(chks.smpos, d.param.sm_steps);//update position value

@@ -497,7 +497,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_map_value =               1600,                 //25 kPa
 
   .inj_lambda_senstype =         0,                    //NBO sensor type
-  .gd_lambda_stoichval =         1997,                 //15.6
+  .gd_lambda_stoichval =         1984,                 //15.5
 
   .inj_lambda_ms_per_stp =       0,                    //0 by default
 

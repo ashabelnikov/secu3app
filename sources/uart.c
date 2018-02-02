@@ -708,12 +708,9 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.sm_steps);
    build_i4h(d.choke_testing);      //fake parameter (actually it is command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
-   build_i8h(d.param.choke_startup_corr);
-   build_i16h(d.param.choke_rpm[0]);
-   build_i16h(d.param.choke_rpm[1]);
    build_i16h(d.param.choke_rpm_if);
-   build_i16h(d.param.choke_corr_time);
-   build_i16h(d.param.choke_corr_temp);
+   build_i16h(d.param.choke_corr_time[0]);
+   build_i16h(d.param.choke_corr_time[1]);
    build_i8h(d.param.choke_flags); //choke flags
    build_i8h(d.param.sm_freq);
    break;
@@ -1283,12 +1280,9 @@ uint8_t uart_recept_packet(void)
    d.param.sm_steps = recept_i16h();
    d.choke_testing = recept_i4h(); //fake parameter (actually it is status)
    d.choke_manpos_d = recept_i8h();//fake parameter
-   d.param.choke_startup_corr = recept_i8h();
-   d.param.choke_rpm[0] = recept_i16h();
-   d.param.choke_rpm[1] = recept_i16h();
    d.param.choke_rpm_if = recept_i16h();
-   d.param.choke_corr_time = recept_i16h();
-   d.param.choke_corr_temp = recept_i16h();
+   d.param.choke_corr_time[0] = recept_i16h();
+   d.param.choke_corr_time[1] = recept_i16h();
    d.param.choke_flags = recept_i8h(); //choke flags
    d.param.sm_freq = recept_i8h();
    break;

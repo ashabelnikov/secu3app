@@ -441,40 +441,6 @@ int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab)
 #endif
 
 #if defined(SM_CONTROL) && !defined(FUEL_INJECT)
-uint8_t choke_closing_lookup(int16_t* p_prev_temp)
-{
- int16_t i, i1, t = d.sens.temperat;
-
- if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
-  return 0;   //блок не укомплектован ДТОЖ-ом
-
- //if difference between current and previous temperature values is less than +/-0.5,
- //then previous value will be used for calculations.
- if (abs(*p_prev_temp - t) < TEMPERATURE_MAGNITUDE(0.5))
-  t = *p_prev_temp;
- else
-  *p_prev_temp = t; //make it current
-
- //-5 - minimum value on the tempature axis
- if (t < TEMPERATURE_MAGNITUDE(-5))
-  t = TEMPERATURE_MAGNITUDE(-5);
-
- //5 - step between interpolation points on the temperature axis
- i = (t - TEMPERATURE_MAGNITUDE(-5)) / TEMPERATURE_MAGNITUDE(5);
-
- if (i >= CHOKE_CLOSING_LOOKUP_TABLE_SIZE-1) i = i1 = CHOKE_CLOSING_LOOKUP_TABLE_SIZE-1;
- else i1 = i + 1;
-
- if ((t > TEMPERATURE_MAGNITUDE(70)) || (0==PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1])))
-  return 0;
- else
- {
-  uint8_t pos = simple_interpolation(t, PGM_GET_BYTE(&fw_data.exdata.choke_closing[i]), PGM_GET_BYTE(&fw_data.exdata.choke_closing[i1]),
-  (i * TEMPERATURE_MAGNITUDE(5)) + TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(5), 16) >> 4;
-  return (pos==1) ? 0 : pos; //0.5% is same as zero
- }
-}
-
 /**Describes state data for idling regulator */
 typedef struct
 {
@@ -492,21 +458,16 @@ void chokerpm_regulator_init(void)
 
 int16_t choke_rpm_regulator(int16_t* p_prev_corr)
 {
- int16_t error, rpm, t = d.sens.temperat;
+ int16_t error, rpm;
 
- if (0==d.param.choke_rpm[0])
+ if (!CHECKBIT(d.param.choke_flags, CKF_USECLRPMREG))
  {
   *p_prev_corr = 0;
   return 0; //regulator is turned off, return zero correction
  }
 
- //-5 - значение температуры cоответствующее оборотам в первой точке
- //70 - значение температуры соответствующее оборотам во второй точке
- restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(70));
-
  //calculate target RPM value for regulator
- rpm = simple_interpolation(t, d.param.choke_rpm[0], d.param.choke_rpm[1],
- TEMPERATURE_MAGNITUDE(-5), TEMPERATURE_MAGNITUDE(75), 4) >> 2;
+ rpm = inj_idling_rpm();
 
  error = rpm - d.sens.frequen;
  if (abs(error) <= 50)   //dead band is +/-50 RPM
@@ -525,6 +486,23 @@ int16_t choke_rpm_regulator(int16_t* p_prev_corr)
 
  return *p_prev_corr;
 }
+
+uint16_t choke_cranking_time(void)
+{
+ int16_t t = d.sens.temperat; //clt
+
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return 300;   //coolant temperature sensor is not enabled (or not installed), use default value (3 sec.)
+
+ //-30 CLT corresponding to first value of time
+ //120 CLT corresponding to second value of time
+ restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(120));
+
+ //calculate target RPM value for regulator
+ return simple_interpolation(t, d.param.choke_corr_time[0], d.param.choke_corr_time[1],
+ TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(150), 4) >> 2;
+}
+
 #endif
 
 #ifdef AIRTEMP_SENS
@@ -674,6 +652,22 @@ uint16_t inj_base_pw(void)
  return ((pw32 > 65535) ? 65535 : pw32);
 }
 
+int16_t inj_timing_lookup(void)
+{
+ return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        _GWU12(inj_timing,fcs.la_l,fcs.la_f),
+        _GWU12(inj_timing,fcs.la_lp1,fcs.la_f),
+        _GWU12(inj_timing,fcs.la_lp1,fcs.la_fp1),
+        _GWU12(inj_timing,fcs.la_l,fcs.la_fp1),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        fcs.la_grad, 8);
+}
+
+#endif //FUEL_INJECT
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL)
 void inj_init_prev_clt(prev_temp_t* p_pt)
 {
  p_pt->clt = fcs.ta_clt;
@@ -687,7 +681,7 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
  int16_t t = fcs.ta_clt;
 
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
-  return 0;   //блок не укомплектован ДТОЖ-ом
+  return 0;   //CLT sensor is turned off
 
  //if difference between current and previous temperature values is less than +/-0.5,
  //then previous value will be used for calculations.
@@ -706,21 +700,7 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
  return simple_interpolation(t, mode ? _GBU(inj_iac_run_pos[i]) : _GBU(inj_iac_crank_pos[i]), mode ? _GBU(inj_iac_run_pos[i1]) : _GBU(inj_iac_crank_pos[i1]),  //<--values in table are unsigned
   (((int16_t)i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
-
-int16_t inj_timing_lookup(void)
-{
- return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        _GWU12(inj_timing,fcs.la_l,fcs.la_f),
-        _GWU12(inj_timing,fcs.la_lp1,fcs.la_f),
-        _GWU12(inj_timing,fcs.la_lp1,fcs.la_fp1),
-        _GWU12(inj_timing,fcs.la_l,fcs.la_fp1),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 8);
-}
-
-#endif //FUEL_INJECT
+#endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint8_t inj_aftstr_en(void)
@@ -806,15 +786,6 @@ uint16_t inj_prime_pw(void)
              TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 1);
 }
 
-uint16_t inj_idling_rpm(void)
-{
- if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
-  return 900;   //coolant temperature sensor is not enabled (or not installed)
-
- return (simple_interpolation(fcs.ta_clt, _GBU(inj_target_rpm[fcs.ta_i]), _GBU(inj_target_rpm[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
-}
-
 uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
@@ -891,6 +862,17 @@ uint16_t inj_iacmixtcorr_lookup(void)
 }
 
 #endif //FUEL_INJECT
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL)
+uint16_t inj_idling_rpm(void)
+{
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return 900;   //coolant temperature sensor is not enabled (or not installed)
+
+ return (simple_interpolation(fcs.ta_clt, _GBU(inj_target_rpm[fcs.ta_i]), _GBU(inj_target_rpm[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+}
+#endif
 
 uint16_t tpsswt_function(void)
 {

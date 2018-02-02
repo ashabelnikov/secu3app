@@ -103,29 +103,28 @@ typedef struct
  uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
  uint8_t   flags;          //!< state flags (see CF_ definitions)
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
+ prev_temp_t prev_temp;    //!< used for inj_iac_pos_lookup()
 
 #ifndef FUEL_INJECT
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
- int16_t   prev_temp;      //!< used for choke_closing_lookup()
 #endif
 
 #ifdef FUEL_INJECT
  int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
  int16_t   iac_pos;        //!< IAC pos between call of the closed loop regulator
  int16_t   iac_add;        //!< Smoothly increased value
- prev_temp_t prev_temp;    //!< used for inj_iac_pos_lookup()
 #endif
 
 }choke_st_t;
 
 /**Instance of state variables */
-choke_st_t chks = {0,0,0,0,0,0,0,0
+choke_st_t chks = {0,0,0,0,0,0,0,0,{0,0,0}
 #ifndef FUEL_INJECT
-                   ,0,0,0
+                   ,0,0
 #endif
 #ifdef FUEL_INJECT
-                   ,0,0,0,{0,0,0}
+                   ,0,0,0
 #endif
                   };
 
@@ -157,12 +156,29 @@ static uint8_t is_rpmreg_allowed(void)
  return !(d.sens.gas && CHECKBIT(d.param.choke_flags, CKF_OFFRPMREGONGAS));
 }
 
-/** Calculates choke position correction at startup mode and from RPM regulator
- * Work flow: Start-->Wait 3 sec.-->RPM regul.-->Ready
+/** Used by calc_sm_position() function
+ * Uses d ECU data structure
+ * \param regval Value of correction from RPM regulator to be added to result
+ * \param mode 0 - use cranking lookup table, 1 - use work lookup table
+ * \return choke position in steps
+ */
+static int16_t choke_pos_final(int16_t regval, uint8_t mode)
+{
+ if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
+  {
+   uint16_t pos = (((uint32_t)inj_iac_pos_lookup(&chks.prev_temp, mode)) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
+   return ((((int32_t)d.param.sm_steps) * pos) / 200) + regval;
+  }
+ else
+  return 0; //fully opened
+}
+
+/** Calculates choke position (for carburetor)
+ * Work flow: Start-->Wait some time-->RPM regul.-->Ready
  * Uses d ECU data structure
  * \return Correction value in SM steps
  */
-int16_t calc_startup_corr(void)
+int16_t calc_sm_position(void)
 {
  int16_t rpm_corr = 0;
 
@@ -174,11 +190,11 @@ int16_t calc_startup_corr(void)
     chks.strt_t1 = s_timer_gtc();
     chks.strt_mode = 1;
     //set choke RPM regulation flag (will be activated after delay)
-    d.choke_rpm_reg = (0!=d.param.choke_rpm[0]) && is_rpmreg_allowed();
+    d.choke_rpm_reg = CHECKBIT(d.param.choke_flags, CKF_USECLRPMREG) && is_rpmreg_allowed();
    }
    break; //use startup correction
   case 1:
-   if ((s_timer_gtc() - chks.strt_t1) >= d.param.choke_corr_time)
+   if ((s_timer_gtc() - chks.strt_t1) >= choke_cranking_time())
    {
     chks.strt_mode = 2;
     chks.rpmreg_prev = 0; //we will enter RPM regulation mode with zero correction
@@ -229,17 +245,11 @@ int16_t calc_startup_corr(void)
 
   case 3:
    if (!d.st_block)
-    chks.strt_mode = 0; //engine is stopped, so use correction again
-   return rpm_corr;  //correction from RPM regulator only
+    chks.strt_mode = 0; //engine is stopped, so use cranking position again
+  return choke_pos_final(rpm_corr, 1); //work position + correction from RPM regulator
  }
 
- //if (temperature > threshold) OR (fuel is gas AND allowed) then don't use correction
- if ((d.sens.temperat > d.param.choke_corr_temp) || (d.sens.gas && CHECKBIT(d.param.choke_flags, CKF_OFFSTRTADDONGAS)))
-  return 0; //Do not use correction if coolant temperature > threshold
- else if (d.sens.temperat < TEMPERATURE_MAGNITUDE(0))
-  return d.param.sm_steps; //if temperature  < 0, then choke must be fully closed
- else
-   return (((int32_t)d.param.sm_steps) * d.param.choke_startup_corr) / 200;
+ return choke_pos_final(0, 0); //cranking position only
 }
 #endif
 
@@ -308,6 +318,7 @@ void sm_motion_control(int16_t pos)
 }
 #endif //SM_CONTROL
 
+#ifdef FUEL_INJECT
 /** Calculate stepper motor position for normal mode
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
@@ -315,8 +326,6 @@ void sm_motion_control(int16_t pos)
  */
 int16_t calc_sm_position(uint8_t pwm)
 {
-#ifdef FUEL_INJECT
-
  switch(chks.strt_mode)
  {
   case 0:  //cranking mode
@@ -357,7 +366,7 @@ int16_t calc_sm_position(uint8_t pwm)
     chks.rpmreg_t1 = tmr;  //reset timer
 
     //TODO:
-    //      2. Смещение РХХ при включении вентилятора
+    //      Displace IAC position when cooling fan turns on
 
     int16_t rpm = inj_idling_rpm(); //target RPM depending on the coolant temperature
 
@@ -438,17 +447,8 @@ int16_t calc_sm_position(uint8_t pwm)
   return ((((int32_t)256) * chks.iac_pos) / 800); //convert percentage position to PWM duty
  else
   return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 800); //convert percentage position to SM steps
-
-#else //carburetor
- if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
-  {
-   uint16_t pos = (((uint32_t)choke_closing_lookup(&chks.prev_temp)) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
-   return ((((int32_t)d.param.sm_steps) * pos) / 200) + calc_startup_corr();
-  }
- else
-  return 0; //fully opened
-#endif
 }
+#endif
 
 void choke_control(void)
 {
@@ -473,12 +473,7 @@ void choke_control(void)
    if (!IOCFG_CHECK(IOP_PWRRELAY))                            //Skip initialization if power management is enabled
     initial_pos(INIT_POS_DIR);
    chks.state = 2;
-#ifdef FUEL_INJECT
    inj_init_prev_clt(&chks.prev_temp);
-#else
-   chks.prev_temp = d.sens.temperat;
-#endif
-
    break;
 
   case 1:                                                     //system is being preparing to power-down
@@ -517,7 +512,11 @@ void choke_control(void)
     int16_t pos;
     if (!CHECKBIT(chks.flags, CF_MAN_CNTR))
     {
-     pos = calc_sm_position(0);                            //calculate stepper motor position
+#ifdef FUEL_INJECT
+     pos = calc_sm_position(0);                               //calculate stepper motor position
+#else
+     pos = calc_sm_position();                                //calculate stepper motor position
+#endif
      if (d.choke_manpos_d)
       SETBIT(chks.flags, CF_MAN_CNTR); //enter manual mode
     }

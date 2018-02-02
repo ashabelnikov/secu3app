@@ -72,7 +72,6 @@
 #define FW_SIGNATURE_INFO_SIZE          48          //!< number of bytes reserved for firmware's signature information
 #define COIL_ON_TIME_LOOKUP_TABLE_SIZE  32          //!< number of points in lookup table used for dwell control
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
-#define CHOKE_CLOSING_LOOKUP_TABLE_SIZE 16          //!< Size of lookup table defining choke closing versus coolant temperature
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
 #define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
@@ -151,7 +150,7 @@
 #endif
 
 //Choke flags
-#define CKF_OFFSTRTADDONGAS             0           //!< Turn off additional startup closing of choke when fuel type is gas
+#define CKF_USECLRPMREG                 0           //!< Use closed loop RPM regulator
 #define CKF_OFFRPMREGONGAS              1           //!< Turn off RPM regulator when fuel type is gas
 #define CKF_USETHROTTLEPOS              2           //!< Use throttle limit switch in choke initialization
 #define CKF_MAXFREQINIT                 3           //!< Use maximum frequency at initialization
@@ -287,9 +286,6 @@ typedef struct fw_ex_data_t
   /**Coolant temperature sensor lookup table, last two values: voltages corresponding to the beginning and end of x-axis */
   int16_t cts_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
 
-  /**Choke closing versus coolant temperature */
-  uint8_t choke_closing[CHOKE_CLOSING_LOOKUP_TABLE_SIZE];
-
   /**Air temperature sensor lookup table, last two values: voltages corresponding to the beginning and end of x-axis */
   int16_t ats_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
 
@@ -322,7 +318,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[51];
+  uint8_t reserved[67];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -446,11 +442,8 @@ typedef struct params_t
 
   // Choke control
   uint16_t sm_steps;                     //!< Number of steps of choke stepper motor
-  uint16_t choke_rpm[2];                 //!< Values of RPM needed for RPM-based control of choke position
-  uint8_t  choke_startup_corr;           //!< Startup correction value for choke (0...200)
   uint16_t choke_rpm_if;                 //!< Integral factor for RPM-based control of choke position (factor * 1024)
-  uint16_t choke_corr_time;              //!< Time for startup correction will be applied
-  int16_t  choke_corr_temp;              //!< Temperature threshold for startup correction
+  uint16_t choke_corr_time[2];           //!< Time for startup correction will be applied at -30°C and 120°C (2 points function)
 
   // Bluetooth and security
   uint8_t  bt_flags;                     //!< Bluetooth and security related flags
@@ -570,7 +563,7 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[2];
+  uint8_t  reserved[7];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

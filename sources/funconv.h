@@ -108,14 +108,6 @@ int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
 #endif
 
 #if defined(SM_CONTROL) && !defined(FUEL_INJECT)
-/** Obtains choke position (closing %) from coolant temperature using lookup table
- * Uses d ECU data structure
- * \param p_prev_temp pointer to state variable used to store temperature value between calls of
- * this function
- * \return choke closing percentage (value * 2)
- */
-uint8_t choke_closing_lookup(int16_t* p_prev_temp);
-
 /**Initialization of regulator's data structures*/
 void chokerpm_regulator_init(void);
 
@@ -126,6 +118,12 @@ void chokerpm_regulator_init(void);
  * \return choke closing correction in SM steps
  */
 int16_t choke_rpm_regulator(int16_t* p_prev_corr);
+
+/** Calculates time which determine delay for switching from cranking to work choke position
+ * Uses d ECU data structure
+ * \return time in 10ms units
+ */
+uint16_t choke_cranking_time(void);
 #endif
 
 #ifdef AIRTEMP_SENS
@@ -162,7 +160,17 @@ uint16_t calc_airflow(void);
  */
 uint16_t inj_base_pw(void);
 
-/***/
+
+/** Calculates injection timing from lookup table
+ * Uses d ECU data structure
+ * \return Injection timing in crank degrees * ANGLE_MULTIPLIER
+ */
+int16_t inj_timing_lookup(void);
+
+#endif
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL)
+/** Holds state variables used by inj_iac_pos_lookup() */
 typedef struct prev_temp_t
 {
  int16_t clt;   //!< temperature
@@ -184,12 +192,6 @@ void inj_init_prev_clt(prev_temp_t* p_pt);
  * \return position percentage (value * 2)
  */
 uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode);
-
-/** Calculates injection timing from lookup table
- * Uses d ECU data structure
- * \return Injection timing in crank degrees * ANGLE_MULTIPLIER
- */
-int16_t inj_timing_lookup(void);
 
 #endif
 
@@ -233,12 +235,6 @@ uint16_t inj_ae_clt_corr(void);
  */
 uint16_t inj_prime_pw(void);
 
-/** Calculates target idling RPM from coolant temperature
- * Uses d ECU data structure
- * \return RPM value in min-1 units
- */
-uint16_t inj_idling_rpm(void);
-
 /** Calculate idling regulator's rigidity
  * Uses d ECU data structure
  * \param targ_map Idling inlet manifold pressure
@@ -253,6 +249,14 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm);
  */
 uint16_t inj_iacmixtcorr_lookup(void);
 
+#endif
+
+#if defined(FUEL_INJECT) || defined(SM_CONTROL)
+/** Calculates target idling RPM from coolant temperature
+ * Uses d ECU data structure
+ * \return RPM value in min-1 units
+ */
+uint16_t inj_idling_rpm(void);
 #endif
 
 /** Calculates TPS switch point depending on RPM using look up table

@@ -429,12 +429,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .knock_recovery_delay =        2,
 
   .sm_steps =                    800,
-  .choke_rpm =                   {2000, 1200},
-  .choke_startup_corr =          20,
-
   .choke_rpm_if =                51,
-  .choke_corr_time =             300,
-  .choke_corr_temp =             40,
+  .choke_corr_time =             {500, 250},
 
   .bt_flags =                    0x12,
   .ibtn_keys =                   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
@@ -580,10 +576,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {_TLV(120.0), _TLV(100.0), _TLV(81.0), _TLV(65.5), _TLV(56.0), _TLV(48.5), _TLV(42.0), _TLV(36.0),
    _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0),
   ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)},
-
-  /**Fill choke closing vs. temperarure lookup table*/
-  {_CLV(100.0), _CLV(99.0), _CLV(98.0), _CLV(96.0), _CLV(95.0), _CLV(92.0), _CLV(86.0), _CLV(78.0),
-   _CLV(69.0),  _CLV(56.0), _CLV(50.0), _CLV(40.0), _CLV(25.0), _CLV(12.0), _CLV(5.0),  _CLV(0)},
 
   /**Fill air temperature sensor lookup table (temperature vs voltage)*/
   {_TLV(120.0), _TLV(100.0), _TLV(81.0), _TLV(65.5), _TLV(56.0), _TLV(48.5), _TLV(42.0), _TLV(36.0),

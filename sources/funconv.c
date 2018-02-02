@@ -495,12 +495,12 @@ uint16_t choke_cranking_time(void)
   return 300;   //coolant temperature sensor is not enabled (or not installed), use default value (3 sec.)
 
  //-30 CLT corresponding to first value of time
- //120 CLT corresponding to second value of time
- restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(120));
+ // 40 CLT corresponding to second value of time
+ restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(40));
 
  //calculate target RPM value for regulator
  return simple_interpolation(t, d.param.choke_corr_time[0], d.param.choke_corr_time[1],
- TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(150), 4) >> 2;
+ TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70), 4) >> 2;
 }
 
 #endif

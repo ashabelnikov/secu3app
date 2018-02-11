@@ -351,9 +351,7 @@ int16_t calc_sm_position(uint8_t pwm)
     {
      int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
-     run_ppos-=(((((int32_t)(run_ppos - crnk_ppos)) * (d.param.inj_cranktorun_time - time_since_crnk) * 256) / d.param.inj_cranktorun_time) >> 8);
-     restrict_value_to(&run_ppos, 0, 100 * 2); //0...100%
-     chks.iac_pos = run_ppos << 2; //x4
+     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 5; //result will be x4
      break;    //use interpolated value
     }
    }

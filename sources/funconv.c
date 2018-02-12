@@ -119,6 +119,15 @@ static int16_t calc_synthetic_load(void)
  return load;
 }
 
+/** Get upper load value
+ * Uses d ECU data structure
+ * \return value of upper load
+ */
+int16_t get_load_upper(void)
+{
+ return ((d.param.load_src_cfg == 1) ? d.sens.baro_press : d.param.load_upper);
+}
+
 /**Calculates argument values needed for some 2d and 3d lookup tables. Fills la_x values in the fcs_t structure
  * Uses d ECU data structure
  * Note! This function must be called before any other function which expects precalculated results
@@ -146,12 +155,12 @@ void calc_lookup_args(void)
   d.load = calc_synthetic_load();
 
  //Calculate arguments for load axis:
- fcs.la_load = (d.param.load_upper - d.load);
+ fcs.la_load = (get_load_upper() - d.load);
  if (fcs.la_load < 0) fcs.la_load = 0;
 
  //load_upper - value of the upper load, load_lower - value of the lower load
  //todo: replace division by 1/x multiplication
- fcs.la_grad = (((d.param.load_src_cfg == 1) ? d.sens.baro_press : d.param.load_upper) - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
+ fcs.la_grad = (get_load_upper() - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
  if (fcs.la_grad < 1)
   fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
 
@@ -795,7 +804,7 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  //normalize values (function argument components)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
- int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)128 * k_load) / (d.param.load_upper - d.param.load_lower)) >> 2; //TODO: use d.sens.map or d.load ???
+ int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)128 * k_load) / (get_load_upper() - d.param.load_lower)) >> 2; //TODO: use d.sens.map or d.load ???
  int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_frq) - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)

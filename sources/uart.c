@@ -713,6 +713,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.choke_corr_time[1]);
    build_i8h(d.param.choke_flags); //choke flags
    build_i8h(d.param.sm_freq);
+   build_i16h(d.param.inj_cranktorun_time); //fuel injection
    break;
 
 #ifdef GD_CONTROL
@@ -1285,6 +1286,7 @@ uint8_t uart_recept_packet(void)
    d.param.choke_corr_time[1] = recept_i16h();
    d.param.choke_flags = recept_i8h(); //choke flags
    d.param.sm_freq = recept_i8h();
+   d.param.inj_cranktorun_time = recept_i16h(); //fuel injection
    break;
 
 #ifdef GD_CONTROL

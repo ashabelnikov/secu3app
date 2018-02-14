@@ -68,7 +68,7 @@
 #define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after in initialization and first movement
 
 #else // Carburetor's choke stuff
-#define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
+//#define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
 
 /**RPM regulator call period, 100ms*/
 #define RPMREG_CORR_TIME 10
@@ -159,14 +159,24 @@ static uint8_t is_rpmreg_allowed(void)
 /** Used by calc_sm_position() function
  * Uses d ECU data structure
  * \param regval Value of correction from RPM regulator to be added to result
- * \param mode 0 - use cranking lookup table, 1 - use work lookup table
+ * \param mode 0 - use cranking lookup table, 1 - use work lookup table, 2 - interpolation between cranking and work positions (see time_since_crnk parameter)
+ * \param time_since_crnk - time for interpolation mode in 10ms units
  * \return choke position in steps
  */
-static int16_t choke_pos_final(int16_t regval, uint8_t mode)
+static int16_t choke_pos_final(int16_t regval, uint8_t mode, uint16_t time_since_crnk)
 {
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
   {
-   uint16_t pos = (((uint32_t)inj_iac_pos_lookup(&chks.prev_temp, mode)) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
+   uint16_t pos;
+   if (mode < 2)
+    pos = inj_iac_pos_lookup(&chks.prev_temp, mode); //cranking or work
+   else
+   { //use interpolation
+    int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
+    int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
+    pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 7;
+   }
+   pos = (((uint32_t)pos) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
    return ((((int32_t)d.param.sm_steps) * pos) / 200) + regval;
   }
  else
@@ -174,7 +184,7 @@ static int16_t choke_pos_final(int16_t regval, uint8_t mode)
 }
 
 /** Calculates choke position (for carburetor)
- * Work flow: Start-->Wait some time-->RPM regul.-->Ready
+ * Work flow: Start-->Wait some time-->Cranking to work pos. transition-->RPM regul.-->Ready
  * Uses d ECU data structure
  * \return Correction value in SM steps
  */
@@ -188,7 +198,7 @@ int16_t calc_sm_position(void)
    if (d.st_block)
    {
     chks.strt_t1 = s_timer_gtc();
-    chks.strt_mode = 1;
+    ++chks.strt_mode; // = 1
     //set choke RPM regulation flag (will be activated after delay)
     d.choke_rpm_reg = CHECKBIT(d.param.choke_flags, CKF_USECLRPMREG) && is_rpmreg_allowed();
    }
@@ -196,19 +206,32 @@ int16_t calc_sm_position(void)
   case 1:
    if ((s_timer_gtc() - chks.strt_t1) >= choke_cranking_time())
    {
-    chks.strt_mode = 2;
-    chks.rpmreg_prev = 0; //we will enter RPM regulation mode with zero correction
-    chks.rpmval_prev = d.sens.frequen;
+    ++chks.strt_mode; // = 2
     chks.strt_t1 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
-    chks.rpmreg_t1 = s_timer_gtc();
-    chokerpm_regulator_init();
-    CLEARBIT(chks.flags, CF_RPMREG_ENEX);
-#ifdef USE_RPMREG_TURNON_DELAY
-    CLEARBIT(chks.flags, CF_PRMREG_ENTO);
-#endif
    }
    break; //use startup correction
-  case 2:
+
+  case 2: //wait specified crank-to-run time and interpolate between crank and run positions
+   {
+    uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
+    if (time_since_crnk >= d.param.inj_cranktorun_time)
+    {
+     ++chks.strt_mode;                 //transition has finished, we will immediately fall into mode 3, use run value
+     chks.rpmreg_prev = 0;             //we will enter RPM regulation mode with zero correction
+     chks.rpmval_prev = d.sens.frequen;
+     chks.strt_t1 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
+     chks.rpmreg_t1 = s_timer_gtc();
+     chokerpm_regulator_init();
+     CLEARBIT(chks.flags, CF_RPMREG_ENEX);
+#ifdef USE_RPMREG_TURNON_DELAY
+     CLEARBIT(chks.flags, CF_PRMREG_ENTO);
+#endif
+    }
+    else
+     return choke_pos_final(0, 2, time_since_crnk); //use interpolated value
+   }
+
+  case 3:
   {
    uint16_t tmr = s_timer_gtc();
    if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
@@ -226,7 +249,7 @@ int16_t calc_sm_position(void)
     if (d.sens.temperat >= (d.param.idlreg_turn_on_temp /*+ 1*/) ||
        (CHECKBIT(chks.flags, CF_RPMREG_ENEX) && (d.sens.frequen > 1000) && (((int16_t)d.sens.frequen - (int16_t)chks.rpmval_prev) > 180)))
     {
-     chks.strt_mode = 3; //exit
+     ++chks.strt_mode; // = 4, exit
      rpm_corr = 0;
      d.choke_rpm_reg = 0;
     }
@@ -243,13 +266,13 @@ int16_t calc_sm_position(void)
    rpm_corr = 0;            //regulator's correction is zero
   }
 
-  case 3:
+  case 4:
    if (!d.st_block)
     chks.strt_mode = 0; //engine is stopped, so use cranking position again
-  return choke_pos_final(rpm_corr, 1); //work position + correction from RPM regulator
+  return choke_pos_final(rpm_corr, 1, 0); //work position + correction from RPM regulator
  }
 
- return choke_pos_final(0, 0); //cranking position only
+ return choke_pos_final(0, 0, 0); //cranking position only
 }
 #endif
 

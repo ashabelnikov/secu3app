@@ -82,18 +82,33 @@ void bt_init(uint8_t en_set_baud)
  bts.btnp_mode = 0;
 }
 
+/**Appends UART TX buffer with CRLF bytes
+ * Uses d ECU data structure
+ */
+static void build_crlf(void)
+{
+ //Use CRLF for BK3231 Bluetooth
+ if (CHECKBIT(d.param.bt_flags, BTF_BT_TYPE))
+ {
+  uart_append_send_buff('\r');
+  uart_append_send_buff('\n');
+ }
+}
+
 /** Builds AT+BAUDx command in the sender's buffer
  * \param baud Baud rate code (see uart.h file for more information)
  */
 static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
 {
  uart_reset_send_buff();
+ build_crlf(); //use CRLF before AT command to reset possible errors
  build_fs(AT_BAUD, 7);
  if (baud == CBR_9600) uart_append_send_buff('4');
  else if (baud == CBR_19200) uart_append_send_buff('5');
  else if (baud == CBR_38400) uart_append_send_buff('6');
  else if (baud == CBR_57600) uart_append_send_buff('7');
  else if (baud == CBR_115200) uart_append_send_buff('8');
+ build_crlf();
 }
 
 /** Increments SM state if timer expired (baud rate setting)*/
@@ -227,8 +242,10 @@ void bt_start_set_namepass(void)
 static void append_tx_buff_with_at_name_cmd(uint8_t* name)
 {
  uart_reset_send_buff();
+ build_crlf();
  build_fs(AT_NAME, 7);
  build_rs(&name[1], name[0]);
+ build_crlf();
 }
 
 /** Builds AT+PINx command in the sender's buffer
@@ -237,8 +254,10 @@ static void append_tx_buff_with_at_name_cmd(uint8_t* name)
 static void append_tx_buff_with_at_pass_cmd(uint8_t* pass)
 {
  uart_reset_send_buff();
+ build_crlf();
  build_fs(AT_PIN, 6);
  build_rs(&pass[1], pass[0]);
+ build_crlf();
 }
 
 uint8_t bt_set_namepass(void)

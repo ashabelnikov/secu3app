@@ -22,7 +22,6 @@
 /** \file fuelpump.c
  * \author Alexey A. Shabelnikov
  * Implementation of controling of electric fuel pump.
- * (Реализация управления электробензонасосом).
  */
 
 #ifdef FUEL_PUMP
@@ -34,9 +33,6 @@
 #include "fuelpump.h"
 #include "ioconfig.h"
 #include "vstimer.h"
-
-/**Turn off timeout used at startup, 5 seconds*/
-#define FP_TURNOFF_TIMEOUT_STRT 500
 
 /**Turn off timeout used when engine stops, 3 seconds */
 #define FP_TURNOFF_TIMEOUT_STOP 300
@@ -60,7 +56,7 @@ void fuelpump_init_ports(void)
 void fuelpump_init(void)
 {
  TURN_ON_ELPUMP(1); //turn on
- s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STRT);
+ s_timer16_set(fuel_pump_time_counter, d.param.fp_timeout_strt);
  fpstate.state = 0;
 }
 

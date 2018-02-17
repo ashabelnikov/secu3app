@@ -541,7 +541,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_floodclear_tps =          TPS_MAGNITUDE(75.0),
 
-  .vent_tmr =                   6000,                 //60 sec.
+  .vent_tmr =                    6000,                //60 sec.
+
+  .fp_timeout_strt =             SYS_TIME_S(5.0),     //5 seconds
 
   .reserved =                    {0},
   .crc =                         0

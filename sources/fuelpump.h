@@ -22,7 +22,6 @@
 /** \file fuelpump.h
  * \author Alexey A. Shabelnikov
  * Control of electric fuel pump.
- * (”правление электробензонасосом).
  */
 
 #ifndef _FUELPUMP_H_
@@ -30,13 +29,15 @@
 
 #ifdef FUEL_PUMP
 
-/** Initialization of used I/O ports (инициализаци€ используемых портов) */
+/** Initialization of used I/O ports*/
 void fuelpump_init_ports(void);
 
-/** Initialization of the module */
+/** Initialization of the module
+ *  Uses d ECU data structure
+ */
 void fuelpump_init(void);
 
-/** Does control of fuel pump (”правление бензонасосом)
+/** Does control of fuel pump
  * Uses d ECU data structure
  */
 void fuelpump_control(void);

@@ -561,10 +561,12 @@ typedef struct params_t
 
   uint16_t vent_tmr;                     //!< How long cooling fan will work on stopped engine, 1 discrete = 10ms
 
+  uint16_t fp_timeout_strt;              //!< Fuel pump turn off timeout before cranking
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[7];
+  uint8_t  reserved[5];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

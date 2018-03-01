@@ -539,7 +539,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .barocorr_type =               0,                   //no barometric correction
 
-  .inj_floodclear_tps =          TPS_MAGNITUDE(75.0),
+  .inj_floodclear_tps =          TPS_MAGNITUDE(90.0),
 
   .vent_tmr =                    6000,                //60 sec.
 

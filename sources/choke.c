@@ -165,20 +165,23 @@ static uint8_t is_rpmreg_allowed(void)
  */
 static int16_t choke_pos_final(int16_t regval, uint8_t mode, uint16_t time_since_crnk)
 {
+ if (!d.st_block)
+  chks.strt_mode = 0; //engine is stopped, so use cranking position again
+
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
-  {
-   uint16_t pos;
-   if (mode < 2)
-    pos = inj_iac_pos_lookup(&chks.prev_temp, mode); //cranking or work
-   else
-   { //use interpolation
-    int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
-    int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
-    pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 7;
-   }
-   pos = (((uint32_t)pos) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
-   return ((((int32_t)d.param.sm_steps) * pos) / 200) + regval;
+ {
+  uint16_t pos;
+  if (mode < 2)
+   pos = inj_iac_pos_lookup(&chks.prev_temp, mode); //cranking or work
+  else
+  { //use interpolation
+   int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
+   int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
+   pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 7;
   }
+  pos = (((uint32_t)pos) * inj_airtemp_corr(1)) >> 7;  //use raw MAT as argument to lookup table
+  return ((((int32_t)d.param.sm_steps) * pos) / 200) + regval;
+ }
  else
   return 0; //fully opened
 }
@@ -267,9 +270,7 @@ int16_t calc_sm_position(void)
   }
 
   case 4:
-   if (!d.st_block)
-    chks.strt_mode = 0; //engine is stopped, so use cranking position again
-  return choke_pos_final(rpm_corr, 1, 0); //work position + correction from RPM regulator
+   return choke_pos_final(rpm_corr, 1, 0); //work position + correction from RPM regulator
  }
 
  return choke_pos_final(0, 0, 0); //cranking position only

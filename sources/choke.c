@@ -100,7 +100,7 @@ typedef struct
  uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
  uint8_t   strt_mode;      //!< state machine state used for starting mode
- uint16_t  strt_t1;        //!< used for time calculations by calc_startup_corr()
+ uint16_t  strt_t1;        //!< used for time calculations by calc_sm_position()
  uint8_t   flags;          //!< state flags (see CF_ definitions)
  uint16_t  rpmreg_t1;      //!< used to call RPM regulator function
  prev_temp_t prev_temp;    //!< used for inj_iac_pos_lookup()
@@ -108,6 +108,7 @@ typedef struct
 #ifndef FUEL_INJECT
  int16_t   rpmreg_prev;    //!< previous value of RPM regulator
  uint16_t  rpmval_prev;    //!< used to store RPM value to detect exit from RPM regulation mode
+ uint16_t  strt_t2;        //!< used for time calculations by calc_sm_position()
 #endif
 
 #ifdef FUEL_INJECT
@@ -121,7 +122,7 @@ typedef struct
 /**Instance of state variables */
 choke_st_t chks = {0,0,0,0,0,0,0,0,{0,0,0}
 #ifndef FUEL_INJECT
-                   ,0,0
+                   ,0,0,0
 #endif
 #ifdef FUEL_INJECT
                    ,0,0,0
@@ -194,6 +195,7 @@ static int16_t choke_pos_final(int16_t regval, uint8_t mode, uint16_t time_since
 int16_t calc_sm_position(void)
 {
  int16_t rpm_corr = 0;
+ uint16_t time_since_crnk = d.param.inj_cranktorun_time;
 
  switch(chks.strt_mode)
  {
@@ -216,13 +218,13 @@ int16_t calc_sm_position(void)
 
   case 2: //wait specified crank-to-run time and interpolate between crank and run positions
    {
-    uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
-    if (time_since_crnk >= d.param.inj_cranktorun_time)
+    time_since_crnk = (s_timer_gtc() - chks.strt_t1); //update time value
+    if ((time_since_crnk >= d.param.inj_cranktorun_time) || (d.sens.frequen <= inj_idling_rpm()))
     {
      ++chks.strt_mode;                 //transition has finished, we will immediately fall into mode 3, use run value
      chks.rpmreg_prev = 0;             //we will enter RPM regulation mode with zero correction
      chks.rpmval_prev = d.sens.frequen;
-     chks.strt_t1 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
+     chks.strt_t2 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
      chks.rpmreg_t1 = s_timer_gtc();
      chokerpm_regulator_init();
      CLEARBIT(chks.flags, CF_RPMREG_ENEX);
@@ -235,15 +237,20 @@ int16_t calc_sm_position(void)
    }
 
   case 3:
+   time_since_crnk = (s_timer_gtc() - chks.strt_t1);  //update time value
+   if (time_since_crnk >= d.param.inj_cranktorun_time)
+    ++chks.strt_mode;
+
+  case 4:
   {
    uint16_t tmr = s_timer_gtc();
    if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
    {
     chks.rpmreg_t1 = tmr;  //reset timer
-    if ((tmr - chks.strt_t1) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
+    if ((tmr - chks.strt_t2) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
      SETBIT(chks.flags, CF_RPMREG_ENEX);
 #ifdef USE_RPMREG_TURNON_DELAY
-    if ((tmr - chks.strt_t1) >=  RPMREG_ENTO_TIME)
+    if ((tmr - chks.strt_t2) >=  RPMREG_ENTO_TIME)
      SETBIT(chks.flags, CF_PRMREG_ENTO);
     if (CHECKBIT(chks.flags, CF_PRMREG_ENTO))
 #endif
@@ -252,7 +259,7 @@ int16_t calc_sm_position(void)
     if (d.sens.temperat >= (d.param.idlreg_turn_on_temp /*+ 1*/) ||
        (CHECKBIT(chks.flags, CF_RPMREG_ENEX) && (d.sens.frequen > 1000) && (((int16_t)d.sens.frequen - (int16_t)chks.rpmval_prev) > 180)))
     {
-     ++chks.strt_mode; // = 4, exit
+     chks.strt_mode = 5;    //exit from closed loop mode
      rpm_corr = 0;
      d.choke_rpm_reg = 0;
     }
@@ -265,12 +272,12 @@ int16_t calc_sm_position(void)
 
   if (!is_rpmreg_allowed()) //Is RPM regulator not allowed?
   {
-   d.choke_rpm_reg = 0;    //always don't use regulator when fuel type is gas
+   d.choke_rpm_reg = 0;     //always don't use regulator when fuel type is gas
    rpm_corr = 0;            //regulator's correction is zero
   }
 
-  case 4:
-   return choke_pos_final(rpm_corr, 1, 0); //work position + correction from RPM regulator
+  case 5:
+   return choke_pos_final(rpm_corr, (time_since_crnk >= d.param.inj_cranktorun_time) ? 1 : 2, time_since_crnk); //work position + correction from RPM regulator
  }
 
  return choke_pos_final(0, 0, 0); //cranking position only

@@ -705,6 +705,11 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
   inj_init_prev_clt(p_pt); //make it current
  }
 
+#ifndef FUEL_INJECT
+ if (0==(mode ? _GBU(inj_iac_run_pos[i1]) : _GBU(inj_iac_crank_pos[i1])))
+  return 0; //asked by alvikagal: open choke fully if next value in the lookup table is zero
+ else
+#endif
  //run/cranking
  return simple_interpolation(t, mode ? _GBU(inj_iac_run_pos[i]) : _GBU(inj_iac_crank_pos[i]), mode ? _GBU(inj_iac_run_pos[i1]) : _GBU(inj_iac_crank_pos[i1]),  //<--values in table are unsigned
   (((int16_t)i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;

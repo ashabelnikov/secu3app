@@ -21,7 +21,7 @@
 
 /** \file wdt.h
  * \author Alexey A. Shabelnikov
- * Watchdog timer API (Модуль сторожевого таймера)
+ * Watchdog timer API
  */
 
 #ifndef _WDT_H_

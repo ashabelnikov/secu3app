@@ -44,6 +44,7 @@
 #include "ecudata.h"
 #include "eculogic.h"
 #include "eeprom.h"
+#include "egosheat.h"
 #include "evap.h"
 #include "gasdose.h"
 #include "pwrvalve.h"
@@ -127,6 +128,10 @@ void control_engine_units(void)
  intkheat_control();
 #endif
 
+#ifdef EGOS_HEATING
+ egosheat_control();
+#endif
+
 #ifdef UNI_OUTPUT
  //Universal programmable output control
  uniout_control();
@@ -192,6 +197,9 @@ void init_ports(void)
 #endif
 #ifdef INTK_HEATING
  intkheat_init_ports();
+#endif
+#ifdef EGOS_HEATING
+ egosheat_init_ports();
 #endif
  meas_init_ports();
 #ifdef UNI_OUTPUT

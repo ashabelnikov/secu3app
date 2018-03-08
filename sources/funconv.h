@@ -145,21 +145,21 @@ uint16_t inj_cranking_pw(void);
  * Uses d ECU data structure
  */
 void calc_ve_afr(void);
-#endif
 
-#ifdef FUEL_INJECT
 /** Calculates air flow as rpm*load
  * Uses d ECU data structure
  * returns air flow value / 32
  */
 uint16_t calc_airflow(void);
+#endif
+
+#ifdef FUEL_INJECT
 
 /** Calculates basic injection time using Ideal gas law, VE and AFR lookup tables
  * Uses d ECU data structure
  * \return Base injection time in ticks of timer (1 tick = 3.2uS)
  */
 uint16_t inj_base_pw(void);
-
 
 /** Calculates injection timing from lookup table
  * Uses d ECU data structure

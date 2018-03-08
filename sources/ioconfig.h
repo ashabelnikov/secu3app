@@ -160,7 +160,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_INJ_OUT5     63     //!< INJ_OUT5        (output)
 #define IOP_INJ_OUT6     64     //!< INJ_OUT6        (output)
 #define IOP_COND_I       65     //!< COND_I          (input)
-#define IOP_RESERVED27   66     //!< reserved plug   ()
+#define IOP_O2SH_O       66     //!< IOP_O2SH_O      (output)
 #define IOP_RESERVED28   67     //!< reserved plug   ()
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT7-(IOP_IGN_OUT6+1)) //!< needed by ckps.c

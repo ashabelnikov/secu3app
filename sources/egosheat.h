@@ -19,53 +19,24 @@
               email: shabelnikov@secu-3.org
 */
 
-/** \file wdt.c
+/** \file egosheat.h
  * \author Alexey A. Shabelnikov
- * Implementation of watchdog timer API
+ * EGO sensor's heating control.
  */
 
-#include "port/avrio.h"
-#include "port/interrupt.h"
-#include "port/intrinsic.h"
-#include "port/port.h"
-#include <stdint.h>
-#include "bitmask.h"
-#include "wdt.h"
+#ifndef _EGOSHEAT_H_
+#define _EGOSHEAT_H_
 
-void wdt_start_timer(void)
-{
- if (!(WDTCSR & _BV(WDE)))
- { //not started yet
-  WDTCSR = _BV(WDCE) | _BV(WDE);
-  WDTCSR = _BV(WDP0) | _BV(WDE); //timeout = 32ms
- }
-}
+#ifdef EGOS_HEATING
 
-void wdt_reset_timer(void)
-{
- _WATCHDOG_RESET();
-}
+/** Initialization of used I/O ports */
+void egosheat_init_ports(void);
 
-void wdt_reset_device(void)
-{
- wdt_start_timer();
- _DISABLE_INTERRUPT();
- for(;;);
-}
+/** Performs control of EGO sensor's heater
+ * Uses d ECU data structure
+ */
+void egosheat_control(void);
 
-void wdt_turnoff_timer(void)
-{
- _BEGIN_ATOMIC_BLOCK();
- _WATCHDOG_RESET();
+#endif //EGOS_HEATING
 
- //Clear WDRF in MCUSR
- MCUSR&= ~_BV(WDRF);
-
- // Write logical one to WDCE and WDE
- WDTCSR = _BV(WDCE) | _BV(WDE);
-
- // Turn off WDT
- WDTCSR = 0x00;
-
- _END_ATOMIC_BLOCK();
-}
+#endif //_EGOSHEAT_H_

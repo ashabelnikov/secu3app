@@ -147,14 +147,17 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     PA4_INP_IGNTIM *     Use PA4 as analog input for manual correction of
                          ignition timing
 
-    SEND_INST_VAL *      Send instant values (RPM, voltage) instead of averaged
+    SEND_INST_VAL  *     Send instant values (RPM, voltage) instead of averaged
                          Передавать мгновенные значения, без усреднения
 
-    EVAP_CONTROL  *      Canister purge valve control
+    EVAP_CONTROL   *     Canister purge valve control
                          Управление клапаном продувки адсорбера
 
-    AIRCONDIT     *      Air conditioner control
+    AIRCONDIT      *     Air conditioner control
                          Управление кондиционером
+
+    EGOS_HEATING   *     EGO sensor's heater control
+                         Управление подогревом датчика кислорода
 
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager

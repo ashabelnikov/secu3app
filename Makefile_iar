@@ -24,7 +24,7 @@ CFLAGS = --cpu $(MCU)
 CFLAGS += -DREALTIME_TABLES -DTHERMISTOR_CS -DCOOLINGFAN_PWM -DDIAGNOSTICS -DHALL_OUTPUT -DFUEL_PUMP -DREV9_BOARD
 CFLAGS += -DSM_CONTROL -DSTROBOSCOPE -DUART_BINARY -DDWELL_CONTROL -DVREF_5V -DGD_CONTROL -DSECU3T
 CFLAGS += -DBL_BAUD_RATE=57600 -DSPEED_SENSOR -DINTK_HEATING -DBLUETOOTH_SUPP -DIMMOBILIZER -DUNI_OUTPUT -DAIRTEMP_SENS -DSEND_INST_VAL
-CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DENABLE_BIT_DEFINITIONS -DIOCFG_FUNC_INIT
+CFLAGS += -DLITTLE_ENDIAN_DATA_FORMAT -DENABLE_BIT_DEFINITIONS -DIOCFG_FUNC_INIT -DEGOS_HEATING
 CFLAGS += -ms -e --initializers_in_flash
 CFLAGS += -s9
 #CFLAGS += --cross_call_passes=1 --do_cross_call
@@ -67,7 +67,8 @@ SRC = adc.c bootldr.c ce_errors.c ckps.c crc16.c \
 	smcontrol.c choke.c hall.c bluetooth.c onewire.c \
 	immobiliz.c ckps2ch.c intkheat.c injector.c uni_out.c \
 	lambda.c ecudata.c gasdose.c gdcontrol.c carb_afr.c \
-	ckpsn+1.c mathemat.c obd.c dbgvar.c evap.c aircond.c
+	ckpsn+1.c mathemat.c obd.c dbgvar.c evap.c aircond.c \
+	egosheat.c
 
 # Define all object files and dependencies
 OBJECTS = $(SRC:%.c=$(OBJDIR)/%.r90)

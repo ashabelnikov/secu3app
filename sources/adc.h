@@ -48,28 +48,28 @@
  #define ADC_VREF_FACTOR        1.0000  //!< Vref compensation factor (2.56V/2.56V)
 #endif
 
-/** Получение последнего измеренного значения с ДАД
- * \return значение в дискретах АЦП
+/** Get last measured value of MAP
+ * \return value in ADC discretes
  */
 uint16_t adc_get_map_value(void);
 
-/** Получение последнего измеренного значения напряжения бортовой сети
- * \return значение в дискретах АЦП
+/** Get last measured value of board voltage
+ * \return value in ADC discretes
  */
 uint16_t adc_get_ubat_value(void);
 
-/** Получение последнего измеренного значения с ДТОЖ
- * \return значение в дискретах АЦП
+/** Get last measured value of CLT
+ * \return value in ADC discretes
  */
 uint16_t adc_get_temp_value(void);
 
-/** Получение последнего измеренного значения с ADD_I1
- * \return значение в дискретах АЦП
+/** Get last measured value of ADD_I1
+ * \return value in ADC discretes
  */
 uint16_t adc_get_add_i1_value(void);
 
-/** Получение последнего измеренного значения с ADD_I2
- * \return значение в дискретах АЦП
+/** Get last measured value of ADD_I2
+ * \return value in ADC discretes
  */
 uint16_t adc_get_add_i2_value(void);
 
@@ -81,8 +81,7 @@ uint16_t adc_get_add_i3_value(void);
 #endif
 
 /** Get latest measured value from throttle gate position sensor
- * (Получение последнего измеренного значения с ДПДЗ)
- * \return значение в дискретах АЦП
+ * \return value in ADC discretes
  */
 uint16_t adc_get_carb_value(void);
 

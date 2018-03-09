@@ -22,7 +22,6 @@
 /** \file jumper.c
  * \author Alexey A. Shabelnikov
  * Implementation of processing of jumpers which user can open/close to do some actions
- * (Реализация обработки перемычек которые пользователь может замыкать/размыкать для выполнения некоторых действий).
  */
 
 #include "port/avrio.h"
@@ -34,13 +33,13 @@
 /**Retrieves state of jumper from port's pin */
 #define GET_DEFEEPROM_JUMPER_STATE() (CHECKBIT(PINC, PINC2) > 0)
 
-/**3 последовательно считанных состояния перемычки*/
+/**3 states of jumper read in series 3 times*/
 uint8_t de_samples[3];
 
 void jumper_init_ports(void)
 {
  uint8_t i = 3;
- DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs (входы)
+ DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs
  PORTC|= _BV(PC3)|_BV(PC2);
 
  _NO_OPERATION();
@@ -53,6 +52,6 @@ void jumper_init_ports(void)
 
 uint8_t jumper_get_defeeprom_state(void)
 {
- //Majority gate (Мажоритарный элемент)
+ //Majority gate
  return (de_samples[0] & de_samples[1]) | (de_samples[1] & de_samples[2]) | (de_samples[0] & de_samples[2]);
 }

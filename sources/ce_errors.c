@@ -235,7 +235,8 @@ void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
   d.ce_state = 1;  //<--doubling
  }
 
- temp_errors = (ce_state.merged_errors | ce_state.ecuerrors);
+ temp_errors = (ce_state.merged_errors | (ce_state.ecuerrors & ~_BV16(ECUERROR_SYS_START))); //also exclude saving of ECUERROR_SYS_START flag
+
  //check for error which is still not in merged_errors
  if (temp_errors!=ce_state.merged_errors)
  {

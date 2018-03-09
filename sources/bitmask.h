@@ -52,6 +52,11 @@
  #define _BV(bit) (1 << (bit))
 #endif
 
+/**Converts a bit number into a 2-byte value */
+#ifndef _BV16
+ #define _BV16(bit) (((uint16_t)1) << (bit))
+#endif
+
 /**Converts a bit number into a 4-byte value */
 #ifndef _BV32
  #define _BV32(bit) (((uint32_t)1) << (bit))
@@ -60,6 +65,11 @@
 /**Converts a bit number into a 1-byte value with specifying of a bit value */
 #ifndef _CBV8
  #define _CBV8(val,bit) (((uint8_t)val) << (bit))
+#endif
+
+/**Converts a bit number into a 2-byte value with specifying of a bit value */
+#ifndef _CBV16
+ #define _CBV16(val,bit) (((uint16_t)val) << (bit))
 #endif
 
 /**Converts a bit number into a 4-byte value with specifying of a bit value */

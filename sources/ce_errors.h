@@ -48,6 +48,7 @@
 #define ECUERROR_ADD_I2_SENSOR         12  //!< ADD_I2 input error
 #define ECUERROR_ADD_I3_SENSOR         13  //!< ADD_I3 input error
 #define ECUERROR_ADD_I4_SENSOR         14  //!< ADD_I4 input error
+#define ECUERROR_SYS_START             15  //!< Not actually an error. just indicates that fimware has started
 
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure

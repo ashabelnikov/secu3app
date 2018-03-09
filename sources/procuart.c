@@ -47,6 +47,8 @@
 #include "smcontrol.h"
 #include "gdcontrol.h"
 
+uint8_t startup_packets = 5;  //number of packets before start up bit will be cleared
+
 void process_uart_interface(void)
 {
  uint8_t descriptor;
@@ -252,7 +254,16 @@ void process_uart_interface(void)
   if (!uart_is_sender_busy())
   {
    uint8_t desc = uart_get_send_mode();
+
+   //----------------------------------
+   if (startup_packets > 0)
+    --startup_packets;
+   else
+    ce_clear_error(ECUERROR_SYS_START);
+   //----------------------------------
+
    uart_send_packet(0);                  //теперь передатчик озабочен передачей данных
+
 #ifdef DEBUG_VARIABLES
    if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc || DIAGINP_DAT==desc)
     sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information

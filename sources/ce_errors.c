@@ -260,7 +260,7 @@ void ce_save_merged_errors(uint16_t* p_merged_errors)
   eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
   ce_state.write_errors = temp_errors | ce_state.merged_errors;
   if (ce_state.write_errors!=temp_errors)
-    eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, &ce_state.write_errors, sizeof(uint16_t));
+   eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, &ce_state.write_errors, sizeof(uint16_t));
  }
  else
  {

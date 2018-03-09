@@ -375,6 +375,10 @@ MAIN()
  //Enable all interrupts globally before we fall in main loop
  _ENABLE_INTERRUPT();
 
+ //----------------------------------
+ ce_set_error(ECUERROR_SYS_START);
+ //----------------------------------
+
  //------------------------------------------------------------------------
  while(1)
  {

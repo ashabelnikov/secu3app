@@ -49,21 +49,6 @@ void egosheat_init_ports(void)
  IOCFG_INIT(IOP_O2SH_O, 0);  //<-- heating is off
 }
 
-/**Helpful macro for filling of lookup table*/
-#define _HPV(v) SYSTIM_MAGS(v)
-
-/**Value of pause in seconds vs board voltage*/
-PGM_DECLARE(uint8_t eh_pause[COIL_ON_TIME_LOOKUP_TABLE_SIZE]) =
-  {//  5.4         5.8         6.2         6.6         7.0        7.4        7.8         8.2
-   _HPV(0.00),_HPV(0.00),_HPV(0.00),_HPV(0.00),_HPV(0.00),_HPV(0.01),_HPV(0.01),_HPV(0.02),
-   //  8.6         9.0         9.4         9.8        10.2       10.6       11.0        11.4
-   _HPV(0.06), _HPV(0.07), _HPV(0.08), _HPV(0.10), _HPV(0.12), _HPV(0.14),_HPV(0.16),_HPV(0.18),
-   // 11.8        12.2        12.6        13.0        13.4       13.8       14.2        14.6
-   _HPV(0.20), _HPV(0.21), _HPV(0.22), _HPV(0.23), _HPV(0.24), _HPV(0.27),_HPV(0.30),_HPV(0.32),
-   // 15.0        15.4        15.8        16.2        16.6       17.0       17.4        17.8
-   _HPV(0.34), _HPV(0.37), _HPV(0.40), _HPV(0.44), _HPV(0.48), _HPV(0.50),_HPV(0.52),_HPV(0.54),
-  };
-
 /** Calculates value of pause using a lookup table. This function doesn't interpolate values
  * \return value of pause in 10ms units (1 second = 100)
  */
@@ -78,7 +63,7 @@ static uint16_t get_eh_pause(void)
   voltage-=VOLTAGE_MAGNITUDE(0.4); //step between function samples
  }while(i-- > 0);
 
- return PGM_GET_BYTE(&eh_pause[i]);
+ return PGM_GET_BYTE(&fw_data.exdata.eh_pause[i]);
 }
 
 void egosheat_control(void)

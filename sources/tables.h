@@ -316,10 +316,13 @@ typedef struct fw_ex_data_t
   /**CLT temperature correction of advance angle on cranking*/
   int8_t cts_crkcorr[CTS_CRKCORR_SIZE];
 
+  /**Value of pause in seconds vs board voltage*/
+  uint8_t eh_pause[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[67];
+  uint8_t reserved[35];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

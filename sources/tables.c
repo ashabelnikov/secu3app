@@ -136,7 +136,11 @@
 //For specifying of throttle position
 #define _TP(v) ROUND((v) * 2.0)
 
+/***/
 #define _GPSX(v) ROUND((v)/2)
+
+/**Helpful macro for filling of lookup table*/
+#define _HPV(v) SYSTIM_MAGS(v)
 
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
@@ -676,6 +680,17 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   //Correction of ignition timing vs CLT on cranking
   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},
+
+  //EGO heating pause time (seconds) vs board voltage (Volts)
+  {//  5.4         5.8         6.2         6.6         7.0        7.4        7.8         8.2
+   _HPV(0.00),_HPV(0.00),_HPV(0.00),_HPV(0.00),_HPV(0.00),_HPV(0.01),_HPV(0.01),_HPV(0.02),
+   //  8.6         9.0         9.4         9.8        10.2       10.6       11.0        11.4
+   _HPV(0.06), _HPV(0.07), _HPV(0.08), _HPV(0.10), _HPV(0.12), _HPV(0.14),_HPV(0.16),_HPV(0.18),
+   // 11.8        12.2        12.6        13.0        13.4       13.8       14.2        14.6
+   _HPV(0.20), _HPV(0.21), _HPV(0.22), _HPV(0.23), _HPV(0.24), _HPV(0.27),_HPV(0.30),_HPV(0.32),
+   // 15.0        15.4        15.8        16.2        16.6       17.0       17.4        17.8
+   _HPV(0.34), _HPV(0.37), _HPV(0.40), _HPV(0.44), _HPV(0.48), _HPV(0.50),_HPV(0.52),_HPV(0.54),
+  },
 
   /**reserved bytes*/
   {0}

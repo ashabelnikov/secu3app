@@ -54,14 +54,15 @@ void egosheat_init_ports(void)
  */
 static uint16_t get_eh_pause(void)
 {
- uint8_t i = COIL_ON_TIME_LOOKUP_TABLE_SIZE-1;  //last element
+ uint8_t i = COIL_ON_TIME_LOOKUP_TABLE_SIZE;    //last element + 1
  int16_t voltage = VOLTAGE_MAGNITUDE(17.8-0.2); //17.6V
  do
  {
+  --i;
   if (d.sens.voltage > voltage)
    break;
   voltage-=VOLTAGE_MAGNITUDE(0.4); //step between function samples
- }while(i-- > 0);
+ }while(i > 0);
 
  return PGM_GET_BYTE(&fw_data.exdata.eh_pause[i]);
 }
@@ -91,16 +92,20 @@ void egosheat_control(void)
    {
     ++eh.state;            //Go into PWM mode
     eh.t1 = s_timer_gtc(); //reset timer
-    IOCFG_SETF(IOP_O2SH_O, 0); //turn off
    }
   }
   case 2:
-   if ((s_timer_gtc() - eh.t1) < get_eh_pause())      //paused heating time
-    break;
+   {
+    uint16_t pause = get_eh_pause();
+    if (pause)
+     IOCFG_SETF(IOP_O2SH_O, 0); //turn off
 
-   ++eh.state;            //Go into active heating mode
-   eh.t1 = s_timer_gtc(); //reset timer
+    if ((s_timer_gtc() - eh.t1) < pause)      //paused heating time
+     break;
 
+    ++eh.state;            //Go into active heating mode
+    eh.t1 = s_timer_gtc(); //reset timer
+   }
   case 3:
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
    //always turn off heater when airflow exceeds specified threshold
@@ -119,7 +124,6 @@ void egosheat_control(void)
 
    --eh.state;            //Go into pause heating mode
    eh.t1 = s_timer_gtc(); //reset timer
-   IOCFG_SETF(IOP_O2SH_O, 0); //turn off
  }
 
  if (!d.st_block)

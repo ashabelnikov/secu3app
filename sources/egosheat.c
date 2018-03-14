@@ -33,6 +33,7 @@
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "vstimer.h"
+#include "lambda.h"
 
 /**Declare state variables structure*/
 typedef struct
@@ -83,7 +84,8 @@ void egosheat_control(void)
   case 1:
   {
    uint16_t time = s_timer_gtc() - eh.t1;
-   if ((d.sens.temperat < TEMPERATURE_MAGNITUDE(70.0) && (time < SYSTIM_MAGS(15.0))) || (d.sens.temperat >= TEMPERATURE_MAGNITUDE(70.0) && (time < SYSTIM_MAGS(30.0))))
+   if ((d.sens.temperat < TEMPERATURE_MAGNITUDE(70.0) && (time < SYSTIM_MAGS(15.0))) || (d.sens.temperat >= TEMPERATURE_MAGNITUDE(70.0) && (time < SYSTIM_MAGS(30.0)))
+      && !(d.param.inj_lambda_htgdet && lambda_is_activated()))
    {
     IOCFG_SETF(IOP_O2SH_O, 1); //turned on
     break;

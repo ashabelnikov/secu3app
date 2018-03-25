@@ -961,9 +961,9 @@ INLINE
 void set_timer0(uint16_t value)
 {
  OCR0A = TCNT0 + _AB(value, 0);
+ SETBIT(TIFR0, OCF0A);
  ckps.TCNT0_H = _AB(value, 1);
  SETBIT(TIMSK0, OCIE0A);
- SETBIT(TIFR0, OCF0A);
 }
 
 /**Helpful function, used at the startup of engine

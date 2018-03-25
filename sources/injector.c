@@ -356,10 +356,10 @@ void inject_start_inj(uint8_t chan)
    //interrupts must be disabled!
    _BEGIN_ATOMIC_BLOCK();
    OCR2B = TCNT2 + _AB(inj.inj_time, 0);
+   SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
    inj.tmr2b_h = _AB(inj.inj_time, 1);
    SET_ALL_INJ(INJ_ON);                       //turn on injector 1-8
    SETBIT(TIMSK2, OCIE2B);
-   SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
    _END_ATOMIC_BLOCK();
   }
   else
@@ -377,9 +377,9 @@ void inject_start_inj(uint8_t chan)
     if (QUEUE_IS_EMPTY(1))
     {
      OCR2B = TCNT2 + _AB(inj.inj_time, 0);
+     SETBIT(TIFR2, OCF2B);                    //reset possible pending interrupt flag
      inj.tmr2b_h = _AB(inj.inj_time, 1);
      SETBIT(TIMSK2, OCIE2B);
-     SETBIT(TIFR2, OCF2B);                    //reset possible pending interrupt flag
      SETBIT(inj.mask_chan, inj_chanstate[chan].io_map); //unmask channel
     }
     QUEUE_ADD(1, (inj.inj_time << 1), chan);  //append queue by channel requiring processing
@@ -400,9 +400,9 @@ void inject_start_inj(uint8_t chan)
     if (QUEUE_IS_EMPTY(2))
     {
      OCR0B = TCNT0 + _AB(t, 0);
+     SETBIT(TIFR0, OCF0B);                    //reset possible pending interrupt flag
      inj.tmr0b_h = _AB(t, 1);
      SETBIT(TIMSK0, OCIE0B);
-     SETBIT(TIFR0, OCF0B);                    //reset possible pending interrupt flag
      SETBIT(inj.mask_chan, inj_chanstate[chan].io_map); //unmask channel
     }
     QUEUE_ADD(2, t, chan);                    //append queue by channel requiring processing
@@ -421,10 +421,10 @@ void inject_open_inj(uint16_t time)
    (_AB(time, 0))++;
   _BEGIN_ATOMIC_BLOCK();
   OCR2B = TCNT2 + _AB(time, 0);
+  SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
   inj.tmr2b_h = _AB(time, 1);
   SET_ALL_INJ(INJ_ON);                        //turn on injector 1-8
   SETBIT(TIMSK2, OCIE2B);
-  SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
   inj.prime_pulse = 1;
   _END_ATOMIC_BLOCK();
 }
@@ -463,9 +463,9 @@ ISR(TIMER2_COMPB_vect)
      t = 4;
     t = t >> 1; //1 tick = 6.4us
     OCR2B = TCNT2 + _AB(t, 0);
+    SETBIT(TIFR2, OCF2B);                     //reset possible pending interrupt flag
     inj.tmr2b_h = _AB(t, 1);
     SETBIT(TIMSK2, OCIE2B);
-    SETBIT(TIFR2, OCF2B);                     //reset possible pending interrupt flag
    }
    else
    {
@@ -506,9 +506,9 @@ ISR(TIMER0_COMPB_vect)
     if (t > 20000) //end_time < TCNT1, so, it is expired  TODO: How can we do this check better?
      t = 2;
     OCR0B = TCNT0 + _AB(t, 0);
+    SETBIT(TIFR0, OCF0B);                     //reset possible pending interrupt flag
     inj.tmr0b_h = _AB(t, 1);
     SETBIT(TIMSK0, OCIE0B);
-    SETBIT(TIFR0, OCF0B);                     //reset possible pending interrupt flag
    }
    else
    {

@@ -621,10 +621,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .map_v_min = VOLTAGE_MAGNITUDE(0.0),
    .map_v_max = VOLTAGE_MAGNITUDE(4.97),
    .map_v_em = VOLTAGE_MAGNITUDE(1.00),
+   .map_v_flg = 1,
 
    .vbat_v_min = VOLTAGE_MAGNITUDE(8.00),
    .vbat_v_max = VOLTAGE_MAGNITUDE(16.00),
    .vbat_v_em = VOLTAGE_MAGNITUDE(14.00),
+   .vbat_v_flg = 1,
 
 #ifdef THERMISTOR_CS
    .cts_v_min = VOLTAGE_MAGNITUDE(0.01), //2.28 (for LM235 sensor)
@@ -635,30 +637,37 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .cts_v_max = VOLTAGE_MAGNITUDE(3.93),
    .cts_v_em = VOLTAGE_MAGNITUDE(3.20),
 #endif
+   .cts_v_flg = 1,
 
    .ks_v_min = VOLTAGE_MAGNITUDE(0.00),
    .ks_v_max = VOLTAGE_MAGNITUDE(4.97),
    .ks_v_em = VOLTAGE_MAGNITUDE(0.10),
+   .ks_v_flg = 1,
 
    .tps_v_min = VOLTAGE_MAGNITUDE(0.00),
    .tps_v_max = VOLTAGE_MAGNITUDE(4.97),
    .tps_v_em = VOLTAGE_MAGNITUDE(0.675),
+   .tps_v_flg = 1,
 
    .add_i1_v_min = VOLTAGE_MAGNITUDE(0.00),
    .add_i1_v_max = VOLTAGE_MAGNITUDE(1.10),
    .add_i1_v_em = VOLTAGE_MAGNITUDE(0.43),
+   .add_i1_v_flg = 1,
 
    .add_i2_v_min = VOLTAGE_MAGNITUDE(0.00),
    .add_i2_v_max = VOLTAGE_MAGNITUDE(4.97),
    .add_i2_v_em = VOLTAGE_MAGNITUDE(3.65),
+   .add_i2_v_flg = 1,
 
    .add_i3_v_min = VOLTAGE_MAGNITUDE(0.00),
    .add_i3_v_max = VOLTAGE_MAGNITUDE(5.10),
    .add_i3_v_em = VOLTAGE_MAGNITUDE(2.50),
+   .add_i3_v_flg = 1,
 
    .add_i4_v_min = VOLTAGE_MAGNITUDE(0.00),
    .add_i4_v_max = VOLTAGE_MAGNITUDE(5.10),
    .add_i4_v_em = VOLTAGE_MAGNITUDE(2.50),
+   .add_i4_v_flg = 1,
   },
 
    /**Fill barometric correction lookup table*/

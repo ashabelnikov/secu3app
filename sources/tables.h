@@ -240,38 +240,47 @@ typedef struct ce_sett_t
  uint16_t map_v_min;                                //!< mininum correct value
  uint16_t map_v_max;                                //!< maximum correct value
  uint16_t map_v_em;                                 //!< emergency value, used in case of error
+ uint8_t  map_v_flg;
 
  uint16_t vbat_v_min;
  uint16_t vbat_v_max;
  uint16_t vbat_v_em;
+ uint8_t  vbat_v_flg;
 
  uint16_t cts_v_min;
  uint16_t cts_v_max;
  uint16_t cts_v_em;
+ uint8_t  cts_v_flg;
 
  uint16_t ks_v_min;
  uint16_t ks_v_max;
  uint16_t ks_v_em;
+ uint8_t  ks_v_flg;
 
  uint16_t tps_v_min;
  uint16_t tps_v_max;
  uint16_t tps_v_em;
+ uint8_t  tps_v_flg;
 
  uint16_t add_i1_v_min;
  uint16_t add_i1_v_max;
  uint16_t add_i1_v_em;
+ uint8_t  add_i1_v_flg;
 
  uint16_t add_i2_v_min;
  uint16_t add_i2_v_max;
  uint16_t add_i2_v_em;
+ uint8_t  add_i2_v_flg;
 
  uint16_t add_i3_v_min;
  uint16_t add_i3_v_max;
  uint16_t add_i3_v_em;
+ uint8_t  add_i3_v_flg;
 
  uint16_t add_i4_v_min;
  uint16_t add_i4_v_max;
  uint16_t add_i4_v_em;
+ uint8_t  add_i4_v_flg;
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware
@@ -322,7 +331,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[35];
+  uint8_t reserved[26];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

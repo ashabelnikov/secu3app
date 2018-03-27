@@ -407,17 +407,17 @@ typedef struct params_t
   uint16_t vent_pwmfrq;                  //!< PWM frequency (value = 1/f * 524288), 10....5000Hz
 
   // ADC corrections/compensations
-  int16_t  map_adc_factor;               //!< ADC error compensation factor for MAP
+  uint16_t map_adc_factor;               //!< ADC error compensation factor for MAP
   int32_t  map_adc_correction;           //!< ADC error compensation correction for MAP
-  int16_t  ubat_adc_factor;              //!< ADC error compensation factor for board voltage
+  uint16_t ubat_adc_factor;              //!< ADC error compensation factor for board voltage
   int32_t  ubat_adc_correction;          //!< ADC error compensation correction for board voltage
-  int16_t  temp_adc_factor;              //!< ADC error compensation factor for CLT
+  uint16_t temp_adc_factor;              //!< ADC error compensation factor for CLT
   int32_t  temp_adc_correction;          //!< ADC error compensation correction for CLT
-  int16_t  tps_adc_factor;               //!< ADC error compensation factor for TPS
+  uint16_t tps_adc_factor;               //!< ADC error compensation factor for TPS
   int32_t  tps_adc_correction;           //!< ADC error compensation correction for TPS
-  int16_t  ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input
+  uint16_t ai1_adc_factor;               //!< ADC error compensation factor for ADD_IO1 input
   int32_t  ai1_adc_correction;           //!< ADC error compensation correction for ADD_IO1 input
-  int16_t  ai2_adc_factor;               //!< ADC error compensation factor for ADD_IO2 input
+  uint16_t ai2_adc_factor;               //!< ADC error compensation factor for ADD_IO2 input
   int32_t  ai2_adc_correction;           //!< ADC error compensation correction for ADD_IO2 input
 
   // Synchronization
@@ -545,9 +545,9 @@ typedef struct params_t
 
   uint8_t sm_freq;                       //!< Frequency of stepper motor's pulses (choke, stepper IAC). 0 - 300Hz, 1 - 150Hz, 2 - 100 Hz, 3 - 75Hz
 
-  int16_t  ai3_adc_factor;               //!< ADC error compensation factor for ADD_I3 input
+  uint16_t ai3_adc_factor;               //!< ADC error compensation factor for ADD_I3 input
   int32_t  ai3_adc_correction;           //!< ADC error compensation correction for ADD_I3 input
-  int16_t  ai4_adc_factor;               //!< ADC error compensation factor for ADD_I4 input
+  uint16_t ai4_adc_factor;               //!< ADC error compensation factor for ADD_I4 input
   int32_t  ai4_adc_correction;           //!< ADC error compensation correction for ADD_I4 input
 
   uint16_t cond_pvt_on;                  //!< Voltage threshold from pressure sensor when air conditioner clutch should be turned on (e.g. turn off if V < 1.6V) in case of pending request

@@ -331,7 +331,7 @@ ISR(ADC_vect)
  }
 }
 
-int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction)
+int16_t adc_compensate(int16_t adcvalue, uint16_t factor, int32_t correction)
 {
  return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
 }

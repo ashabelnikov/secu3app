@@ -131,7 +131,7 @@ void adc_init(void);
  * correction = 2^14 * (0.5 - offset * gainfactor),
  * 2^16 * realvalue = 2^2 * (adcvalue * factor + correction)
  */
-int16_t adc_compensate(int16_t adcvalue, int16_t factor, int32_t correction);
+int16_t adc_compensate(int16_t adcvalue, uint16_t factor, int32_t correction);
 
 /**переводит значение АЦП в физическую величину - давление
  * \param adcvalue значение в дискретах АЦП

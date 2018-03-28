@@ -56,7 +56,7 @@ void fuelpump_init_ports(void)
 void fuelpump_init(void)
 {
  TURN_ON_ELPUMP(1); //turn on
- s_timer16_set(fuel_pump_time_counter, d.param.fp_timeout_strt);
+ s_timer16_set(fuel_pump_time_counter, ((uint16_t)d.param.fp_timeout_strt) * 10);
  fpstate.state = 0;
 }
 

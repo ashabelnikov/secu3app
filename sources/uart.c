@@ -702,7 +702,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.flpmp_flags);   //fuel pump flags
    build_i16h(d.param.evap_afbegin);
    build_i16h(d.param.evap_afslope);
-   build_i16h(d.param.fp_timeout_strt);
+   build_i8h(d.param.fp_timeout_strt);
    break;
 
   case CHOKE_PAR:
@@ -1275,7 +1275,7 @@ uint8_t uart_recept_packet(void)
    d.param.flpmp_flags = recept_i8h();   //fuel pump flags
    d.param.evap_afbegin = recept_i16h();
    d.param.evap_afslope = recept_i16h();
-   d.param.fp_timeout_strt = recept_i16h();
+   d.param.fp_timeout_strt = recept_i8h();
   }
   break;
 

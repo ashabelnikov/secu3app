@@ -573,12 +573,18 @@ typedef struct params_t
 
   uint16_t vent_tmr;                     //!< How long cooling fan will work on stopped engine, 1 discrete = 10ms
 
-  uint8_t fp_timeout_strt;              //!< Fuel pump turn off timeout before cranking, value in 0.1 second units (max 25.5 seconds)
+  uint8_t fp_timeout_strt;               //!< Fuel pump turn off timeout before cranking, value in 0.1 second units (max 25.5 seconds)
+
+  uint8_t eh_heating_time[2];            //!< Heating time without PWM at low(0) and high(1) temperatures (see also temperature threshold)
+  uint8_t eh_temper_thrd;                //!< Low/high temperature threshold, value in 1C derg. units
+  uint8_t eh_heating_act;                //!< During this time heater is on in PWM mode (see also pause lookup table)
+  uint16_t eh_aflow_thrd;                //!< Air flow threshold above which heater will be turned off to prevent overheating
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[6];
+/*
+  uint8_t  reserved[0]; */
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

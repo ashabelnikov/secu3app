@@ -84,7 +84,10 @@ void egosheat_control(void)
   case 1:
   {
    uint16_t time = s_timer_gtc() - eh.t1;
-   if ((d.sens.temperat < TEMPERATURE_MAGNITUDE(70.0) && (time < SYSTIM_MAGS(15.0))) || (d.sens.temperat >= TEMPERATURE_MAGNITUDE(70.0) && (time < SYSTIM_MAGS(30.0)))
+   int16_t temperat_thrd = ((int16_t)d.param.eh_temper_thrd)*4;
+   uint16_t ht_cold = ((uint16_t)d.param.eh_heating_time[0])*100;
+   uint16_t ht_hot = ((uint16_t)d.param.eh_heating_time[1])*100;
+   if (((d.sens.temperat < temperat_thrd) && (time < ht_cold)) || ((d.sens.temperat >= temperat_thrd) && (time < ht_hot))
       && !(d.param.inj_lambda_htgdet && lambda_is_activated()))
    {
     IOCFG_SETF(IOP_O2SH_O, 1); //turned on
@@ -111,7 +114,7 @@ void egosheat_control(void)
   case 3:
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
    //always turn off heater when airflow exceeds specified threshold
-   if (calc_airflow() > 10000) // value / 32
+   if (calc_airflow() > d.param.eh_aflow_thrd) // value / 32
    {
     IOCFG_SETF(IOP_O2SH_O, 0); //turn off
     eh.t1 = s_timer_gtc(); //reset timer
@@ -121,7 +124,7 @@ void egosheat_control(void)
 #endif
     IOCFG_SETF(IOP_O2SH_O, 1); //turn on
 
-   if ((s_timer_gtc() - eh.t1) < SYSTIM_MAGS(0.06))   //active heating time
+   if ((s_timer_gtc() - eh.t1) < d.param.eh_heating_act)   //active heating time
     break;
 
    --eh.state;            //Go into pause heating mode

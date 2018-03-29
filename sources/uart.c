@@ -792,6 +792,12 @@ void uart_send_packet(uint8_t send_mode)
   build_i8h(d.param.inj_lambda_ms_per_stp);
   build_i8h(d.param.inj_lambda_htgdet);
   build_i16h(d.param.gd_lambda_stoichval);
+  //heating:
+  build_i8h(d.param.eh_heating_time[0]);
+  build_i8h(d.param.eh_heating_time[1]);
+  build_i8h(d.param.eh_temper_thrd);
+  build_i8h(d.param.eh_heating_act);
+  build_i16h(d.param.eh_aflow_thrd);
   break;
 #endif
 
@@ -1377,6 +1383,12 @@ uint8_t uart_recept_packet(void)
   d.param.inj_lambda_ms_per_stp = recept_i8h();
   d.param.inj_lambda_htgdet = recept_i8h();
   d.param.gd_lambda_stoichval = recept_i16h();
+  //heating:
+  d.param.eh_heating_time[0] = recept_i8h();
+  d.param.eh_heating_time[1] = recept_i8h();
+  d.param.eh_temper_thrd = recept_i8h();
+  d.param.eh_heating_act = recept_i8h();
+  d.param.eh_aflow_thrd = recept_i16h();
   break;
 #endif
 

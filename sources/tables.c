@@ -549,7 +549,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .fp_timeout_strt =             SYS_TIME_S(5.0)/10,  //5 seconds
 
-  .reserved =                    {0},
+  .eh_heating_time =             {15, 30},            //15 and 30 seconds
+  .eh_temper_thrd =              70,                  //70 °C
+  .eh_heating_act =              SYSTIM_MAGS(0.06),   //60 ms
+  .eh_aflow_thrd =               10000,               //value = (load * rpm) / 32
+
+/*.reserved =                    {0},*/
   .crc =                         0
  },
 

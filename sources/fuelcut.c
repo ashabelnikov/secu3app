@@ -53,14 +53,20 @@ static void simple_fuel_cut(uint8_t apply)
  }
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  else
+ {
   if (d.sens.gas) //gas
    d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d.sens.inst_frq > d.param.ie_lot_g)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit_g)))?0:1;
   else //petrol
    d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
    &&(((d.sens.inst_frq > d.param.ie_lot)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit)))?0:1;
+ }
  if (apply)
+ {
+  if (d.floodclear)   //Turn off carburetor's idle cut off valve in flood clear mode is active. Here we rely that apply=1 only if gas dosator is NOT active.
+   d.ie_valve = 0;
   IOCFG_SETF(IOP_IE, d.ie_valve);
+ }
  else
   IOCFG_SETF(IOP_IE, 0); //turn off valve
 }
@@ -82,7 +88,7 @@ void fuelcut_control(void)
 #ifdef GD_CONTROL
  if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP))
  {
-  simple_fuel_cut(1);   //fuel cut off for gas doser
+  simple_fuel_cut(0);   //fuel cut off for gas doser
   goto revlim;
  }
 #endif

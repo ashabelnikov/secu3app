@@ -148,7 +148,11 @@ void carbafr_control(void)
 #ifdef GD_CONTROL
  //Don't use AFR control when gas doser is activated and fuel type is gas
  if (d.sens.gas && IOCFG_CHECK(IOP_GD_STP))
+ {
+  IOCFG_INIT(IOP_IE, 0); //valve is turned off
+  IOCFG_INIT(IOP_FE, 0); //valve is turned off
   return; //no AFR control
+ }
 #endif
 
  if (d.sens.frequen < d.param.inj_lambda_rpm_thrd) //100 min-1

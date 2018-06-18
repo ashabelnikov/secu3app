@@ -117,7 +117,6 @@ static uint8_t lambda_iteration(uint8_t mask)
  }
  else
  { //WBO sensor type (or emulation)
-  uint16_t sens_afr = ego_curve_lookup();
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
   int16_t int_m_thrd = d.corr.afr - AFRVAL_MAG(0.05);
   int16_t int_p_thrd = d.corr.afr + AFRVAL_MAG(0.05);
@@ -128,7 +127,7 @@ static uint8_t lambda_iteration(uint8_t mask)
   if (int_m_thrd < 0)
    int_m_thrd = 0;
 
-  if (sens_afr < int_m_thrd)
+  if (d.sens.afr < int_m_thrd)
   {
    if (1!=mask)
    {
@@ -136,7 +135,7 @@ static uint8_t lambda_iteration(uint8_t mask)
     updated = 1;
    }
   }
-  else if (sens_afr > int_p_thrd)
+  else if (d.sens.afr > int_p_thrd)
   {
    if (2!=mask)
    {
@@ -232,7 +231,7 @@ void lambda_stroke_event_notification(void)
   if ((d.corr.afr < ego_curve_min()) || (d.corr.afr > ego_curve_max()))
   {
    d.corr.lambda = 0;
-   return; //not a stoichiometry AFR
+   return; //out of range
   }
  }
 

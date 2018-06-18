@@ -599,6 +599,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
+   build_i16h(d.sens.afr);
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

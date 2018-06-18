@@ -233,6 +233,16 @@ void ignlogic_system_state_machine(void)
  engine_blowing_cond(); //check for entering flood clear mode
 #endif
 
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
+ if (IOCFG_CHECK(IOP_LAMBDA))
+ {
+  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated()) //NBO or not activated
+   d.sens.afr = 0;
+  else //WBO or emulation
+   d.sens.afr = ego_curve_lookup();
+ }
+#endif
+
  switch(d.engine_mode)
  {
   case EM_START: //cranking mode

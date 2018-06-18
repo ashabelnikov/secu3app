@@ -139,6 +139,10 @@ typedef struct sensors_t
  int16_t tmp2;                           //!< Secondary temperature sensor (gas temperature)
 #endif
 
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
+ uint16_t afr;                           //!< AFR value calculated from lambda sensor, value * 128
+#endif
+
  uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
 }sensors_t;
 

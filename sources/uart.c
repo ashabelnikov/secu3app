@@ -511,18 +511,26 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.corr.knock_retard);      // knock retard
    build_i8h(d.airflow);                 // index of the map axis curve
    //boolean values
-   build_i8h((d.ie_valve   << 0) |       // IE flag
-             (d.sens.carb  << 1) |       // carb. limit switch flag
-             (d.sens.gas   << 2) |       // gas valve flag
-             (d.fe_valve   << 3) |       // power valve flag
-             (d.ce_state   << 4) |       // CE flag
-             (d.cool_fan   << 5) |       // cooling fan flag
-             (d.st_block   << 6) |       // starter blocking flag
+   build_i16h(_CBV16(d.ie_valve, 0) |    // IE flag
+              _CBV16(d.sens.carb, 1) |   // carb. limit switch flag
+              _CBV16(d.sens.gas, 2) |    // gas valve flag
+              _CBV16(d.fe_valve, 3) |    // power valve flag
+              _CBV16 (d.ce_state, 4) |   // CE flag
+              _CBV16(d.cool_fan, 5) |    // cooling fan flag
+              _CBV16(d.st_block, 6) |    // starter blocking flag
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-             (d.acceleration << 7));     // acceleration enrichment flag
+              _CBV16(d.acceleration, 7) |// acceleration enrichment flag
 #else
-             (0 << 7));
+              _CBV16(0, 7) |
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+              _CBV16(d.fc_revlim, 8) |   // fuel cut rev.lim. flag
+#else
+              _CBV16(0, 8) |
+#endif
+              _CBV16(d.floodclear, 9) |  // flood clear mode flag
+              _CBV16(d.sys_locked, 10)); // system locked flag (immobilizer)
 
 #ifdef SEND_INST_VAL
    build_i8h(d.sens.inst_tps);           // instant TPS (0...100%, x2)

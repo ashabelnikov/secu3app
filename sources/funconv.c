@@ -1068,7 +1068,7 @@ uint8_t inj_airtemp_corr(uint8_t rawmat)
 
 #endif
 
-#if defined(FUEL_INJECT) && !defined(SECU3T)
+#if (defined(FUEL_INJECT) || defined(GD_CONTROL)) && !defined(SECU3T)
 uint8_t inj_gts_pwcorr(void)
 {
  int16_t i, i1, t = d.sens.tmp2;

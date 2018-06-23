@@ -333,7 +333,7 @@ uint8_t inj_airtemp_corr(uint8_t rawmat);
  */
 void calc_lookup_args(void);
 
-#if defined(FUEL_INJECT) && !defined(SECU3T)
+#if (defined(FUEL_INJECT) || defined(GD_CONTROL)) && !defined(SECU3T)
 /** Calculate PW correction from gas temperature using a lookup table
  * Uses d ECU data structure
  * \return coefficient * 128, range 0...1.99

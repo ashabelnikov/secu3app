@@ -245,6 +245,16 @@ static int16_t calc_sm_position(uint8_t pwm)
   if (d.param.barocorr_type)
    pos = (((int32_t)pos) * barocorr_lookup()) >> 12;           //apply barometric correction
 
+#ifdef _PLATFORM_M1284_
+#ifndef SECU3T
+  if (1)
+  {
+   pos = (((int32_t)pos) * inj_gts_pwcorr()) >> 7;             //apply gas temperature correction
+   pos = (((int32_t)pos) * inj_gps_pwcorr()) >> 7;             //apply gas pressure correction
+  }
+#endif
+#endif
+
   pos = pos - (d.ie_valve ? 0 : d.param.gd_fc_closing); //apply fuel cut flag
 
   pos = (d.fc_revlim ? 0 : pos); //apply rev.limit flag

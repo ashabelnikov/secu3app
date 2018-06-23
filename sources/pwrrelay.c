@@ -51,7 +51,7 @@ pwrstate_t pwrs = {0,0};   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
- IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on (реле включено)
+ IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on
 #ifdef SECU3T  //see also initialization in measure.c
  IOCFG_INIT(IOP_IGN, 1);      //init IGN input
 #endif
@@ -69,12 +69,12 @@ static uint8_t clt_is_ready(void)
  {
 #ifdef COOLINGFAN_PWM
   if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM)) //PWM is available and enabled
-   temperature_ok = (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(3.0)));
+   temperature_ok = (d.cool_fan == 0) || (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(3.0)));
   else //PWM is available, but disabled
-   temperature_ok = (d.sens.temperat <= (d.param.vent_off));
+   temperature_ok = (d.cool_fan == 0);
 #else
   //PWM is not available
-  temperature_ok = (d.sens.temperat <= (d.param.vent_off));
+  temperature_ok = (d.cool_fan == 0);
 #endif
  }
  return temperature_ok;

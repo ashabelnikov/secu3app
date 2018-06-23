@@ -107,14 +107,14 @@ static int32_t calc_acc_enrich(void)
  //calculate normal conditions PW, MAP=100kPa, IAT=20°C, AFR=14.7 (petrol) or d.param.gd_lambda_stoichval (gas).
  //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
  int32_t pwnc = (((((uint32_t)PWNC_CONST) * nr_1x_afr(lambda_get_stoichval() << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15;
- int16_t aef = inj_ae_tps_lookup();               //calculate basic AE factor value
+ int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);               //calculate basic AE factor value
 
  if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
  {
   if (lgs.aef_started)
   {
    lgs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
-   lgs.aef_decay = aef;
+   lgs.aef_decay = inj_ae_tps_lookup(d.param.inj_ae_tpsdot_thrd); //aef
    lgs.aef_started = 0;
   }
   //stop decay if gas pedal fully released

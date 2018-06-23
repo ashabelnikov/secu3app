@@ -71,7 +71,7 @@ static gasdose_st_t gds = {0,0,0,0,0,0,0};
 static int16_t calc_gd_acc_enrich(void)
 {
  int32_t gdnc = GD_MAGNITUDE(100.0);               //normal conditions %
- int16_t aef = inj_ae_tps_lookup();                //calculate basic AE factor value
+ int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);                //calculate basic AE factor value
 
 //------------------------------
  int16_t int_m_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;

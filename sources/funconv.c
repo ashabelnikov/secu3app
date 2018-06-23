@@ -735,10 +735,10 @@ uint8_t inj_warmup_en(void)
  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
 }
 
-int16_t inj_ae_tps_lookup(void)
+int16_t inj_ae_tps_lookup(int16_t tpsdot)
 {
  int8_t i;
- int16_t tpsdot = d.sens.tpsdot;  //%/s
+ //int16_t tpsdot = d.sens.tpsdot;  //%/s
 
  for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
   if (d.sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;

@@ -210,9 +210,10 @@ uint8_t inj_warmup_en(void);
 
 /** Calculates TPS based acceleration value
  * Uses d ECU data structure
+ * \param tpsdot TPS dot value (%/s)
  * \return acceleration factor * 128, value can be negative
  */
-int16_t inj_ae_tps_lookup(void);
+int16_t inj_ae_tps_lookup(int16_t tpsdot);
 
 /** Calculates RPM correction factor for AE
  * Uses d ECU data structure

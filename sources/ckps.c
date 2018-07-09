@@ -488,7 +488,10 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
   chanstate[i].hop_end_cog = _normalize_tn(chanstate[i].hop_begin_cog + ckps.hop_duration);
 #endif
 #ifdef FUEL_INJECT
-  chanstate[i].inj_angle = _normalize_angle((tdc * ckps.degrees_per_cog) -  ckps.inj_phase);
+  uint16_t angle = (tdc * ckps.degrees_per_cog) + ckps.inj_phase;
+  if (angle > ANGLE_MAGNITUDE(720))
+   angle-= ANGLE_MAGNITUDE(720);    //phase is periodical
+  chanstate[i].inj_angle = angle;
 #endif
  }
  ckps.cogs_btdc = cogs_btdc;
@@ -786,20 +789,20 @@ void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
  }
  //---------------------------------------------------------
 
- if (phase > ANGLE_MAGNITUDE(720.0))
-  phase-= ANGLE_MAGNITUDE(720.0);     //phase is periodical
-
  ckps.inj_phase = phase;
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
   uint16_t tdc = (((uint16_t)ckps.cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
-  uint16_t angle = _normalize_angle((tdc * ckps.degrees_per_cog) -  ckps.inj_phase);
+  uint16_t angle = (tdc * ckps.degrees_per_cog) +  ckps.inj_phase;
+  if (angle > ANGLE_MAGNITUDE(720))
+   angle-= ANGLE_MAGNITUDE(720);    //phase is periodical
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
   chanstate[i].inj_angle = angle;
  _RESTORE_INTERRUPT(_t);
  }
+
 }
 #endif
 

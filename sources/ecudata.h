@@ -172,7 +172,6 @@ typedef struct correct_t
 }correct_t;
 
 /**Describes system's data (main ECU data structure)
- * описывает данные системы, обеспечивает единый интерфейс данных
  */
 typedef struct ecudata_t
 {

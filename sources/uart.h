@@ -53,7 +53,7 @@
 #define  CBR_115200              0x0015 //!< 115200 baud
 
 #define  UART_RECV_BUFF_SIZE     110    //!< Size of receiver's buffer
-#define  UART_SEND_BUFF_SIZE     126    //!< Size of transmitter's buffer
+#define  UART_SEND_BUFF_SIZE     130    //!< Size of transmitter's buffer
 
 // Interface of the module
 

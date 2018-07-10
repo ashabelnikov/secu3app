@@ -152,7 +152,7 @@ PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 
 #endif
 
-//--------вспомогательные функции для построения пакетов-------------
+//--------helpful functions for building of packets-------------
 
 /**Appends sender's buffer by sequence of bytes from program memory. This function is also used in the bluetooth module
  * note! can NOT be used for binary data! */
@@ -194,10 +194,10 @@ static void build_i4h(uint8_t i)
 static void build_i8h(uint8_t i)
 {
 #ifdef UART_BINARY
- append_tx_buff(i);           //1 байт
+ append_tx_buff(i);           //1 byte
 #else
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);          //старший байт HEX числа
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);          //младший байт HEX числа
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);          //High byte of hex number
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);          //low byte of hex number
 #endif
 }
 
@@ -207,13 +207,13 @@ static void build_i8h(uint8_t i)
 static void build_i16h(uint16_t i)
 {
 #ifdef UART_BINARY
- append_tx_buff(_AB(i,1));    //старший байт
- append_tx_buff(_AB(i,0));    //младший байт
+ append_tx_buff(_AB(i,1));    //high byte
+ append_tx_buff(_AB(i,0));    //low byte
 #else
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);   //старший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);   //младший байт HEX числа (старший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);   //старший байт HEX числа (младший байт)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);   //младший байт HEX числа (младший байт)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);   //High byte of hex number (high byte)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);   //Low byte of hex number (high byte)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);   //High byte of hex number (low byte)
+ uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);   //Low byte of hex number (low byte)
 #endif
 }
 
@@ -612,6 +612,8 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+   build_i16h(d.load);
    break;
 
   case ADCCOR_PAR:

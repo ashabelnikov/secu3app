@@ -72,6 +72,7 @@ void aircond_control(void)
   d.cond_req_fan = 0, d.cond_req_rpm = 0; //reset cooling fan and RPM requests
 #ifndef SECU3T
   IOCFG_SETF(IOP_COND_O, 0);
+  d.cond_state = 0;
 #endif
  }
 
@@ -88,6 +89,7 @@ void aircond_control(void)
    if (IOCFG_GET(IOP_COND_I))
 #else
    IOCFG_SETF(IOP_COND_O, 0); //turned off
+   d.cond_state = 0;
    if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && (d.sens.add_i3 < d.param.cond_pvt_on) && !ce_is_error(ECUERROR_ADD_I3_SENSOR) && (d.sens.temperat > TEMPERATURE_MAGNITUDE(75.0)) && (d.sens.tps < TPS_MAGNITUDE(68.0))))
 #endif
    {
@@ -101,6 +103,7 @@ void aircond_control(void)
      ac.state = 3; //RPM already ok, skip 2 state
 #ifndef SECU3T
      IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
+     d.cond_state = 1;
 #endif
      ac.t1 = s_timer_gtc();
     }
@@ -113,6 +116,7 @@ void aircond_control(void)
     ++ac.state;
 #ifndef SECU3T
     IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
+    d.cond_state = 1;
 #endif
     ac.t1 = s_timer_gtc();
    }

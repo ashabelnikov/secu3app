@@ -459,8 +459,19 @@ int16_t calc_sm_position(uint8_t pwm)
 #endif
      chks.prev_rpm_error = error; //save for further calculation of derror
     }
+
+    uint16_t idl_iacminpos = d.param.idl_iacminpos;
+    #ifdef AIRCONDIT
+    #ifdef SECU3T
+    if (IOCFG_GET(IOP_COND_I))
+    #else
+    if (d.cond_state)
+    #endif
+     idl_iacminpos+=20*2; //+20%
+    #endif
+
     //Restrict IAC position using specified limits
-    restrict_value_to(&chks.iac_pos, ((uint16_t)d.param.idl_iacminpos) << 2, ((uint16_t)d.param.idl_iacmaxpos) << 2);
+    restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 2, ((uint16_t)d.param.idl_iacmaxpos) << 2);
    }
    else
    { //open loop mode

@@ -614,6 +614,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 
    build_i16h(d.load);
+   build_i16h(d.sens.baro_press);
    break;
 
   case ADCCOR_PAR:

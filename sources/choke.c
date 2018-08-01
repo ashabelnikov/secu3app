@@ -467,7 +467,7 @@ int16_t calc_sm_position(uint8_t pwm)
     #else
     if (d.cond_state)
     #endif
-     idl_iacminpos+=20*2; //+20%
+     idl_iacminpos+=15*2; //+15%
     #endif
 
     //Restrict IAC position using specified limits

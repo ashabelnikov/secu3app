@@ -339,6 +339,30 @@ static uint8_t cond_ai2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  return p_ctx->state;
 }
 
+/**Condition function for ADD_I3 analog input */
+static uint8_t cond_ai3(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#ifndef SECU3T
+ if (d->sens.add_i3 >= on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->sens.add_i3 <= off_thrd)
+#endif
+  p_ctx->state = 0; //OFF
+ return p_ctx->state;
+}
+
+/**Condition function for ADD_I4 analog input */
+static uint8_t cond_ai4(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#ifndef SECU3T
+ if (d->sens.add_i4 >= on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->sens.add_i4 <= off_thrd)
+#endif
+  p_ctx->state = 0; //OFF
+ return p_ctx->state;
+}
+
 /**Condition function for gas valve input*/
 static uint8_t cond_gasv(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
@@ -424,13 +448,13 @@ static uint8_t cond_oftmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_th
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 21
+#define COND_FPTR_TABLE_SIZE 23
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
  {&cond_cts, &cond_rpm, &cond_map, &cond_volt, &cond_carb, &cond_vspd, &cond_airfl, &cond_tmr, &cond_ittmr,
   &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
-  &cond_ipw, &cond_ce, &cond_oftmr};
+  &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4};
 
 void uniout_init_ports(void)
 {

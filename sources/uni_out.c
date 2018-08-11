@@ -354,7 +354,7 @@ static uint8_t cond_ai3(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
 /**Condition function for ADD_I4 analog input */
 static uint8_t cond_ai4(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
-#ifndef SECU3T
+#if !defined(SECU3T) && defined(TPIC8101)
  if (d->sens.add_i4 >= on_thrd)
   p_ctx->state = 1; //ON
  if (d->sens.add_i4 <= off_thrd)

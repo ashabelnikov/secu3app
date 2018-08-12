@@ -120,6 +120,7 @@ static int16_t calc_gd_acc_enrich(void)
 void gasdose_init_ports(void)
 {
  gdstpmot_init_ports();
+ IOCFG_INIT(IOP_GD_PWM, 0);
 }
 
 /** Calculates actuator position (%*2) from step value

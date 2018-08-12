@@ -134,6 +134,9 @@ void choke_init_ports(void)
 #ifdef SM_CONTROL
  stpmot_init_ports();
 #endif
+#ifdef FUEL_INJECT
+ IOCFG_INIT(IOP_IAC_PWM, 0);
+#endif
 }
 
 /** Calculates choke position (%*2) from step value

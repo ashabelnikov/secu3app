@@ -67,6 +67,9 @@ extern uint8_t  spi_IODIRA;  //!< Direction control bits for SPI PORTA (inputs)
 extern uint8_t  spi_IODIRB;  //!< Direction control bits for SPI PORTB (outputs)
 extern uint8_t  spi_GPPUA;   //!< Pull-up resistors control register A
 extern uint8_t  spi_GPPUB;   //!< Pull-up resistors control register B
+#ifdef MCP3204
+extern uint16_t spiadc_chan[SPIADC_CHNUM];
+#endif
 #endif
 //----------------------------------------------------------------------------
 
@@ -122,6 +125,10 @@ typedef struct
 #ifdef TPIC8101
  volatile uint16_t adc_value;           //!< Complete 10-bit ADC value read via SPI
  volatile uint8_t adc_low;              //!< Low byte of ADC value read via SPI
+#endif
+#if !defined(SECU3T) && defined(MCP3204)
+ uint8_t spiadc_chidx;
+ volatile uint8_t spiadc_hibyte;
 #endif
 }kspstate_t;
 
@@ -272,8 +279,16 @@ uint8_t knock_expander_initialize()
  _DELAY_US(2);
 
  //configure port expander MCP23S17
- //expander will be by default in the sequential mode, BANK=0,
- //so, we don't need to initialize IOCON register
+#ifdef MCP3204
+ ksp.spiadc_chidx = 0;
+ //disable default sequential mode (set byte mode), BANK=0,
+ SET_KSP_TEST(0);
+ spi_master_transmit(0x40);        //write
+ spi_master_transmit(0x0A);        //address = 0x0A
+ spi_master_transmit(0x20);        //set SEQOP bit in the IOCON register
+ SET_KSP_TEST(1);
+ _DELAY_US(2);
+#endif
 
  //pull-up resistors:
  SET_KSP_TEST(0);
@@ -347,7 +362,7 @@ void knock_start_expander_latching(void)
  _NO_OPERATION();
 #ifdef SECU3T
   SET_CAN_CS(0);
-  ksp.ksp_interrupt_state = 12;
+  ksp.ksp_interrupt_state = 19;
  _NO_OPERATION();
  _NO_OPERATION();
  _NO_OPERATION();
@@ -475,7 +490,7 @@ ISR(SPI_STC_vect)
     SETBIT(SPCR, CPOL);
     SET_CAN_CS(0);
     ksp.pending_request = 0;
-    ksp.ksp_interrupt_state = 12; // busy (state = 12)
+    ksp.ksp_interrupt_state = 19; // busy (state = 19)
     SPDR = SPI_READ_STATUS;
    }
    else
@@ -510,10 +525,49 @@ ISR(SPI_STC_vect)
    break;
   case 7: //GPIOB address loaded
    SPDR = spi_PORTB;
+#ifdef MCP3204
    ++ksp.ksp_interrupt_state;
    break;
-  case 8: //GPIOB wrote!
-
+  case 8: //GPIOB wrote
+   SPDR = 0x00; //set MCP3204 CS!
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 9: //GPIOA wrote!
+   SET_KSP_TEST(1); //deselect the device
+   ++ksp.ksp_interrupt_state;
+   _NO_OPERATION();
+   _NO_OPERATION();
+   SPDR = (ksp.spiadc_chidx >> 2) | 0x6; //D2, single-ended
+   break;
+  case 10: //MCP3204 first byte wrote
+   SPDR = ksp.spiadc_chidx << 6; //D1, D0
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 11: //MCP3204 second byte wrote
+   ksp.spiadc_hibyte = SPDR;
+   ++ksp.ksp_interrupt_state;
+   SPDR = 0x00;
+   break;
+  case 12: //MCP3204 third byte wrote
+   SET_KSP_TEST(0);
+   spiadc_chan[ksp.spiadc_chidx] = (ksp.spiadc_hibyte << 8) | SPDR;
+   ksp.spiadc_chidx = (ksp.spiadc_chidx + 1) & (SPIADC_CHNUM - 1);
+   ++ksp.ksp_interrupt_state;
+   SPDR = 0x40; //write opcode
+   break;
+  case 13: //expander, opcode loaded
+   SPDR = 0x12; //address of the GPIOA
+   ++ksp.ksp_interrupt_state;
+   break;
+  case 14: //GPIOA address loaded
+   SPDR = 0x80; //clear MCP3204 CS!
+   ++ksp.ksp_interrupt_state;
+   break;
+#else
+   ksp.ksp_interrupt_state = 15;
+   break;
+#endif
+  case 15: //GPIOA wrote
    SET_KSP_TEST(1); //deselect the device
    ++ksp.ksp_interrupt_state;
    _NO_OPERATION();
@@ -527,15 +581,15 @@ ISR(SPI_STC_vect)
    _NO_OPERATION();
    SPDR = 0x41;  //read opcode
    break;
-  case 9: //expander, opcode loaded
+  case 16: //expander, opcode loaded
    SPDR = 0x12; //address of the GPIOA
    ++ksp.ksp_interrupt_state;
    break;
-  case 10: //GPIOA address loaded
+  case 17: //GPIOA address loaded
    SPDR = 0x00;  //shift read register
    ++ksp.ksp_interrupt_state;
    break;
-  case 11: //GPIOA read!
+  case 18: //GPIOA read!
    spi_PORTA = SPDR;
    SET_KSP_TEST(1);
 #ifdef OBD_SUPPORT
@@ -544,7 +598,7 @@ ISR(SPI_STC_vect)
     SET_CAN_CS(0);
     _NO_OPERATION();
     _NO_OPERATION();
-    ksp.ksp_interrupt_state = 12; // busy (state = 12)
+    ksp.ksp_interrupt_state = 19; // busy (state = 19)
     SPDR = SPI_READ_STATUS;
    }
    else
@@ -569,11 +623,11 @@ ISR(SPI_STC_vect)
 #endif
 
 #ifdef OBD_SUPPORT
-   case 12:
+   case 19:
     SPDR = 0xFF; //shift read register
     ++ksp.ksp_interrupt_state;
     break;
-   case 13: //read status!
+   case 20: //read status!
     SET_CAN_CS(1);
    _NO_OPERATION();
    _NO_OPERATION();
@@ -600,27 +654,27 @@ ISR(SPI_STC_vect)
     SPDR = SPI_WRITE_TX | ksp.can_buff_addr;
     ++ksp.ksp_interrupt_state;
     break;
-   case 14:
+   case 21:
     SPDR = (ksp.can_msg.id >> 3);
     ++ksp.ksp_interrupt_state;
     break;
-   case 15:
+   case 22:
     SPDR = (ksp.can_msg.id << 5);
     ++ksp.ksp_interrupt_state;
     break;
-   case 16:
+   case 23:
     SPDR = 0;
     ++ksp.ksp_interrupt_state;
     break;
-   case 17:
+   case 24:
     SPDR = 0;
     ++ksp.ksp_interrupt_state;
     break;
-   case 18:
+   case 25:
     if (ksp.can_msg.flags.rtr)
     {
      SPDR = _BV(RTR) | ksp.can_msg.length;
-     ksp.ksp_interrupt_state = 20;
+     ksp.ksp_interrupt_state = 27;
     }
     else
     {
@@ -629,12 +683,12 @@ ISR(SPI_STC_vect)
      ++ksp.ksp_interrupt_state;
     }
     break;
-   case 19: //length set!
+   case 26: //length set!
     SPDR = ksp.can_msg.data[ksp.can_data_idx++];
     if (ksp.can_data_idx >= ksp.can_msg.length)
      ++ksp.ksp_interrupt_state;
     break;
-   case 20:
+   case 27:
     SET_CAN_CS(1);
    _NO_OPERATION();
    _NO_OPERATION();
@@ -644,7 +698,7 @@ ISR(SPI_STC_vect)
     SPDR = SPI_RTS | ((ksp.can_buff_addr == 0) ? 1 : ksp.can_buff_addr);
     ++ksp.ksp_interrupt_state;
     break;
-   case 21:
+   case 28:
     ksp.can_pending_msg = 0;
     SET_CAN_CS(1);
     if (ksp.pending_request)

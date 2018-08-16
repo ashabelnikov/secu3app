@@ -499,6 +499,10 @@ void iocfg_i_gens_ii(uint8_t value);     //!< init GENS_I input        (inverted
 uint8_t iocfg_g_gens_i(void);            //!< get GENS_I input value
 uint8_t iocfg_g_gens_ii(void);           //!< get GENS_I input value   (inverted)
 
+#ifdef MCP3204
+#define SPIADC_CHNUM 4
+#endif
+
 #endif
 
 #endif //_IOCONFIG_H_

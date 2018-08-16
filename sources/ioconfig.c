@@ -542,14 +542,22 @@ uint8_t iocfg_g_ckpsi(void)           //inverted version
  return !CHECKBIT(PIND, PIND6);
 }
 
+#ifdef MCP3204
+ #error "MCP3204 supported only in SECU-3i, please compile without SECU3T option"
+#endif
+
 #else //---SECU-3i---
 
-uint8_t  spi_PORTA = 0;   //!< Bits of inputs read by SPI
+uint8_t  spi_PORTA = 0x80; //!< Bits of inputs read by SPI. 7 bit is reserved as output, by default = 1
 uint8_t  spi_PORTB = 0;   //!< Bits of outputs controlled by SPI
-uint8_t  spi_IODIRA = 0;  //!< Direction control bits for SPI PORTA (inputs)
+uint8_t  spi_IODIRA = 0;  //!< Direction control bits for SPI PORTA (inputs). 7 bit is reserved and configured as output
 uint8_t  spi_IODIRB = 0;  //!< Direction control bits for SPI PORTB (outputs)
-uint8_t  spi_GPPUA = 0;   //!< Pull-up resistors control register A
+uint8_t  spi_GPPUA = 0x80; //!< Pull-up resistors control register A. 7 bit is reserved as output
 uint8_t  spi_GPPUB = 0;   //!< Pull-up resistors control register B
+
+#ifdef MCP3204
+uint16_t spiadc_chan[SPIADC_CHNUM] = {0};
+#endif
 
 //Outputs
 void iocfg_i_ign_out1(uint8_t value)    //!< init IGN_O1

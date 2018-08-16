@@ -159,6 +159,9 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     EGOS_HEATING   *     EGO sensor's heater control
                          Управление подогревом датчика кислорода
 
+    MCP3204        *     Support of additional 4 analog inputs (using MCP3204)
+                         Поддержка 4 дополнительных аналоговых входов
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager
   означает что опция является внутренней и не отображается в списке опций в

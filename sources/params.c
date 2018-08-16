@@ -42,6 +42,7 @@
 #include "ventilator.h"
 #include "vstimer.h"
 #include "wdt.h"
+#include "pwrrelay.h"
 
 void save_param_if_need(void)
 {
@@ -70,6 +71,7 @@ void reset_eeprom_params(void)
  IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
  IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
+ pwrrelay_init_steppers();
 
  while(!eeprom_is_idle() && --i)
  {

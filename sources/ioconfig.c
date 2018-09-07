@@ -192,8 +192,10 @@ void iocfg_i_add_o2(uint8_t value)
 
 void iocfg_i_add_o2i(uint8_t value)   //inverted version
 {
+#ifndef PA4_INP_IGNTIM
  WRITEBIT(PORTA, PA4, !value);
  DDRA |= _BV(DDA4);
+#endif
 }
 
 void iocfg_s_add_o2(uint8_t value)
@@ -205,7 +207,9 @@ void iocfg_s_add_o2(uint8_t value)
 
 void iocfg_s_add_o2i(uint8_t value)   //inverted version
 {
+#ifndef PA4_INP_IGNTIM
  WRITEBIT(PORTA, PA4, !value);
+#endif
 }
 
 void iocfg_i_ecf(uint8_t value)

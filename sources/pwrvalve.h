@@ -27,7 +27,7 @@
 #ifndef _FUELECON_H_
 #define _FUELECON_H_
 
-#ifndef CARB_AFR //power valve functionality isn't needed when carburetor AFR control is used
+#if !defined(CARB_AFR) && !defined(FUEL_INJECT) //power valve functionality isn't needed when carburetor AFR control is used (fuel injection too)
 
 /**Initialization of I/O ports*/
 void pwrvalve_init_ports(void);

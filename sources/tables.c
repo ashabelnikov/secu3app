@@ -362,7 +362,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ie_hit =                      2100,
   .ie_lot_g =                    1900,
   .ie_hit_g =                    2100,
-  .fe_on_threshold =             392,
+#ifdef FUEL_INJECT
+  .fe_on_threshold =             PRESSURE_MAGNITUDE(500.0),
+#else
+  .fe_on_threshold =             PRESSURE_MAGNITUDE(6.12),
+#endif
   .shutoff_delay =               0,
   .fuelcut_map_thrd =            1280,
   .fuelcut_cts_thrd =            60,

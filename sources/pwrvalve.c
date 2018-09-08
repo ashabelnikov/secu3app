@@ -24,7 +24,7 @@
  * Implementation of controlling algorithms for Power Valve (Carburetor)
  */
 
-#ifndef CARB_AFR //power valve functionality isn't needed when carburetor AFR control is used
+#if !defined(CARB_AFR) && !defined(FUEL_INJECT) //power valve functionality isn't needed when carburetor AFR control is used (fuel injection too)
 
 #include "port/avrio.h"
 #include "port/port.h"

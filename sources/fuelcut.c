@@ -63,7 +63,7 @@ static void simple_fuel_cut(uint8_t apply)
  }
  if (apply)
  {
-  if (d.floodclear)   //Turn off carburetor's idle cut off valve in flood clear mode is active. Here we rely that apply=1 only if gas dosator is NOT active.
+  if (d.floodclear)   //Turn off carburetor's idle cut off valve if flood clear mode is active. Here we rely that apply=1 only if gas dosator is NOT active.
    d.ie_valve = 0;
   IOCFG_SETF(IOP_IE, d.ie_valve);
  }

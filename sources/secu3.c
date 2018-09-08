@@ -98,7 +98,7 @@ void control_engine_units(void)
  //Control of electric cooling fan (only if CTS is present in the system)
  vent_control();
 
-#ifndef CARB_AFR //Carb. AFR control supersede power valve functionality
+#if !defined(CARB_AFR) && !defined(FUEL_INJECT) //Carb. AFR control supersede power valve functionality
  //Power valve control
  pwrvalve_control();
 #endif
@@ -176,7 +176,7 @@ void init_ports(void)
  ckps_init_ports();
  cams_init_ports();
  vent_init_ports();
-#ifndef CARB_AFR //Carb. AFR control supersede power valve functionality
+#if !defined(CARB_AFR) && !defined(FUEL_INJECT) //Carb. AFR control supersede power valve functionality
  pwrvalve_init_ports();
 #endif
 #ifdef FUEL_PUMP
@@ -458,9 +458,14 @@ MAIN()
    ckps_enable_ignition(0);
   else
   {
-   //Если разрешено, то делаем отсечку зажигания при превышении определенных оборотов
+   //If enabled, do ignition cut off when RPM or MAP exceed set thresholds. We do cut off from MAP only if FE is not mapped
+   //to its I/O and only in the firmware with fuel injection support.
    if (d.param.ign_cutoff)
-    ckps_enable_ignition(d.sens.inst_frq < d.param.ign_cutoff_thrd);
+    ckps_enable_ignition((d.sens.inst_frq < d.param.ign_cutoff_thrd)
+#ifdef FUEL_INJECT
+    && (/*IOCFG_CHECK(IOP_FE) ||*/ d.sens.map < d.param.fe_on_threshold)
+#endif
+    );
    else
     ckps_enable_ignition(1);
   }

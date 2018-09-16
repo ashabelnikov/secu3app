@@ -58,6 +58,8 @@ void save_param_if_need(void)
 
 void ckps_enable_ignition(uint8_t);
 void ckps_init_ports(void);
+void inject_init_ports(void);
+void inject_set_fuelcut(uint8_t);
 
 void reset_eeprom_params(void)
 {
@@ -65,12 +67,15 @@ void reset_eeprom_params(void)
  uint16_t i = 5000; //5 seconds max
 
  ckps_enable_ignition(0);        //turn off ignition
+ inject_set_fuelcut(0);          //turn off injection
  ckps_init_ports();
+ inject_init_ports();
  vent_turnoff();                 //turn off ventilator
  starter_set_blocking_state(1);  //block starter
  IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
  IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
+ IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
  pwrrelay_init_steppers();
 
  while(!eeprom_is_idle() && --i)

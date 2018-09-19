@@ -568,7 +568,7 @@ uint8_t ckps_is_cog_changed(void)
 /** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
  * \param index Index of callback */
 INLINE
-static fnptr_t get_callback(uint8_t index)
+fnptr_t get_callback(uint8_t index)
 {
  return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_IGNPLG_OFF);
 }

@@ -436,7 +436,7 @@ void ckps_set_degrees_btdc(int16_t degrees_btdc)
  * \param i_channel number of ignition channel to turn off
  */
 INLINE
-void turn_off_ignition_channel(void)
+static void turn_off_ignition_channel(void)
 {
  if (!CHECKBIT(flags, F_IGNIEN))
   return; //ignition disabled
@@ -556,7 +556,7 @@ ISR(TIMER1_COMPB_vect)
  * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
-void set_timer0(uint16_t value)
+static void set_timer0(uint16_t value)
 {
   OCR0A = TCNT0 + _AB(value, 0);
   hall.TCNT0_H = _AB(value, 1);
@@ -569,7 +569,7 @@ void set_timer0(uint16_t value)
  * \param tmr Timer value at the moment of falling edge
  */
 INLINE
-void ProcessFallingEdge(uint16_t tmr)
+static void ProcessFallingEdge(uint16_t tmr)
 {
  //save period value if it is correct. We need to do it forst of all to have fresh stroke_period value
  if (CHECKBIT(flags, F_VHTPER))
@@ -673,7 +673,7 @@ void ProcessFallingEdge(uint16_t tmr)
 /** Special function for processing rising edge, must be called from ISR
  */
 INLINE
-void ProcessRisingEdge(uint16_t tmr)
+static void ProcessRisingEdge(uint16_t tmr)
 {
  //spark on rising at the startup, force COMPA interrupt
  if (CHECKBIT(flags2, F_SHUTTER_S))

@@ -817,7 +817,7 @@ void ckps_use_cam_ref_s(uint8_t i_camref)
  * \param i_channel number of ignition channel to turn off
  */
 INLINE
-void turn_off_ignition_channel(uint8_t i_channel)
+static void turn_off_ignition_channel(uint8_t i_channel)
 {
  if (!CHECKBIT(flags, F_IGNIEN))
   return; //ignition disabled
@@ -961,7 +961,7 @@ ISR(TIMER1_COMPB_vect)
  * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
-void set_timer0(uint16_t value)
+static void set_timer0(uint16_t value)
 {
  OCR0A = TCNT0 + _AB(value, 0);
  SETBIT(TIFR0, OCF0A);

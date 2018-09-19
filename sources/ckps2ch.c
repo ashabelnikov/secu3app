@@ -741,7 +741,7 @@ ISR(TIMER1_COMPB_vect)
  * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
-void set_timer0(uint16_t value)
+static void set_timer0(uint16_t value)
 {
   OCR0A = TCNT0 + _AB(value, 0);
   ckps.TCNT0_H = _AB(value, 1);

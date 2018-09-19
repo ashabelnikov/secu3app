@@ -444,7 +444,7 @@ void ckps_set_degrees_btdc(int16_t degrees_btdc)
  * \param i_channel number of ignition channel to turn off
  */
 INLINE
-void turn_off_ignition_channel(uint8_t i_channel)
+static void turn_off_ignition_channel(uint8_t i_channel)
 {
  if (!CHECKBIT(flags, F_IGNIEN))
   return; //ignition disabled
@@ -544,7 +544,7 @@ ISR(TIMER1_COMPB_vect)
  * \param value Value to set timer for, 1 tick = 3.2uS
  */
 INLINE
-void set_timer0(uint16_t value)
+static void set_timer0(uint16_t value)
 {
   OCR0A = TCNT0 + _AB(value, 0);
   hall.TCNT0_H = _AB(value, 1);
@@ -556,7 +556,7 @@ void set_timer0(uint16_t value)
  * \param tmr Timer value at the moment of falling edge
  */
 INLINE
-void ProcessCogEdge(uint16_t tmr)
+static void ProcessCogEdge(uint16_t tmr)
 {
  //calculate stroke period
  hall.cog_period = tmr - hall.tmr_prev;

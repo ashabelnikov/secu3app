@@ -61,8 +61,8 @@ typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
 }
 
 /**Check specified timer for action */
-static INLINE
-uint8_t s_timer16_is_action(s_timer16_t i_timer)
+INLINE
+static uint8_t s_timer16_is_action(s_timer16_t i_timer)
 {
  uint8_t result;
  _BEGIN_ATOMIC_BLOCK();
@@ -73,8 +73,8 @@ uint8_t s_timer16_is_action(s_timer16_t i_timer)
 
 extern volatile uint16_t sys_counter;
 /**Get value of the system 10ms counter */
-static INLINE
-uint16_t s_timer_gtc(void)
+INLINE
+static uint16_t s_timer_gtc(void)
 {
  uint16_t result;
  _BEGIN_ATOMIC_BLOCK();

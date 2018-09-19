@@ -99,7 +99,7 @@ uartstate_t uart = {0,{0},{0},0,0,0,0};
  * \param b byte which will be used to append tx buffer
  */
 INLINE
-void append_tx_buff(uint8_t b)
+static void append_tx_buff(uint8_t b)
 {
  if (b == FOBEGIN)
  {
@@ -124,7 +124,7 @@ void append_tx_buff(uint8_t b)
  * \return byte retrieved from buffer
  */
 INLINE
-uint8_t takeout_rx_buff(void)
+static uint8_t takeout_rx_buff(void)
 {
  uint8_t b1 = uart.recv_buf[uart.recv_index++];
  if (b1 == FESC)

@@ -87,7 +87,7 @@ void egosheat_control(void)
    int16_t temperat_thrd = ((int16_t)d.param.eh_temper_thrd)*4;
    uint16_t ht_cold = ((uint16_t)d.param.eh_heating_time[0])*100;
    uint16_t ht_hot = ((uint16_t)d.param.eh_heating_time[1])*100;
-   if (((d.sens.temperat < temperat_thrd) && (time < ht_cold)) || ((d.sens.temperat >= temperat_thrd) && (time < ht_hot))
+   if ((((d.sens.temperat < temperat_thrd) && (time < ht_cold)) || ((d.sens.temperat >= temperat_thrd) && (time < ht_hot)))
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
       && !(d.param.inj_lambda_htgdet && lambda_is_activated())
 #endif

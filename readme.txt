@@ -120,8 +120,8 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          Поддержка микросхемы TPIC8101
 
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
-                         19200, 28800, 38400, 57600. Note! Will not take effect
-                         without reprogramming using ISP programmator.
+                         19200, 28800, 38400, 57600, 115200. Note! Will not take
+                         effect without reprogramming using ISP programmator.
                          (Скорость передачи данных для загрузчика)
 
     SPEED_SENSOR   *     Include speed sensor support

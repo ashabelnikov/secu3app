@@ -1087,17 +1087,19 @@ void uart_send_packet(uint8_t send_mode)
 #endif
  }//switch
 
- //общая часть для всех пакетов
+ //common part for all packets
  uart.send_buf[uart.send_size++] = '\r';
 
- //буфер передатчика содержит полностью готовый пакет - начинаем передачу
+ //now buffer contains all of the data - start sending
  uart_begin_send();
 }
 
 //TODO: remove it from here. It must be in secu3.c, use callback. E.g. on_bl_starting()
-/** Initialization of used I/O ports (производит инициализацию линий портов) */
+/** Initialization of used I/O ports */
 void ckps_init_ports(void);
+#ifdef FUEL_INJECT
 void inject_init_ports(void);
+#endif
 void sop_send_gonna_bl_start(void);
 void pwrrelay_init_steppers(void);
 void vent_turnoff(void);
@@ -1137,7 +1139,9 @@ uint8_t uart_recept_packet(void)
    //если в бутлоадере есть команда "cli", то эту строчку можно убрать
    _DISABLE_INTERRUPT();
    ckps_init_ports();
+#ifdef FUEL_INJECT
    inject_init_ports();
+#endif
    //jump to the boot loader code skipping check of jumper's state
    boot_loader_start();
    break;

@@ -308,4 +308,137 @@
 #define PD7 PORTD7
 #endif
 
+
+//DDRA
+#ifndef DDA0
+#define DDA0 DDRA0
+#endif
+
+#ifndef DDA1
+#define DDA1 DDRA1
+#endif
+
+#ifndef DDA2
+#define DDA2 DDRA2
+#endif
+
+#ifndef DDA3
+#define DDA3 DDRA3
+#endif
+
+#ifndef DDA4
+#define DDA4 DDRA4
+#endif
+
+#ifndef DDA5
+#define DDA5 DDRA5
+#endif
+
+#ifndef DDA6
+#define DDA6 DDRA6
+#endif
+
+#ifndef DDA7
+#define DDA7 DDRA7
+#endif
+
+//DDRB
+#ifndef DDB0
+#define DDB0 DDRB0
+#endif
+
+#ifndef DDB1
+#define DDB1 DDRB1
+#endif
+
+#ifndef DDB2
+#define DDB2 DDRB2
+#endif
+
+#ifndef DDB3
+#define DDB3 DDRB3
+#endif
+
+#ifndef DDB4
+#define DDB4 DDRB4
+#endif
+
+#ifndef DDB5
+#define DDB5 DDRB5
+#endif
+
+#ifndef DDB6
+#define DDB6 DDRB6
+#endif
+
+#ifndef DDB7
+#define DDB7 DDRB7
+#endif
+
+//DDRC
+#ifndef DDC0
+#define DDC0 DDRC0
+#endif
+
+#ifndef DDC1
+#define DDC1 DDRC1
+#endif
+
+#ifndef DDC2
+#define DDC2 DDRC2
+#endif
+
+#ifndef DDC3
+#define DDC3 DDRC3
+#endif
+
+#ifndef DDC4
+#define DDC4 DDRC4
+#endif
+
+#ifndef DDC5
+#define DDC5 DDRC5
+#endif
+
+#ifndef DDC6
+#define DDC6 DDRC6
+#endif
+
+#ifndef DDC7
+#define DDC7 DDRC7
+#endif
+
+//DDRD
+#ifndef DDD0
+#define DDD0 DDRD0
+#endif
+
+#ifndef DDD1
+#define DDD1 DDRD1
+#endif
+
+#ifndef DDD2
+#define DDD2 DDRD2
+#endif
+
+#ifndef DDD3
+#define DDD3 DDRD3
+#endif
+
+#ifndef DDD4
+#define DDD4 DDRD4
+#endif
+
+#ifndef DDD5
+#define DDD5 DDRD5
+#endif
+
+#ifndef DDD6
+#define DDD6 DDRD6
+#endif
+
+#ifndef DDD7
+#define DDD7 DDRD7
+#endif
+
 #endif //_SECU3_AVRIO_H_

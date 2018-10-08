@@ -157,6 +157,17 @@ int16_t manual_igntim(void)
 }
 #endif
 
+#ifdef IFR_VS_MAP_CORR
+/** Injector's flow rate correction vs manifold absolute pressure
+ *  coefficient = 1.0 / sqrt(frap - map / 300.0)
+ * \return correction factor * 256
+ */
+static uint16_t ifr_vs_map_corr(void)
+{
+ uint16_t frap = ROUNDU16(500.0 * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER); //absolute pressure in the fuel rail
+ return ui32_sqrt((3UL * 100UL * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER * 65535UL) / (frap - d.sens.map)); //65535 = 256 ^ 2
+}
+#endif
 
 /** Perform fuel calculations used on idling and work
  */
@@ -164,6 +175,10 @@ int16_t manual_igntim(void)
 static void fuel_calc(void)
 {
  uint32_t pw = inj_base_pw();
+
+#ifdef IFR_VS_MAP_CORR
+ pw = (pw * ifr_vs_map_corr()) >> 8;            //apply injector's flow rate vs manifold pressure correction
+#endif
 
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEAIRDEN))
   pw = (pw * inj_airtemp_corr(0)) >> 7;           //apply air density correction (if enabled)

@@ -470,7 +470,7 @@ uint8_t ckps_is_cog_changed(void)
 /** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
  * \param index Index of callback */
 INLINE
-fnptr_t get_callback(uint8_t index)
+fnptr_t get_callback_ign(uint8_t index)
 {
  return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_IGNPLG_OFF);
 }
@@ -540,7 +540,7 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  //unused channels must be turned off
  if (i > i_cyl_number)
   for(i = i_cyl_number; i < IGN_CHANNELS_MAX; ++i)
-   ((iocfg_pfn_set)get_callback(i))(IGN_OUTPUTS_ON_VAL);
+   ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
 
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.

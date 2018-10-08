@@ -147,7 +147,7 @@ inj_queue_t inj_eq2[INJ_CH_QUEUE_SIZE];
 /** Get value of I/O callback by index. This function is necessary for supporting of 5,6 inj. channels for SECU-3T and 6,7,8 inj.channels for SECU-3i
  * \param index Index of callback */
 INLINE
-fnptr_t get_callback(uint8_t index)
+fnptr_t get_callback_inj(uint8_t index)
 {
 #ifdef SECU3T
  return (index < (IOP_INJ_OUT4+1)) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_INJPLG_OFF);
@@ -179,8 +179,8 @@ static void set_channels_fs(uint8_t fs_mode)
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   if (CHECKBIT(inj.squirt_mask, i)) {
-   inj_chanstate[i].io_callback1 = get_callback(IOP_INJ_OUT1 + ch);
-   inj_chanstate[i].io_callback2 = get_callback(IOP_INJ_OUT1 + iss);
+   inj_chanstate[i].io_callback1 = get_callback_inj(IOP_INJ_OUT1 + ch);
+   inj_chanstate[i].io_callback2 = get_callback_inj(IOP_INJ_OUT1 + iss);
    inj_chanstate[i].io_map = i;
    ++ch;
   }
@@ -199,7 +199,7 @@ static void set_channels_ss(uint8_t _2bnk)
  uint8_t _t, i = 0, ch = 0;
  for(; i < inj.cyl_number; ++i)
  {
-  fnptr_t value = get_callback(IOP_INJ_OUT1 + ch);
+  fnptr_t value = get_callback_inj(IOP_INJ_OUT1 + ch);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   if (CHECKBIT(inj.squirt_mask, i)) {

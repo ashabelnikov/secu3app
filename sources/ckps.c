@@ -775,6 +775,8 @@ void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
  uint8_t _t, i;
  //TODO: We can do some optimization in the future - set timing only if it is not equal to current (already set one)
 
+ phase = ANGLE_MAGNITUDE(720.0) - phase;
+
  //Apply selected injection pulse option: begin of squirt, middle of squirt or end of squirt
  if (mode > INJANGLESPEC_BEGIN)
  {

@@ -102,6 +102,11 @@ void disp_start(void)
  }while(--i);
 }
 
+void ckps_init_ports(void);
+#ifdef FUEL_INJECT
+void inject_init_ports(void);
+#endif
+
 void bc_indication_mode(void)
 {
  uint8_t i = 5;
@@ -117,6 +122,10 @@ void bc_indication_mode(void)
 
  //We are entered to the blink codes indication mode
  _DISABLE_INTERRUPT();
+ ckps_init_ports();
+#ifdef FUEL_INJECT
+ inject_init_ports();
+#endif
  ce_set_state(CE_STATE_OFF);
 
  vent_turnoff();                 //turn off ventilator
@@ -124,6 +133,7 @@ void bc_indication_mode(void)
  IOCFG_INIT(IOP_FL_PUMP, 0);     //turn off fuel pump
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
  IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
+ IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
 
  wdt_reset_timer();
 

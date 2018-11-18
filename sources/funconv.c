@@ -234,7 +234,7 @@ int16_t work_function(void)
 int16_t coolant_function(void)
 {
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
-  return 0;   //нет коррекции, если блок неукомплектован ДТОЖ-ом
+  return 0;   //no correction if CLT sensor is turned off
 
  return simple_interpolation(fcs.ta_clt, _GB(f_tmp[fcs.ta_i]), _GB(f_tmp[fcs.ta_i1]),
  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
@@ -249,7 +249,7 @@ int16_t crkclt_function(void)
  (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
-//Регулятор холостого хода РХХ
+//Idling regulator
 /**Describes state data for idling regulator */
 typedef struct
 {
@@ -547,7 +547,7 @@ uint16_t inj_cranking_pw(void)
   return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
  return simple_interpolation(fcs.ta_clt, _GWU(inj_cranking[fcs.ta_i]), _GWU(inj_cranking[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 4) >> 2;
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 2) >> 1;
 }
 
 void calc_ve_afr(void)
@@ -617,7 +617,7 @@ static int16_t inj_corrected_mat(void)
  uint16_t coeff = (simple_interpolation(x, _GWU(inj_iatclt_corr[i]), _GWU(inj_iatclt_corr[i1]), //<--values in table are unsigned
         (i * x_step) + x_start, x_step, 2));
 
- //Corrected MAT = (CTS - IAT) * coefficient(load*rpm) + IAT,
+ //Corrected MAT = (CLT - IAT) * coefficient(load*rpm) + IAT,
  //at this point coefficient is multiplied by 16384
  return (int16_t)(((int32_t)(d.sens.temperat - d.sens.air_temp) * coeff) >> (13+1)) + d.sens.air_temp;
 }
@@ -630,10 +630,12 @@ uint16_t inj_base_pw(void)
 {
  uint32_t pw32;
  uint8_t  nsht = 0; //no division
+ //if air density correction map used, then use normal conditions MAT = 20°С instead if real MAT
+ int16_t CorrectedMAT = CHECKBIT(d.param.inj_flags, INJFLG_USEAIRDEN) ? TEMPERATURE_MAGNITUDE(293.15) : (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
 
  if (d.param.load_src_cfg == 2) //Alpha-N
  {
-  pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas] /* TEMPERATURE_MAGNITUDE(293.15)*/) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+  pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
  {
@@ -646,7 +648,7 @@ uint16_t inj_base_pw(void)
   else if (d.sens.map > PRESSURE_MAGNITUDE(125.0))
    nsht = 1;        //pressure will be divided by 2
 
-  pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const[d.sens.gas]) / (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+  pw32 = ((uint32_t)(d.sens.map >> nsht) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
  }
 
  pw32>>=(4-nsht);  //after this shift pw32 value is basic pulse width, nsht compensates previous divide of MAP

@@ -39,6 +39,9 @@ void lambda_control(void);
  */
 void lambda_stroke_event_notification(void);
 
+/**called from main loop when system detects engine stop*/
+void lambda_eng_stopped_notification(void);
+
 /** Check for activation of lambda sensor (heated-up)
  * \return 1 - activated, 0 - still not activated
  */

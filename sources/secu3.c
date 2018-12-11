@@ -401,6 +401,7 @@ MAIN()
    ckps_init_state_variables();
    cams_init_state_variables();
    ignlogic_eng_stopped_notification(); //set cranking mode
+   lambda_eng_stopped_notification();
 
    knklogic_init(&retard_state);
 

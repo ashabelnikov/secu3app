@@ -281,4 +281,9 @@ uint8_t lambda_is_activated(void)
  return ego.enabled;
 }
 
+void lambda_eng_stopped_notification(void)
+{
+ d.corr.lambda = 0;
+}
+
 #endif

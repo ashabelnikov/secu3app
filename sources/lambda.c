@@ -55,7 +55,7 @@ static lambda_state_t ego = {0,0,0,0,0,0,0};
 
 void lambda_control(void)
 {
- if (d.engine_mode == EM_START)
+ if (d.engine_mode == EM_START && d.param.inj_lambda_activ_delay)
  {
   ego.lambda_t1 = s_timer_gtc();
   ego.enabled = 0;
@@ -78,7 +78,7 @@ void lambda_control(void)
    else
     ego.enabled = 1;
   }
- }
+}
 }
 
 /** Process one lambda iteration

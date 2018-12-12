@@ -422,7 +422,18 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .hop_start_cogs =              0,
   .hop_durat_cogs =              10,
 
+#if (FW_BAUD_RATE == 19200)
+  .uart_divisor =                CBR_19200,
+#if (FW_BAUD_RATE == 38400)
+  .uart_divisor =                CBR_38400,
+#if (FW_BAUD_RATE == 57600)
   .uart_divisor =                CBR_57600,
+#elif (FW_BAUD_RATE == 115200)
+  .uart_divisor =                CBR_115200,
+#else
+ #error "Invalid baud rate value specified for firmware!"
+#endif
+
   .uart_period_t_ms =            2,
 
   .knock_use_knock_channel =     0,

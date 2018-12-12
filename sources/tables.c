@@ -424,9 +424,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
 #if (FW_BAUD_RATE == 19200)
   .uart_divisor =                CBR_19200,
-#if (FW_BAUD_RATE == 38400)
+#elif (FW_BAUD_RATE == 38400)
   .uart_divisor =                CBR_38400,
-#if (FW_BAUD_RATE == 57600)
+#elif (FW_BAUD_RATE == 57600)
   .uart_divisor =                CBR_57600,
 #elif (FW_BAUD_RATE == 115200)
   .uart_divisor =                CBR_115200,

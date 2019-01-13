@@ -451,7 +451,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .choke_rpm_if =                51,
   .choke_corr_time =             {500, 250},
 
-  .bt_flags =                    0x12,
+  .bt_flags =                    _BV(BTF_SET_BBR) | _BV(BTF_CHK_FWCRC)
+#ifndef SECU3T
+| _BV(BTF_BT_TYPE)
+#endif
+,
   .ibtn_keys =                   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
 
   .uni_output =                  {{0,0,0,220,200,220,200},{0,0,0,220,200,220,200},{0,0,0,220,200,220,200}},

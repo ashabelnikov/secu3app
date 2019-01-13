@@ -197,7 +197,7 @@ void cams_init_state(void)
  }
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
- //remapping of REF_S to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
+ //remapping of PS to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
  else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ps)
  {
   camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor
@@ -419,7 +419,7 @@ ISR(INT1_vect)
 {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1) //Synchronization from hall sensor
  if (3==camstate.ps_inpalt)
-  ProcessInterrupt1();         //call INT1 handler if PS input not remapped to other function (Hall sensor is connected to PS)
+  ProcessInterrupt1();         //call INT1 handler if PS input is remapped to CKPS (Hall sensor is connected to PS)
 #endif
 #ifdef SPEED_SENSOR
  if (2==camstate.ps_inpalt)
@@ -427,7 +427,7 @@ ISR(INT1_vect)
 #endif
 #ifdef PHASE_SENSOR
  if (1==camstate.ps_inpalt)
-  PROCESS_CAM()                //PS is not remapped to other function, so use in for cam sensor
+  PROCESS_CAM()                //PS is not remapped to other function, so use it for cam sensor
 #endif
 }
 

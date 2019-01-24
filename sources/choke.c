@@ -65,7 +65,7 @@
 #endif
 #define CF_CL_LOOP      3  //!< IAC closed loop flag
 #define CF_ADDACT       4  //!<
-#define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after in initialization and first movement
+#define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after initialization and first movement
 
 #else // Carburetor's choke stuff
 //#define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
@@ -88,7 +88,7 @@
 #ifdef USE_RPMREG_TURNON_DELAY
 #define CF_PRMREG_ENTO  4  //!< indicates that system is entered to RPM regulation mode
 #endif
-#define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after in initialization and first movement
+#define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after initialization and first movement
 
 #endif //FUEL_INJECT
 
@@ -325,7 +325,7 @@ void sm_motion_control(int16_t pos)
   diff = pos - chks.smpos;
   if (!stpmot_is_busy())
   {
-   if (CHECKBIT(chks.flags, CF_INITFRQ))                      //set normal frequency after first complete movement
+   if (!CHECKBIT(chks.flags, CF_INITFRQ))                     //set normal frequency after first complete movement
     stpmot_freq(d.param.sm_freq);
    SETBIT(chks.flags, CF_INITFRQ);
 

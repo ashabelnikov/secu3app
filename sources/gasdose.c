@@ -47,7 +47,7 @@
 #define CF_POWERDOWN    0  //!< powerdown flag (used if power management is enabled)
 #define CF_MAN_CNTR     1  //!< manual control mode flag
 #define CF_SMDIR_CHG    3  //!< flag, indicates that stepper motor direction has changed during motion
-#define CF_INITFRQ      4  //!<  indicates that we are ready to set normal frequency after in initialization and first movement
+#define CF_INITFRQ      4  //!<  indicates that we are ready to set normal frequency after initialization and first movement
 
 /**Define state variables*/
 typedef struct
@@ -169,7 +169,7 @@ static void sm_motion_control(int16_t pos)
   diff = pos - gds.smpos;
   if (!gdstpmot_is_busy())
   {
-   if (CHECKBIT(gds.flags, CF_INITFRQ))                      //set normal frequency after first complete movement
+   if (!CHECKBIT(gds.flags, CF_INITFRQ))                      //set normal frequency after first complete movement
     gdstpmot_freq(d.param.gd_freq);
    SETBIT(gds.flags, CF_INITFRQ);
 

@@ -669,17 +669,17 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .ks_v_flg = 1,
 
    .tps_v_min = VOLTAGE_MAGNITUDE(0.00),
-   .tps_v_max = VOLTAGE_MAGNITUDE(4.97),
+   .tps_v_max = VOLTAGE_MAGNITUDE(5.10),
    .tps_v_em = VOLTAGE_MAGNITUDE(0.675),
    .tps_v_flg = 1,
 
    .add_i1_v_min = VOLTAGE_MAGNITUDE(0.00),
-   .add_i1_v_max = VOLTAGE_MAGNITUDE(1.10),
+   .add_i1_v_max = VOLTAGE_MAGNITUDE(5.10),
    .add_i1_v_em = VOLTAGE_MAGNITUDE(0.43),
    .add_i1_v_flg = 1,
 
    .add_i2_v_min = VOLTAGE_MAGNITUDE(0.00),
-   .add_i2_v_max = VOLTAGE_MAGNITUDE(4.97),
+   .add_i2_v_max = VOLTAGE_MAGNITUDE(5.10),
    .add_i2_v_em = VOLTAGE_MAGNITUDE(3.65),
    .add_i2_v_flg = 1,
 

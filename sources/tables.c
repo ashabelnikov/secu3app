@@ -335,7 +335,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {0,0,0},
 
   /**Version of the firmware. Do not forget to write out same value into the signature info! */
-  0x47,
+  0x48,
 
   /**2 bytes - size of this structure. */
   sizeof(cd_data_t)
@@ -1535,7 +1535,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   * Date in format Mmm dd yyyy.
   * Do not forget to write out same value of version into to the fw_version field of cd_data_t!
   */
- {"SECU-3 firmware v4.7. Build ["__DATE__"]       "},
+ {"SECU-3 firmware v4.8. Build ["__DATE__"]       "},
 
  /**Version of this structure - 0.0*/
  0x00,

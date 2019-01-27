@@ -70,7 +70,7 @@ typedef struct
 }tpsval_t;
 #endif
 
-/**Cтруктура данных состояния АЦП */
+/** Data structure of the ADC state variables */
 typedef struct
 {
  volatile uint16_t map_value;    //!< последнее измеренное значение абсолютного давления
@@ -92,7 +92,7 @@ typedef struct
 #endif
 }adcstate_t;
 
-/** переменные состояния АЦП */
+/** ADC state variables */
 adcstate_t adc;
 
 uint16_t adc_get_map_value(void)
@@ -252,55 +252,61 @@ ISR(ADC_vect)
 
  switch(ADMUX&0x07)
  {
-  case ADCI_MAP: //закончено измерение абсолютного давления
+  case ADCI_MAP: //Measurement of MAP completed
    adc.map_value = ADC;
    ADMUX = ADCI_UBAT|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_UBAT://закончено измерение напряжения бортовой сети
+  case ADCI_UBAT: //Measurement of board voltage completed
    adc.ubat_value = ADC;
    ADMUX = ADCI_TEMP|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_TEMP://закончено измерение температуры охлаждающей жидкости
+  case ADCI_TEMP: //Measurement of CLT completed
    adc.temp_value = ADC;
    ADMUX = ADCI_CARB|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_CARB:
+  case ADCI_CARB: //Measurement of TPS completed
    adc.carb_value = ADC;
    ADMUX = ADCI_ADD_I1|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts
    SETBIT(ADCSRA,ADSC);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-   if ((TCNT1 - adc.tpsdot[1].tps_tmr) >= TPSDOT_TIME_DELTA)
+   if ((TCNT1 - adc.tpsdot[0].tps_tmr) >= TPSDOT_TIME_DELTA)
    {
     //save values for TPSdot calculations
     adc.tpsdot[1] = adc.tpsdot[0];          //previous = current
-    adc.tpsdot[0].tps_volt = ADC;           //save voltage
+    adc.tpsdot[0].tps_volt = adc.carb_value;//save voltage
     adc.tpsdot[0].tps_tmr = TCNT1;          //save timer value
    }
 #endif
    break;
 
-  case ADCI_ADD_I1:
+  case ADCI_ADD_I1: //Measurement of ADD_I1 completed
    adc.add_i1_value = ADC;
    ADMUX = ADCI_ADD_I2|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_ADD_I2:
+  case ADCI_ADD_I2: //Measurement of ADD_I2 completed
    adc.add_i2_value = ADC;
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
    ADMUX = ADCI_ADD_I3|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();
    SETBIT(ADCSRA,ADSC);
    break;
 
-  case ADCI_ADD_I3:
+  case ADCI_ADD_I3: //Measurement of ADD_I3 completed
    adc.add_i3_value = ADC;
 #endif
 
@@ -310,6 +316,7 @@ ISR(ADC_vect)
 #else
    //continue (as additional analog input)
    ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
+   _DISABLE_INTERRUPT();
    SETBIT(ADCSRA, ADSC);
 #endif
    break;
@@ -321,6 +328,7 @@ ISR(ADC_vect)
    if (adc.waste_meas)
    {                       //waste measurement is required (for delay)
     adc.waste_meas = 0;
+   _DISABLE_INTERRUPT();
     SETBIT(ADCSRA, ADSC);  //change nothing and start ADC again
     break;
    }
@@ -340,7 +348,6 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
 {
  int16_t t;
  //АЦП не измеряет отрицательных напряжений, однако отрицательное значение может появится после компенсации погрешностей.
- //Такой ход событий необходимо предотвращать.
  if (adcvalue < 0)
   adcvalue = 0;
 

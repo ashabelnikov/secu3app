@@ -132,6 +132,10 @@ static uint16_t ifr_vs_map_corr(void)
 #ifdef FUEL_INJECT
 static void fuel_calc(void)
 {
+#ifdef GD_CONTROL
+ if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
+ {
+#endif
  uint32_t pw = inj_base_pw();
 
 #ifdef IFR_VS_MAP_CORR
@@ -163,6 +167,11 @@ static void fuel_calc(void)
  if (d.ie_valve && !d.fc_revlim && d.eng_running)
   d.inj_pw = lim_inj_pw(&pw);
  else d.inj_pw = 0;
+#ifdef GD_CONTROL
+}
+else
+ d.inj_pw = 0;
+#endif
 }
 #endif
 
@@ -226,6 +235,9 @@ void ignlogic_system_state_machine(void)
     if (!lgs.prime_ready && ((s_timer_gtc() - lgs.prime_delay_tmr) >= ((uint16_t)d.param.inj_prime_delay*10)))
     {
      if (!lgs.cog_changed && d.param.inj_prime_cold) //skip prime pulse if cranking has started or if it is disabled (=0)
+#ifdef GD_CONTROL
+      if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
+#endif
       inject_open_inj(inj_prime_pw());               //start prime pulse
      lgs.prime_ready = 1;
     }
@@ -235,6 +247,9 @@ void ignlogic_system_state_machine(void)
     if (!lgs.prime_ready && lgs.cog_changed)
     {
      if (d.param.inj_prime_cold)                    //output prime pulse only if cranking has started and if it is not disabled (=0)
+#ifdef GD_CONTROL
+      if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
+#endif
       inject_open_inj(inj_prime_pw());              //start prime pulse
      lgs.prime_ready = 1;
     }
@@ -258,6 +273,9 @@ void ignlogic_system_state_machine(void)
    d.airflow = 0;                                   //no "air flow" on cranking
 
 #ifdef FUEL_INJECT
+#ifdef GD_CONTROL
+   if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
+#endif
    { //PW = CRANKING + DEADTIME
    uint32_t pw = inj_cranking_pw();
    if (d.param.barocorr_type)
@@ -275,6 +293,10 @@ void ignlogic_system_state_machine(void)
     d.inj_pw = 0;
    d.acceleration = 0; //no acceleration
    }
+#ifdef GD_CONTROL
+   else
+    d.inj_pw = 0;
+#endif
 #endif
 
 #ifdef PA4_INP_IGNTIM

@@ -48,9 +48,6 @@ typedef struct
  uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
  uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
- uint8_t  ae_decay_counter;      //!< AE decay counter
- uint16_t aef_decay;             //!< AE factor value at the start of decay
- uint8_t  aef_started;           //!< flag, indicates that decay will be started
 #endif
  int16_t  calc_adv_ang;          //!< calculated advance angle
  int16_t  advance_angle_inhibitor_state; //!<
@@ -59,7 +56,7 @@ typedef struct
 /**Instance of internal state variables structure*/
 static logic_state_t lgs = {
 #ifdef FUEL_INJECT
- 0,0,0,0,0,0,0,
+ 0,0,0,0,
 #endif
  0,0
 };
@@ -95,45 +92,6 @@ static uint16_t lim_inj_pw(uint32_t *value)
  return (*value) > 65535 ? 65535 : (*value);
 }
 
-/**"Normal conditions" constant for calculating of NC pulse width, value of this constant = 1397*/
-#define PWNC_CONST ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER))
-
-/** Calculates AE value.
- * Uses d ECU data structure
- * \return AE value in PW units
- */
-static int32_t calc_acc_enrich(void)
-{
- //calculate normal conditions PW, MAP=100kPa, IAT=20°C, AFR=14.7 (petrol) or d.param.gd_lambda_stoichval (gas).
- //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
- int32_t pwnc = (((((uint32_t)PWNC_CONST) * nr_1x_afr(lambda_get_stoichval() << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15;
- int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);               //calculate basic AE factor value
-
- if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
- {
-  if (lgs.aef_started)
-  {
-   lgs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
-   lgs.aef_decay = inj_ae_tps_lookup(d.param.inj_ae_tpsdot_thrd); //aef
-   lgs.aef_started = 0;
-  }
-  //stop decay if gas pedal fully released
-  if (!d.sens.carb)
-   lgs.ae_decay_counter = 0;
-  d.acceleration = (lgs.ae_decay_counter > 0);
-  //apply decay factor
-  aef = (((int32_t)lgs.aef_decay) * lgs.ae_decay_counter) / d.param.inj_ae_decay_time; //TODO: replace division by multiplication with 1 / inj_ae_decay_time constant
- }
- else
- {
-  lgs.aef_started = 1;
-  d.acceleration = 1;
- }
-
- aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
- aef = ((int32_t)aef * inj_ae_rpm_lookup()) >> 7; //apply RPM correction factor to AE factor
- return (pwnc * aef) >> 7;                        //apply AE factor to the normal conditions PW
-}
 #endif
 
 #ifdef PA4_INP_IGNTIM
@@ -188,7 +146,7 @@ static void fuel_calc(void)
   pw= (pw * (128 + scale_aftstr_enrich(lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
  pw= (pw * (512 + d.corr.lambda)) >> 9;         //apply lambda correction additive factor (signed)
  pw= (pw * inj_iacmixtcorr_lookup()) >> 13;     //apply mixture correction vs IAC
- pw+= calc_acc_enrich();                        //add acceleration enrichment
+ pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
  if (((int32_t)pw) < 0)
   pw = 0;
  if (d.param.barocorr_type)
@@ -446,8 +404,7 @@ void ignlogic_stroke_event_notification(void)
  if (lgs.aftstr_enrich_counter)
   --lgs.aftstr_enrich_counter;
  //update AE decay counter
- if (lgs.ae_decay_counter)
-  --lgs.ae_decay_counter;
+ acc_enrich_decay_counter();
 #endif
 }
 

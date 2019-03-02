@@ -220,15 +220,16 @@ int16_t inj_ae_tps_lookup(int16_t tpsdot);
  * \return factor * 128, positive value
  */
 uint8_t inj_ae_rpm_lookup(void);
-#endif
-
-#ifdef FUEL_INJECT
 
 /** Calculates CLT correction factor for AE
  * Uses d ECU data structure
  * \return factor * 128, positive value (1.0...2.99)
  */
 uint16_t inj_ae_clt_corr(void);
+
+#endif
+
+#ifdef FUEL_INJECT
 
 /** Calculates prime pulse width from coolant temperature
  * Uses d ECU data structure
@@ -353,6 +354,19 @@ uint8_t inj_gps_pwcorr(void);
  * \return 1 - engine blowing should be active, 0 - not active
  */
 uint8_t engine_blowing_cond(void);
+#endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates AE value.
+ * Uses d ECU data structure
+ * \param Mode of calculation: 0 - fuel injection, 1 - gas dispenser
+ * \param stoich_val Stoichiometric value of current fuel. This parement is ignored for gas dispenser mode
+ * \return AE value in PW units
+ */
+int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val);
+
+/**Update AE decay counter. Must be called for each stroke*/
+void acc_enrich_decay_counter(void);
 #endif
 
 #endif //_FUNCONV_H_

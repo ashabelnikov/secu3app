@@ -91,6 +91,10 @@ typedef struct
  //precalculated values:
  int16_t vecurr;       //!< current value of VE (value * 2048)
  int16_t afrcurr;      //!< current value of AFR (value * 256)
+ //AE decay:
+ uint8_t  ae_decay_counter; //!< AE decay counter
+ uint16_t aef_decay;        //!< AE factor value at the start of decay
+ uint8_t  aef_started;      //!< flag, indicates that decay will be started
 }fcs_t;
 
 /**Instance of state variables*/
@@ -768,9 +772,7 @@ uint8_t inj_ae_rpm_lookup(void)
              ((int16_t)_GBU(inj_ae_rpm_enr[i])), ((int16_t)_GBU(inj_ae_rpm_enr[i+1])),  //<--values in table are unsigned
              _GBU(inj_ae_rpm_bins[i])*100,(_GBU(inj_ae_rpm_bins[i+1])-_GBU(inj_ae_rpm_bins[i]))*100, 16) >> 4; //<--values of bins are unsigned
 }
-#endif
 
-#ifdef FUEL_INJECT
 uint16_t inj_ae_clt_corr(void)
 {
  int16_t t = d.sens.temperat; //clt
@@ -786,7 +788,9 @@ uint16_t inj_ae_clt_corr(void)
              ((int16_t)(d.param.inj_ae_coldacc_mult))+128, 128,
              TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 32) >> 5;
 }
+#endif
 
+#ifdef FUEL_INJECT
 uint16_t inj_prime_pw(void)
 {
  int16_t t = d.sens.temperat; //clt
@@ -1127,5 +1131,49 @@ uint8_t engine_blowing_cond(void)
 {
  d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
  return d.floodclear;
+}
+#endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/**"Normal conditions" constant for calculating of NC pulse width, value of this constant = 1397*/
+#define PWNC_CONST ROUND((100.0*MAP_PHYSICAL_MAGNITUDE_MULTIPLIER*256) / (293.15*TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER))
+
+int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val)
+{
+ //calculate normal conditions PW, MAP=100kPa, IAT=20.C, AFR=14.7 (petrol) or d.param.gd_lambda_stoichval (gas).
+ //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
+ int32_t pwnc = mode ? GD_MAGNITUDE(100.0) : ((((((uint32_t)PWNC_CONST) * nr_1x_afr(stoich_val << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15);
+ int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);               //calculate basic AE factor value
+
+ if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
+ {
+  if (fcs.aef_started)
+  {
+   fcs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
+   fcs.aef_decay = inj_ae_tps_lookup(d.param.inj_ae_tpsdot_thrd); //aef
+   fcs.aef_started = 0;
+  }
+  //stop decay if gas pedal fully released
+  if (!d.sens.carb)
+   fcs.ae_decay_counter = 0;
+  d.acceleration = (fcs.ae_decay_counter > 0);
+  //apply decay factor
+  aef = (((int32_t)fcs.aef_decay) * fcs.ae_decay_counter) / d.param.inj_ae_decay_time; //TODO: replace division by multiplication with 1 / inj_ae_decay_time constant
+ }
+ else
+ {
+  fcs.aef_started = 1;
+  d.acceleration = 1;
+ }
+
+ aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
+ aef = ((int32_t)aef * inj_ae_rpm_lookup()) >> 7; //apply RPM correction factor to AE factor
+ return (pwnc * aef) >> 7;                        //apply AE factor to the normal conditions PW
+}
+
+void acc_enrich_decay_counter(void)
+{
+ if (fcs.ae_decay_counter)
+  --fcs.ae_decay_counter; //update AE decay counter
 }
 #endif

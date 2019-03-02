@@ -57,62 +57,11 @@ typedef struct
  uint8_t   cur_dir;        //!< current value of SM direction (SM_DIR_CW or SM_DIR_CCW)
  int16_t   smpos_prev;     //!< start value of stepper motor position (before each motion)
  uint8_t   flags;          //!< state flags (see CF_ definitions)
- uint8_t   acc_strokes;    //!< strokes counter for acceleration enrichment
  uint16_t  aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment
 }gasdose_st_t;
 
 /**Instance of state variables */
-static gasdose_st_t gds = {0,0,0,0,0,0,0};
-
-/** Calculates AE value for gas doser
- * Uses d ECU data structure
- * \return AE value in %
- */
-static int16_t calc_gd_acc_enrich(void)
-{
- int32_t gdnc = GD_MAGNITUDE(100.0);               //normal conditions %
- int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);                //calculate basic AE factor value
-
-//------------------------------
- int16_t int_m_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;
- int16_t int_p_thrd = ((int16_t)d.param.inj_lambda_swt_point) - d.param.inj_lambda_dead_band;
- if (int_p_thrd < 0)
-  int_p_thrd = 0;
-
- if (((d.sens.tpsdot > d.param.inj_ae_tpsdot_thrd) && (d.sens.add_i1 < int_m_thrd)) ||
-     ((d.sens.tpsdot < (-d.param.inj_ae_tpsdot_thrd)) && (d.sens.add_i1 > int_p_thrd)))
- {
-  d.acceleration  = 1;
-  gds.acc_strokes = 5; //init acceleration strokes counter
- }
-
- if (((d.sens.tpsdot < d.param.inj_ae_tpsdot_thrd) && ((d.sens.add_i1 > int_m_thrd) || (gds.acc_strokes == 0))) ||
-     ((d.sens.tpsdot > (-d.param.inj_ae_tpsdot_thrd)) && ((d.sens.add_i1 < int_p_thrd) || (gds.acc_strokes == 0))))
- {
-  d.acceleration = 0;
- }
-
- if (!d.acceleration)
-  return 0; //no acceleration enrichment
-//------------------------------
-
-/*
- if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd) {
-  d.acceleration = 0;
-  return 0;                                        //no acceleration or deceleration
- }
- d.acceleration = 1;
-*/
-
-
- //For now we don't use CLT correction factor
-/*
- aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;    //apply CLT correction factor to AE factor
-*/
- aef = ((int32_t)aef * inj_ae_rpm_lookup()) >> 7;  //apply RPM correction factor to AE factor
-
- return (gdnc * aef) >> 7;                         //apply AE factor to the normal conditions
-}
+static gasdose_st_t gds = {0,0,0,0,0,0};
 
 //=============================================================================================================================
 
@@ -236,7 +185,7 @@ static int16_t calc_sm_position(uint8_t pwm)
   if (pos > GD_MAGNITUDE(100.0))
    pos = GD_MAGNITUDE(100.0);
 
-  pos+= calc_gd_acc_enrich();    //apply acceleration enrichment
+  pos+= acc_enrich_calc(1, 0);     //apply acceleration enrichment
 
   if (d.engine_mode == EM_START)
    gds.aftstr_enrich_counter = d.param.inj_aftstr_strokes << 1; //init engine strokes counter
@@ -390,8 +339,8 @@ uint8_t gasdose_is_ready(void)
 
 void gasdose_stroke_event_notification(void)
 {
- if (gds.acc_strokes)
-  --gds.acc_strokes;
+ //Update AE decay counter
+ acc_enrich_decay_counter();
 
  //update afterstart enrichemnt counter
  if (gds.aftstr_enrich_counter)

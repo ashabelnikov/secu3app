@@ -401,7 +401,9 @@ MAIN()
    ckps_init_state_variables();
    cams_init_state_variables();
    ignlogic_eng_stopped_notification(); //set cranking mode
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_eng_stopped_notification();
+#endif
 
    knklogic_init(&retard_state);
 

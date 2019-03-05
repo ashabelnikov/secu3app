@@ -47,6 +47,7 @@ uint16_t mm_get_w12_pgm(uint16_t offset, uint8_t off);
 /**Describes diagnostics inputs data */
 typedef struct diagnost_inp_t
 {
+ uint8_t flags;                          //!< flags
  uint16_t voltage;                       //!< board voltage
  uint16_t map;                           //!< MAP sensor
  uint16_t temp;                          //!< coolant temperature

@@ -385,6 +385,11 @@ void diagnost_process(void)
   if (diag.skip_loops == 0)
   {
    //analog inputs
+#ifdef SECU3T
+   d.diag_inp.flags = 1; //SECU-3T
+#else
+   d.diag_inp.flags = 0; //SECU-3i
+#endif
    d.diag_inp.voltage = _ADC_COMPENSATE(adc_get_ubat_value(), ADC_VREF_FACTOR, 0.0);
    d.diag_inp.map = _ADC_COMPENSATE(adc_get_map_value(), ADC_VREF_FACTOR, 0.0);
    d.diag_inp.temp = _ADC_COMPENSATE(adc_get_temp_value(), ADC_VREF_FACTOR, 0.0);

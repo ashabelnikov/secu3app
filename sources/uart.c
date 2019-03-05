@@ -1063,6 +1063,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 #ifdef DIAGNOSTICS
   case DIAGINP_DAT:
+   build_i8h(d.diag_inp.flags);
    build_i16h(d.diag_inp.voltage);
    build_i16h(d.diag_inp.map);
    build_i16h(d.diag_inp.temp);

@@ -191,7 +191,7 @@ typedef struct f_data_t
 
   uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];//!< Injector pulse width used when engine is starting up (cranking)
   uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE]; //!< Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00
-  uint16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE]; //!< Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS
+  int16_t inj_dead_time[INJ_DT_LOOKUP_TABLE_SIZE]; //!< Injector dead-time lookup table, value in ticks of timer, 1 tick = 3.2uS
   /**Position of the IAC/PWM vs coolant temperature for run mode (used in open-loop idle control)
    * value in % * 2, e.g. 200 = 100.0% */
   uint8_t inj_iac_run_pos[INJ_IAC_POS_TABLE_SIZE];

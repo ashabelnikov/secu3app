@@ -69,29 +69,15 @@ void ignlogic_init(void)
  d.sens.baro_press = PRESSURE_MAGNITUDE(101.3); //set default value to prevent wrong conditions when barometric pressure will not be sampled for some reasons
 }
 
-#ifdef FUEL_INJECT
-
-#ifndef SECU3T
+#if defined(FUEL_INJECT) && !defined(SECU3T)
 /** Applies gas temperature and pressure corrections (coefficients) to the inj. PW
- * \param pw PW to be corrected
- * \return Corrected PW
+ * \param pw PW to be corrected, will also receive result
  */
-uint32_t pw_gascorr(uint32_t pw)
+void pw_gascorr(int32_t* pw)
 {
- pw = (pw * inj_gts_pwcorr()) >> 7;              //apply gas temperature correction
- pw = (pw * inj_gps_pwcorr()) >> 7;              //apply gas pressure correction
- return pw;
+ (*pw) = ((*pw) * inj_gts_pwcorr()) >> 7;              //apply gas temperature correction
+ (*pw) = ((*pw) * inj_gps_pwcorr()) >> 7;              //apply gas pressure correction
 }
-#endif
-
-/**Limit value of injection PW
- * \return limited value (16 bit)
- */
-static uint16_t lim_inj_pw(uint32_t *value)
-{
- return (*value) > 65535 ? 65535 : (*value);
-}
-
 #endif
 
 #ifdef PA4_INP_IGNTIM
@@ -136,7 +122,7 @@ static void fuel_calc(void)
  if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
  {
 #endif
- uint32_t pw = inj_base_pw();
+ int32_t pw = inj_base_pw();
 
 #ifdef IFR_VS_MAP_CORR
  pw = (pw * ifr_vs_map_corr()) >> 8;            //apply injector's flow rate vs manifold pressure correction
@@ -150,23 +136,19 @@ static void fuel_calc(void)
   pw= (pw * (128 + scale_aftstr_enrich(lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
  pw= (pw * (512 + d.corr.lambda)) >> 9;         //apply lambda correction additive factor (signed)
  pw= (pw * inj_iacmixtcorr_lookup()) >> 13;     //apply mixture correction vs IAC
- pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
- if (((int32_t)pw) < 0)
-  pw = 0;
  if (d.param.barocorr_type)
   pw = (pw * barocorr_lookup()) >> 12;           //apply barometric correction
 
 #ifndef SECU3T
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
-  pw = pw_gascorr(pw);                              //apply gas corrections
+  pw_gascorr(&pw);                              //apply gas corrections
 #endif
+ pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
 
- d.inj_pw_raw = lim_inj_pw(&pw);
- d.inj_dt = accumulation_time(1);                //apply dead time
+ d.inj_pw_raw = restrict_3216(&pw, 0, 65535);
+ d.inj_dt = (int16_t)accumulation_time(1);      //apply dead time
  pw+= d.inj_dt;
- if (d.ie_valve && !d.fc_revlim && d.eng_running)
-  d.inj_pw = lim_inj_pw(&pw);
- else d.inj_pw = 0;
+ d.inj_pw = restrict_3216(&pw, INJ_TIME_MIN, (d.ie_valve && !d.fc_revlim && d.eng_running) ? INJ_TIME_MAX : 0);
 #ifdef GD_CONTROL
 }
 else
@@ -277,20 +259,17 @@ void ignlogic_system_state_machine(void)
    if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
 #endif
    { //PW = CRANKING + DEADTIME
-   uint32_t pw = inj_cranking_pw();
+   int32_t pw = inj_cranking_pw();
    if (d.param.barocorr_type)
     pw = (pw * barocorr_lookup()) >> 12;             //apply barometric correction
 #ifndef SECU3T
    if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
-    pw = pw_gascorr(pw);                              //apply gas corrections
+    pw_gascorr(&pw);                                 //apply gas corrections
 #endif
-   d.inj_pw_raw = lim_inj_pw(&pw);
-   d.inj_dt = accumulation_time(1);                  //apply dead time
+   d.inj_pw_raw = restrict_3216(&pw, 0, 65535);
+   d.inj_dt = (int16_t)accumulation_time(1);         //apply dead time
    pw+= d.inj_dt;
-   if (d.eng_running)
-    d.inj_pw = lim_inj_pw(&pw);
-   else
-    d.inj_pw = 0;
+   d.inj_pw = restrict_3216(&pw, INJ_TIME_MIN, (d.eng_running) ? INJ_TIME_MAX : 0);
    d.acceleration = 0; //no acceleration
    }
 #ifdef GD_CONTROL

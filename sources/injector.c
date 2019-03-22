@@ -37,6 +37,8 @@
 #include "ioconfig.h"
 #include "tables.h"
 #include "ecudata.h"
+#include "mathemat.h"
+#include <stdlib.h>
 
 #ifndef AIRTEMP_SENS
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
@@ -298,7 +300,7 @@ void inject_set_num_squirts(uint8_t numsqr)
  _END_ATOMIC_BLOCK();
 }
 
-void inject_set_inj_time(uint16_t time, uint16_t dead_time)
+void inject_set_inj_time(uint16_t time, int16_t dead_time)
 {
  //shrink injection time in the forced semi-sequential mode (if cam sensor isn't ready)
  if (inj.shrinktime == 1)
@@ -311,9 +313,12 @@ void inject_set_inj_time(uint16_t time, uint16_t dead_time)
    time = ((uint32_t)time * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
  }
 
- inj.inj_time_raw = time;                 //required for fuel flow calculations
+ inj.inj_time_raw = time;                  //required for fuel flow calculations
+ if (dead_time < 0)
+  inj.inj_time_raw+= abs(dead_time);       //add injector's lag if it is negative
 
- time+= dead_time; //apply injector's dead time
+ int32_t time32 = ((int32_t)time) + dead_time; //apply injector's dead time
+ time = restrict_3216(&time32, INJ_TIME_MIN, INJ_TIME_MAX);
 
  time = (time >> 1) - INJ_COMPB_CALIB;        //subtract calibration ticks
  if (0==_AB(time, 0))                         //avoid strange bug which appears when OCR2B is set to the same value as TCNT2

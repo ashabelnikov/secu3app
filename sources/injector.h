@@ -51,7 +51,7 @@ void inject_set_num_squirts(uint8_t numsqr);
  * \param time Injection time, one tick = 3.2us
  * \param dead_time Injector's dead time
  */
-void inject_set_inj_time(uint16_t time, uint16_t dead_time);
+void inject_set_inj_time(uint16_t time, int16_t dead_time);
 
 /**Set fuel cut on/off
  * \param state Fuel cut flag (1 - fuel is On, 0 - fuel of Off)

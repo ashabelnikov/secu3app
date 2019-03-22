@@ -229,7 +229,7 @@ typedef struct ecudata_t
 #ifdef FUEL_INJECT
  uint16_t inj_pw;                        //!< current value of injector pulse width
  uint16_t inj_pw_raw;                    //!< current value of injector pulse width without dead time
- uint16_t inj_dt;                        //!< current value of injector's dead time
+ int16_t inj_dt;                         //!< current value of injector's dead time
  uint16_t inj_fff;                       //!< Instant fuel flow as frequency (Hz), 16000 pulses per 1L of burnt fuel (value * 256)
  uint8_t  eng_running;                   //!< flag, indicates that engine is operating now (running)
 #endif
@@ -257,5 +257,7 @@ typedef struct ecudata_t
 extern struct ecudata_t d;               //!< ECU data structure. Contains all related data and state information
 extern struct params_t eeprom_parameters_cache;//!< Cache for buffering of EEPROM parameters
 
+#define INJ_TIME_MIN 312   //~1ms
+#define INJ_TIME_MAX 31250 //100ms
 
 #endif //_ECUDATA_H_

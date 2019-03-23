@@ -113,9 +113,55 @@ static uint16_t ifr_vs_map_corr(void)
 }
 #endif
 
+#ifdef FUEL_INJECT
+/** Finalizes specified inj. PW value (adds injector lag and precalculates normal and shrinked values)
+ * \param pw Pointer to the variable which contains value of PW
+ * \return PW value ready to be used to drive injectors
+ */
+static uint16_t finalize_inj_time(int32_t* pw)
+{
+ int32_t pw_s = *pw;
+ uint16_t pwns[2];
+
+ d.inj_dt = (int16_t)accumulation_time(1);      //calculate dead time (injector lag), value is signed
+
+ //add inj. lag and restrict result
+ (*pw)+= d.inj_dt;
+ if ((*pw) < INJ_TIME_MIN)
+  pwns[0] = INJ_TIME_MIN;
+ else if ((*pw) > INJ_TIME_MAX)
+  pwns[0] = INJ_TIME_MAX;
+ else
+  pwns[0] = *pw;
+
+ //Precalculate shrinked injection time depending on cylinder number for emergency semi-sequential/simultaneous mode
+ if (!(d.param.ckps_engine_cyl & 1))
+  pw_s>>= 1; //2 times (even cylinder number engines)
+ else if (d.param.ckps_engine_cyl == 5)
+  pw_s = (pw_s * 13107) >> 16;  //divide by 5 (13107 = (1/5)*65536)
+ else if (d.param.ckps_engine_cyl == 3)
+  pw_s = (pw_s * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
+
+ //add inj. lag and restrict result
+ pw_s+= d.inj_dt;
+ if (pw_s < INJ_TIME_MIN)
+  pwns[1] = INJ_TIME_MIN;
+ else if (pw_s > INJ_TIME_MAX)
+  pwns[1] = INJ_TIME_MAX;
+ else
+  pwns[1] = pw_s;
+
+ //store precalculated values (see inject_set_fullsequentila() for more information)
+ _BEGIN_ATOMIC_BLOCK();
+ d.inj_pwns[0] = pwns[0];
+ d.inj_pwns[1] = pwns[1];
+ _END_ATOMIC_BLOCK();
+
+ return (inject_is_shrinked() ? pwns[1] : pwns[0]);
+}
+
 /** Perform fuel calculations used on idling and work
  */
-#ifdef FUEL_INJECT
 static void fuel_calc(void)
 {
 #ifdef GD_CONTROL
@@ -145,10 +191,9 @@ static void fuel_calc(void)
 #endif
  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
 
- d.inj_pw_raw = restrict_3216(&pw, 0, 65535);
- d.inj_dt = (int16_t)accumulation_time(1);      //apply dead time
- pw+= d.inj_dt;
- d.inj_pw = restrict_3216(&pw, INJ_TIME_MIN, (d.ie_valve && !d.fc_revlim && d.eng_running) ? INJ_TIME_MAX : 0);
+ d.inj_pw = finalize_inj_time(&pw);
+ if (!(d.ie_valve && !d.fc_revlim && d.eng_running))
+  d.inj_pw = 0;
 #ifdef GD_CONTROL
 }
 else
@@ -174,7 +219,8 @@ void sample_baro_pressure(void)
  restrict_value_to((int16_t*)&d.sens.baro_press, PRESSURE_MAGNITUDE(70.0), PRESSURE_MAGNITUDE(120.0));
 }
 
-/**
+/** Gets state of the "Use inj. timing map" check
+ * \return 0 - using simple constant, 1 - using a 3D map
 */
 uint8_t get_use_injtim_map_flag(void)
 {
@@ -266,10 +312,11 @@ void ignlogic_system_state_machine(void)
    if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
     pw_gascorr(&pw);                                 //apply gas corrections
 #endif
-   d.inj_pw_raw = restrict_3216(&pw, 0, 65535);
-   d.inj_dt = (int16_t)accumulation_time(1);         //apply dead time
-   pw+= d.inj_dt;
-   d.inj_pw = restrict_3216(&pw, INJ_TIME_MIN, (d.eng_running) ? INJ_TIME_MAX : 0);
+
+   d.inj_pw = finalize_inj_time(&pw);
+   if (!(d.eng_running))
+    d.inj_pw = 0;
+
    d.acceleration = 0; //no acceleration
    }
 #ifdef GD_CONTROL

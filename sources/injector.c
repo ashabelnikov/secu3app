@@ -72,7 +72,6 @@ uint16_t ckps_get_stroke_period(void);
 typedef struct
 {
  volatile uint16_t inj_time;     //!< Current injection time, used in interrupts
- uint16_t inj_time_raw;          //!< Injection mode aware inj.time, but without calibration delay and dead time
  volatile uint8_t tmr2b_h;       //!< used in timer2 COMPB interrupt to perform 16-bit timing
  volatile uint8_t tmr0b_h;       //!< used in timer0 COMPB interrupt to perform 16-bit timing
  volatile uint8_t cyl_number;    //!< number of engine cylinders
@@ -113,7 +112,7 @@ typedef struct
 }inj_queue_t;
 
 /** Global instance of injector state variable structure*/
-inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /** I/O information for each channel */
 inj_chanstate_t inj_chanstate[INJ_CHANNELS_MAX];
@@ -300,26 +299,8 @@ void inject_set_num_squirts(uint8_t numsqr)
  _END_ATOMIC_BLOCK();
 }
 
-void inject_set_inj_time(uint16_t time, int16_t dead_time)
+void inject_set_inj_time(uint16_t time)
 {
- //shrink injection time in the forced semi-sequential mode (if cam sensor isn't ready)
- if (inj.shrinktime == 1)
-  time>>=1;
- else if (inj.shrinktime == 2)
- {
-  if (inj.cyl_number == 5)
-   time = ((uint32_t)time * 13107) >> 16;  //divide by 5 (13107 = (1/5)*65536)
-  else if (inj.cyl_number == 3)
-   time = ((uint32_t)time * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
- }
-
- inj.inj_time_raw = time;                  //required for fuel flow calculations
- if (dead_time < 0)
-  inj.inj_time_raw+= abs(dead_time);       //add injector's lag if it is negative
-
- int32_t time32 = ((int32_t)time) + dead_time; //apply injector's dead time
- time = restrict_3216(&time32, INJ_TIME_MIN, INJ_TIME_MAX);
-
  time = (time >> 1) - INJ_COMPB_CALIB;        //subtract calibration ticks
  if (0==_AB(time, 0))                         //avoid strange bug which appears when OCR2B is set to the same value as TCNT2
   (_AB(time, 0))++;
@@ -528,7 +509,7 @@ void inject_set_fullsequential(uint8_t mode)
  if (inj.cfg == INJCFG_FULLSEQUENTIAL)
  {
   set_channels_fs(mode);
-  inject_set_inj_time(d.inj_pw_raw, d.inj_dt);
+  inject_set_inj_time((inj.shrinktime == 0) ? d.inj_pwns[0] : d.inj_pwns[1]);
  }
 }
 
@@ -556,6 +537,10 @@ void inject_calc_fuel_flow(void)
   //p.s. we don't change default value of Nsi (set at the top) if shrinktime = 2
  }
 
+ int32_t inj_time_raw = ((int32_t)d.inj_pw) - d.inj_dt;
+ if (inj_time_raw < 0)
+  inj_time_raw = 0;
+
  //Formula: frq = Ifr * Kduty * k, Kduty = (PW * Nsqr * Nsi) / Tc;
  // frq - frequency in Hz
  // Ifr - injector flow rate in cc/min
@@ -569,9 +554,14 @@ void inject_calc_fuel_flow(void)
  //calculate and save result
  //inj_flow_rate * 64, fff_const * 65536, result must be * 256
  if (inj.fuelcut && d.eng_running)
-  d.inj_fff = (((((((uint32_t)inj.inj_time_raw) * d.param.inj_flow_rate[d.sens.gas]) / cycleper) * inj.num_squirts) * Nsi) * d.param.fff_const) >> 14;
+  d.inj_fff = (((((((uint32_t)inj_time_raw) * d.param.inj_flow_rate[d.sens.gas]) / cycleper) * inj.num_squirts) * Nsi) * d.param.fff_const) >> 14;
  else
   d.inj_fff = 0; //no flow of fuel, because injector(s) are turned off
+}
+
+uint8_t inject_is_shrinked(void)
+{
+ return inj.shrinktime > 0;
 }
 
 #endif

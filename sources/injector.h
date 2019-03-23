@@ -49,9 +49,8 @@ void inject_set_num_squirts(uint8_t numsqr);
 
 /**Set injection time
  * \param time Injection time, one tick = 3.2us
- * \param dead_time Injector's dead time
  */
-void inject_set_inj_time(uint16_t time, int16_t dead_time);
+void inject_set_inj_time(uint16_t time);
 
 /**Set fuel cut on/off
  * \param state Fuel cut flag (1 - fuel is On, 0 - fuel of Off)
@@ -83,6 +82,11 @@ void inject_set_fullsequential(uint8_t mode);
 /** Calculates fuel flow and stores it into d.inj_fff
  */
 void inject_calc_fuel_flow(void);
+
+/** Get current PW mode: normal or shrinked
+ * \return 0 - normal, 1 - shrinked
+ */
+uint8_t inject_is_shrinked(void);
 
 #endif //FUEL_INJECT
 

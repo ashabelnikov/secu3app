@@ -94,7 +94,7 @@ struct ecudata_t d =
 
 #ifdef FUEL_INJECT
 ,.inj_pw = 0,
- .inj_pw_raw = 0,
+ .inj_pwns = {0,0},
  .inj_dt = 0,
  .inj_fff = 0,
  .eng_running = 0           //fully stopped

@@ -63,16 +63,6 @@ int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t
  */
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
 
-#ifdef FUEL_INJECT
-/** Restricts specified value to specified limits
- * \param io_value pointer to value to be restricted (signed 32 bit).
- * \param i_bottom_limit bottom limit (unsigned 16 bit)
- * \param i_top_limit upper limit (unsigned 16 bit)
- * \return restricted value
- */
-uint16_t restrict_3216(int32_t *io_value, uint16_t i_bottom_limit, uint16_t i_top_limit);
-#endif
-
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Calculate 1/x function using Newton-Raphson method, 2 iterations
  * \param x  8...24, value * 1024

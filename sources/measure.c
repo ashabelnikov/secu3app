@@ -407,5 +407,9 @@ void meas_take_discrete_inputs(void)
 #ifndef SECU3T //SECU-3i
  d.sens.oilpress_ok = IOCFG_GET(IOP_OILP_I); //oil pressure sensor
  d.sens.generator_ok = IOCFG_GET(IOP_GENS_I); //generator status
+
+ d.sens.ign_i = IOCFG_GET(IOP_IGN);
+ d.sens.cond_i = IOCFG_GET(IOP_COND_I);
+ d.sens.epas_i = IOCFG_GET(IOP_EPAS_I);
 #endif
 }

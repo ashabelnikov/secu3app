@@ -111,6 +111,10 @@ typedef struct sensors_t
 #ifndef SECU3T //SECU-3i
  uint8_t oilpress_ok;                    //!< Flag.1 - oil pressure is OK, 0 - failure
  uint8_t generator_ok;                   //!< Flag.1 - dynamo generator is OK, 0 - failure
+
+ uint8_t ign_i;
+ uint8_t cond_i;
+ uint8_t epas_i;
 #endif
 
  //raw values of sensors (ADC discretes with compensated errors)

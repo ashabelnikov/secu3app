@@ -535,6 +535,8 @@ void uart_send_packet(uint8_t send_mode)
               _CBV16(d.sens.ign_i, 11) |  // IGN_I flag
               _CBV16(d.sens.cond_i, 12) | // COND_I flag
               _CBV16(d.sens.epas_i, 13)   // EPAS_I flag
+#else //SECU-3T
+              0
 #endif
               );
 

@@ -28,6 +28,7 @@
 
 #include "port/port.h"
 #include <stdlib.h>
+#include "bitmask.h"
 #include "ecudata.h"
 #include "eculogic.h"
 #include "funconv.h"
@@ -65,7 +66,7 @@ void lambda_control(void)
  {
   if ((s_timer_gtc() - ego.lambda_t1) >= (d.param.inj_lambda_activ_delay*100))
   {
-   if (d.param.inj_lambda_htgdet)
+   if (CHECKBIT(d.param.inj_lambda_flags, LAMFLG_HTGDET))
    { //deternime oxygen sensor's heating by monitoring voltage.
     int16_t top_thrd = d.param.inj_lambda_swt_point + d.param.inj_lambda_dead_band;
     int16_t bot_thrd = ((int16_t)d.param.inj_lambda_swt_point) - d.param.inj_lambda_dead_band;
@@ -189,13 +190,8 @@ void lambda_stroke_event_notification(void)
  if ((d.sens.gas && IOCFG_CHECK(IOP_GD_STP))) {
 #endif
 
- //Turn off EGO correction on overrun or rev. limiting
-#ifdef GD_CONTROL
- //turn off EGO correction also on idling if gas doser is active
- if (!d.ie_valve || d.fc_revlim || d.acceleration ||  (!d.sens.carb && (d.sens.gas && IOCFG_CHECK(IOP_GD_STP))))
-#else
- if (!d.ie_valve || d.fc_revlim || d.acceleration)
-#endif
+ //Turn off EGO correction on overrun or rev. limiting or on idling (if enabled)
+ if (!d.ie_valve || d.fc_revlim || d.acceleration || (!d.sens.carb && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_IDLCORR)))
  { //overrun or rev.limiting
   ego.fc_delay = EGO_FC_DELAY;
   d.corr.lambda = 0;

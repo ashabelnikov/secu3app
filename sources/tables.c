@@ -550,7 +550,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .cond_min_rpm =                1200,
 
-  .inj_lambda_htgdet =           0,
+  .inj_lambda_flags =           _BV(LAMFLG_IDLCORR),
 
   .gd_freq =                     0,                    //300Hz
 

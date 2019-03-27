@@ -175,6 +175,10 @@
 #define TMPF_CLT_MAP                    1           //!< Flag which indicates using of lookup table for coolant temperature sensor
 #define TMPF_VENT_PWM                   2           //!< Flag - control cooling fan by using PWM
 
+//lambda flags
+#define LAMFLG_HTGDET                   0           //!< Determine oxygen sensor's heating by monitoring of voltage from it
+#define LAMFLG_IDLCORR                  1           //!< Use lambda correction on idling
+
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
 {
@@ -557,7 +561,7 @@ typedef struct params_t
 
   uint16_t cond_min_rpm;                 //!< minimum RPM required for turning on of the air conditioner
 
-  uint8_t inj_lambda_htgdet;             //!< Flag, indicates that system should determine oxygen sensor's heating by monitoring voltage from it
+  uint8_t inj_lambda_flags;              //!< lambda flags, see LAMFLG_ defines for more information
 
   uint8_t gd_freq;                       //!< Frequency of GD stepper motor's pulses (stepper gas valve). 0 - 300Hz, 1 - 150Hz, 2 - 100 Hz, 3 - 75Hz
 

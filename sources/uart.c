@@ -623,6 +623,15 @@ void uart_send_packet(uint8_t send_mode)
 
    build_i16h(d.load);
    build_i16h(d.sens.baro_press);
+
+#ifdef FUEL_INJECT
+   { //combine inj.timing (value*16) and information about inj.timing mode (begin, middle or end of pulse)
+   uint16_t iit = (((uint16_t)d.corr.inj_timing) >> 1) | ((uint16_t)(d.sens.gas ? (d.param.inj_anglespec >> 4) : (d.param.inj_anglespec & 0xF))) << 14;
+   build_i16h(iit);         // inj. timing
+   }
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

@@ -467,8 +467,7 @@ ISR(TIMER1_COMPA_vect)
 #ifndef DWELL_CONTROL
  //set timer for pulse completion, use fast division by 3
  if (CHECK_TIM1_OVF())
-//OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
-  OCR1B = tmr + hall.stroke_period / 3;
+  OCR1B = tmr + (((uint32_t)hall.stroke_period * 21845) >> 16); //pulse width = 1/3, 21845 = 1/3 * 65536
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
 #else
@@ -564,14 +563,14 @@ void set_timer0(uint16_t value)
   SETBIT(TIFR0, OCF0A);
 }
 
-/** Special function for processing falling edge,
+/** Special function for processing of falling edge,
  * must be called from ISR
  * \param tmr Timer value at the moment of falling edge
  */
 INLINE
 void ProcessFallingEdge(uint16_t tmr)
 {
- //save period value if it is correct. We need to do it forst of all to have fresh stroke_period value
+ //save period value if it is correct. We need to do it first of all to have fresh stroke_period value
  if (CHECKBIT(flags, F_VHTPER))
  {
   //calculate stroke period
@@ -602,7 +601,7 @@ void ProcessFallingEdge(uint16_t tmr)
 
   // if number of degrees before a spark is less or equal to window width in interrupter, then use falling edge
   // as a reference for advance angle timer, otherwise use rising edge (that will increase accuracy)
-  if (hall.advance_angle <= hall.shutter_wnd_width)
+  if (hall.advance_angle <= hall.shutter_wnd_width || hall.shutter_wnd_width == 0)
   {
    CLEARBIT(flags, F_SELFRONT);// use falling edge
 

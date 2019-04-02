@@ -38,6 +38,22 @@
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
 
+/** Get fuel cut low threshold depending on gas_v input
+ * \return low threshold
+ */
+static uint16_t get_fc_lot(void)
+{
+ return d.sens.gas ? d.param.ie_lot_g : d.param.ie_lot;
+}
+
+/** Get fuel cut high threshold depending on gas_v input
+ * \return high threshold
+ */
+static uint16_t get_fc_hit(void)
+{
+ return d.sens.gas ? d.param.ie_hit_g : d.param.ie_hit;
+}
+
 #if (defined(FUEL_INJECT) && defined(GD_CONTROL)) || (!defined(FUEL_INJECT) && (!defined(CARB_AFR) || defined(GD_CONTROL)))
 /** Fuel cut control logic for carburetor or gas doser
  * Uses d ECU data structure
@@ -54,12 +70,8 @@ static void simple_fuel_cut(uint8_t apply)
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  else
  {
-  if (d.sens.gas) //gas
-   d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d.sens.inst_frq > d.param.ie_lot_g)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit_g)))?0:1;
-  else //petrol
-   d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
-   &&(((d.sens.inst_frq > d.param.ie_lot)&&(!d.ie_valve))||(d.sens.inst_frq > d.param.ie_hit)))?0:1;
+  d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+  &&(((d.sens.inst_frq > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_frq > get_fc_hit())))?0:1;
  }
  if (apply)
  {
@@ -94,7 +106,7 @@ void fuelcut_control(void)
 #endif
 
  //fuel cut off for fuel injection
- if (d.sens.inst_frq > d.param.ie_hit)
+ if (d.sens.inst_frq > get_fc_hit())
  {
   //When RPM > hi threshold, then check TPS, CTS and MAP
   if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd))
@@ -116,7 +128,7 @@ void fuelcut_control(void)
    state = 0;
   }
  }
- else if (d.sens.inst_frq < d.param.ie_lot || d.sens.carb)
+ else if (d.sens.inst_frq < get_fc_lot() || d.sens.carb)
  { //always turn on fuel when RPM < low threshold or throttle is opened
   d.ie_valve = 1;
   state = 0;

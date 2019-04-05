@@ -229,4 +229,11 @@
  #define COPT_TPIC8101 0
 #endif
 
+/**Build firmware for synchronization from camshaft wheel */
+#ifdef CAM_SYNC
+ #define COPT_CAM_SYNC 1
+#else
+ #define COPT_CAM_SYNC 0
+#endif
+
 #endif //_COMPILOPT_H_

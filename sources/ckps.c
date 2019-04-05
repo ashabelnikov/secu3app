@@ -24,7 +24,7 @@
  * Implementation of crankshaft position sensor's processing.
  */
 
-#if !defined(HALL_SYNC) && !defined(CKPS_2CHIGN) && !defined(CKPS_NPLUS1)
+#if !defined(HALL_SYNC) && !defined(CKPS_2CHIGN) && !defined(CKPS_NPLUS1) && !defined(CAM_SYNC)
 
 #include <stdlib.h>
 #include "port/avrio.h"

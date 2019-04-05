@@ -326,7 +326,13 @@ void inject_set_config(uint8_t cfg)
   set_channels_fs(0);                               //semi-sequential with separate channels
 #ifdef PHASE_SENSOR
  else if (cfg == INJCFG_FULLSEQUENTIAL)
-  set_channels_fs(cams_is_ready());                 //full sequential
+  set_channels_fs(
+#ifdef CAM_SYNC
+  1
+#else
+  cams_is_ready()
+#endif
+  );                 //full sequential
 #endif
 }
 

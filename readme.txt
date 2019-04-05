@@ -119,6 +119,9 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     TPIC8101             Support of TPIC8101 knock chip
                          Поддержка микросхемы TPIC8101
 
+    CAM_SYNC             Support of synchronization from camshaft wheel
+                         Синхронизация от диска на распределительном вале
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600, 115200. Note! Will not take
                          effect without reprogramming using ISP programmator.

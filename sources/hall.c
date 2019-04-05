@@ -31,6 +31,9 @@
 #if defined(CKPS_NPLUS1)
  #error "You can not use CKPS_NPLUS1 option together with HALL_SYNC!"
 #endif
+#if defined(CAM_SYNC)
+ #error "You can not use CAM_SYNC option together with HALL_SYNC!"
+#endif
 
 #include <stdlib.h>
 #include "port/avrio.h"

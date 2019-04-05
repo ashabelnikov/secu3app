@@ -335,7 +335,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[26];
+  uint8_t reserved[24];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -583,6 +583,8 @@ typedef struct params_t
   uint8_t eh_temper_thrd;                //!< Low/high temperature threshold, value in 1C derg. units
   uint8_t eh_heating_act;                //!< During this time heater is on in PWM mode (see also pause lookup table)
   uint16_t eh_aflow_thrd;                //!< Air flow threshold above which heater will be turned off to prevent overheating
+
+  uint8_t inj_min_pw[2];                 //!< minimum injection PW, 1 discrete = 25.6us (3.2us * 8), max = 6.5ms
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from

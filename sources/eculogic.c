@@ -125,10 +125,12 @@ static uint16_t finalize_inj_time(int32_t* pw)
 
  d.inj_dt = (int16_t)accumulation_time(1);      //calculate dead time (injector lag), value is signed
 
+ uint16_t inj_min_pw = ((uint16_t)(d.param.inj_min_pw[d.sens.gas])) * 8;
+
  //add inj. lag and restrict result
  (*pw)+= d.inj_dt;
- if ((*pw) < INJ_TIME_MIN)
-  pwns[0] = INJ_TIME_MIN;
+ if ((*pw) < inj_min_pw)
+  pwns[0] = inj_min_pw;
  else if ((*pw) > INJ_TIME_MAX)
   pwns[0] = INJ_TIME_MAX;
  else
@@ -144,8 +146,8 @@ static uint16_t finalize_inj_time(int32_t* pw)
 
  //add inj. lag and restrict result
  pw_s+= d.inj_dt;
- if (pw_s < INJ_TIME_MIN)
-  pwns[1] = INJ_TIME_MIN;
+ if (pw_s < inj_min_pw)
+  pwns[1] = inj_min_pw;
  else if (pw_s > INJ_TIME_MAX)
   pwns[1] = INJ_TIME_MAX;
  else

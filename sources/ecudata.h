@@ -261,7 +261,7 @@ typedef struct ecudata_t
 extern struct ecudata_t d;               //!< ECU data structure. Contains all related data and state information
 extern struct params_t eeprom_parameters_cache;//!< Cache for buffering of EEPROM parameters
 
-#define INJ_TIME_MIN 312   //~1ms
+//#define INJ_TIME_MIN 312   //~1ms
 #define INJ_TIME_MAX 31250 //100ms
 
 #endif //_ECUDATA_H_

@@ -505,13 +505,13 @@ uint16_t choke_cranking_time(void)
  int16_t t = d.sens.temperat; //clt
 
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
-  return 300;   //coolant temperature sensor is not enabled (or not installed), use default value (3 sec.)
+  return d.param.choke_corr_time[0];   //coolant temperature sensor is not enabled (or not installed), use low temp. value
 
  //-30 CLT corresponding to first value of time
  // 40 CLT corresponding to second value of time
  restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(40));
 
- //calculate target RPM value for regulator
+ //calculate time using an interpolation
  return simple_interpolation(t, d.param.choke_corr_time[0], d.param.choke_corr_time[1],
  TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70), 4) >> 2;
 }

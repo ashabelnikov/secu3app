@@ -461,7 +461,7 @@ typedef struct params_t
   // Choke control
   uint16_t sm_steps;                     //!< Number of steps of choke stepper motor
   uint16_t choke_rpm_if;                 //!< Integral factor for RPM-based control of choke position (factor * 1024)
-  uint16_t choke_corr_time[2];           //!< Time for startup correction will be applied at -30°C and 120°C (2 points function)
+  uint16_t choke_corr_time[2];           //!< Time for startup correction will be applied at -30°C and 40°C (2 points function)
 
   // Bluetooth and security
   uint8_t  bt_flags;                     //!< Bluetooth and security related flags

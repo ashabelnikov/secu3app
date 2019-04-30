@@ -27,6 +27,8 @@
 #ifndef _UFCODES_H_
 #define _UFCODES_H_
 
+//Reserved symbols: '!', '@', '\r'
+
 #define   CHANGEMODE   'h'   //!< change mode (type of default packet)
 #define   BOOTLOADER   'i'   //!< start boot loader
 
@@ -70,5 +72,7 @@
 
 #define   GASDOSE_PAR  '*'   //!< gas dose parameters
 #define   SIGINF_DAT   '~'   //! signature information
+
+#define   SILENT       'S'   //!< used with CHANGEMODE to turn off transmitter
 
 #endif //_UFCODES_H_

@@ -96,4 +96,9 @@
  */
  void uart_init(uint16_t baud);
 
+/** Turn on/off UART transmitter. When transmitter is disabled PD1 goes into high impedance state
+ * \param state 0 - transmitter is turned off, 1 - transmitter is tuirned on
+ */
+ void uart_transmitter(uint8_t state);
+
 #endif //_UART_H_

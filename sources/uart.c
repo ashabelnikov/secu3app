@@ -1135,7 +1135,7 @@ uint8_t uart_recept_packet(void)
 // TODO: сделать проверку uart_recv_size для каждого типа пакета.
 // Проверять байты пакетов на принадлежность к шестнадцатерчным символам
 
- //интерпретируем данные принятого фрейма в зависимости от дескриптора
+ //interpret received data depending on the descriptor
  switch(descriptor)
  {
   case CHANGEMODE:
@@ -1612,6 +1612,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
 #ifdef DIAGNOSTICS
   case DIAGINP_DAT:
 #endif
+  case SILENT:
    return uart.send_mode = descriptor;
   default:
    return uart.send_mode; //dot not set not existing context
@@ -1704,5 +1705,21 @@ ISR(USART_RXC_vect)
      uart.recv_buf[uart.recv_index++] = chr;
    }
    break;
+ }
+}
+
+void uart_transmitter(uint8_t state)
+{
+ if (state)
+ { //turn on transmitter
+  _DISABLE_INTERRUPT();
+  UCSRB|=_BV(TXEN);
+  _ENABLE_INTERRUPT();
+ }
+ else
+ { //turn off transmitter
+  _DISABLE_INTERRUPT();
+  UCSRB&=~_BV(TXEN);
+  _ENABLE_INTERRUPT();
  }
 }

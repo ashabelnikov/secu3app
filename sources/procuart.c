@@ -48,6 +48,7 @@
 #include "gdcontrol.h"
 
 uint8_t startup_packets = 5;  //number of packets before start up bit will be cleared
+uint8_t silent = 0;
 
 void process_uart_interface(void)
 {
@@ -248,13 +249,23 @@ void process_uart_interface(void)
   uart_notify_processed();
  }
 
- //периодически передаем фреймы с данными
- if (s_timer_is_action(send_packet_interval_counter))
+ //periodically send frames with data
+ if (!uart_is_sender_busy())
  {
-  if (!uart_is_sender_busy())
+  uint8_t desc = uart_get_send_mode();
+  if (desc == SILENT && !silent)
   {
-   uint8_t desc = uart_get_send_mode();
+   uart_transmitter(0); //turn off transmitter
+   silent = 1;
+  }
+  if (desc != SILENT && silent)
+  {
+   uart_transmitter(1); //turn on transmitter
+   silent = 0;
+  }
 
+  if (s_timer_is_action(send_packet_interval_counter) && !silent)
+  {
    //----------------------------------
    if (startup_packets > 0)
     --startup_packets;

@@ -152,6 +152,8 @@ PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
 
 #endif
 
+PGM_DECLARE(uint8_t lzblhs_str[4]) = "3MAN";
+
 //--------helpful functions for building of packets-------------
 
 /**Appends sender's buffer by sequence of bytes from program memory. This function is also used in the bluetooth module
@@ -1161,6 +1163,7 @@ uint8_t uart_recept_packet(void)
 #ifdef FUEL_INJECT
    inject_init_ports();
 #endif
+   wdt_turnoff_timer();
    //jump to the boot loader code skipping check of jumper's state
    boot_loader_start();
    break;
@@ -1539,6 +1542,15 @@ uint8_t uart_recept_packet(void)
    d.diag_out = recept_i32h();
    break;
 #endif
+
+  case LZBLHS:
+  {
+   uint8_t buff[4];
+   recept_rs(buff, 4);
+   if (!memcmp_P(buff, lzblhs_str, 4))
+    uart_set_send_mode(SILENT);
+  }
+  break;
  }//switch
 
  return descriptor;
@@ -1613,6 +1625,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case DIAGINP_DAT:
 #endif
   case SILENT:
+  case LZBLHS:
    return uart.send_mode = descriptor;
   default:
    return uart.send_mode; //dot not set not existing context

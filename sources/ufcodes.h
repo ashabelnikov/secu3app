@@ -75,4 +75,6 @@
 
 #define   SILENT       'S'   //!< used with CHANGEMODE to turn off transmitter
 
+#define   LZBLHS       'H'   //!< "handshake" command sent to injector driver
+
 #endif //_UFCODES_H_

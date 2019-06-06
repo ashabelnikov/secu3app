@@ -45,7 +45,7 @@ then
 fi
 
 #Run programmer
-$PROGRAMMER -p $MCU -c avr910 -P /dev/ttyACM0 -U flash:w:$CODE
+$PROGRAMMER -p $MCU -c usbasp -P /dev/ttyACM0 -U flash:w:$CODE
 if [ $? -ne 0 ]
 then
  PrintError

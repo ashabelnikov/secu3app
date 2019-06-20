@@ -669,7 +669,7 @@ uint16_t inj_base_pw(void)
 
 int16_t inj_timing_lookup(void)
 {
- return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+ int16_t it = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_timing,fcs.la_l,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_fp1),
@@ -678,6 +678,9 @@ int16_t inj_timing_lookup(void)
         (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
         fcs.la_grad, 8);
+ if (it > ROUND(720.0*16))
+  it-=ROUND(720.0*16);
+ return (it << 1);
 }
 
 #endif //FUEL_INJECT

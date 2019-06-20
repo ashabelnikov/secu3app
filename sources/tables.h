@@ -192,7 +192,7 @@ typedef struct f_data_t
   //fuel injection maps
   uint8_t inj_ve[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< Volumetric efficiency lookup table, value * 2048 (12-bit)
   uint8_t inj_afr[INJ_VE_POINTS_L][INJ_VE_POINTS_F];//!< Air-Fuel ratio lookup table, (value - 8) * 16
-  uint8_t inj_timing[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< injection timing in crankshaft degrees, value * 4 (12-bit), 0...720 deg.
+  uint8_t inj_timing[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< injection timing in crankshaft degrees, value * 2 (12-bit), 0...1080 deg.
 
   uint16_t inj_cranking[INJ_CRANKING_LOOKUP_TABLE_SIZE];//!< Injector pulse width used when engine is starting up (cranking)
   uint8_t inj_warmup[INJ_WARMUP_LOOKUP_TABLE_SIZE]; //!< Warmup enrichment lookup table (factor), value * 128, e.g. 128 = 1.00

@@ -102,7 +102,7 @@
 #define _GD(v) GD_MAGNITUDE(v)
 
 //For encoding of injection timing map values
-#define _IT(v) ROUND((v) * 4.0)
+#define _IT(v) ROUND((v) * 2.0)
 
 //For indling target RPM
 #define _IR(v) ROUND((v) / 10.0)

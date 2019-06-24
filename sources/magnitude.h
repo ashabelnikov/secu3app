@@ -81,6 +81,9 @@
 /** Transforms floating point value of percentage of gas dose position to fixed point value */
 #define GD_MAGNITUDE(t) ROUND ((t) * GD_PHYSICAL_MAGNITUDE_MULTIPLIER)
 
+/** Converts injection PW value (ms) into tics of timer (1 tick = 3.2us) */
+#define INJPW_MAG(pw) ROUND ((pw) * (1000.0 / 3.2))
+
 /** Transforms ADC compensation factor to fixed point value */
 #define ADC_COMP_FACTOR(f) ROUND((f) * 16384)
 /** Transforms ADC compensation correction to fixed point value */

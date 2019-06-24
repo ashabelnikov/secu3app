@@ -488,9 +488,9 @@ MAIN()
 #ifdef FUEL_INJECT
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
-   inject_set_fuelcut(!d.floodclear && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
+   inject_set_fuelcut(!d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
 #else
-   inject_set_fuelcut(!d.floodclear && d.ie_valve && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
+   inject_set_fuelcut(!d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
 #endif
 #endif
 

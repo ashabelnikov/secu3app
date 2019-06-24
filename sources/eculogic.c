@@ -48,6 +48,10 @@ typedef struct
  uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
  uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
+ uint8_t  sfc_transient_e;       //!< Counter for soft transient from normal injection to the fuel cut mode
+ uint8_t  sfc_transient_l;       //!< Counter for soft transient from the fuel cut mode to normal injection
+ uint16_t sfc_pw_e;              //!<
+ uint16_t sfc_pw_l;              //!<
 #endif
  int16_t  calc_adv_ang;          //!< calculated advance angle
  int16_t  advance_angle_inhibitor_state; //!<
@@ -56,7 +60,7 @@ typedef struct
 /**Instance of internal state variables structure*/
 static logic_state_t lgs = {
 #ifdef FUEL_INJECT
- 0,0,0,0,
+ 0,0,0,0,0,0,0,0,
 #endif
  0,0
 };
@@ -114,6 +118,38 @@ static uint16_t ifr_vs_map_corr(void)
 #endif
 
 #ifdef FUEL_INJECT
+PGM_DECLARE(uint8_t fi_enter_strokes) = 75;
+PGM_DECLARE(uint8_t fi_leave_strokes) = 75;
+
+/** Resets transient smoothing for the forced idle fuel cut */
+static void reset_smooth_fuelcut(void)
+{
+ lgs.sfc_transient_e = PGM_GET_BYTE(&fi_enter_strokes);
+ lgs.sfc_transient_l = PGM_GET_BYTE(&fi_leave_strokes);
+ lgs.sfc_pw_e = lgs.sfc_pw_l = 0;
+}
+
+/** Implements transient smoothing for the forced idle fuel cut.
+ * \param pw Calculated injection PW
+ * \return Injection PW transformed according to the current state of fuel cut
+ */
+static uint16_t apply_smooth_fuelcut(uint16_t pw)
+{
+ if (d.ie_valve)
+ { //leave fuel cut mode
+  pw = simple_interpolation(lgs.sfc_transient_l, lgs.sfc_pw_e, pw, 0, PGM_GET_BYTE(&fi_leave_strokes), 1);
+  lgs.sfc_transient_e = 0;
+  lgs.sfc_pw_l = pw;
+ }
+ else
+ { //enter fuel cut mode
+  pw = simple_interpolation(lgs.sfc_transient_e, lgs.sfc_pw_l, 0, 0, PGM_GET_BYTE(&fi_enter_strokes), 1);
+  lgs.sfc_transient_l = 0;
+  lgs.sfc_pw_e = pw;
+ }
+ return pw;
+}
+
 /** Finalizes specified inj. PW value (adds injector lag and precalculates normal and shrinked values)
  * \param pw Pointer to the variable which contains value of PW
  * \return PW value ready to be used to drive injectors
@@ -194,7 +230,8 @@ static void fuel_calc(void)
  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
 
  d.inj_pw = finalize_inj_time(&pw);
- if (!(d.ie_valve && !d.fc_revlim && d.eng_running))
+ d.inj_pw = apply_smooth_fuelcut(d.inj_pw);
+ if (!(d.inj_pw > INJPW_MAG(0.1) && !d.fc_revlim && d.eng_running))
   d.inj_pw = 0;
 #ifdef GD_CONTROL
 }
@@ -259,6 +296,7 @@ void ignlogic_system_state_machine(void)
  {
   case EM_START: //cranking mode
 #ifdef FUEL_INJECT
+   reset_smooth_fuelcut();
    if (d.param.inj_prime_delay)
    {
     //fire prime pulse before cranking
@@ -455,6 +493,12 @@ void ignlogic_stroke_event_notification(void)
   --lgs.aftstr_enrich_counter;
  //update AE decay counter
  acc_enrich_decay_counter();
+
+ //update counters for smoothing of entering/leaving from forced idle mode
+ if (lgs.sfc_transient_e < PGM_GET_BYTE(&fi_enter_strokes))
+  lgs.sfc_transient_e++;
+ if (lgs.sfc_transient_l < PGM_GET_BYTE(&fi_leave_strokes))
+  lgs.sfc_transient_l++;
 #endif
 }
 

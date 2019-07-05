@@ -333,10 +333,18 @@ typedef struct fw_ex_data_t
   /**Value of pause in seconds (10ms units) vs board voltage*/
   uint8_t eh_pause[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
 
+  //---------------------------------------------------------------
+  //temporary valriables!!! Should be cleaned up after full migration to mega1284
+  uint8_t gc_sign[4];
+  uint8_t fi_enter_strokes;
+  uint8_t fi_leave_strokes;
+  uint8_t iac_cond_add;
+  //---------------------------------------------------------------
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[24];
+  uint8_t reserved[17];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

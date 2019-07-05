@@ -726,6 +726,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _HPV(0.34), _HPV(0.37), _HPV(0.40), _HPV(0.44), _HPV(0.48), _HPV(0.50),_HPV(0.52),_HPV(0.54),
   },
 
+  .gc_sign = {'.','g','c','d'}, // user will search for ".gcd"
+  .fi_enter_strokes = 25,  //25 strokes
+  .fi_leave_strokes = 10,  //10 strokes
+  .iac_cond_add = 15*2,    //+15%
+
   /**reserved bytes*/
   {0}
  },

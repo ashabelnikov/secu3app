@@ -118,14 +118,11 @@ static uint16_t ifr_vs_map_corr(void)
 #endif
 
 #ifdef FUEL_INJECT
-PGM_DECLARE(uint8_t fi_enter_strokes) = 75;
-PGM_DECLARE(uint8_t fi_leave_strokes) = 75;
-
 /** Resets transient smoothing for the forced idle fuel cut */
 static void reset_smooth_fuelcut(void)
 {
- lgs.sfc_transient_e = PGM_GET_BYTE(&fi_enter_strokes);
- lgs.sfc_transient_l = PGM_GET_BYTE(&fi_leave_strokes);
+ lgs.sfc_transient_e = PGM_GET_BYTE(&fw_data.exdata.fi_enter_strokes);
+ lgs.sfc_transient_l = PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes);
  lgs.sfc_pw_e = lgs.sfc_pw_l = 0;
 }
 
@@ -137,13 +134,13 @@ static uint16_t apply_smooth_fuelcut(uint16_t pw)
 {
  if (d.ie_valve)
  { //leave fuel cut mode
-  pw = simple_interpolation(lgs.sfc_transient_l, lgs.sfc_pw_e, pw, 0, PGM_GET_BYTE(&fi_leave_strokes), 1);
+  pw = simple_interpolation(lgs.sfc_transient_l, lgs.sfc_pw_e, pw, 0, PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes), 1);
   lgs.sfc_transient_e = 0;
   lgs.sfc_pw_l = pw;
  }
  else
  { //enter fuel cut mode
-  pw = simple_interpolation(lgs.sfc_transient_e, lgs.sfc_pw_l, 0, 0, PGM_GET_BYTE(&fi_enter_strokes), 1);
+  pw = simple_interpolation(lgs.sfc_transient_e, lgs.sfc_pw_l, 0, 0, PGM_GET_BYTE(&fw_data.exdata.fi_enter_strokes), 1);
   lgs.sfc_transient_l = 0;
   lgs.sfc_pw_e = pw;
  }
@@ -495,9 +492,9 @@ void ignlogic_stroke_event_notification(void)
  acc_enrich_decay_counter();
 
  //update counters for smoothing of entering/leaving from forced idle mode
- if (lgs.sfc_transient_e < PGM_GET_BYTE(&fi_enter_strokes))
+ if (lgs.sfc_transient_e < PGM_GET_BYTE(&fw_data.exdata.fi_enter_strokes))
   lgs.sfc_transient_e++;
- if (lgs.sfc_transient_l < PGM_GET_BYTE(&fi_leave_strokes))
+ if (lgs.sfc_transient_l < PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes))
   lgs.sfc_transient_l++;
 #endif
 }

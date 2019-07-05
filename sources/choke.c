@@ -470,7 +470,7 @@ int16_t calc_sm_position(uint8_t pwm)
     #else
     if (d.cond_state)
     #endif
-     idl_iacminpos+=15*2; //+15%
+     idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add);
     #endif
 
     //Restrict IAC position using specified limits

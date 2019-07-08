@@ -339,12 +339,13 @@ typedef struct fw_ex_data_t
   uint8_t fi_enter_strokes;
   uint8_t fi_leave_strokes;
   uint8_t iac_cond_add;
+  uint16_t inj_max_pw;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[17];
+  uint8_t reserved[15];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

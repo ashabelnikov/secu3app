@@ -564,8 +564,7 @@ uint8_t ckps_is_cog_changed(void)
 
 /** Get value of I/O callback by index. This function is necessary for supporting of 7,8 ign. channels
  * \param index Index of callback */
-INLINE
-fnptr_t get_callback_ign(uint8_t index)
+static inline fnptr_t get_callback_ign(uint8_t index)
 {
  return (index < IOP_ECF) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_IGNPLG_OFF);
 }
@@ -813,8 +812,7 @@ void ckps_use_cam_ref_s(uint8_t i_camref)
 /** Turn OFF specified ignition channel
  * \param i_channel number of ignition channel to turn off
  */
-INLINE
-void turn_off_ignition_channel(uint8_t i_channel)
+static inline void turn_off_ignition_channel(uint8_t i_channel)
 {
  if (!CHECKBIT(flags, F_IGNIEN))
   return; //ignition disabled
@@ -957,8 +955,7 @@ ISR(TIMER1_COMPB_vect)
  * It is assumed that this function called when all interrupts are disabled
  * \param value Value to set timer for, 1 tick = 3.2uS
  */
-INLINE
-void set_timer0(uint16_t value)
+static inline void set_timer0(uint16_t value)
 {
  OCR0A = TCNT0 + _AB(value, 0);
  SETBIT(TIFR0, OCF0A);

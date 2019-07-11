@@ -43,19 +43,19 @@
 /**Contains queue of suspended operations. Each operation can appear one time */
 uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 
-/*INLINE*/
+/*inline*/
 void sop_set_operation(uint8_t opcode)
 {
  suspended_opcodes[(opcode)] = (opcode);
 }
 
-/*INLINE*/
+/*inline*/
 void sop_reset_operation(uint8_t opcode)
 {
  suspended_opcodes[opcode] = SOP_NA;
 }
 
-/*INLINE*/
+/*inline*/
 uint8_t sop_is_operation_active(uint8_t opcode)
 {
  return (suspended_opcodes[(opcode)] == (opcode));

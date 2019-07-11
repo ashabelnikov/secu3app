@@ -147,8 +147,7 @@ inj_queue_t inj_eq2[INJ_CH_QUEUE_SIZE];
 
 /** Get value of I/O callback by index. This function is necessary for supporting of 5,6 inj. channels for SECU-3T and 6,7,8 inj.channels for SECU-3i
  * \param index Index of callback */
-INLINE
-fnptr_t get_callback_inj(uint8_t index)
+static inline fnptr_t get_callback_inj(uint8_t index)
 {
 #ifdef SECU3T
  return (index < (IOP_INJ_OUT4+1)) ? IOCFG_CB(index) : IOCFG_CB(index + IOP_INJPLG_OFF);

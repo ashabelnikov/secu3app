@@ -98,7 +98,7 @@ uartstate_t uart = {0,{0},{0},0,0,0,0};
 /** Appends transmitter's buffer
  * \param b byte which will be used to append tx buffer
  */
-/*INLINE*/
+/*inline*/
 void append_tx_buff(uint8_t b)
 {
  if (b == FOBEGIN)
@@ -123,7 +123,7 @@ void append_tx_buff(uint8_t b)
 /** Takes out byte from receiver's buffer
  * \return byte retrieved from buffer
  */
-/*INLINE*/
+/*inline*/
 uint8_t takeout_rx_buff(void)
 {
  uint8_t b1 = uart.recv_buf[uart.recv_index++];

@@ -218,3 +218,22 @@ void s_timer_init(void)
  TCNT2 = 0;
  TIMSK2|= _BV(TOIE2);
 }
+
+uint8_t s_timer16_is_action(s_timer16_t i_timer)
+{
+ uint8_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = (i_timer == 0);
+ _END_ATOMIC_BLOCK();
+ return result;
+}
+
+uint16_t s_timer_gtc(void)
+{
+ uint16_t result;
+ _BEGIN_ATOMIC_BLOCK();
+ result = sys_counter;
+ _END_ATOMIC_BLOCK();
+ return result;
+}
+

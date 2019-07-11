@@ -41,8 +41,6 @@
   #error "avrio.h: Wrong platform identifier!"
  #endif
 
- #define INLINE _Pragma("inline")
-
 #elif defined(__GNUC__) // GNU Compiler
  //main() can be void if -ffreestanding compiler option specified.
  #define MAIN() __attribute__ ((OS_main)) void main(void)
@@ -58,7 +56,6 @@
   #error "avrio.h: Wrong platform identifier!"
  #endif
 
- #define INLINE inline
 #else //Unknown compiler!
  #error "port.h: Unknown C compiler!"
 #endif

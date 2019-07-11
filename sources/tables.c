@@ -727,8 +727,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   },
 
   .gc_sign = {'.','g','c','d'}, // user will search for ".gcd"
-  .fi_enter_strokes = 25,  //25 strokes
-  .fi_leave_strokes = 10,  //10 strokes
+  .fi_enter_strokes = 5,  //5 strokes
+  .fi_leave_strokes = 5,  //5 strokes
   .iac_cond_add = 15*2,    //+15%
   .inj_max_pw = 31250,     //100ms
 

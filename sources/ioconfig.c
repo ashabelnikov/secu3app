@@ -1058,6 +1058,28 @@ void iocfg_s_add_o2i(uint8_t value)     //!< set  ADD_O2           (inverted)
  _END_ATOMIC_BLOCK();
 }
 //-----------------------------------------------------------------------------
+void iocfg_i_tach_o(uint8_t value)      //!< init TACH_O
+{
+ WRITEBIT(PORTC, PC4, value);
+ DDRC |= _BV(DDC4);
+}
+
+void iocfg_i_tach_oi(uint8_t value)     //!< init TACH_O           (inverted)
+{
+ WRITEBIT(PORTC, PC4, !value);
+ DDRC |= _BV(DDC4);
+}
+
+void iocfg_s_tach_o(uint8_t value)      //!< set  TACH_O
+{
+ WRITEBIT(PORTC, PC4, value);
+}
+
+void iocfg_s_tach_oi(uint8_t value)     //!< set  TACH_O           (inverted)
+{
+ WRITEBIT(PORTC, PC4, !value);
+}
+//-----------------------------------------------------------------------------
 
 //Inputs
 void iocfg_i_ps(uint8_t value)          //!< init PS input

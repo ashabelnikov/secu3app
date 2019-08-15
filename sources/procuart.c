@@ -214,10 +214,12 @@ void process_uart_interface(void)
     if (d.param.knock_use_knock_channel)
     {
      if (!d.use_knock_channel_prev)
+     {
       if (!knock_module_initialize())
       {//чип сигнального процессора детонации неисправен - зажигаем СЕ
        ce_set_error(ECUERROR_KSP_CHIP_FAILED);
       }
+     }
     }
     else //if knock detection has turned off then reset possible error
      ce_clear_error(ECUERROR_KNOCK_DETECTED);

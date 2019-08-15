@@ -190,7 +190,11 @@ uint8_t knock_module_initialize(void)
  //Setting HOLD mode for integrator and "Run" mode for chip at all.
  //Note: In the SECU-3i TEST is not connected to PB3 (left NC)
  SET_KSP_TEST(1);
+#ifdef SECU3T
  SET_KSP_INTHOLD(KNOCK_INTMODE_HOLD);
+#else //SECU3i
+ IOCFG_SET(IOP_TACH_O, KNOCK_INTMODE_HOLD);
+#endif
  SET_KSP_CS(1);
 
  spi_master_init();
@@ -723,9 +727,14 @@ ISR(SPI_STC_vect)
 void knock_init_ports(void)
 {
  PORTB|= _BV(PB4)|_BV(PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
+#ifdef SECU3T
  PORTC&=~_BV(PC4);
- DDRB |= _BV(DDB7)|_BV(DDB5)|_BV(DDB4)|_BV(DDB3);
  DDRC |= _BV(DDC4);
+#else //SECU3i
+ IOCFG_INIT(IOP_TACH_O, 0);
+#endif
+ DDRB |= _BV(DDB7)|_BV(DDB5)|_BV(DDB4)|_BV(DDB3);
+
 #ifdef OBD_SUPPORT
  INIT_CAN_CS();
 #endif

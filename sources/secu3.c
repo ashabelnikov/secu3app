@@ -229,10 +229,12 @@ void init_modules(void)
  knock_set_int_time_constant(d.param.knock_int_time_const);
  knock_set_channel(0);
  if (d.param.knock_use_knock_channel)
+ {
   if (!knock_module_initialize())
   {//knock signal processor failure - light up CE lamp
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   }
+ }
  d.use_knock_channel_prev = d.param.knock_use_knock_channel;
 
 #if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---

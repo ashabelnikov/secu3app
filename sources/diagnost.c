@@ -243,6 +243,12 @@ void set_outputs(uint32_t o)
  WRITEBIT(spi_PORTB, 4, (o & _OBV(21))); //COND_O
  WRITEBIT(spi_PORTB, 0, (o & _OBV(22))); //ADD_O2
 
+ //TACH_O
+ if (o & _OBV(24))
+ {
+  WRITEBIT(PORTC, PC4, (o & _OBV(23)));
+ }
+
 #endif
 
 }
@@ -345,7 +351,8 @@ void diagnost_process(void)
    case 1:
     if (adc_is_measure_ready())
     {
-     knock_set_integration_mode(KNOCK_INTMODE_INT);
+     if (!(d.diag_out & _OBV(24)))
+      knock_set_integration_mode(KNOCK_INTMODE_INT);
      _DELAY_US(1000);   //1ms
      ++diag.fsm_state;
     }
@@ -353,7 +360,8 @@ void diagnost_process(void)
 
    //start measurements (knock signal)
    case 2:
-    knock_set_integration_mode(KNOCK_INTMODE_HOLD);
+    if (!(d.diag_out & _OBV(24)))
+     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
 
     //start the process of downloading the settings into the HIP9011 (and getting ADC result for TPIC8101)
     knock_start_settings_latching();

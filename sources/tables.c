@@ -731,6 +731,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .fi_leave_strokes = 5,  //5 strokes
   .iac_cond_add = 15*2,    //+15%
   .inj_max_pw = 31250,     //100ms
+  .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
+  .aircond_tps = TPS_MAGNITUDE(68.0), //68%
 
   /**reserved bytes*/
   {0}

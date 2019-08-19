@@ -340,12 +340,14 @@ typedef struct fw_ex_data_t
   uint8_t fi_leave_strokes;
   uint8_t iac_cond_add;
   uint16_t inj_max_pw;
+  int16_t  aircond_clt;
+  uint8_t  aircond_tps;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[15];
+  uint8_t reserved[12];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

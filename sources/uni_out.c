@@ -181,6 +181,76 @@ static uint8_t cond_tmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  return p_ctx->state;
 }
 
+/*
+static uint8_t cond_lptmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+ switch(p_ctx->sm)
+ {
+  case 0:
+   if (p_ctx->other)
+   {
+    p_ctx->tmr = s_timer_gtc();
+    p_ctx->sm = 1;
+   }
+   p_ctx->state = 0;
+   break;
+  case 1:
+   if ((s_timer_gtc() - p_ctx->tmr) >= on_thrd)
+   {
+    p_ctx->state = 1;  //ON
+    p_ctx->tmr = s_timer_gtc();
+    p_ctx->sm = 2;
+   }
+   break;
+  case 2:
+   if ((s_timer_gtc() - p_ctx->tmr) >= off_thrd)
+   {
+    p_ctx->state = 0;  //OFF
+    p_ctx->sm = 0;
+   }
+   break;
+ }
+
+ return p_ctx->state;
+}*/
+
+
+/**Condition function for timer (starts to run after triggering of other(first) condition).
+ * this function is used only as second condition */
+static uint8_t cond_lptmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+ switch(p_ctx->sm)
+ {
+  case 0:
+   if (p_ctx->other)
+   {
+    p_ctx->state = 1;  //ON
+    p_ctx->tmr = s_timer_gtc();
+    p_ctx->sm = 1;
+   }
+   else
+    p_ctx->state = 0;
+   break;
+  case 1:
+   if ((s_timer_gtc() - p_ctx->tmr) >= on_thrd)
+   {
+    p_ctx->state = 0;  //OFF
+    p_ctx->tmr = s_timer_gtc();
+    p_ctx->sm = 2;
+   }
+   break;
+  case 2:
+   if ((s_timer_gtc() - p_ctx->tmr) >= off_thrd)
+   {
+    p_ctx->state = 1;  //ON
+    p_ctx->sm = 0;
+   }
+   break;
+ }
+
+ return p_ctx->state;
+}
+
 /**Condition function for timer which starts to run after ignition turn on*/
 static uint8_t cond_ittmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
@@ -448,13 +518,13 @@ static uint8_t cond_oftmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_th
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 23
+#define COND_FPTR_TABLE_SIZE 24
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
  {&cond_cts, &cond_rpm, &cond_map, &cond_volt, &cond_carb, &cond_vspd, &cond_airfl, &cond_tmr, &cond_ittmr,
   &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
-  &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4};
+  &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4, &cond_lptmr};
 
 void uniout_init_ports(void)
 {

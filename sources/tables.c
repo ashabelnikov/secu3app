@@ -733,6 +733,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_max_pw = 31250,     //100ms
   .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .aircond_tps = TPS_MAGNITUDE(68.0), //68%
+  .idl_ve = ROUND(0*2048), //turned off
 
   /**reserved bytes*/
   {0}

@@ -726,7 +726,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _HPV(0.34), _HPV(0.37), _HPV(0.40), _HPV(0.44), _HPV(0.48), _HPV(0.50),_HPV(0.52),_HPV(0.54),
   },
 
-  .gc_sign = {'.','g','c','d'}, // user will search for ".gcd"
+  .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
+  .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
+  .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
   .fi_enter_strokes = 5,  //5 strokes
   .fi_leave_strokes = 5,  //5 strokes
   .iac_cond_add = 15*2,    //+15%

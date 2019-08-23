@@ -335,7 +335,9 @@ typedef struct fw_ex_data_t
 
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
-  uint8_t gc_sign[4];
+  int16_t evap_clt;
+  uint8_t evap_tps_lo;
+  uint8_t evap_tps_hi;
   uint8_t fi_enter_strokes;
   uint8_t fi_leave_strokes;
   uint8_t iac_cond_add;

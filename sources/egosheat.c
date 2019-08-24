@@ -136,7 +136,7 @@ void egosheat_control(void)
 
  if (!d.st_block)
  {
-  IOCFG_SETF(IOP_O2SH_O, 0); //turned off
+  IOCFG_SETF(IOP_O2SH_O, !!CHECKBIT(d.param.inj_lambda_flags, LAMFLG_CRKHEAT)); //turned off or turned on (depending on flag)
   eh.state = 0;
  }
 }

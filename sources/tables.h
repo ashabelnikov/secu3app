@@ -179,6 +179,7 @@
 //lambda flags
 #define LAMFLG_HTGDET                   0           //!< Determine oxygen sensor's heating by monitoring of voltage from it
 #define LAMFLG_IDLCORR                  1           //!< Use lambda correction on idling
+#define LAMFLG_CRKHEAT                  2           //!< Use heating before cranking
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t

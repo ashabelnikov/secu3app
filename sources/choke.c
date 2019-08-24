@@ -373,6 +373,8 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    break;
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
+   if (!d.st_block)
+    chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
    {
     uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
     if (time_since_crnk >= d.param.inj_cranktorun_time)

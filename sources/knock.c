@@ -192,10 +192,11 @@ uint8_t knock_module_initialize(void)
  SET_KSP_TEST(1);
 #ifdef SECU3T
  SET_KSP_INTHOLD(KNOCK_INTMODE_HOLD);
-#else //SECU3i
- IOCFG_SET(IOP_TACH_O, KNOCK_INTMODE_HOLD);
-#endif
  SET_KSP_CS(1);
+#else //SECU3i
+ IOCFG_SETF(IOP_TACH_O, KNOCK_INTMODE_HOLD);
+ IOCFG_SETF(IOP_KSP_CS, 1);
+#endif
 
  spi_master_init();
  ksp.ksp_interrupt_state = 0; //init state machine, stopped
@@ -208,17 +209,33 @@ uint8_t knock_module_initialize(void)
 #endif //SECU-3i
 
  //set prescaler first
+#ifdef SECU3T
  SET_KSP_CS(0);
+#else //SECU3i
+ IOCFG_SETF(IOP_KSP_CS, 0);
+#endif
  spi_master_transmit(init_data[0]);
+#ifdef SECU3T
  SET_KSP_CS(1);
+#else //SECU3i
+ IOCFG_SETF(IOP_KSP_CS, 1);
+#endif
 
  //Setting SO terminal active and perform initialization. For each parameter perform
  //checking for response and correcntess of received data.
  for(i = 0; i < 2; ++i)
  {
-  SET_KSP_CS(0);
+#ifdef SECU3T
+ SET_KSP_CS(0);
+#else //SECU3i
+ IOCFG_SETF(IOP_KSP_CS, 0);
+#endif
   spi_master_transmit(init_data[i]);
-  SET_KSP_CS(1);
+#ifdef SECU3T
+ SET_KSP_CS(1);
+#else //SECU3i
+ IOCFG_SETF(IOP_KSP_CS, 1);
+#endif
   response = SPDR;
   if (response!=init_data[i])
   {
@@ -229,9 +246,17 @@ uint8_t knock_module_initialize(void)
 
 #ifdef TPIC8101
  //Finally, go into the advanced mode. In this mode we will be able to read int.output via SPI
+#ifdef SECU3T
  SET_KSP_CS(0);
+#else //SECU3i
+ IOCFG_SETF(IOP_KSP_CS, 0);
+#endif
  spi_master_transmit(KSP_SET_ADVANCED);
+#ifdef SECU3T
  SET_KSP_CS(1);
+#else //SECU3i
+ IOCFG_SETF(IOP_KSP_CS, 1);
+#endif
 #endif
 
  _RESTORE_INTERRUPT(_t);
@@ -726,11 +751,13 @@ ISR(SPI_STC_vect)
 
 void knock_init_ports(void)
 {
- PORTB|= _BV(PB4)|_BV(PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
 #ifdef SECU3T
+ PORTB|= _BV(PB4)|_BV(PB3); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
  PORTC&=~_BV(PC4);
  DDRC |= _BV(DDC4);
 #else //SECU3i
+ IOCFG_INIT(IOP_KSP_CS, 1); //interface with HIP9011 turned off (CS=1, TEST=1, MOSI=0, SCK=0)
+ SETBIT(PORTB, PB3);
  IOCFG_INIT(IOP_TACH_O, 0);
 #endif
  DDRB |= _BV(DDB7)|_BV(DDB5)|_BV(DDB4)|_BV(DDB3);

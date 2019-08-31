@@ -1080,6 +1080,28 @@ void iocfg_s_tach_oi(uint8_t value)     //!< set  TACH_O           (inverted)
  WRITEBIT(PORTC, PC4, !value);
 }
 //-----------------------------------------------------------------------------
+void iocfg_i_ksp_cs(uint8_t value)      //!< init KSP_CS
+{
+ WRITEBIT(PORTB, PB4, value);
+ DDRB |= _BV(DDB4);
+}
+
+void iocfg_i_ksp_csi(uint8_t value)     //!< init KSP_CS           (inverted)
+{
+ WRITEBIT(PORTB, PB4, !value);
+ DDRB |= _BV(DDB4);
+}
+
+void iocfg_s_ksp_cs(uint8_t value)      //!< set  KSP_CS
+{
+ WRITEBIT(PORTB, PB4, value);
+}
+
+void iocfg_s_ksp_csi(uint8_t value)     //!< set  KSP_CS           (inverted)
+{
+ WRITEBIT(PORTB, PB4, !value);
+}
+//-----------------------------------------------------------------------------
 
 //Inputs
 void iocfg_i_ps(uint8_t value)          //!< init PS input

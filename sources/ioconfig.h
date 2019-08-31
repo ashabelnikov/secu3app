@@ -285,10 +285,10 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_EPAS_I       30     //!< EPAS_I          (input)    spi
 #define IOP_ADD_I4       31     //!< ADD_I4          (input)
 #define IOP_TACH_O       32     //!< TACH_O          (output)
-#define IOP_OILP_I       33     //!< OILP_I          (input)    spi
-#define IOP_GENS_I       34     //!< GENS_I          (input)    spi
+#define IOP_KSP_CS       33     //!< KSP_CS          (output)
+#define IOP_OILP_I       34     //!< OILP_I          (input)    spi
+#define IOP_GENS_I       35     //!< GENS_I          (input)    spi
 //reserved slots
-#define IOP_RESERVED5    35     //!< reserved slot   ()
 #define IOP_RESERVED6    36     //!< reserved slot   ()
 //Next definitions correspond to plugs only
 #define IOP_IGN_OUT6     37     //!< IGN_O6          (output)
@@ -436,6 +436,11 @@ void iocfg_i_tach_o(uint8_t value);      //!< init TACH_O
 void iocfg_i_tach_oi(uint8_t value);     //!< init TACH_O           (inverted)
 void iocfg_s_tach_o(uint8_t value);      //!< set  TACH_O
 void iocfg_s_tach_oi(uint8_t value);     //!< set  TACH_O           (inverted)
+
+void iocfg_i_ksp_cs(uint8_t value);      //!< init KSP_CS
+void iocfg_i_ksp_csi(uint8_t value);     //!< init KSP_CS           (inverted)
+void iocfg_s_ksp_cs(uint8_t value);      //!< set  KSP_CS
+void iocfg_s_ksp_csi(uint8_t value);     //!< set  KSP_CS           (inverted)
 
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input

@@ -38,6 +38,7 @@
 #include "uart.h"
 #include "ufcodes.h"
 #include "wdt.h"
+#include "ioconfig.h"
 
 
 #ifndef SECU3T //---SECU-3i---
@@ -364,7 +365,10 @@ void diagnost_process(void)
      knock_set_integration_mode(KNOCK_INTMODE_HOLD);
 
     //start the process of downloading the settings into the HIP9011 (and getting ADC result for TPIC8101)
-    knock_start_settings_latching();
+#ifndef SECU3T
+    if (IOCFG_CHECK(IOP_KSP_CS))
+#endif
+     knock_start_settings_latching();
 #ifndef TPIC8101
     adc_begin_measure_knock(0); //HIP9011 only
 #endif

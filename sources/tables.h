@@ -346,12 +346,13 @@ typedef struct fw_ex_data_t
   int16_t  aircond_clt;
   uint8_t  aircond_tps;
   int16_t  idl_ve;
+  uint16_t frap;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[10];
+  uint8_t reserved[8];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

@@ -51,10 +51,17 @@ typedef struct
  uint8_t  bv_eds;            //!< board voltage error detecting state, used for state machine
  uint8_t  bv_dev;            //!< board voltage deviation flag, if 0, then voltage is below normal, if 1, then voltage is above normal
  uint8_t  turnout_low_priority_errors_counter;
+#ifdef DEFERRED_CRC
+ uint8_t  en_err_cls;        //!< Enable error's clearing flag
+#endif
 }ce_state_t;
 
 /**State variables */
-ce_state_t ce_state = {0,0,0,0,0,0,0};
+ce_state_t ce_state = {0,0,0,0,0,0,0,
+#ifdef DEFERRED_CRC
+0
+#endif
+};
 
 //operations under errors
 /*#pragma inline*/
@@ -283,12 +290,26 @@ void ce_init_ports(void)
 
 void ce_stroke_event_notification(void)
 {
- //Stop to indicate these errors after starting of engine (after a certain number of strokes)
- if (ce_state.turnout_low_priority_errors_counter == 254)
+#ifdef DEFERRED_CRC
+ if (ce_state.en_err_cls)
  {
-  ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
-  ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);
+#endif
+  //Stop to indicate these errors after starting of engine (after a certain number of strokes)
+  if (ce_state.turnout_low_priority_errors_counter == 254)
+  {
+   ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
+   ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);
+  }
+  if (ce_state.turnout_low_priority_errors_counter < 255)
+   ce_state.turnout_low_priority_errors_counter++;
+#ifdef DEFERRED_CRC
  }
- if (ce_state.turnout_low_priority_errors_counter < 255)
-  ce_state.turnout_low_priority_errors_counter++;
+#endif
 }
+
+#ifdef DEFERRED_CRC
+void ce_enable_errors_clearing(void)
+{
+ ce_state.en_err_cls = 1;
+}
+#endif

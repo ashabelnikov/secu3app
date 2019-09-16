@@ -92,4 +92,9 @@ void ce_init_ports(void);
 /**Called each stroke*/
 void ce_stroke_event_notification(void);
 
+#ifdef DEFERRED_CRC
+/**Enable clearing of errors*/
+void ce_enable_errors_clearing(void);
+#endif
+
 #endif //_CE_ERRORS_H_

@@ -31,24 +31,24 @@
 #define      P_16   0xA001     //!< polynomial
 
 //variant for RAM
-uint16_t crc16( uint8_t *buf, uint16_t num )
+uint16_t crc16(uint8_t *buf, uint16_t num)
 {
  uint8_t i;
  uint16_t crc = 0xffff;
 
- while ( num-- )
+ while(num--)
  {
   crc ^= *buf++;
   i = 8;
   do
   {
-   if ( crc & 1 )
-    crc = ( crc >> 1 ) ^ P_16;
+   if (crc & 1)
+    crc = (crc >> 1) ^ P_16;
    else
     crc >>= 1;
-  } while ( --i );
+  } while(--i);
  }
- return( crc );
+ return(crc);
 }
 
 //variant for FLASH
@@ -57,20 +57,20 @@ uint16_t crc16f(uint8_t _HPGM *buf, pgmsize_t num)
  uint8_t i;
  uint16_t crc = 0xffff;
 
- while ( num-- )
+ while(num--)
  {
   crc ^= PGM_GET_BYTE(buf++);
   i = 8;
   do
   {
-   if ( crc & 1 )
-    crc = ( crc >> 1 ) ^ P_16;
+   if (crc & 1)
+    crc = (crc >> 1) ^ P_16;
    else
     crc >>= 1;
-  } while ( --i );
+  } while(--i);
  }
 
- return( crc );
+ return(crc);
 }
 
 uint8_t update_crc8(uint8_t data, uint8_t crc)
@@ -84,7 +84,27 @@ uint8_t update_crc8(uint8_t data, uint8_t crc)
    crc >>= 1;
   data >>= 1;
  }
- while( --i );
+ while(--i);
 
  return crc;
 }
+
+#ifdef DEFERRED_CRC
+uint16_t upd_crc16f(uint16_t crc, uint8_t _HPGM *buf, uint16_t num)
+{
+ uint8_t i;
+ while(num--)
+ {
+  crc ^= PGM_GET_BYTE(buf++);
+  i = 8;
+  do
+  {
+   if (crc & 1)
+    crc = (crc >> 1) ^ P_16;
+   else
+    crc >>= 1;
+  } while(--i);
+ }
+ return crc;
+}
+#endif

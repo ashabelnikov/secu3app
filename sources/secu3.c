@@ -159,14 +159,44 @@ void control_engine_units(void)
  */
 void check_firmware_integrity(void)
 {
+#ifndef DEFERRED_CRC
  if(CHECKBIT(fw_data.def_param.bt_flags, BTF_CHK_FWCRC))
  {
   if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
    ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
  }
+#endif
  if (crc16f(fwinfo, FWINFOSIZE)!=0x44DB)
   check_firmware_integrity(); //Uuups!
 }
+
+#ifdef DEFERRED_CRC
+#define DCFC_BLOCK_SIZE 128
+void deferred_check_firmware_crc(void)
+{
+ static uint16_t fwcrc = 0xFFFF;
+ static uint8_t _HPGM* ptr = 0;
+ static uint8_t finished = 0;
+
+ if (!finished && CHECKBIT(fw_data.def_param.bt_flags, BTF_CHK_FWCRC))
+ {
+  uint32_t d = (CODE_SIZE) - ((uint32_t)ptr);
+  if (d > DCFC_BLOCK_SIZE)
+  {
+   fwcrc = upd_crc16f(fwcrc, ptr, DCFC_BLOCK_SIZE);
+  }
+  else
+  {
+   fwcrc = upd_crc16f(fwcrc, ptr, d);
+   finished = 1;
+   if (fwcrc != PGM_GET_WORD(&fw_data.code_crc))
+    ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
+   ce_enable_errors_clearing();
+  }
+  ptr+=DCFC_BLOCK_SIZE;
+ }
+}
+#endif
 
 /**Initialization of I/O ports
  */
@@ -544,6 +574,12 @@ MAIN()
 #endif
 
   wdt_reset_timer();
+
+#ifdef DEFERRED_CRC
+  deferred_check_firmware_crc();
+  wdt_reset_timer();
+#endif
+
  }//main loop
  //------------------------------------------------------------------------
 }

@@ -31,17 +31,17 @@
 #include "port/pgmspace.h"
 #include <stdint.h>
 
-/** Calculates CRC16 for given block of data in RAM
- * \param buf pointer to block of data (RAM)
- * \param num size of block to process in bytes
- * \return calculated CRC16
+/** Calculates CRC16 for a given block of data in RAM
+ * \param buf Pointer to a block of data (RAM)
+ * \param num Size of block to process in bytes
+ * \return Calculated CRC16
  */
 uint16_t crc16(uint8_t *buf, uint16_t num);
 
-/** Calculates CRC16 for given block of data in ROM
- * \param buf pointer to block of data (ROM)
- * \param num size of block to process in bytes
- * \return calculated CRC16
+/** Calculates CRC16 for a given block of data in ROM
+ * \param buf Pointer to a block of data (ROM)
+ * \param num Size of block to process in bytes
+ * \return Calculated CRC16
  */
 uint16_t crc16f(uint8_t _HPGM *buf, pgmsize_t num);
 
@@ -52,5 +52,15 @@ uint16_t crc16f(uint8_t _HPGM *buf, pgmsize_t num);
  * \return calculated value of CRC8
  */
 uint8_t update_crc8(uint8_t data, uint8_t crc);
+
+#ifdef DEFERRED_CRC
+/** Calculates and updates CRC16 for given block of data in ROM
+ * \param crc Previous value of the CRC to be updated (or zero)
+ * \param buf Pointer to block of data (ROM)
+ * \param num Size of block in bytes to be processed
+ * \return updated value on the crc
+ */
+uint16_t upd_crc16f(uint16_t crc, uint8_t _HPGM *buf, uint16_t num);
+#endif
 
 #endif //_CRC16_H_

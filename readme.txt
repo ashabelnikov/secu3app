@@ -127,43 +127,49 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          effect without reprogramming using ISP programmator.
                          (Скорость передачи данных для загрузчика)
 
-    SPEED_SENSOR   *     Include speed sensor support
+    SPEED_SENSOR    *    Include speed sensor support
                          Включить поддержку датчика скорости
 
-    INTK_HEATING   *     Include support of intake manifold heating control
+    INTK_HEATING    *    Include support of intake manifold heating control
                          Включить поддержку управления подогревом впускного
                          коллектора
 
-    AIRTEMP_SENS   *     Include support of intake air temperature sensor
+    AIRTEMP_SENS    *    Include support of intake air temperature sensor
                          Включить поддержку датчика температуры воздуха
 
-    BLUETOOTH_SUPP *     Include functionality for working with Bluetooth
+    BLUETOOTH_SUPP  *    Include functionality for working with Bluetooth
                          Включить поддержку работы с Bluetooth
 
-    IMMOBILIZER    *     Include immobilizer and iButton functionality
+    IMMOBILIZER     *    Include immobilizer and iButton functionality
                          Включить поддержку иммобилайзера и iButton
 
-    UNI_OUTPUT     *     Include support of an universal programmable output
+    UNI_OUTPUT      *    Include support of an universal programmable output
                          Включить поддержку универсального программируемого
                          выхода
 
-    PA4_INP_IGNTIM *     Use PA4 as analog input for manual correction of
+    PA4_INP_IGNTIM  *    Use PA4 as analog input for manual correction of
                          ignition timing
 
-    SEND_INST_VAL  *     Send instant values (RPM, voltage) instead of averaged
+    SEND_INST_VAL   *    Send instant values (RPM, voltage) instead of averaged
                          Передавать мгновенные значения, без усреднения
 
-    EVAP_CONTROL   *     Canister purge valve control
+    EVAP_CONTROL    *    Canister purge valve control
                          Управление клапаном продувки адсорбера
 
-    AIRCONDIT      *     Air conditioner control
+    AIRCONDIT       *    Air conditioner control
                          Управление кондиционером
 
-    EGOS_HEATING   *     EGO sensor's heater control
+    EGOS_HEATING    *    EGO sensor's heater control
                          Управление подогревом датчика кислорода
 
-    MCP3204        *     Support of additional 4 analog inputs (using MCP3204)
+    MCP3204         *    Support of additional 4 analog inputs (using MCP3204)
                          Поддержка 4 дополнительных аналоговых входов
+
+    IFR_VS_MAP_CORR *    Turn on correction of pressure in the fuel rail
+                         Включить коррекцию давления в топливной рампе по ДАД
+
+    DEFERRED_CRC    *    Turn on background checking of the firmware's CRC
+                         Включить фоновую проверку контрольной суммы прошивки
 
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager

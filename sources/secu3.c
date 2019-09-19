@@ -436,6 +436,7 @@ MAIN()
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_eng_stopped_notification();
 #endif
+   starter_eng_stopped_notification();
 
    knklogic_init(&retard_state);
 
@@ -516,6 +517,8 @@ MAIN()
    ignlogic_stroke_event_notification();
 
    ce_stroke_event_notification();
+
+   starter_stroke_event_notification();
 
 #ifdef FUEL_INJECT
 #ifdef GD_CONTROL

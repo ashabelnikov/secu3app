@@ -40,4 +40,10 @@ void starter_control(void);
  */
 void starter_set_blocking_state(uint8_t i_state);
 
+/**Must be called from the main loop for each stroke event*/
+void starter_stroke_event_notification(void);
+
+/**Must be called from the main loop when engine is stopped*/
+void starter_eng_stopped_notification(void);
+
 #endif //_STARTER_H_

@@ -33,6 +33,10 @@
 #include "starter.h"
 #include "vstimer.h"
 
+
+static uint8_t str_counter = 0;
+static uint8_t str_state = 0;
+
 void starter_set_blocking_state(uint8_t i_state)
 {
  IOCFG_SETF(IOP_ST_BLOCK, !i_state);
@@ -52,9 +56,28 @@ void starter_control(void)
  }
 
  //control of starter's blocking (starter is blocked after reaching the specified RPM, but will not turn back!)
- if (d.sens.frequen > d.param.starter_off)
-  starter_set_blocking_state(1), d.st_block = 1;
+ switch(str_state)
+ {
+  case 0:
+   if (d.sens.frequen > d.param.starter_off)
+    str_state++;
+   break;
+  case 1:
+   if (str_counter >= fw_data.exdata.stbl_str_cnt)
+    starter_set_blocking_state(1), d.st_block = 1;
+ }
+}
 
- if (d.sens.frequen < 30)
+void starter_stroke_event_notification(void)
+{
+ if (str_state > 0)
+  str_counter++;
+}
+
+void starter_eng_stopped_notification(void)
+{
+ str_counter = 0;
+ str_state = 0;
+ if (!d.sys_locked)
   starter_set_blocking_state(0), d.st_block = 0; //unblock starter
 }

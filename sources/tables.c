@@ -738,6 +738,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_ve = ROUND(0*2048), //turned off
   .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
   .idl_ve_g = ROUND(0*2048), //turned off
+  .stbl_str_cnt = 10, //10 strokes
 
   /**reserved bytes*/
   {0}

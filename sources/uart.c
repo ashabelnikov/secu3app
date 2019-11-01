@@ -1545,8 +1545,8 @@ uint8_t uart_recept_packet(void)
 
   case LZBLHS:
   {
-   uint8_t buff[4];
-   recept_rs(buff, 4);
+   uint8_t buff[5];
+   recept_rs(buff, 5);
    if (!memcmp_P(buff, lzblhs_str, 4))
     uart_set_send_mode(SILENT);
   }

@@ -113,7 +113,7 @@ typedef struct
 
 #ifdef FUEL_INJECT
  int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
- int16_t   iac_pos;        //!< IAC pos between call of the closed loop regulator
+ int16_t   iac_pos;        //!< IAC pos between calls of the closed loop regulator
  int16_t   iac_add;        //!< Smoothly increased value
 #endif
 
@@ -488,10 +488,15 @@ int16_t calc_sm_position(uint8_t pwm)
    break;
  }
 
- if (pwm)
-  return ((((int32_t)256) * chks.iac_pos) / 800); //convert percentage position to PWM duty
+ if (d.floodclear)
+  return 0; //0% (use d.param.sm_steps for 100%)
  else
-  return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 800); //convert percentage position to SM steps
+ {
+  if (pwm)
+   return ((((int32_t)256) * chks.iac_pos) / 800); //convert percentage position to PWM duty
+  else
+   return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 800); //convert percentage position to SM steps
+ }
 }
 #endif
 

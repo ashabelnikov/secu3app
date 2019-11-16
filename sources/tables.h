@@ -349,12 +349,13 @@ typedef struct fw_ex_data_t
   uint16_t frap;
   int16_t  idl_ve_g;
   uint8_t  stbl_str_cnt;
+  int16_t  knkclt_thrd;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[5];
+  uint8_t reserved[3];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

@@ -382,6 +382,7 @@ int16_t calc_sm_position(uint8_t pwm)
      ++chks.strt_mode; //transition has finished, we will immediately fall into mode 2, use run value
      chks.rpmreg_t1 = s_timer_gtc();
      chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 2; //run pos x4
+     CLEARBIT(chks.flags, CF_ADDACT);
     }
     else
     {

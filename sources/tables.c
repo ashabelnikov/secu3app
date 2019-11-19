@@ -740,9 +740,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_ve_g = ROUND(0*2048), //turned off
   .stbl_str_cnt = 10, //10 strokes
   .knkclt_thrd = TEMPERATURE_MAGNITUDE(70.0), //70°C
+  .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
+  .heating_time = 100, //10 min
 
   /**reserved bytes*/
-  {0}
+  /*{0}*/
  },
 
  /**Fill tables with default data */

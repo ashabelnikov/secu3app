@@ -350,12 +350,14 @@ typedef struct fw_ex_data_t
   int16_t  idl_ve_g;
   uint8_t  stbl_str_cnt;
   int16_t  knkclt_thrd;
+  int16_t  heating_t_off; //Heating off temperature
+  uint8_t  heating_time;  //Input manifold heating time
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3];
+//  uint8_t reserved[0];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

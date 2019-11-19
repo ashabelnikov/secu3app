@@ -33,12 +33,6 @@
 #include "magnitude.h"
 #include "vstimer.h"
 
-/**Input manifold heating time - 10 minutes */
-#define HEATING_TIME (10U*60U*100U)
-
-/**Heating off temperature */
-#define HEATING_T_OFF  65.0
-
 /**Declare state variables structure*/
 typedef struct
 {
@@ -66,13 +60,13 @@ void intkheat_control(void)
  switch(ih.state)
  {
   case 0: //turn on heating and start timer
-   IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < TEMPERATURE_MAGNITUDE(HEATING_T_OFF)));   // control heating
+   IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < PGM_GET_WORD(&fw_data.exdata.heating_t_off)));   // control heating
    ih.strt_t1 = s_timer_gtc();
    ih.state = 1;
    break;
 
   case 1: //wait 10 minutes and turn off heating or it will be turned off immediatelly if crankshaft begin to revolve
-   if (((s_timer_gtc() - ih.strt_t1) >= HEATING_TIME) || ih.cog_changed)
+   if (((s_timer_gtc() - ih.strt_t1) >= ((uint16_t)PGM_GET_BYTE(&fw_data.exdata.heating_time)*600)) || ih.cog_changed)
    {
     IOCFG_SETF(IOP_INTK_HEAT, 0);                                                          // turn off heating
     ih.state = 2;
@@ -82,7 +76,7 @@ void intkheat_control(void)
   case 2: //control heating if engine is running, otherwise turn it off
    if (d.st_block)
    { //engine is running
-    IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < TEMPERATURE_MAGNITUDE(HEATING_T_OFF)));  // control heating
+    IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < PGM_GET_WORD(&fw_data.exdata.heating_t_off)));  // control heating
    }
    else
     IOCFG_SETF(IOP_INTK_HEAT, 0);

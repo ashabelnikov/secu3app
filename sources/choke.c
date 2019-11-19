@@ -421,7 +421,7 @@ int16_t calc_sm_position(uint8_t pwm)
       break;              //use interpolated value
     }
     chks.rpmreg_t1 = s_timer_gtc();
-    CLEARBIT(chks.flags, CF_ADDACT);
+  //CLEARBIT(chks.flags, CF_ADDACT);
    }
   case 3: //run mode
    if (CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
@@ -449,10 +449,10 @@ int16_t calc_sm_position(uint8_t pwm)
     {
      chks.iac_pos += (((uint16_t)d.param.idl_to_run_add) << 2); //x4
    //chks.iac_add = ((((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) + ((uint16_t)d.param.idl_to_run_add)) << 2); //x4
+   //SETBIT(chks.flags, CF_ADDACT);
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit
-     SETBIT(chks.flags, CF_ADDACT);
     }
-    else if (CHECKBIT(chks.flags, CF_ADDACT))
+/*  else if (CHECKBIT(chks.flags, CF_ADDACT))
     {
      chks.iac_pos+=8; //1% step
      if (chks.iac_pos > chks.iac_add)
@@ -460,7 +460,7 @@ int16_t calc_sm_position(uint8_t pwm)
       chks.iac_pos = chks.iac_add;
       CLEARBIT(chks.flags, CF_ADDACT);
      }
-    }
+    }*/
 
     //closed loop mode is active
     if (CHECKBIT(chks.flags, CF_CL_LOOP))

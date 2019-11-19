@@ -353,6 +353,30 @@ void sm_motion_control(int16_t pos)
 #endif //SM_CONTROL
 
 #ifdef FUEL_INJECT
+/***/
+static int16_t calc_cl_rpm(void)
+{
+ int16_t rpm = inj_idling_rpm(); //target RPM depending on the coolant temperature
+
+#ifdef AIRCONDIT
+ if (rpm < d.cond_req_rpm)
+  rpm = d.cond_req_rpm;         //increase RPM to the minimum required value
+#endif
+
+ //use addition value when vehicle starts to run
+#ifdef SPEED_SENSOR
+ if (IOCFG_CHECK(IOP_SPDSENS) && (d.sens.speed < 65530))
+  rpm += (d.param.rpm_on_run_add * 10);
+#endif
+ return rpm;
+}
+
+/***/
+static uint16_t calc_rpm_thrd1(uint16_t rpm)
+{
+ return (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd1) + 128)) >> 7;
+}
+
 /** Calculate stepper motor position for normal mode
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
@@ -373,26 +397,33 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    break;
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
+  case 2:
    if (!d.st_block)
+   {
     chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
+    break;
+   }
    {
     uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
     if (time_since_crnk >= d.param.inj_cranktorun_time)
     {
-     ++chks.strt_mode; //transition has finished, we will immediately fall into mode 2, use run value
-     chks.rpmreg_t1 = s_timer_gtc();
+     chks.strt_mode = 3; //transition has finished, we will immediately fall into mode 2, use run value
      chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 2; //run pos x4
-     CLEARBIT(chks.flags, CF_ADDACT);
     }
     else
     {
      int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 5; //result will be x4
-     break;    //use interpolated value
+     if (d.sens.frequen < calc_rpm_thrd1(calc_cl_rpm()) || chks.strt_mode > 1)
+      chks.strt_mode = 2; //allow closed loop before finishing of crank to run transition
+     else
+      break;              //use interpolated value
     }
+    chks.rpmreg_t1 = s_timer_gtc();
+    CLEARBIT(chks.flags, CF_ADDACT);
    }
-  case 2: //run mode
+  case 3: //run mode
    if (CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
    { //closed loop mode
     uint16_t tmr = s_timer_gtc();
@@ -403,20 +434,9 @@ int16_t calc_sm_position(uint8_t pwm)
     //TODO:
     //      Displace IAC position when cooling fan turns on
 
-    int16_t rpm = inj_idling_rpm(); //target RPM depending on the coolant temperature
-
-#ifdef AIRCONDIT
-    if (rpm < d.cond_req_rpm)
-     rpm = d.cond_req_rpm;         //increase RPM to the minimum required value
-#endif
-
-    //use addition value when vehicle starts to run
-#ifdef SPEED_SENSOR
-    if (IOCFG_CHECK(IOP_SPDSENS) && (d.sens.speed < 65530))
-     rpm += (d.param.rpm_on_run_add * 10);
-#endif
+    int16_t rpm = calc_cl_rpm();
     //calculate transition RPM thresholds
-    uint16_t rpm_thrd1 = (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd1) + 128)) >> 7;
+    uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm);
     uint16_t rpm_thrd2 = (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd2) + 128)) >> 7;
 
     // go into the closed loop mode
@@ -481,7 +501,8 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    else
    { //open loop mode
-    chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 2; //run pos, x4
+    if (chks.strt_mode > 2)
+     chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 2; //run pos, x4
    }
 
    if (!d.st_block)

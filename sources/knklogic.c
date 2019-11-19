@@ -37,7 +37,7 @@
 
 uint8_t knklogic_detect(retard_state_t* p_rs)
 {
- if (d.sens.frequen > d.param.starter_off && d.sens.temperat > fw_data.exdata.knkclt_thrd)
+ if (d.sens.frequen > d.param.starter_off && d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.knkclt_thrd))
  {
   if (0==p_rs->sd_counter)
   {

@@ -556,11 +556,10 @@ uint16_t inj_cranking_pw(void)
 
 void calc_ve_afr(void)
 {
-
- if (d.sens.carb || !fw_data.exdata.idl_ve)
+ if (d.sens.carb || !PGM_GET_WORD(&fw_data.exdata.idl_ve))
  {
 
- if ((!d.sens.gas && !fw_data.exdata.idl_ve) || (d.sens.gas && !fw_data.exdata.idl_ve_g))
+ if ((!d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve)) || (d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve_g)))
  //look into VE table
  fcs.vecurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
@@ -573,7 +572,7 @@ void calc_ve_afr(void)
         fcs.la_grad, 8) >> 3;
  }
  else
-  fcs.vecurr = d.sens.gas ? fw_data.exdata.idl_ve_g : fw_data.exdata.idl_ve;
+  fcs.vecurr = d.sens.gas ? PGM_GET_WORD(&fw_data.exdata.idl_ve_g) : PGM_GET_WORD(&fw_data.exdata.idl_ve);
 
  //look into AFR table
  fcs.afrcurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,

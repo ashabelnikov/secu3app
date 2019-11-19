@@ -63,7 +63,7 @@ void starter_control(void)
     str_state++;
    break;
   case 1:
-   if (str_counter >= fw_data.exdata.stbl_str_cnt)
+   if (str_counter >= PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt))
     starter_set_blocking_state(1), d.st_block = 1;
  }
 }

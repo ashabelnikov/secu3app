@@ -113,7 +113,7 @@ int16_t manual_igntim(void)
 static uint16_t ifr_vs_map_corr(void)
 {
  //uint16_t frap = ROUNDU16(500.0 * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER); //absolute pressure in the fuel rail
- return ui32_sqrt((3UL * 100UL * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER * 65535UL) / (fw_data.exdata.frap - d.sens.map)); //65535 = 256 ^ 2
+ return ui32_sqrt((3UL * 100UL * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER * 65535UL) / (PGM_GET_WORD(&fw_data.exdata.frap) - d.sens.map)); //65535 = 256 ^ 2
 }
 #endif
 
@@ -207,7 +207,7 @@ static void fuel_calc(void)
  int32_t pw = inj_base_pw();
 
 #ifdef IFR_VS_MAP_CORR
- if (fw_data.exdata.frap)
+ if (PGM_GET_WORD(&fw_data.exdata.frap))
   pw = (pw * ifr_vs_map_corr()) >> 8;            //apply injector's flow rate vs manifold pressure correction
 #endif
 

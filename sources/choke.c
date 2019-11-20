@@ -64,7 +64,7 @@
 #define CF_SMDIR_CHG    2  //!< flag, indicates that stepper motor direction has changed during motion
 #endif
 #define CF_CL_LOOP      3  //!< IAC closed loop flag
-#define CF_ADDACT       4  //!<
+#define CF_HOT_ENG      4  //!<
 #define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after initialization and first movement
 
 #else // Carburetor's choke stuff
@@ -393,7 +393,7 @@ int16_t calc_sm_position(uint8_t pwm)
  switch(chks.strt_mode)
  {
   case 0:  //cranking mode
-   chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 0)) << 2; //use crank pos, x4
+   chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 0)) << 4; //use crank pos, x16
    if (d.st_block)
    {
     CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
@@ -414,20 +414,21 @@ int16_t calc_sm_position(uint8_t pwm)
     if (time_since_crnk >= d.param.inj_cranktorun_time)
     {
      chks.strt_mode = 3; //transition has finished, we will immediately fall into mode 2, use run value
-     chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 2; //run pos x4
+     chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 4; //run pos x16
     }
     else
     {
      int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
-     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 5; //result will be x4
+     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 3; //result will be x16
      if (d.sens.frequen < calc_rpm_thrd1(calc_cl_rpm()) || chks.strt_mode > 1)
       chks.strt_mode = 2; //allow closed loop before finishing of crank to run transition
      else
       break;              //use interpolated value
     }
     chks.rpmreg_t1 = s_timer_gtc();
-  //CLEARBIT(chks.flags, CF_ADDACT);
+    chks.iac_add = 0;
+    CLEARBIT(chks.flags, CF_HOT_ENG);
    }
   case 3: //run mode
    if (CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
@@ -437,36 +438,35 @@ int16_t calc_sm_position(uint8_t pwm)
      break; //not time to call regulator, exit
     chks.rpmreg_t1 = tmr;  //reset timer
 
-    //TODO:
-    //      Displace IAC position when cooling fan turns on
-
     int16_t rpm = calc_cl_rpm();
     //calculate transition RPM thresholds
     uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm);
     uint16_t rpm_thrd2 = calc_rpm_thrd2(rpm);
 
-    // go into the closed loop mode
-    if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE) && (d.sens.inst_frq < rpm_thrd1))
+    if (d.engine_mode == EM_IDLE)
     {
-     SETBIT(chks.flags, CF_CL_LOOP);
-    }
-    // go out from the closed loop
-    else if (CHECKBIT(chks.flags, CF_CL_LOOP) && ((d.engine_mode != EM_IDLE) || (d.sens.inst_frq > rpm_thrd2)))
-    {
-     chks.iac_pos += (((uint16_t)d.param.idl_to_run_add) << 2); //x4
-   //chks.iac_add = ((((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) + ((uint16_t)d.param.idl_to_run_add)) << 2); //x4
-   //SETBIT(chks.flags, CF_ADDACT);
-     CLEARBIT(chks.flags, CF_CL_LOOP); //exit
-    }
-/*  else if (CHECKBIT(chks.flags, CF_ADDACT))
-    {
-     chks.iac_pos+=8; //1% step
-     if (chks.iac_pos > chks.iac_add)
+     if (d.sens.inst_frq < rpm_thrd1)
      {
-      chks.iac_pos = chks.iac_add;
-      CLEARBIT(chks.flags, CF_ADDACT);
+      SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
      }
-    }*/
+     else if  (d.sens.inst_frq > rpm_thrd2)
+     {
+      CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop
+      chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+      chks.iac_pos = ((((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) + ((uint16_t)d.param.idl_to_run_add)) << 4); //x16, work position + addition
+     }
+     else
+     { //RPM between thrd1 and thrd2
+      chks.iac_add-=8; //1% step
+      if (chks.iac_add < 0)
+       chks.iac_add = 0;
+      chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4) + chks.iac_add; //x4, work position + decreasing addition
+     }
+    }
+    else
+    {
+     CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop
+    }
 
     //closed loop mode is active
     if (CHECKBIT(chks.flags, CF_CL_LOOP))
@@ -475,18 +475,18 @@ int16_t calc_sm_position(uint8_t pwm)
      int16_t derror, error = rpm - d.sens.frequen, intlim = d.param.idl_intrpm_lim * 10;
      restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
      derror = error - chks.prev_rpm_error;
-
 #ifdef COLD_ENG_INT
-     chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_p) + ((int32_t)error * d.param.idl_reg_i))) >> (8+7));
+     chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_p) + ((int32_t)error * d.param.idl_reg_i))) >> (8+7-2));
 #else
-     if ((d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
+     if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
      { //hot engine or RPM above or equal target idling RPM
-      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_p) + ((int32_t)error * d.param.idl_reg_i))) >> (8+7));
+      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_p) + ((int32_t)error * d.param.idl_reg_i))) >> (8+7-2));
+      SETBIT(chks.flags, CF_HOT_ENG);
      }
      else
      { //cold engine
       if ((error > 0) && (derror > 0)) //works only if errors are positive
-       chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d.param.idl_reg_p)) >> (8+7));
+       chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d.param.idl_reg_p)) >> (8+7-2));
      }
 #endif
      chks.prev_rpm_error = error; //save for further calculation of derror
@@ -502,13 +502,15 @@ int16_t calc_sm_position(uint8_t pwm)
      idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add);
     #endif
 
+    //TODO: Displace IAC position when cooling fan turns on
+
     //Restrict IAC position using specified limits
-    restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 2, ((uint16_t)d.param.idl_iacmaxpos) << 2);
+    restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
    }
    else
    { //open loop mode
     if (chks.strt_mode > 2)
-     chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 2; //run pos, x4
+     chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
    }
 
    if (!d.st_block)
@@ -521,9 +523,9 @@ int16_t calc_sm_position(uint8_t pwm)
  else
  {
   if (pwm)
-   return ((((int32_t)256) * chks.iac_pos) / 800); //convert percentage position to PWM duty
+   return ((((int32_t)256) * chks.iac_pos) / 3200); //convert percentage position to PWM duty
   else
-   return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 800); //convert percentage position to SM steps
+   return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 3200); //convert percentage position to SM steps
  }
 }
 #endif

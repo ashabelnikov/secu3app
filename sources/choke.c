@@ -51,7 +51,7 @@
 
 #ifdef FUEL_INJECT
 
-#define COLD_ENG_INT      //! Use integral component on cold engine
+//#define COLD_ENG_INT      //! Use integral component on cold engine
 
 /**RPM regulator call period, 100ms*/
 #define RPMREG_CORR_TIME 10
@@ -371,10 +371,16 @@ static int16_t calc_cl_rpm(void)
  return rpm;
 }
 
-/***/
+/**Calculates 1-st transition threshold*/
 static uint16_t calc_rpm_thrd1(uint16_t rpm)
 {
  return (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd1) + 128)) >> 7;
+}
+
+/**calculates 2-nd transition threshold*/
+static uint16_t calc_rpm_thrd2(uint16_t rpm)
+{
+ return (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd2) + 128)) >> 7;
 }
 
 /** Calculate stepper motor position for normal mode
@@ -437,7 +443,7 @@ int16_t calc_sm_position(uint8_t pwm)
     int16_t rpm = calc_cl_rpm();
     //calculate transition RPM thresholds
     uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm);
-    uint16_t rpm_thrd2 = (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd2) + 128)) >> 7;
+    uint16_t rpm_thrd2 = calc_rpm_thrd2(rpm);
 
     // go into the closed loop mode
     if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE) && (d.sens.inst_frq < rpm_thrd1))

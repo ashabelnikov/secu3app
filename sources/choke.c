@@ -466,6 +466,14 @@ int16_t calc_sm_position(uint8_t pwm)
     else
     {
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop
+/*
+     chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x4, work position
+     if  (d.sens.inst_frq > rpm_thrd2)
+     {
+      chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+      chks.iac_pos+=chks.iac_add;
+     }
+*/
     }
 
     //closed loop mode is active
@@ -476,17 +484,17 @@ int16_t calc_sm_position(uint8_t pwm)
      restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
      derror = error - chks.prev_rpm_error;
 #ifdef COLD_ENG_INT
-     chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_p) + ((int32_t)error * d.param.idl_reg_i))) >> (8+7-2));
+     chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_i) + ((int32_t)error * d.param.idl_reg_p))) >> (8+7-2));
 #else
      if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
      { //hot engine or RPM above or equal target idling RPM
-      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_p) + ((int32_t)error * d.param.idl_reg_i))) >> (8+7-2));
+      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_i) + ((int32_t)error * d.param.idl_reg_p))) >> (8+7-2));
       SETBIT(chks.flags, CF_HOT_ENG);
      }
      else
      { //cold engine
       if ((error > 0) && (derror > 0)) //works only if errors are positive
-       chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d.param.idl_reg_p)) >> (8+7-2));
+       chks.iac_pos += (((int32_t)rigidity * ((int32_t)error * d.param.idl_reg_p)) >> (8+7-2));
      }
 #endif
      chks.prev_rpm_error = error; //save for further calculation of derror

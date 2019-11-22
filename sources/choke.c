@@ -440,18 +440,21 @@ int16_t calc_sm_position(uint8_t pwm)
     //calculate target RPM and transition RPM thresholds
     int16_t rpm = calc_cl_rpm();
     uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm), rpm_thrd2 = calc_rpm_thrd2(rpm);
+    int16_t error = rpm - d.sens.frequen, intlim = d.param.idl_intrpm_lim * 10;
+    restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
 
-    if (d.engine_mode == EM_IDLE && d.sens.inst_frq < rpm_thrd1)
+    if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.inst_frq < rpm_thrd1))
+    {
      SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
-    if (d.engine_mode != EM_IDLE || d.sens.inst_frq > rpm_thrd2)
+     chks.prev_rpm_error = error;      //reset previous error
+    }
+    if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.inst_frq > rpm_thrd2))
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
 
     if (CHECKBIT(chks.flags, CF_CL_LOOP))
     { //closed loop mode is active
      uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
-     int16_t derror, error = rpm - d.sens.frequen, intlim = d.param.idl_intrpm_lim * 10;
-     restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
-     derror = error - chks.prev_rpm_error;
+     int16_t derror = error - chks.prev_rpm_error;
 #ifdef COLD_ENG_INT
      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * d.param.idl_reg_i) + ((int32_t)error * d.param.idl_reg_p))) >> (8+7-2));
 #else

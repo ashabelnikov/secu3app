@@ -403,6 +403,10 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    break;
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
+   chks.iac_add = 0;
+   CLEARBIT(chks.flags, CF_HOT_ENG);
+   CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
+   chks.rpmreg_t1 = s_timer_gtc();
   case 2:
    if (!d.st_block)
    {
@@ -426,9 +430,6 @@ int16_t calc_sm_position(uint8_t pwm)
      else
       break;              //use interpolated value
     }
-    chks.rpmreg_t1 = s_timer_gtc();
-    chks.iac_add = 0;
-    CLEARBIT(chks.flags, CF_HOT_ENG);
    }
   case 3: //run mode
    if (CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
@@ -438,47 +439,17 @@ int16_t calc_sm_position(uint8_t pwm)
      break; //not time to call regulator, exit
     chks.rpmreg_t1 = tmr;  //reset timer
 
+    //calculate target RPM and transition RPM thresholds
     int16_t rpm = calc_cl_rpm();
-    //calculate transition RPM thresholds
-    uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm);
-    uint16_t rpm_thrd2 = calc_rpm_thrd2(rpm);
+    uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm), rpm_thrd2 = calc_rpm_thrd2(rpm);
 
-    if (d.engine_mode == EM_IDLE)
-    {
-     if (d.sens.inst_frq < rpm_thrd1)
-     {
-      SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
-     }
-     else if  (d.sens.inst_frq > rpm_thrd2)
-     {
-      CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop
-      chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
-      chks.iac_pos = ((((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) + ((uint16_t)d.param.idl_to_run_add)) << 4); //x16, work position + addition
-     }
-     else
-     { //RPM between thrd1 and thrd2
-      chks.iac_add-=8; //1% step
-      if (chks.iac_add < 0)
-       chks.iac_add = 0;
-      chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4) + chks.iac_add; //x4, work position + decreasing addition
-     }
-    }
-    else
-    {
-     CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop
-/*
-     chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x4, work position
-     if  (d.sens.inst_frq > rpm_thrd2)
-     {
-      chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
-      chks.iac_pos+=chks.iac_add;
-     }
-*/
-    }
+    if (d.engine_mode == EM_IDLE && d.sens.inst_frq < rpm_thrd1)
+     SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
+    if (d.engine_mode != EM_IDLE || d.sens.inst_frq > rpm_thrd2)
+     CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
 
-    //closed loop mode is active
     if (CHECKBIT(chks.flags, CF_CL_LOOP))
-    {
+    { //closed loop mode is active
      uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
      int16_t derror, error = rpm - d.sens.frequen, intlim = d.param.idl_intrpm_lim * 10;
      restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
@@ -494,10 +465,37 @@ int16_t calc_sm_position(uint8_t pwm)
      else
      { //cold engine
       if ((error > 0) && (derror > 0)) //works only if errors are positive
-       chks.iac_pos += (((int32_t)rigidity * ((int32_t)error * d.param.idl_reg_p)) >> (8+7-2));
+       chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * d.param.idl_reg_i)) >> (8+7-2));
      }
 #endif
      chks.prev_rpm_error = error; //save for further calculation of derror
+    }
+    else
+    { //closed loop is not active
+     if (chks.strt_mode > 2)
+      chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x4, work position as base
+     if (d.engine_mode == EM_IDLE)
+     {
+      if  (d.sens.inst_frq > rpm_thrd2)
+      {
+       chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+      }
+      else
+      { //RPM between thrd1 and thrd2
+       chks.iac_add-=8; //1% step
+       if (chks.iac_add < 0)
+        chks.iac_add = 0;
+      }
+      chks.iac_pos+=chks.iac_add; //x16, work position + addition
+     }
+     else
+     {
+      if  (d.sens.inst_frq > rpm_thrd2)
+      {
+       chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+       chks.iac_pos+=chks.iac_add; //x16, work position + addition
+      }
+     }
     }
 
     uint16_t idl_iacminpos = d.param.idl_iacminpos;

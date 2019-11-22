@@ -397,16 +397,14 @@ int16_t calc_sm_position(uint8_t pwm)
    if (d.st_block)
    {
     CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
+    chks.iac_add = 0;
+    CLEARBIT(chks.flags, CF_HOT_ENG);
     chks.strt_t1 = s_timer_gtc();
     ++chks.strt_mode; //next state - 1
     chks.rpmreg_t1 = s_timer_gtc();
    }
    break;
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
-   chks.iac_add = 0;
-   CLEARBIT(chks.flags, CF_HOT_ENG);
-   CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
-   chks.rpmreg_t1 = s_timer_gtc();
   case 2:
    if (!d.st_block)
    {

@@ -51,6 +51,8 @@
 
 #ifdef FUEL_INJECT
 
+#define IDLTORUN_STEP 8   //!< 0.25%
+
 //#define COLD_ENG_INT      //! Use integral component on cold engine
 
 /**RPM regulator call period, 100ms*/
@@ -474,7 +476,7 @@ int16_t calc_sm_position(uint8_t pwm)
     else
     { //closed loop is not active
      if (chks.strt_mode > 2)
-      chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x4, work position as base
+      chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x16, work position as base
      if (d.engine_mode == EM_IDLE)
      {
       if  (d.sens.inst_frq > rpm_thrd2)
@@ -483,7 +485,7 @@ int16_t calc_sm_position(uint8_t pwm)
       }
       else
       { //RPM between thrd1 and thrd2
-       chks.iac_add-=8; //1% step
+       chks.iac_add-=IDLTORUN_STEP;
        if (chks.iac_add < 0)
         chks.iac_add = 0;
       }
@@ -493,7 +495,10 @@ int16_t calc_sm_position(uint8_t pwm)
      {
       if  (d.sens.inst_frq > rpm_thrd2)
       {
-       chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+       chks.iac_add+=IDLTORUN_STEP;
+       uint16_t max_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+       if (chks.iac_add > max_add)
+        chks.iac_add = max_add;
        chks.iac_pos+=chks.iac_add; //x16, work position + addition
       }
      }

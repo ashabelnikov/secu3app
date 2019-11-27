@@ -620,13 +620,17 @@ static int16_t inj_corrected_mat(void)
  if (x < x_start)
   x = x_start;
 
- i = (x - x_start) / x_step;
+ uint16_t coeff = 0;
+ if (x_step > 0)
+ {
+  i = (x - x_start) / x_step;
 
- if (i >= INJ_IATCLT_CORR_SIZE-1) i = i1 = INJ_IATCLT_CORR_SIZE-1;
- else i1 = i + 1;
+  if (i >= INJ_IATCLT_CORR_SIZE-1) i = i1 = INJ_IATCLT_CORR_SIZE-1;
+  else i1 = i + 1;
 
- uint16_t coeff = (simple_interpolation(x, _GWU(inj_iatclt_corr[i]), _GWU(inj_iatclt_corr[i1]), //<--values in table are unsigned
-        (i * x_step) + x_start, x_step, 2));
+  coeff = (simple_interpolation(x, _GWU(inj_iatclt_corr[i]), _GWU(inj_iatclt_corr[i1]), //<--values in table are unsigned
+          (i * x_step) + x_start, x_step, 2));
+ }
 
  //Corrected MAT = (CLT - IAT) * coefficient(load*rpm) + IAT,
  //at this point coefficient is multiplied by 16384
@@ -857,13 +861,17 @@ uint16_t inj_iacmixtcorr_lookup(void)
  if (x < x_start)
   x = x_start;
 
- i = (x - x_start) / x_step;
+ int16_t corr = 0;
+ if (x_step > 0)
+ {
+  i = (x - x_start) / x_step;
 
- if (i >= INJ_IAC_CORR_SIZE-1) i = i1 = INJ_IAC_CORR_SIZE-1;
- else i1 = i + 1;
+  if (i >= INJ_IAC_CORR_SIZE-1) i = i1 = INJ_IAC_CORR_SIZE-1;
+  else i1 = i + 1;
 
- int16_t corr = (simple_interpolation(x, _GW(inj_iac_corr[i]), _GW(inj_iac_corr[i1]), //<--values in table are unsigned
-        (i * x_step) + x_start, x_step, 2)) >> 1;
+  corr = (simple_interpolation(x, _GW(inj_iac_corr[i]), _GW(inj_iac_corr[i1]), //<--values in table are unsigned
+         (i * x_step) + x_start, x_step, 2)) >> 1;
+ }
 
  //Calculate weight coefficient:
 
@@ -879,13 +887,17 @@ uint16_t inj_iacmixtcorr_lookup(void)
  if (x < x_start)
   x = x_start;
 
- i = (x - x_start) / x_step;
+ uint16_t corr_w = 0;
+ if (x_step > 0)
+ {
+  i = (x - x_start) / x_step;
 
- if (i >= INJ_IAC_CORR_W_SIZE-1) i = i1 = INJ_IAC_CORR_W_SIZE-1;
- else i1 = i + 1;
+  if (i >= INJ_IAC_CORR_W_SIZE-1) i = i1 = INJ_IAC_CORR_W_SIZE-1;
+  else i1 = i + 1;
 
- uint16_t corr_w = (simple_interpolation(x, _GBU(inj_iac_corr_w[i]), _GBU(inj_iac_corr_w[i1]), //<--values in table are unsigned
-        (i * x_step) + x_start, x_step, 32));
+  corr_w = (simple_interpolation(x, _GBU(inj_iac_corr_w[i]), _GBU(inj_iac_corr_w[i1]), //<--values in table are unsigned
+          (i * x_step) + x_start, x_step, 32));
+ }
 
  //calculate final value
  return 8192 + (int16_t)(((int32_t)corr * corr_w) >> (8+5));
@@ -1123,13 +1135,18 @@ uint8_t inj_gps_pwcorr(void)
  if (p < p_start)
   p = p_start;
 
- i = (p - p_start) / p_step;
+ uint8_t coeff = 128; //1.0
+ if (p_step > 0)
+ {
+  i = (p - p_start) / p_step;
 
- if (i >= INJ_GPS_CORR_SIZE-1) i = i1 = INJ_GPS_CORR_SIZE-1;
- else i1 = i + 1;
+  if (i >= INJ_GPS_CORR_SIZE-1) i = i1 = INJ_GPS_CORR_SIZE-1;
+  else i1 = i + 1;
 
- return (simple_interpolation(p, _GBU(inj_gps_corr[i]), _GBU(inj_gps_corr[i1]), //<--values in table are unsigned
-        (i * p_step) + p_start, p_step, 64)) >> 6;
+  coeff = (simple_interpolation(p, _GBU(inj_gps_corr[i]), _GBU(inj_gps_corr[i1]), //<--values in table are unsigned
+          (i * p_step) + p_start, p_step, 64)) >> 6;
+ }
+ return coeff;
 }
 #endif
 

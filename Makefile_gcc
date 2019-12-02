@@ -68,7 +68,7 @@ DEPS = $(OBJECTS:$(OBJDIR)/%.o=$(OBJDIR)/%.d)
 LST = $(SRC:%.c=$(OBJDIR)/%.lst)
 
 # Build
-all: OBJ_DIRS $(TARGET).elf $(TARGET).a90
+all: OBJ_DIRS $(TARGET).elf $(TARGET).hex
 
 #Include make files containing dependencies
 -include $(DEPS)
@@ -78,7 +78,7 @@ OBJ_DIRS:
 	@mkdir -p $(OBJDIR)
 
 #Create HEX file
-%.a90: %.elf
+%.hex: %.elf
 	$(OBJCOPY) -O $(FORMAT) -R .eeprom -R .fuse -R .lock $< $@
 
 # Compile
@@ -93,4 +93,4 @@ $(OBJDIR)/%.o : sources/%.c
 
 # Clean target
 clean:
-	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(TARGET).elf $(OBJDIR)/$(TARGET).map $(DEPS)
+	@rm -f $(OBJECTS) $(LST) $(TARGET).hex $(TARGET).elf $(OBJDIR)/$(TARGET).map $(DEPS)

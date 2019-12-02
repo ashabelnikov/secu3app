@@ -50,7 +50,7 @@
 
 //Phase sensor and phased ignition are not supported when this method is used for synchronization
 #if defined(PHASE_SENSOR) || defined(PHASED_IGNITION)
- #error "You can not use phase sensor and phased ignition when Hall sensor is used for synchronization"
+ #error "You can not use phase sensor and phased ignition when N+1 method is used for synchronization!"
 #endif
 
 /**Maximum number of ignition channels (cylinders) */

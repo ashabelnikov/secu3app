@@ -82,7 +82,7 @@ SPAT=$(shell echo "$(IAR_HOME)" | sed -e 's/\\\/\\\\\\\\\\\/g')
 RPAT=$(shell echo "$(IAR_HOME)" | sed -e 's/\\\/\\\\\\\\\\\/g' -e 's/ /\\\\\\\\\\\ /g')
 
 # Build
-all: OBJ_DIRS $(TARGET).a90
+all: OBJ_DIRS $(TARGET).hex
 
 #Include make files containing dependencies
 -include $(DEPS)
@@ -97,9 +97,9 @@ $(OBJDIR)/%.r90 : sources/%.c
 	@sed -e 's/$(SPAT)/$(RPAT)/' $(patsubst %.r90, %.d, $@) > tmpfile; mv tmpfile $(patsubst %.r90, %.d, $@)
 
 #Link
-$(TARGET).a90: $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET).a90
+$(TARGET).hex: $(OBJECTS)
+	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $(TARGET).hex
 
 # Clean target
 clean:
-	@rm -f $(OBJECTS) $(LST) $(TARGET).a90 $(OBJDIR)/*.map $(DEPS)
+	@rm -f $(OBJECTS) $(LST) $(TARGET).hex $(OBJDIR)/*.map $(DEPS)

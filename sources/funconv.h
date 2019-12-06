@@ -369,4 +369,19 @@ int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val);
 void acc_enrich_decay_counter(void);
 #endif
 
+/** Calculates cranking RPM threshold (RPM vs coolant temperature)
+ * \return RPM value
+ */
+uint16_t cranking_thrd_rpm(void);
+
+/** Calculates cranking time (strokes vs coolant temperature)
+ * \return number of strokes 0-255
+ */
+uint16_t cranking_thrd_tmr(void);
+
+/** Calculates start map abandon threshold (RPM vs coolant temperature)
+ * \return RPM value
+ */
+uint16_t smapaban_thrd_rpm(void);
+
 #endif //_FUNCONV_H_

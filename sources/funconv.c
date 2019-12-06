@@ -1204,3 +1204,30 @@ void acc_enrich_decay_counter(void)
   --fcs.ae_decay_counter; //update AE decay counter
 }
 #endif
+
+uint16_t cranking_thrd_rpm(void)
+{
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return d.param.starter_off;   //coolant temperature sensor is not enabled (or not installed), use simple constant
+
+ return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_thrd[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+}
+
+uint16_t cranking_thrd_tmr(void)
+{
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt);   //coolant temperature sensor is not enabled (or not installed), use simple constant
+
+ return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+}
+
+uint16_t smapaban_thrd_rpm(void)
+{
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return d.param.smap_abandon;   //coolant temperature sensor is not enabled (or not installed). use simple constant
+
+ return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i1]),  //<--values in table are unsigned
+ (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+}

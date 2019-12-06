@@ -325,7 +325,7 @@ void ignlogic_system_state_machine(void)
    d.corr.inj_timing = d.param.inj_timing_crk[d.sens.gas];
 
 #endif
-   if (d.sens.inst_frq > d.param.smap_abandon)
+   if (d.sens.inst_frq > (d.param.smap_abandon ? d.param.smap_abandon : smapaban_thrd_rpm()))
    {
     d.engine_mode = EM_IDLE;
     idling_regulator_init();

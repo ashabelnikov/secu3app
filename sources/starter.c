@@ -32,6 +32,7 @@
 #include "ioconfig.h"
 #include "starter.h"
 #include "vstimer.h"
+#include "funconv.h"
 
 
 static uint8_t str_counter = 0;
@@ -59,12 +60,15 @@ void starter_control(void)
  switch(str_state)
  {
   case 0:
-   if (d.sens.frequen > d.param.starter_off)
+   if (d.sens.frequen > (d.param.starter_off ? d.param.starter_off : cranking_thrd_rpm()))
     str_state++;
    break;
   case 1:
-   if (str_counter >= PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt))
-    starter_set_blocking_state(1), d.st_block = 1;
+   {
+    uint8_t stbl_str_cnt = PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt) ? PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt) : cranking_thrd_tmr();
+    if (str_counter >= stbl_str_cnt)
+     starter_set_blocking_state(1), d.st_block = 1;
+   }
  }
 }
 

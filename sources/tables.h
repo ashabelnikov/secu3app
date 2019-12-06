@@ -105,6 +105,10 @@
 #define INJ_ATS_CORR_SIZE               16          //!< Size of air temperature correction map
 #define CTS_CRKCORR_SIZE                16          //!< Size of cranking ign.timing correction vs CLT map
 
+#define CRANK_THRD_SIZE                 16          //!< Size of the cranking threshold vs coolant temp. table
+#define CRANK_TIME_SIZE                 16          //!< Size of the cranking time vs coolant temp. table
+#define SMAPABAN_THRD_SIZE              16          //!< Size of the start map abandon threshold vs coolant temp. table
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -334,6 +338,15 @@ typedef struct fw_ex_data_t
   /**Value of pause in seconds (10ms units) vs board voltage*/
   uint8_t eh_pause[COIL_ON_TIME_LOOKUP_TABLE_SIZE];
 
+  /**Value of RPM (in 10 min-1 units) vs coolant temperature*/
+  uint8_t cranking_thrd[CRANK_THRD_SIZE];
+
+  /**Number of strokes vs coolant temperature*/
+  uint8_t cranking_time[CRANK_TIME_SIZE];
+
+  /**Value of RPM (in 10 min-1 units) vs coolant temperature*/
+  uint8_t smapaban_thrd[SMAPABAN_THRD_SIZE];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -357,7 +370,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-//  uint8_t reserved[0];
+  uint8_t reserved[16];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

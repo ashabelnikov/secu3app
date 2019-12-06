@@ -142,6 +142,15 @@
 /**Helpful macro for filling of lookup table*/
 #define _HPV(v) SYSTIM_MAGS(v)
 
+/***/
+#define _CRT(v) ((v) / 10)
+
+/***/
+#define _CTM(v) (v)
+
+/***/
+#define _SMA(v) ((v) / 10)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -726,6 +735,24 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _HPV(0.34), _HPV(0.37), _HPV(0.40), _HPV(0.44), _HPV(0.48), _HPV(0.50),_HPV(0.52),_HPV(0.54),
   },
 
+  //Cranking RPM threshold vs coolant temperature
+  {
+   _CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),
+   _CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),_CRT(600),
+  },
+
+  //Cranking time (strokes) after reaching of threshold vs coolant temperature
+  {
+   _CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),
+   _CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),_CTM(0),
+  },
+
+  //Start map abandon RPM vs coolant temperature
+  {
+   _SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),
+   _SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),
+  },
+
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
   .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
@@ -744,7 +771,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .heating_time = 100, //10 min
 
   /**reserved bytes*/
-  /*{0}*/
+  {0}
  },
 
  /**Fill tables with default data */

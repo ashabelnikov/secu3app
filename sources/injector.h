@@ -70,8 +70,9 @@ void inject_open_inj(uint16_t time);
 
 /** Set injection configuration
  * \param cfg Selected configuration (See INJCFG_x constants in tables.h)
+ * \param irs 0 - normal behaviour, 1 - if GAS_V = 1, system will switch to second injector row
  */
-void inject_set_config(uint8_t cfg);
+void inject_set_config(uint8_t cfg, uint8_t irs);
 
 /** Set full sequential mode 
  * Uses d ECU data structure

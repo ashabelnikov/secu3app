@@ -91,7 +91,7 @@ void process_uart_interface(void)
    case INJCTR_PAR:
     //TODO: redundant code fragment
     inject_set_num_squirts(d.param.inj_config[d.sens.gas] & 0xF);  //number of squirts
-    inject_set_config(d.param.inj_config[d.sens.gas] >> 4);        //type of injection
+    inject_set_config(d.param.inj_config[d.sens.gas] >> 4, CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT));//type of injection
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
     cams_enable_cam(
 #ifdef FUEL_INJECT

@@ -92,6 +92,8 @@ typedef struct
  volatile uint8_t mask_chan;     //!< for masking of channels
 
  volatile uint8_t shrinktime;    //!< flag, indicates that injection time should be reduced: 0 - no changes, 1 - 2 times, 2 - N times (N = number of cylinders)
+ volatile uint8_t rowswt_add;    //!< value being added to output index for switching to second inj. row
+ volatile uint8_t rowmod;        //!< flag, indicates inj. row switching mode: 0 - normal, 1 - first row, 2 - second row
 }inj_state_t;
 
 /**Describes injector channels*/
@@ -99,7 +101,7 @@ typedef struct
 {
  /**Address of callback which will be used for settiong of I/O */
  volatile fnptr_t io_callback1;  //!< callback pointer (function which sets corresponding I/O)
- volatile fnptr_t io_callback2;  //!< second callback to allo semi-sequential mode with separate outputs
+ volatile fnptr_t io_callback2;  //!< second callback to allow semi-sequential mode with separate outputs
  uint8_t io_map;                 //!< for mapping of channel number to a particular I/O
 }inj_chanstate_t;
 
@@ -112,7 +114,7 @@ typedef struct
 }inj_queue_t;
 
 /** Global instance of injector state variable structure*/
-inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /** I/O information for each channel */
 inj_chanstate_t inj_chanstate[INJ_CHANNELS_MAX];
@@ -179,8 +181,8 @@ static void set_channels_fs(uint8_t fs_mode)
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   if (CHECKBIT(inj.squirt_mask, i)) {
-   inj_chanstate[i].io_callback1 = get_callback_inj(IOP_INJ_OUT1 + ch);
-   inj_chanstate[i].io_callback2 = get_callback_inj(IOP_INJ_OUT1 + iss);
+   inj_chanstate[i].io_callback1 = get_callback_inj(IOP_INJ_OUT1 + inj.rowswt_add + ch);
+   inj_chanstate[i].io_callback2 = get_callback_inj(IOP_INJ_OUT1 + inj.rowswt_add + iss);
    inj_chanstate[i].io_map = i;
    ++ch;
   }
@@ -199,7 +201,7 @@ static void set_channels_ss(uint8_t _2bnk)
  uint8_t _t, i = 0, ch = 0;
  for(; i < inj.cyl_number; ++i)
  {
-  fnptr_t value = get_callback_inj(IOP_INJ_OUT1 + ch);
+  fnptr_t value = get_callback_inj(IOP_INJ_OUT1 + inj.rowswt_add + ch);
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
   if (CHECKBIT(inj.squirt_mask, i)) {
@@ -240,6 +242,8 @@ void inject_init_state(void)
 #else //SECU-3i
 /*Turn on/off all injectors **/
 #define SET_ALL_INJ(state) \
+  if (0==inj.rowmod) \
+  { \
    IOCFG_SET(IOP_INJ_OUT1, (state));           /*injector 1 */ \
    IOCFG_SET(IOP_INJ_OUT2, (state));           /*injector 2 */ \
    IOCFG_SET(IOP_INJ_OUT3, (state));           /*injector 3 */ \
@@ -247,7 +251,22 @@ void inject_init_state(void)
    IOCFG_SET(IOP_INJ_OUT5, (state));           /*injector 5 */ \
    IOCFG_SET(IOP_INJ_OUT6, (state));           /*injector 6 */ \
    IOCFG_SET(IOP_INJ_OUT7, (state));           /*injector 7 */ \
-   IOCFG_SET(IOP_INJ_OUT8, (state));           /*injector 8 */
+   IOCFG_SET(IOP_INJ_OUT8, (state));           /*injector 8 */ \
+  } \
+  else if (1==inj.rowmod) \
+  { \
+   IOCFG_SET(IOP_INJ_OUT1, (state));           /*injector 1 */ \
+   IOCFG_SET(IOP_INJ_OUT2, (state));           /*injector 2 */ \
+   IOCFG_SET(IOP_INJ_OUT3, (state));           /*injector 3 */ \
+   IOCFG_SET(IOP_INJ_OUT4, (state));           /*injector 4 */ \
+  } \
+  else \
+  { \
+   IOCFG_SET(IOP_INJ_OUT5, (state));           /*injector 5 */ \
+   IOCFG_SET(IOP_INJ_OUT6, (state));           /*injector 6 */ \
+   IOCFG_SET(IOP_INJ_OUT7, (state));           /*injector 7 */ \
+   IOCFG_SET(IOP_INJ_OUT8, (state));           /*injector 8 */ \
+  }
 #endif
 
 void inject_init_ports(void)
@@ -286,7 +305,7 @@ void inject_set_cyl_number(uint8_t cylnum)
  _BEGIN_ATOMIC_BLOCK();
  inj.cyl_number = cylnum;
  calc_squirt_mask();                          //update squirt mask
- inject_set_config(inj.cfg);                  //update inj. config
+ inject_set_config(inj.cfg, inj.rowmod);      //update inj. config
  _END_ATOMIC_BLOCK();
 }
 
@@ -314,9 +333,29 @@ void inject_set_fuelcut(uint8_t state)
  inj.fuelcut = state;
 }
 
-void inject_set_config(uint8_t cfg)
+void inject_set_config(uint8_t cfg, uint8_t irs)
 {
  inj.cfg = cfg;
+#ifndef SECU3T //only in SECU-3i
+ if (irs)
+ {
+  if (!d.sens.gas)
+  {
+   inj.rowswt_add = 0;
+   inj.rowmod = 1;  //1st row
+  }
+  else
+  {
+   inj.rowswt_add = 4;
+   inj.rowmod = 2; //2nd row
+  }
+ }
+ else
+ {
+  inj.rowswt_add = 0;
+  inj.rowmod = 0; //normal mode
+ }
+#endif
  if (cfg == INJCFG_2BANK_ALTERN)
   set_channels_ss(1);                               //2 banks, alternating
  else if (cfg == INJCFG_SEMISEQUENTIAL)
@@ -332,6 +371,23 @@ void inject_set_config(uint8_t cfg)
   cams_is_ready()
 #endif
   );                 //full sequential
+#endif
+
+#ifndef SECU3T //only in SECU-3i
+ if (1==inj.rowmod)
+ {
+  IOCFG_SET(IOP_INJ_OUT5, INJ_OFF);           /*injector 5 */
+  IOCFG_SET(IOP_INJ_OUT6, INJ_OFF);           /*injector 6 */
+  IOCFG_SET(IOP_INJ_OUT7, INJ_OFF);           /*injector 7 */
+  IOCFG_SET(IOP_INJ_OUT8, INJ_OFF);           /*injector 8 */
+ }
+ else if (2==inj.rowmod)
+ {
+  IOCFG_SET(IOP_INJ_OUT1, INJ_OFF);           /*injector 1 */
+  IOCFG_SET(IOP_INJ_OUT2, INJ_OFF);           /*injector 2 */
+  IOCFG_SET(IOP_INJ_OUT3, INJ_OFF);           /*injector 3 */
+  IOCFG_SET(IOP_INJ_OUT4, INJ_OFF);           /*injector 4 */
+ }
 #endif
 }
 

@@ -347,13 +347,13 @@ void meas_take_discrete_inputs(void)
  if (d.sens.gas != gas_v_trig)
  {
   d.sens.gas = gas_v_trig;
-  if (d.param.inj_config[0] != d.param.inj_config[1]) //update settings only if it is necessary!
+  if (d.param.inj_config[0] != d.param.inj_config[1] || CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT)) //update settings only if it is necessary!
   {
    //update some parameters which depend on type of fuel
    //TODO: redundant code fragment
 #ifdef FUEL_INJECT
    inject_set_num_squirts(d.param.inj_config[d.sens.gas] & 0xF);  //number of squirts
-   inject_set_config(d.param.inj_config[d.sens.gas] >> 4);        //type of injection
+   inject_set_config(d.param.inj_config[d.sens.gas] >> 4, CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT));//type of injection
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
    cams_enable_cam(
 #ifdef FUEL_INJECT

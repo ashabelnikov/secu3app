@@ -328,7 +328,7 @@ void init_modules(void)
  inject_init_state();
  inject_set_cyl_number(d.param.ckps_engine_cyl);
  inject_set_num_squirts(d.param.inj_config[0] & 0xF); //petrol
- inject_set_config(d.param.inj_config[0] >> 4);       //petrol
+ inject_set_config(d.param.inj_config[0] >> 4, CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT));//petrol
 #if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
  cams_enable_cam(
 #ifdef FUEL_INJECT

@@ -147,6 +147,7 @@
 #define INJFLG_USEADDCORRS              2           //!< Use additional corrections required for precise gas injection
 #define INJFLG_USEAIRDEN                3           //!< Use iar density correction map
 #define INJFLG_USEDIFFPRESS             4           //!< Use differential pressure for correction from GPS
+#define INJFLG_SECINJROWSWT             5           //!< Switch to second inj. row when switching to second fuel type
 
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas

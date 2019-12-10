@@ -769,6 +769,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .knkclt_thrd = TEMPERATURE_MAGNITUDE(70.0), //70°C
   .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
   .heating_time = 100, //10 min
+  .idltorun_stp_en = 8, //0.25%
+  .idltorun_stp_le = 8, //0.25%
 
   /**reserved bytes*/
   {0}

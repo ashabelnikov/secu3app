@@ -51,8 +51,6 @@
 
 #ifdef FUEL_INJECT
 
-#define IDLTORUN_STEP 8   //!< 0.25%
-
 //#define COLD_ENG_INT      //! Use integral component on cold engine
 
 /**RPM regulator call period, 100ms*/
@@ -485,7 +483,7 @@ int16_t calc_sm_position(uint8_t pwm)
       }
       else
       { //RPM between thrd1 and thrd2
-       chks.iac_add-=IDLTORUN_STEP;
+       chks.iac_add-=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_en); //enter
        if (chks.iac_add < 0)
         chks.iac_add = 0;
       }
@@ -495,7 +493,7 @@ int16_t calc_sm_position(uint8_t pwm)
      {
       if  (d.sens.inst_frq > rpm_thrd2)
       {
-       chks.iac_add+=IDLTORUN_STEP;
+       chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
        uint16_t max_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
        if (chks.iac_add > max_add)
         chks.iac_add = max_add;

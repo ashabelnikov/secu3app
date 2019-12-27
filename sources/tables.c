@@ -771,6 +771,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .heating_time = 100, //10 min
   .idltorun_stp_en = 8, //0.25%
   .idltorun_stp_le = 8, //0.25%
+            // FRQ  MAP  BAT  TMP  TPS  AI1  AI2  SPD  AI3  AI4
+  .inpavnum = { 4,   4,   4,   8,   4,   4,   4,   8,   4,   4 }, //Number of averages for each input
 
   /**reserved bytes*/
   {0}

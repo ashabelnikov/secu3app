@@ -423,7 +423,7 @@ int16_t calc_sm_position(uint8_t pwm)
      int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 3; //result will be x16
-     if (d.sens.frequen < calc_rpm_thrd1(calc_cl_rpm()) || chks.strt_mode > 1)
+     if (d.sens.frequen >= calc_rpm_thrd1(calc_cl_rpm()) || chks.strt_mode > 1)
       chks.strt_mode = 2; //allow closed loop before finishing of crank to run transition
      else
       break;              //use interpolated value

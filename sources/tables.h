@@ -368,12 +368,13 @@ typedef struct fw_ex_data_t
   uint8_t  heating_time;  //Input manifold heating time
   uint8_t  idltorun_stp_en;
   uint8_t  idltorun_stp_le;
+  uint8_t  inpavnum[10];
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[14];
+  uint8_t reserved[4];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

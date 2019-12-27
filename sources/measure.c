@@ -56,17 +56,8 @@
 /**Reads state of throttle gate (only the value, without inversion) */
 #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
 
-// Size of each ring buffer
-#define FRQ_AVERAGING        4                 //!< Number of values for averaging of RPM for tachometer
-#define MAP_AVERAGING        4                 //!< Number of values for averaging of pressure (MAP)
-#define BAT_AVERAGING        4                 //!< Number of values for averaging of board voltage
-#define TMP_AVERAGING        8                 //!< Number of values for averaging of coolant temperature
-#define TPS_AVERAGING        4                 //!< Number of values for averaging of throttle position
-#define AI1_AVERAGING        4                 //!< Number of values for averaging of ADD_I1
-#define AI2_AVERAGING        4                 //!< Number of values for averaging of ADD_I2
-#define SPD_AVERAGING        8                 //!< Number of values for averaging of speed sensor periods (SPEED_SENSOR option must be included)
-#define AI3_AVERAGING        4                 //!< Number of values for averaging of ADD_I3 (SECU3T option must be excluded OR PA4_INP_IGNTIM option must be included)
-#define AI4_AVERAGING        4                 //!< Number of values for averaging of ADD_I4 (SECU3T option must be excluded AND TPIC8101 option must be included)
+/**Gets size of corresponding ring buffer*/
+#define AVNUM(idx) (PGM_GET_BYTE(&fw_data.exdata.inpavnum[idx]))
 
 //Index of each ring buffer
 #define FRQ_INPIDX           0                 //!< Index of ring buffer for RPM
@@ -76,9 +67,9 @@
 #define TPS_INPIDX           4                 //!< Index of ring buffer for TPS
 #define AI1_INPIDX           5                 //!< Index of ring buffer for ADD_I1
 #define AI2_INPIDX           6                 //!< Index of ring buffer for ADD_I2
-#define SPD_INPIDX           7                 //!< Index of ring buffer for VSS
-#define AI3_INPIDX           8                 //!< Index of ring buffer for ADD_I3
-#define AI4_INPIDX           9                 //!< Index of ring buffer for ADD_I4
+#define SPD_INPIDX           7                 //!< Index of ring buffer for VSS (SPEED_SENSOR option must be included)
+#define AI3_INPIDX           8                 //!< Index of ring buffer for ADD_I3 (SECU3T option must be excluded OR PA4_INP_IGNTIM option must be included)
+#define AI4_INPIDX           9                 //!< Index of ring buffer for ADD_I4 (SECU3T option must be excluded AND TPIC8101 option must be included)
 
 #define CIRCBUFFMAX 8                          //!< Maximum size of ring buffer in items
 #define INPUTNUM 10                            //!< number of ring buffers
@@ -92,32 +83,28 @@ typedef struct
 
 /**Ring buffers for all inputs */
 meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
-/**Number of averages for each input. Values must be a degree of 2 (see average_buffer() for more information)*/
-PGM_DECLARE(uint8_t avnum[INPUTNUM]) = {FRQ_AVERAGING, MAP_AVERAGING, BAT_AVERAGING, TMP_AVERAGING, TPS_AVERAGING, AI1_AVERAGING, AI2_AVERAGING, SPD_AVERAGING, AI3_AVERAGING, AI4_AVERAGING};
 
 static uint16_t update_buffer(uint8_t idx, uint16_t value)
 {
  meas[idx].buff[meas[idx].ai] = value;
- (meas[idx].ai==0) ? (meas[idx].ai = PGM_GET_BYTE(&avnum[idx]) - 1): meas[idx].ai--;
+ (meas[idx].ai==0) ? (meas[idx].ai = AVNUM(idx) - 1): meas[idx].ai--;
  return value;
 }
 
 static uint16_t average_buffer(uint8_t idx)
 {
- uint8_t i = PGM_GET_BYTE(&avnum[idx]) - 1;  uint32_t sum = 0;
+ uint8_t i = AVNUM(idx) - 1;  uint32_t sum = 0;
  do
  {
   sum+=meas[idx].buff[i];
  }while(i--);
 
  //We use shifts instead of division.
- uint8_t sht = 4; // sum/16
- if (PGM_GET_BYTE(&avnum[idx])==4)
-  sht = 2;
- if (PGM_GET_BYTE(&avnum[idx])==8)
-  sht = 3;
- return sum >> sht;
-//return sum / PGM_GET_BYTE(&avnum[idx]);
+ if (AVNUM(idx)==4)
+  return sum >> 2;
+ if (AVNUM(idx)==8)
+  return sum >> 3;
+ return sum / AVNUM(idx); //default
 }
 
 void meas_init_ports(void)

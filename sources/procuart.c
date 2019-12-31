@@ -186,7 +186,6 @@ void process_uart_interface(void)
     ckps_set_cogs_btdc(d.param.ckps_cogs_btdc);
     ckps_set_merge_outs(CHECKBIT(d.param.hall_flags, CKPF_MERGE_OUTS));
 
-
 #ifndef DWELL_CONTROL
     ckps_set_ignition_cogs(d.param.ckps_ignit_cogs);
 #else
@@ -205,6 +204,14 @@ void process_uart_interface(void)
 
 #ifdef PHASE_SENSOR
     ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF) && !d.param.ckps_miss_num);
+#endif
+
+#if defined(PHASE_SENSOR) && !defined(PHASED_IGNITION)
+    cams_enable_cam(
+#ifdef FUEL_INJECT
+    (d.param.inj_config[d.sens.gas] >> 4) == INJCFG_FULLSEQUENTIAL ||
+#endif
+    CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
     break;
 

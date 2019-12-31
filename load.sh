@@ -4,7 +4,7 @@
 # Updated 22 Jan 2018
 
 PROGRAMMER=avrdude
-CODE=secu-3_app.a90
+CODE=secu-3_app.hex
 USAGE="Supported options: M644, M1284"
 MCU=Undefined
 

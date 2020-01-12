@@ -511,6 +511,7 @@ uint8_t iocfg_g_gens_ii(void);           //!< get GENS_I input value   (inverted
 
 #ifdef MCP3204
 #define SPIADC_CHNUM 4
+extern uint16_t spiadc_chan[SPIADC_CHNUM];
 #endif
 
 #endif

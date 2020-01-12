@@ -674,6 +674,17 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);  //stub for ADD_I3
    build_i16h(0);  //stub for ADD_I4
 #endif
+#if !defined(SECU3T) && defined(MCP3204)
+   build_i16h(spiadc_chan[0]);
+   build_i16h(spiadc_chan[1]);
+   build_i16h(spiadc_chan[2]);
+   build_i16h(spiadc_chan[3]);
+#else
+   build_i16h(0);  //stub for ADD_I5 (MCP3204)
+   build_i16h(0);  //stub for ADD_I6 (MCP3204)
+   build_i16h(0);  //stub for ADD_I7 (MCP3204)
+   build_i16h(0);  //stub for ADD_I8 (MCP3204)
+#endif
    break;
 
   case CKPS_PAR:

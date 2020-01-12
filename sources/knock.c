@@ -67,9 +67,6 @@ extern uint8_t  spi_IODIRA;  //!< Direction control bits for SPI PORTA (inputs)
 extern uint8_t  spi_IODIRB;  //!< Direction control bits for SPI PORTB (outputs)
 extern uint8_t  spi_GPPUA;   //!< Pull-up resistors control register A
 extern uint8_t  spi_GPPUB;   //!< Pull-up resistors control register B
-#ifdef MCP3204
-extern uint16_t spiadc_chan[SPIADC_CHNUM];
-#endif
 #endif
 //----------------------------------------------------------------------------
 

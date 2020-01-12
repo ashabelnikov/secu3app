@@ -96,6 +96,13 @@ typedef struct sensors_t
  uint16_t add_i4;                        //!< ADD_I4 input voltage
 #endif
 
+#if !defined(SECU3T) && defined(MCP3204)
+ uint16_t add_i5;                        //!< inputs from SPI ADC
+ uint16_t add_i6;
+ uint16_t add_i7;
+ uint16_t add_i8;
+#endif
+
 #ifdef SPEED_SENSOR
  uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 4us)
  uint32_t distance;                      //!< Distance expressed by number of speed sensor pulses since last ignition turn on
@@ -134,6 +141,14 @@ typedef struct sensors_t
  int16_t  add_i4_raw;                    //!< raw ADC value from ADD_I4 input
 #endif
 #endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+ uint16_t add_i5_raw;                    //!< inputs from SPI ADC
+ uint16_t add_i6_raw;
+ uint16_t add_i7_raw;
+ uint16_t add_i8_raw;
+#endif
+
  int16_t  knock_raw;                     //!< raw value of signal from KS chip
 
 #ifndef SECU3T //SECU-3i

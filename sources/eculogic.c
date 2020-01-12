@@ -99,6 +99,10 @@ int16_t manual_igntim(void)
  else if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4i)
   return pa4_function(d.sens.add_i4);
 #endif
+#ifdef MCP3204
+ else if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i5i)
+  return pa4_function(d.sens.add_i5);
+#endif
  else
   return 0; //not mapped to real I/O
 #endif

@@ -1393,4 +1393,34 @@ uint8_t iocfg_g_gens_ii(void)           //!< get GENS_I input value  (inverted)
 }
 //-----------------------------------------------------------------------------
 
+void iocfg_i_add_i5(uint8_t value)
+{
+ //stub
+}
+
+void iocfg_i_add_i5i(uint8_t value)     //inverted version
+{
+ //stub
+}
+
+uint8_t iocfg_g_add_i5(void)
+{
+#ifdef MCP3204
+ return (spiadc_chan[0] > 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+uint8_t iocfg_g_add_i5i(void)          //inverted version
+{
+#ifdef MCP3204
+ return (spiadc_chan[0] < 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+//-----------------------------------------------------------------------------
+
 #endif

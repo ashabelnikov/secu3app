@@ -675,10 +675,10 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);  //stub for ADD_I4
 #endif
 #if !defined(SECU3T) && defined(MCP3204)
-   build_i16h(spiadc_chan[0]);
-   build_i16h(spiadc_chan[1]);
-   build_i16h(spiadc_chan[2]);
-   build_i16h(spiadc_chan[3]);
+   build_i16h(d.sens.add_i5_raw);
+   build_i16h(d.sens.add_i6_raw);
+   build_i16h(d.sens.add_i7_raw);
+   build_i16h(d.sens.add_i8_raw);
 #else
    build_i16h(0);  //stub for ADD_I5 (MCP3204)
    build_i16h(0);  //stub for ADD_I6 (MCP3204)

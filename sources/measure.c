@@ -198,6 +198,20 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  else
   d.sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
 #endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+  d.sens.add_i5_raw = adc_compensate(spiadc_chan[0], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i5 = d.sens.add_i5_raw;
+
+  d.sens.add_i6_raw = adc_compensate(spiadc_chan[1], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i6 = d.sens.add_i6_raw;
+
+  d.sens.add_i7_raw = adc_compensate(spiadc_chan[2], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i7 = d.sens.add_i7_raw;
+
+  d.sens.add_i8_raw = adc_compensate(spiadc_chan[3], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i8 = d.sens.add_i8_raw;
+#endif
 }
 
 //Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values

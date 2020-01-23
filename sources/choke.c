@@ -543,9 +543,11 @@ int16_t calc_sm_position(uint8_t pwm)
 void choke_control(void)
 {
 #ifdef FUEL_INJECT
+ if (!CHECKBIT(chks.flags, CF_CL_LOOP))
+  d.corr.rigid_arg = 255;                                    //default value (means not used), actual value will be set in the calc_sm_position() function
  if (IOCFG_CHECK(IOP_IAC_PWM))
  { //use PWM IAC
-  uint16_t  pos = calc_sm_position(1);                     //calculate PWM duty
+  uint16_t  pos = calc_sm_position(1);                       //calculate PWM duty
   if (pos > 255) pos = 255;
   d.choke_pos = calc_percent_pos(pos, 256);                  //update position value
   vent_set_duty8(pos);

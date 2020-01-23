@@ -634,6 +634,12 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+#ifdef FUEL_INJECT
+   build_i8h(d.corr.rigid_arg);
+#else
+   build_i8h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

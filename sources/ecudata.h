@@ -185,6 +185,7 @@ typedef struct correct_t
 #endif
 #ifdef FUEL_INJECT
  int16_t inj_timing;                     //!< Current injection timing
+ uint8_t rigid_arg;                      //!< IAC regulator rigidity's argument, value * 256, value 255 is reserved
 #endif
 #ifdef PA4_INP_IGNTIM
  int16_t pa4_aac;                        //!< Ignition timing correction from PA4

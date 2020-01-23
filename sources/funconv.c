@@ -838,6 +838,11 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  if (R > RAD_MAG(1.0))
   R = RAD_MAG(1.0);
 
+ uint16_t arg = R >> 2;
+ if (arg > 254)  //note: value 255 is reserved
+  arg = 254;
+ d.corr.rigid_arg = arg;
+
  i = R / RAD_MAG(0.1428);   //0.1428 - horizontal axis step
 
  if (i >= INJ_IDL_RIGIDITY_SIZE-1) i = i1 = INJ_IDL_RIGIDITY_SIZE-1;

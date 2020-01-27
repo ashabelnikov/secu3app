@@ -512,7 +512,12 @@ int16_t calc_sm_position(uint8_t pwm)
      idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add);
     #endif
 
-    //TODO: Displace IAC position when cooling fan turns on
+    //Displace IAC position when cooling fan turns on
+    if (d.vent_req_on)
+    {
+     chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
+     d.vent_req_on = 0;
+    }
 
     //Restrict IAC position using specified limits
     restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
@@ -520,7 +525,12 @@ int16_t calc_sm_position(uint8_t pwm)
    else
    { //open loop mode
     if (chks.strt_mode > 2)
+    {
      chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
+     //Displace IAC position when cooling fan turns on
+     if (d.vent_req_on)
+      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
+    }
    }
 
    if (!d.st_block)

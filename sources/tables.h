@@ -369,12 +369,14 @@ typedef struct fw_ex_data_t
   uint8_t  idltorun_stp_en;
   uint8_t  idltorun_stp_le;
   uint8_t  inpavnum[10];
+  uint8_t  vent_delay;   //Ventilator's turn on delay
+  uint8_t  vent_iacoff;  //Value to be added to IAC position when ventilator is being turned on
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4];
+  uint8_t reserved[2];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

@@ -58,6 +58,8 @@ volatile uint16_t pwm_duty_2;   //!< current duty value (-)
 volatile uint8_t tmr2a_h;       //!< used for extending OCR2A to 16 bit
 uint16_t vent_tmr;
 uint8_t vent_tmrexp;
+uint16_t vent_tmr1;             //!< used for delay
+uint8_t vent_delst;
 
 void vent_init_ports(void)
 {
@@ -75,6 +77,8 @@ void vent_init_state(void)
  tmr2a_h = 0;
  vent_tmr = s_timer_gtc();
  vent_tmrexp = 0;
+ vent_tmr1 = 0;
+ vent_delst = 0;
 }
 
 #ifdef COOLINGFAN_PWM
@@ -161,9 +165,25 @@ void vent_control(void)
      || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
 #endif
     ))
-  IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
+ {
+  if (0==vent_delst)
+  { //delay
+   vent_tmr1 = s_timer_gtc();
+   vent_delst++;
+   d.vent_req_on = 1;
+  }
+  else if (1==vent_delst)
+  { //delay has been expired
+   if ((s_timer_gtc() - vent_tmr1) > PGM_GET_BYTE(&fw_data.exdata.vent_delay))
+    IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
+  }
+ }
  else if (vent_tmrexp || d.sens.temperat <= d.param.vent_off)
+ {
   IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
+  vent_delst = 0;
+  d.vent_req_on = 0;
+ }
 #else //control cooling fan either by using relay or PWM
  if (!CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM))
  { //relay
@@ -177,9 +197,25 @@ void vent_control(void)
      || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
 #endif
      ))
-   IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
+  {
+   if (0==vent_delst)
+   { //delay
+    vent_tmr1 = s_timer_gtc();
+    vent_delst++;
+    d.vent_req_on = 1;
+   }
+   else if (1==vent_delst)
+   { //delay has been expired
+    if ((s_timer_gtc() - vent_tmr1) > PGM_GET_BYTE(&fw_data.exdata.vent_delay))
+     IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
+   }
+  }
   else if (vent_tmrexp || d.sens.temperat <= d.param.vent_off)
+  {
    IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
+   vent_delst = 0;
+   d.vent_req_on = 0;
+ }
  }
  else
  {

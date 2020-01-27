@@ -115,7 +115,8 @@ struct ecudata_t d =
 #endif
 
  ,.floodclear = 0
- ,.cond_state = 0
+ ,.cond_state = 0,
+ .vent_req_on = 0
 };
 
 #ifdef REALTIME_TABLES

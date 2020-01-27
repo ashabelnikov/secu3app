@@ -271,6 +271,7 @@ typedef struct ecudata_t
  uint8_t floodclear;                    //!< Flood clear mode flag
 
  uint8_t cond_state;                    //!< Current state of the air conditioner (0 - off, 1 - on)
+ uint8_t vent_req_on;                   //!< Ventilator's turn on request
 }ecudata_t;
 
 

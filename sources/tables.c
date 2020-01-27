@@ -773,6 +773,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idltorun_stp_le = 8, //0.25%
             // FRQ  MAP  BAT  TMP  TPS  AI1  AI2  SPD  AI3  AI4
   .inpavnum = { 4,   4,   4,   8,   4,   4,   4,   8,   4,   4 }, //Number of averages for each input
+  .vent_delay = 0,
+  .vent_iacoff = 0,
 
   /**reserved bytes*/
   {0}

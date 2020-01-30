@@ -344,11 +344,11 @@ void meas_take_discrete_inputs(void)
 
  //read state of gas valve input
  //if GAS_V input remapped to other function, then petrol
-#ifdef FUEL_INJECT
  uint8_t gas_v_trig = IOCFG_GET(IOP_GAS_V);
  if (d.sens.gas != gas_v_trig)
  {
   d.sens.gas = gas_v_trig;
+#ifdef FUEL_INJECT
   if (d.param.inj_config[0] != d.param.inj_config[1] || CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT)) //update settings only if it is necessary!
   {
    //update some parameters which depend on type of fuel
@@ -363,8 +363,8 @@ void meas_take_discrete_inputs(void)
      CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
   }
- }
 #endif
+ }
 
  //switch set of maps (or fuel type) depending on the state of GAS_V input (gas valve) and additional input (MAPSEL0)
 #ifndef REALTIME_TABLES

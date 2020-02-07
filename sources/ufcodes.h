@@ -76,5 +76,6 @@
 #define   SILENT       'S'   //!< used with CHANGEMODE to turn off transmitter
 
 #define   LZBLHS       'H'   //!< "handshake" command sent to injector driver
+#define   CLTGRD_PAR   '('   //!< used for transferring of CLT grid
 
 #endif //_UFCODES_H_

@@ -85,8 +85,8 @@ typedef struct
  int8_t  la_f;         //!< index on the rpm axis
  int8_t  la_fp1;       //!< la_f + 1
  //CLT args:
- uint8_t ta_i;         //!< index
- uint8_t ta_i1;        //!< index + 1
+ int8_t  ta_i;         //!< index
+ int8_t  ta_i1;        //!< index + 1
  int16_t ta_clt;       //!< temperature (CLT)
  //precalculated values:
  int16_t vecurr;       //!< current value of VE (value * 2048)
@@ -182,15 +182,14 @@ void calc_lookup_args(void)
  //Coolant temperature arguments:
  fcs.ta_clt = d.sens.temperat;
 
- //-30 - minimum value of temperature corresponding to the first point in table
- if (fcs.ta_clt < TEMPERATURE_MAGNITUDE(-30))
-  fcs.ta_clt = TEMPERATURE_MAGNITUDE(-30);
+ //find interpolation points, then restrict CLT if it fall outside set range
+ for(fcs.ta_i = F_TMP_POINTS-2; fcs.ta_i >= 0; fcs.ta_i--)
+  if (fcs.ta_clt >= PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i])) break;
 
- //10 - step between interpolation points in table
- fcs.ta_i = (fcs.ta_clt - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
-
- if (fcs.ta_i >= INJ_CRANKING_LOOKUP_TABLE_SIZE-1) fcs.ta_i = fcs.ta_i1 = INJ_CRANKING_LOOKUP_TABLE_SIZE-1;
- else fcs.ta_i1 = fcs.ta_i + 1;
+ //lookup table works from clt_grid_points[0] and upper
+ if (fcs.ta_i < 0)  {fcs.ta_i = 0; fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
+ if (fcs.ta_clt > PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1])) fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
+ fcs.ta_i1 = fcs.ta_i + 1;
 }
 
 // Implements function of ignition timing vs RPM for idling
@@ -241,7 +240,7 @@ int16_t coolant_function(void)
   return 0;   //no correction if CLT sensor is turned off
 
  return simple_interpolation(fcs.ta_clt, _GB(f_tmp[fcs.ta_i]), _GB(f_tmp[fcs.ta_i1]),
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
 }
 
 int16_t crkclt_function(void)
@@ -250,7 +249,7 @@ int16_t crkclt_function(void)
   return 0;   //no correction if CLT sensor is turned off
 
  return simple_interpolation(fcs.ta_clt, (int8_t)PGM_GET_BYTE(&fw_data.exdata.cts_crkcorr[fcs.ta_i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.cts_crkcorr[fcs.ta_i1]),
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
 }
 
 //Idling regulator
@@ -551,7 +550,7 @@ uint16_t inj_cranking_pw(void)
   return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
  return simple_interpolation(fcs.ta_clt, _GWU(inj_cranking[fcs.ta_i]), _GWU(inj_cranking[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 1) /*>> 0*/;
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 1) /*>> 0*/;
 }
 
 void calc_ve_afr(void)
@@ -732,7 +731,7 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
 #endif
  //run/cranking
  return simple_interpolation(t, mode ? _GBU(inj_iac_run_pos[i]) : _GBU(inj_iac_crank_pos[i]), mode ? _GBU(inj_iac_run_pos[i1]) : _GBU(inj_iac_crank_pos[i1]),  //<--values in table are unsigned
-  (((int16_t)i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+  PGM_GET_WORD(&fw_data.exdata.clt_grid_points[i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[i]), 16) >> 4;
 }
 #endif
 
@@ -743,7 +742,7 @@ uint8_t inj_aftstr_en(void)
   return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
 
  return simple_interpolation(fcs.ta_clt, _GBU(inj_aftstr[fcs.ta_i]), _GBU(inj_aftstr[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
 }
 
 uint8_t inj_warmup_en(void)
@@ -752,7 +751,7 @@ uint8_t inj_warmup_en(void)
   return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
 
  return simple_interpolation(fcs.ta_clt, _GBU(inj_warmup[fcs.ta_i]), _GBU(inj_warmup[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4;
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
 }
 
 int16_t inj_ae_tps_lookup(int16_t tpsdot)
@@ -917,7 +916,7 @@ uint16_t inj_idling_rpm(void)
   return 900;   //coolant temperature sensor is not enabled (or not installed)
 
  return (simple_interpolation(fcs.ta_clt, _GBU(inj_target_rpm[fcs.ta_i]), _GBU(inj_target_rpm[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 #endif
 
@@ -1216,7 +1215,7 @@ uint16_t cranking_thrd_rpm(void)
   return d.param.starter_off;   //coolant temperature sensor is not enabled (or not installed), use simple constant
 
  return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_thrd[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 
 uint16_t cranking_thrd_tmr(void)
@@ -1225,7 +1224,7 @@ uint16_t cranking_thrd_tmr(void)
   return PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt);   //coolant temperature sensor is not enabled (or not installed), use simple constant
 
  return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 
 uint16_t smapaban_thrd_rpm(void)
@@ -1234,5 +1233,5 @@ uint16_t smapaban_thrd_rpm(void)
   return d.param.smap_abandon;   //coolant temperature sensor is not enabled (or not installed). use simple constant
 
  return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i1]),  //<--values in table are unsigned
- (((int16_t)fcs.ta_i) * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16) >> 4) * 10;
+         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }

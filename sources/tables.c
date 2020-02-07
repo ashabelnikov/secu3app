@@ -151,6 +151,9 @@
 /***/
 #define _SMA(v) ((v) / 10)
 
+/***/
+#define _CLT(v) TEMPERATURE_MAGNITUDE(v)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -752,6 +755,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),
    _SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),_SMA(800),
   },
+
+  /**Fill CLT grid points lookup table*/
+  {_CLT(-30.0),_CLT(-20.0),_CLT(-10.0),_CLT(0.0),_CLT(10.0),_CLT(20.0),_CLT(30.0),_CLT(40.0),_CLT(50.0),_CLT(60.0),_CLT(70.0),_CLT(80.0),_CLT(90.0),_CLT(100.0),_CLT(110.0),_CLT(120.0)},
+  /**Fill CLT grid cell sizes lookup table*/
+  {_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0)},
 
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%

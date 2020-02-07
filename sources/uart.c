@@ -1072,6 +1072,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(0); //<--reserved
    build_fb((uint8_t _PGM*)fw_data.exdata.rpm_grid_points, RPM_GRID_SIZE * sizeof(int16_t));
    break;
+  //Transferring of CLT grid
+  case CLTGRD_PAR:
+   build_i8h(0); //<--reserved
+   build_fb((uint8_t _PGM*)fw_data.exdata.clt_grid_points, CLT_GRID_SIZE * sizeof(int16_t));
+   break;
 #endif
 
   case ATTTAB_PAR:
@@ -1633,6 +1638,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
   case RPMGRD_PAR:
+  case CLTGRD_PAR:
 #endif
   case ATTTAB_PAR:
 #ifdef DEBUG_VARIABLES

@@ -74,6 +74,7 @@
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
+#define CLT_GRID_SIZE                   16          //!< Number of points on the CLT axis in the lookup tables
 #define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
 #define IBTN_KEY_SIZE                   6           //!< Size of iButton key (except CRC8 and family code)
 
@@ -348,6 +349,11 @@ typedef struct fw_ex_data_t
   /**Value of RPM (in 10 min-1 units) vs coolant temperature*/
   uint8_t smapaban_thrd[SMAPABAN_THRD_SIZE];
 
+  /**Points of the RPM grid*/
+  int16_t clt_grid_points[CLT_GRID_SIZE];
+  /**Sizes of cells in RPM grid (so, we don't need to calculate them at the runtime)*/
+  int16_t clt_grid_sizes[CLT_GRID_SIZE-1];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -376,7 +382,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[2];
+  uint8_t reserved[20];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

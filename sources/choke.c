@@ -522,6 +522,7 @@ int16_t calc_sm_position(uint8_t pwm)
 
     //Displace IAC position when EPAS turns on (one time displacement).
     //Displacement will take place only if EPAS_I is not reassigned to other function and EPAS_I = 0
+    #ifndef SECU3T
     if (IOCFG_CHECK(IOP_EPAS_I))
     {
      if (!IOCFG_GET(IOP_EPAS_I))
@@ -535,6 +536,7 @@ int16_t calc_sm_position(uint8_t pwm)
      else
       chks.epas_offadded = 0; //alllow displacement again
     }
+    #endif
 
     //Restrict IAC position using specified limits
     restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
@@ -548,8 +550,10 @@ int16_t calc_sm_position(uint8_t pwm)
      if (d.vent_req_on)
       chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
      //Displace IAC position when EPAS turns on
+     #ifndef SECU3T
      if (IOCFG_CHECK(IOP_EPAS_I) && !IOCFG_GET(IOP_EPAS_I))
       chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
+     #endif
     }
    }
 

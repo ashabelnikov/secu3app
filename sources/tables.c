@@ -783,6 +783,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inpavnum = { 4,   4,   4,   8,   4,   4,   4,   8,   4,   4 }, //Number of averages for each input
   .vent_delay = 0,
   .vent_iacoff = 0,
+  .epas_iacoff = 0,
 
   /**reserved bytes*/
   {0}

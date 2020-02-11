@@ -115,6 +115,7 @@ typedef struct
  int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
  int16_t   iac_pos;        //!< IAC pos between calls of the closed loop regulator
  int16_t   iac_add;        //!< Smoothly increased value
+ uint8_t   epas_offadded;  //!<
 #endif
 
 }choke_st_t;
@@ -125,7 +126,7 @@ choke_st_t chks = {0,0,0,0,0,0,0,0,{0,0,0}
                    ,0,0,0
 #endif
 #ifdef FUEL_INJECT
-                   ,0,0,0
+                   ,0,0,0,0
 #endif
                   };
 
@@ -519,6 +520,22 @@ int16_t calc_sm_position(uint8_t pwm)
      d.vent_req_on = 0;
     }
 
+    //Displace IAC position when EPAS turns on (one time displacement).
+    //Displacement will take place only if EPAS_I is not reassigned to other function and EPAS_I = 0
+    if (IOCFG_CHECK(IOP_EPAS_I))
+    {
+     if (!IOCFG_GET(IOP_EPAS_I))
+     {
+      if (!chks.epas_offadded)
+      {
+       chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
+       chks.epas_offadded = 1;
+      }
+     }
+     else
+      chks.epas_offadded = 0; //alllow displacement again
+    }
+
     //Restrict IAC position using specified limits
     restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
    }
@@ -530,6 +547,9 @@ int16_t calc_sm_position(uint8_t pwm)
      //Displace IAC position when cooling fan turns on
      if (d.vent_req_on)
       chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
+     //Displace IAC position when EPAS turns on
+     if (IOCFG_CHECK(IOP_EPAS_I) && !IOCFG_GET(IOP_EPAS_I))
+      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
     }
    }
 

@@ -27,6 +27,7 @@
 #include "port/avrio.h"
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
+#include "port/pgmspace.h"
 #include "port/port.h"
 #include "bitmask.h"
 #include "ecudata.h"
@@ -48,9 +49,6 @@
 #endif
 #endif //COOLINGFAN_PWM
 
-/**number of PWM discretes for 5kHz with 20MHz quartz */
-#define PWM_STEPS 31
-
 volatile uint8_t pwm_state;     //!< For state machine. 0 - passive, 1 - active
 volatile uint16_t pwm_steps;    //!< number of timer ticks per PWM period
 volatile uint16_t pwm_duty_1;   //!< current duty value (+)
@@ -71,7 +69,7 @@ void vent_init_ports(void)
 void vent_init_state(void)
 {
  pwm_state = 0;  //begin from active level
- pwm_steps = PWM_STEPS;
+ pwm_steps = PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
  pwm_duty_1 = 0;
  pwm_duty_2 = 0;
  tmr2a_h = 0;
@@ -222,21 +220,21 @@ void vent_control(void)
   uint16_t d_val;
   //note: We skip 1 and 30 values of duty
   int16_t dd = d.param.vent_on - d.sens.temperat;
-  if (dd < 2
+  if (dd < 0
 #ifdef AIRCONDIT
      || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
 #endif
      )
    dd = 0;         //restrict to max.
-  if (vent_tmrexp || dd > (PWM_STEPS-2))
+  if (vent_tmrexp || dd > (PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps)-PGM_GET_BYTE(&fw_data.exdata.vent_minband)))
   {
-   dd = PWM_STEPS; //restrict to min.
+   dd = PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps); //restrict to min.
    d.cool_fan = 0; //turned off
   }
   else
    d.cool_fan = 1; //turned on
 
-  d_val = ((uint16_t)(PWM_STEPS - dd) * 256) / PWM_STEPS;
+  d_val = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 256) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
   if (d_val > 255) d_val = 255;
   //TODO: implement kick on turn on
   vent_set_duty(d_val);

@@ -784,6 +784,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_delay = 0,
   .vent_iacoff = 0,
   .epas_iacoff = 0,
+  .vent_pwmsteps = 31, //number of PWM discretes for 5kHz with 20MHz quartz
+  .vent_minband = 2,
 
   /**reserved bytes*/
   {0}

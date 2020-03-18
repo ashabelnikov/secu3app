@@ -97,6 +97,13 @@ extern volatile uint8_t evap_duty;
 extern uint8_t evap_soft_cnt;
 #endif
 
+#if defined(COOLINGFAN_PWM) && !defined(SECU3T)
+//see ventilator.c for more information
+extern uint8_t vent_comp;
+extern volatile uint8_t vent_duty;
+extern uint8_t vent_soft_cnt;
+#endif
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
@@ -185,6 +192,21 @@ ISR(TIMER2_OVF_vect)
  }
  if (evap_comp == evap_soft_cnt)
   IOCFG_SET(IOP_EVAP_O, 0); //OFF
+#endif
+
+//Low frequency for cooling fan's PWM
+#if defined(COOLINGFAN_PWM) && !defined(SECU3T)
+ if (vent_duty)
+ {
+  vent_soft_cnt = (vent_soft_cnt + 1) & 0x0F; //increment modulo 16, frequency will be 39Hz
+  if (vent_soft_cnt == 0)
+  {
+   vent_comp = vent_duty;
+   IOCFG_SET(IOP_ECF, 1); //OFF
+  }
+  if (vent_comp == vent_soft_cnt)
+   IOCFG_SET(IOP_ECF, 0); //ON
+ }
 #endif
 
  if (divider > 0)

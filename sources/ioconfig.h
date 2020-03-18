@@ -74,7 +74,7 @@ uint8_t IOCFG_CHECK(uint8_t io_id);
 #endif
 
 /**Get specified I/O callback address
- * io_id - ID of I/O to be set to specified value
+ * io_id - ID of I/O for which a callback address will be obtained
  * returns - corresponding callback address
  */
 #define IOCFG_CB(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))

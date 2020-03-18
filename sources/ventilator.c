@@ -59,6 +59,13 @@ uint8_t vent_tmrexp;
 uint16_t vent_tmr1;             //!< used for delay
 uint8_t vent_delst;
 
+#if defined(COOLINGFAN_PWM) && !defined(SECU3T)
+//see vstimer.c for more information
+uint8_t vent_comp = 0;
+volatile uint8_t vent_duty = 0; //!< By default PWM is disabled
+uint8_t vent_soft_cnt = 0;
+#endif
+
 void vent_init_ports(void)
 {
 #ifdef COOLINGFAN_PWM
@@ -189,6 +196,9 @@ void vent_control(void)
   _DISABLE_INTERRUPT();
   TIMSK2&=~_BV(OCIE2A);
   _ENABLE_INTERRUPT();
+#ifndef SECU3T
+  vent_duty = 0; //disable software PWM
+#endif
 
   if (!vent_tmrexp && (d.sens.temperat >= d.param.vent_on
 #ifdef AIRCONDIT
@@ -213,12 +223,11 @@ void vent_control(void)
    IOCFG_SETF(IOP_ECF, 0), d.cool_fan = 0; //turn off
    vent_delst = 0;
    d.vent_req_on = 0;
- }
+  }
  }
  else
  {
   uint16_t d_val;
-  //note: We skip 1 and 30 values of duty
   int16_t dd = d.param.vent_on - d.sens.temperat;
   if (dd < 0
 #ifdef AIRCONDIT
@@ -234,10 +243,28 @@ void vent_control(void)
   else
    d.cool_fan = 1; //turned on
 
+  //TODO: implement kick on turn on
+
+#ifndef SECU3T
+  if (IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2i)
+  { //low frequency software PWM
+   vent_duty = dd;
+   if (vent_duty == 0)
+    IOCFG_SETF(IOP_ECF, 0); //turn on
+  }
+  else
+  { //high frequency PWM
+   vent_duty = 0; //disable software PWM
+   d_val = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 256) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
+   if (d_val > 255) d_val = 255;
+   vent_set_duty(d_val);
+  }
+#else //SECU-3T
   d_val = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 256) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
   if (d_val > 255) d_val = 255;
-  //TODO: implement kick on turn on
   vent_set_duty(d_val);
+#endif
+
  }
 #endif
 }

@@ -1597,7 +1597,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   * Date in format Mmm dd yyyy.
   * Do not forget to write out same value of version into to the fw_version field of cd_data_t!
   */
- {"SECU-3 firmware v4.8. Build ["__DATE__"]       "},
+ {"SECU-3 firmware v4.9. Build ["__DATE__"]       "},
 
  /**Version of this structure - 0.0*/
  0x00,

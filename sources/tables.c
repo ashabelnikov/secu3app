@@ -174,7 +174,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i2), //ADD_I2 input initialization
     _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de),
     _FNC(iocfg_i_gas_v), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps),
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (initialization)
    {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
     _FNC(iocfg_i_add_o1i), _FNC(iocfg_i_add_o2i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_st_blocki),
@@ -184,7 +184,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i2i), //ADD_I2 input initialization
     _FNC(iocfg_i_cei), _FNC(iocfg_i_bli), _FNC(iocfg_i_dei),
     _FNC(iocfg_i_gas_vi), _FNC(iocfg_i_ref_si), _FNC(iocfg_i_ckpsi),
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC(iocfg_s_add_o1), _FNC(iocfg_s_add_o2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
@@ -194,7 +194,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i2), //ADD_I2 input get value
     _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de),
     _FNC(iocfg_g_gas_v), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps),
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
     _FNC(iocfg_s_add_o1i), _FNC(iocfg_s_add_o2i), _FNC(iocfg_s_ecfi), _FNC(iocfg_s_st_blocki),
@@ -204,14 +204,17 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i2i), //ADD_I2 input get value
     _FNC(iocfg_s_cei), _FNC(iocfg_s_bli), _FNC(iocfg_s_dei),
     _FNC(iocfg_g_gas_vi), _FNC(iocfg_g_ref_si), _FNC(iocfg_g_ckpsi),
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },
    //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
     _FNC(iocfg_i_add_o1), _FNC(iocfg_i_add_o2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
     _FNC(iocfg_i_ie), _FNC(iocfg_i_fe), _FNC(iocfg_i_ps), _FNC(iocfg_i_add_i1),
     _FNC(iocfg_i_add_i2), _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de),
-    _FNC(iocfg_i_gas_v), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //<-- mapped to slots by default
+    _FNC(iocfg_i_gas_v), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //<-- mapped to slots by default
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -225,7 +228,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_add_o1), _FNC(iocfg_s_add_o2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
     _FNC(iocfg_s_ie), _FNC(iocfg_s_fe), _FNC(iocfg_g_ps), _FNC(iocfg_g_add_i1),
     _FNC(iocfg_g_add_i2), _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de),
-    _FNC(iocfg_g_gas_v), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //<-- mapped to slots by default
+    _FNC(iocfg_g_gas_v), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
@@ -233,7 +236,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
 #else //---SECU-3i---
@@ -248,7 +254,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), _FNC(iocfg_i_add_i3), _FNC(iocfg_i_gas_v),
     _FNC(iocfg_i_ign), _FNC(iocfg_i_cond_i), _FNC(iocfg_i_epas_i),_FNC(iocfg_i_add_i4),
     _FNC(iocfg_i_tach_o),_FNC(iocfg_i_ksp_cs),_FNC(iocfg_i_add_i5),_FNC(iocfg_i_oilp_i),
-    _FNC(iocfg_i_gens_i) //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_gens_i), 0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (initialization)
    {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
     _FNC(iocfg_i_ign_out5i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_inj_out1i), _FNC(iocfg_i_inj_out2i),
@@ -259,7 +265,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i1i), _FNC(iocfg_i_add_i2i), _FNC(iocfg_i_add_i3i), _FNC(iocfg_i_gas_vi),
     _FNC(iocfg_i_igni), _FNC(iocfg_i_cond_ii), _FNC(iocfg_i_epas_ii),_FNC(iocfg_i_add_i4i),
     _FNC(iocfg_i_tach_oi), _FNC(iocfg_i_ksp_csi), _FNC(iocfg_i_add_i5i), _FNC(iocfg_i_oilp_ii),
-    _FNC(iocfg_i_gens_ii) //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_gens_ii), 0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf), _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
@@ -270,7 +276,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), _FNC(iocfg_g_add_i3), _FNC(iocfg_g_gas_v),
     _FNC(iocfg_g_ign), _FNC(iocfg_g_cond_i), _FNC(iocfg_g_epas_i), _FNC(iocfg_g_add_i4),
     _FNC(iocfg_s_tach_o), _FNC(iocfg_s_ksp_cs),_FNC(iocfg_g_add_i5),_FNC(iocfg_g_oilp_i),
-    _FNC(iocfg_g_gens_i) //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_gens_i), 0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
     _FNC(iocfg_s_ign_out5i), _FNC(iocfg_s_ecfi), _FNC(iocfg_i_inj_out1i), _FNC(iocfg_s_inj_out2i),
@@ -281,7 +287,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i1i), _FNC(iocfg_g_add_i2i), _FNC(iocfg_g_add_i3i), _FNC(iocfg_g_gas_vi),
     _FNC(iocfg_g_igni), _FNC(iocfg_g_cond_ii), _FNC(iocfg_g_epas_ii),_FNC(iocfg_g_add_i4i),
     _FNC(iocfg_s_tach_oi), _FNC(iocfg_s_ksp_csi), _FNC(iocfg_g_add_i5i), _FNC(iocfg_g_oilp_ii),
-    _FNC(iocfg_g_gens_ii) //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_gens_ii), 0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },
    //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
@@ -293,9 +299,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), _FNC(iocfg_i_add_i3), _FNC(iocfg_i_gas_v),
     _FNC(iocfg_i_ign), _FNC(iocfg_i_cond_i), _FNC(iocfg_i_epas_i), _FNC(iocfg_i_add_i4),
     _FNC(iocfg_i_tach_o),_FNC(iocfg_i_ksp_cs), _FNC(iocfg_i_add_i5), _FNC(iocfg_i_oilp_i),
-    _FNC(iocfg_i_gens_i), //<-- mapped to slots by default
+    _FNC(iocfg_i_gens_i), 0,0,0,0,0,0,0,0,0,0,0,0, //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_i_bl), 
     _FNC(iocfg_i_de), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -312,7 +321,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), _FNC(iocfg_g_add_i3), _FNC(iocfg_g_gas_v),
     _FNC(iocfg_g_ign), _FNC(iocfg_g_cond_i), _FNC(iocfg_g_epas_i),_FNC(iocfg_g_add_i4),
     _FNC(iocfg_s_tach_o), _FNC(iocfg_s_ksp_cs), _FNC(iocfg_g_add_i5), _FNC(iocfg_g_oilp_i),
-    _FNC(iocfg_g_gens_i), //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_gens_i), 0,0,0,0,0,0,0,0,0,0,0,0, //<-- zero means that these slots are not implemented in this firmware
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_bl),
     _FNC(iocfg_s_de),   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -320,14 +329,17 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 2.9
-   IOREMVER(2,9),
+   //Version of this structure - 3.0
+   IOREMVER(3,0),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -586,7 +598,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .eh_aflow_thrd =               10000,               //value = (load * rpm) / 32
 
   .inj_min_pw =                  {39,39},             //1ms, 1ms
-/*.reserved =                    {0},*/
+  .reserved =                    {0},
   .crc =                         0
  },
 
@@ -988,10 +1000,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   }//,
+   },
 
    /**reserved bytes */
-//   {0}
+   {0}
   },
 
   {
@@ -1188,10 +1200,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   }//,
+   },
 
    /**reserved bytes */
-//   {0}
+   {0}
   },
 
   {
@@ -1387,10 +1399,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   }//,
+   },
 
    /**reserved bytes */
-//   {0}
+   {0}
   },
 
   {//Ignition maps
@@ -1586,10 +1598,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     //  50          60         70        80        90           100        110       120
     _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
-   }//,
+   },
 
    /**reserved bytes */
-  // {0}
+   {0}
   }
  },
 
@@ -1617,208 +1629,3 @@ PGM_DECLARE(uint8_t fwinfo[FWINFOSIZE]) =
   0x6f,0x76,0x2c,0x20,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,0x73,0x65,0x63,0x75,0x2d,
   0x33,0x2e,0x6f,0x72,0x67};
 
-#if 0
-#ifdef REALTIME_TABLES
-/**Fill default data for tunable tables */
-PGM_DECLARE(f_data_t tt_def_data) =
-{
- {'T','u','n','a','b','l','e','_','s','e','t',' ',' ',' ',' ',' '},
- //Ignition maps
- {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x0C,0x10,0x14,0x14,0x14},  //cranking map
- {0x14,0x14,0x14,0x14,0x14,0x14,0x17,0x1D,0x28,0x32,0x36,0x37,0x37,0x37,0x37,0x37},  //idling map
- {
-  {0x04,0x05,0x06,0x07,0x0A,0x0C,0x10,0x15,0x1A,0x20,0x24,0x27,0x28,0x28,0x28,0x28}, //work map
-  {0x04,0x05,0x06,0x08,0x0B,0x0D,0x10,0x16,0x1B,0x21,0x26,0x29,0x2A,0x2A,0x2A,0x2A},
-  {0x04,0x05,0x08,0x08,0x0C,0x0E,0x12,0x18,0x1E,0x23,0x28,0x2A,0x2C,0x2C,0x2C,0x2C},
-  {0x04,0x06,0x08,0x0A,0x0C,0x10,0x14,0x1B,0x21,0x26,0x28,0x2A,0x2C,0x2C,0x2C,0x2D},
-  {0x06,0x07,0x0A,0x0C,0x0E,0x12,0x18,0x20,0x26,0x2A,0x2C,0x2D,0x2E,0x2E,0x2F,0x30},
-  {0x08,0x08,0x0A,0x0E,0x12,0x16,0x1E,0x27,0x2D,0x2F,0x30,0x31,0x33,0x34,0x35,0x36},
-  {0x0A,0x0B,0x0D,0x10,0x14,0x1B,0x24,0x2D,0x32,0x33,0x35,0x37,0x39,0x3A,0x3A,0x3B},
-  {0x0C,0x10,0x12,0x15,0x1A,0x21,0x29,0x32,0x36,0x37,0x39,0x3C,0x3E,0x40,0x40,0x40},
-  {0x10,0x16,0x18,0x1C,0x22,0x28,0x2E,0x36,0x3A,0x3B,0x3D,0x3F,0x41,0x44,0x44,0x44},
-  {0x16,0x1C,0x1E,0x22,0x27,0x2E,0x34,0x3A,0x3D,0x3E,0x40,0x42,0x44,0x48,0x48,0x48},
-  {0x1C,0x21,0x22,0x26,0x2A,0x31,0x38,0x3F,0x41,0x42,0x44,0x45,0x48,0x4A,0x4A,0x4B},
-  {0x1E,0x22,0x24,0x27,0x2B,0x33,0x3B,0x42,0x45,0x45,0x47,0x48,0x4A,0x4C,0x4C,0x4C},
-  {0x20,0x24,0x26,0x29,0x2E,0x36,0x3D,0x45,0x47,0x47,0x48,0x49,0x4A,0x4C,0x4C,0x4D},
-  {0x20,0x24,0x27,0x2B,0x31,0x37,0x3F,0x45,0x47,0x48,0x49,0x49,0x4B,0x4D,0x4D,0x4D},
-  {0x1E,0x22,0x26,0x2C,0x31,0x39,0x40,0x46,0x48,0x4A,0x4A,0x4B,0x4D,0x4E,0x4E,0x4E},
-  {0x1E,0x21,0x25,0x29,0x2F,0x36,0x3F,0x45,0x49,0x4B,0x4C,0x4D,0x4F,0x4F,0x4F,0x4F}
- },
- {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //CLT correction map
-
- //Fuel injection maps
- /**Fill VE lookup table, value can be in range 0...1.99  */
- {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //16
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //15
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //14
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //13
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //12
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //11
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //10
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 9
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 8
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 7
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 6
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 5
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 4
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 3
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, // 2
-  {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}  // 1
- },
- /**Fill AFR lookup table, value can be in range 8.1...22.0 */
- {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //16
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //15
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //14
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //13
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //12
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //11
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, //10
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 9
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 8
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 7
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 6
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 5
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 4
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 3
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}, // 2
-  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)}  // 1
- },
- /**Fill injection timing map, value can be in range -360...360 */
- {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //16
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //15
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //14
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //13
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //12
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //11
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, //10
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 9
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 8
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 7
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 6
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 5
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 4
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 3
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 2
-  {_PACK16(_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0),_IT(   0))}, // 1
- },
-
- /**Fill cranking pulse width lookup table, time in ms vs coolant temperature */
- {// -30           -20        -10           0        10            20         30          40
-  _DLV(10.20), _DLV(9.30), _DLV(8.60), _DLV(8.00), _DLV(7.25), _DLV(6.65), _DLV(6.00), _DLV(5.4),
-  //  50            60         70          80        90           100        110         120
-  _DLV(4.80), _DLV(4.20), _DLV(3.75), _DLV(3.30), _DLV(2.90), _DLV(2.55), _DLV(2.30), _DLV(2.15)
- },
- /**Fill warmup enrichment lookup table, factor(0...199%) vs coolant temperature */
- {// -30         -20        -10         0        10           20         30        40
-  _WLV(160), _WLV(156), _WLV(152), _WLV(147), _WLV(142), _WLV(137), _WLV(133), _WLV(129),
-  //  50          60         70        80        90          100        110        120
-  _WLV(126), _WLV(123), _WLV(120), _WLV(117), _WLV(114), _WLV(110), _WLV(105), _WLV(100)
- },
- /**Fill injector dead time lookup table (Siemens DEKA ZMZ6354), time in ms vs voltage */
- {//  5.4       5.8        6.2        6.6         7.0        7.4        7.8        8.2
-  _DLV(5.80),_DLV(4.50),_DLV(3.80),_DLV(3.30),_DLV(3.00),_DLV(2.75),_DLV(2.50),_DLV(2.30),
-  //  8.6       9.0        9.4        9.8        10.2       10.6       11.0       11.4
-  _DLV(2.12),_DLV(2.00),_DLV(1.90),_DLV(1.82),_DLV(1.75),_DLV(1.67),_DLV(1.60),_DLV(1.50),
-  // 11.8      12.2       12.6       13.0        13.4       13.8       14.2       14.6
-  _DLV(1.45),_DLV(1.40),_DLV(1.34),_DLV(1.30),_DLV(1.26),_DLV(1.22),_DLV(1.18),_DLV(1.16),
-  // 15.0      15.4       15.8        16.2       16.6        17.0      17.4       17.8
-  _DLV(1.12),_DLV(1.10),_DLV(1.06),_DLV(1.04),_DLV(1.02),_DLV(0.99),_DLV(0.97),_DLV(0.96)
- },
- /**Fill IAC/PWM open-loop position lookup table (run mode) */
- {// -30           -20        -10           0        10            20         30          40
-  _CLV(46.0), _CLV(41.0), _CLV(38.0), _CLV(35.0), _CLV(33.0), _CLV(31.5), _CLV(30.4), _CLV(29.0),
-  //  50            60         70          80        90           100        110         120
-  _CLV(28.0), _CLV(26.7), _CLV(25.5), _CLV(24.4), _CLV(23.4), _CLV(22.2), _CLV(21.0), _CLV(20.0)
- },
- /**Fill IAC/PWM open-loop position lookup table (cranking mode) */
- {// -30           -20        -10           0        10            20         30          40
-  _CLV(65.0), _CLV(60.0), _CLV(55.0), _CLV(50.0), _CLV(46.0), _CLV(42.0), _CLV(38.2), _CLV(36.0),
-  //  50            60         70          80        90           100        110         120
-  _CLV(33.3), _CLV(31.5), _CLV(30.0), _CLV(28.5), _CLV(27.0), _CLV(25.7), _CLV(24.8), _CLV(24.5)
- },
- /**Fill values of the AE's TPS lookup table, range is -55...199% */
- {
-  AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(1.0), AE_TPS_V(20.0), AE_TPS_V(120.0), AE_TPS_V(160.0)
- },
- /**Fill bins of the AE's TPS lookup table, range is -1000...+1000% / 1s */
- {
-  AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
- },
- /**Fill values of the AE's RPM lookup table, %, range is 0...199% */
- {
-  AE_RPM_V(100.0), AE_RPM_V(70.0), AE_RPM_V(40.0), AE_RPM_V(30.0)
- },
- /**Fill bins of the AE's RPM lookup table, range is 0...25000min-1 */
- {
-  AE_RPM_B(1000), AE_RPM_B(2000), AE_RPM_B(4000), AE_RPM_B(8000)
- },
- /**Fill afterstart enrichment lookup table, range is 0...199%, value indicates how many % will be added to fuel */
- {// -30           -20        -10           0        10            20         30          40
-  _ASE(45.0), _ASE(41.0), _ASE(38.0), _ASE(35.0), _ASE(33.0), _ASE(31.5), _ASE(30.4), _ASE(29.0),
-  //  50            60         70          80        90           100        110         120
-  _ASE(28.0), _ASE(26.7), _ASE(25.5), _ASE(24.4), _ASE(23.4), _ASE(22.2), _ASE(21.0), _ASE(20.0)
- },
-
- /**Fill idle target RPM vs coolant temperature */
- {//  -30      -20       -10        0         10        20        30        40        50        60       70        80        90       100        110      120
-  _IR(1600),_IR(1570),_IR(1550),_IR(1500),_IR(1350),_IR(1300),_IR(1190),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1100),_IR(1110),_IR(1130),_IR(1160)
- },
-
- /**Fill idle regulator's rigidity function*/
- {
-  _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
- },
-
- /**Fill EGO AFR curve looku up table*/
- {_ER(22.03),_ER(19.17),_ER(17.24),_ER(16.35),_ER(15.68),_ER(15.25),_ER(15.00),_ER(14.70),_ER(14.30),_ER(14.00),_ER(13.70),_ER(13.18),_ER(12.50),_ER(11.77),_ER(10.90),_ER(10.00),
- ROUND(0.01 / ADC_DISCRETE), ROUND(1.00 / ADC_DISCRETE)},
-
- /**Fill mixture correction weight vs TPS position*/
- {//   0         4          8        12        16        20       24        28        32        36        40        44       48         52       56         60
-  _MW(0.996),_MW(0.51),_MW(0.40),_MW(0.32),_MW(0.28),_MW(0.24),_MW(0.22),_MW(0.17),_MW(0.14),_MW(0.12),_MW(0.09),_MW(0.07),_MW(0.05),_MW(0.04),_MW(0.02),_MW(0.00),
-  _MWX(0.00),_MWX(60.0) //0-60% TPS
- },
-
- /**Fill mixture correction vs IAC position*/
- {//   0        10         20         30        40          50          60        70
-  _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
-  _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
- },
-
- /**Fill IAT/CLT correction lookup table*/
- {//
-  _IC(1.000),_IC(0.500),_IC(0.160),_IC(0.08),_IC(0.050),_IC(0.035),_IC(0.025),_IC(0.010),
-  _ICX(5000),_ICX(960000) //
- },
-
- //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
- {_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00),_TP(0.00)},
-
- /**Fill gas temperature's correction lookup table, coefficient vs gas temperature */
- {// -30         -20        -10         0        10            20         30        40
-  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
-  //  50          60         70        80        90           100        110       120
-  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
- },
-
- /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
- {
-  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
-  _ER(1.00), _GPSX(100.0), _GPSX(400.0),
- },
-
- /**Fill air temperature's correction lookup table (inj.), coefficient vs air temperature */
- {// -30         -20        -10         0        10            20         30        40
-  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
-  //  50          60         70        80        90           100        110       120
-  _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00)
- }//,
-
- /**reserved bytes */
-// {0}
-};
-#endif
-#endif

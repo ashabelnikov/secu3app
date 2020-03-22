@@ -242,7 +242,7 @@ typedef struct f_data_t
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-//  uint8_t reserved[0];
+  uint8_t reserved[1024];
 }f_data_t;
 
 
@@ -385,7 +385,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[17];
+  uint8_t reserved[4102];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/
@@ -639,8 +639,8 @@ typedef struct params_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-/*
-  uint8_t  reserved[0]; */
+
+  uint8_t  reserved[251];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;
@@ -648,8 +648,8 @@ typedef struct params_t
 
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
-#define IOREM_SLOTS  37                  //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS  68                  //!< Number of plugs used in I/O remapping
+#define IOREM_SLOTS  49                  //!< Number of slots used for I/O remapping
+#define IOREM_PLUGS  92                  //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t
@@ -722,13 +722,6 @@ typedef struct fw_data_t
 
 /**All firmware data */
 PGM_FIXED_ADDR_OBJ(extern fw_data_t fw_data, ".firmware_data");
-
-#if 0
-#ifdef REALTIME_TABLES
-/**Default data for tunable tables stored in the EEPROM */
-PGM_DECLARE(extern f_data_t tt_def_data);
-#endif
-#endif
 
 /*fwinfo*/
 #define FWINFOSIZE 69

@@ -37,13 +37,13 @@ fi
 if [ $1 = "M644" ]
 then
  CFG_BL_START="F800"
- CFG_FWD_START="D5C0"
+ CFG_FWD_START="B410"
  CFG_EE_SIZE="2048"
  CFG_LNKXCL="lnkm644s.xcl"
 elif [ $1 = "M1284" ]
 then
  CFG_BL_START="1F800"
- CFG_FWD_START="1D5C0"
+ CFG_FWD_START="1B410"
  CFG_EE_SIZE="4096"
  CFG_LNKXCL="lnkm1284s.xcl"
 else

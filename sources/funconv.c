@@ -649,8 +649,10 @@ uint16_t inj_base_pw(void)
 
  if (d.param.load_src_cfg == 2) //Alpha-N
  {
-//pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
-  pw32 = (((uint32_t)(d.sens.map >> nsht)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
+  if (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul))
+   pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
+  else
+   pw32 = (((uint32_t)(d.sens.map >> nsht)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
  {

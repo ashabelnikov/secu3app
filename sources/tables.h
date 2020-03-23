@@ -380,12 +380,13 @@ typedef struct fw_ex_data_t
   uint8_t  epas_iacoff;  //Value to be added to IAC position when electronic power steering is being turned on
   uint8_t  vent_pwmsteps;
   uint8_t  vent_minband;
+  uint8_t  an_tps_mul;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[17];
+  uint8_t reserved[16];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

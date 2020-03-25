@@ -40,6 +40,7 @@
  #define _DELAY_US(us) __delay_cycles((us) * (F_CPU / 1000000UL))
  #define _WATCHDOG_RESET() __watchdog_reset()
 
+ //accepts byte address!
  #define CALL_ADDRESS(addr) ((void (*)())((addr)/2))()
 
 #else //AVR GCC
@@ -86,6 +87,7 @@
  #define _DELAY_US(us) _delay_4cpi((us) * (F_CPU / 4000000UL))
  #define _WATCHDOG_RESET() __asm__ __volatile__ ("wdr")
 
+ //accepts byte address!
  #define CALL_ADDRESS(addr) _icall_ins(((addr)/2))
 
 #endif

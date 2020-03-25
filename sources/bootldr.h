@@ -42,10 +42,16 @@
 
 /**Input point of boot loader used from programm (passing by jumper checking),
  * see source code of boot loader
+ * Note, we use byte address!
  */
 #ifdef _PLATFORM_M644_
-#define boot_loader_start() if (0x94F8 == *((uint16_t _PGM *)((SECU3BOOTSTART+0xA)))) \
-CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x14);
+#ifdef __ICCAVR__
+ #define boot_loader_start() if (0x94F8 == *((uint16_t _PGM *)((SECU3BOOTSTART+0xA)))) \
+ CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x14);
+#else //GCC
+ #define boot_loader_start() if (0x94F8 == PGM_GET_WORD((SECU3BOOTSTART+0xA))) \
+ CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x14);
+#endif
 #else //M1284
 #define boot_loader_start() CALL_ADDRESS(SECU3BOOTSTART+0x14);
 #endif

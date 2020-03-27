@@ -359,7 +359,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {0,0,0},
 
   /**Version of the firmware. Do not forget to write out same value into the signature info! */
-  0x48,
+  0x49,
 
   /**2 bytes - size of this structure. */
   sizeof(cd_data_t)

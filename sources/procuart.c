@@ -199,7 +199,13 @@ void process_uart_interface(void)
 #endif
 
 #ifdef FUEL_INJECT
-    inject_set_cyl_number(d.param.ckps_engine_cyl);
+    if (inject_set_cyl_number(d.param.ckps_engine_cyl) != d.param.ckps_engine_cyl)
+    {//reset inj. config and number of squirts to default values because they may become invalid for new number of cylinders
+     d.param.inj_config[0] = (INJCFG_SIMULTANEOUS << 4) | d.param.ckps_engine_cyl; //petrol: simultaneous, num. of squirts = num. of cylinders
+     d.param.inj_config[1] = (INJCFG_SIMULTANEOUS << 4) | d.param.ckps_engine_cyl; //gas
+     inject_set_num_squirts(d.param.inj_config[d.sens.gas] & 0xF);  //number of squirts
+     inject_set_config(d.param.inj_config[d.sens.gas] >> 4, CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT));//type of injection
+    }
 #endif
 
 #ifdef PHASE_SENSOR

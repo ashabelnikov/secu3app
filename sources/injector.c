@@ -300,13 +300,15 @@ static void calc_squirt_mask(void)
  }
 }
 
-void inject_set_cyl_number(uint8_t cylnum)
+uint8_t inject_set_cyl_number(uint8_t cylnum)
 {
+ uint8_t cylprev = inj.cyl_number;
  _BEGIN_ATOMIC_BLOCK();
  inj.cyl_number = cylnum;
  calc_squirt_mask();                          //update squirt mask
  inject_set_config(inj.cfg, inj.rowmod);      //update inj. config
  _END_ATOMIC_BLOCK();
+ return cylprev;
 }
 
 void inject_set_num_squirts(uint8_t numsqr)

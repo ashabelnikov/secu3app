@@ -138,13 +138,17 @@ static uint16_t apply_smooth_fuelcut(uint16_t pw)
 {
  if (d.ie_valve)
  { //leave fuel cut mode
-  pw = simple_interpolation(lgs.sfc_transient_l, lgs.sfc_pw_e, pw, 0, PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes), 1);
+  if (PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes) > 0)
+   pw = simple_interpolation(lgs.sfc_transient_l, lgs.sfc_pw_e, pw, 0, PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes), 1);
   lgs.sfc_transient_e = 0;
   lgs.sfc_pw_l = pw;
  }
  else
  { //enter fuel cut mode
-  pw = simple_interpolation(lgs.sfc_transient_e, lgs.sfc_pw_l, 0, 0, PGM_GET_BYTE(&fw_data.exdata.fi_enter_strokes), 1);
+  if (PGM_GET_BYTE(&fw_data.exdata.fi_enter_strokes) > 0)
+   pw = simple_interpolation(lgs.sfc_transient_e, lgs.sfc_pw_l, 0, 0, PGM_GET_BYTE(&fw_data.exdata.fi_enter_strokes), 1);
+  else
+   pw = 0;
   lgs.sfc_transient_l = 0;
   lgs.sfc_pw_e = pw;
  }

@@ -39,8 +39,9 @@ void inject_init_ports(void);
 
 /** Set number of engine cylinders
  * \param cylnum Nymber of engine cylinders to set
+ * \return previous number of cylinders
  */
-void inject_set_cyl_number(uint8_t cylnum);
+uint8_t inject_set_cyl_number(uint8_t cylnum);
 
 /** Set number of squirts per 1 cycle
  * numsqr Number of squirts per cycle

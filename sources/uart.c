@@ -163,7 +163,7 @@ void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
 #ifdef UART_BINARY
  while(size--) append_tx_buff(PGM_GET_BYTE(romBuffer++));
 #else
- memcpy_P(&uart.send_buf[uart.send_size], romBuffer, size);
+ MEMCPY_P(&uart.send_buf[uart.send_size], romBuffer, size);
  uart.send_size+=size;
 #endif
 }
@@ -1569,7 +1569,7 @@ uint8_t uart_recept_packet(void)
   {
    uint8_t buff[5];
    recept_rs(buff, 5);
-   if (!memcmp_P(buff, lzblhs_str, 4))
+   if (!MEMCPY_P(buff, lzblhs_str, 4))
     uart_set_send_mode(SILENT);
   }
   break;

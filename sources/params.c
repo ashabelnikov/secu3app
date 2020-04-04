@@ -115,7 +115,7 @@ void load_eeprom_params(void)
   if (CHECKBIT(PGM_GET_BYTE(&fw_data.def_param.bt_flags), BTF_USE_RESPAR))
   {
    //User selected to use parameters from a FLASH  only
-   memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
+   MEMCPY_P(&d.param, &fw_data.def_param, sizeof(params_t));
   }
   else
   {
@@ -127,7 +127,7 @@ void load_eeprom_params(void)
 
    if (crc16((uint8_t*)&d.param, (sizeof(params_t)-PAR_CRC_SIZE))!=d.param.crc)
    {
-    memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
+    MEMCPY_P(&d.param, &fw_data.def_param, sizeof(params_t));
     ce_set_error(ECUERROR_EEPROM_PARAM_BROKEN);
    }
   }
@@ -136,7 +136,7 @@ void load_eeprom_params(void)
  }
  else
  {//jumper is closed - load default parameters, which will be saved soon. Also, load default data into EEPROM for editable set of tables
-  memcpy_P(&d.param, &fw_data.def_param, sizeof(params_t));
+  MEMCPY_P(&d.param, &fw_data.def_param, sizeof(params_t));
   ce_clear_errors(); //clear saved CE errors
 #ifdef REALTIME_TABLES
   eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
@@ -151,7 +151,7 @@ void load_specified_tables_into_ram(uint8_t index)
 {
  //load tables depending on index, if index is FLASH, then load from FLASH, if index is EEPROM, then load from EEPROM
  if (index < TABLES_NUMBER_PGM)
-  memcpy_P(&d.tables_ram, &fw_data.tables[index], sizeof(f_data_t));
+  MEMCPY_P(&d.tables_ram, &fw_data.tables[index], sizeof(f_data_t));
  else
   eeprom_read(&d.tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
 

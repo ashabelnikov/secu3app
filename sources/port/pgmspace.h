@@ -64,9 +64,15 @@ __flash__ variable@sect_name
  //Declare variable in FLASH
  #define PGM_DECLARE(x) const x __attribute__((__progmem__))
 
- #define PGM_GET_BYTE(addr) pgm_read_byte(addr)
- #define PGM_GET_WORD(addr) pgm_read_word(addr)
- #define PGM_GET_DWORD(addr) pgm_read_dword(addr)
+ #if defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__)
+  #define PGM_GET_BYTE(addr) pgm_read_byte_far(addr)
+  #define PGM_GET_WORD(addr) pgm_read_word_far(addr)
+  #define PGM_GET_DWORD(addr) pgm_read_dword_far(addr)
+ #else //644
+  #define PGM_GET_BYTE(addr) pgm_read_byte(addr)
+  #define PGM_GET_WORD(addr) pgm_read_word(addr)
+  #define PGM_GET_DWORD(addr) pgm_read_dword(addr)
+ #endif
 
  //GCC doesn't support Harvard's architecture, so use const at least to indicate
  //that variable will be read-only

@@ -51,6 +51,7 @@ __flash__ variable@sect_name
  #define PGM_GET_BYTE(addr) *(addr)
  #define PGM_GET_WORD(addr) *(addr)
  #define PGM_GET_DWORD(addr) *(addr)
+ #define MEMCPY_P(dest, src, len) memcpy_P(dest, src, len)
 
  #define _PGM __flash__
  #define _HPGM __hugeflash__
@@ -68,16 +69,18 @@ __flash__ variable@sect_name
   #define PGM_GET_BYTE(addr) pgm_read_byte_far(addr)
   #define PGM_GET_WORD(addr) pgm_read_word_far(addr)
   #define PGM_GET_DWORD(addr) pgm_read_dword_far(addr)
+  #define MEMCPY_P(dest, src, len) memcpy_PF(dest, (uint_farptr_t)(src), len)
  #else //644
   #define PGM_GET_BYTE(addr) pgm_read_byte(addr)
   #define PGM_GET_WORD(addr) pgm_read_word(addr)
   #define PGM_GET_DWORD(addr) pgm_read_dword(addr)
+  #define MEMCPY_P(dest, src, len) memcpy_P(dest, src, len)
  #endif
 
  //GCC doesn't support Harvard's architecture, so use const at least to indicate
  //that variable will be read-only
  #define _PGM const
- #define _HPGM const
+ #define _HPGM const __memx
 
  #if defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__)
   typedef uint32_t pgmsize_t;

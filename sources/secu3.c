@@ -160,7 +160,7 @@ void control_engine_units(void)
 void check_firmware_integrity(void)
 {
 #ifndef DEFERRED_CRC
- if(CHECKBIT(fw_data.def_param.bt_flags, BTF_CHK_FWCRC))
+ if(CHECKBIT(PGM_GET_BYTE(&fw_data.def_param.bt_flags), BTF_CHK_FWCRC))
  {
   if (crc16f(0, CODE_SIZE)!=PGM_GET_WORD(&fw_data.code_crc))
    ce_set_error(ECUERROR_PROGRAM_CODE_BROKEN);
@@ -178,7 +178,7 @@ void deferred_check_firmware_crc(void)
  static uint8_t _HPGM* ptr = 0;
  static uint8_t finished = 0;
 
- if (!finished && CHECKBIT(fw_data.def_param.bt_flags, BTF_CHK_FWCRC))
+ if (!finished && CHECKBIT(PGM_GET_BYTE(&fw_data.def_param.bt_flags), BTF_CHK_FWCRC))
  {
   uint32_t d = (CODE_SIZE) - ((uint32_t)ptr);
   if (d > DCFC_BLOCK_SIZE)

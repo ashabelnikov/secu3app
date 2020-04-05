@@ -184,11 +184,11 @@ void calc_lookup_args(void)
 
  //find interpolation points, then restrict CLT if it fall outside set range
  for(fcs.ta_i = F_TMP_POINTS-2; fcs.ta_i >= 0; fcs.ta_i--)
-  if (fcs.ta_clt >= PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i])) break;
+  if (fcs.ta_clt >= ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]))) break;
 
  //lookup table works from clt_grid_points[0] and upper
  if (fcs.ta_i < 0)  {fcs.ta_i = 0; fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
- if (fcs.ta_clt > PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1])) fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
+ if (fcs.ta_clt > ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]))) fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
  fcs.ta_i1 = fcs.ta_i + 1;
 }
 
@@ -712,7 +712,7 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
 
  //if difference between current and previous temperature values is less than +/-0.5,
  //then previous value will be used for calculations.
- if (abs(p_pt->clt - t) < TEMPERATURE_MAGNITUDE(0.5))
+ if (abs(p_pt->clt - t) < TEMPERATURE_MAGNITUDE(0.25))
  {
   t = p_pt->clt;
   i = p_pt->i;

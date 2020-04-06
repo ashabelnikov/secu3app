@@ -93,8 +93,7 @@ typedef struct
  int16_t afrcurr;      //!< current value of AFR (value * 256)
  //AE decay:
  uint8_t  ae_decay_counter; //!< AE decay counter
- uint16_t aef_decay;        //!< AE factor value at the start of decay
- uint8_t  aef_started;      //!< flag, indicates that decay will be started
+ int16_t  aef_decay;        //!< AE factor value at the start of decay
 }fcs_t;
 
 /**Instance of state variables*/
@@ -756,7 +755,6 @@ uint8_t inj_warmup_en(void)
 int16_t inj_ae_tps_lookup(int16_t tpsdot)
 {
  int8_t i;
- //int16_t tpsdot = d.sens.tpsdot;  //%/s
 
  for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
   if (d.sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
@@ -766,7 +764,7 @@ int16_t inj_ae_tps_lookup(int16_t tpsdot)
 
  return simple_interpolation(tpsdot,
              ((int16_t)_GBU(inj_ae_tps_enr[i]))-55, ((int16_t)_GBU(inj_ae_tps_enr[i+1]))-55,  //<--values in inj_ae_tps_enr table are unsigned
-             (int16_t)_GB(inj_ae_tps_bins[i])*10,(int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i]))*10, 164) >> 7; //*1.28, so output value will be x 128
+             ((int16_t)_GB(inj_ae_tps_bins[i]))*10,((int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i])))*10, 164) >> 7; //*1.28, so output value will be x 128
 }
 
 uint8_t inj_ae_rpm_lookup(void)
@@ -798,7 +796,7 @@ uint16_t inj_ae_clt_corr(void)
 
  return simple_interpolation(t,
              ((int16_t)(d.param.inj_ae_coldacc_mult))+128, 128,
-             TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 32) >> 5;
+             TEMPERATURE_MAGNITUDE(-30.0), TEMPERATURE_MAGNITUDE(100), 32) >> 5; //70 - (-30) = 100
 }
 #endif
 
@@ -1177,12 +1175,6 @@ int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val)
 
  if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
  {
-  if (fcs.aef_started)
-  {
-   fcs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
-   fcs.aef_decay = inj_ae_tps_lookup(d.param.inj_ae_tpsdot_thrd); //aef
-   fcs.aef_started = 0;
-  }
   //stop decay if gas pedal fully released
   if (!d.sens.carb)
    fcs.ae_decay_counter = 0;
@@ -1192,7 +1184,8 @@ int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val)
  }
  else
  {
-  fcs.aef_started = 1;
+  fcs.aef_decay = inj_ae_tps_lookup((d.sens.tpsdot < 0) ? -((int16_t)d.param.inj_ae_tpsdot_thrd) : d.param.inj_ae_tpsdot_thrd); //aef
+  fcs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter
   d.acceleration = 1;
  }
 

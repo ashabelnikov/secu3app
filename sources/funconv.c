@@ -757,7 +757,7 @@ int16_t inj_ae_tps_lookup(int16_t tpsdot)
  int8_t i;
 
  for(i = INJ_AE_TPS_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
-  if (d.sens.tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
+  if (tpsdot >= ((int16_t)_GB(inj_ae_tps_bins[i])*10)) break;
 
  if (i < 0)  {i = 0; tpsdot = (int16_t)_GB(inj_ae_tps_bins[0])*10;}
  if (tpsdot > ((int16_t)_GB(inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE-1])*10)) tpsdot = ((int16_t)_GB(inj_ae_tps_bins[INJ_AE_TPS_LOOKUP_TABLE_SIZE-1])*10);

@@ -1189,7 +1189,11 @@ int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val)
   d.acceleration = 1;
  }
 
- aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
+ if (aef >= 0)
+  aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
+ else
+  aef = (((int32_t)aef) * (((uint16_t)65535) / inj_ae_clt_corr())) >> (16-7); //use inverse CLT correction factor if AE factor is negative, so mixture will be less lean when engine is cold
+
  aef = ((int32_t)aef * inj_ae_rpm_lookup()) >> 7; //apply RPM correction factor to AE factor
  return (pwnc * aef) >> 7;                        //apply AE factor to the normal conditions PW
 }

@@ -615,6 +615,7 @@ void choke_control(void)
     else
      chks.state = 5;                                          //normal working
     chks.smpos = 0;                                           //initial position (fully opened)
+    d.choke_pos = calc_percent_pos(chks.smpos, d.param.sm_steps);//update position value
     CLEARBIT(chks.flags, CF_SMDIR_CHG);
    }
    break;

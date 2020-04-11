@@ -1172,6 +1172,7 @@ uint8_t uart_recept_packet(void)
    pwrrelay_init_steppers();
    vent_turnoff();
    IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
+   IOCFG_SETF(IOP_ST_BLOCK, 0);    //block starter
 
    //передатчик занят. необходимо подождать его освобождения и только потом запускать бутлоадер
    while (uart_is_sender_busy()) { wdt_reset_timer(); }

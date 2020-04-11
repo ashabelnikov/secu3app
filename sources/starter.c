@@ -33,6 +33,7 @@
 #include "starter.h"
 #include "vstimer.h"
 #include "funconv.h"
+#include "pwrrelay.h"
 
 
 static uint8_t str_counter = 0;
@@ -50,7 +51,7 @@ void starter_init_ports(void)
 
 void starter_control(void)
 {
- if (d.sys_locked)
+ if (d.sys_locked || !pwrrelay_get_state())
  { //system locked by immobilizer
   starter_set_blocking_state(1), d.st_block = 1;
   return;
@@ -82,6 +83,6 @@ void starter_eng_stopped_notification(void)
 {
  str_counter = 0;
  str_state = 0;
- if (!d.sys_locked)
+ if (!d.sys_locked && pwrrelay_get_state())
   starter_set_blocking_state(0), d.st_block = 0; //unblock starter
 }

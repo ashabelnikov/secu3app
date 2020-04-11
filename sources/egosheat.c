@@ -34,6 +34,7 @@
 #include "magnitude.h"
 #include "vstimer.h"
 #include "lambda.h"
+#include "pwrrelay.h"
 
 /**Declare state variables structure*/
 typedef struct
@@ -72,6 +73,12 @@ void egosheat_control(void)
 {
  if (!IOCFG_CHECK(IOP_O2SH_O))
   return; //this feature is disabled
+
+ if (!pwrrelay_get_state())
+ {
+  IOCFG_SETF(IOP_O2SH_O, 0); //turn off heating when system is in powerdown state
+  return;
+ }
 
  switch(eh.state)
  {

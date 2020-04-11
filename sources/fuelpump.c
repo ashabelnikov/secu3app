@@ -33,6 +33,7 @@
 #include "fuelpump.h"
 #include "ioconfig.h"
 #include "vstimer.h"
+#include "pwrrelay.h"
 
 /**Turn off timeout used when engine stops, 3 seconds */
 #define FP_TURNOFF_TIMEOUT_STOP 300
@@ -72,9 +73,11 @@ static uint8_t gas_v_logic(void)
 
 void fuelpump_control(void)
 {
- if (d.sys_locked)
+ if (d.sys_locked || !pwrrelay_get_state())
  { //system locked by immobilizer
   TURN_ON_ELPUMP(0); //turn off
+  s_timer16_set(fuel_pump_time_counter, ((uint16_t)d.param.fp_timeout_strt) * 10); //reset timer, so after power up rfuel pump will be ready again
+  fpstate.state = 0;
   return;
  }
 
@@ -86,6 +89,10 @@ void fuelpump_control(void)
    {
     TURN_ON_ELPUMP(0); //turn off
     fpstate.state = 1;
+   }
+   else
+   {
+    TURN_ON_ELPUMP(1); //turn on
    }
 
    //reset timer periodically if engine is still running

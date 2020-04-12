@@ -190,6 +190,11 @@ static void set_channels_fs(uint8_t fs_mode)
   if (ch >= idxNum)
    ch = 0;
  }
+
+ //turn off unused channels
+ idxNum = inj.rowmod ? INJ_CHANNELS_MAX / 2 : INJ_CHANNELS_MAX;
+ for(i =  inj.cyl_number; i < idxNum; ++i)
+  ((iocfg_pfn_set)get_callback_inj(IOP_INJ_OUT1 + inj.rowswt_add + i))(INJ_OFF);
 }
 
 /**Tune channels' I/O for semi-sequential or 2 banks alternating injection mode
@@ -214,6 +219,11 @@ static void set_channels_ss(uint8_t _2bnk)
   if (ch >= idxNum)
    ch = 0;
  }
+
+ //turn off unused channels
+ idxNum = inj.rowmod ? INJ_CHANNELS_MAX / 2 : INJ_CHANNELS_MAX;
+ for(i = _2bnk ? 2 : (inj.cyl_number / 2); i < idxNum; ++i)
+  ((iocfg_pfn_set)get_callback_inj(IOP_INJ_OUT1 + inj.rowswt_add + i))(INJ_OFF);
 }
 
 void inject_init_state(void)

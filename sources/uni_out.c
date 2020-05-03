@@ -580,11 +580,11 @@ static uint8_t process_output(uint8_t index, uint8_t action)
  uint8_t state1, state2 = 0;
 
  //execute specified conditions
- state1 = cond_fptr[cond_1](&d, p_out_param->on_thrd_1, p_out_param->off_thrd_1, &uni.states[index].ctx1);
+ state1 = ((cond_fptr_t)PGM_GET_WORD(&cond_fptr[cond_1]))(&d, p_out_param->on_thrd_1, p_out_param->off_thrd_1, &uni.states[index].ctx1);
  if (15 != (p_out_param->flags >> 4))
  {
   uni.states[index].ctx2.other = state1;
-  state2 = cond_fptr[cond_2](&d, p_out_param->on_thrd_2, p_out_param->off_thrd_2, &uni.states[index].ctx2);
+  state2 = ((cond_fptr_t)PGM_GET_WORD(&cond_fptr[cond_2]))(&d, p_out_param->on_thrd_2, p_out_param->off_thrd_2, &uni.states[index].ctx2);
  }
 
  //apply inversion flags

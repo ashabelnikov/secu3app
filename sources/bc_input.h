@@ -27,6 +27,9 @@
 #ifndef _BC_INPUT_H_
 #define _BC_INPUT_H_
 
+/**Initialization of used input ports*/
+void bc_init_ports(void);
+
 /** Check BC_INPUT and if it is active, then enter blink codes 
  * indication mode. This mode has its own infinite loop.
  * Note that in this mode interrupts must be disabled!

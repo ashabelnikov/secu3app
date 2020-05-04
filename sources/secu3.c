@@ -247,6 +247,7 @@ void init_ports(void)
 #if defined(AIRCONDIT) && !defined(SECU3T)
  aircond_init_ports();
 #endif
+ bc_init_ports();
 }
 
 /**Initialization of system modules

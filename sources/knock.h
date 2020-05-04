@@ -122,4 +122,10 @@ void knock_init_ports(void);
 uint16_t knock_get_adc_value(void);
 #endif
 
+#ifndef SECU3T
+/**Reads state of inputs from expander chip and updates I/O variables*/
+void knock_read_expander(void);
+void knock_write_expander(void);
+#endif
+
 #endif //_KNOCK_H_

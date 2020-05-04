@@ -33,6 +33,7 @@
 #include "eeprom.h"
 #include "ce_errors.h"
 #include "ioconfig.h"
+#include "knock.h"   //for knock_read_expander() and knock_write_expander()
 #include "starter.h"
 #include "tables.h"  //for IOCFG_
 #include "ventilator.h"
@@ -41,6 +42,12 @@
 /**Declare blink codes. Indexes in the array must correspond to numbers of bits of corresponding CE errors in ce_errors.h */
 PGM_DECLARE(uint8_t blink_codes[16]) =
  {0x21, 0x13, 0x14, 0x31, 0x32, 0x22, 0x23, 0x24, 0x41, 0x25, 0x26, 0x27, 0x28, 0x51, 0x52, 0};
+
+
+void bc_init_ports(void)
+{
+ IOCFG_INIT(IOP_BC_INPUT, 0); //don't use internal pull up resistor
+}
 
 /**Delay in hundreds of milliseconds
  * \param hom value in hundreds of milliseconds
@@ -60,8 +67,14 @@ void delay_hom(uint8_t hom)
 void blink(void)
 {
  ce_set_state(CE_STATE_ON);
+#if !defined(SECU3T)
+ knock_write_expander();
+#endif
  delay_hom(2);
  ce_set_state(CE_STATE_OFF);
+#if !defined(SECU3T)
+ knock_write_expander();
+#endif
  delay_hom(2);
 }
 
@@ -96,8 +109,14 @@ void disp_start(void)
  do
  {
   ce_set_state(CE_STATE_ON);
+#if !defined(SECU3T)
+  knock_write_expander();
+#endif
   delay_hom(8);
   ce_set_state(CE_STATE_OFF);
+#if !defined(SECU3T)
+  knock_write_expander();
+#endif
   delay_hom(3);
  }while(--i);
 }
@@ -113,15 +132,19 @@ void bc_indication_mode(void)
  if (!IOCFG_CHECK(IOP_BC_INPUT))
   return; //normal program execution
 
+ _DISABLE_INTERRUPT();
+
  //Check 5 times
  do
  {
+#if !defined(SECU3T)
+  knock_read_expander();
+#endif
   if (IOCFG_GET(IOP_BC_INPUT))
    return; //normal program execution
  }while(--i);
 
  //We are entered to the blink codes indication mode
- _DISABLE_INTERRUPT();
  ckps_init_ports();
 #ifdef FUEL_INJECT
  inject_init_ports();
@@ -134,6 +157,10 @@ void bc_indication_mode(void)
  IOCFG_INIT(IOP_IE, 0);          //turn off IE valve solenoid
  IOCFG_INIT(IOP_FE, 0);          //turn off power valve solenoid
  IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
+
+#if !defined(SECU3T)
+ knock_write_expander();
+#endif
 
  wdt_reset_timer();
 

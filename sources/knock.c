@@ -783,3 +783,29 @@ uint16_t knock_get_adc_value(void)
  return value;
 }
 #endif
+
+#ifndef SECU3T
+void knock_read_expander(void)
+{
+  //Note: we rely on that interrupts are disabled!
+ SETBIT(SPCR, CPOL);             //set clock polarity required by expander chip
+ SET_KSP_TEST(0);                //select chip
+ spi_master_transmit(0x41);      //read opcode
+ spi_master_transmit(0x12);      //address of the GPIOA
+ spi_master_transmit(0x00);      //shift read register
+ spi_PORTA = SPDR;               //save read value
+ SET_KSP_TEST(1);                //deselect chip
+}
+
+void knock_write_expander(void)
+{
+ //Note: we rely on that interrupts are disabled!
+ SETBIT(SPCR, CPOL);             //set clock polarity required by expander chip
+ SET_KSP_TEST(0);                //select chip
+ spi_master_transmit(0x40);      //write opcode
+ spi_master_transmit(0x13);      //address of the GPIOB
+ spi_master_transmit(spi_PORTB); //write new value into GPIOB
+ SET_KSP_TEST(1);                //deselect chip
+}
+
+#endif

@@ -521,7 +521,11 @@ ISR(TIMER2_COMPB_vect)
     if (t > 20000) //end_time < TCNT1   TODO: How can we do this check better?
      t = 4;
     t = t >> 1; //1 tick = 6.4us
-    OCR2B = TCNT2 + _AB(t, 0);
+
+    uint8_t TCNT2_L = _AB(t, 0);
+    if (!TCNT2_L)
+     TCNT2_L++;
+    OCR2B = TCNT2 + TCNT2_L;
     SETBIT(TIFR2, OCF2B);                     //reset possible pending interrupt flag
     inj.tmr2b_h = _AB(t, 1);
     SETBIT(TIMSK2, OCIE2B);
@@ -564,7 +568,11 @@ ISR(TIMER0_COMPB_vect)
     uint16_t t = QUEUE_TAIL(2).end_time - TCNT1;
     if (t > 20000) //end_time < TCNT1, so, it is expired  TODO: How can we do this check better?
      t = 2;
-    OCR0B = TCNT0 + _AB(t, 0);
+
+    uint8_t TCNT0_L = _AB(t, 0);
+    if (!TCNT0_L)
+     TCNT0_L++;
+    OCR0B = TCNT0 + TCNT0_L;
     SETBIT(TIFR0, OCF0B);                     //reset possible pending interrupt flag
     inj.tmr0b_h = _AB(t, 1);
     SETBIT(TIMSK0, OCIE0B);

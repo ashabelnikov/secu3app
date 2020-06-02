@@ -962,7 +962,10 @@ ISR(TIMER1_COMPB_vect)
  */
 static inline void set_timer0(uint16_t value)
 {
- OCR0A = TCNT0 + _AB(value, 0);
+ uint8_t TCNT0_L = _AB(value, 0);
+ if (!TCNT0_L)
+  TCNT0_L++;
+ OCR0A = TCNT0 + TCNT0_L;
  SETBIT(TIFR0, OCF0A);
  ckps.TCNT0_H = _AB(value, 1);
  SETBIT(TIMSK0, OCIE0A);

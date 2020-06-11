@@ -411,3 +411,11 @@ int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
  return (((int32_t)adcvalue) * gradient) >> (7+6+1);
 }
 #endif
+
+void adc_measure_voltage(void)
+{
+ ADMUX = ADCI_UBAT|ADC_VREF_TYPE; //select volage input
+ SETBIT(ADCSRA, ADSC);            //start measurement
+ while(CHECKBIT(ADCSRA, ADSC));   //wait for completion of measurement
+ adc.ubat_value = ADC;
+}

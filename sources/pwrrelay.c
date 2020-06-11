@@ -43,11 +43,12 @@
 /**Define state variables */
 typedef struct
 {
- uint8_t state;   //!< state mashine for managing of power states
+ uint8_t state;    //!< state mashine for managing of power states
  uint8_t pwrdown;  //!< power-down flag
+ uint8_t opmode;   //!< mode of operation
 }pwrstate_t;
 
-pwrstate_t pwrs = {0,0};   //!< instance of state variables
+pwrstate_t pwrs = {0,0,0};   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
@@ -107,7 +108,7 @@ void pwrrelay_control(void)
 #ifdef GD_CONTROL
       && gasdose_is_ready()
 #endif
-      ) || s_timer16_is_action(powerdown_timeout_counter))
+      ) || s_timer16_is_action(powerdown_timeout_counter) || pwrs.opmode)
    IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay, there is no way back
  }
  else
@@ -153,4 +154,9 @@ void pwrrelay_init_steppers(void)
   if (--cnt <= 0)
    break;
  }
+}
+
+void pwrrelay_set_opmode(uint8_t mode)
+{
+ pwrs.opmode = mode;
 }

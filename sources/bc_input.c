@@ -29,13 +29,16 @@
 #include "port/intrinsic.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
+#include "adc.h"
 #include "bitmask.h"
-#include "eeprom.h"
 #include "ce_errors.h"
+#include "eeprom.h"
 #include "ioconfig.h"
 #include "knock.h"   //for knock_read_expander() and knock_write_expander()
+#include "pwrrelay.h"
 #include "starter.h"
 #include "tables.h"  //for IOCFG_
+#include "measure.h"
 #include "ventilator.h"
 #include "wdt.h"
 
@@ -126,6 +129,19 @@ void ckps_init_ports(void);
 void inject_init_ports(void);
 #endif
 
+void measure_voltage(void)
+{
+ uint8_t i = 16;
+ do
+ {
+  adc_measure_voltage();
+  meas_update_values_buffers(0, &fw_data.exdata.cesd); //<-- all
+  _DELAY_US(100);
+  wdt_reset_timer();
+ }while(--i);
+ meas_average_measured_values(&fw_data.exdata.cesd);
+}
+
 void bc_indication_mode(void)
 {
  uint8_t i = 5;
@@ -164,6 +180,8 @@ void bc_indication_mode(void)
 
  wdt_reset_timer();
 
+ pwrrelay_set_opmode(1);
+
  //delay 2 sec.
  delay_hom(20);
 
@@ -180,6 +198,16 @@ void bc_indication_mode(void)
 
   for(i = 0; i < 16; ++i)
   {
+   measure_voltage();
+
+#if !defined(SECU3T)
+   knock_read_expander();
+#endif
+   pwrrelay_control();
+#if !defined(SECU3T)
+   knock_write_expander();
+#endif
+
    if (0 == PGM_GET_BYTE(&blink_codes[i]))
     continue;
    if (errors & (1 << i))

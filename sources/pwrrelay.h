@@ -47,4 +47,9 @@ uint8_t pwrrelay_get_state(void);
  */
 void pwrrelay_init_steppers(void);
 
+/** Set mode of operation
+ * \param mode 0 - normal operation (default), 1 - instant reaction on IGN or voltage
+ */
+void pwrrelay_set_opmode(uint8_t mode);
+
 #endif //_PWRRELAY_H_

@@ -174,4 +174,9 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
 #endif
 
+/**Measure value of voltage in special mode when interrupts are disabled.
+ * Call adc_get_ubat_value() to obtain result of measurement
+ */
+void adc_measure_voltage(void);
+
 #endif //_ADC_H_

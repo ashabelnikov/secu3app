@@ -79,7 +79,7 @@ void lambda_control(void)
    else
     ego.enabled = 1;
   }
-}
+ }
 }
 
 /** Process one lambda iteration

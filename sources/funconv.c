@@ -644,10 +644,13 @@ uint16_t inj_base_pw(void)
 
  if (d.param.load_src_cfg == 2) //Alpha-N
  {
-  if (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul))
+  if (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul)==1)
    pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
   else
-   pw32 = (((uint32_t)(d.sens.map >> nsht)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
+  { //0 or 2
+   uint16_t map = (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul)==2) ? PRESSURE_MAGNITUDE(101.5) : d.sens.map;
+   pw32 = (((uint32_t)(map >> nsht)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
+  }
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
  {

@@ -195,7 +195,7 @@ static uint16_t finalize_inj_time(int32_t* pw)
  else
   pwns[1] = pw_s;
 
- //store precalculated values (see inject_set_fullsequentila() for more information)
+ //store precalculated values (see inject_set_fullsequential() for more information)
  _BEGIN_ATOMIC_BLOCK();
  d.inj_pwns[0] = pwns[0];
  d.inj_pwns[1] = pwns[1];

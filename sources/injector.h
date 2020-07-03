@@ -49,7 +49,7 @@ uint8_t inject_set_cyl_number(uint8_t cylnum);
 void inject_set_num_squirts(uint8_t numsqr);
 
 /**Set injection time
- * \param time Injection time, one tick = 3.2us
+ * \param time Injection time, one tick = 3.2us. Value is not allowed to be close to zero!
  */
 void inject_set_inj_time(uint16_t time);
 

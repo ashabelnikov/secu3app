@@ -454,6 +454,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .uart_divisor =                CBR_57600,
 #elif (FW_BAUD_RATE == 115200)
   .uart_divisor =                CBR_115200,
+#elif (FW_BAUD_RATE == 250000)
+  .uart_divisor =                CBR_250000,
 #else
  #error "Invalid baud rate value specified for firmware!"
 #endif

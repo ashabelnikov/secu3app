@@ -33,7 +33,7 @@
 
 #if defined(BL_BAUD_RATE)
 /**Encode specified baud rate value into AVR instruction (ldi)*/
-//We use 20.000 MHz oscillator for ATMega644 and so we have different baud rate constants
+//We use 20.000 MHz oscillator for ATMega644/1284 and so we have different baud rate constants
 #if (BL_BAUD_RATE == 9600)
  #define _LDIINS_L LDIINS(/*0x81*/0x03)
  #define _LDIINS_H LDIINS(/*0x00*/0x01)
@@ -56,10 +56,10 @@
  #define _LDIINS_L LDIINS(/*0x0A*/0x15)   //note: error is 1.4%
  #define _LDIINS_H LDIINS(0x00)
 #elif (BL_BAUD_RATE == 250000)
- #define _LDIINS_L LDIINS(/*0x04*/0x09)
+ #define _LDIINS_L LDIINS(/*0x04*/0x09)   //note: error is 0%
  #define _LDIINS_H LDIINS(0x00)
 #elif (BL_BAUD_RATE == 500000)
- #define _LDIINS_L LDIINS(0x04)
+ #define _LDIINS_L LDIINS(0x04)           //note: error is 0%
  #define _LDIINS_H LDIINS(0x00)
 #else
  #error "Invalid baud rate value specified for boot loader!"

@@ -31,16 +31,18 @@
 
 //Here are some values for UBRR for 20.000 mHz crystal
 //
-//       Speed    Value(U2X=0)  Value(U2X=1)
-//       2400        0x208         0x411
-//       4800        0x103         0x208
-//       9600        0x81          0x103
-//       14400       0x56          0xAD
-//       19200       0x40          0x81
-//       28800       0x2A          0x56
-//       38400       0x20          0x40
-//       57600       0x15          0x2A
-//       115200      0x0A          0x15
+//       Speed    Value(U2X=0)     Value(U2X=1)
+//       2400        0x208            0x411
+//       4800        0x103            0x208
+//       9600        0x81             0x103
+//       14400       0x56             0xAD
+//       19200       0x40             0x81
+//       28800       0x2A             0x56
+//       38400       0x20             0x40
+//       57600       0x15 (e=-1.4%)   0x2A (e=0.9%)
+//       115200      0x0A (e=-1.4%)   0x15 (e=-1.4%)
+//       250000      0x04 (e=0%)      0x09 (e=0%)
+//       500000       -               0x04 (e=0%)
 
 #define  CBR_2400                0x0411 //!<  2400 baud
 #define  CBR_4800                0x0208 //!<  4800 baud
@@ -51,6 +53,7 @@
 #define  CBR_38400               0x0040 //!< 38400 baud
 #define  CBR_57600               0x002A //!< 57600 baud
 #define  CBR_115200              0x0015 //!< 115200 baud
+#define  CBR_250000              0x0009 //!< 250000 baud
 
 #define  UART_RECV_BUFF_SIZE     110    //!< Size of receiver's buffer
 #define  UART_SEND_BUFF_SIZE     134    //!< Size of transmitter's buffer

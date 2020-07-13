@@ -1041,7 +1041,7 @@ uint8_t scale_aftstr_enrich(uint16_t enrich_counter)
  //do scaling of ASE factor (scale down)
  int16_t counter = aftstr_strokes - enrich_counter; //convert decreasing to increasing
  if (counter < 0) counter = 0;
- return ((uint16_t)inj_aftstr_en() * (aftstr_strokes - counter)) / aftstr_strokes;
+ return ((uint32_t)inj_aftstr_en() * (aftstr_strokes - counter)) / aftstr_strokes;
 }
 
 int16_t barocorr_lookup(void)

@@ -1,0 +1,10 @@
+Values of FUSE bytes for ATmega644/1284:
+Значения FUSE байтов для ATmega644/1284:
+
+LOCK  = 0xE0
+LFUSE = 0xD7
+HFUSE = 0xD4
+EFUSE = 0xFC
+
+More information on our site http://secu3.org
+Also, please read datasheet

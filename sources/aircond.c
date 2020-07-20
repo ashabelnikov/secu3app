@@ -84,13 +84,15 @@ void aircond_control(void)
    ++ac.state;
 
   case 1: //wait for turn on request
+  {
    d.cond_req_fan = 0; //reset cooling fan request
 #ifdef SECU3T
    if (IOCFG_GET(IOP_COND_I))
 #else
    IOCFG_SETF(IOP_COND_O, 0); //turned off
    d.cond_state = 0;
-   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && (d.sens.add_i3 < d.param.cond_pvt_on) && !ce_is_error(ECUERROR_ADD_I3_SENSOR) && (d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_BYTE(&fw_data.exdata.aircond_tps))))
+   uint8_t add_i3_cond = d.param.cond_pvt_on ? (d.sens.add_i3 < d.param.cond_pvt_on) : 1; //don't use ADD_I3 if threshold is set to 0
+   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && (add_i3_cond) && !ce_is_error(ECUERROR_ADD_I3_SENSOR) && (d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_BYTE(&fw_data.exdata.aircond_tps))))
 #endif
    {
     if (d.sens.frequen < d.param.cond_min_rpm)
@@ -108,6 +110,7 @@ void aircond_control(void)
      ac.t1 = s_timer_gtc();
     }
    }
+  }
    break;
 
   case 2: //smoothly increase RPM if it is less than required
@@ -122,14 +125,17 @@ void aircond_control(void)
    }
 
   case 3: //conditioner is turned on, check for turn off conditions
+  {
 #ifdef SECU3T
    if (!IOCFG_GET(IOP_COND_I))
 #else
-   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || (d.sens.add_i3 > d.param.cond_pvt_off) || ce_is_error(ECUERROR_ADD_I3_SENSOR) || (d.sens.tps > (PGM_GET_BYTE(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0))))))
+   uint8_t add_i3_cond = d.param.cond_pvt_off ? (d.sens.add_i3 > d.param.cond_pvt_off) : 0; //don't use ADD_I3 if threshold is set to 0
+   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || (add_i3_cond) || ce_is_error(ECUERROR_ADD_I3_SENSOR) || (d.sens.tps > (PGM_GET_BYTE(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0))))))
 #endif
     ac.state = 1;
    if ((s_timer_gtc() - ac.t1) > SYSTIM_MAGS(1.5) && ac.state == 3)
     d.cond_req_fan = 1; //turn on cooling fan after 1.5 seconds
+  }
    break;
  }
 

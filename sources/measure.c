@@ -200,16 +200,34 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
-  d.sens.add_i5_raw = adc_compensate(spiadc_chan[0], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  uint16_t spiadc[SPIADC_CHNUM];
+
+  _BEGIN_ATOMIC_BLOCKN(0);
+  spiadc[0] = spiadc_chan[0] & 0xFFF;
+  _END_ATOMIC_BLOCKN(0);
+
+  _BEGIN_ATOMIC_BLOCKN(1);
+  spiadc[1] = spiadc_chan[1] & 0xFFF;
+  _END_ATOMIC_BLOCKN(1);
+
+  _BEGIN_ATOMIC_BLOCKN(2);
+  spiadc[2] = spiadc_chan[2] & 0xFFF;
+  _END_ATOMIC_BLOCKN(2);
+
+  _BEGIN_ATOMIC_BLOCKN(3);
+  spiadc[3] = spiadc_chan[3] & 0xFFF;
+  _END_ATOMIC_BLOCKN(3);
+
+  d.sens.add_i5_raw = adc_compensate(spiadc[0], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
   d.sens.add_i5 = d.sens.add_i5_raw;
 
-  d.sens.add_i6_raw = adc_compensate(spiadc_chan[1], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i6_raw = adc_compensate(spiadc[1], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
   d.sens.add_i6 = d.sens.add_i6_raw;
 
-  d.sens.add_i7_raw = adc_compensate(spiadc_chan[2], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i7_raw = adc_compensate(spiadc[2], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
   d.sens.add_i7 = d.sens.add_i7_raw;
 
-  d.sens.add_i8_raw = adc_compensate(spiadc_chan[3], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
+  d.sens.add_i8_raw = adc_compensate(spiadc[3], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
   d.sens.add_i8 = d.sens.add_i8_raw;
 #endif
 }

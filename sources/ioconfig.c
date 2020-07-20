@@ -1406,7 +1406,11 @@ void iocfg_i_add_i5i(uint8_t value)     //inverted version
 uint8_t iocfg_g_add_i5(void)
 {
 #ifdef MCP3204
- return (spiadc_chan[0] > 2048);
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[0];
+ _END_ATOMIC_BLOCK();
+ return (value > 2048);
 #else
  return 0; //stub
 #endif
@@ -1415,7 +1419,11 @@ uint8_t iocfg_g_add_i5(void)
 uint8_t iocfg_g_add_i5i(void)          //inverted version
 {
 #ifdef MCP3204
- return (spiadc_chan[0] < 2048);
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[0];
+ _END_ATOMIC_BLOCK();
+ return (value < 2048);
 #else
  return 0; //stub
 #endif

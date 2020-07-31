@@ -7,7 +7,7 @@ PROGRAMMER=avrdude
 LFUSE=0xD7
 HFUSE=0xD4
 EFUSE=0xFC
-LOCK=0xE0
+LOCK=0xEF
 
 USAGE="Supported options: M644, M1284"
 MCU=Undefined

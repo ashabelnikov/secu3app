@@ -1234,3 +1234,76 @@ uint16_t smapaban_thrd_rpm(void)
  return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i1]),  //<--values in table are unsigned
          PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
+
+#ifdef _PLATFORM_M1284_
+/**Used to encode values in the knock zones look up table*/
+#define _KNR(b15, b14, b13, b12, b11, b10, b9, b8, b7, b6, b5, b4, b3, b2 ,b1, b0) (_CBV16(b15, 0) | _CBV16(b14, 1) | _CBV16(b13, 2) | _CBV16(b12, 3) | _CBV16(b11, 4) | _CBV16(b10, 5) | _CBV16(b9, 6) | _CBV16(b8, 7) | _CBV16(b7, 8) | _CBV16(b6, 9) | _CBV16(b5, 10) | _CBV16(b4, 11) | _CBV16(b3, 12) | _CBV16(b2, 13) | _CBV16(b1, 14) | _CBV16(b0, 15))
+
+/**Number of points along tps axis in the knock zones look up table*/
+#define KNKZONE_TPS_SIZE 16
+
+/**Knock zones vs rpm, tps*/
+PGM_DECLARE(uint16_t knock_zones[KNKZONE_TPS_SIZE]) = {
+//600 720 840 990 1170 1380 1650 1950 2310 2730 3210 3840 4530 5370 6360 7500 (min-1)
+// -->
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //16
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //15
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //14
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //13
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //12
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //11
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //10
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //9
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //8
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //7
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //6
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //5
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //4
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //3
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //2  ^
+ _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)  //1  |
+
+/*
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //16
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //15
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //14
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //13
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //12
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //11
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //10
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0), //9
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0), //8
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0), //7
+ _KNR(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0), //6
+ _KNR(0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), //5
+ _KNR(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), //4
+ _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), //3
+ _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), //2  ^
+ _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)  //1  |
+*/
+};
+
+/**Gets knock zone flag from a look up table using current RPM and TPS values
+ * \return flag value (0, 1)
+ */
+uint8_t knock_zone_val(void)
+{
+ uint16_t rpm = d.sens.inst_frq;
+ int16_t tps = d.sens.tps * 16;
+ int8_t f, t;
+
+ //find interpolation points, then restrict RPM if it fall outside set range
+ for(f = F_WRK_POINTS_F-1; f >= 0; f--)
+  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+ //lookup table works from rpm_grid_points[0] and upper
+ if (f < 0) f = 0;
+
+ t = (tps / TPS_AXIS_STEP);
+ if (t > (KNKZONE_TPS_SIZE - 1))
+  t = KNKZONE_TPS_SIZE - 1;
+
+ t = (KNKZONE_TPS_SIZE-1)-t;
+ return ((uint8_t)(PGM_GET_WORD(&knock_zones[t]) >> f)) & 1;
+}
+
+#endif

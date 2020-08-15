@@ -31,13 +31,18 @@
 #include "knklogic.h"
 #include "magnitude.h"
 #include "mathemat.h"
+#include "funconv.h"
 
 /**Delay in strokes*/
 #define KNK_STRT_DELAY 150
 
 uint8_t knklogic_detect(retard_state_t* p_rs)
 {
- if (d.sens.frequen > d.param.starter_off && d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.knkclt_thrd))
+ if (d.sens.frequen > d.param.starter_off && d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.knkclt_thrd)
+#ifdef _PLATFORM_M1284_
+&& knock_zone_val()
+#endif
+    )
  {
   if (0==p_rs->sd_counter)
   {

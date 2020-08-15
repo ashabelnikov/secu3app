@@ -384,4 +384,11 @@ uint16_t cranking_thrd_tmr(void);
  */
 uint16_t smapaban_thrd_rpm(void);
 
+#ifdef _PLATFORM_M1284_
+/**Gets knock zone flag from a look up table using current RPM and TPS values
+ * \return flag value (0, 1)
+ */
+uint8_t knock_zone_val(void);
+#endif
+
 #endif //_FUNCONV_H_

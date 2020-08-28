@@ -354,7 +354,7 @@ void sm_motion_control(int16_t pos)
 #endif //SM_CONTROL
 
 #ifdef FUEL_INJECT
-/***/
+/**Calculates value of target RPM for closed loop regulator*/
 static int16_t calc_cl_rpm(void)
 {
  int16_t rpm = inj_idling_rpm(); //target RPM depending on the coolant temperature

@@ -106,6 +106,7 @@ void aircond_control(void)
 #ifndef SECU3T
      IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
      d.cond_state = 1;
+     d.cond_req_rpm = d.param.cond_min_rpm; //specify minimum RPM, see calc_cl_rpm() in choke.c for more information
 #endif
      ac.t1 = s_timer_gtc();
     }
@@ -143,9 +144,9 @@ void aircond_control(void)
 
 void aircond_stroke_event_notification(void)
 {
- if (ac.state == 2)
+ if (ac.state == 2)                        //smoothly increase RPM
   d.cond_req_rpm+=RPMREQSTEP;
- else if (ac.state == 1 && d.cond_req_rpm)
+ else if (ac.state == 1 && d.cond_req_rpm >= RPMREQSTEP) //smoothly decrease RPM
   d.cond_req_rpm-=RPMREQSTEP;
 }
 

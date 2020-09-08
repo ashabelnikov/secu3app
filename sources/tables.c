@@ -801,6 +801,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_pwmsteps = 31, //number of PWM discretes for 5kHz with 20MHz quartz
   .vent_minband = 2,
   .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
+  .igntim_wrkmap = 0,  //0 - regular behaviour (separate maps for idling and working modes)
 
   /**reserved bytes*/
   {0}

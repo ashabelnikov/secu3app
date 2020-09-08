@@ -383,7 +383,16 @@ void ignlogic_system_state_machine(void)
    {
     d.engine_mode = EM_WORK;
    }
-   angle = d.corr.idle_aalt = idling_function(); //basic ignition timing - idling map
+   if (PGM_GET_BYTE(&fw_data.exdata.igntim_wrkmap))
+   { //it is selected always to use working mode's map
+    angle = d.corr.work_aalt = work_function();//basic ignition timing - work map
+    d.corr.idle_aalt = AAV_NOTUSED;
+   }
+   else
+   { //use idle map (default)
+    angle = d.corr.idle_aalt = idling_function(); //basic ignition timing - idling map
+    d.corr.work_aalt = AAV_NOTUSED;
+   }
    d.corr.temp_aalt = coolant_function();      //add CLT correction to ignition timing
    angle+=d.corr.temp_aalt;
 #ifdef AIRTEMP_SENS
@@ -398,7 +407,7 @@ void ignlogic_system_state_machine(void)
 #endif
    d.corr.idlreg_aac = idling_pregulator(&idle_period_time_counter);//add correction from idling regulator
    angle+=d.corr.idlreg_aac;
-   d.corr.strt_aalt = d.corr.work_aalt = AAV_NOTUSED;
+   d.corr.strt_aalt = AAV_NOTUSED;
 
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME

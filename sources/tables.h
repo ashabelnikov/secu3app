@@ -110,6 +110,8 @@
 #define CRANK_TIME_SIZE                 16          //!< Size of the cranking time vs coolant temp. table
 #define SMAPABAN_THRD_SIZE              16          //!< Size of the start map abandon threshold vs coolant temp. table
 
+#define KNKZONE_TPS_SIZE                16          //! Number of points along tps axis in the knock zones look up table
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -388,10 +390,13 @@ typedef struct fw_ex_data_t
   uint8_t  igntim_wrkmap; //1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
   //---------------------------------------------------------------
 
+  /**Knock zones vs rpm, tps*/
+  uint16_t knock_zones[KNKZONE_TPS_SIZE];
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4100];
+  uint8_t reserved[4068];
 }fw_ex_data_t;
 
 /**Describes a unirersal programmable output*/

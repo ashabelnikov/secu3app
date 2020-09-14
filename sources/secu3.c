@@ -66,6 +66,7 @@
 #include "params.h"
 #include "procuart.h"
 #include "pwrrelay.h"
+#include "pwm2.h"
 #include "starter.h"
 #include "suspendop.h"
 #include "tables.h"
@@ -97,6 +98,9 @@ void control_engine_units(void)
 
  //Control of electric cooling fan (only if CTS is present in the system)
  vent_control();
+
+ //Control of 2 PWM channels
+ pwm2_control();
 
 #if !defined(CARB_AFR) && !defined(FUEL_INJECT) //Carb. AFR control supersede power valve functionality
  //Power valve control
@@ -206,6 +210,7 @@ void init_ports(void)
  ckps_init_ports();
  cams_init_ports();
  vent_init_ports();
+ pwm2_init_ports();
 #if !defined(CARB_AFR) && !defined(FUEL_INJECT) //Carb. AFR control supersede power valve functionality
  pwrvalve_init_ports();
 #endif
@@ -254,6 +259,11 @@ void init_ports(void)
  */
 void init_modules(void)
 {
+ //init two PWM channels
+ pwm2_init_state();
+ pwm2_set_pwmfrq(0, d.param.pwmfrq[0]);
+ pwm2_set_pwmfrq(1, d.param.pwmfrq[1]);
+
  //preliminary initialization of the knock signal processor
  knock_set_band_pass(d.param.knock_bpf_frequency);
  knock_set_gain(PGM_GET_BYTE(&fw_data.exdata.attenuator_table[0]));

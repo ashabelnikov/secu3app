@@ -46,6 +46,7 @@
 #include "vstimer.h"
 #include "smcontrol.h"
 #include "gdcontrol.h"
+#include "pwm2.h"
 
 uint8_t startup_packets = 5;  //number of packets before start up bit will be cleared
 uint8_t silent = 0;
@@ -116,6 +117,8 @@ void process_uart_interface(void)
     ckps_set_hall_pulse(d.param.hop_start_cogs, d.param.hop_durat_cogs);
 #endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    pwm2_set_pwmfrq(0, d.param.pwmfrq[0]);
+    pwm2_set_pwmfrq(1, d.param.pwmfrq[1]);
     break;
 
    case FUNSET_PAR:

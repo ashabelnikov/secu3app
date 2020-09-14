@@ -239,10 +239,14 @@ typedef struct f_data_t
 
   uint8_t inj_ats_corr[INJ_ATS_CORR_SIZE];            //!< PW correction from air temperature sensor (air density correction), value * 128, max. 1.99
 
+  uint8_t pwm_duty1[F_WRK_POINTS_L][F_WRK_POINTS_F];//!< PWM1 duty lookup table, value 0...255
+
+  uint8_t pwm_duty2[F_WRK_POINTS_L][F_WRK_POINTS_F];//!< PWM2 duty lookup table, value 0...255
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1024];
+  uint8_t reserved[512];
 }f_data_t;
 
 
@@ -638,11 +642,13 @@ typedef struct params_t
 
   uint8_t inj_min_pw[2];                 //!< minimum injection PW, 1 discrete = 25.6us (3.2us * 8), max = 6.5ms
 
+  uint16_t pwmfrq[2];                    //!< PWM frequency for PWM1/2 outputs (value = 1/f * 524288), 10....5000Hz
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[251];
+  uint8_t  reserved[247];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

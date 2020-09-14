@@ -391,4 +391,11 @@ uint16_t smapaban_thrd_rpm(void);
 uint8_t knock_zone_val(void);
 #endif
 
+/** Calculates value of PWM duty from "pwm_dutyx" maps
+ * Uses d ECU data structure
+ * \param mode 0 - from pwm_duty1 map, 1 - from pwm_duty2 map
+ * \return value of duty 0...255
+ */
+uint16_t pwm_function(uint8_t mode);
+
 #endif //_FUNCONV_H_

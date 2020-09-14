@@ -67,6 +67,8 @@
 #define ETMT_GTSC_MAP 23    //!< PW correction from gas temperature
 #define ETMT_GPSC_MAP 24    //!< PW correction from gas pressure
 #define ETMT_ATSC_MAP 25    //!< PW correction from air temperature
+#define ETMT_PWM1_MAP 26     //!< PWM duty 1
+#define ETMT_PWM2_MAP 27     //!< PWM duty 2
 
 /**Define internal state variables */
 typedef struct
@@ -755,6 +757,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.evap_afbegin);
    build_i16h(d.param.evap_afslope);
    build_i8h(d.param.fp_timeout_strt);
+   build_i16h(d.param.pwmfrq[0]);
+   build_i16h(d.param.pwmfrq[1]);
    break;
 
   case CHOKE_PAR:
@@ -1061,7 +1065,29 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_ATSC_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_ats_corr, INJ_ATS_CORR_SIZE);
-     state = ETMT_STRT_MAP;
+     state = ETMT_PWM1_MAP, wrk_index = 0;
+     break;
+    case ETMT_PWM1_MAP: //PWM1 map
+     build_i8h(wrk_index*F_WRK_POINTS_L);
+     build_rb((uint8_t*)&d.tables_ram.pwm_duty1[wrk_index][0], F_WRK_POINTS_F);
+     if (wrk_index >= F_WRK_POINTS_L-1 )
+     {
+      wrk_index = 0;
+      state = ETMT_PWM2_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_PWM2_MAP: //PWM2 map
+     build_i8h(wrk_index*F_WRK_POINTS_L);
+     build_rb((uint8_t*)&d.tables_ram.pwm_duty2[wrk_index][0], F_WRK_POINTS_F);
+     if (wrk_index >= F_WRK_POINTS_L-1 )
+     {
+      wrk_index = 0;
+      state = ETMT_STRT_MAP;
+     }
+     else
+      ++wrk_index;
      break;
    }
    break;
@@ -1352,6 +1378,8 @@ uint8_t uart_recept_packet(void)
    d.param.evap_afbegin = recept_i16h();
    d.param.evap_afslope = recept_i16h();
    d.param.fp_timeout_strt = recept_i8h();
+   d.param.pwmfrq[0] = recept_i16h();
+   d.param.pwmfrq[1] = recept_i16h();
   }
   break;
 
@@ -1555,6 +1583,12 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_ATSC_MAP: //PW correction from air temperature
      recept_rb(((uint8_t*)&d.tables_ram.inj_ats_corr) + addr, INJ_ATS_CORR_SIZE); /*INJ_ATS_CORR_SIZE max*/
+     break;
+    case ETMT_PWM1_MAP: //PWM1 map
+     recept_rb(((uint8_t*)&d.tables_ram.pwm_duty1[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
+     break;
+    case ETMT_PWM2_MAP: //PWM2 map
+     recept_rb(((uint8_t*)&d.tables_ram.pwm_duty2[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
      break;
    }
   }

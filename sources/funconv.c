@@ -1307,3 +1307,27 @@ uint8_t knock_zone_val(void)
 }
 
 #endif
+
+uint16_t pwm_function(uint8_t mode)
+{
+ if (0==mode)
+ return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        _GB(pwm_duty1[fcs.la_l][fcs.la_f]),
+        _GB(pwm_duty1[fcs.la_lp1][fcs.la_f]),
+        _GB(pwm_duty1[fcs.la_lp1][fcs.la_fp1]),
+        _GB(pwm_duty1[fcs.la_l][fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        fcs.la_grad, 64) >> 6;
+ else
+ return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        _GB(pwm_duty2[fcs.la_l][fcs.la_f]),
+        _GB(pwm_duty2[fcs.la_lp1][fcs.la_f]),
+        _GB(pwm_duty2[fcs.la_lp1][fcs.la_fp1]),
+        _GB(pwm_duty2[fcs.la_l][fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        fcs.la_grad, 64) >> 6;
+}

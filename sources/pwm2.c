@@ -121,15 +121,25 @@ typedef struct
  volatile uint8_t pwm_state[2];    //!< For state machine. 0 - passive, 1 - active
  volatile uint16_t pwm_duty_1[2];  //!< current duty value (+)
  volatile uint16_t pwm_duty_2[2];  //!< current duty value (-)
+#ifdef FUEL_INJECT
+ uint8_t  compa_mode;              //!< mode of functioning of COMPA channel: 0 - for PWM1; 1 - for generation of fuel consumption signal
+#endif
 }pwm2_t;
 
 /**Instance of internal state variables */
-pwm2_t pwm2 = {{0,0},{255,255},{0,0},{0,0},{0,0}};
+pwm2_t pwm2 = {{0,0},{255,255},{0,0},{0,0},{0,0},
+#ifdef FUEL_INJECT
+0
+#endif
+};
 
 void pwm2_init_ports(void)
 {
  IOCFG_INIT(IOP_PWM1, 0); //PWM1 channel is turned Off
  IOCFG_INIT(IOP_PWM2, 0); //PWM2 channel is turned Off
+#ifdef FUEL_INJECT
+ IOCFG_INIT(IOP_FL_CONS, 0); // channel is turned Off
+#endif
 }
 
 void pwm2_init_state(void)
@@ -152,6 +162,24 @@ void pwm2_init_state(void)
   pwm2.iomode[0] = 2; //BL
  else if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_de || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_dei)
   pwm2.iomode[0] = 3; //DE
+#ifdef FUEL_INJECT
+ //FL_CONS:
+#ifdef SECU3T
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o1 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o1i)
+  {pwm2.iomode[0] = 0; pwm2.compa_mode = 1;} //ADD_O1
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o2i)
+  {pwm2.iomode[0] = 1; pwm2.compa_mode = 1;} //ADD_O2
+#else //SECU-3i
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out5 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out5i)
+  {pwm2.iomode[0] = 0; pwm2.compa_mode = 1;} //IGN_O5
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5i)
+  {pwm2.iomode[0] = 1; pwm2.compa_mode = 1;} //INJ_O5
+#endif
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bli)
+  {pwm2.iomode[0] = 2; pwm2.compa_mode = 1;} //BL
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_de || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_dei)
+  {pwm2.iomode[0] = 3; pwm2.compa_mode = 1;} //DE
+#endif
  else
  { //No I/O assigned, disable interrupt
   CLEARBIT(TIMSK3, OCIE3A);
@@ -276,11 +304,44 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
  }
 }
 
+#ifdef FUEL_INJECT
+/**Set fuel cinsumption signal's frequency and duty for COMPA channel
+ */
+static void pwm2_set_fl_cons(void)
+{
+ //see inject_calc_fuel_flow() in injector.c for more information
+ uint16_t duty_1 = ((uint32_t)((256 * 312500) / 2)) / d.inj_fff;
+
+ if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
+ { //no fuel flow
+  _DISABLE_INTERRUPT();
+   TIMSK3&=~_BV(OCIE3A);  //disable interrupt for COMPA
+  _ENABLE_INTERRUPT();
+   PWMx_TURNOFF(0);      //fully OFF
+ }
+ else
+ { //produce fuel consumption signal
+  _DISABLE_INTERRUPT();
+   SETBIT(TIMSK3, OCIE3A);
+   pwm2.pwm_duty_1[0] = duty_1;
+   pwm2.pwm_duty_2[0] = duty_1;
+  _ENABLE_INTERRUPT();
+ }
+}
+#endif
+
 void pwm2_control(void)
 {
  if (pwm2.iomode[0] != 255)
  { //ch 0
-  pwm2_set_duty8(0, pwm_function(0));
+#ifdef FUEL_INJECT
+  if (0==pwm2.compa_mode)
+   pwm2_set_duty8(0, pwm_function(0)); //generate PWM
+  else
+   pwm2_set_fl_cons();                 //generate fuel consumption signal (flequency with 50% duty)
+#else
+  pwm2_set_duty8(0, pwm_function(0));  //generate PWM
+#endif
  }
  if (pwm2.iomode[1] != 255)
  { //ch 1

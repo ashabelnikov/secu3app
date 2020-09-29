@@ -604,8 +604,10 @@ void inject_calc_fuel_flow(void)
  uint32_t cycleper = ((uint32_t)ckps_get_stroke_period()) * d.param.ckps_engine_cyl;
 
  //calculate value of Nsi variable (Nsi - number of simultaneously working injectors)
- uint8_t Nsi = d.param.ckps_engine_cyl; //for [central] or [simultaneous] or [full sequential without cam sensor on the odd-cylinder num. engines]
- if (inj.cfg == INJCFG_2BANK_ALTERN)
+ uint8_t Nsi = d.param.ckps_engine_cyl; //for [simultaneous] or [full sequential without cam sensor on the odd-cylinder num. engines]
+ if (inj.cfg == INJCFG_THROTTLEBOBY)
+  Nsi = 1; //only single injector works simultaneously
+ else if (inj.cfg == INJCFG_2BANK_ALTERN)
   Nsi = Nsi >> 1; // = Ncyl / 2
  else if (inj.cfg == INJCFG_SEMISEQUENTIAL || inj.cfg == INJCFG_SEMISEQSEPAR)
   Nsi = 2;       //two injectors work simultaneously

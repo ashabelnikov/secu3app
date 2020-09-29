@@ -478,6 +478,13 @@ void ignlogic_system_state_machine(void)
  if (d.param.zero_adv_ang)
   angle = 0;
 
+ //if input is active, then use specified value of ignition timing
+ if (IOCFG_CHECK(IOP_AUTO_I))
+ {
+  if (IOCFG_GET(IOP_AUTO_I))
+   angle = (int16_t)PGM_GET_WORD(&fw_data.exdata.shift_igntim);
+ }
+
  lgs.calc_adv_ang = angle; //save calculated advance angle
 }
 

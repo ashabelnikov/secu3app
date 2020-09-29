@@ -360,6 +360,9 @@ typedef struct fw_ex_data_t
   /**Sizes of cells in RPM grid (so, we don't need to calculate them at the runtime)*/
   int16_t clt_grid_sizes[CLT_GRID_SIZE-1];
 
+  /**Knock zones vs rpm, tps*/
+  uint16_t knock_zones[KNKZONE_TPS_SIZE];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -388,18 +391,16 @@ typedef struct fw_ex_data_t
   uint8_t  vent_minband;
   uint8_t  an_tps_mul;
   uint8_t  igntim_wrkmap; //1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
+  int16_t  shift_igntim;  //ignition timing for shifting
   //---------------------------------------------------------------
-
-  /**Knock zones vs rpm, tps*/
-  uint16_t knock_zones[KNKZONE_TPS_SIZE];
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4068];
+  uint8_t reserved[4066];
 }fw_ex_data_t;
 
-/**Describes a unirersal programmable output*/
+/**Describes a universal programmable output*/
 typedef struct uni_output_t
 {
  uint8_t flags;                          //!< MS Nibble - logic function, LS Nibble - flags (inversion)

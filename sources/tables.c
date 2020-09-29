@@ -243,7 +243,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
@@ -335,8 +335,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
@@ -784,34 +784,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill CLT grid cell sizes lookup table*/
   {_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0),_CLT(10.0)},
 
-  .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
-  .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
-  .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
-  .fi_enter_strokes = 5,  //5 strokes
-  .fi_leave_strokes = 5,  //5 strokes
-  .iac_cond_add = 15*2,    //+15%
-  .inj_max_pw = 31250,     //100ms
-  .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
-  .aircond_tps = TPS_MAGNITUDE(68.0), //68%
-  .idl_ve = ROUND(0*2048), //turned off
-  .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
-  .idl_ve_g = ROUND(0*2048), //turned off
-  .stbl_str_cnt = 10, //10 strokes
-  .knkclt_thrd = TEMPERATURE_MAGNITUDE(70.0), //70°C
-  .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
-  .heating_time = 100, //10 min
-  .idltorun_stp_en = 8, //0.25%
-  .idltorun_stp_le = 8, //0.25%
-            // FRQ  MAP  BAT  TMP  TPS  AI1  AI2  SPD  AI3  AI4
-  .inpavnum = { 4,   4,   4,   8,   4,   4,   4,   8,   4,   4 }, //Number of averages for each input
-  .vent_delay = 0,
-  .vent_iacoff = 0,
-  .epas_iacoff = 0,
-  .vent_pwmsteps = 31, //number of PWM discretes for 5kHz with 20MHz quartz
-  .vent_minband = 2,
-  .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
-  .igntim_wrkmap = 0,  //0 - regular behaviour (separate maps for idling and working modes)
-
   //Fill knock zones map
   //600 720 840 990 1170 1380 1650 1950 2310 2730 3210 3840 4530 5370 6360 7500 (min-1)
   // -->
@@ -852,6 +824,35 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), //2  ^
  _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)  //1  |
 */
+
+  .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
+  .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
+  .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
+  .fi_enter_strokes = 5,  //5 strokes
+  .fi_leave_strokes = 5,  //5 strokes
+  .iac_cond_add = 15*2,    //+15%
+  .inj_max_pw = 31250,     //100ms
+  .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
+  .aircond_tps = TPS_MAGNITUDE(68.0), //68%
+  .idl_ve = ROUND(0*2048), //turned off
+  .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
+  .idl_ve_g = ROUND(0*2048), //turned off
+  .stbl_str_cnt = 10, //10 strokes
+  .knkclt_thrd = TEMPERATURE_MAGNITUDE(70.0), //70°C
+  .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
+  .heating_time = 100, //10 min
+  .idltorun_stp_en = 8, //0.25%
+  .idltorun_stp_le = 8, //0.25%
+            // FRQ  MAP  BAT  TMP  TPS  AI1  AI2  SPD  AI3  AI4
+  .inpavnum = { 4,   4,   4,   8,   4,   4,   4,   8,   4,   4 }, //Number of averages for each input
+  .vent_delay = 0,
+  .vent_iacoff = 0,
+  .epas_iacoff = 0,
+  .vent_pwmsteps = 31, //number of PWM discretes for 5kHz with 20MHz quartz
+  .vent_minband = 2,
+  .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
+  .igntim_wrkmap = 0,  //0 - regular behaviour (separate maps for idling and working modes)
+  .shift_igntim = 0,
 
   /**reserved bytes*/
   {0}

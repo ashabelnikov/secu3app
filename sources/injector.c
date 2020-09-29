@@ -605,7 +605,7 @@ void inject_calc_fuel_flow(void)
 
  //calculate value of Nsi variable (Nsi - number of simultaneously working injectors)
  uint8_t Nsi = d.param.ckps_engine_cyl; //for [simultaneous] or [full sequential without cam sensor on the odd-cylinder num. engines]
- if (inj.cfg == INJCFG_THROTTLEBOBY)
+ if (inj.cfg == INJCFG_THROTTLEBODY)
   Nsi = 1; //only single injector works simultaneously
  else if (inj.cfg == INJCFG_2BANK_ALTERN)
   Nsi = Nsi >> 1; // = Ncyl / 2

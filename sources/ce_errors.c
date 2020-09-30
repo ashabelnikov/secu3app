@@ -37,6 +37,7 @@
 #include "ioconfig.h"
 #include "knock.h"
 #include "magnitude.h"
+#include "pwrrelay.h"
 #include "suspendop.h"
 #include "tables.h"  //for ce_sett_t type
 #include "vstimer.h"
@@ -90,9 +91,12 @@ void check(ce_sett_t _PGM *cesd)
  //If error of CKP sensor was, then set corresponding bit of error
  if (ckps_is_error())
  {
-  //ignore error in case of stall of an engine
-  if (!(((d.st_block) && (d.sens.inst_frq < d.param.starter_off)) || (d.sens.inst_frq < 30)))
-   ce_set_error(ECUERROR_CKPS_MALFUNCTION);
+  if (pwrrelay_get_state()) //set error only if power is on
+  {
+   //ignore error in case of stall of an engine
+   if (!(((d.st_block) && (d.sens.inst_frq < d.param.starter_off)) || (d.sens.inst_frq < 30)))
+    ce_set_error(ECUERROR_CKPS_MALFUNCTION);
+  }
   ckps_reset_error();
  }
  else
@@ -103,7 +107,10 @@ void check(ce_sett_t _PGM *cesd)
 #ifdef PHASE_SENSOR
  if (cams_is_error())
  {
-  ce_set_error(ECUERROR_CAMS_MALFUNCTION);
+  if (pwrrelay_get_state()) //set error only if power is on
+  {
+   ce_set_error(ECUERROR_CAMS_MALFUNCTION);
+  }
   cams_reset_error();
  }
  else

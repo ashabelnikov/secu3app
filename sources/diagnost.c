@@ -324,6 +324,7 @@ void diagnost_process(void)
  TIMSK0&=~(_BV(OCIE0A)|_BV(OCIE0B)|_BV(TOIE0));
  TIMSK1&=~(_BV(ICIE1)|_BV(OCIE1A)|_BV(OCIE1B)|_BV(TOIE1));
  TIMSK2&=~(_BV(OCIE2A)|_BV(OCIE2B));
+ TIMSK3&=~(_BV(OCIE3A)|_BV(OCIE3B)|_BV(TOIE3));
 
  //Disable external interrupts
  EIMSK&=  ~(_BV(INT0) | _BV(INT1) | _BV(INT2));

@@ -39,6 +39,7 @@
 #include "ufcodes.h"
 #include "wdt.h"
 #include "ioconfig.h"
+#include "vstimer.h"
 
 
 #ifndef SECU3T //---SECU-3i---

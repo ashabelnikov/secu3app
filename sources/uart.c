@@ -1597,6 +1597,9 @@ uint8_t uart_recept_packet(void)
 #ifdef DIAGNOSTICS
   case DIAGOUT_DAT:
    d.diag_out = recept_i32h();
+   d.diag_frq = recept_i16h(); //frequency
+   d.diag_duty = recept_i8h(); //duty
+   d.diag_chan = recept_i8h(); //selected channel (=0 no selection)
    break;
 #endif
 

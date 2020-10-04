@@ -44,4 +44,16 @@ void pwm2_control(void);
  */
 void pwm2_set_pwmfrq(uint8_t ch, uint16_t period);
 
+#ifdef DIAGNOSTICS
+/** Set I/O mode for 2nd channel. Used by diagnostics
+ * \param iomode I/O mode to be set, =255 - no output selected
+ */
+void pwm2_set_diag_iomode(uint8_t iomode);
+
+/**Set PWM duty for specified channel
+ * \param ch Number of channel to be configured (0 or 1)
+ * \param duty 8-bit PWM duty value (0...255)
+ */
+void pwm2_set_duty8(uint8_t ch, uint8_t duty);
+#endif
 #endif //_PWM2_H_

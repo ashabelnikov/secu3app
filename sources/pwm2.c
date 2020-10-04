@@ -37,6 +37,50 @@
 #include "vstimer.h"
 #include "ioconfig.h"
 
+#ifndef SECU3T
+/**See ioconfig.c for more information*/
+extern uint8_t spi_PORTB;
+#endif
+
+/**Turn on PWM channel (fast version)
+ * This is redundant definitions (see ioconfig.c), but it is opportunity to
+ * speed up corresponding ISR
+ */
+#ifdef SECU3T
+ #define PWMx_TURNON_F(ch) switch(pwm2.iomode[ch]) \
+ { \
+  case 0: /*ADD_O1*/ \
+   CLEARBIT(PORTC, PC5); \
+   break; \
+  case 1: /*ADD_O2*/ \
+   CLEARBIT(PORTA, PA4); \
+   break; \
+  case 2: /*BL*/ \
+   SETBIT(PORTC, PC3); \
+   break; \
+  case 3: /*DE*/ \
+   SETBIT(PORTC, PC2); \
+   break; \
+ }
+#else //SECU-3i
+ #define PWMx_TURNON_F(ch) switch(pwm2.iomode[ch]) \
+ { \
+  case 0: /*IGN_O5*/ \
+   CLEARBIT(PORTC, PC5); \
+   break; \
+  case 1: /*INJ_O5*/ \
+   SETBIT(PORTB, PB0); \
+   break; \
+  case 2: /*BL*/ \
+   SETBIT(PORTC, PC3); \
+   break; \
+  case 3: /*DE*/ \
+   SETBIT(PORTC, PC2); \
+   break; \
+ }
+#endif
+
+#ifdef DIAGNOSTICS
 /**Turn on PWM channel
  * This is redundant definitions (see ioconfig.c), but it is opportunity to
  * speed up corresponding ISR
@@ -56,6 +100,34 @@
   case 3: /*DE*/ \
    SETBIT(PORTC, PC2); \
    break; \
+  /*following cases are used only by diagnistics: */ \
+  case 4: /*IGN_OUT1*/ \
+   CLEARBIT(PORTD, PD4); \
+   break; \
+  case 5: /*IGN_OUT2*/ \
+   CLEARBIT(PORTD, PD5); \
+   break; \
+  case 6: /*IGN_OUT3*/ \
+   CLEARBIT(PORTC, PC0); \
+   break; \
+  case 7: /*IGN_OUT4*/ \
+   CLEARBIT(PORTC, PC1); \
+   break; \
+  case 8: /*ECF*/ \
+   CLEARBIT(PORTD, PD7); \
+   break; \
+  case 9: /*CE*/ \
+   CLEARBIT(PORTB, PB2); \
+   break; \
+  case 10: /*ST_BLOCK*/ \
+   CLEARBIT(PORTB, PB1); \
+   break; \
+  case 11: /*IE - high side output*/ \
+   SETBIT(PORTB, PB0); \
+   break; \
+  case 12: /*FE - high side output*/ \
+   SETBIT(PORTC, PC7); \
+   break; \
  }
 #else //SECU-3i
  #define PWMx_TURNON(ch) switch(pwm2.iomode[ch]) \
@@ -72,9 +144,105 @@
   case 3: /*DE*/ \
    SETBIT(PORTC, PC2); \
    break; \
+  /*following cases are used only by diagnistics: */ \
+  case 4: /*IGN_O1*/ \
+   CLEARBIT(PORTD, PD4); \
+   break; \
+  case 5: /*IGN_O2*/ \
+   CLEARBIT(PORTD, PD5); \
+   break; \
+  case 6: /*IGN_O3*/ \
+   CLEARBIT(PORTC, PC0); \
+   break; \
+  case 7: /*IGN_O4*/ \
+   CLEARBIT(PORTC, PC1); \
+   break; \
+  case 8: /*INJ_O1*/ \
+   SETBIT(PORTB, PB1); \
+   break; \
+  case 9: /*INJ_O2*/ \
+   SETBIT(PORTC, PC6); \
+   break; \
+  case 10: /*INJ_O3*/ \
+   SETBIT(PORTB, PB2); \
+   break; \
+  case 11: /*INJ_O4*/ \
+   SETBIT(PORTC, PC7); \
+   break; \
+  case 12: /*ECF*/ \
+   SETBIT(PORTD, PD7); \
+   break; \
+  case 13: /*TACH_O*/ \
+   SETBIT(PORTC, PC4); \
+   break; \
+  case 14: /*STBL_O*/ \
+   SETBIT(spi_PORTB, 1); \
+   break; \
+  case 15: /*CEL_O*/ \
+   SETBIT(spi_PORTB, 5); \
+   break; \
+  case 16: /*FPMP_O*/ \
+   SETBIT(spi_PORTB, 3); \
+   break; \
+  case 17: /*PWRR_O*/ \
+   SETBIT(spi_PORTB, 2); \
+   break; \
+  case 18: /*EVAP_O*/ \
+   SETBIT(spi_PORTB, 6); \
+   break; \
+  case 19: /*O2SH_O*/ \
+   SETBIT(spi_PORTB, 7); \
+   break; \
+  case 20: /*COND_O*/ \
+   SETBIT(spi_PORTB, 4); \
+   break; \
+  case 21: /*ADD_O2*/ \
+   SETBIT(spi_PORTB, 0); \
+   break; \
  }
 #endif
 
+#endif //DIAGNOSTICS
+
+/**Turn off PWM channel (fast version)
+ * This is redundant definitions (see ioconfig.c), but it is opportunity to
+ * speed up corresponding ISR
+ */
+#ifdef SECU3T
+ #define PWMx_TURNOFF_F(ch) switch(pwm2.iomode[ch]) \
+ { \
+  case 0: /*ADD_O1*/ \
+   SETBIT(PORTC, PC5); \
+   break; \
+  case 1: /*ADD_O2*/ \
+   SETBIT(PORTA, PA4); \
+   break; \
+  case 2: /*BL*/ \
+   CLEARBIT(PORTC, PC3); \
+   break; \
+  case 3: /*DE*/ \
+   CLEARBIT(PORTC, PC2); \
+   break; \
+ }
+#else //SECU-3i
+ #define PWMx_TURNOFF_F(ch) switch(pwm2.iomode[ch]) \
+ { \
+  case 0: /*IGN_O5*/ \
+   SETBIT(PORTC, PC5); \
+   break; \
+  case 1: /*INJ_O5*/ \
+   CLEARBIT(PORTB, PB0); \
+   break; \
+  case 2: /*BL*/ \
+   CLEARBIT(PORTC, PC3); \
+   break; \
+  case 3: /*DE*/ \
+   CLEARBIT(PORTC, PC2); \
+   break; \
+ }
+#endif
+
+#ifdef DIAGNOSTICS
 /**Turn off PWM channel
  * This is redundant definitions (see ioconfig.c), but it is opportunity to
  * speed up corresponding ISR
@@ -94,6 +262,34 @@
   case 3: /*DE*/ \
    CLEARBIT(PORTC, PC2); \
    break; \
+  /*following cases are used only by diagnistics: */ \
+  case 4: /*IGN_OUT1*/ \
+   SETBIT(PORTD, PD4); \
+   break; \
+  case 5: /*IGN_OUT2*/ \
+   SETBIT(PORTD, PD5); \
+   break; \
+  case 6: /*IGN_OUT3*/ \
+   SETBIT(PORTC, PC0); \
+   break; \
+  case 7: /*IGN_OUT4*/ \
+   SETBIT(PORTC, PC1); \
+   break; \
+  case 8: /*ECF*/ \
+   SETBIT(PORTD, PD7); \
+   break; \
+  case 9: /*CE*/ \
+   SETBIT(PORTB, PB2); \
+   break; \
+  case 10: /*ST_BLOCK*/ \
+   SETBIT(PORTB, PB1); \
+   break; \
+  case 11: /*IE - high side output*/ \
+   CLEARBIT(PORTB, PB0); \
+   break; \
+  case 12: /*FE - high side output*/ \
+   CLEARBIT(PORTC, PC7); \
+   break; \
  }
 #else //SECU-3i
  #define PWMx_TURNOFF(ch) switch(pwm2.iomode[ch]) \
@@ -110,8 +306,65 @@
   case 3: /*DE*/ \
    CLEARBIT(PORTC, PC2); \
    break; \
+  /*following cases are used only by diagnistics: */ \
+  case 4: /*IGN_O1*/ \
+   SETBIT(PORTD, PD4); \
+   break; \
+  case 5: /*IGN_O2*/ \
+   SETBIT(PORTD, PD5); \
+   break; \
+  case 6: /*IGN_O3*/ \
+   SETBIT(PORTC, PC0); \
+   break; \
+  case 7: /*IGN_O4*/ \
+   SETBIT(PORTC, PC1); \
+   break; \
+  case 8: /*INJ_O1*/ \
+   CLEARBIT(PORTB, PB1); \
+   break; \
+  case 9: /*INJ_O2*/ \
+   CLEARBIT(PORTC, PC6); \
+   break; \
+  case 10: /*INJ_O3*/ \
+   CLEARBIT(PORTB, PB2); \
+   break; \
+  case 11: /*INJ_O4*/ \
+   CLEARBIT(PORTC, PC7); \
+   break; \
+  case 12: /*ECF*/ \
+   CLEARBIT(PORTD, PD7); \
+   break; \
+  case 13: /*TACH_O*/ \
+   CLEARBIT(PORTC, PC4); \
+   break; \
+  case 14: /*STBL_O*/ \
+   CLEARBIT(spi_PORTB, 1); \
+   break; \
+  case 15: /*CEL_O*/ \
+   CLEARBIT(spi_PORTB, 5); \
+   break; \
+  case 16: /*FPMP_O*/ \
+   CLEARBIT(spi_PORTB, 3); \
+   break; \
+  case 17: /*PWRR_O*/ \
+   CLEARBIT(spi_PORTB, 2); \
+   break; \
+  case 18: /*EVAP_O*/ \
+   CLEARBIT(spi_PORTB, 6); \
+   break; \
+  case 19: /*O2SH_O*/ \
+   CLEARBIT(spi_PORTB, 7); \
+   break; \
+  case 20: /*COND_O*/ \
+   CLEARBIT(spi_PORTB, 4); \
+   break; \
+  case 21: /*ADD_O2*/ \
+   CLEARBIT(spi_PORTB, 0); \
+   break; \
  }
 #endif
+
+#endif //DIAGNOSTICS
 
 /**Describes interal state veriables */
 typedef struct
@@ -212,13 +465,13 @@ ISR(TIMER3_COMPA_vect)
 {
  if (0 == pwm2.pwm_state[0])
  { //start active part
-  PWMx_TURNON(0);
+  PWMx_TURNON_F(0); //<--use fast version
   OCR3A = TCNT3 + pwm2.pwm_duty_1[0];
   ++pwm2.pwm_state[0];
  }
  else
  { //start passive part
-  PWMx_TURNOFF(0);
+  PWMx_TURNOFF_F(0); //<--use fast version
   OCR3A = TCNT3 + pwm2.pwm_duty_2[0];
   --pwm2.pwm_state[0];
  }
@@ -229,13 +482,21 @@ ISR(TIMER3_COMPB_vect)
 {
  if (0 == pwm2.pwm_state[1])
  { //start active part
+#ifdef DIAGNOSTICS
   PWMx_TURNON(1);
+#else
+  PWMx_TURNON_F(1); //<--use fast version
+#endif
   OCR3B = TCNT3 + pwm2.pwm_duty_1[1];
   ++pwm2.pwm_state[1];
  }
  else
  { //start passive part
+#ifdef DIAGNOSTICS
   PWMx_TURNOFF(1);
+#else
+  PWMx_TURNOFF_F(1); //<--use fast version
+#endif
   OCR3B = TCNT3 + pwm2.pwm_duty_2[1];
   --pwm2.pwm_state[1];
  }
@@ -245,7 +506,11 @@ ISR(TIMER3_COMPB_vect)
  * \param ch Number of channel to be configured (0 or 1)
  * \param duty 8-bit PWM duty value (0...255)
  */
+#ifdef DIAGNOSTICS
+void pwm2_set_duty8(uint8_t ch, uint8_t duty)
+#else
 static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
+#endif
 {
  uint16_t duty_1 = ((uint32_t)duty * pwm2.pwm_steps[ch] * 16) >> 12;
  uint16_t duty_2 = pwm2.pwm_steps[ch] - duty_1;
@@ -265,7 +530,11 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
    TIMSK3&=~_BV(OCIE3B); //disable interrupt for ch1
    _ENABLE_INTERRUPT();
   }
+#ifdef DIAGNOSTICS
   PWMx_TURNOFF(ch);      //fully OFF
+#else
+  PWMx_TURNOFF_F(ch);    //fully OFF, fast version
+#endif
  }
  else if (duty == 255)
  {
@@ -281,7 +550,11 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
    TIMSK3&=~_BV(OCIE3B); //disable interrupt for ch1
    _ENABLE_INTERRUPT();
   }
+#ifdef DIAGNOSTICS
   PWMx_TURNON(ch);       //fully ON
+#else
+  PWMx_TURNON_F(ch);     //fully ON, fast version
+#endif
  }
  else
  {
@@ -317,7 +590,7 @@ static void pwm2_set_fl_cons(void)
   _DISABLE_INTERRUPT();
    TIMSK3&=~_BV(OCIE3A);  //disable interrupt for COMPA
   _ENABLE_INTERRUPT();
-   PWMx_TURNOFF(0);      //fully OFF
+   PWMx_TURNOFF_F(0);     //fully OFF
  }
  else
  { //produce fuel consumption signal
@@ -356,3 +629,10 @@ void pwm2_set_pwmfrq(uint8_t ch, uint16_t period)
  //78125 = 312500/4; 4 = 2^2
  pwm2.pwm_steps[ch] = ((uint32_t)(78125UL * period)) >> (19-2);
 }
+
+#ifdef DIAGNOSTICS
+void pwm2_set_diag_iomode(uint8_t iomode)
+{
+ pwm2.iomode[1] = iomode;
+}
+#endif

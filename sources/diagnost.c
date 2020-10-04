@@ -39,7 +39,20 @@
 #include "ufcodes.h"
 #include "wdt.h"
 #include "ioconfig.h"
+#include "pwm2.h"
 
+#ifdef SECU3T
+/**Look up table for recoding of number of channel 
+ * See PWMx_TURNON/PWMx_TURNOFF macro in pwm2.c for more information
+ */
+PGM_DECLARE(uint8_t iomode_id[13+1]) = {255, 4, 5, 6, 7, 11, 12, 8, 9, 10, 0, 1, 2, 3};
+#else //SECU-3i
+
+/**Look up table for recoding of number of channel
+  * See PWMx_TURNON/PWMx_TURNOFF macro in pwm2.c for more information
+  */
+PGM_DECLARE(uint8_t iomode_id[22+1]) = {255, 4, 5, 6, 7, 0, 12, 8, 9, 10, 11, 1, 2, 3, 14, 15, 16, 17, 18, 19, 20, 21, 13};
+#endif
 
 #ifndef SECU3T //---SECU-3i---
 extern uint8_t spi_PORTB;
@@ -161,95 +174,143 @@ void init_digital_outputs(void)
  */
 void set_outputs(uint32_t o)
 {
+ uint8_t diagch = d.diag_chan - 1; //if 0, then 255
 
 #ifdef SECU3T
 
- WRITEBIT(PORTD, PD4, (o & _OBV(0)));  //IGN_OUT1
- WRITEBIT(PORTD, PD5, (o & _OBV(1)));  //IGN_OUT2
- WRITEBIT(PORTC, PC0, (o & _OBV(2)));  //IGN_OUT3
- WRITEBIT(PORTC, PC1, (o & _OBV(3)));  //IGN_OUT4
- WRITEBIT(PORTB, PB0, (o & _OBV(4)));  //IE
- WRITEBIT(PORTC, PC7, (o & _OBV(5)));  //FE
+ if (diagch != 0)
+  {WRITEBIT(PORTD, PD4, (o & _OBV(0)));}  //IGN_OUT1
+ if (diagch != 1)
+  {WRITEBIT(PORTD, PD5, (o & _OBV(1)));}  //IGN_OUT2
+ if (diagch != 2)
+  {WRITEBIT(PORTC, PC0, (o & _OBV(2)));}  //IGN_OUT3
+ if (diagch != 3)
+  {WRITEBIT(PORTC, PC1, (o & _OBV(3)));}  //IGN_OUT4
+ if (diagch != 4)
+  {WRITEBIT(PORTB, PB0, (o & _OBV(4)));}  //IE
+ if (diagch != 5)
+  {WRITEBIT(PORTC, PC7, (o & _OBV(5)));}  //FE
 
 #ifdef REV9_BOARD
- WRITEBIT(PORTD, PD7, (o & _OBV(6)));  //ECF
+ if (diagch != 6)
+ {WRITEBIT(PORTD, PD7, (o & _OBV(6)));}  //ECF
 #else
- WRITEBIT(PORTD, PD7,!(o & _OBV(6)));
+ if (diagch != 6)
+ {WRITEBIT(PORTD, PD7,!(o & _OBV(6)));}
 #endif
 
 #ifdef REV9_BOARD
- WRITEBIT(PORTB, PB2, (o & _OBV(7)));  //CE
+ if (diagch != 7)
+  {WRITEBIT(PORTB, PB2, (o & _OBV(7)));}  //CE
 #else
- WRITEBIT(PORTB, PB2,!(o & _OBV(7)));
+ if (diagch != 7)
+  {WRITEBIT(PORTB, PB2,!(o & _OBV(7)));}
 #endif
 
  //ST_BLOCK
 #ifdef REV9_BOARD
- WRITEBIT(PORTB, PB1, (o & _OBV(8))); //ST_BLOCK
+ if (diagch != 8)
+  {WRITEBIT(PORTB, PB1, (o & _OBV(8)));} //ST_BLOCK
 #else
- WRITEBIT(PORTB, PB1,!(o & _OBV(8)));
+ if (diagch != 8)
+  {WRITEBIT(PORTB, PB1,!(o & _OBV(8)));}
 #endif
 
- WRITEBIT(PORTC, PC5, (o & _OBV(9)));  //ADD_IO1
- WRITEBIT(PORTA, PA4, (o & _OBV(10)));  //ADD_IO2
+ if (diagch != 9)
+  {WRITEBIT(PORTC, PC5, (o & _OBV(9)));}  //ADD_IO1
+ if (diagch != 10)
+  {WRITEBIT(PORTA, PA4, (o & _OBV(10)));}  //ADD_IO2
 
  //BL
- if (o & _OBV(12)) {
-  WRITEBIT(PORTC, PC3, (o & _OBV(11))); }
- else {
-  WRITEBIT(PORTC, PC3, 1); }             //pull up input
+ if (diagch != 11)
+ {
+  if (o & _OBV(12)) {
+   WRITEBIT(PORTC, PC3, (o & _OBV(11))); }
+  else {
+   WRITEBIT(PORTC, PC3, 1); }             //pull up input
+ }
  WRITEBIT(DDRC, DDC3, (o & _OBV(12)));   //select mode: input/output
 
  //DE
- if (o & _OBV(14)) {
-  WRITEBIT(PORTC, PC2, (o & _OBV(13))); }
- else {
-  WRITEBIT(PORTC, PC2, 1); }             //pull up input
+ if (diagch != 12)
+ {
+  if (o & _OBV(14)) {
+   WRITEBIT(PORTC, PC2, (o & _OBV(13))); }
+  else {
+   WRITEBIT(PORTC, PC2, 1); }             //pull up input
+ }
  WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
 
 #else //---SECU-3i---
 
- WRITEBIT(PORTD, PD4, !(o & _OBV(0)));  //IGN_O1
- WRITEBIT(PORTD, PD5, !(o & _OBV(1)));  //IGN_O2
- WRITEBIT(PORTC, PC0, !(o & _OBV(2)));  //IGN_O3
- WRITEBIT(PORTC, PC1, !(o & _OBV(3)));  //IGN_O4
- WRITEBIT(PORTC, PC5, !(o & _OBV(4)));  //IGN_O5
- WRITEBIT(PORTD, PD7, (o & _OBV(5)));  //ECF
- WRITEBIT(PORTB, PB1, (o & _OBV(6)));  //INJ_O1
- WRITEBIT(PORTC, PC6, (o & _OBV(7)));  //INJ_O2
- WRITEBIT(PORTB, PB2, (o & _OBV(8)));  //INJ_O3
- WRITEBIT(PORTC, PC7, (o & _OBV(9)));  //INJ_O4
- WRITEBIT(PORTB, PB0, (o & _OBV(10))); //INJ_O5
+ if (diagch != 0)
+  {WRITEBIT(PORTD, PD4, !(o & _OBV(0)));}  //IGN_O1
+ if (diagch != 1)
+  {WRITEBIT(PORTD, PD5, !(o & _OBV(1)));}  //IGN_O2
+ if (diagch != 2)
+  {WRITEBIT(PORTC, PC0, !(o & _OBV(2)));}  //IGN_O3
+ if (diagch != 3)
+  {WRITEBIT(PORTC, PC1, !(o & _OBV(3)));}  //IGN_O4
+ if (diagch != 4)
+  {WRITEBIT(PORTC, PC5, !(o & _OBV(4)));}  //IGN_O5
+ if (diagch != 5)
+  {WRITEBIT(PORTD, PD7, (o & _OBV(5)));}  //ECF
+ if (diagch != 6)
+  {WRITEBIT(PORTB, PB1, (o & _OBV(6)));}  //INJ_O1
+ if (diagch != 7)
+  {WRITEBIT(PORTC, PC6, (o & _OBV(7)));}  //INJ_O2
+ if (diagch != 8)
+  {WRITEBIT(PORTB, PB2, (o & _OBV(8)));}  //INJ_O3
+ if (diagch != 9)
+  {WRITEBIT(PORTC, PC7, (o & _OBV(9)));}  //INJ_O4
+ if (diagch != 10)
+  {WRITEBIT(PORTB, PB0, (o & _OBV(10)));} //INJ_O5
 
  //BL
- if (o & _OBV(12)) {
-  WRITEBIT(PORTC, PC3, (o & _OBV(11))); }
- else {
-  WRITEBIT(PORTC, PC3, 1); }             //pull up input
+ if (diagch != 11)
+ {
+  if (o & _OBV(12)) {
+   WRITEBIT(PORTC, PC3, (o & _OBV(11))); }
+  else {
+   WRITEBIT(PORTC, PC3, 1); }             //pull up input
+ }
  WRITEBIT(DDRC, DDC3, (o & _OBV(12)));   //select mode: input/output
 
  //DE
- if (o & _OBV(14)) {
-  WRITEBIT(PORTC, PC2, (o & _OBV(13))); }
- else {
-  WRITEBIT(PORTC, PC2, 1); }             //pull up input
+ if (diagch != 12)
+ {
+  if (o & _OBV(14)) {
+   WRITEBIT(PORTC, PC2, (o & _OBV(13))); }
+  else {
+   WRITEBIT(PORTC, PC2, 1); }             //pull up input
+ }
  WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
 
- WRITEBIT(spi_PORTB, 1, (o & _OBV(15))); //STBL_O
- WRITEBIT(spi_PORTB, 5, (o & _OBV(16))); //CEL_O
- WRITEBIT(spi_PORTB, 3, (o & _OBV(17))); //FPMP_O
- WRITEBIT(spi_PORTB, 2, (o & _OBV(18))); //PWRR_O
- WRITEBIT(spi_PORTB, 6, (o & _OBV(19))); //EVAP_O
- WRITEBIT(spi_PORTB, 7, (o & _OBV(20))); //O2SH_O
- WRITEBIT(spi_PORTB, 4, (o & _OBV(21))); //COND_O
- WRITEBIT(spi_PORTB, 0, (o & _OBV(22))); //ADD_O2
+ if (diagch != 13)
+  {WRITEBIT(spi_PORTB, 1, (o & _OBV(15)));} //STBL_O
+ if (diagch != 14)
+  {WRITEBIT(spi_PORTB, 5, (o & _OBV(16)));} //CEL_O
+ if (diagch != 15)
+  {WRITEBIT(spi_PORTB, 3, (o & _OBV(17)));} //FPMP_O
+ if (diagch != 16)
+  {WRITEBIT(spi_PORTB, 2, (o & _OBV(18)));} //PWRR_O
+ if (diagch != 17)
+  {WRITEBIT(spi_PORTB, 6, (o & _OBV(19)));} //EVAP_O
+ if (diagch != 18)
+  {WRITEBIT(spi_PORTB, 7, (o & _OBV(20)));} //O2SH_O
+ if (diagch != 19)
+  {WRITEBIT(spi_PORTB, 4, (o & _OBV(21)));} //COND_O
+ if (diagch != 20)
+  {WRITEBIT(spi_PORTB, 0, (o & _OBV(22)));} //ADD_O2
 
  //TACH_O
- if (o & _OBV(24))
+ if (diagch != 21)
  {
-  WRITEBIT(PORTC, PC4, (o & _OBV(23)));
+  if (o & _OBV(24))
+  {
+   WRITEBIT(PORTC, PC4, (o & _OBV(23)));
+  }
  }
-
 #endif
 
 }
@@ -306,6 +367,8 @@ void diagnost_process(void)
 {
  if (0==diag.diag_started)
   return; //normal mode
+
+ pwm2_set_diag_iomode(255); //disable I/O for ch1
 
  //We are in diagnostic mode
  sop_set_operation(SOP_SEND_NC_ENTER_DIAG);
@@ -423,6 +486,20 @@ void diagnost_process(void)
 
    //outputs
    set_outputs(d.diag_out);
+
+   //set parameters for testing of outputs
+   if (d.diag_chan > 0)
+   {
+    pwm2_set_diag_iomode(PGM_GET_BYTE(&iomode_id[d.diag_chan])); //use look up table to recode IDs of outputs
+    pwm2_set_pwmfrq(1, d.diag_frq); //ch1
+    pwm2_set_duty8(1, d.diag_duty); //ch1
+   }
+   else
+   {
+    _DISABLE_INTERRUPT();
+    TIMSK3&=~_BV(OCIE3B); //disable interrupt for ch1
+    _ENABLE_INTERRUPT();
+   }
   }
   else
    --diag.skip_loops;

@@ -79,6 +79,9 @@ struct ecudata_t d =
 #ifdef DIAGNOSTICS
  .diag_inp = {0},
  .diag_out = 0,
+ .diag_frq = 0,
+ .diag_duty = 0,
+ .diag_chan = 0,
 #endif
 
  .choke_testing = 0,

@@ -233,6 +233,10 @@ typedef struct ecudata_t
 #ifdef DIAGNOSTICS
  diagnost_inp_t diag_inp;                //!< diagnostic mode: values of inputs
  uint32_t       diag_out;                //!< diagnostic mode: values of outputs
+
+ uint16_t       diag_frq;                //!< PWM frequency, value = 1/f * 524288 (2.5...5000 Hz)
+ uint8_t        diag_duty;               //!< duty 0...255 (0...100%)
+ uint8_t        diag_chan;               //!< index of selected output for testing (=0 means no selection)
 #endif
 
  uint8_t choke_testing;                  //!< Used to indcate that choke testing is on/off (so it is applicable only if SM_CONTROL compilation option is used)

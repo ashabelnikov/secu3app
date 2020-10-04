@@ -307,6 +307,9 @@ void diagnost_process(void)
  if (0==diag.diag_started)
   return; //normal mode
 
+ //turn off unnecessary stuff in vstimer.c module
+ s_timer_enter_diag();
+
  //We are in diagnostic mode
  sop_set_operation(SOP_SEND_NC_ENTER_DIAG);
 

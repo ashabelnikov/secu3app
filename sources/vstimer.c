@@ -104,12 +104,18 @@ extern volatile uint8_t vent_duty;
 extern uint8_t vent_soft_cnt;
 #endif
 
+static volatile uint8_t diagnostics = 0;   //!< diagnostics flag
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
 ISR(TIMER2_OVF_vect)
 {
  _ENABLE_INTERRUPT();
+
+#ifdef DIAGNOSTICS
+if (!diagnostics) {
+#endif
 
 #ifdef SM_CONTROL
  if (sm_divider > 0)
@@ -182,16 +188,23 @@ ISR(TIMER2_OVF_vect)
   IOCFG_SET(IOP_FE, 0); //OFF
 #endif
 
+#ifdef DIAGNOSTICS
+}
+#endif
+
 //PWM for canister purge valve control (~19 Hz, 32 discretes)
 #if defined(EVAP_CONTROL) && !defined(SECU3T)
- evap_soft_cnt = (evap_soft_cnt + 1) & 0x1F; //increment modulo 32
- if (evap_soft_cnt == 0)
+ if (evap_duty)
  {
-  evap_comp = evap_duty;
-  IOCFG_SET(IOP_EVAP_O, 1); //ON
+  evap_soft_cnt = (evap_soft_cnt + 1) & 0x1F; //increment modulo 32
+  if (evap_soft_cnt == 0)
+  {
+   evap_comp = evap_duty;
+   IOCFG_SET(IOP_EVAP_O, 1); //ON
+  }
+  if (evap_comp == evap_soft_cnt)
+   IOCFG_SET(IOP_EVAP_O, 0); //OFF
  }
- if (evap_comp == evap_soft_cnt)
-  IOCFG_SET(IOP_EVAP_O, 0); //OFF
 #endif
 
 //Low frequency for cooling fan's PWM
@@ -259,3 +272,9 @@ uint16_t s_timer_gtc(void)
  return result;
 }
 
+#ifdef DIAGNOSTICS
+void s_timer_enter_diag(void)
+{
+ diagnostics = 1;
+}
+#endif

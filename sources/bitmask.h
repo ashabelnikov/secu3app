@@ -41,6 +41,13 @@
 /** Write specified v value to y bit in the byte x */
 #define WRITEBIT(x, y, v) if (v)  SETBIT(x,y); else CLEARBIT(x, y);
 
+/** Write specified v value to y bit in the byte x (interrupt-safe)*/
+#define WRITEBIT_ATOM(x, y, v) { \
+ _BEGIN_ATOMIC_BLOCK(); \
+ if (v)  SETBIT(x,y); else CLEARBIT(x, y); \
+ _END_ATOMIC_BLOCK(); \
+ }
+
 #ifdef LITTLE_ENDIAN_DATA_FORMAT //little-endian data store format (Intel)
  #define _AB(src,rel) *(((unsigned char*)&(src)+(rel)))                 /**< Access Nth byte in variable */
 #else                            //big-endian data store format (Motorola)

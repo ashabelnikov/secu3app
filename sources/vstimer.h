@@ -84,6 +84,11 @@ extern volatile uint16_t sys_counter;
 /**Initialization of system timers */
 void s_timer_init(void);
 
+#ifdef DIAGNOSTICS
+/**Enter diagnostics compatible mode*/
+void s_timer_enter_diag(void);
+#endif
+
 //////////////////////////////////////////////////////////////////
 extern volatile s_timer8_t  send_packet_interval_counter;
 extern volatile s_timer8_t  force_measure_timeout_counter;

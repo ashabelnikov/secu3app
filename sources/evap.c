@@ -54,6 +54,8 @@ uint8_t evap_soft_cnt = 0;         //!< Counter for PWM
 /** Set canister purge valve's PWM duty */
 #define SET_EVAP_DUTY(v) { \
  evap_duty = (v); \
+ if (evap_duty == 0) \
+  IOCFG_SET(IOP_EVAP_O, 0); /*OFF*/ \
  }
 
 /**Define state variables */

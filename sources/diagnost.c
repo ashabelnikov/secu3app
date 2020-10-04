@@ -28,6 +28,7 @@
 
 #include "port/avrio.h"
 #include "port/intrinsic.h"
+#include "port/interrupt.h"
 #include "bitmask.h"
 #include "diagnost.h"
 #include "ecudata.h"
@@ -40,6 +41,7 @@
 #include "wdt.h"
 #include "ioconfig.h"
 #include "pwm2.h"
+#include "vstimer.h"
 
 #ifdef SECU3T
 /**Look up table for recoding of number of channel 
@@ -287,21 +289,21 @@ void set_outputs(uint32_t o)
  WRITEBIT(DDRC, DDC2, (o & _OBV(14)));   //select mode: input/output
 
  if (diagch != 13)
-  {WRITEBIT(spi_PORTB, 1, (o & _OBV(15)));} //STBL_O
+  WRITEBIT_ATOM(spi_PORTB, 1, (o & _OBV(15))); //STBL_O
  if (diagch != 14)
-  {WRITEBIT(spi_PORTB, 5, (o & _OBV(16)));} //CEL_O
+  WRITEBIT_ATOM(spi_PORTB, 5, (o & _OBV(16))); //CEL_O
  if (diagch != 15)
-  {WRITEBIT(spi_PORTB, 3, (o & _OBV(17)));} //FPMP_O
+  WRITEBIT_ATOM(spi_PORTB, 3, (o & _OBV(17))); //FPMP_O
  if (diagch != 16)
-  {WRITEBIT(spi_PORTB, 2, (o & _OBV(18)));} //PWRR_O
+  WRITEBIT_ATOM(spi_PORTB, 2, (o & _OBV(18))); //PWRR_O
  if (diagch != 17)
-  {WRITEBIT(spi_PORTB, 6, (o & _OBV(19)));} //EVAP_O
+  WRITEBIT_ATOM(spi_PORTB, 6, (o & _OBV(19))); //EVAP_O
  if (diagch != 18)
-  {WRITEBIT(spi_PORTB, 7, (o & _OBV(20)));} //O2SH_O
+  WRITEBIT_ATOM(spi_PORTB, 7, (o & _OBV(20))); //O2SH_O
  if (diagch != 19)
-  {WRITEBIT(spi_PORTB, 4, (o & _OBV(21)));} //COND_O
+  WRITEBIT_ATOM(spi_PORTB, 4, (o & _OBV(21))); //COND_O
  if (diagch != 20)
-  {WRITEBIT(spi_PORTB, 0, (o & _OBV(22)));} //ADD_O2
+  WRITEBIT_ATOM(spi_PORTB, 0, (o & _OBV(22))); //ADD_O2
 
  //TACH_O
  if (diagch != 21)
@@ -368,7 +370,11 @@ void diagnost_process(void)
  if (0==diag.diag_started)
   return; //normal mode
 
- pwm2_set_diag_iomode(255); //disable I/O for ch1
+ //turn off unnecessary stuff in vstimer.c module
+ s_timer_enter_diag();
+
+ //disable I/O for ch1 (see pwm2.c)
+ pwm2_set_diag_iomode(255);
 
  //We are in diagnostic mode
  sop_set_operation(SOP_SEND_NC_ENTER_DIAG);

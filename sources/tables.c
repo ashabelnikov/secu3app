@@ -853,6 +853,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
   .igntim_wrkmap = 0,  //0 - regular behaviour (separate maps for idling and working modes)
   .shift_igntim = 0,
+  .fldclr_start = 1,  //allowed
 
   /**reserved bytes*/
   {0}

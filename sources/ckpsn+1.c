@@ -135,7 +135,7 @@ typedef struct
 hallstate_t hall;                     //!< instance of state variables
 
 /** Arrange flags in the free I/O register
- *  note: may be not effective on other MCUs or even case bugs! Be aware.
+ *  note: may be not effective on other MCUs or even cause bugs! Be aware.
  */
 #define flags  GPIOR0                 //ATmega644 has one general purpose I/O register
 #define flags2 TWBR

@@ -203,7 +203,7 @@ ckpsstate_t ckps;                         //!< instance of state variables
 chanstate_t chanstate[IGN_CHANNELS_MAX];  //!< instance of array of channel's state variables
 
 /** Arrange flags in the free I/O register
- *  note: may be not effective on other MCUs or even case bugs! Be aware.
+ *  note: may be not effective on other MCUs or even cause bugs! Be aware.
  */
 #define flags  GPIOR0                  //ATmega644 has one general purpose I/O register
 #define flags2 TWBR

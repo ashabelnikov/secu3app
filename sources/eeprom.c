@@ -43,7 +43,7 @@ typedef struct
  uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ)
  uint16_t count;               //!< Number of bytes (количество байтов)
  uint8_t eews;                 //!< State of writing process (состояние процесса записи)
- uint8_t opcode;               //!< code of specific operation wich cased writing process
+ uint8_t opcode;               //!< code of specific operation which caused writing process
  uint8_t completed_opcode;     //!< will be equal to opcode after finish of process
 }eeprom_wr_desc_t;
 
@@ -87,14 +87,14 @@ uint8_t eeprom_is_idle(void)
  */
 ISR(EE_RDY_vect)
 {
- CLEARBIT(EECR, EERIE); //запрещаем прерывание от EEPROM
+ CLEARBIT(EECR, EERIE); //disable interrupt from EEPROM
  _ENABLE_INTERRUPT();
  switch(eewd.eews)
  {
-  case 0:   //КА остановлен
+  case 0:   //state machine is stopped
    break;
 
-  case 1:   //КА в процессе записи
+  case 1:   //state machine is in process of writing
    _DISABLE_INTERRUPT();
    EEAR = eewd.ee_addr;
    EEDR = *eewd.sram_addr;
@@ -109,7 +109,7 @@ ISR(EE_RDY_vect)
     eewd.eews = 1;
    break;
 
-  case 2:   //последний байт записан
+  case 2:   //last byte wrote
    EEAR=0x000;      //this will help to prevent corruption of EEPROM
    eewd.eews = 0;
    eewd.completed_opcode = eewd.opcode;

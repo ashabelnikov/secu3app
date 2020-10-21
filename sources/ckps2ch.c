@@ -58,6 +58,11 @@
 /**Maximum number of ignition channels */
 #define IGN_CHANNELS_MAX      8
 
+#ifdef SPLIT_ANGLE
+/**Offset for splitting of channels*/
+#define SPLIT_OFFSET 4
+#endif
+
 /** Barrier for detecting of missing teeth
  * e.g. for 60-2 crank wheel, p * 2.5
  *      for 36-1 crank wheel, p * 1.5
@@ -109,6 +114,10 @@
 #define F_SPSIGN     3                //!< Sign of the measured stroke period (time between TDCs)
 #ifdef PHASE_SENSOR
 #define F_CAMREF     4                //!< Specifies to use camshaft sensor as reference
+#endif
+#ifdef SPLIT_ANGLE
+ #define F_NTSCHA1   5                //!< indicates that it is necessary to set channel
+ #define F_CALTIM1   6                //!< Indicates that time calculation is started before the spark
 #endif
 
 /** State variables */
@@ -164,6 +173,12 @@ typedef struct
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
 
  volatile uint8_t TCNT0_H;            //!< For supplementing timer/counter 0 up to 16 bits
+
+#ifdef SPLIT_ANGLE
+ uint8_t  channel_mode1;              //!< determines which channel of the ignition to run at the moment
+ int16_t  advance_angle1;             //!< required adv.angle * ANGLE_MULTIPLIER
+ volatile int16_t advance_angle_buffered1;//!< buffered value of advance angle (to ensure correct latching)
+#endif
 }ckpsstate_t;
  
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -234,6 +249,17 @@ PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
      SETBIT(TIMSK1, OCIE1B);
 #endif
 
+#ifdef SPLIT_ANGLE
+/**Set T3 COMPA channel of timer. Note: we rely that timers 1 and 3 are synchronized!
+ * r Timer's register (TCNT3, TCNT1 or ICR1).
+ * v Time in tics of timer 1 after which event should fire
+ */
+#define SET_T3COMPA(r, v) \
+     OCR3A = (r) + (v); \
+     TIFR3 = _BV(OCF3A); \
+     SETBIT(TIMSK3, OCIE3A);
+#endif
+
 void ckps_init_state_variables(void)
 {
  _BEGIN_ATOMIC_BLOCK();
@@ -242,7 +268,13 @@ void ckps_init_state_variables(void)
  ckps.advance_angle = ckps.advance_angle_buffered = 0;
  ckps.starting_mode = 0;
  ckps.channel_mode = CKPS_CHANNEL_MODENA;
+#ifdef SPLIT_ANGLE
+ ckps.channel_mode1 = CKPS_CHANNEL_MODENA;
+#endif
  CLEARBIT(flags, F_NTSCHA);
+#ifdef SPLIT_ANGLE
+ CLEARBIT(flags2, F_NTSCHA1);
+#endif
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
@@ -250,6 +282,9 @@ void ckps_init_state_variables(void)
  CLEARBIT(flags2, F_CAMISS);
 #endif
  CLEARBIT(flags2, F_CALTIM);
+#ifdef SPLIT_ANGLE
+ CLEARBIT(flags2, F_CALTIM1);
+#endif
  CLEARBIT(flags2, F_SPSIGN);
 #ifdef FUEL_INJECT
  ckps.inj_chidx = 0;
@@ -287,6 +322,15 @@ void ckps_init_state(void)
  //enable input capture and Compare A interrupts of timer 1
  TIMSK1|= _BV(ICIE1);
 
+#ifdef SPLIT_ANGLE
+ TCCR3A = 0; //Normal port operation, OC3A/OC3B disconnected.
+
+ //note: it is also started in pwm2.c module
+ TCCR3B = _BV(CS31) | _BV(CS30); //start timer, clock  = 312.5 kHz
+
+ CLEARBIT(TIMSK3, OCIE3A); //compare interrupt A is disabled
+#endif
+
  _END_ATOMIC_BLOCK();
 }
 
@@ -296,6 +340,15 @@ void ckps_set_advance_angle(int16_t angle)
  ckps.advance_angle_buffered = angle;
  _END_ATOMIC_BLOCK();
 }
+
+#ifdef SPLIT_ANGLE
+void ckps_set_advance_angle1(int16_t angle)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ ckps.advance_angle_buffered1 = angle;
+ _END_ATOMIC_BLOCK();
+}
+#endif
 
 void ckps_init_ports(void)
 {
@@ -489,6 +542,10 @@ static void set_channels_ss(void)
    _DISABLE_INTERRUPT();
    chanstate[i].io_callback1 = chanstate[i].io_callback2 = IOCFG_CB(0);
    chanstate[i].output_state1 = chanstate[i].output_state2 = (i & 1) ? IGN_OUTPUTS_OFF_VAL : IGN_OUTPUTS_ON_VAL;
+#ifdef SPLIT_ANGLE
+   chanstate[i+SPLIT_OFFSET].io_callback1 = chanstate[i+SPLIT_OFFSET].io_callback2 = get_callback_ign(SPLIT_OFFSET);
+   chanstate[i+SPLIT_OFFSET].output_state1 = chanstate[i+SPLIT_OFFSET].output_state2 = (i & 1) ? IGN_OUTPUTS_OFF_VAL : IGN_OUTPUTS_ON_VAL;
+#endif
    _RESTORE_INTERRUPT(_t);
   }
  }
@@ -541,8 +598,17 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
  //unused channels must be turned off
  if (i > i_cyl_number)
+ {
+#ifdef SPLIT_ANGLE
+  for(i = i_cyl_number; i < SPLIT_OFFSET; ++i) //turn off channels in primiry group
+   ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
+  for(i = i_cyl_number + SPLIT_OFFSET; i < IGN_CHANNELS_MAX; ++i) //turn off channels on secondary group
+   ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
+#else
   for(i = i_cyl_number; i < IGN_CHANNELS_MAX; ++i)
    ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
+#endif
+ }
 
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.
@@ -685,12 +751,26 @@ void ckps_use_cam_ref_s(uint8_t i_camref)
 #endif
 
 /**Forces ignition spark if corresponding interrupt is pending*/
+#ifdef SPLIT_ANGLE
+#define force_pending_spark() \
+ if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)) && CHECKBIT(flags, F_IGNIEN))\
+ { \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(chanstate[ckps.channel_mode].output_state1); \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(chanstate[ckps.channel_mode].output_state2); \
+ } \
+ if ((TIFR3 & _BV(OCF3A)) && (CHECKBIT(flags2, F_CALTIM1)) && CHECKBIT(flags, F_IGNIEN)) \
+ { \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback1)(chanstate[ckps.channel_mode1].output_state1); \
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback2)(chanstate[ckps.channel_mode1].output_state2); \
+ }
+#else
 #define force_pending_spark() \
  if ((TIFR1 & _BV(OCF1A)) && (CHECKBIT(flags2, F_CALTIM)) && CHECKBIT(flags, F_IGNIEN))\
  { \
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback1)(chanstate[ckps.channel_mode].output_state1); \
   ((iocfg_pfn_set)chanstate[ckps.channel_mode].io_callback2)(chanstate[ckps.channel_mode].output_state2); \
  }
+#endif
 
 /**Interrupt handler for Compare/Match channel A of timer T1
  */
@@ -727,6 +807,29 @@ ISR(TIMER1_COMPA_vect)
 
  CLEARBIT(flags2, F_CALTIM); //we already output the spark, so calculation of time is finished
 }
+
+#ifdef SPLIT_ANGLE
+/**Interrupt handler for Compare/Match channel A of timer T3
+ */
+ISR(TIMER3_COMPA_vect)
+{
+ TIMSK3&= ~_BV(OCIE3A);//disable interrupt
+
+ //line of port in the low level, now set it into a high level - makes the igniter to stop 
+ //the accumulation of energy and close the transistor (spark)
+ if (CKPS_CHANNEL_MODENA == ckps.channel_mode1)
+  return; //none of channels selected
+
+ if (CHECKBIT(flags, F_IGNIEN)) //ignition disabled
+ {
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback1)(chanstate[ckps.channel_mode1].output_state1);
+  ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback2)(chanstate[ckps.channel_mode1].output_state2);
+ }
+
+ CLEARBIT(flags2, F_CALTIM1); //we already output the spark, so calculation of time is finished
+}
+#endif
+
 
 #ifdef FUEL_INJECT
 /**Interrupt handler for Compare/Match channel B of timer T1. Used for injection timing
@@ -839,10 +942,17 @@ static void process_ckps_cogs(void)
   if (ckps.cog == chanstate[i].cogs_latch)
   {
    ckps.channel_mode = i;                    //remember number of channel
+#ifdef SPLIT_ANGLE
+   ckps.channel_mode1 = i + SPLIT_OFFSET;    //remember number of channel
+   SETBIT(flags2, F_NTSCHA1);                //establish an indication that it is need to count advance angle
+#endif
    SETBIT(flags, F_NTSCHA);                  //establish an indication that it is need to count advance angle
    //start counting of advance angle
    ckps.current_angle = ckps.start_angle; // those same 66°
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)
+#ifdef SPLIT_ANGLE
+   ckps.advance_angle1 = ckps.advance_angle_buffered1; //advance angle with all the adjustments (say, 15°)
+#endif
    adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values
 #ifdef STROBOSCOPE
    if (0==i)
@@ -910,6 +1020,22 @@ static void process_ckps_cogs(void)
    SETBIT(flags2, F_CALTIM);  // Set indication that we begin to calculate the time
   }
  }
+
+#ifdef SPLIT_ANGLE
+ //Preparing to start the ignition for the current channel (if the right moment became)
+ if (CHECKBIT(flags2, F_NTSCHA1) && ckps.channel_mode1!= CKPS_CHANNEL_MODENA)
+ {
+  uint16_t diff = ckps.current_angle - ckps.advance_angle1;
+  if (diff <= (ckps.degrees_per_cog << 1))
+  {
+   //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
+   uint16_t delay = ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
+   SET_T3COMPA(ICR1, delay);
+   CLEARBIT(flags2, F_NTSCHA1); // For avoiding to enter into setup mode
+   SETBIT(flags2, F_CALTIM1);  // Set indication that we begin to calculate the time
+  }
+ }
+#endif
 
  //tooth passed - angle before TDC decriased (e.g 6° per tooth for 60-2).
  ckps.current_angle-= ckps.degrees_per_cog;

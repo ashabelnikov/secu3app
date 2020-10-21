@@ -168,7 +168,11 @@ typedef struct sensors_t
 
 typedef struct correct_t
 {
- int16_t curr_angle;                     //!< Current advance angle
+ int16_t curr_angle;                     //!< Current advance angle of 1st spark plug
+#ifdef SPLIT_ANGLE
+ int16_t split_angle;                    //!< Current value of split angle
+ int16_t curr_angle1;                    //!< Current advance angle of 2nd spark plug
+#endif
  int16_t knock_retard;                   //!< Correction of advance angle from knock detector
  int16_t idlreg_aac;                     //!< Idle regulator advance angle correction
  int16_t octan_aac;                      //!< Octane advance angle correction

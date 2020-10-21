@@ -347,6 +347,10 @@ void ignlogic_system_state_machine(void)
    d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
    d.airflow = 0;                                   //no "air flow" on cranking
 
+#ifdef SPLIT_ANGLE
+   d.corr.split_angle = 0;                          //no splitting during cranking
+#endif
+
 #ifdef FUEL_INJECT
 #ifdef GD_CONTROL
    if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
@@ -409,6 +413,10 @@ void ignlogic_system_state_machine(void)
    angle+=d.corr.idlreg_aac;
    d.corr.strt_aalt = AAV_NOTUSED;
 
+#ifdef SPLIT_ANGLE
+   d.corr.split_angle = split_function();        //calculate and store split angle value
+#endif
+
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
     fuel_calc();
@@ -458,6 +466,10 @@ void ignlogic_system_state_machine(void)
    //substract correction obtained from detonation regulator
    angle-=d.corr.knock_retard;
    d.corr.strt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
+
+#ifdef SPLIT_ANGLE
+   d.corr.split_angle = split_function();        //calculate and store split angle value
+#endif
 
 #ifdef FUEL_INJECT
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
@@ -509,6 +521,14 @@ void ignlogic_stroke_event_notification(void)
 #endif
   d.corr.curr_angle = advance_angle_inhibitor(lgs.calc_adv_ang, &lgs.advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
  }
+
+#ifdef SPLIT_ANGLE
+  //if d.corr.split_angle is positive, then leading (1st) spark plug fired before the trailing one (2nd)
+  //if d.corr.split_angle is negative, then trailing (2nd) spark plug fires before the leading one (1st)
+  d.corr.curr_angle1 = d.corr.curr_angle - d.corr.split_angle;
+  //Limit ignition timing for trailing plug using set limits
+  restrict_value_to(&d.corr.curr_angle1, d.param.min_angle, d.param.max_angle);
+#endif
 
 #ifdef FUEL_INJECT
  //update afterstart enrichemnt counter

@@ -76,6 +76,9 @@ void ckps_set_rising_spark(uint8_t rising_edge);
  * \param angle advance angle * ANGLE_MULTIPLIER
  */
 void ckps_set_advance_angle(int16_t angle);
+#ifdef SPLIT_ANGLE
+void ckps_set_advance_angle1(int16_t angle);
+#endif
 
 /** Calculate instant RPM using last measured period
  * \return RPM (min-1)

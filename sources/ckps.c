@@ -53,6 +53,11 @@
 /**Maximum number of ignition channels */
 #define IGN_CHANNELS_MAX      8
 
+#ifdef SPLIT_ANGLE
+/**Offset for splitting of channels*/
+#define SPLIT_OFFSET 4
+#endif
+
 /** Barrier threshold for detecting of missing teeth
  * e.g. for 60-2 crank wheel, p * 2.5
  *      for 36-1 crank wheel, p * 1.5
@@ -108,6 +113,13 @@
 #ifdef PHASE_SENSOR
 #define F_CAMREF     4                //!< Specifies to use camshaft sensor as reference
 #endif
+#ifdef SPLIT_ANGLE
+#define F_PNDSPK1    5                //!< indicates that it is necessary to set compare channel for spark (finish of dwell)
+#ifdef DWELL_CONTROL
+ #define F_PNDDWL1   6                //!< Indicates that it is necessary to set compare channel for dwell (start of dwell)
+#endif
+#endif
+
 /** State variables */
 typedef struct
 {
@@ -136,8 +148,8 @@ typedef struct
  volatile uint8_t ignout_on_val;      //!< value used to turn on ignition channel
  volatile uint8_t ignout_off_val;     //!< value used to turn off ignition channel
  volatile uint16_t degrees_per_chan;  //!< number of degrees per one channel (degrees between two spark events)
- volatile uint8_t eq_tail;            //!< event queue tail (index in a static array)
- volatile uint8_t eq_head;            //!< event queue head (index), queue is empty if head = tail
+ volatile uint8_t eq_tail1;           //!< event queue tail (index in a static array)
+ volatile uint8_t eq_head1;           //!< event queue head (index), queue is empty if head = tail
 #endif
 #ifdef HALL_OUTPUT
  int8_t   hop_offset;                 //!< Hall output: start of pulse in teeth of wheel relatively to TDC
@@ -170,6 +182,16 @@ typedef struct
 
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
+
+#ifdef SPLIT_ANGLE
+ volatile uint8_t chan_number_split;  //!< number of ignition channels with splitting
+ uint8_t  channel_mode1;              //!< determines which channel of the ignition to run at the moment (second group)
+ uint8_t  channel_mode_b1;            //!< determines which channel of the ignition to start accumulate at the moment (second group)
+ int16_t  advance_angle1;             //!< required adv.angle * ANGLE_MULTIPLIER (òðåáóåìûé ÓÎÇ * ANGLE_MULTIPLIER)
+ volatile int16_t advance_angle_buffered1;//!< buffered value of advance angle (to ensure correct latching)
+ volatile uint8_t eq_tail2;           //!< event queue tail (index in a static array)
+ volatile uint8_t eq_head2;           //!< event queue head (index), queue is empty if head = tail
+#endif
 }ckpsstate_t;
 
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -243,29 +265,34 @@ typedef struct
 }ign_queue_t;
 
 /**Event queue for scheduling of ignition spark events (T1 COMPA) */
-ign_queue_t ign_eq[IGN_QUEUE_SIZE];
+ign_queue_t ign_eq1[IGN_QUEUE_SIZE];
+
+#ifdef SPLIT_ANGLE
+/**Event queue for scheduling of ignition spark events (T3 COMPA) */
+ign_queue_t ign_eq2[IGN_QUEUE_SIZE];
+#endif
 
 /** Reset specified queue (makes it empty) */
-#define QUEUE_RESET()  ckps.eq_tail = ckps.eq_head = 0;
+#define QUEUE_RESET(q)  ckps.eq_tail##q = ckps.eq_head##q = 0;
 
 /** Add event into the queue (add to head)
  * r Timer's register (TCNT1 or ICR1)
  * time Time in tics of timer 1 after which event should fire
  * aid ID of pending action, which shold be performed
  */
-#define QUEUE_ADD(r, time, aid) \
-    ign_eq[ckps.eq_head].end_time = (r) + (time); \
-    ign_eq[ckps.eq_head].id = (aid); \
-    ckps.eq_head = (ckps.eq_head + 1) & (IGN_QUEUE_SIZE-1);
+#define QUEUE_ADD(q, r, time, aid) \
+    ign_eq##q[ckps.eq_head##q].end_time = (r) + (time); \
+    ign_eq##q[ckps.eq_head##q].id = (aid); \
+    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1);
 
 /** Remove event from the queue (remove from tail)*/
-#define QUEUE_REMOVE() ckps.eq_tail = (ckps.eq_tail + 1) & (IGN_QUEUE_SIZE-1)
+#define QUEUE_REMOVE(q) ckps.eq_tail##q = (ckps.eq_tail##q + 1) & (IGN_QUEUE_SIZE-1)
 
 /** Get tail item value from queue */
-#define QUEUE_TAIL() ign_eq[ckps.eq_tail]
+#define QUEUE_TAIL(q) ign_eq##q[ckps.eq_tail##q]
 
 /** Test is queue empty */
-#define QUEUE_IS_EMPTY() (ckps.eq_head==ckps.eq_tail)
+#define QUEUE_IS_EMPTY(q) (ckps.eq_head##q==ckps.eq_tail##q)
 
 #endif //DWELL_CONTROL
 
@@ -289,6 +316,17 @@ ign_queue_t ign_eq[IGN_QUEUE_SIZE];
      SETBIT(TIMSK1, OCIE1B);
 #endif
 
+#ifdef SPLIT_ANGLE
+/**Set T3 COMPA channel of timer. Note: we rely that timers 1 and 3 are synchronized!
+ * r Timer's register (TCNT3, TCNT1 or ICR1).
+ * v Time in tics of timer 1 after which event should fire
+ */
+#define SET_T3COMPA(r, v) \
+     OCR3A = (r) + (v); \
+     TIFR3 = _BV(OCF3A); \
+     SETBIT(TIMSK3, OCIE3A);
+#endif
+
 void ckps_init_state_variables(void)
 {
 #ifndef DWELL_CONTROL
@@ -301,19 +339,37 @@ void ckps_init_state_variables(void)
  _BEGIN_ATOMIC_BLOCK();
  ckps.cr_acc_time = 0;
  ckps.channel_mode_b = 0; //prevent missing spark on first ignition event
+#ifdef SPLIT_ANGLE
+ ckps.channel_mode_b1 = 0; //prevent missing spark on first ignition event
+#endif
  CLEARBIT(flags, F_PNDDWL);
- QUEUE_RESET();
+#ifdef SPLIT_ANGLE
+ CLEARBIT(flags2, F_PNDDWL1);
+#endif
+ QUEUE_RESET(1);
+#ifdef SPLIT_ANGLE
+ QUEUE_RESET(2);
+#endif
 #endif
 
  ckps.cog = ckps.cog360 = 0;
  ckps.stroke_period = 0xFFFF;
  ckps.advance_angle = ckps.advance_angle_buffered = 0;
+#ifdef SPLIT_ANGLE
+ ckps.advance_angle1 = ckps.advance_angle_buffered1 = 0;
+#endif
  ckps.starting_mode = 0;
  ckps.channel_mode = 0;
+#ifdef SPLIT_ANGLE
+ ckps.channel_mode1 = 0;
+#endif
 #if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
  CLEARBIT(flags2, F_CAMISS);
 #endif
  CLEARBIT(flags, F_PNDSPK);
+#ifdef SPLIT_ANGLE
+ CLEARBIT(flags2, F_PNDSPK1);
+#endif
  CLEARBIT(flags, F_STROKE);
  CLEARBIT(flags, F_ISSYNC);
  SETBIT(flags, F_IGNIEN);
@@ -354,6 +410,15 @@ void ckps_init_state(void)
  //enable input capture interrupt of timer 1
  TIMSK1|= _BV(ICIE1);
 
+#ifdef SPLIT_ANGLE
+ TCCR3A = 0; //Normal port operation, OC3A/OC3B disconnected.
+
+ //note: it is also started in pwm2.c module
+ TCCR3B = _BV(CS31) | _BV(CS30); //start timer, clock  = 312.5 kHz
+
+ CLEARBIT(TIMSK3, OCIE3A); //compare interrupt A is disabled
+#endif
+
  _END_ATOMIC_BLOCK();
 }
 
@@ -363,6 +428,15 @@ void ckps_set_advance_angle(int16_t angle)
  ckps.advance_angle_buffered = angle;
  _END_ATOMIC_BLOCK();
 }
+
+#ifdef SPLIT_ANGLE
+void ckps_set_advance_angle1(int16_t angle)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ ckps.advance_angle_buffered1 = angle;
+ _END_ATOMIC_BLOCK();
+}
+#endif
 
 void ckps_init_ports(void)
 {
@@ -479,6 +553,9 @@ void ckps_set_cogs_btdc(uint8_t cogs_btdc)
  {
   uint16_t tdc = (((uint16_t)cogs_btdc) + ((i * ckps.cogs_per_chan) >> 8));
   chanstate[i].cogs_btdc = _normalize_tn(tdc);
+#ifdef SPLIT_ANGLE
+  chanstate[i+SPLIT_OFFSET].cogs_btdc = _normalize_tn(tdc);
+#endif
   chanstate[i].cogs_latch = _normalize_tn(tdc - ckps.wheel_latch_btdc);
   chanstate[i].knock_wnd_begin = _normalize_tn(tdc + ckps.knock_wnd_begin_abs);
   chanstate[i].knock_wnd_end = _normalize_tn(tdc + ckps.knock_wnd_end_abs);
@@ -582,9 +659,19 @@ static void set_channels_sc(void)
  {
   _BEGIN_ATOMIC_BLOCK();
   chanstate[i].io_callback1 = value;
-  ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL); //turn of other channels
+  ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL); //turn off other channels
   _END_ATOMIC_BLOCK();
  }
+#ifdef SPLIT_ANGLE
+ value = get_callback_ign(SPLIT_OFFSET); //use only 1-st channel
+ for(i = 0; i < ckps.chan_number; ++i)
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  chanstate[i + SPLIT_OFFSET].io_callback1 = value;
+  ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL); //turn off other channels
+  _END_ATOMIC_BLOCK();
+ }
+#endif
 }
 
 #ifndef PHASED_IGNITION
@@ -601,6 +688,17 @@ static void set_channels_ss(void)
   chanstate[i + chan].io_callback1 = value;
   _RESTORE_INTERRUPT(_t);
  }
+#ifdef SPLIT_ANGLE
+ for(i = 0; i < chan; ++i)
+ {
+  fnptr_t value = get_callback_ign(i + SPLIT_OFFSET);
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  chanstate[i + SPLIT_OFFSET].io_callback1 = value;
+  chanstate[i + chan + SPLIT_OFFSET].io_callback1 = value;
+  _RESTORE_INTERRUPT(_t);
+ }
+#endif
 }
 
 #else
@@ -620,6 +718,20 @@ static void set_channels_fs(uint8_t fs_mode)
   chanstate[i].io_callback2 = get_callback_ign(iss);
   _RESTORE_INTERRUPT(_t);
  }
+#ifdef SPLIT_ANGLE
+ for(i = 0; i < ckps.chan_number; ++i)
+ {
+  iss = (i + ch2);
+  if (iss >= ckps.chan_number)
+   iss-=ckps.chan_number;
+
+  _t=_SAVE_INTERRUPT();
+  _DISABLE_INTERRUPT();
+  chanstate[i+SPLIT_OFFSET].io_callback1 = get_callback_ign(i+SPLIT_OFFSET);
+  chanstate[i+SPLIT_OFFSET].io_callback2 = get_callback_ign(iss+SPLIT_OFFSET);
+  _RESTORE_INTERRUPT(_t);
+ }
+#endif
 }
 #endif
 
@@ -628,6 +740,9 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
  uint8_t i = ckps.chan_number;
  _BEGIN_ATOMIC_BLOCK();
  ckps.chan_number = i_cyl_number;
+#ifdef SPLIT_ANGLE
+ ckps.chan_number_split = i_cyl_number + SPLIT_OFFSET;
+#endif
  _END_ATOMIC_BLOCK();
 
  ckps.frq_calc_dividend = FRQ_CALC_DIVIDEND(i_cyl_number);
@@ -649,8 +764,17 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
  //unused channels must be turned off
  if (i > i_cyl_number)
+ {
+#ifdef SPLIT_ANGLE
+  for(i = i_cyl_number; i < SPLIT_OFFSET; ++i) //turn off channels in primiry group
+   ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
+  for(i = i_cyl_number + SPLIT_OFFSET; i < IGN_CHANNELS_MAX; ++i) //turn off channels on secondary group
+   ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
+#else //regular mode (single channel per cylinder)
   for(i = i_cyl_number; i < IGN_CHANNELS_MAX; ++i)
    ((iocfg_pfn_set)get_callback_ign(i))(IGN_OUTPUTS_ON_VAL);
+#endif
+ }
 
  //TODO: calculations previosly made by ckps_set_cogs_btdc()|ckps_set_knock_window()|ckps_set_hall_pulse() becomes invalid!
  //So, ckps_set_cogs_btdc() must be called again. Do it here or in place where this function called.
@@ -836,7 +960,7 @@ ISR(TIMER1_COMPA_vect)
  TIMSK1&= ~_BV(OCIE1A); //disable this interrupt
 
 #ifdef DWELL_CONTROL
- switch(QUEUE_TAIL().id) //what exactly happen?
+ switch(QUEUE_TAIL(1).id) //what exactly happen?
  {
   case QID_DWELL: //start accumulation
    //line of port is high level, now we set it into a low level
@@ -856,11 +980,11 @@ ISR(TIMER1_COMPA_vect)
    if (1==ckps.strobe)
    {
     IOCFG_SET(IOP_STROBE, 1);  //start pulse
-    if (QUEUE_IS_EMPTY())
+    if (QUEUE_IS_EMPTY(1))
     {
      SET_T1COMPA(TCNT1, STROBE_PW); //strobe pulse is 100uS by default
     }
-    QUEUE_ADD(TCNT1, STROBE_PW, QID_STROBE);
+    QUEUE_ADD(1, TCNT1, STROBE_PW, QID_STROBE);
     ckps.strobe = 0;           //and reset flag
    }
 #endif
@@ -870,11 +994,11 @@ ISR(TIMER1_COMPA_vect)
    { //CDI mode
     ckps.channel_mode_b = ckps.channel_mode;
     uint16_t acc_time = (ckps.cr_acc_time > acc_delay-DWL_DEAD_TIME) ? ((uint16_t)acc_delay-DWL_DEAD_TIME) : ckps.cr_acc_time;
-    if (QUEUE_IS_EMPTY())
+    if (QUEUE_IS_EMPTY(1))
     {
      SET_T1COMPA(TCNT1, acc_time);
     }
-    QUEUE_ADD(TCNT1, acc_time, QID_DWELL);
+    QUEUE_ADD(1, TCNT1, acc_time, QID_DWELL);
     CLEARBIT(flags, F_PNDDWL);
    }
    else
@@ -889,11 +1013,11 @@ ISR(TIMER1_COMPA_vect)
     //if less than 1 teeth remains to the accumulation beginning we have to program compare channel
     if (acc_delay < (ckps.period_curr << 1))
     {
-     if (QUEUE_IS_EMPTY())
+     if (QUEUE_IS_EMPTY(1))
      {
       SET_T1COMPA(TCNT1, (uint16_t)acc_delay);
      }
-     QUEUE_ADD(TCNT1, (uint16_t)acc_delay, QID_DWELL);
+     QUEUE_ADD(1, TCNT1, (uint16_t)acc_delay, QID_DWELL);
      CLEARBIT(flags, F_PNDDWL);
     }
    }
@@ -907,11 +1031,11 @@ ISR(TIMER1_COMPA_vect)
  }
 
  //Remove already processed event from queue. After that, is queue is not empty, then start
- //next event in chain. Also, prevent effects when event alredy expired.
- QUEUE_REMOVE();
- if (!QUEUE_IS_EMPTY())
+ //next event in chain. Also, prevent effects when event already expired.
+ QUEUE_REMOVE(1);
+ if (!QUEUE_IS_EMPTY(1))
  {
-  uint16_t t = (QUEUE_TAIL().end_time-(uint16_t)2) - TCNT1;
+  uint16_t t = (QUEUE_TAIL(1).end_time-(uint16_t)2) - TCNT1;
   if (t > 65520)             //end_time < TCNT1, so, it is expired (forbidden range is 65520...65535)
    t = 2;
   SET_T1COMPA(TCNT1, t);
@@ -945,6 +1069,91 @@ ISR(TIMER1_COMPA_vect)
 #endif
 }
 
+#ifdef SPLIT_ANGLE
+/** Timer 3 compare interrupt A - used for second ignition channels (angle splitting for rotary engines)*/
+ISR(TIMER3_COMPA_vect)
+{
+ TIMSK3&= ~_BV(OCIE3A); //disable this interrupt
+
+#ifdef DWELL_CONTROL
+ switch(QUEUE_TAIL(2).id) //what exactly happen?
+ {
+  case QID_DWELL: //start accumulation
+   //line of port is high level, now we set it into a low level
+   turn_off_ignition_channel(ckps.channel_mode_b1);
+   break;
+
+  case QID_SPARK:
+  {
+   //line of port in the low level, now set it into a high level - makes the transistor to close and coil to stop 
+   //the accumulation of energy (spark)
+   ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback1)(IGNOUTCB_ON_VAL);
+#ifdef PHASED_IGNITION
+   ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback2)(IGNOUTCB_ON_VAL);
+#endif
+
+   int32_t acc_delay = (((uint32_t)ckps.period_curr) * ckps.cogs_per_chan) >> 8;
+
+   if (ckps.rising_edge_spark)
+   { //CDI mode
+    ckps.channel_mode_b1 = ckps.channel_mode1;
+    uint16_t acc_time = (ckps.cr_acc_time > acc_delay-DWL_DEAD_TIME) ? ((uint16_t)acc_delay-DWL_DEAD_TIME) : ckps.cr_acc_time;
+    if (QUEUE_IS_EMPTY(2))
+    {
+     SET_T3COMPA(TCNT3, acc_time);
+    }
+    QUEUE_ADD(2, TCNT1, acc_time, QID_DWELL);
+    CLEARBIT(flags2, F_PNDDWL1);
+   }
+   else
+   { //IDI mode
+    acc_delay-= ckps.cr_acc_time;    //apply dwell time
+    if (acc_delay < DWL_DEAD_TIME)
+     acc_delay = DWL_DEAD_TIME;
+
+    ckps.channel_mode_b1 = (ckps.channel_mode1 < ckps.chan_number_split-1) ? ckps.channel_mode1 + 1 : SPLIT_OFFSET;
+    SETBIT(flags2, F_PNDDWL1);
+
+    //if less than 1 teeth remains to the accumulation beginning we have to program compare channel
+    if (acc_delay < (ckps.period_curr << 1))
+    {
+     if (QUEUE_IS_EMPTY(2))
+     {
+      SET_T3COMPA(TCNT3, (uint16_t)acc_delay);
+     }
+     QUEUE_ADD(2, TCNT1, (uint16_t)acc_delay, QID_DWELL);
+     CLEARBIT(flags2, F_PNDDWL1);
+    }
+   }
+   break;
+  }
+ }
+
+ //Remove already processed event from queue. After that, if queue is not empty, then start
+ //next event in chain. Also, prevent effects when event already expired.
+ QUEUE_REMOVE(2);
+ if (!QUEUE_IS_EMPTY(2))
+ {
+  uint16_t t = (QUEUE_TAIL(2).end_time-(uint16_t)2) - TCNT1;
+  if (t > 65520)             //end_time < TCNT3, so, it is expired (forbidden range is 65520...65535)
+   t = 2;
+  SET_T3COMPA(TCNT3, t);
+ }
+
+#else //just use trigger wheel teeth instead of dwell control
+
+ //line of port in the low level, now set it into a high level - makes the igniter to stop 
+ //the accumulation of energy and close the transistor (spark)
+ ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback1)(IGNOUTCB_ON_VAL);
+#ifdef PHASED_IGNITION
+ ((iocfg_pfn_set)chanstate[ckps.channel_mode1].io_callback2)(IGNOUTCB_ON_VAL);
+#endif
+
+ chanstate[ckps.channel_mode1].ignition_pulse_cogs = 0; //start counting the duration of pulse in the teeth
+#endif
+
+}
+#endif
 
 #ifdef FUEL_INJECT
 /**Interrupt handler for Compare/Match channel B of timer T1. Used for injection timing
@@ -1060,14 +1269,36 @@ static void process_ckps_cogs(void)
    if (delay < DWL_DEAD_TIME)
     delay = DWL_DEAD_TIME; //restrict accumulation time.
 
-   if (QUEUE_IS_EMPTY())
+   if (QUEUE_IS_EMPTY(1))
    {
     SET_T1COMPA(ICR1, (uint16_t)delay);
    }
-   QUEUE_ADD(ICR1, (uint16_t)delay, QID_DWELL);
+   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL);
    CLEARBIT(flags, F_PNDDWL);  // To avoid entering into setup mode
   }
  }
+#ifdef SPLIT_ANGLE
+ if (CHECKBIT(flags2, F_PNDDWL1) && !ckps.rising_edge_spark)
+ {
+  //calculate delay between current tooth and next spark
+  int32_t angle_to_spark = (((int32_t)_normalize_tn(chanstate[ckps.channel_mode_b1].cogs_btdc - ckps.cog)) * ckps.degrees_per_cog) - ckps.advance_angle1;
+  int32_t delay =  (angle_to_spark * (((int32_t)ckps.period_curr * ckps.degrees_per_cog_r) >> 10)) >> 6; //convert angle to delay
+  delay-= ckps.cr_acc_time;    //apply dwell time
+
+  if (delay < (ckps.period_curr<<1))
+  {
+   if (delay < DWL_DEAD_TIME)
+    delay = DWL_DEAD_TIME; //restrict accumulation time.
+
+   if (QUEUE_IS_EMPTY(2))
+   {
+    SET_T3COMPA(ICR1, (uint16_t)delay);  //note: we rely that timers 1 and 3 are synchronized!
+   }
+   QUEUE_ADD(2, ICR1, (uint16_t)delay, QID_DWELL);
+   CLEARBIT(flags2, F_PNDDWL1);  // To avoid entering into setup mode
+  }
+ }
+#endif
 #endif
 
  for(i = 0; i < ckps.chan_number; ++i)
@@ -1096,10 +1327,17 @@ static void process_ckps_cogs(void)
   if (ckps.cog == chanstate[i].cogs_latch)
   {
    ckps.channel_mode = i;                    //remember number of channel
+#ifdef SPLIT_ANGLE
+   ckps.channel_mode1 = i + SPLIT_OFFSET;
+   SETBIT(flags2, F_PNDSPK1);                //establish an indication that it is need to count advance angle
+#endif
    SETBIT(flags, F_PNDSPK);                  //establish an indication that it is need to count advance angle
    //start counting of advance angle
    ckps.current_angle = ckps.start_angle; // those same 66°
    ckps.advance_angle = ckps.advance_angle_buffered; //advance angle with all the adjustments (say, 15°)
+#ifdef SPLIT_ANGLE
+   ckps.advance_angle1 = ckps.advance_angle_buffered1; //advance angle with all the adjustments (say, 15°)
+#endif
    adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values
 #ifdef STROBOSCOPE
    if (0==i)
@@ -1159,11 +1397,11 @@ static void process_ckps_cogs(void)
    uint16_t delay = ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
 #ifdef DWELL_CONTROL
    //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
-   if (QUEUE_IS_EMPTY())
+   if (QUEUE_IS_EMPTY(1))
    {
     SET_T1COMPA(ICR1, delay);
    }
-   QUEUE_ADD(ICR1, (uint16_t)delay, QID_SPARK);
+   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_SPARK);
 #else
    SET_T1COMPA(ICR1, delay);
 #endif
@@ -1171,9 +1409,37 @@ static void process_ckps_cogs(void)
   }
  }
 
+#ifdef SPLIT_ANGLE
+ //Preparing to start the ignition for the current channel (if the right moment became)
+ if (CHECKBIT(flags2, F_PNDSPK1))
+ {
+  uint16_t diff = ckps.current_angle - ckps.advance_angle1;
+  if (diff <= (ckps.degrees_per_cog << 1))
+  {
+   uint16_t delay = ((((uint32_t)diff * (ckps.period_curr)) * ckps.degrees_per_cog_r) >> 16) - COMPA_VECT_DELAY;
+#ifdef DWELL_CONTROL
+   //before starting the ignition it is left to count less than 2 teeth. It is necessary to prepare the compare module
+   if (QUEUE_IS_EMPTY(2))
+   {
+    SET_T3COMPA(ICR1, delay); //note: we rely that timers 1 and 3 are synchronized!
+   }
+   QUEUE_ADD(2, ICR1, (uint16_t)delay, QID_SPARK);
+#else
+   SET_T3COMPA(ICR1, delay); //note: we rely that timers 1 and 3 are synchronized!
+#endif
+   CLEARBIT(flags2, F_PNDSPK1); // For avoiding to enter into setup mode
+  }
+ }
+#endif
+
+
 #ifndef DWELL_CONTROL
  //finish the ignition trigger pulses for igniter(s) and immediately increase the number of tooth for processed channel
+#ifdef SPLIT_ANGLE
+ for(i = 0; i < ckps.chan_number + SPLIT_OFFSET; ++i)
+#else
  for(i = 0; i < ckps.chan_number; ++i)
+#endif
  {
   if (chanstate[i].ignition_pulse_cogs == 255)
    continue;
@@ -1255,6 +1521,9 @@ ISR(TIMER1_CAPT_vect)
   {
 #ifdef DWELL_CONTROL
    SETBIT(flags, F_PNDDWL); //it is need to set compare channel for dwell start
+#ifdef SPLIT_ANGLE
+   SETBIT(flags2, F_PNDDWL1);
+#endif
 #endif
 #ifdef FUEL_INJECT
    sync_inj_angle();

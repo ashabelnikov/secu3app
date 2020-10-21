@@ -236,4 +236,11 @@
  #define COPT_CAM_SYNC 0
 #endif
 
+/**Build firmware with support of splitting of ignition angle (rotary engines) */
+#ifdef SPLIT_ANGLE
+ #define COPT_SPLIT_ANGLE 1
+#else
+ #define COPT_SPLIT_ANGLE 0
+#endif
+
 #endif //_COMPILOPT_H_

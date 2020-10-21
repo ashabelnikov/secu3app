@@ -397,6 +397,7 @@ void pwm2_init_ports(void)
 
 void pwm2_init_state(void)
 {
+ //note: it is also started in the ckps.c module (when option SPLIT_ANGLE is active)
  TCCR3B = _BV(CS31) | _BV(CS30); //start timer, clock  = 312.5 kHz
 
  //PWM1:
@@ -435,7 +436,9 @@ void pwm2_init_state(void)
 #endif
  else
  { //No I/O assigned, disable interrupt
+#ifndef SPLIT_ANGLE
   CLEARBIT(TIMSK3, OCIE3A);
+#endif
  }
 
  //PWM2:
@@ -460,6 +463,8 @@ void pwm2_init_state(void)
  }
 }
 
+#ifndef SPLIT_ANGLE
+//When SPLIT_ANGLE is active this ISR is used in ckps.c for ign. splitting
 /**T/C 3 Compare interrupt for generating of PWM (channel 0)*/
 ISR(TIMER3_COMPA_vect)
 {
@@ -476,6 +481,7 @@ ISR(TIMER3_COMPA_vect)
   --pwm2.pwm_state[0];
  }
 }
+#endif
 
 /**T/C 3 Compare interrupt for generating of PWM (channel 1)*/
 ISR(TIMER3_COMPB_vect)
@@ -520,9 +526,11 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
  {
   if (0==ch)
   {
+#ifndef SPLIT_ANGLE
    _DISABLE_INTERRUPT();
    TIMSK3&=~_BV(OCIE3A);  //disable interrupt for ch0
    _ENABLE_INTERRUPT();
+#endif
   }
   else
   { //1
@@ -540,9 +548,11 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
  {
   if (0==ch)
   {
+#ifndef SPLIT_ANGLE
    _DISABLE_INTERRUPT();
    TIMSK3&=~_BV(OCIE3A); //disable interrupt for ch0
    _ENABLE_INTERRUPT();
+#endif
   }
   else
   { //1
@@ -560,11 +570,13 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
  {
   if (0==ch)
   {
+#ifndef SPLIT_ANGLE
    _DISABLE_INTERRUPT();
    SETBIT(TIMSK3, OCIE3A);
    pwm2.pwm_duty_1[0] = duty_1;
    pwm2.pwm_duty_2[0] = duty_2;
    _ENABLE_INTERRUPT();
+#endif
   }
   else
   { //1
@@ -585,6 +597,7 @@ static void pwm2_set_fl_cons(void)
  //see inject_calc_fuel_flow() in injector.c for more information
  uint16_t duty_1 = ((uint32_t)((256 * 312500) / 2)) / d.inj_fff;
 
+#ifndef SPLIT_ANGLE
  if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
  { //no fuel flow
   _DISABLE_INTERRUPT();
@@ -600,11 +613,29 @@ static void pwm2_set_fl_cons(void)
    pwm2.pwm_duty_2[0] = duty_1;
   _ENABLE_INTERRUPT();
  }
+#else //use channel B
+ if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
+ { //no fuel flow
+  _DISABLE_INTERRUPT();
+   TIMSK3&=~_BV(OCIE3B);  //disable interrupt for COMPA
+  _ENABLE_INTERRUPT();
+   PWMx_TURNOFF_F(1);     //fully OFF
+ }
+ else
+ { //produce fuel consumption signal
+  _DISABLE_INTERRUPT();
+   SETBIT(TIMSK3, OCIE3B);
+   pwm2.pwm_duty_1[1] = duty_1;
+   pwm2.pwm_duty_2[1] = duty_1;
+  _ENABLE_INTERRUPT();
+ }
+#endif
 }
 #endif
 
 void pwm2_control(void)
 {
+#ifndef SPLIT_ANGLE
  if (pwm2.iomode[0] != 255)
  { //ch 0
 #ifdef FUEL_INJECT
@@ -616,9 +647,17 @@ void pwm2_control(void)
   pwm2_set_duty8(0, pwm_function(0));  //generate PWM
 #endif
  }
+#endif
  if (pwm2.iomode[1] != 255)
  { //ch 1
+#if defined(FUEL_INJECT) && defined(SPLIT_ANGLE)
+  if (0==pwm2.compa_mode)
+   pwm2_set_duty8(1, pwm_function(1)); //generate PWM
+  else
+   pwm2_set_fl_cons();                 //generate fuel consumption signal (flequency with 50% duty)
+#else
   pwm2_set_duty8(1, pwm_function(1));
+#endif
  }
 }
 

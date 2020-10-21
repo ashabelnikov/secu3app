@@ -327,6 +327,9 @@ void init_modules(void)
  ckps_set_shutter_wnd_width(d.param.hall_wnd_width);
  ckps_set_degrees_btdc(d.param.hall_degrees_btdc);
  ckps_set_advance_angle(0);
+#ifdef SPLIT_ANGLE
+ ckps_set_advance_angle1(0);
+#endif
 #endif
 #ifdef PHASE_SENSOR
  ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF) && !d.param.ckps_miss_num);
@@ -375,6 +378,14 @@ void init_modules(void)
 #ifdef FUEL_INJECT
  //must be called after meas_init()
  inject_set_fuelcut(!d.sys_locked && !engine_blowing_cond());
+#endif
+
+ //perform synchronization of timers 1 and 3
+#ifdef SPLIT_ANGLE
+ GTCCR = _BV(TSM) | _BV(PSRSYNC); // halt timer1 and timer3
+ TCNT1 = 0; // set 1 and 3 timers to the same value
+ TCNT3 = 0;
+ GTCCR = 0; // release all timers
 #endif
 }
 
@@ -568,6 +579,9 @@ MAIN()
 
   //save ignition timing for applying in the nearest ignition stroke
   ckps_set_advance_angle(d.corr.curr_angle);
+#ifdef SPLIT_ANGLE
+  ckps_set_advance_angle1(d.corr.curr_angle1);
+#endif
 #ifdef FUEL_INJECT
   //set current injection time and fuel cut state
   if (d.inj_pw > 0) inject_set_inj_time(d.inj_pw);

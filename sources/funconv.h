@@ -398,4 +398,13 @@ uint8_t knock_zone_val(void);
  */
 uint16_t pwm_function(uint8_t mode);
 
+#ifdef SPLIT_ANGLE
+/** Calculates advance angle from splitting map
+ * In map: positive split means the leading plug fires before the trailing plug.
+ * Uses d ECU data structure
+ * \return value of advance angle * 32
+ */
+int16_t split_function(void);
+#endif
+
 #endif //_FUNCONV_H_

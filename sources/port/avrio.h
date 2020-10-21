@@ -112,6 +112,15 @@
   #endif
  #endif
 
+//some bits of the GTCCR register:
+#ifndef TSM
+ #define TSM 7
+#endif
+
+#ifndef PSRSYNC
+ #define PSRSYNC 0
+#endif
+
 #else //AVR GCC
  #include <avr/io.h>    //device IO
 

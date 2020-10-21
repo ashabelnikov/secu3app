@@ -122,6 +122,9 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
     CAM_SYNC             Support of synchronization from camshaft wheel
                          Синхронизация от диска на распределительном вале
 
+    SPLIT_ANGLE          Split angle for ignition on rotary engines
+                         Сплиттинг УОЗ для роторно-поршневых двигателей
+
     BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600, 115200. Note! Will not take
                          effect without reprogramming using ISP programmator.

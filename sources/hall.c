@@ -591,7 +591,7 @@ static inline void ProcessFallingEdge(uint16_t tmr)
   WRITEBIT(flags, F_SPSIGN, tmr < hall.measure_start_value); //save sign
   hall.t1oc_s = hall.t1oc, hall.t1oc = 0; //save value and reset counter
   ///prediction/////////////////////////////////////
-  if (hall.t1oc_s = 0 && CHECKBIT(flags2, F_VDELTAP))
+  if ((hall.t1oc_s = 0 && CHECKBIT(flags2, F_VDELTAP)) && PGM_GET_BYTE(&fw_data.exdata.hall_predict))
   { //with prediction (only if there were no overflows and stroke_period_prev is valid)
    int32_t newperiod = ((int32_t)hall.stroke_period_meas) + (((int32_t)hall.stroke_period_meas) - hall.stroke_period_prev); //1st derivative is used for prediction
    if (newperiod > 65500)

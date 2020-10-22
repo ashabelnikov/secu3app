@@ -394,12 +394,13 @@ typedef struct fw_ex_data_t
   uint8_t  igntim_wrkmap; //1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
   int16_t  shift_igntim;  //ignition timing for shifting
   uint8_t  fldclr_start;  //allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
+  uint8_t  hall_predict;  //prediction mode for hall (N=Ncyl) synchronization mode: 0 - last interval (default), 1 - 1st derivative
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4065];
+  uint8_t reserved[4064];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

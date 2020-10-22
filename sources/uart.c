@@ -796,7 +796,7 @@ void uart_send_packet(uint8_t send_mode)
    break;
 
   case UNIOUT_PAR:
-  { //3 tunable outputs' parameters
+  { //6 tunable outputs' parameters
    uint8_t oi = 0;
    for(; oi < UNI_OUTPUT_NUMBER; ++oi)
    {
@@ -1429,7 +1429,7 @@ uint8_t uart_recept_packet(void)
   break;
 
   case UNIOUT_PAR:
-  { //3 tunable outputs' parameters
+  { //6 tunable outputs' parameters
    uint8_t oi = 0;
    for(; oi < UNI_OUTPUT_NUMBER; ++oi)
    {

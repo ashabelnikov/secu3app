@@ -96,7 +96,7 @@
 #define BAROCORR_SIZE                   9           //!< Barometric correction map size
 #define PA4_LOOKUP_TABLE_SIZE           16          //!< Manual ign.timing map size
 
-#define UNI_OUTPUT_NUMBER               3           //!< number of universal programmable outputs
+#define UNI_OUTPUT_NUMBER               6           //!< number of universal programmable outputs
 
 #define GASDOSE_POS_RPM_SIZE            16          //!< RPM axis size
 #define GASDOSE_POS_TPS_SIZE            16          //!< TPS axis size
@@ -657,7 +657,7 @@ typedef struct params_t
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[247];
+  uint8_t  reserved[214];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

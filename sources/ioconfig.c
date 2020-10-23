@@ -30,11 +30,11 @@
 #include "port/intrinsic.h"
 #include "bitmask.h"
 #include <stdint.h>
+#include "ioconfig.h"
 
 #ifdef IOCFG_FUNC_INIT
 // Can save up to 200 bytes of program memory, but loosing a little in speed
 #include "port/pgmspace.h"
-#include "ioconfig.h"
 #include "tables.h"
 
 void IOCFG_INIT(uint8_t io_id, uint8_t io_state)

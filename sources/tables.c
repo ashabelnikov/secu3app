@@ -855,6 +855,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .shift_igntim = 0,
   .fldclr_start = 1,  //allowed
   .hall_predict = 0,  //last interval
+  .vtachom_mult = ROUNDU16(0.5*8192), //generate tachometer pulses as for 4 cylinder 4 stroke engine
 
   /**reserved bytes*/
   {0}

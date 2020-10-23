@@ -395,12 +395,13 @@ typedef struct fw_ex_data_t
   int16_t  shift_igntim;  //ignition timing for shifting
   uint8_t  fldclr_start;  //allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
   uint8_t  hall_predict;  //prediction mode for hall (N=Ncyl) synchronization mode: 0 - last interval (default), 1 - 1st derivative
+  uint16_t vtachom_mult;  //Event multiplier for VTACHO output, value * 8192, value in range 0.125...7.900
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4064];
+  uint8_t reserved[4062];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

@@ -377,13 +377,15 @@ typedef struct
 #ifdef FUEL_INJECT
  uint8_t  compa_mode;              //!< mode of functioning of COMPA channel: 0 - for PWM1; 1 - for generation of fuel consumption signal
 #endif
+ uint8_t  compb_mode;              //!< mode of functioning of COMPB channel: 0 - for PWM2; 1 - for generation of fuel consumption signal; 2 - for generation of pulses for tachometer
 }pwm2_t;
 
 /**Instance of internal state variables */
 pwm2_t pwm2 = {{0,0},{255,255},{0,0},{0,0},{0,0},
 #ifdef FUEL_INJECT
-0
+0,
 #endif
+0
 };
 
 void pwm2_init_ports(void)
@@ -393,6 +395,7 @@ void pwm2_init_ports(void)
 #ifdef FUEL_INJECT
  IOCFG_INIT(IOP_FL_CONS, 0); // channel is turned Off
 #endif
+ IOCFG_INIT(IOP_VTACHOM, 0);
 }
 
 void pwm2_init_state(void)
@@ -400,6 +403,8 @@ void pwm2_init_state(void)
  //note: it is also started in the ckps.c module (when option SPLIT_ANGLE is active)
  TCCR3B = _BV(CS31) | _BV(CS30); //start timer, clock  = 312.5 kHz
 
+ //in firmware with SPLIT_ANGLE COMPA channel of timer 3 is busy by CKPS algorithm and can be used here for PWM1, FL_CONS and VTACHOM
+#ifndef SPLIT_ANGLE
  //PWM1:
 #ifdef SECU3T
  if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_add_o1 || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_add_o1i)
@@ -436,10 +441,9 @@ void pwm2_init_state(void)
 #endif
  else
  { //No I/O assigned, disable interrupt
-#ifndef SPLIT_ANGLE
   CLEARBIT(TIMSK3, OCIE3A);
-#endif
  }
+#endif
 
  //PWM2:
 #ifdef SECU3T
@@ -457,6 +461,40 @@ void pwm2_init_state(void)
   pwm2.iomode[1] = 2; //BL
  else if (IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_de || IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_dei)
   pwm2.iomode[1] = 3; //DE
+#if defined(FUEL_INJECT) && defined(SPLIT_ANGLE)
+ //FL_CONS:
+#ifdef SECU3T
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o1 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o1i)
+  {pwm2.iomode[1] = 0; pwm2.compb_mode = 1;} //ADD_O1
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_add_o2i)
+  {pwm2.iomode[1] = 1; pwm2.compb_mode = 1;} //ADD_O2
+#else //SECU-3i
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out5 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out5i)
+  {pwm2.iomode[1] = 0; pwm2.compb_mode = 1;} //IGN_O5
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5i)
+  {pwm2.iomode[1] = 1; pwm2.compb_mode = 1;} //INJ_O5
+#endif
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bli)
+  {pwm2.iomode[1] = 2; pwm2.compb_mode = 1;} //BL
+ else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_de || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_dei)
+  {pwm2.iomode[1] = 3; pwm2.compb_mode = 1;} //DE
+#endif
+ //VTACHOM:
+#ifdef SECU3T
+ else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_add_o1 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_add_o1i)
+  {pwm2.iomode[1] = 0; pwm2.compb_mode = 2;} //ADD_O1
+ else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_add_o2i)
+  {pwm2.iomode[1] = 1; pwm2.compb_mode = 2;} //ADD_O2
+#else //SECU-3i
+ if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_ign_out5 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_ign_out5i)
+  {pwm2.iomode[1] = 0; pwm2.compb_mode = 2;} //IGN_O5
+ else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_inj_out5i)
+  {pwm2.iomode[1] = 1; pwm2.compb_mode = 2;} //INJ_O5
+#endif
+ else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_bli)
+  {pwm2.iomode[1] = 2; pwm2.compb_mode = 2;} //BL
+ else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_de || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_dei)
+  {pwm2.iomode[1] = 3; pwm2.compb_mode = 2;} //DE
  else
  { //No I/O assigned, disable interrupt
   CLEARBIT(TIMSK3, OCIE3B);
@@ -590,48 +628,74 @@ static void pwm2_set_duty8(uint8_t ch, uint8_t duty)
 }
 
 #ifdef FUEL_INJECT
-/**Set fuel cinsumption signal's frequency and duty for COMPA channel
+/**Set fuel consumption signal's frequency and duty for COMPA channel
+ * \param ch Number of channel to be configured (0 or 1)
  */
-static void pwm2_set_fl_cons(void)
+static void pwm2_set_fl_cons(uint8_t ch)
 {
  //see inject_calc_fuel_flow() in injector.c for more information
  uint16_t duty_1 = ((uint32_t)((256 * 312500) / 2)) / d.inj_fff;
 
-#ifndef SPLIT_ANGLE
- if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
- { //no fuel flow
-  _DISABLE_INTERRUPT();
-   TIMSK3&=~_BV(OCIE3A);  //disable interrupt for COMPA
-  _ENABLE_INTERRUPT();
-   PWMx_TURNOFF_F(0);     //fully OFF
+ if (0==ch) //use channel A
+ {
+  if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
+  { //no fuel flow
+   _DISABLE_INTERRUPT();
+    TIMSK3&=~_BV(OCIE3A);  //disable interrupt for COMPA
+   _ENABLE_INTERRUPT();
+    PWMx_TURNOFF_F(0);     //fully OFF
+  }
+  else
+  { //produce fuel consumption signal
+   _DISABLE_INTERRUPT();
+    SETBIT(TIMSK3, OCIE3A);
+    pwm2.pwm_duty_1[0] = duty_1;
+    pwm2.pwm_duty_2[0] = duty_1;
+   _ENABLE_INTERRUPT();
+  }
  }
- else
- { //produce fuel consumption signal
-  _DISABLE_INTERRUPT();
-   SETBIT(TIMSK3, OCIE3A);
-   pwm2.pwm_duty_1[0] = duty_1;
-   pwm2.pwm_duty_2[0] = duty_1;
-  _ENABLE_INTERRUPT();
+ else //use channel B
+ {
+  if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
+  { //no fuel flow
+   _DISABLE_INTERRUPT();
+    TIMSK3&=~_BV(OCIE3B);  //disable interrupt for COMPA
+   _ENABLE_INTERRUPT();
+    PWMx_TURNOFF_F(1);     //fully OFF
+  }
+  else
+  { //produce fuel consumption signal
+   _DISABLE_INTERRUPT();
+    SETBIT(TIMSK3, OCIE3B);
+    pwm2.pwm_duty_1[1] = duty_1;
+    pwm2.pwm_duty_2[1] = duty_1;
+   _ENABLE_INTERRUPT();
+  }
  }
-#else //use channel B
- if (d.inj_fff < 614)     //614 = 2.4 * 256 (2.4Hz is the minimum frequency)
- { //no fuel flow
-  _DISABLE_INTERRUPT();
-   TIMSK3&=~_BV(OCIE3B);  //disable interrupt for COMPA
-  _ENABLE_INTERRUPT();
-   PWMx_TURNOFF_F(1);     //fully OFF
- }
- else
- { //produce fuel consumption signal
-  _DISABLE_INTERRUPT();
-   SETBIT(TIMSK3, OCIE3B);
-   pwm2.pwm_duty_1[1] = duty_1;
-   pwm2.pwm_duty_2[1] = duty_1;
-  _ENABLE_INTERRUPT();
- }
-#endif
 }
 #endif
+
+/**Set VTACHOM signal frequency depending on RPM and settings
+ */
+static void pwm2_set_vtachom(void)
+{
+ uint16_t rpm = d.sens.frequen;
+ if (rpm < 150)
+  rpm = 150; //prevent overflow in the following calculations
+
+ //9375000 = (312500*60)/2
+ uint32_t duty = ((((uint32_t)9375000) / d.sens.frequen) * PGM_GET_WORD(&fw_data.exdata.vtachom_mult)) >> 13;
+ if (duty > 65535)
+  duty = 65535; //prevent possible overflow
+ uint16_t duty_1 = duty;
+ uint16_t duty_2 = duty;
+
+ _DISABLE_INTERRUPT();
+ SETBIT(TIMSK3, OCIE3B);
+ pwm2.pwm_duty_1[1] = duty_1;
+ pwm2.pwm_duty_2[1] = duty_2;
+ _ENABLE_INTERRUPT();
+}
 
 void pwm2_control(void)
 {
@@ -641,8 +705,8 @@ void pwm2_control(void)
 #ifdef FUEL_INJECT
   if (0==pwm2.compa_mode)
    pwm2_set_duty8(0, pwm_function(0)); //generate PWM
-  else
-   pwm2_set_fl_cons();                 //generate fuel consumption signal (flequency with 50% duty)
+  else //=1
+   pwm2_set_fl_cons(0);                //generate fuel consumption signal (flequency with 50% duty)
 #else
   pwm2_set_duty8(0, pwm_function(0));  //generate PWM
 #endif
@@ -650,13 +714,18 @@ void pwm2_control(void)
 #endif
  if (pwm2.iomode[1] != 255)
  { //ch 1
-#if defined(FUEL_INJECT) && defined(SPLIT_ANGLE)
-  if (0==pwm2.compa_mode)
+#if defined(FUEL_INJECT)
+  if (0==pwm2.compb_mode)
    pwm2_set_duty8(1, pwm_function(1)); //generate PWM
-  else
-   pwm2_set_fl_cons();                 //generate fuel consumption signal (flequency with 50% duty)
+  else if (1==pwm2.compb_mode)
+   pwm2_set_fl_cons(1);                //generate fuel consumption signal (flequency with 50% duty)
+  else if (2==pwm2.compb_mode)
+   pwm2_set_vtachom();                 //genarate pulses for tachometer (VTACHOM output)
 #else
-  pwm2_set_duty8(1, pwm_function(1));
+  if (0==pwm2.compb_mode)
+   pwm2_set_duty8(1, pwm_function(1));
+  else if (2==pwm2.compb_mode)
+   pwm2_set_vtachom();                 //genarate pulses for tachometer (VTACHOM output)
 #endif
  }
 }

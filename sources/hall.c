@@ -87,6 +87,7 @@
 #define F_SHUTTER   0                 //!< indicates using of shutter entering for spark generation (used at startup)
 #define F_SHUTTER_S 1                 //!< synchronized value of F_SHUTTER
 #define F_SELEDGE   2                 //!< indicates selected edge type, falling edge is default (see also same definition in camsens.c)
+#define F_VDELTAP   3                 //!< indicates validity of stroke_period_prev
 
 /** State variables */
 typedef struct
@@ -122,6 +123,9 @@ typedef struct
  uint8_t ckps_inpalt;                 //!< indicates that CKPS is not remapped
 
  volatile uint8_t TCNT0_H;            //!< For supplementing timer/counter 0 up to 16 bits
+
+ volatile uint16_t stroke_period_prev;//!< previous value of the stroke_period variable, used for calculation of the 1st derivative
+ volatile uint16_t stroke_period_meas;//!< stored measured value of stroke period (not corrected)
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -144,6 +148,8 @@ void ckps_init_state_variables(void)
  _BEGIN_ATOMIC_BLOCK();
 
  hall.stroke_period = 0xFFFF;
+ hall.stroke_period_prev = 0xFFFF;
+ hall.stroke_period_meas = 0xFFFF;
  hall.advance_angle = hall.degrees_btdc; //=0
 
  CLEARBIT(flags, F_STROKE);
@@ -153,6 +159,7 @@ void ckps_init_state_variables(void)
  SETBIT(flags, F_IGNIEN);
  SETBIT(flags2, F_SHUTTER);
  SETBIT(flags2, F_SHUTTER_S);
+ CLEARBIT(flags2, F_VDELTAP);
 
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
 
@@ -577,9 +584,22 @@ static inline void ProcessFallingEdge(uint16_t tmr)
  if (CHECKBIT(flags, F_VHTPER))
  {
   //calculate stroke period
-  hall.stroke_period = tmr - hall.measure_start_value;
+  hall.stroke_period_meas = tmr - hall.measure_start_value;
   WRITEBIT(flags, F_SPSIGN, tmr < hall.measure_start_value); //save sign
   hall.t1oc_s = hall.t1oc, hall.t1oc = 0; //save value and reset counter
+  ///prediction/////////////////////////////////////
+  if ((hall.t1oc_s = 0 && CHECKBIT(flags2, F_VDELTAP)) && PGM_GET_BYTE(&fw_data.exdata.hall_predict))
+  { //with prediction (only if there were no overflows and stroke_period_prev is valid)
+   int32_t newperiod = ((int32_t)hall.stroke_period_meas) + (((int32_t)hall.stroke_period_meas) - hall.stroke_period_prev); //1st derivative is used for prediction
+   if (newperiod > 65500)
+    newperiod = 65500;
+   hall.stroke_period = newperiod;
+  }
+  else //without prediction (use last interval)
+   hall.stroke_period = hall.stroke_period_meas;
+  hall.stroke_period_prev = hall.stroke_period_meas;
+  SETBIT(flags2, F_VDELTAP);
+  ///prediction/////////////////////////////////////
  }
  SETBIT(flags, F_VHTPER);
  SETBIT(flags, F_STROKE); //set the stroke-synchronization event

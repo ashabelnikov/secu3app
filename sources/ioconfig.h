@@ -311,12 +311,12 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_TACH_O       32     //!< TACH_O          (output)
 #define IOP_KSP_CS       33     //!< KSP_CS          (output)
 #define IOP_ADD_I5       34     //!< ADD_I5          (input)    spiadc
-#define IOP_OILP_I       35     //!< OILP_I          (input)    spi
-#define IOP_GENS_I       36     //!< GENS_I          (input)    spi
+#define IOP_ADD_I6       35     //!< ADD_I6          (input)    spiadc
+#define IOP_ADD_I7       36     //!< ADD_I7          (input)    spiadc
+#define IOP_ADD_I8       37     //!< ADD_I8          (input)    spiadc
+#define IOP_OILP_I       38     //!< OILP_I          (input)    spi
+#define IOP_GENS_I       39     //!< GENS_I          (input)    spi
 //reserved slots
-#define IOP_RESERVED0    37     //!< reserved slot   ()
-#define IOP_RESERVED1    38     //!< reserved slot   ()
-#define IOP_RESERVED2    39     //!< reserved slot   ()
 #define IOP_RESERVED3    40     //!< reserved slot   ()
 #define IOP_RESERVED4    41     //!< reserved slot   ()
 #define IOP_RESERVED5    42     //!< reserved slot   ()
@@ -556,11 +556,26 @@ void iocfg_i_gens_i(uint8_t value);      //!< init GENS_I input
 void iocfg_i_gens_ii(uint8_t value);     //!< init GENS_I input        (inverted)
 uint8_t iocfg_g_gens_i(void);            //!< get GENS_I input value
 uint8_t iocfg_g_gens_ii(void);           //!< get GENS_I input value   (inverted)
-
+//ADD_I5
 void iocfg_i_add_i5(uint8_t value);      //!< init ADD_I5 input
 void iocfg_i_add_i5i(uint8_t value);     //!< init ADD_I5 input       (inverted)
 uint8_t iocfg_g_add_i5(void);            //!< set  ADD_I5 input
 uint8_t iocfg_g_add_i5i(void);           //!< set  ADD_I5 input       (inverted)
+//ADD_I6
+void iocfg_i_add_i6(uint8_t value);      //!< init ADD_I6 input
+void iocfg_i_add_i6i(uint8_t value);     //!< init ADD_I6 input       (inverted)
+uint8_t iocfg_g_add_i6(void);            //!< set  ADD_I6 input
+uint8_t iocfg_g_add_i6i(void);           //!< set  ADD_I6 input       (inverted)
+//ADD_I7
+void iocfg_i_add_i7(uint8_t value);      //!< init ADD_I7 input
+void iocfg_i_add_i7i(uint8_t value);     //!< init ADD_I7 input       (inverted)
+uint8_t iocfg_g_add_i7(void);            //!< set  ADD_I7 input
+uint8_t iocfg_g_add_i7i(void);           //!< set  ADD_I7 input       (inverted)
+//ADD_I8
+void iocfg_i_add_i8(uint8_t value);      //!< init ADD_I8 input
+void iocfg_i_add_i8i(uint8_t value);     //!< init ADD_I8 input       (inverted)
+uint8_t iocfg_g_add_i8(void);            //!< set  ADD_I8 input
+uint8_t iocfg_g_add_i8i(void);           //!< set  ADD_I8 input       (inverted)
 
 #ifdef MCP3204
 #define SPIADC_CHNUM 4

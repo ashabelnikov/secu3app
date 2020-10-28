@@ -43,8 +43,8 @@
 #include "wdt.h"
 
 /**Declare blink codes. Indexes in the array must correspond to numbers of bits of corresponding CE errors in ce_errors.h */
-PGM_DECLARE(uint8_t blink_codes[16]) =
- {0x21, 0x13, 0x14, 0x31, 0x32, 0x22, 0x23, 0x24, 0x41, 0x25, 0x26, 0x27, 0x28, 0x51, 0x52, 0};
+PGM_DECLARE(uint8_t blink_codes[ECUERROR_NUM]) =
+ {0x21, 0x13, 0x14, 0x31, 0x32, 0x22, 0x23, 0x24, 0x41, 0x25, 0x26, 0x27, 0x28, 0x51, 0x52, 0, 0x53, 0x54, 0x55, 0x56};
 
 
 void bc_init_ports(void)
@@ -188,15 +188,15 @@ void bc_indication_mode(void)
  //main loop
  for(;;)
  {
-  uint16_t errors = 0;
+  uint32_t errors = 0;
   disp_start();
 
   delay_hom(7);
 
   //read errors
-  eeprom_read(&errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
+  eeprom_read(&errors, EEPROM_ECUERRORS_START, sizeof(uint32_t));
 
-  for(i = 0; i < 16; ++i)
+  for(i = 0; i < ECUERROR_NUM; ++i)
   {
    measure_voltage();
 
@@ -210,7 +210,7 @@ void bc_indication_mode(void)
 
    if (0 == PGM_GET_BYTE(&blink_codes[i]))
     continue;
-   if (errors & (1 << i))
+   if (errors & _CBV32(1, i))
    {
     disp_code(PGM_GET_BYTE(&blink_codes[i]));
     delay_hom(20);

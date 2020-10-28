@@ -48,6 +48,8 @@
  #define ADC_VREF_FACTOR        1.0000  //!< Vref compensation factor (2.56V/2.56V)
 #endif
 
+#define ADC_MCP3204_FACTOR      0.488281 //!<2000/4096
+
 /** Get last measured value of MAP
  * \return value in ADC discretes
  */
@@ -178,5 +180,27 @@ int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
  * Call adc_get_ubat_value() to obtain result of measurement
  */
 void adc_measure_voltage(void);
+
+#if !defined(SECU3T) && defined(MCP3204)
+/** Get last measured value from ADD_I5
+ * \return value in the ADC discretes
+ */
+uint16_t adc_get_add_i5_value(void);
+
+/** Get last measured value from ADD_I6
+ * \return value in the ADC discretes
+ */
+uint16_t adc_get_add_i6_value(void);
+
+/** Get last measured value from ADD_I7
+ * \return value in the ADC discretes
+ */
+uint16_t adc_get_add_i7_value(void);
+
+/** Get last measured value from ADD_I8
+ * \return value in the ADC discretes
+ */
+uint16_t adc_get_add_i8_value(void);
+#endif
 
 #endif //_ADC_H_

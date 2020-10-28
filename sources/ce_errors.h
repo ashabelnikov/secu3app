@@ -49,6 +49,11 @@
 #define ECUERROR_ADD_I3_SENSOR         13  //!< ADD_I3 input error
 #define ECUERROR_ADD_I4_SENSOR         14  //!< ADD_I4 input error
 #define ECUERROR_SYS_START             15  //!< Not actually an error. just indicates that fimware has started
+#define ECUERROR_ADD_I5_SENSOR         16  //!< ADD_I5 input error
+#define ECUERROR_ADD_I6_SENSOR         17  //!< ADD_I6 input error
+#define ECUERROR_ADD_I7_SENSOR         18  //!< ADD_I7 input error
+#define ECUERROR_ADD_I8_SENSOR         19  //!< ADD_I8 input error
+#define ECUERROR_NUM                   20  //!< number of ECU error codes
 
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure
@@ -75,7 +80,7 @@ uint8_t ce_is_error(uint8_t error);
  * Call only if EEPROM is ready!
  * \param p_merged_errors merged errors's bits to save
  */
-void ce_save_merged_errors(uint16_t* p_merged_errors);
+void ce_save_merged_errors(uint32_t* p_merged_errors);
 
 /**Clears errors saved in EEPROM */
 void ce_clear_errors(void);

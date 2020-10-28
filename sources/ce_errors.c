@@ -45,9 +45,9 @@
 /**CE state variables structure */
 typedef struct
 {
- uint16_t ecuerrors;         //!< 16 error codes maximum
- uint16_t merged_errors;     //!< caching errors to preserve resource of the EEPROM
- uint16_t write_errors;      //!< func. eeprom_start_wr_data() launches background process!
+ uint32_t ecuerrors;         //!< 32 error codes maximum
+ uint32_t merged_errors;     //!< caching errors to preserve resource of the EEPROM
+ uint32_t write_errors;      //!< func. eeprom_start_wr_data() launches background process!
  uint16_t bv_tdc;            //!< board voltage debouncong counter for eliminating of false errors during normal transients
  uint8_t  bv_eds;            //!< board voltage error detecting state, used for state machine
  uint8_t  bv_dev;            //!< board voltage deviation flag, if 0, then voltage is below normal, if 1, then voltage is above normal
@@ -68,18 +68,18 @@ ce_state_t ce_state = {0,0,0,0,0,0,0,
 /*#pragma inline*/
 void ce_set_error(uint8_t error)
 {
- SETBIT(ce_state.ecuerrors, error);
+ SETBIT32(ce_state.ecuerrors, error);
 }
 
 /*#pragma inline*/
 void ce_clear_error(uint8_t error)
 {
- CLEARBIT(ce_state.ecuerrors, error);
+ CLEARBIT32(ce_state.ecuerrors, error);
 }
 
 uint8_t ce_is_error(uint8_t error)
 {
- return !!CHECKBIT(ce_state.ecuerrors, error);
+ return !!CHECKBIT32(ce_state.ecuerrors, error);
 }
 
 /** Internal function. Contains checking logic 
@@ -222,6 +222,29 @@ void check(ce_sett_t _PGM *cesd)
  else
   ce_clear_error(ECUERROR_ADD_I4_SENSOR);
 #endif
+
+#ifdef MCP3204
+ //checking ADD_I5 sensor
+ if ((d.sens.add_i5_raw < PGM_GET_WORD(&cesd->add_i5_v_min)) || (d.sens.add_i5_raw > PGM_GET_WORD(&cesd->add_i5_v_max)))
+  ce_set_error(ECUERROR_ADD_I5_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I5_SENSOR);
+ //checking ADD_I6 sensor
+ if ((d.sens.add_i6_raw < PGM_GET_WORD(&cesd->add_i6_v_min)) || (d.sens.add_i6_raw > PGM_GET_WORD(&cesd->add_i6_v_max)))
+  ce_set_error(ECUERROR_ADD_I6_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I6_SENSOR);
+ //checking ADD_I7 sensor
+ if ((d.sens.add_i7_raw < PGM_GET_WORD(&cesd->add_i7_v_min)) || (d.sens.add_i7_raw > PGM_GET_WORD(&cesd->add_i7_v_max)))
+  ce_set_error(ECUERROR_ADD_I7_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I7_SENSOR);
+ //checking ADD_I8 sensor
+ if ((d.sens.add_i8_raw < PGM_GET_WORD(&cesd->add_i8_v_min)) || (d.sens.add_i8_raw > PGM_GET_WORD(&cesd->add_i8_v_max)))
+  ce_set_error(ECUERROR_ADD_I8_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I8_SENSOR);
+#endif
 #endif
 }
 
@@ -230,7 +253,7 @@ void check(ce_sett_t _PGM *cesd)
 //of the operability.
 void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
 {
- uint16_t temp_errors;
+ uint32_t temp_errors;
 
  check(&fw_data.exdata.cesd);
 
@@ -249,7 +272,7 @@ void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
   d.ce_state = 1;  //<--doubling
  }
 
- temp_errors = (ce_state.merged_errors | (ce_state.ecuerrors & ~_BV16(ECUERROR_SYS_START))); //also exclude saving of ECUERROR_SYS_START flag
+ temp_errors = (ce_state.merged_errors | (ce_state.ecuerrors & ~_BV32(ECUERROR_SYS_START))); //also exclude saving of ECUERROR_SYS_START flag
 
  //check for error which is still not in merged_errors
  if (temp_errors!=ce_state.merged_errors)
@@ -266,28 +289,28 @@ void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
  d.ecuerrors_for_transfer|= ce_state.ecuerrors;
 }
 
-void ce_save_merged_errors(uint16_t* p_merged_errors)
+void ce_save_merged_errors(uint32_t* p_merged_errors)
 {
- uint16_t temp_errors;
+ uint32_t temp_errors;
 
  if (!p_merged_errors) //overwrite with parameter?
  {
-  eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
+  eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint32_t));
   ce_state.write_errors = temp_errors | ce_state.merged_errors;
   if (ce_state.write_errors!=temp_errors)
-   eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, &ce_state.write_errors, sizeof(uint16_t));
+   eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, &ce_state.write_errors, sizeof(uint32_t));
  }
  else
  {
   ce_state.merged_errors = *p_merged_errors;
-  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.merged_errors, sizeof(uint16_t));
+  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.merged_errors, sizeof(uint32_t));
  }
 }
 
 void ce_clear_errors(void)
 {
  memset(&ce_state, 0, sizeof(ce_state_t));
- eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint16_t));
+ eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint32_t));
 }
 
 void ce_init_ports(void)

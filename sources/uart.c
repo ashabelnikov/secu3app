@@ -556,7 +556,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.sens.add_i1);            // averaged ADD_I1 voltage
 #endif
    build_i16h(d.sens.add_i2);            // ADD_I2 voltage
-   build_i16h(d.ecuerrors_for_transfer); // CE errors
+   build_i32h(d.ecuerrors_for_transfer); // CE errors
    build_i8h(d.choke_pos);               // choke position
    build_i8h(d.gasdose_pos);             // gas dosator position
 #ifdef SPEED_SENSOR
@@ -661,6 +661,14 @@ void uart_send_packet(uint8_t send_mode)
    build_i32h(d.param.ai3_adc_correction);
    build_i16h(d.param.ai4_adc_factor);
    build_i32h(d.param.ai4_adc_correction);
+   build_i16h(d.param.ai5_adc_factor);
+   build_i32h(d.param.ai5_adc_correction);
+   build_i16h(d.param.ai6_adc_factor);
+   build_i32h(d.param.ai6_adc_correction);
+   build_i16h(d.param.ai7_adc_factor);
+   build_i32h(d.param.ai7_adc_correction);
+   build_i16h(d.param.ai8_adc_factor);
+   build_i32h(d.param.ai8_adc_correction);
    break;
 
   case ADCRAW_DAT:
@@ -711,7 +719,7 @@ void uart_send_packet(uint8_t send_mode)
    break;
 
   case CE_ERR_CODES:
-   build_i16h(d.ecuerrors_for_transfer);
+   build_i32h(d.ecuerrors_for_transfer);
    break;
 
   case KNOCK_PAR:
@@ -729,7 +737,7 @@ void uart_send_packet(uint8_t send_mode)
    break;
 
   case CE_SAVED_ERR:
-   build_i16h(d.ecuerrors_saved_transfer);
+   build_i32h(d.ecuerrors_saved_transfer);
    break;
 
   case FWINFO_DAT:
@@ -1328,6 +1336,14 @@ uint8_t uart_recept_packet(void)
    d.param.ai3_adc_correction = recept_i32h();
    d.param.ai4_adc_factor     = recept_i16h();
    d.param.ai4_adc_correction = recept_i32h();
+   d.param.ai5_adc_factor     = recept_i16h();
+   d.param.ai5_adc_correction = recept_i32h();
+   d.param.ai6_adc_factor     = recept_i16h();
+   d.param.ai6_adc_correction = recept_i32h();
+   d.param.ai7_adc_factor     = recept_i16h();
+   d.param.ai7_adc_correction = recept_i32h();
+   d.param.ai8_adc_factor     = recept_i16h();
+   d.param.ai8_adc_correction = recept_i32h();
    break;
 
   case CKPS_PAR:
@@ -1360,7 +1376,7 @@ uint8_t uart_recept_packet(void)
    break;
 
   case CE_SAVED_ERR:
-   d.ecuerrors_saved_transfer = recept_i16h();
+   d.ecuerrors_saved_transfer = recept_i32h();
    break;
 
   case MISCEL_PAR:

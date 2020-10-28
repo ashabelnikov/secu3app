@@ -112,6 +112,8 @@
 
 #define KNKZONE_TPS_SIZE                16          //! Number of points along tps axis in the knock zones look up table
 
+#define INPUTNUM                        14          //!< number of ring buffers (analog inputs)
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -300,6 +302,26 @@ typedef struct ce_sett_t
  uint16_t add_i4_v_max;
  uint16_t add_i4_v_em;
  uint8_t  add_i4_v_flg;
+
+ uint16_t add_i5_v_min;
+ uint16_t add_i5_v_max;
+ uint16_t add_i5_v_em;
+ uint8_t  add_i5_v_flg;
+
+ uint16_t add_i6_v_min;
+ uint16_t add_i6_v_max;
+ uint16_t add_i6_v_em;
+ uint8_t  add_i6_v_flg;
+
+ uint16_t add_i7_v_min;
+ uint16_t add_i7_v_max;
+ uint16_t add_i7_v_em;
+ uint8_t  add_i7_v_flg;
+
+ uint16_t add_i8_v_min;
+ uint16_t add_i8_v_max;
+ uint16_t add_i8_v_em;
+ uint8_t  add_i8_v_flg;
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware
@@ -384,7 +406,7 @@ typedef struct fw_ex_data_t
   uint8_t  heating_time;  //Input manifold heating time
   uint8_t  idltorun_stp_en;
   uint8_t  idltorun_stp_le;
-  uint8_t  inpavnum[10];
+  uint8_t  inpavnum[INPUTNUM];
   uint8_t  vent_delay;   //Ventilator's turn on delay
   uint8_t  vent_iacoff;  //Value to be added to IAC position when ventilator is being turned on
   uint8_t  epas_iacoff;  //Value to be added to IAC position when electronic power steering is being turned on
@@ -401,7 +423,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4062];
+  uint8_t reserved[4030];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -654,11 +676,20 @@ typedef struct params_t
 
   uint16_t pwmfrq[2];                    //!< PWM frequency for PWM1/2 outputs (value = 1/f * 524288), 10....5000Hz
 
+  uint16_t ai5_adc_factor;               //!< ADC error compensation factor for ADD_I5 input
+  int32_t  ai5_adc_correction;           //!< ADC error compensation correction for ADD_I5 input
+  uint16_t ai6_adc_factor;               //!< ADC error compensation factor for ADD_I6 input
+  int32_t  ai6_adc_correction;           //!< ADC error compensation correction for ADD_I6 input
+  uint16_t ai7_adc_factor;               //!< ADC error compensation factor for ADD_I7 input
+  int32_t  ai7_adc_correction;           //!< ADC error compensation correction for ADD_I7 input
+  uint16_t ai8_adc_factor;               //!< ADC error compensation factor for ADD_I8 input
+  int32_t  ai8_adc_correction;           //!< ADC error compensation correction for ADD_I8 input
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[214];
+  uint8_t  reserved[190];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

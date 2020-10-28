@@ -70,9 +70,14 @@
 #define SPD_INPIDX           7                 //!< Index of ring buffer for VSS (SPEED_SENSOR option must be included)
 #define AI3_INPIDX           8                 //!< Index of ring buffer for ADD_I3 (SECU3T option must be excluded OR PA4_INP_IGNTIM option must be included)
 #define AI4_INPIDX           9                 //!< Index of ring buffer for ADD_I4 (SECU3T option must be excluded AND TPIC8101 option must be included)
+#if !defined(SECU3T) && defined(MCP3204)
+#define AI5_INPIDX          10                 //!< Index of ring buffer for ADD_I5 (SECU3T option must be excluded AND MCP3204 option must be included)
+#define AI6_INPIDX          11                 //!< Index of ring buffer for ADD_I6 (SECU3T option must be excluded AND MCP3204 option must be included)
+#define AI7_INPIDX          12                 //!< Index of ring buffer for ADD_I7 (SECU3T option must be excluded AND MCP3204 option must be included)
+#define AI8_INPIDX          13                 //!< Index of ring buffer for ADD_I8 (SECU3T option must be excluded AND MCP3204 option must be included)
+#endif
 
 #define CIRCBUFFMAX 8                          //!< Maximum size of ring buffer in items
-#define INPUTNUM 10                            //!< number of ring buffers
 
 /**Describes ring buffer for one input*/
 typedef struct
@@ -82,7 +87,7 @@ typedef struct
 }meas_input_t;
 
 /**Ring buffers for all inputs */
-meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
+meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
 
 static uint16_t update_buffer(uint8_t idx, uint16_t value)
 {
@@ -169,6 +174,13 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  update_buffer(AI4_INPIDX, adc_get_knock_value());
 #endif
 
+#if !defined(SECU3T) && defined(MCP3204)
+ update_buffer(AI5_INPIDX, adc_get_add_i5_value());
+ update_buffer(AI6_INPIDX, adc_get_add_i6_value());
+ update_buffer(AI7_INPIDX, adc_get_add_i7_value());
+ update_buffer(AI8_INPIDX, adc_get_add_i8_value());
+#endif
+
  if (d.param.knock_use_knock_channel && d.sens.frequen > 200)
  {
 #ifdef TPIC8101
@@ -198,38 +210,6 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  }
  else
   d.sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
-#endif
-
-#if !defined(SECU3T) && defined(MCP3204)
-  uint16_t spiadc[SPIADC_CHNUM];
-
-  _BEGIN_ATOMIC_BLOCKN(0);
-  spiadc[0] = spiadc_chan[0] & 0xFFF;
-  _END_ATOMIC_BLOCKN(0);
-
-  _BEGIN_ATOMIC_BLOCKN(1);
-  spiadc[1] = spiadc_chan[1] & 0xFFF;
-  _END_ATOMIC_BLOCKN(1);
-
-  _BEGIN_ATOMIC_BLOCKN(2);
-  spiadc[2] = spiadc_chan[2] & 0xFFF;
-  _END_ATOMIC_BLOCKN(2);
-
-  _BEGIN_ATOMIC_BLOCKN(3);
-  spiadc[3] = spiadc_chan[3] & 0xFFF;
-  _END_ATOMIC_BLOCKN(3);
-
-  d.sens.add_i5_raw = adc_compensate(spiadc[0], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
-  d.sens.add_i5 = d.sens.add_i5_raw;
-
-  d.sens.add_i6_raw = adc_compensate(spiadc[1], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
-  d.sens.add_i6 = d.sens.add_i6_raw;
-
-  d.sens.add_i7_raw = adc_compensate(spiadc[2], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
-  d.sens.add_i7 = d.sens.add_i7_raw;
-
-  d.sens.add_i8_raw = adc_compensate(spiadc[3], ADC_COMP_FACTOR(0.488281), ADC_COMP_CORR(0.488281, 0.0)); //0.488281 = 2000/4096
-  d.sens.add_i8 = d.sens.add_i8_raw;
 #endif
 }
 
@@ -282,6 +262,17 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #if !defined(SECU3T) && defined(TPIC8101)
  d.sens.add_i4_raw = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
  d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && PGM_GET_BYTE(&cesd->add_i4_v_flg) ? PGM_GET_WORD(&cesd->add_i4_v_em) : d.sens.add_i4_raw;
+#endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+ d.sens.add_i5_raw = adc_compensate(average_buffer(AI5_INPIDX), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
+ d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && PGM_GET_BYTE(&cesd->add_i5_v_flg) ? PGM_GET_WORD(&cesd->add_i5_v_em) : d.sens.add_i5_raw;
+ d.sens.add_i6_raw = adc_compensate(average_buffer(AI6_INPIDX), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
+ d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && PGM_GET_BYTE(&cesd->add_i6_v_flg) ? PGM_GET_WORD(&cesd->add_i6_v_em) : d.sens.add_i6_raw;
+ d.sens.add_i7_raw = adc_compensate(average_buffer(AI7_INPIDX), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
+ d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && PGM_GET_BYTE(&cesd->add_i7_v_flg) ? PGM_GET_WORD(&cesd->add_i7_v_em) : d.sens.add_i7_raw;
+ d.sens.add_i8_raw = adc_compensate(average_buffer(AI8_INPIDX), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
+ d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && PGM_GET_BYTE(&cesd->add_i8_v_flg) ? PGM_GET_WORD(&cesd->add_i8_v_em) : d.sens.add_i8_raw;
 #endif
 
 #ifdef AIRTEMP_SENS

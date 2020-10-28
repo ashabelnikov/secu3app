@@ -34,6 +34,7 @@
 #include "bitmask.h"
 #include "magnitude.h"
 #include "mathemat.h"
+#include "ioconfig.h"
 
 /**номер канала используемого для ДАД */
 #define ADCI_MAP                2
@@ -419,3 +420,42 @@ void adc_measure_voltage(void)
  while(CHECKBIT(ADCSRA, ADSC));   //wait for completion of measurement
  adc.ubat_value = ADC;
 }
+
+#if !defined(SECU3T) && defined(MCP3204)
+uint16_t adc_get_add_i5_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCKN();
+ value = spiadc_chan[0] & 0xFFF;
+ _END_ATOMIC_BLOCKN();
+ return value;
+}
+
+uint16_t adc_get_add_i6_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCKN();
+ value = spiadc_chan[1] & 0xFFF;
+ _END_ATOMIC_BLOCKN();
+ return value;
+}
+
+uint16_t adc_get_add_i7_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCKN();
+ value = spiadc_chan[2] & 0xFFF;
+ _END_ATOMIC_BLOCKN();
+ return value;
+}
+
+uint16_t adc_get_add_i8_value(void)
+{
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCKN();
+ value = spiadc_chan[3] & 0xFFF;
+ _END_ATOMIC_BLOCKN();
+ return value;
+}
+
+#endif

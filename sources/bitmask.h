@@ -32,11 +32,20 @@
 /** Set y bit in the byte x */
 #define SETBIT(x,y)   ((x) |= (1<<(y)))
 
+/** Set y bit in the byte x  (32-bit version)*/
+#define SETBIT32(x,y)   ((x) |= (((uint32_t)1)<<(y)))
+
 /** Clear y bit in the byte x */
 #define CLEARBIT(x,y) ((x) &= (~(1<<(y))))
 
+/** Clear y bit in the byte x (32 bit version) */
+#define CLEARBIT32(x,y) ((x) &= (~(((uint32_t)1)<<(y))))
+
 /** Check y bit in the byte x */
 #define CHECKBIT(x,y) ((x) & (1<<(y)))
+
+/** Check y bit in the byte x (32 bit version)*/
+#define CHECKBIT32(x,y) ((x) & (((uint32_t)1)<<(y)))
 
 /** Write specified v value to y bit in the byte x */
 #define WRITEBIT(x, y, v) if (v)  SETBIT(x,y); else CLEARBIT(x, y);

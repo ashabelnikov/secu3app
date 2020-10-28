@@ -156,7 +156,7 @@ void sop_execute_operations(void)
  {
   if (eeprom_is_idle())
   {
-   eeprom_read(&d.ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint16_t));
+   eeprom_read(&d.ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint32_t));
    sop_set_operation(SOP_TRANSMIT_CE_ERRORS);
    //"удаляем" эту операцию из списка так как она уже выполнилась.
    sop_reset_operation(SOP_READ_CE_ERRORS);

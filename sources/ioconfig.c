@@ -1410,7 +1410,7 @@ uint8_t iocfg_g_add_i5(void)
  _BEGIN_ATOMIC_BLOCK();
  value = spiadc_chan[0];
  _END_ATOMIC_BLOCK();
- return (value > 2048);
+ return ((value & 0xFFF) > 2048);
 #else
  return 0; //stub
 #endif
@@ -1423,7 +1423,118 @@ uint8_t iocfg_g_add_i5i(void)          //inverted version
  _BEGIN_ATOMIC_BLOCK();
  value = spiadc_chan[0];
  _END_ATOMIC_BLOCK();
- return (value < 2048);
+ return ((value & 0xFFF) < 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void iocfg_i_add_i6(uint8_t value)
+{
+ //stub
+}
+
+void iocfg_i_add_i6i(uint8_t value)     //inverted version
+{
+ //stub
+}
+
+uint8_t iocfg_g_add_i6(void)
+{
+#ifdef MCP3204
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[1];
+ _END_ATOMIC_BLOCK();
+ return ((value & 0xFFF) > 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+uint8_t iocfg_g_add_i6i(void)          //inverted version
+{
+#ifdef MCP3204
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[1];
+ _END_ATOMIC_BLOCK();
+ return ((value & 0xFFF) < 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void iocfg_i_add_i7(uint8_t value)
+{
+ //stub
+}
+
+void iocfg_i_add_i7i(uint8_t value)     //inverted version
+{
+ //stub
+}
+
+uint8_t iocfg_g_add_i7(void)
+{
+#ifdef MCP3204
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[2];
+ _END_ATOMIC_BLOCK();
+ return ((value & 0xFFF) > 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+uint8_t iocfg_g_add_i7i(void)          //inverted version
+{
+#ifdef MCP3204
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[2];
+ _END_ATOMIC_BLOCK();
+ return ((value & 0xFFF) < 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void iocfg_i_add_i8(uint8_t value)
+{
+ //stub
+}
+
+void iocfg_i_add_i8i(uint8_t value)     //inverted version
+{
+ //stub
+}
+
+uint8_t iocfg_g_add_i8(void)
+{
+#ifdef MCP3204
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[3];
+ _END_ATOMIC_BLOCK();
+ return ((value & 0xFFF) > 2048);
+#else
+ return 0; //stub
+#endif
+}
+
+uint8_t iocfg_g_add_i8i(void)          //inverted version
+{
+#ifdef MCP3204
+ uint16_t value;
+ _BEGIN_ATOMIC_BLOCK();
+ value = spiadc_chan[3];
+ _END_ATOMIC_BLOCK();
+ return ((value & 0xFFF) < 2048);
 #else
  return 0; //stub
 #endif

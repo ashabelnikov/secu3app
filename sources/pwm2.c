@@ -77,6 +77,15 @@ extern uint8_t spi_PORTB;
   case 3: /*DE*/ \
    SETBIT(PORTC, PC2); \
    break; \
+  case 6: /*IGN_O3*/ \
+   CLEARBIT(PORTC, PC0); \
+   break; \
+  case 7: /*IGN_O4*/ \
+   CLEARBIT(PORTC, PC1); \
+   break; \
+  case 13: /*TACH_O*/ \
+   SETBIT(PORTC, PC4); \
+   break; \
  }
 #endif
 
@@ -238,6 +247,15 @@ extern uint8_t spi_PORTB;
    break; \
   case 3: /*DE*/ \
    CLEARBIT(PORTC, PC2); \
+   break; \
+  case 6: /*IGN_O3*/ \
+   SETBIT(PORTC, PC0); \
+   break; \
+  case 7: /*IGN_O4*/ \
+   SETBIT(PORTC, PC1); \
+   break; \
+  case 13: /*TACH_O*/ \
+   CLEARBIT(PORTC, PC4); \
    break; \
  }
 #endif
@@ -416,6 +434,12 @@ void pwm2_init_state(void)
   pwm2.iomode[0] = 0; //IGN_O5
  else if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_inj_out5i)
   pwm2.iomode[0] = 1; //INJ_O5
+ if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_ign_out3 || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_ign_out3i)
+  pwm2.iomode[0] = 6; //IGN_O3
+ if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_ign_out4 || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_ign_out4i)
+  pwm2.iomode[0] = 7; //IGN_O4
+ if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_tach_o || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_tach_oi)
+  pwm2.iomode[0] = 13; //TACH_O
 #endif
  else if (IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_PWM1)==(fnptr_t)iocfg_s_bli)
   pwm2.iomode[0] = 2; //BL
@@ -433,6 +457,12 @@ void pwm2_init_state(void)
   {pwm2.iomode[0] = 0; pwm2.compa_mode = 1;} //IGN_O5
  else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5i)
   {pwm2.iomode[0] = 1; pwm2.compa_mode = 1;} //INJ_O5
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out3 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out3i)
+  {pwm2.iomode[0] = 6; pwm2.compa_mode = 1;} //IGN_O3
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out4 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out4i)
+  {pwm2.iomode[0] = 7; pwm2.compa_mode = 1;} //IGN_O4
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_tach_o || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_tach_oi)
+  {pwm2.iomode[0] = 13; pwm2.compa_mode = 1;} //TACH_O
 #endif
  else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bli)
   {pwm2.iomode[0] = 2; pwm2.compa_mode = 1;} //BL
@@ -456,6 +486,12 @@ void pwm2_init_state(void)
   pwm2.iomode[1] = 0; //IGN_O5
  else if (IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_inj_out5i)
   pwm2.iomode[1] = 1; //INJ_O5
+ if (IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_ign_out3 || IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_ign_out3i)
+  pwm2.iomode[1] = 6; //IGN_O3
+ if (IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_ign_out4 || IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_ign_out4i)
+  pwm2.iomode[1] = 7; //IGN_O4
+ if (IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_tach_o || IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_tach_oi)
+  pwm2.iomode[1] = 13; //TACH_O
 #endif
  else if (IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_PWM2)==(fnptr_t)iocfg_s_bli)
   pwm2.iomode[1] = 2; //BL
@@ -473,6 +509,12 @@ void pwm2_init_state(void)
   {pwm2.iomode[1] = 0; pwm2.compb_mode = 1;} //IGN_O5
  else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_inj_out5i)
   {pwm2.iomode[1] = 1; pwm2.compb_mode = 1;} //INJ_O5
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out3 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out3i)
+  {pwm2.iomode[1] = 6; pwm2.compb_mode = 1;} //IGN_O3
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out4 || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_ign_out4i)
+  {pwm2.iomode[1] = 7; pwm2.compb_mode = 1;} //IGN_O4
+ if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_tach_o || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_tach_oi)
+  {pwm2.iomode[1] = 13; pwm2.compb_mode = 1;} //TACH_O
 #endif
  else if (IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_FL_CONS)==(fnptr_t)iocfg_s_bli)
   {pwm2.iomode[1] = 2; pwm2.compb_mode = 1;} //BL
@@ -490,6 +532,12 @@ void pwm2_init_state(void)
   {pwm2.iomode[1] = 0; pwm2.compb_mode = 2;} //IGN_O5
  else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_inj_out5 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_inj_out5i)
   {pwm2.iomode[1] = 1; pwm2.compb_mode = 2;} //INJ_O5
+ if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_ign_out3 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_ign_out3i)
+  {pwm2.iomode[1] = 6; pwm2.compb_mode = 2;} //IGN_O3
+ if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_ign_out4 || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_ign_out4i)
+  {pwm2.iomode[1] = 7; pwm2.compb_mode = 2;} //IGN_O4
+ if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_tach_o || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_tach_oi)
+  {pwm2.iomode[1] = 13; pwm2.compb_mode = 2;} //TACH_O
 #endif
  else if (IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_bl || IOCFG_CB(IOP_VTACHOM)==(fnptr_t)iocfg_s_bli)
   {pwm2.iomode[1] = 2; pwm2.compb_mode = 2;} //BL

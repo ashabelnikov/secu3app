@@ -642,6 +642,13 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i8h(0);
 #endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+   build_i16h(d.sens.grts);              //gas reducer's temperature
+#else
+   build_i16h(0);
+#endif
+
    break;
 
   case ADCCOR_PAR:

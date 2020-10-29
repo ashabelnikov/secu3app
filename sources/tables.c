@@ -339,7 +339,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
@@ -855,6 +855,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
  _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), //2  ^
  _KNR(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)  //1  |
 */
+
+  /**Fill GRTEMP sensor lookup table (temperature vs voltage)*/
+  {_TLV(120.0), _TLV(100.0), _TLV(81.0), _TLV(65.5), _TLV(56.0), _TLV(48.5), _TLV(42.0), _TLV(36.0),
+   _TLV(30.0), _TLV(23.0), _TLV(18.0), _TLV(12.0), _TLV(4.0), _TLV(-4.0), _TLV(-15.0), _TLV(-37.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)
+  },
 
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%

@@ -386,6 +386,9 @@ typedef struct fw_ex_data_t
   /**Knock zones vs rpm, tps*/
   uint16_t knock_zones[KNKZONE_TPS_SIZE];
 
+  /**GRTEMP sensor's temperature vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+  int16_t grts_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -423,7 +426,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[4030];
+  uint8_t reserved[3994];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

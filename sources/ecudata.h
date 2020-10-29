@@ -163,6 +163,10 @@ typedef struct sensors_t
  uint16_t afr;                           //!< AFR value calculated from lambda sensor, value * 128
 #endif
 
+#if !defined(SECU3T) && defined(MCP3204)
+ int16_t grts;                           //!< Gas reducer temperature sensor
+#endif
+
  uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
 }sensors_t;
 

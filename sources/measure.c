@@ -296,6 +296,14 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, fw_data.exdata.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
  else
   d.sens.tmp2 = 0; //input is not selected
+
+#ifdef MCP3204
+ if (IOCFG_CHECK(IOP_GRTEMP))
+  d.sens.grts = thermistor_lookup(d.sens.add_i6, fw_data.exdata.grts_curve); //ADD_I6 input selected as GRTEMP sensor
+ else
+  d.sens.grts = 0; //input is not selected
+#endif
+
 #endif
 
 }

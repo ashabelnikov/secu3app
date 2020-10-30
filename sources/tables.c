@@ -862,6 +862,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    ROUND(0.0 / ADC_DISCRETE), ROUND(4.98 / ADC_DISCRETE)
   },
 
+  /**Fill gas reducer's heating duty look up table (%)*/
+  {200,200,200,200,200,160,120,80,40,0,0,0,0,0,0,0},
+
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
   .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
@@ -893,6 +896,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .fldclr_start = 1,  //allowed
   .hall_predict = 0,  //last interval
   .vtachom_mult = ROUNDU16(0.5*8192), //generate tachometer pulses as for 4 cylinder 4 stroke engine
+  .grheat_time = SYSTIM_MAGS(180), //3 minutes
 
   /**reserved bytes*/
   {0}

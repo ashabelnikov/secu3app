@@ -50,6 +50,7 @@
 #include "pwrvalve.h"
 #include "fuelpump.h"
 #include "funconv.h"
+#include "grheat.h"
 #include "jumper.h"
 #include "fuelcut.h"
 #include "immobiliz.h"
@@ -130,6 +131,10 @@ void control_engine_units(void)
 
 #ifdef INTK_HEATING
  intkheat_control();
+#endif
+
+#ifndef SECU3T
+ grheat_control();
 #endif
 
 #ifdef EGOS_HEATING
@@ -232,6 +237,9 @@ void init_ports(void)
 #endif
 #ifdef INTK_HEATING
  intkheat_init_ports();
+#endif
+#ifndef SECU3T
+ grheat_init_ports();
 #endif
 #ifdef EGOS_HEATING
  egosheat_init_ports();
@@ -444,6 +452,9 @@ MAIN()
    intkheat_cog_changed_notification();
    #endif
    vent_cog_changed_notification();
+#ifndef SECU3T
+   grheat_cog_changed_notification();
+#endif
   }
 
   if (s_timer_is_action(engine_rotation_timeout_counter))

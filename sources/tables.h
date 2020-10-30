@@ -389,6 +389,9 @@ typedef struct fw_ex_data_t
   /**GRTEMP sensor's temperature vs voltage. 16 points of function, plus two values for setting of x-axis range*/
   int16_t grts_curve[THERMISTOR_LOOKUP_TABLE_SIZE+2];
 
+  /**Gas reducer's heating control duty, value in % * 2*/
+  uint8_t grheat_duty[F_TMP_POINTS];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -421,12 +424,13 @@ typedef struct fw_ex_data_t
   uint8_t  fldclr_start;  //allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
   uint8_t  hall_predict;  //prediction mode for hall (N=Ncyl) synchronization mode: 0 - last interval (default), 1 - 1st derivative
   uint16_t vtachom_mult;  //Event multiplier for VTACHO output, value * 8192, value in range 0.125...7.900
+  uint16_t grheat_time;   //Maximum time for heating on stopped engine
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3994];
+  uint8_t reserved[3976];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

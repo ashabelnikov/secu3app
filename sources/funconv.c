@@ -88,6 +88,12 @@ typedef struct
  int8_t  ta_i;         //!< index
  int8_t  ta_i1;        //!< index + 1
  int16_t ta_clt;       //!< temperature (CLT)
+#ifndef SECU3T
+ //GRTS args:
+ int8_t  ga_i;         //!< index
+ int8_t  ga_i1;        //!< index + 1
+ int16_t ga_grt;       //!< temperature (GRTS)
+#endif
  //precalculated values:
  int16_t vecurr;       //!< current value of VE (value * 2048)
  int16_t afrcurr;      //!< current value of AFR (value * 256)
@@ -189,6 +195,21 @@ void calc_lookup_args(void)
  if (fcs.ta_i < 0)  {fcs.ta_i = 0; fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
  if (fcs.ta_clt > ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]))) fcs.ta_clt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
  fcs.ta_i1 = fcs.ta_i + 1;
+
+#ifndef SECU3T
+ //-----------------------------------------
+ //GRTS arguments:
+ fcs.ga_grt = d.sens.grts;
+
+ //find interpolation points, then restrict CLT if it fall outside set range
+ for(fcs.ga_i = F_TMP_POINTS-2; fcs.ga_i >= 0; fcs.ga_i--)
+  if (fcs.ga_grt >= ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]))) break;
+
+ //lookup table works from clt_grid_points[0] and upper
+ if (fcs.ga_i < 0)  {fcs.ga_i = 0; fcs.ga_grt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
+ if (fcs.ga_grt > ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]))) fcs.ga_grt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
+ fcs.ga_i1 = fcs.ga_i + 1;
+#endif
 }
 
 // Implements function of ignition timing vs RPM for idling
@@ -1299,5 +1320,13 @@ int16_t split_function(void)
         (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
         fcs.la_grad, 16);
+}
+#endif
+
+#ifndef SECU3T
+uint8_t grheat_pwm_duty(void)
+{
+ return simple_interpolation(fcs.ga_grt, PGM_GET_BYTE(&fw_data.exdata.grheat_duty[fcs.ga_i]), PGM_GET_BYTE(&fw_data.exdata.grheat_duty[fcs.ga_i1]),
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ga_i]), 16) >> 4;
 }
 #endif

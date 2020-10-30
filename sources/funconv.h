@@ -407,4 +407,11 @@ uint16_t pwm_function(uint8_t mode);
 int16_t split_function(void);
 #endif
 
+#ifndef SECU3T
+/** Calculates PWM duty for gas reducer's heater (duty vs coolant temperature)
+ * \return duty value (%) * 2
+ */
+uint8_t grheat_pwm_duty(void);
+#endif
+
 #endif //_FUNCONV_H_

@@ -528,17 +528,83 @@ static uint8_t cond_oftmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_th
  return p_ctx->state;
 }
 
+/** Condition function for gas reducer's temperature sensor (GRTS)
+ * \param d pointer to ECU data structure
+ * \param on_thrd ON threshold, must be in temperature units
+ * \param off_thrd OFF threshold, must be in temperature units
+ * \param state Current logic state (0 or 1)
+ * \return updated logic state (0 or 1)
+ */
+static uint8_t cond_grts(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#if !defined(SECU3T) && defined(MCP3204)
+ if ((int16_t)on_thrd > (int16_t)off_thrd)
+ {
+  if (d->sens.grts >= (int16_t)on_thrd)
+   p_ctx->state = 1; //ON
+  if (d->sens.grts <= (int16_t)off_thrd)
+   p_ctx->state = 0; //OFF
+ }
+ else
+ { //has same effect as inversion
+  if (d->sens.grts <= (int16_t)on_thrd)
+   p_ctx->state = 1; //ON
+  if (d->sens.grts >= (int16_t)off_thrd)
+   p_ctx->state = 0; //OFF
+ }
+#else
+ p_ctx->state = 0; //OFF
+#endif
+ return p_ctx->state;
+}
+
+/**Condition function for MAP2 sensor*/
+static uint8_t cond_map2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#ifndef SECU3T
+ if (d->sens.map2 >= on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->sens.map2 <= off_thrd)
+#endif
+  p_ctx->state = 0; //OFF
+ return p_ctx->state;
+}
+
+static uint8_t cond_tmp2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#ifndef SECU3T
+ if ((int16_t)on_thrd > (int16_t)off_thrd)
+ {
+  if (d->sens.tmp2 >= (int16_t)on_thrd)
+   p_ctx->state = 1; //ON
+  if (d->sens.tmp2 <= (int16_t)off_thrd)
+   p_ctx->state = 0; //OFF
+ }
+ else
+ { //has same effect as inversion
+  if (d->sens.tmp2 <= (int16_t)on_thrd)
+   p_ctx->state = 1; //ON
+  if (d->sens.tmp2 >= (int16_t)off_thrd)
+   p_ctx->state = 0; //OFF
+ }
+#else
+ p_ctx->state = 0; //OFF
+#endif
+ return p_ctx->state;
+}
+
 /**Function pointer type used in function pointers tables (conditions)*/
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 28
+#define COND_FPTR_TABLE_SIZE 31
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
  {&cond_cts, &cond_rpm, &cond_map, &cond_volt, &cond_carb, &cond_vspd, &cond_airfl, &cond_tmr, &cond_ittmr,
   &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
-  &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4, &cond_lptmr, &cond_ai5, &cond_ai6, &cond_ai7, &cond_ai8};
+  &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4, &cond_lptmr, &cond_ai5, &cond_ai6, &cond_ai7, &cond_ai8,
+  &cond_grts, &cond_map2, &cond_tmp2};
 
 void uniout_init_ports(void)
 {

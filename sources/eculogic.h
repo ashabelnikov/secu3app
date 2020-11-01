@@ -24,8 +24,8 @@
  * Logic determining calculation and regulation of anvance angle
  */
 
-#ifndef _IGNLOGIC_H_
-#define _IGNLOGIC_H_
+#ifndef _ECULOGIC_H_
+#define _ECULOGIC_H_
 
 #include <stdint.h>
 
@@ -39,22 +39,22 @@
 #define EM_WORK  2
 
 /**Initialization of state variables */
-void ignlogic_init(void);
+void eculogic_init(void);
 
 /**Implements state machine of engine's modes
  * Uses d ECU data structure
  */
-void ignlogic_system_state_machine(void);
+void eculogic_system_state_machine(void);
 
 /** Must be called from main loop to notify about stroke events
  * Uses d ECU data structure
  */
-void ignlogic_stroke_event_notification(void);
+void eculogic_stroke_event_notification(void);
 
 /**Called from main loop when system detects changing of cog number*/
-void ignlogic_cog_changed_notification(void);
+void eculogic_cog_changed_notification(void);
 
 /**called from main loop when system detects engine stop*/
-void ignlogic_eng_stopped_notification(void);
+void eculogic_eng_stopped_notification(void);
 
-#endif //_IGNLOGIC_H_
+#endif //_ECULOGIC_H_

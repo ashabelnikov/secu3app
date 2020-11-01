@@ -137,6 +137,19 @@ int16_t get_load_upper(void)
  return ((d.param.load_src_cfg == 1) ? d.sens.baro_press : d.param.load_upper);
 }
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates air flow as rpm*load
+ * Uses d ECU data structure
+ * returns air flow value / 32
+ */
+static uint16_t calc_airflow(void)
+{
+ uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.load) >> (6+5); //value / 32
+ x_raw = (x_raw * fcs.vecurr) >> 11; //apply VE
+ return (x_raw > 65535) ? 65535 : x_raw;
+}
+#endif
+
 /**Calculates argument values needed for some 2d and 3d lookup tables. Fills la_x values in the fcs_t structure
  * Uses d ECU data structure
  * Note! This function must be called before any other function which expects precalculated results
@@ -209,6 +222,11 @@ void calc_lookup_args(void)
  if (fcs.ga_i < 0)  {fcs.ga_i = 0; fcs.ga_grt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
  if (fcs.ga_grt > ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]))) fcs.ga_grt = PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
  fcs.ga_i1 = fcs.ga_i + 1;
+#endif
+
+//-------------------------------------------
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ d.sens.rxlaf = calc_airflow();
 #endif
 }
 
@@ -604,12 +622,6 @@ void calc_ve_afr(void)
  d.corr.afr = fcs.afrcurr >> 1; //update value of AFR
 }
 
-uint16_t calc_airflow(void)
-{
- uint32_t x_raw = ((int32_t)d.sens.inst_frq * d.load) >> (6+5); //value / 32
- x_raw = (x_raw * fcs.vecurr) >> 11; //apply VE
- return (x_raw > 65535) ? 65535 : x_raw;
-}
 
 /** Calculates corrected MAT based on the coefficient from a lookup table, IAT and CTS sensors
  * \param d Pointer to ECU data structure
@@ -617,7 +629,7 @@ uint16_t calc_airflow(void)
  */
 static int16_t inj_corrected_mat(void)
 {
- int16_t i, i1; uint16_t x = calc_airflow();
+ int16_t i, i1; uint16_t x = d.sens.rxlaf;
  //x contains value of air flow * 32
 
  //air flow value at the start of axis

@@ -649,6 +649,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   build_i16h(d.sens.rxlaf);             //RxL air flow, note: it is divided by 32
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

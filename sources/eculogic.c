@@ -65,7 +65,7 @@ static logic_state_t lgs = {
  0,0
 };
 
-void ignlogic_init(void)
+void eculogic_init(void)
 {
 #ifdef FUEL_INJECT
  lgs.prime_delay_tmr = s_timer_gtc();
@@ -273,7 +273,7 @@ uint8_t get_use_injtim_map_flag(void)
  return (d.sens.gas ? CHECKBIT(d.param.inj_flags, INJFLG_USETIMINGMAP_G) : CHECKBIT(d.param.inj_flags, INJFLG_USETIMINGMAP));
 }
 
-void ignlogic_system_state_machine(void)
+void eculogic_system_state_machine(void)
 {
  int16_t angle = 0;
 
@@ -500,7 +500,7 @@ void ignlogic_system_state_machine(void)
  lgs.calc_adv_ang = angle; //save calculated advance angle
 }
 
-void ignlogic_stroke_event_notification(void)
+void eculogic_stroke_event_notification(void)
 {
  //Limit fast transients of ignition timing (filtering). So, it can not change more than specified value during 1 engine stroke
  //Filtering is turned off on cranking
@@ -545,7 +545,7 @@ void ignlogic_stroke_event_notification(void)
 #endif
 }
 
-void ignlogic_cog_changed_notification(void)
+void eculogic_cog_changed_notification(void)
 {
 #ifdef FUEL_INJECT
  lgs.cog_changed = 1;
@@ -553,7 +553,7 @@ void ignlogic_cog_changed_notification(void)
 #endif
 }
 
-void ignlogic_eng_stopped_notification(void)
+void eculogic_eng_stopped_notification(void)
 {
  d.engine_mode = EM_START; //cranking
  d.corr.curr_angle = lgs.calc_adv_ang;

@@ -99,7 +99,7 @@ void evap_control(void)
 #endif
     )
  {
-  uint16_t af = calc_airflow();
+  uint16_t af = d.sens.rxlaf;
   //calculate current duty, based on the current air flow and limits specified by user
   if (af < d.param.evap_afbegin)
    af = d.param.evap_afbegin;

@@ -369,7 +369,7 @@ void init_modules(void)
 #endif
 
  s_timer_init();
- ignlogic_init();
+ eculogic_init();
 
  vent_init_state();
  vent_set_pwmfrq(d.param.vent_pwmfrq);
@@ -447,7 +447,7 @@ MAIN()
   if (ckps_is_cog_changed())
   {
    s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
-   ignlogic_cog_changed_notification();
+   eculogic_cog_changed_notification();
    #ifdef INTK_HEATING
    intkheat_cog_changed_notification();
    #endif
@@ -465,7 +465,7 @@ MAIN()
 #endif
    ckps_init_state_variables();
    cams_init_state_variables();
-   ignlogic_eng_stopped_notification(); //set cranking mode
+   eculogic_eng_stopped_notification(); //set cranking mode
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_eng_stopped_notification();
 #endif
@@ -510,7 +510,7 @@ MAIN()
   //calculate arguments for lookup tables
   calc_lookup_args();
   //System's state machine core (dispatcher of modes)
-  ignlogic_system_state_machine();
+  eculogic_system_state_machine();
   //control peripheral devices (actuators)
   control_engine_units();
 
@@ -547,7 +547,7 @@ MAIN()
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
-   ignlogic_stroke_event_notification();
+   eculogic_stroke_event_notification();
 
    ce_stroke_event_notification();
 

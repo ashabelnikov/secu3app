@@ -145,12 +145,6 @@ uint16_t inj_cranking_pw(void);
  * Uses d ECU data structure
  */
 void calc_ve_afr(void);
-
-/** Calculates air flow as rpm*load
- * Uses d ECU data structure
- * returns air flow value / 32
- */
-uint16_t calc_airflow(void);
 #endif
 
 #ifdef FUEL_INJECT

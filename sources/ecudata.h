@@ -167,6 +167,10 @@ typedef struct sensors_t
  int16_t grts;                           //!< Gas reducer temperature sensor
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ uint16_t rxlaf;                         //!< Calculated RxLxVE value
+#endif
+
  uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
 }sensors_t;
 

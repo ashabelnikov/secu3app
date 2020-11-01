@@ -124,7 +124,7 @@ void egosheat_control(void)
   case 3:
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
    //always turn off heater when airflow exceeds specified threshold
-   if (calc_airflow() > d.param.eh_aflow_thrd) // value / 32
+   if (d.sens.rxlaf > d.param.eh_aflow_thrd) // value / 32
    {
     IOCFG_SETF(IOP_O2SH_O, 0); //turn off
     eh.t1 = s_timer_gtc(); //reset timer

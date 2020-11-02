@@ -1160,7 +1160,7 @@ uint8_t inj_gps_pwcorr(void)
  */
 uint8_t engine_blowing_cond(void)
 {
- d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
+ d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START || !PGM_GET_BYTE(&fw_data.exdata.fldclr_start));
  return d.floodclear;
 }
 #endif

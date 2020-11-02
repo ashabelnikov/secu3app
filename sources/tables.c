@@ -790,6 +790,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_minband = 2,
   .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
   .igntim_wrkmap = 0,  //0 - regular behaviour (separate maps for idling and working modes)
+  .fldclr_start = 1,  //allowed
   .hall_predict = 0,  //last interval
 
   /**reserved bytes*/

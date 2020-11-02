@@ -550,12 +550,56 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.sens.tps);                // TPS (0...100%, x2)
 #endif
 
+   {
+   uint8_t ai1sub = PGM_GET_BYTE(&fw_data.exdata.add_i1_sub);
+   if (0==ai1sub)
+   {
 #ifdef SEND_INST_VAL
    build_i16h(d.sens.inst_add_i1);       // instant ADD_I1 voltage
 #else
    build_i16h(d.sens.add_i1);            // averaged ADD_I1 voltage
 #endif
-   build_i16h(d.sens.add_i2);            // ADD_I2 voltage
+   }
+#if !defined(SECU3T) && defined(MCP3204)
+   else if (1==ai1sub)
+   {
+    build_i16h(d.sens.add_i5);           // send value of ADD_I5
+   }
+   else if (2==ai1sub)
+   {
+    build_i16h(d.sens.add_i6);           // send value of ADD_I6
+   }
+   else if (3==ai1sub)
+   {
+    build_i16h(d.sens.add_i7);           // send value of ADD_I7
+   }
+   else
+    build_i16h(d.sens.add_i8);           // send value of ADD_I8
+#else
+   else
+    build_i16h(0);
+#endif
+   }
+
+   {
+   uint8_t ai2sub = PGM_GET_BYTE(&fw_data.exdata.add_i2_sub);
+   if (0==ai2sub)
+    build_i16h(d.sens.add_i2);            // ADD_I2 voltage
+#if !defined(SECU3T) && defined(MCP3204)
+   else if (1==ai2sub)
+    build_i16h(d.sens.add_i5);            //send value of ADD_I5
+   else if (2==ai2sub)
+    build_i16h(d.sens.add_i6);            //send value of ADD_I6
+   else if (3==ai2sub)
+    build_i16h(d.sens.add_i7);            //send value of ADD_I7
+   else
+    build_i16h(d.sens.add_i8);            //send value of ADD_I8
+#else
+   else
+    build_i16h(0);
+#endif
+   }
+
    build_i32h(d.ecuerrors_for_transfer); // CE errors
    build_i8h(d.choke_pos);               // choke position
    build_i8h(d.gasdose_pos);             // gas dosator position

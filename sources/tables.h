@@ -114,6 +114,8 @@
 
 #define INPUTNUM                        14          //!< number of ring buffers (analog inputs)
 
+#define PWMIAC_UCOEF_SIZE               16          //!< size of PWM IAC duty coefficient vs board voltage map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -392,6 +394,9 @@ typedef struct fw_ex_data_t
   /**Gas reducer's heating control duty, value in % * 2*/
   uint8_t grheat_duty[F_TMP_POINTS];
 
+  /**PWM IAC duty coefficient vs board voltage map, value * 4096*/
+  uint16_t pwmiac_ucoef[PWMIAC_UCOEF_SIZE];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -432,7 +437,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3974];
+  uint8_t reserved[3942];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

@@ -1342,3 +1342,21 @@ uint8_t grheat_pwm_duty(void)
         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ga_i]), 16) >> 4;
 }
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+uint16_t pwmiac_ucoef(void)
+{
+ int16_t i, i1, voltage = d.sens.voltage;
+
+ if (voltage < VOLTAGE_MAGNITUDE(5.4))
+  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 -  minimum voltage value corresponding to 1st value in table for 12V board voltage
+
+ i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.8);   //0.8 - voltage step
+
+ if (i >= PWMIAC_UCOEF_SIZE-1) i = i1 = PWMIAC_UCOEF_SIZE-1;
+  else i1 = i + 1;
+
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.pwmiac_ucoef[i]), PGM_GET_WORD(&fw_data.exdata.pwmiac_ucoef[i1]),
+        (i * VOLTAGE_MAGNITUDE(0.8)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.8), 2) >> 1;
+}
+#endif

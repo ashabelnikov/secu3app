@@ -408,4 +408,11 @@ int16_t split_function(void);
 uint8_t grheat_pwm_duty(void);
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates coefficient vs board voltage.
+ * \return value of coefficient * 4096
+ */
+uint16_t pwmiac_ucoef(void);
+#endif
+
 #endif //_FUNCONV_H_

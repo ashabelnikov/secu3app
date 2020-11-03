@@ -162,6 +162,9 @@
 /**Used to encode values in the knock zones look up table*/
 #define _KNR(b15, b14, b13, b12, b11, b10, b9, b8, b7, b6, b5, b4, b3, b2 ,b1, b0) (_CBV16(b15, 0) | _CBV16(b14, 1) | _CBV16(b13, 2) | _CBV16(b12, 3) | _CBV16(b11, 4) | _CBV16(b10, 5) | _CBV16(b9, 6) | _CBV16(b8, 7) | _CBV16(b7, 8) | _CBV16(b6, 9) | _CBV16(b5, 10) | _CBV16(b4, 11) | _CBV16(b3, 12) | _CBV16(b2, 13) | _CBV16(b1, 14) | _CBV16(b0, 15))
 
+/**For encoding of PWM IAC voltage coefficients */
+#define _UF(v) ROUND((v)*4096.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -864,6 +867,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**Fill gas reducer's heating duty look up table (%)*/
   {200,200,200,200,200,160,120,80,40,0,0,0,0,0,0,0},
+
+  /**Fill PWM IAC duty coefficient vs board voltage map
+   *  5.4      6.2      7.0      7.8      8.6      9.4      10.2    11.0     11.8     12.6     13.4     14.2     15.0     15.8     16.6     17.4 */
+  {_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0)},
 
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%

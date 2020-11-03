@@ -584,6 +584,8 @@ void choke_control(void)
   uint16_t  pos = calc_sm_position(1);                       //calculate PWM duty
   if (pos > 255) pos = 255;
   d.choke_pos = calc_percent_pos(pos, 256);                  //update position value
+  pos = (((uint32_t)pos) * pwmiac_ucoef()) >> 12;
+  if (pos > 255) pos = 255;
   vent_set_duty8(pos);
   return;
  }

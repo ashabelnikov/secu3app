@@ -275,8 +275,6 @@ void idling_regulator_init(void)
 int16_t idling_pregulator(volatile s_timer8_t* io_timer)
 {
  int16_t error,factor,idling_rpm;
- //зона "подхвата" регул€тора при возвращени двигател€ из рабочего режима в ’’
- uint16_t capture_range = 200;
  #define IRUSDIV 1
 
  //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
@@ -300,7 +298,7 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
 #endif
 
  //regulator will be turned on with delay
- if (d.sens.frequen < (idling_rpm + capture_range))
+ if (d.sens.frequen < (idling_rpm + PGM_GET_WORD(&fw_data.exdata.idlreg_captrange)))
  {
   switch(idl_prstate.enter_state)
   {

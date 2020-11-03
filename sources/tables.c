@@ -906,6 +906,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .grheat_time = SYSTIM_MAGS(180), //3 minutes
   .add_i1_sub = 0,
   .add_i2_sub = 0,
+  .idlreg_captrange = 200, //200 min-1
 
   /**reserved bytes*/
   {0}

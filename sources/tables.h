@@ -432,12 +432,13 @@ typedef struct fw_ex_data_t
   uint16_t grheat_time;   //Maximum time for heating on stopped engine
   uint8_t  add_i1_sub;    // 0 - default, 1 - ADD_i5, 2 - ADD_i6, 3 - ADD_I7, 4 - ADD_I8
   uint8_t  add_i2_sub;
+  uint16_t idlreg_captrange; //capture range for ign. tim. idling regulator
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3942];
+  uint8_t reserved[3940];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

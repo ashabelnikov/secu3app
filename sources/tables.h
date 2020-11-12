@@ -75,6 +75,7 @@
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
 #define CLT_GRID_SIZE                   16          //!< Number of points on the CLT axis in the lookup tables
+#define LOAD_GRID_SIZE                  16          //!< Number of points on the load axis in 3D lookup tables
 #define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
 #define IBTN_KEY_SIZE                   6           //!< Size of iButton key (except CRC8 and family code)
 
@@ -192,6 +193,9 @@
 #define LAMFLG_HTGDET                   0           //!< Determine oxygen sensor's heating by monitoring of voltage from it
 #define LAMFLG_IDLCORR                  1           //!< Use lambda correction on idling
 #define LAMFLG_CRKHEAT                  2           //!< Use heating before cranking
+
+//Functions tab flags
+#define FUNC_LDAX_GRID                  0           //!< Use grid table for load axis (load grid is defined by two values (default) or load grid is defined by table if this flag is set)
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
@@ -397,6 +401,12 @@ typedef struct fw_ex_data_t
   /**PWM IAC duty coefficient vs board voltage map, value * 4096*/
   uint16_t pwmiac_ucoef[PWMIAC_UCOEF_SIZE];
 
+  /**Points of the load grid*/
+  int16_t load_grid_points[LOAD_GRID_SIZE];
+
+  /**Sizes of cells in load grid (so, we don't need to calculate them at the runtime)*/
+  int16_t load_grid_sizes[LOAD_GRID_SIZE-1];
+
   //---------------------------------------------------------------
   //temporary valriables!!! Should be cleaned up after full migration to mega1284
   int16_t evap_clt;
@@ -438,7 +448,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3940];
+  uint8_t reserved[3878];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -700,11 +710,13 @@ typedef struct params_t
   uint16_t ai8_adc_factor;               //!< ADC error compensation factor for ADD_I8 input
   int32_t  ai8_adc_correction;           //!< ADC error compensation correction for ADD_I8 input
 
+  uint8_t func_flags;
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[190];
+  uint8_t  reserved[189];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

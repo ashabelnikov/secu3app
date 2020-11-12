@@ -449,6 +449,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i4h(d.param.load_src_cfg);
    build_i8h(d.param.mapsel_uni);
    build_i8h(d.param.barocorr_type);
+   build_i8h(d.param.func_flags);
    break;
 
   case STARTR_PAR:
@@ -1167,6 +1168,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(0); //<--reserved
    build_fb((uint8_t _PGM*)fw_data.exdata.clt_grid_points, CLT_GRID_SIZE * sizeof(int16_t));
    break;
+  //Transferring of load grid
+  case LODGRD_PAR:
+   build_i8h(0); //<--reserved
+   build_fb((uint8_t _PGM*)fw_data.exdata.load_grid_points, LOAD_GRID_SIZE * sizeof(int16_t));
+   break;
 #endif
 
   case ATTTAB_PAR:
@@ -1362,6 +1368,7 @@ uint8_t uart_recept_packet(void)
 
    d.param.mapsel_uni = recept_i8h();
    d.param.barocorr_type = recept_i8h();
+   d.param.func_flags = recept_i8h();
    break;
 
   case STARTR_PAR:
@@ -1749,6 +1756,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case EDITAB_PAR:
   case RPMGRD_PAR:
   case CLTGRD_PAR:
+  case LODGRD_PAR:
 #endif
   case ATTTAB_PAR:
 #ifdef DEBUG_VARIABLES

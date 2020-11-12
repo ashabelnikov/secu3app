@@ -165,6 +165,9 @@
 /**For encoding of PWM IAC voltage coefficients */
 #define _UF(v) ROUND((v)*4096.0)
 
+/**For specifying load values*/
+#define _LM(v) PRESSURE_MAGNITUDE(v)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -623,6 +626,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ai8_adc_factor =              _ACF1,
   .ai8_adc_correction =          _ACC1,
 
+  .func_flags =                  0,
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -686,7 +691,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //      5
    {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //20%   4
    {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //      3
-   {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //      2
+   {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}, //     2
    {_GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0), _GD(50.0)}  //0%    1
   },
 
@@ -871,6 +876,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill PWM IAC duty coefficient vs board voltage map
    *  5.4      6.2      7.0      7.8      8.6      9.4      10.2    11.0     11.8     12.6     13.4     14.2     15.0     15.8     16.6     17.4 */
   {_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0),_UF(1.0)},
+
+  /**Fill load grid points lookup table (note: values are in reverse direction)*/
+  {_LM(100.0),_LM(95.0),_LM(90.0),_LM(85.0),_LM(80.0),_LM(75.0),_LM(70.0),_LM(65.0),_LM(60.0),_LM(55.0),_LM(50.0),_LM(45.0),_LM(40.0),_LM(35.0),_LM(30.0),_LM(25.0)},
+
+  /**Fill load grid cell sizes lookup table (note: values are in reverse direction)*/
+  {_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0)},
 
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%

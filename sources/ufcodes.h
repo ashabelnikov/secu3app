@@ -77,5 +77,6 @@
 
 #define   LZBLHS       'H'   //!< "handshake" command sent to injector driver
 #define   CLTGRD_PAR   '('   //!< used for transferring of CLT grid
+#define   LODGRD_PAR   ')'   //!< used for transferring of load grid
 
 #endif //_UFCODES_H_

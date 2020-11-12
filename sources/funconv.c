@@ -176,25 +176,50 @@ void calc_lookup_args(void)
  else                                //mixed (MAP+TPS)
   d.load = calc_synthetic_load();
 
- //Calculate arguments for load axis:
- fcs.la_load = (get_load_upper() - d.load);
- if (fcs.la_load < 0) fcs.la_load = 0;
+ if (CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID))
+ { //use grid table
+  fcs.la_load = d.load;
 
- //load_upper - value of the upper load, load_lower - value of the lower load
- //todo: replace division by 1/x multiplication
- fcs.la_grad = (get_load_upper() - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
- if (fcs.la_grad < 1)
-  fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
+  if (fcs.la_load > PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]))
+   fcs.la_load = PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]);
+  if (fcs.la_load < PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]))
+   fcs.la_load = PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]);
 
- fcs.la_l = (fcs.la_load / fcs.la_grad);
+  for(fcs.la_l = 1; fcs.la_l < F_WRK_POINTS_L; ++fcs.la_l)
+   if (fcs.la_load >= PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l])) break;
+  fcs.la_lp1 = fcs.la_l - 1;
 
- if (fcs.la_l >= (F_WRK_POINTS_L - 1))
-  fcs.la_lp1 = fcs.la_l = F_WRK_POINTS_L - 1;
+  //update air flow variable (find nearest point)
+  if (fcs.la_load < (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - (PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) / 2)))
+   d.airflow = (F_WRK_POINTS_L-1) - fcs.la_lp1;
+  else
+   d.airflow = F_WRK_POINTS_L - fcs.la_lp1;
+ }
  else
-  fcs.la_lp1 = fcs.la_l + 1;
+ {
+  //Calculate arguments for load axis:
+  fcs.la_load = (get_load_upper() - d.load);
+  if (fcs.la_load < 0) fcs.la_load = 0;
 
- //update air flow variable
- d.airflow = F_WRK_POINTS_L - fcs.la_l;
+  //load_upper - value of the upper load, load_lower - value of the lower load
+  //todo: replace division by 1/x multiplication
+  fcs.la_grad = (get_load_upper() - d.param.load_lower) / (F_WRK_POINTS_L - 1); //divide by number of points on the load axis - 1
+  if (fcs.la_grad < 1)
+   fcs.la_grad = 1;  //exclude division by zero and negative value in case when upper pressure < lower pressure
+
+  fcs.la_l = (fcs.la_load / fcs.la_grad);
+
+  if (fcs.la_l >= (F_WRK_POINTS_L - 1))
+   fcs.la_lp1 = fcs.la_l = F_WRK_POINTS_L - 1;
+  else
+   fcs.la_lp1 = fcs.la_l + 1;
+
+  //update air flow variable (find nearest point)
+  if (fcs.la_load < ((fcs.la_grad * fcs.la_lp1) - (fcs.la_grad / 2)))
+   d.airflow = (F_WRK_POINTS_L+1) - fcs.la_lp1;
+  else
+   d.airflow = F_WRK_POINTS_L - fcs.la_lp1;
+ }
 
  //-----------------------------------------
  //Coolant temperature arguments:
@@ -259,15 +284,16 @@ int16_t start_function(void)
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
 int16_t work_function(void)
 {
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GB(f_wrk[fcs.la_l][fcs.la_f]),
         _GB(f_wrk[fcs.la_lp1][fcs.la_f]),
         _GB(f_wrk[fcs.la_lp1][fcs.la_fp1]),
         _GB(f_wrk[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 16);
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) : fcs.la_grad, 16);
 }
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
@@ -591,6 +617,7 @@ uint16_t inj_cranking_pw(void)
 
 void calc_ve_afr(void)
 {
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  if (d.sens.carb || (!d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve)) || (d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve_g)))
   //look into VE table
   fcs.vecurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
@@ -599,9 +626,9 @@ void calc_ve_afr(void)
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 8) >> 3;
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8) >> 3;
  else
   fcs.vecurr = d.sens.gas ? PGM_GET_WORD(&fw_data.exdata.idl_ve_g) : PGM_GET_WORD(&fw_data.exdata.idl_ve);
 
@@ -612,9 +639,9 @@ void calc_ve_afr(void)
         _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
         _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 16);
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
  fcs.afrcurr+=(8*256);
 
  d.corr.afr = fcs.afrcurr >> 1; //update value of AFR
@@ -711,15 +738,16 @@ uint16_t inj_base_pw(void)
 
 int16_t inj_timing_lookup(void)
 {
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  int16_t it = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_timing,fcs.la_l,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_timing,fcs.la_l,fcs.la_fp1),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 8);
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8);
  if (it > ROUND(720.0*16))
   it-=ROUND(720.0*16);
  return (it << 1);
@@ -1294,6 +1322,7 @@ uint8_t knock_zone_val(void)
 
 uint16_t pwm_function(uint8_t mode)
 {
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  if (0==mode)
  return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GBU(pwm_duty1[fcs.la_l][fcs.la_f]),   //<-- values are unsigned
@@ -1301,9 +1330,9 @@ uint16_t pwm_function(uint8_t mode)
         _GBU(pwm_duty1[fcs.la_lp1][fcs.la_fp1]),
         _GBU(pwm_duty1[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 64) >> 6;
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 64) >> 6;
  else
  return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GBU(pwm_duty2[fcs.la_l][fcs.la_f]),   //<-- values are unsigned
@@ -1311,9 +1340,9 @@ uint16_t pwm_function(uint8_t mode)
         _GBU(pwm_duty2[fcs.la_lp1][fcs.la_fp1]),
         _GBU(pwm_duty2[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 64) >> 6;
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 64) >> 6;
 }
 
 #ifdef SPLIT_ANGLE
@@ -1321,15 +1350,16 @@ uint16_t pwm_function(uint8_t mode)
 // Returns anvance angle value * 32, 2 * 16 = 32.
 int16_t split_function(void)
 {
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GB(pwm_duty1[fcs.la_l][fcs.la_f]),   //<-- values are signed
         _GB(pwm_duty1[fcs.la_lp1][fcs.la_f]),
         _GB(pwm_duty1[fcs.la_lp1][fcs.la_fp1]),
         _GB(pwm_duty1[fcs.la_l][fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        (fcs.la_grad * fcs.la_l),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        fcs.la_grad, 16);
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
 }
 #endif
 

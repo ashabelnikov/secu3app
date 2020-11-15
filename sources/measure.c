@@ -306,6 +306,17 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 
 #endif
 
+//select input for lambda sensor
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
+#ifndef SECU3T //SECU-3i
+ if (IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i1 || IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i1i)
+  d.sens.lambda1 = d.sens.add_i1; //use ADD_I1 /*d.sens.inst_add_i1*/
+ else if (IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i3i)
+  d.sens.lambda1 = d.sens.add_i3; //use ADD_I3
+#else
+ d.sens.lambda1 = d.sens.add_i1; //in SECU-3T only ADD_I1 can be used for lambda sensor
+#endif
+#endif
 }
 
 //Call this function for making preliminary measurements before starting of engine. Call it only after

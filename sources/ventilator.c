@@ -246,7 +246,8 @@ void vent_control(void)
   //TODO: implement kick on turn on
 
 #ifndef SECU3T
-  if (IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2i)
+  if (IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2i ||
+      IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_o || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_oi)
   { //low frequency software PWM
    vent_duty = dd;
    if (vent_duty == 0)

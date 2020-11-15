@@ -553,24 +553,38 @@ void uart_send_packet(uint8_t send_mode)
 
    {
    uint8_t ai1sub = PGM_GET_BYTE(&fw_data.exdata.add_i1_sub);
-   if (0==ai1sub)
+   if (1==ai1sub)
    {
 #ifdef SEND_INST_VAL
-   build_i16h(d.sens.inst_add_i1);       // instant ADD_I1 voltage
+    build_i16h(d.sens.inst_add_i1);       // instant ADD_I1 voltage
 #else
-   build_i16h(d.sens.add_i1);            // averaged ADD_I1 voltage
+    build_i16h(d.sens.add_i1);            // averaged ADD_I1 voltage
 #endif
-   }
-#if !defined(SECU3T) && defined(MCP3204)
-   else if (1==ai1sub)
-   {
-    build_i16h(d.sens.add_i5);           // send value of ADD_I5
    }
    else if (2==ai1sub)
    {
+    build_i16h(d.sens.add_i2);           // send value of ADD_I2
+   }
+#ifndef SECU3T
+   else if (3==ai1sub)
+   {
+    build_i16h(d.sens.add_i3);           // send value of ADD_I3
+   }
+   else if (4==ai1sub)
+   {
+    build_i16h(d.sens.add_i4);           // send value of ADD_I4
+   }
+#endif
+#if !defined(SECU3T) && defined(MCP3204)
+   else if (5==ai1sub)
+   {
+    build_i16h(d.sens.add_i5);           // send value of ADD_I5
+   }
+   else if (6==ai1sub)
+   {
     build_i16h(d.sens.add_i6);           // send value of ADD_I6
    }
-   else if (3==ai1sub)
+   else if (7==ai1sub)
    {
     build_i16h(d.sens.add_i7);           // send value of ADD_I7
    }
@@ -584,14 +598,22 @@ void uart_send_packet(uint8_t send_mode)
 
    {
    uint8_t ai2sub = PGM_GET_BYTE(&fw_data.exdata.add_i2_sub);
-   if (0==ai2sub)
+   if (1==ai2sub)
+    build_i16h(d.sens.add_i1);            // ADD_I1 voltage
+   if (2==ai2sub)
     build_i16h(d.sens.add_i2);            // ADD_I2 voltage
-#if !defined(SECU3T) && defined(MCP3204)
-   else if (1==ai2sub)
-    build_i16h(d.sens.add_i5);            //send value of ADD_I5
-   else if (2==ai2sub)
-    build_i16h(d.sens.add_i6);            //send value of ADD_I6
+#ifndef SECU3T
    else if (3==ai2sub)
+    build_i16h(d.sens.add_i3);            //send value of ADD_I3
+   else if (4==ai2sub)
+    build_i16h(d.sens.add_i4);            //send value of ADD_I4
+#endif
+#if !defined(SECU3T) && defined(MCP3204)
+   else if (5==ai2sub)
+    build_i16h(d.sens.add_i5);            //send value of ADD_I5
+   else if (6==ai2sub)
+    build_i16h(d.sens.add_i6);            //send value of ADD_I6
+   else if (7==ai2sub)
     build_i16h(d.sens.add_i7);            //send value of ADD_I7
    else
     build_i16h(d.sens.add_i8);            //send value of ADD_I8

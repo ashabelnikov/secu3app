@@ -73,7 +73,7 @@ void lambda_control(void)
     if (bot_thrd < 0)
      bot_thrd = 0;
 
-    if (d.sens.add_i1 < bot_thrd || d.sens.add_i1 > top_thrd)
+    if (d.sens.lambda1 < bot_thrd || d.sens.lambda1 > top_thrd)
      ego.enabled = 1;
    }
    else
@@ -99,7 +99,7 @@ static uint8_t lambda_iteration(uint8_t mask)
   if (int_p_thrd < 0)
    int_p_thrd = 0;
 
-  if (d.sens.add_i1 /*d.sens.inst_add_i1*/ > int_m_thrd)
+  if (d.sens.lambda1 /*d.sens.inst_add_i1*/ > int_m_thrd)
   {
    if (1!=mask)
    {
@@ -107,7 +107,7 @@ static uint8_t lambda_iteration(uint8_t mask)
     updated = 1;
    }
   }
-  else if (d.sens.add_i1 /*d.sens.inst_add_i1*/ < int_p_thrd)
+  else if (d.sens.lambda1 /*d.sens.inst_add_i1*/ < int_p_thrd)
   {
    if (2!=mask)
    {

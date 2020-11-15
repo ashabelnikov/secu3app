@@ -440,8 +440,8 @@ typedef struct fw_ex_data_t
   uint8_t  hall_predict;  //prediction mode for hall (N=Ncyl) synchronization mode: 0 - last interval (default), 1 - 1st derivative
   uint16_t vtachom_mult;  //Event multiplier for VTACHO output, value * 8192, value in range 0.125...7.900
   uint16_t grheat_time;   //Maximum time for heating on stopped engine
-  uint8_t  add_i1_sub;    // 0 - default, 1 - ADD_i5, 2 - ADD_i6, 3 - ADD_I7, 4 - ADD_I8
-  uint8_t  add_i2_sub;
+  uint8_t  add_i1_sub;    // 1 - default (ADD_i1), 2 - ADD_i2, 3 - ADD_i3, 4 - ADD_i4, 5 - ADD_i5, 6 - ADD_i6, 7 - ADD_I7, 8 - ADD_I8
+  uint8_t  add_i2_sub;    // 1 - ADD_i1, 2 - default (ADD_i2), 3 - ADD_i3, 4 - ADD_i4, 5 - ADD_i5, 6 - ADD_i6, 7 - ADD_I7, 8 - ADD_I8
   uint16_t idlreg_captrange; //capture range for ign. tim. idling regulator
   //---------------------------------------------------------------
 

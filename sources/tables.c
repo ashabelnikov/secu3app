@@ -915,8 +915,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .hall_predict = 0,  //last interval
   .vtachom_mult = ROUNDU16(0.5*8192), //generate tachometer pulses as for 4 cylinder 4 stroke engine
   .grheat_time = SYSTIM_MAGS(180), //3 minutes
-  .add_i1_sub = 0,
-  .add_i2_sub = 0,
+  .add_i1_sub = 1,
+  .add_i2_sub = 2,
   .idlreg_captrange = 200, //200 min-1
 
   /**reserved bytes*/

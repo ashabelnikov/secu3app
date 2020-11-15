@@ -1057,7 +1057,7 @@ int16_t gdp_function(void)
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 int16_t ego_curve_lookup(void)
 {
- int16_t i, i1, voltage = d.sens.add_i1; /*d.sens.inst_add_i1*/
+ int16_t i, i1, voltage = d.sens.lambda1; /*d.sens.inst_add_i1*/
 
  //Voltage value at the start of axis in ADC discretes
  uint16_t v_start = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE]);

@@ -109,7 +109,7 @@ int16_t manual_igntim(void)
 }
 #endif
 
-#ifdef IFR_VS_MAP_CORR
+#if defined(IFR_VS_MAP_CORR) && defined(FUEL_INJECT)
 /** Injector's flow rate correction vs manifold absolute pressure
  *  coefficient = 1.0 / sqrt(frap - map / 300.0)
  * \return correction factor * 256

@@ -565,11 +565,13 @@ void uart_send_packet(uint8_t send_mode)
    {
     build_i16h(d.sens.add_i2);           // send value of ADD_I2
    }
-#ifndef SECU3T
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
    else if (3==ai1sub)
    {
     build_i16h(d.sens.add_i3);           // send value of ADD_I3
    }
+#endif
+#if !defined(SECU3T) && defined(TPIC8101)
    else if (4==ai1sub)
    {
     build_i16h(d.sens.add_i4);           // send value of ADD_I4
@@ -602,9 +604,11 @@ void uart_send_packet(uint8_t send_mode)
     build_i16h(d.sens.add_i1);            // ADD_I1 voltage
    if (2==ai2sub)
     build_i16h(d.sens.add_i2);            // ADD_I2 voltage
-#ifndef SECU3T
+#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
    else if (3==ai2sub)
     build_i16h(d.sens.add_i3);            //send value of ADD_I3
+#endif
+#if !defined(SECU3T) && defined(TPIC8101)
    else if (4==ai2sub)
     build_i16h(d.sens.add_i4);            //send value of ADD_I4
 #endif

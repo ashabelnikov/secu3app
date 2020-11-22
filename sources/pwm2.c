@@ -728,6 +728,14 @@ static void pwm2_set_fl_cons(uint8_t ch)
 static void pwm2_set_vtachom(void)
 {
  uint16_t rpm = d.sens.frequen;
+ if (0==rpm)
+ { //engine stopped
+  _DISABLE_INTERRUPT();
+  CLEARBIT(TIMSK3, OCIE3B);
+  _ENABLE_INTERRUPT();
+  PWMx_TURNOFF_F(1);     //fully OFF
+  return;
+ }
  if (rpm < 150)
   rpm = 150; //prevent overflow in the following calculations
 

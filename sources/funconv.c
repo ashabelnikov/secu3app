@@ -1096,7 +1096,7 @@ int16_t ego_curve_max(void)
 
 uint8_t scale_aftstr_enrich(uint16_t enrich_counter)
 {
- int16_t aftstr_strokes = ((uint16_t)d.param.inj_aftstr_strokes) << 1;
+ int16_t aftstr_strokes = ((uint16_t)d.param.inj_aftstr_strokes) << 2;
  //do scaling of ASE factor (scale down)
  int16_t counter = aftstr_strokes - enrich_counter; //convert decreasing to increasing
  if (counter < 0) counter = 0;

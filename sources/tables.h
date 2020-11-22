@@ -594,7 +594,7 @@ typedef struct params_t
   uint8_t  inj_prime_delay;              //!< Prime pulse delay in 0.1 sec units
 
   uint16_t inj_cranktorun_time;          //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms)
-  uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied (divided by 2)
+  uint8_t  inj_aftstr_strokes;           //!< Number of engine strokes, during this time afterstart enrichment is applied (divided by 4)
 
   uint8_t  inj_lambda_str_per_stp;       //!< Number of strokes per step for lambda control
   uint8_t  inj_lambda_step_size_p;       //!< "+" Step size, value * 512, max 0.49

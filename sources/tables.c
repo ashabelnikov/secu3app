@@ -512,7 +512,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_prime_delay =             SYS_TIMEX10_S(2.0),   //fire prime pulse after 2 seconds
 
   .inj_cranktorun_time =         SYS_TIME_S(3.00),     //3 seconds
-  .inj_aftstr_strokes =          75,                   //150 strokes
+  .inj_aftstr_strokes =          38,                   //152 strokes
 
   .inj_lambda_str_per_stp =      8,                    //8 strokes
   .inj_lambda_step_size_p =      EGO_CORR(2.5),        //2.5%

@@ -155,7 +155,7 @@ static int16_t calc_sm_position(uint8_t pwm)
 
  if (d.engine_mode==EM_START)
  {
-  gds.aftstr_enrich_counter = ((uint16_t)d.param.inj_aftstr_strokes) << 2; //init engine strokes counter
+  gds.aftstr_enrich_counter = ((uint16_t)(d.sens.gas ? d.param.inj_aftstr_strokes1 : d.param.inj_aftstr_strokes)) << 2; //init engine strokes counter
 
   uint16_t pw = inj_cranking_pw();    //use Cranking PW injection map to define GD position on cranking
   if (pw > 3125)
@@ -188,7 +188,7 @@ static int16_t calc_sm_position(uint8_t pwm)
   pos+= acc_enrich_calc(1, 0);     //apply acceleration enrichment
 
   if (d.engine_mode == EM_START)
-   gds.aftstr_enrich_counter = ((uint16_t)d.param.inj_aftstr_strokes) << 2; //init engine strokes counter
+   gds.aftstr_enrich_counter = ((uint16_t)(d.sens.gas ? d.param.inj_aftstr_strokes1 : d.param.inj_aftstr_strokes)) << 2; //init engine strokes counter
   else if (gds.aftstr_enrich_counter)
    pos= ((int32_t)pos * (128 + scale_aftstr_enrich(gds.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
 

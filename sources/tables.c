@@ -628,6 +628,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .func_flags =                  0,
 
+  .inj_aftstr_strokes1 =         38,
+
   .reserved =                    {0},
   .crc =                         0
  },

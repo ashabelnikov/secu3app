@@ -712,11 +712,13 @@ typedef struct params_t
 
   uint8_t func_flags;
 
+  uint8_t  inj_aftstr_strokes1;          //!< Number of engine strokes, during this time afterstart enrichment is applied (divided by 4) second fuel
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[189];
+  uint8_t  reserved[188];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -885,6 +885,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill load grid cell sizes lookup table (note: values are in reverse direction)*/
   {_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0),_LM(5.0)},
 
+  /**Fill after start enrichment strokes vs coolant temperature map */
+  {150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150},
+
+  /**Fill after start enrichment strokes vs coolant temperature map */
+  {150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150},
+
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
   .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%

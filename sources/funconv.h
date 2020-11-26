@@ -415,4 +415,12 @@ uint8_t grheat_pwm_duty(void);
 uint16_t pwmiac_ucoef(void);
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates number of after start enrichment strokes vs cooland temperature
+ * \param mode 0 - use set 0, 1 - use set 1
+ * \return Number of strokes
+ */
+uint16_t aftstr_strokes(uint8_t mode);
+#endif
+
 #endif //_FUNCONV_H_

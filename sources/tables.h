@@ -116,6 +116,7 @@
 #define INPUTNUM                        14          //!< number of ring buffers (analog inputs)
 
 #define PWMIAC_UCOEF_SIZE               16          //!< size of PWM IAC duty coefficient vs board voltage map
+#define AFTSTR_STRK_SIZE                16
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -407,8 +408,14 @@ typedef struct fw_ex_data_t
   /**Sizes of cells in load grid (so, we don't need to calculate them at the runtime)*/
   int16_t load_grid_sizes[LOAD_GRID_SIZE-1];
 
+  /**After start enrichment strokes vs coolant temperature - petrol*/
+  uint16_t inj_aftstr_strk0[AFTSTR_STRK_SIZE];
+
+  /**After start enrichment strokes vs coolant temperature - gas*/
+  uint16_t inj_aftstr_strk1[AFTSTR_STRK_SIZE];
+
   //---------------------------------------------------------------
-  //temporary valriables!!! Should be cleaned up after full migration to mega1284
+  //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
   uint8_t evap_tps_lo;
   uint8_t evap_tps_hi;
@@ -448,7 +455,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3878];
+  uint8_t reserved[3814];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

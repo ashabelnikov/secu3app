@@ -338,7 +338,7 @@ void eculogic_system_state_machine(void)
     d.engine_mode = EM_IDLE;
     idling_regulator_init();
 #ifdef FUEL_INJECT
-    lgs.aftstr_enrich_counter = ((uint16_t)(d.sens.gas ? d.param.inj_aftstr_strokes1 : d.param.inj_aftstr_strokes)) << 2; //init engine strokes counter
+    lgs.aftstr_enrich_counter = aftstr_strokes(d.sens.gas); //init engine strokes counter
 #endif
    }
    angle = d.corr.strt_aalt = start_function();     //basic ignition timing - cranking map

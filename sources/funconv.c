@@ -1096,11 +1096,11 @@ int16_t ego_curve_max(void)
 
 uint8_t scale_aftstr_enrich(uint16_t enrich_counter)
 {
- int16_t aftstr_strokes = ((uint16_t)(d.sens.gas ? d.param.inj_aftstr_strokes1 : d.param.inj_aftstr_strokes)) << 2;
+ int16_t aftstr_strk = aftstr_strokes(d.sens.gas);
  //do scaling of ASE factor (scale down)
- int16_t counter = aftstr_strokes - enrich_counter; //convert decreasing to increasing
+ int16_t counter = aftstr_strk - enrich_counter; //convert decreasing to increasing
  if (counter < 0) counter = 0;
- return ((uint32_t)inj_aftstr_en() * (aftstr_strokes - counter)) / aftstr_strokes;
+ return ((uint32_t)inj_aftstr_en() * (aftstr_strk - counter)) / aftstr_strk;
 }
 
 int16_t barocorr_lookup(void)
@@ -1386,5 +1386,30 @@ uint16_t pwmiac_ucoef(void)
 
  return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.pwmiac_ucoef[i]), PGM_GET_WORD(&fw_data.exdata.pwmiac_ucoef[i1]),
         (i * VOLTAGE_MAGNITUDE(0.8)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.8), 2) >> 1;
+}
+#endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+uint16_t aftstr_strokes(uint8_t mode)
+{
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return ((uint16_t)(mode ? d.param.inj_aftstr_strokes1 : d.param.inj_aftstr_strokes)) << 2;   //coolant temperature sensor is not enabled (or not installed). use simple constant
+
+ if (mode)
+ { //gas
+  if (0==d.param.inj_aftstr_strokes1)
+   return simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk1[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk1[fcs.ta_i1]),  //<--values in table are unsigned
+         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
+  else
+   return ((uint16_t)d.param.inj_aftstr_strokes1) << 2;
+ }
+ else
+ { //petrol
+  if (0==d.param.inj_aftstr_strokes)
+   return simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk0[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk0[fcs.ta_i1]),  //<--values in table are unsigned
+         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
+  else
+   return ((uint16_t)d.param.inj_aftstr_strokes) << 2;
+ }
 }
 #endif

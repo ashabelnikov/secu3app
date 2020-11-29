@@ -487,6 +487,13 @@ void diagnost_process(void)
 #endif
    d.diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
 
+#if !defined(SECU3T) && defined(MCP3204)
+   d.diag_inp.add_i5 = _ADC_COMPENSATE(adc_get_add_i5_value(), 0.488, 0.0);
+   d.diag_inp.add_i6 = _ADC_COMPENSATE(adc_get_add_i6_value(), 0.488, 0.0);
+   d.diag_inp.add_i7 = _ADC_COMPENSATE(adc_get_add_i7_value(), 0.488, 0.0);
+   d.diag_inp.add_i8 = _ADC_COMPENSATE(adc_get_add_i8_value(), 0.488, 0.0);
+#endif
+
    //digital inputs
    d.diag_inp.bits = get_inputs();
 

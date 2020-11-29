@@ -1245,6 +1245,18 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0); //stub
    build_i16h(0); //stub
 #endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+   build_i16h(d.diag_inp.add_i5);
+   build_i16h(d.diag_inp.add_i6);
+   build_i16h(d.diag_inp.add_i7);
+   build_i16h(d.diag_inp.add_i8);
+#else
+   build_i16h(0); //stubs
+   build_i16h(0);
+   build_i16h(0);
+   build_i16h(0);
+#endif
    build_i16h(d.diag_inp.carb);
    build_i16h(d.diag_inp.ks_1);
    build_i16h(d.diag_inp.ks_2);

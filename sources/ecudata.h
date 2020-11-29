@@ -59,6 +59,12 @@ typedef struct diagnost_inp_t
  uint16_t add_i4;                        //!< additional input 4 (analog)
 #endif
 #endif
+#if !defined(SECU3T) && defined(MCP3204)
+ uint16_t add_i5;                        //!< additional input 5 (analog)
+ uint16_t add_i6;                        //!< additional input 6 (analog)
+ uint16_t add_i7;                        //!< additional input 7 (analog)
+ uint16_t add_i8;                        //!< additional input 8 (analog)
+#endif
  uint16_t carb;                          //!< carburetor switch, throttle position sensor (analog)
  uint16_t bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp (plus IGN_I, COND_I, EPAS_I for SECU-3i)
  uint16_t ks_1;                          //!< knock sensor 1

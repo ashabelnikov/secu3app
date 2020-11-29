@@ -348,7 +348,7 @@ int16_t adc_compensate(int16_t adcvalue, uint16_t factor, int32_t correction)
 uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
 {
  int16_t t;
- //АЦП не измеряет отрицательных напряжений, однако отрицательное значение может появится после компенсации погрешностей.
+ //Our ADC doesn't measure negative values, but negative value may appear after compensation
  if (adcvalue < 0)
   adcvalue = 0;
 
@@ -369,6 +369,7 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
 
 uint16_t ubat_adc_to_v(int16_t adcvalue)
 {
+ //Our ADC doesn't measure negative values, but negative value may appear after compensation
  if (adcvalue < 0)
   adcvalue = 0;
  return adcvalue;
@@ -377,6 +378,7 @@ uint16_t ubat_adc_to_v(int16_t adcvalue)
 //Coolant sensor has linear output. 10mV per C (e.g. LM235)
 int16_t temp_adc_to_c(int16_t adcvalue)
 {
+ //Our ADC doesn't measure negative values, but negative value may appear after compensation
  if (adcvalue < 0)
   adcvalue = 0;
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
@@ -385,6 +387,7 @@ int16_t temp_adc_to_c(int16_t adcvalue)
 uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
 {
  int16_t t;
+ //Our ADC doesn't measure negative values, but negative value may appear after compensation
  if (adcvalue < 0)
   adcvalue = 0;
  t = adcvalue + offset;

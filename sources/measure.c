@@ -130,7 +130,7 @@ void meas_init_ports(void)
 //Update ring buffers
 void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 {
- uint16_t rawval;
+ int16_t rawval;
 
  update_buffer(FRQ_INPIDX, d.sens.inst_frq);
 
@@ -161,7 +161,10 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 
  rawval = update_buffer(AI1_INPIDX, adc_get_add_i1_value());
 #ifdef SEND_INST_VAL
- d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && PGM_GET_BYTE(&cesd->add_i1_v_flg) ? PGM_GET_WORD(&cesd->add_i1_v_em) : adc_compensate(_RESDIV(rawval, 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ rawval = adc_compensate(_RESDIV(rawval, 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && PGM_GET_BYTE(&cesd->add_i1_v_flg) ? PGM_GET_WORD(&cesd->add_i1_v_em) : rawval;
 #endif
 
  update_buffer(AI2_INPIDX, adc_get_add_i2_value());
@@ -216,6 +219,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 //Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values
 void meas_average_measured_values(ce_sett_t _PGM *cesd)
 {
+ int16_t rawval;
  d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(MAP_INPIDX), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
  d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
 
@@ -248,31 +252,47 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  if (d.sens.tps > TPS_MAGNITUDE(100))
   d.sens.tps = TPS_MAGNITUDE(100);
 
- d.sens.add_i1_raw = adc_compensate(_RESDIV(average_buffer(AI1_INPIDX), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
- d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && PGM_GET_BYTE(&cesd->add_i1_v_flg) ? PGM_GET_WORD(&cesd->add_i1_v_em) : d.sens.add_i1_raw;
+ d.sens.add_i1_raw = rawval = adc_compensate(_RESDIV(average_buffer(AI1_INPIDX), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && PGM_GET_BYTE(&cesd->add_i1_v_flg) ? PGM_GET_WORD(&cesd->add_i1_v_em) : rawval;
 
- d.sens.add_i2_raw = adc_compensate(_RESDIV(average_buffer(AI2_INPIDX), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
- d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && PGM_GET_BYTE(&cesd->add_i2_v_flg) ? PGM_GET_WORD(&cesd->add_i2_v_em) : d.sens.add_i2_raw;
+ d.sens.add_i2_raw = rawval = adc_compensate(_RESDIV(average_buffer(AI2_INPIDX), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && PGM_GET_BYTE(&cesd->add_i2_v_flg) ? PGM_GET_WORD(&cesd->add_i2_v_em) : rawval;
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
- d.sens.add_i3_raw = adc_compensate(average_buffer(AI3_INPIDX), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
- d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && PGM_GET_BYTE(&cesd->add_i3_v_flg) ? PGM_GET_WORD(&cesd->add_i3_v_em) : d.sens.add_i3_raw;
+ d.sens.add_i3_raw = rawval = adc_compensate(average_buffer(AI3_INPIDX), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && PGM_GET_BYTE(&cesd->add_i3_v_flg) ? PGM_GET_WORD(&cesd->add_i3_v_em) : rawval;
 #endif
 
 #if !defined(SECU3T) && defined(TPIC8101)
- d.sens.add_i4_raw = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
- d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && PGM_GET_BYTE(&cesd->add_i4_v_flg) ? PGM_GET_WORD(&cesd->add_i4_v_em) : d.sens.add_i4_raw;
+ d.sens.add_i4_raw = rawval = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && PGM_GET_BYTE(&cesd->add_i4_v_flg) ? PGM_GET_WORD(&cesd->add_i4_v_em) : rawval;
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
- d.sens.add_i5_raw = adc_compensate(average_buffer(AI5_INPIDX), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
- d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && PGM_GET_BYTE(&cesd->add_i5_v_flg) ? PGM_GET_WORD(&cesd->add_i5_v_em) : d.sens.add_i5_raw;
- d.sens.add_i6_raw = adc_compensate(average_buffer(AI6_INPIDX), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
- d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && PGM_GET_BYTE(&cesd->add_i6_v_flg) ? PGM_GET_WORD(&cesd->add_i6_v_em) : d.sens.add_i6_raw;
- d.sens.add_i7_raw = adc_compensate(average_buffer(AI7_INPIDX), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
- d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && PGM_GET_BYTE(&cesd->add_i7_v_flg) ? PGM_GET_WORD(&cesd->add_i7_v_em) : d.sens.add_i7_raw;
- d.sens.add_i8_raw = adc_compensate(average_buffer(AI8_INPIDX), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
- d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && PGM_GET_BYTE(&cesd->add_i8_v_flg) ? PGM_GET_WORD(&cesd->add_i8_v_em) : d.sens.add_i8_raw;
+ d.sens.add_i5_raw = rawval = adc_compensate(average_buffer(AI5_INPIDX), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && PGM_GET_BYTE(&cesd->add_i5_v_flg) ? PGM_GET_WORD(&cesd->add_i5_v_em) : rawval;
+ d.sens.add_i6_raw = rawval = adc_compensate(average_buffer(AI6_INPIDX), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && PGM_GET_BYTE(&cesd->add_i6_v_flg) ? PGM_GET_WORD(&cesd->add_i6_v_em) : rawval;
+ d.sens.add_i7_raw = rawval = adc_compensate(average_buffer(AI7_INPIDX), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && PGM_GET_BYTE(&cesd->add_i7_v_flg) ? PGM_GET_WORD(&cesd->add_i7_v_em) : rawval;
+ d.sens.add_i8_raw = rawval =adc_compensate(average_buffer(AI8_INPIDX), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
+ if (rawval < 0)
+  rawval = 0;
+ d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && PGM_GET_BYTE(&cesd->add_i8_v_flg) ? PGM_GET_WORD(&cesd->add_i8_v_em) : rawval;
 #endif
 
 #ifdef AIRTEMP_SENS

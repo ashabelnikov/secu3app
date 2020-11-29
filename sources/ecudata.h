@@ -149,10 +149,10 @@ typedef struct sensors_t
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
- uint16_t add_i5_raw;                    //!< inputs from SPI ADC
- uint16_t add_i6_raw;
- uint16_t add_i7_raw;
- uint16_t add_i8_raw;
+ int16_t add_i5_raw;                     //!< inputs from SPI ADC
+ int16_t add_i6_raw;
+ int16_t add_i7_raw;
+ int16_t add_i8_raw;
 #endif
 
  int16_t  knock_raw;                     //!< raw value of signal from KS chip

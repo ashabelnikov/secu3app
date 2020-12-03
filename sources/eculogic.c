@@ -406,8 +406,11 @@ void eculogic_system_state_machine(void)
    d.corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   d.corr.pa4_aac = manual_igntim();
-   angle+=d.corr.pa4_aac;
+   if (PGM_GET_BYTE(&fw_data.exdata.manigntim_idl))
+   {
+    d.corr.pa4_aac = manual_igntim();
+    angle+=d.corr.pa4_aac;
+   }
 #endif
    d.corr.idlreg_aac = idling_pregulator(&idle_period_time_counter);//add correction from idling regulator
    angle+=d.corr.idlreg_aac;

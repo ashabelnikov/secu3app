@@ -926,6 +926,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .add_i1_sub = 1,
   .add_i2_sub = 2,
   .idlreg_captrange = 200, //200 min-1
+  .manigntim_idl = 1, //use manual ignition timing on idling
 
   /**reserved bytes*/
   {0}

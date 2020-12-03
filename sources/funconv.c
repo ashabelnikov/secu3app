@@ -298,12 +298,16 @@ int16_t work_function(void)
 
 //Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
 // Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
-int16_t coolant_function(void)
+int16_t coolant_function(uint8_t mode)
 {
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //no correction if CLT sensor is turned off
 
- return simple_interpolation(fcs.ta_clt, _GB(f_tmp[fcs.ta_i]), _GB(f_tmp[fcs.ta_i1]),
+ if (mode) //work mode
+  return simple_interpolation(fcs.ta_clt, _GB(f_tmp[fcs.ta_i]), _GB(f_tmp[fcs.ta_i1]),
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
+ else //idling mode
+  return simple_interpolation(fcs.ta_clt, _GB(f_tmp_idl[fcs.ta_i]), _GB(f_tmp_idl[fcs.ta_i1]),
         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
 }
 

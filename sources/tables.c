@@ -1192,6 +1192,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}, // 2
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}  // 1
    },
+   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //Correction of ignition timing vs CLT (for idling)
 
    /**reserved bytes */
    {0}
@@ -1455,6 +1456,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}, // 2
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}  // 1
    },
+   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //Correction of ignition timing vs CLT (for idling)
 
    /**reserved bytes */
    {0}
@@ -1717,6 +1719,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}, // 2
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}  // 1
    },
+   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //Correction of ignition timing vs CLT (for idling)
 
    /**reserved bytes */
    {0}
@@ -1979,6 +1982,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}, // 2
     {_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0),_PW(50.0)}  // 1
    },
+   {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //Correction of ignition timing vs CLT (for idling)
 
    /**reserved bytes */
    {0}

@@ -120,6 +120,9 @@ struct ecudata_t d =
  ,.floodclear = 0
  ,.cond_state = 0,
  .vent_req_on = 0
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+,.aftstr_enr = 0
+#endif
 };
 
 #ifdef REALTIME_TABLES

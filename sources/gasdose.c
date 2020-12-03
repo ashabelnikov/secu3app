@@ -347,6 +347,9 @@ void gasdose_stroke_event_notification(void)
  //update afterstart enrichemnt counter
  if (gds.aftstr_enrich_counter)
   --gds.aftstr_enrich_counter;
+
+ if (d.sens.gas)
+  d.aftstr_enr = (0 != gds.aftstr_enrich_counter);
 }
 
 void gasdose_init_motor(void)

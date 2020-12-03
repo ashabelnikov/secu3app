@@ -53,9 +53,10 @@ int16_t work_function(void);
 
 /** Calculates advance angle correction using coolant temperature
  * Uses d ECU data structure
+ * \param mode 0 - calculate correction for idling, 1 - calculate correction for work mode
  * \return value of advance angle * 32
  */
-int16_t coolant_function(void);
+int16_t coolant_function(uint8_t mode);
 
 /** Calculates advance angle correction for cranking using coolant temperature
  * Uses d ECU data structure

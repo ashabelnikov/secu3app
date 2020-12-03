@@ -250,15 +250,17 @@ typedef struct f_data_t
 
   uint8_t inj_ats_corr[INJ_ATS_CORR_SIZE];            //!< PW correction from air temperature sensor (air density correction), value * 128, max. 1.99
 
-  uint8_t pwm_duty1[F_WRK_POINTS_L][F_WRK_POINTS_F];//!< PWM1 duty lookup table, value 0...255. It is also used for split angle (firmware with SPLIT_ANGLE option), sign. value * 2
+  uint8_t pwm_duty1[F_WRK_POINTS_L][F_WRK_POINTS_F];  //!< PWM1 duty lookup table, value 0...255. It is also used for split angle (firmware with SPLIT_ANGLE option), sign. value * 2
   uint8_t map_mode;
 
-  uint8_t pwm_duty2[F_WRK_POINTS_L][F_WRK_POINTS_F];//!< PWM2 duty lookup table, value 0...255
+  uint8_t pwm_duty2[F_WRK_POINTS_L][F_WRK_POINTS_F];  //!< PWM2 duty lookup table, value 0...255
+
+  int8_t f_tmp_idl[F_TMP_POINTS];                     //!< coolant temper. correction of advance angle, discrete = 0.5 degr.
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[511];
+  uint8_t reserved[495];
 }f_data_t;
 
 

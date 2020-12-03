@@ -67,8 +67,9 @@
 #define ETMT_GTSC_MAP 23    //!< PW correction from gas temperature
 #define ETMT_GPSC_MAP 24    //!< PW correction from gas pressure
 #define ETMT_ATSC_MAP 25    //!< PW correction from air temperature
-#define ETMT_PWM1_MAP 26     //!< PWM duty 1
-#define ETMT_PWM2_MAP 27     //!< PWM duty 2
+#define ETMT_PWM1_MAP 26    //!< PWM duty 1
+#define ETMT_PWM2_MAP 27    //!< PWM duty 2
+#define ETMT_TEMPI_MAP 28   //!< temp.corr. map id (idling)
 
 /**Define internal state variables */
 typedef struct
@@ -517,34 +518,32 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.corr.knock_retard);      // knock retard
    build_i8h(d.airflow);                 // index of the map axis curve
    //boolean values
-   build_i16h(_CBV16(d.ie_valve, 0) |    // IE flag
-              _CBV16(d.sens.carb, 1) |   // carb. limit switch flag
-              _CBV16(d.sens.gas, 2) |    // gas valve flag
-              _CBV16(d.fe_valve, 3) |    // power valve flag
-              _CBV16 (d.ce_state, 4) |   // CE flag
-              _CBV16(d.cool_fan, 5) |    // cooling fan flag
-              _CBV16(d.st_block, 6) |    // starter blocking flag
+   build_i16h(_CBV16(d.ie_valve, 0)      // IE flag
+             | _CBV16(d.sens.carb, 1)    // carb. limit switch flag
+             | _CBV16(d.sens.gas, 2)     // gas valve flag
+             | _CBV16(d.fe_valve, 3)     // power valve flag
+             | _CBV16 (d.ce_state, 4)    // CE flag
+             | _CBV16(d.cool_fan, 5)     // cooling fan flag
+             | _CBV16(d.st_block, 6)     // starter blocking flag
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-              _CBV16(d.acceleration, 7) |// acceleration enrichment flag
-#else
-              _CBV16(0, 7) |
+             | _CBV16(d.acceleration, 7) // acceleration enrichment flag
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-              _CBV16(d.fc_revlim, 8) |   // fuel cut rev.lim. flag
-#else
-              _CBV16(0, 8) |
+             | _CBV16(d.fc_revlim, 8)    // fuel cut rev.lim. flag
 #endif
-              _CBV16(d.floodclear, 9) |  // flood clear mode flag
-              _CBV16(d.sys_locked, 10) | // system locked flag (immobilizer)
+             | _CBV16(d.floodclear, 9)   // flood clear mode flag
+             | _CBV16(d.sys_locked, 10)  // system locked flag (immobilizer)
 #ifndef SECU3T
-              _CBV16(d.sens.ign_i, 11) |  // IGN_I flag
-              _CBV16(d.sens.cond_i, 12) | // COND_I flag
-              _CBV16(d.sens.epas_i, 13)   // EPAS_I flag
-#else //SECU-3T
-              0
+             | _CBV16(d.sens.ign_i, 11)  // IGN_I flag
+             | _CBV16(d.sens.cond_i, 12) // COND_I flag
+             | _CBV16(d.sens.epas_i, 13) // EPAS_I flag
 #endif
-              );
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+             | _CBV16(d.aftstr_enr, 14)    // after start enrichment flag
+#endif
+             );
 
 #ifdef SEND_INST_VAL
    build_i8h(d.sens.inst_tps);           // instant TPS (0...100%, x2)
@@ -990,6 +989,11 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_TEMP_MAP: //temper. correction.
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.f_tmp, F_TMP_POINTS);
+     state = ETMT_TEMPI_MAP;
+     break;
+    case ETMT_TEMPI_MAP: //temper. correction. (idling)
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.f_tmp_idl, F_TMP_POINTS);
      state = ETMT_NAME_STR;
      break;
     case ETMT_NAME_STR:
@@ -1636,6 +1640,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_TEMP_MAP: //temper. correction map
      recept_rb(((uint8_t*)&d.tables_ram.f_tmp) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
+     break;
+    case ETMT_TEMPI_MAP: //temper. correction map (idling)
+     recept_rb(((uint8_t*)&d.tables_ram.f_tmp_idl) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
      break;
     case ETMT_NAME_STR: //name
      recept_rs((d.tables_ram.name) + addr, F_NAME_SIZE); /*F_NAME_SIZE max*/

@@ -397,7 +397,7 @@ void eculogic_system_state_machine(void)
     angle = d.corr.idle_aalt = idling_function(); //basic ignition timing - idling map
     d.corr.work_aalt = AAV_NOTUSED;
    }
-   d.corr.temp_aalt = coolant_function();      //add CLT correction to ignition timing
+   d.corr.temp_aalt = coolant_function(0);     //add CLT correction to ignition timing
    angle+=d.corr.temp_aalt;
 #ifdef AIRTEMP_SENS
    d.corr.airt_aalt = airtemp_function();      //add air temperature correction
@@ -451,7 +451,7 @@ void eculogic_system_state_machine(void)
    d.corr.idle_aalt = AAV_NOTUSED;
 #endif
 
-   d.corr.temp_aalt = coolant_function();   //add CLT correction to ignition timing
+   d.corr.temp_aalt = coolant_function(1);  //add CLT correction to ignition timing
    angle+=d.corr.temp_aalt;
 #ifdef AIRTEMP_SENS
    d.corr.airt_aalt = airtemp_function();   //add air temperature correction;
@@ -534,6 +534,10 @@ void eculogic_stroke_event_notification(void)
  //update afterstart enrichemnt counter
  if (lgs.aftstr_enrich_counter)
   --lgs.aftstr_enrich_counter;
+
+ if (!d.sens.gas)
+  d.aftstr_enr = (0 != lgs.aftstr_enrich_counter);
+
  //update AE decay counter
  acc_enrich_decay_counter();
 
@@ -560,6 +564,8 @@ void eculogic_eng_stopped_notification(void)
 #ifdef FUEL_INJECT
  d.eng_running = 0; //stopped
 #endif
+
+ d.aftstr_enr = 0;
 
  //Sample atmospheric pressure which will be used for barometric correction.
  sample_baro_pressure();

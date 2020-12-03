@@ -295,6 +295,10 @@ typedef struct ecudata_t
 
  uint8_t cond_state;                    //!< Current state of the air conditioner (0 - off, 1 - on)
  uint8_t vent_req_on;                   //!< Ventilator's turn on request
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ uint8_t aftstr_enr;                    //!< Flag which indicates that after start enrichment is active
+#endif
 }ecudata_t;
 
 

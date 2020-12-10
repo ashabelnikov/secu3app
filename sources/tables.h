@@ -453,12 +453,13 @@ typedef struct fw_ex_data_t
   uint8_t  add_i2_sub;    // 1 - ADD_i1, 2 - default (ADD_i2), 3 - ADD_i3, 4 - ADD_i4, 5 - ADD_i5, 6 - ADD_i6, 7 - ADD_I7, 8 - ADD_I8
   uint16_t idlreg_captrange; //capture range for ign. tim. idling regulator
   uint8_t  manigntim_idl; //0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
+  uint8_t  idlent_timval;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3813];
+  uint8_t reserved[3812];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

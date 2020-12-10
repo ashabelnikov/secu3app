@@ -31,7 +31,6 @@
 #include "vstimer.h"
 
 #define IDLE_PERIOD_TIME_VALUE        25    //!< used by idling regulator
-#define IDLE_ENTER_TIME_VALUE         150   //!< time for entering closed loop mode
 
 /** Calculates advance angle from "start" map
  * Uses d ECU data structure

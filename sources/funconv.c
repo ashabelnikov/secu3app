@@ -372,7 +372,7 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
   switch(idl_prstate.enter_state)
   {
    case 0:
-    s_timer_set(*io_timer, IDLE_ENTER_TIME_VALUE);
+    s_timer_set(*io_timer, PGM_GET_BYTE(&fw_data.exdata.idlent_timval));
     ++idl_prstate.enter_state; //=1
     return 0; //no correction
    case 1:

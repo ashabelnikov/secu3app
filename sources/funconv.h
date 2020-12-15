@@ -406,6 +406,11 @@ int16_t split_function(void);
  * \return duty value (%) * 2
  */
 uint8_t grheat_pwm_duty(void);
+
+/** Calculates gas valve's opening delay vs gas reducer's temperature
+ * \return delay in 10ms units (e.g. 100 --> 1 sec)
+ */
+uint16_t grv_delay(void);
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

@@ -123,6 +123,9 @@ struct ecudata_t d =
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 ,.aftstr_enr = 0
 #endif
+#ifndef SECU3T
+,.gasval_on = 0
+#endif
 };
 
 #ifdef REALTIME_TABLES

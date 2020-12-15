@@ -1373,6 +1373,12 @@ uint8_t grheat_pwm_duty(void)
  return simple_interpolation(fcs.ga_grt, PGM_GET_BYTE(&fw_data.exdata.grheat_duty[fcs.ga_i]), PGM_GET_BYTE(&fw_data.exdata.grheat_duty[fcs.ga_i1]),
         PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ga_i]), 16) >> 4;
 }
+
+uint16_t grv_delay(void)
+{
+ return simple_interpolation(fcs.ga_grt, PGM_GET_WORD(&fw_data.exdata.grv_delay[fcs.ga_i]), PGM_GET_WORD(&fw_data.exdata.grv_delay[fcs.ga_i1]),
+        PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]), PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ga_i]), 2) >> 1;
+}
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

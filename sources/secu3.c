@@ -76,6 +76,7 @@
 #include "ventilator.h"
 #include "vstimer.h"
 #include "wdt.h"
+#include "grvalve.h"
 
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
@@ -135,6 +136,7 @@ void control_engine_units(void)
 
 #ifndef SECU3T
  grheat_control();
+ grvalve_control();
 #endif
 
 #ifdef EGOS_HEATING
@@ -240,6 +242,7 @@ void init_ports(void)
 #endif
 #ifndef SECU3T
  grheat_init_ports();
+ grvalve_init_ports();
 #endif
 #ifdef EGOS_HEATING
  egosheat_init_ports();
@@ -395,6 +398,10 @@ void init_modules(void)
  TCNT3 = 0;
  GTCCR = 0; // release all timers
 #endif
+
+#ifndef SECU3T
+ grvalve_init_state();
+#endif
 }
 
 /**Main function of firmware - entry point. Contains initialization and main loop 
@@ -454,6 +461,7 @@ MAIN()
    vent_cog_changed_notification();
 #ifndef SECU3T
    grheat_cog_changed_notification();
+   grvalve_cog_changed_notification();
 #endif
   }
 
@@ -470,7 +478,9 @@ MAIN()
    lambda_eng_stopped_notification();
 #endif
    starter_eng_stopped_notification();
-
+#ifndef SECU3T
+   grvalve_eng_stopped_notification();
+#endif
    knklogic_init(&retard_state);
 
    if (d.param.knock_use_knock_channel)

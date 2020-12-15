@@ -416,6 +416,9 @@ typedef struct fw_ex_data_t
   /**After start enrichment strokes vs coolant temperature - gas*/
   uint16_t inj_aftstr_strk1[AFTSTR_STRK_SIZE];
 
+  /**Gas valve's opening delay vs gas reducer's temperature*/
+  uint16_t grv_delay[F_TMP_POINTS];
+
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
@@ -454,12 +457,13 @@ typedef struct fw_ex_data_t
   uint16_t idlreg_captrange; //capture range for ign. tim. idling regulator
   uint8_t  manigntim_idl; //0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
   uint8_t  idlent_timval;
+  uint16_t gasval_ontime; //time during which gas valve will be turned on when engine is stopped (10 ms units)
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3812];
+  uint8_t reserved[3778];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

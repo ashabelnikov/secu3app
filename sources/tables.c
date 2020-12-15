@@ -891,6 +891,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill after start enrichment strokes vs coolant temperature map */
   {150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150},
 
+  /**Fill gas valve's opening delay vs gas reducer's temperature map*/
+  {1200,1100,1000,900,800,700,600,500,420,340,260,180,100,50,30,10},
+
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
   .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
@@ -928,6 +931,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idlreg_captrange = 200, //200 min-1
   .manigntim_idl = 1, //use manual ignition timing on idling
   .idlent_timval = 150,
+  .gasval_ontime = 500, //5 sec.
 
   /**reserved bytes*/
   {0}

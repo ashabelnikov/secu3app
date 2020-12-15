@@ -299,6 +299,10 @@ typedef struct ecudata_t
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  uint8_t aftstr_enr;                    //!< Flag which indicates that after start enrichment is active
 #endif
+
+#ifndef SECU3T
+ uint8_t gasval_on;                     //!< State of the GASVAL_O output
+#endif
 }ecudata_t;
 
 

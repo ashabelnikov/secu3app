@@ -302,6 +302,7 @@ typedef struct ecudata_t
 
 #ifndef SECU3T
  uint8_t gasval_on;                     //!< State of the GASVAL_O output
+ uint8_t gasval_res;
 #endif
 }ecudata_t;
 

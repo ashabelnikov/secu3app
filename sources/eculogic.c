@@ -305,7 +305,7 @@ void eculogic_system_state_machine(void)
 #ifdef FUEL_INJECT
    reset_smooth_fuelcut();
 #ifndef SECU3T
-   if (d.gasval_on)
+   if (d.gasval_res)
     lgs.prime_delay_tmr = s_timer_gtc();
 #endif
    if (d.param.inj_prime_delay)

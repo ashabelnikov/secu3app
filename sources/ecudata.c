@@ -125,6 +125,7 @@ struct ecudata_t d =
 #endif
 #ifndef SECU3T
 ,.gasval_on = 0
+,.gasval_res = 0
 #endif
 };
 

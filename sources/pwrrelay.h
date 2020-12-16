@@ -22,7 +22,7 @@
 /** \file pwrrelay.h
  * \author Alexey A. Shabelnikov
  * Power management using external relay, allows SECU-3 to be turned on some time
- * after ignition is off. So, for instance electric colling fan can work even ignition is off
+ * after ignition is off. So, for instance electric colling fan can work even when ignition is off
  */
 
 #ifndef _PWRRELAY_H_

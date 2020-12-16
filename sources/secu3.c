@@ -533,7 +533,7 @@ MAIN()
   ckps_set_acc_time(accumulation_time(0));
 #endif
 #endif
-  if (d.sys_locked)
+  if (d.sys_locked || !pwrrelay_get_state())
    ckps_enable_ignition(0);
   else
   {

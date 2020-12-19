@@ -103,7 +103,7 @@
 #define GASDOSE_POS_TPS_SIZE            16          //!< TPS axis size
 #define INJ_TPSSWT_SIZE                 16          //!< Size of the TPS switch point lookup table
 #define INJ_GTS_CORR_SIZE               16          //!< Size of gas temperature correction map
-#define INJ_GPS_CORR_SIZE               9           //!< Size of gas pressure correction map
+#define INJ_GPS_CORR_SIZE               17          //!< Size of gas pressure correction map
 #define INJ_ATS_CORR_SIZE               16          //!< Size of air temperature correction map
 #define CTS_CRKCORR_SIZE                16          //!< Size of cranking ign.timing correction vs CLT map
 
@@ -260,7 +260,7 @@ typedef struct f_data_t
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[495];
+  uint8_t reserved[487];
 }f_data_t;
 
 

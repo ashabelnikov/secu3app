@@ -1125,7 +1125,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
    {
-    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),_ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
    },
 
@@ -1389,7 +1389,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
    {
-    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),_ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
    },
 
@@ -1652,7 +1652,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
    {
-    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),_ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
    },
 
@@ -1915,7 +1915,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill gas pressure's correction lookup table, coefficient vs gas pressure */
    {
-    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
+    _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),_ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00), _ER(1.00),
     _ER(1.00), _GPSX(100.0), _GPSX(400.0),
    },
 

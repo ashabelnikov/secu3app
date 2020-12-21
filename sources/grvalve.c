@@ -34,6 +34,10 @@
 #include "vstimer.h"
 #include "funconv.h"
 
+/**Controls state of GASVAL_O output*/
+#define GASVAL_CONTROL(v) IOCFG_SET(IOP_GASVAL_O, (v)); \
+  d.gasval_on = (v);
+
 /**Declare state variables structure*/
 typedef struct
 {
@@ -63,8 +67,8 @@ void grvalve_control(void)
 
  if (!d.sens.gas)
  {
-  IOCFG_INIT(IOP_GASVAL_O, 0);  //<-- valve is off on petrol
-  d.gasval_on = 0;
+  GASVAL_CONTROL(0); //<-- valve is off on petrol
+  grvs.t1 = s_timer_gtc();
   grvs.mode = 0;
   return;
  }
@@ -72,16 +76,14 @@ void grvalve_control(void)
  switch(grvs.mode)
  {
   case 0: //sample value of delay
-   IOCFG_INIT(IOP_GASVAL_O, 0); //off
-   d.gasval_on = 0;
+   GASVAL_CONTROL(0); //off
    grvs.delay = grv_delay();
    ++grvs.mode;
 
   case 1: //count down delay
    if ((s_timer_gtc() - grvs.t1) >= grvs.delay)
    {
-    IOCFG_INIT(IOP_GASVAL_O, 1); //on
-    d.gasval_on = 1;
+    GASVAL_CONTROL(1); //on
     grvs.t1 = s_timer_gtc();
     ++grvs.mode;
    }
@@ -94,15 +96,13 @@ void grvalve_control(void)
   case 2: //count down time during which valve is on
    if ((s_timer_gtc() - grvs.t1) >= PGM_GET_WORD(&fw_data.exdata.gasval_ontime))
    {
-    IOCFG_INIT(IOP_GASVAL_O, 0); //off
-    d.gasval_on = 0;
+    GASVAL_CONTROL(0); //off
    }
    d.gasval_res = 0;
    break;
 
   case 3: //engine is running/cranking
-   IOCFG_INIT(IOP_GASVAL_O, 1);  //<-- valve is on when engine is running
-   d.gasval_on = 1;
+   GASVAL_CONTROL(1);  //<-- valve is on when engine is running
    return;
  }
 }

@@ -349,7 +349,7 @@ void init_modules(void)
 #ifdef FUEL_INJECT
  //We set some settings using first fuel's parameters, d.sens.gas_v = 0 now
  //TODO: redundant code fragment
- ckps_set_inj_timing(d.param.inj_timing_crk[0], d.inj_pw, d.param.inj_anglespec & 0xF); //use inj.timing on cranking, petrol
+ ckps_set_inj_timing(param_inj_timing(0), d.inj_pw, d.param.inj_anglespec & 0xF); //use inj.timing on cranking, petrol
  inject_init_state();
  inject_set_cyl_number(d.param.ckps_engine_cyl);
  inject_set_num_squirts(d.param.inj_config[0] & 0xF); //petrol

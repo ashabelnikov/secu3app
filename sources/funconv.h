@@ -161,6 +161,12 @@ uint16_t inj_base_pw(void);
  */
 int16_t inj_timing_lookup(void);
 
+/** Gets inj. timing values from constants stored in the parameters
+ * \param mode 0 - obtain valie for cranking mode, 1 - obtain value for running mode
+ * \return inj. timing value * ANGLE_MULTIPLIER
+ */
+int16_t param_inj_timing(uint8_t mode);
+
 #endif
 
 #if defined(FUEL_INJECT) || defined(SM_CONTROL)

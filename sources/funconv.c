@@ -757,6 +757,14 @@ int16_t inj_timing_lookup(void)
  return (it << 1);
 }
 
+int16_t param_inj_timing(uint8_t mode)
+{
+ int16_t it = mode ? d.param.inj_timing[d.sens.gas] : d.param.inj_timing_crk[d.sens.gas];
+ if (it > ROUND(720.0*16))
+  it-=ROUND(720.0*16);
+ return (it << 1);
+}
+
 #endif //FUEL_INJECT
 
 #if defined(FUEL_INJECT) || defined(SM_CONTROL)

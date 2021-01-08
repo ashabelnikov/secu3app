@@ -624,7 +624,7 @@ typedef struct params_t
 
   uint16_t gd_steps;                     //!< Number of steps of gas dosator stepper motor
 
-  int16_t  inj_timing[2];                //!< Injection timing in crank degrees * ANGLE_MULTIPLIER
+  int16_t  inj_timing[2];                //!< Injection timing in crank degrees * 16
 
   uint8_t  flpmp_flags;                  //!< fuel pump flags
 
@@ -633,7 +633,7 @@ typedef struct params_t
   uint16_t revlim_lot;                   //!< lower threshold for rev.limitting (fuel injection)
   uint16_t revlim_hit;                   //!< upper threshold for rev.limitting (fuel injection)
 
-  int16_t  inj_timing_crk[2];            //!< Injection timing on cranking in crank degrees * ANGLE_MULTIPLIER
+  int16_t  inj_timing_crk[2];            //!< Injection timing on cranking in crank degrees * 16
 
   uint8_t  gd_fc_closing;                //!< How much close (in %) gas doser in fuel cut mode (relatively to current position)
 

@@ -334,7 +334,7 @@ void eculogic_system_state_machine(void)
     }
    }
 
-   d.corr.inj_timing = d.param.inj_timing_crk[d.sens.gas];
+   d.corr.inj_timing = param_inj_timing(0);
 
 #endif
    if (d.sens.inst_frq > (d.param.smap_abandon ? d.param.smap_abandon : smapaban_thrd_rpm()))
@@ -429,7 +429,7 @@ void eculogic_system_state_machine(void)
     fuel_calc();
    }
 
-   d.corr.inj_timing = get_use_injtim_map_flag() ? inj_timing_lookup() : d.param.inj_timing[d.sens.gas];
+   d.corr.inj_timing = get_use_injtim_map_flag() ? inj_timing_lookup() : param_inj_timing(1);
 #endif
    break;
 
@@ -483,7 +483,7 @@ void eculogic_system_state_machine(void)
     fuel_calc();
    }
 
-   d.corr.inj_timing = get_use_injtim_map_flag() ? inj_timing_lookup() : d.param.inj_timing[d.sens.gas];
+   d.corr.inj_timing = get_use_injtim_map_flag() ? inj_timing_lookup() : param_inj_timing(1);
 #endif
    break;
  }

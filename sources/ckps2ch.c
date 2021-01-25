@@ -712,11 +712,18 @@ void ckps_set_inj_timing(int16_t phase, uint16_t pw, uint8_t mode)
  uint8_t _t, i;
  //TODO: We can do some optimization in the future - set timing only if it is not equal to current (already set one)
 
+ phase = ANGLE_MAGNITUDE(720.0) - phase;
+
  //Apply selected injection pulse option: begin of squirt, middle of squirt or end of squirt
  if (mode > INJANGLESPEC_BEGIN)
  {
+  uint16_t period_curr;
+  _BEGIN_ATOMIC_BLOCK();
+  period_curr = ckps.period_curr;
+  _END_ATOMIC_BLOCK();
+
   //convert delay to angle (value * ANGLE_MULTIPLIER). TODO: how to escape from slow division?
-  uint16_t pw_angle = (((uint32_t)pw) * ckps.degrees_per_cog) / ckps.period_curr;
+  uint16_t pw_angle = (((uint32_t)pw) * ckps.degrees_per_cog) / period_curr;
   if (mode == INJANGLESPEC_MIDDLE)
    pw_angle>>= 1;
   //apply, rotate angle if need

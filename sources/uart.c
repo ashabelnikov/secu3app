@@ -842,8 +842,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.uart_period_t_ms);
    build_i4h(d.param.ign_cutoff);
    build_i16h(d.param.ign_cutoff_thrd);
-   build_i8h(d.param.hop_start_cogs);
-   build_i8h(d.param.hop_durat_cogs);
+   build_i16h(d.param.hop_start_ang);
+   build_i16h(d.param.hop_durat_ang);
    build_i8h(d.param.flpmp_flags);   //fuel pump flags
    build_i16h(d.param.evap_afbegin);
    build_i16h(d.param.evap_afslope);
@@ -1495,8 +1495,8 @@ uint8_t uart_recept_packet(void)
    d.param.uart_period_t_ms = recept_i8h();
    d.param.ign_cutoff = recept_i4h();
    d.param.ign_cutoff_thrd = recept_i16h();
-   d.param.hop_start_cogs = recept_i8h();
-   d.param.hop_durat_cogs = recept_i8h();
+   d.param.hop_start_ang = recept_i16h();
+   d.param.hop_durat_ang = recept_i16h();
    d.param.flpmp_flags = recept_i8h();   //fuel pump flags
    d.param.evap_afbegin = recept_i16h();
    d.param.evap_afslope = recept_i16h();

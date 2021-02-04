@@ -24,7 +24,7 @@
  * Implementation of crankshaft position sensor's processing (camshaft version).
  */
 
-#ifdef CAM_SYNC
+#if defined(CAM_SYNC) && !defined(ODDFIRE_ALGO)
 
 #include <stdlib.h>
 #include "port/avrio.h"
@@ -818,12 +818,12 @@ void ckps_set_merge_outs(uint8_t i_merge)
 }
 
 #ifdef HALL_OUTPUT
-void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
+void ckps_set_hall_pulse(int16_t i_offset, uint16_t i_duration)
 {
  uint8_t _t, i;
  //save values because we will access them from other function
- ckps.hop_offset = i_offset;
- ckps.hop_duration = i_duration;
+ ckps.hop_offset = i_offset / ((int16_t)ckps.degrees_per_cog);
+ ckps.hop_duration = i_duration / ((int16_t)ckps.degrees_per_cog);
 
  _t=_SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();

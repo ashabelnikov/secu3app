@@ -114,7 +114,7 @@ void process_uart_interface(void)
 
    case MISCEL_PAR:
 #ifdef HALL_OUTPUT
-    ckps_set_hall_pulse(d.param.hop_start_cogs, d.param.hop_durat_cogs);
+    ckps_set_hall_pulse(d.param.hop_start_ang, d.param.hop_durat_ang);
 #endif
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     pwm2_set_pwmfrq(0, d.param.pwmfrq[0]);

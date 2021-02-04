@@ -243,4 +243,11 @@
  #define COPT_SPLIT_ANGLE 0
 #endif
 
+/**Build firmware with new CKP algorithm (odd-fire) */
+#ifdef ODDFIRE_ALGO
+ #define COPT_ODDFIRE_ALGO 1
+#else
+ #define COPT_ODDFIRE_ALGO 0
+#endif
+
 #endif //_COMPILOPT_H_

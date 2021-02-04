@@ -332,7 +332,7 @@ void init_modules(void)
  ckps_set_cogs_btdc(d.param.ckps_cogs_btdc); //<--now valid initialization
  ckps_set_merge_outs(CHECKBIT(d.param.hall_flags, CKPF_MERGE_OUTS));
 #ifdef HALL_OUTPUT
- ckps_set_hall_pulse(d.param.hop_start_cogs, d.param.hop_durat_cogs);
+ ckps_set_hall_pulse(d.param.hop_start_ang, d.param.hop_durat_ang);
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  ckps_set_shutter_wnd_width(d.param.hall_wnd_width);

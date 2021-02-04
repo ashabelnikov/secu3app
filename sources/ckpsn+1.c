@@ -37,6 +37,9 @@
 #if defined(SPLIT_ANGLE)
  #error "You can not use SPLIT_ANGLE option together with CKPS_NPLUS1"
 #endif
+#if defined(ODDFIRE_ALGO)
+ #error "You can not use ODDFIRE_ALGO option together with CKPS_NPLUS1"
+#endif
 
 #include <stdlib.h>
 #include "port/avrio.h"

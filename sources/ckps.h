@@ -135,10 +135,10 @@ void ckps_set_merge_outs(uint8_t i_merge);
 
 #ifdef HALL_OUTPUT
 /** Set parameters for Hall output pulse
- * \param i_offset - offset in tooth relatively to TDC (if > 0, then BTDC)
- * \param i_duration - duration of pulse in tooth
+ * \param i_offset - offset relatively to TDC (if > 0, then BTDC), value * ANGLE_MULTIPLIER
+ * \param i_duration - duration of pulse, value * ANGLE_MULTIPLIER
  */
-void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration);
+void ckps_set_hall_pulse(int16_t i_offset, uint16_t i_duration);
 #endif
 
 /** Set number of cranck wheel's teeth

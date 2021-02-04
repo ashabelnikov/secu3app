@@ -360,7 +360,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   },
 
   /**32-bit config data*/
-  _CBV32(COPT_OBD_SUPPORT, 0) | _CBV32(COPT_ATMEGA1284, 1) | _CBV32(0/*COPT_ATMEGA64, left for compatibility*/, 2) | _CBV32(0/*COPT_ATMEGA128, left for compatibility*/, 3) |
+  _CBV32(COPT_OBD_SUPPORT, 0) | _CBV32(COPT_ATMEGA1284, 1) | _CBV32(COPT_ODDFIRE_ALGO, 2) | _CBV32(0/*COPT_ATMEGA128, left for compatibility*/, 3) |
   _CBV32(COPT_SPLIT_ANGLE, 4) | _CBV32(COPT_TPIC8101, 5) | _CBV32(COPT_CAM_SYNC, 6) | _CBV32(COPT_DWELL_CONTROL, 7) |
   _CBV32(COPT_COOLINGFAN_PWM, 8) | _CBV32(COPT_REALTIME_TABLES, 9) | _CBV32(COPT_ICCAVR_COMPILER, 10) | _CBV32(COPT_AVRGCC_COMPILER, 11) |
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
@@ -457,8 +457,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ign_cutoff =                  0,
   .ign_cutoff_thrd =             7500,
 
-  .hop_start_cogs =              0,
-  .hop_durat_cogs =              10,
+  .hop_start_ang =              0,
+  .hop_durat_ang =              60.0*32,
 
 #if (FW_BAUD_RATE == 19200)
   .uart_divisor =                CBR_19200,
@@ -932,6 +932,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .manigntim_idl = 1, //use manual ignition timing on idling
   .idlent_timval = 150,
   .gasval_ontime = 500, //5 sec.
+
+  //             114°  294°  474°   654°
+  .tdc_angle = {3648, 9408, 15168, 20928, 0, 0, 0 ,0},
+  .smp_angle = 66*32,  //66°
+  .dwl_dead_time = 312, //1ms
 
   /**reserved bytes*/
   {0}

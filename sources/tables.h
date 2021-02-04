@@ -458,12 +458,15 @@ typedef struct fw_ex_data_t
   uint8_t  manigntim_idl; //0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
   uint8_t  idlent_timval;
   uint16_t gasval_ontime; //time during which gas valve will be turned on when engine is stopped (10 ms units)
+  uint16_t tdc_angle[8];  //Angle of TDC for each cylinder, value * ANGLE_MULTIPLIER, relatively to 0 tooth.
+  uint16_t smp_angle;     //Angle for sampling of sensors, value * ANGLE_MULTIPLIER, relatively to TDC (BTDC)
+  uint16_t dwl_dead_time; //Dwell dead time, 1 discrete = 3.2us
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3778];
+  uint8_t reserved[3758];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -566,8 +569,8 @@ typedef struct params_t
   uint16_t ign_cutoff_thrd;              //!< Cutoff threshold (RPM)
 
   // Hall emulation output
-  int8_t   hop_start_cogs;               //!< Hall output: start of pulse in teeth relatively to TDC 
-  uint8_t  hop_durat_cogs;               //!< Hall output: duration of pulse in teeth
+  int16_t   hop_start_ang;               //!< Hall output: start of pulse in degrees relatively to TDC, value * ANGLE_MULTIPLIER
+  uint16_t  hop_durat_ang;               //!< Hall output: duration of pulse in degrees, value * ANGLE_MULTIPLIER
 
   // Communication
   uint16_t uart_divisor;                 //!< divider which corresponds to selected baud rate
@@ -733,7 +736,7 @@ typedef struct params_t
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[188];
+  uint8_t  reserved[186];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

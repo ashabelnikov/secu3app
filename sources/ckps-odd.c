@@ -41,8 +41,6 @@
 
 #include "knock.h"
 
-#include "dbgvar.h"
-
 #ifdef CAM_SYNC
  #error "TODO: implement CAM_SYNC!"
 #endif

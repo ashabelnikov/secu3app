@@ -572,7 +572,9 @@ void eculogic_eng_stopped_notification(void)
  d.eng_running = 0; //stopped
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  d.aftstr_enr = 0;
+#endif
 
  //Sample atmospheric pressure which will be used for barometric correction.
  sample_baro_pressure();

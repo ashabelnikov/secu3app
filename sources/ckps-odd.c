@@ -261,18 +261,18 @@ ign_queue_t ign_eq3[IGN_QUEUE_SIZE];
  * chan Number of channel
  */
 #define QUEUE_ADD(q, r, time, aid, chan) \
-    uint8_t i = ckps.eq_head##q; \
-    while((i != ckps.eq_tail##q) && ((time) < (ign_eq##q[(i - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
+    uint8_t qi = ckps.eq_head##q; \
+    while((qi != ckps.eq_tail##q) && ((time) < (ign_eq##q[(qi - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
     { \
-     uint8_t im1 = (i - 1) & (IGN_QUEUE_SIZE-1); \
-     ign_eq##q[i] = ign_eq##q[im1]; \
-     i = im1; \
+     uint8_t im1 = (qi - 1) & (IGN_QUEUE_SIZE-1); \
+     ign_eq##q[qi] = ign_eq##q[im1]; \
+     qi = im1; \
     } \
-    ign_eq##q[i].end_time = (r) + (time); \
-    ign_eq##q[i].id = (aid); \
-    ign_eq##q[i].ch = (chan); \
+    ign_eq##q[qi].end_time = (r) + (time); \
+    ign_eq##q[qi].id = (aid); \
+    ign_eq##q[qi].ch = (chan); \
     ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1);\
-    if (i == ckps.eq_tail##q) \
+    if (qi == ckps.eq_tail##q) \
     { \
      SET_T##q##COMPA((r), (time)); \
     }
@@ -280,17 +280,17 @@ ign_queue_t ign_eq3[IGN_QUEUE_SIZE];
 /** A more computationally economical version of QUEUE_ADD() macro
  */
 #define QUEUE_ADDF(q, r, time, aid) \
-    uint8_t i = ckps.eq_head##q; \
-    while((i != ckps.eq_tail##q) && ((time) < (ign_eq##q[(i - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
+    uint8_t qi = ckps.eq_head##q; \
+    while((qi != ckps.eq_tail##q) && ((time) < (ign_eq##q[(qi - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
     { \
-     uint8_t im1 = (i - 1) & (IGN_QUEUE_SIZE-1); \
-     ign_eq##q[i] = ign_eq##q[im1]; \
-     i = im1; \
-    } \
-    ign_eq##q[i].end_time = (r) + (time); \
-    ign_eq##q[i].id = (aid); \
+     uint8_t im1 = (qi - 1) & (IGN_QUEUE_SIZE-1); \
+     ign_eq##q[qi] = ign_eq##q[im1]; \
+     qi = im1; \
+    }\
+    ign_eq##q[qi].end_time = (r) + (time); \
+    ign_eq##q[qi].id = (aid); \
     ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1); \
-    if (i == ckps.eq_tail##q) \
+    if (qi == ckps.eq_tail##q) \
     { \
      SET_T##q##COMPA((r), (time)); \
     }
@@ -1028,11 +1028,7 @@ ISR(TIMER1_COMPA_vect)
    if (0==QUEUE_TAIL(1).ch)
    {
     IOCFG_SET(IOP_STROBE, 1);  //start pulse
-//    if (QUEUE_IS_EMPTY(1))
-//    {
-//     SET_T1COMPA(TCNT1, STROBE_PW); //strobe pulse is 100uS by default
-//    }
-    QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE);
+    QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE); //strobe pulse is 100uS by default
    }
 #endif
    break;
@@ -1242,114 +1238,81 @@ static uint8_t sync_at_startup(void)
  */
 static void process_ckps_cogs(void)
 {
- uint8_t i;
-
- for(i = 0; i < ckps.chan_number; ++i)
+ uint8_t ch;
+ for(ch = 0; ch < ckps.chan_number; ++ch)
  {
   //program queue for dwell event
-  if (chanstate[i].dwl_tooth[1] == ckps.cog)
+  if (chanstate[ch].dwl_tooth[1] == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].dwl_frac[1]);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T1COMPA(ICR1, delay);
-//   }
-   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL, i);
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].dwl_frac[1]);
+   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL, ch);
   }
 
   //program queue for spark event
-  if (chanstate[i].ign_tooth[1] == ckps.cog)
+  if (chanstate[ch].ign_tooth[1] == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].ign_frac[1]);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T1COMPA(ICR1, delay);
-//   }
-   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_SPARK, i);
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].ign_frac[1]);
+   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_SPARK, ch);
    //sync values
-   chanstate[i].dwl_tooth[1] = chanstate[i].dwl_tooth[0];
-   chanstate[i].dwl_frac[1] = chanstate[i].dwl_frac[0];
-   chanstate[i].ign_tooth[1] = chanstate[i].ign_tooth[0];
-   chanstate[i].ign_frac[1] = chanstate[i].ign_frac[0];
+   chanstate[ch].dwl_tooth[1] = chanstate[ch].dwl_tooth[0];
+   chanstate[ch].dwl_frac[1] = chanstate[ch].dwl_frac[0];
+   chanstate[ch].ign_tooth[1] = chanstate[ch].ign_tooth[0];
+   chanstate[ch].ign_frac[1] = chanstate[ch].ign_frac[0];
   }
 
   //program queue for rpm sample event
-  if (chanstate[i].rpm_tooth == ckps.cog)
+  if (chanstate[ch].rpm_tooth == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].rpm_frac);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T1COMPA(ICR1, delay);
-//   }
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].rpm_frac);
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_RPMSAMP);
   }
 
   //program queue for sensors' sample event
-  if (chanstate[i].msr_tooth == ckps.cog)
+  if (chanstate[ch].msr_tooth == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].msr_frac);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T1COMPA(ICR1, delay);
-//   }
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].msr_frac);
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_MEASURE);
   }
 
   if (CHECKBIT(flags, F_USEKNK))
   {
    //program queue 'knock window begin' event
-   if (chanstate[i].knb_tooth == ckps.cog)
+   if (chanstate[ch].knb_tooth == ckps.cog)
    {
-    uint16_t delay = FRAC_TO_TIME(chanstate[i].knb_frac);
-//    if (QUEUE_IS_EMPTY(1))
-//    {
-//     SET_T1COMPA(ICR1, delay);
-//    }
+    uint16_t delay = FRAC_TO_TIME(chanstate[ch].knb_frac);
     QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_KNKBEG);
    }
 
    //program queue for 'knock window end' event
-   if (chanstate[i].kne_tooth == ckps.cog)
+   if (chanstate[ch].kne_tooth == ckps.cog)
    {
-    uint16_t delay = FRAC_TO_TIME(chanstate[i].kne_frac);
-//    if (QUEUE_IS_EMPTY(1))
-//    {
-//     SET_T1COMPA(ICR1, delay);
-//    }
+    uint16_t delay = FRAC_TO_TIME(chanstate[ch].kne_frac);
     QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_KNKEND);
    }
   }
 
 #ifdef HALL_OUTPUT
   //program queue for hall output pulse's start event
-  if (chanstate[i].hob_tooth == ckps.cog)
+  if (chanstate[ch].hob_tooth == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].hob_frac);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T1COMPA(ICR1, delay);
-//   }
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].hob_frac);
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPBEG);
   }
 
   //program queue for hall output pulse's end event
-  if (chanstate[i].hoe_tooth == ckps.cog)
+  if (chanstate[ch].hoe_tooth == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].hoe_frac);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T1COMPA(ICR1, delay);
-//   }
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].hoe_frac);
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPEND);
   }
 #endif
 
 #ifdef FUEL_INJECT
   //control injection timing using teeth and COMPB timer channel
-  if (chanstate[i].inj_tooth[1] == ckps.cog)
+  if (chanstate[ch].inj_tooth[1] == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].inj_frac[1]);
-   ckps.inj_chidx = i;  //remember number of channel to be fired
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].inj_frac[1]);
+   ckps.inj_chidx = ch;  //remember number of channel to be fired
    SET_T1COMPB(ICR1, delay);
    sync_inj_angle();
   }
@@ -1357,33 +1320,25 @@ static void process_ckps_cogs(void)
  }
 
 #ifdef SPLIT_ANGLE
- for(i = SPLIT_OFFSET; i < ckps.chan_number_split; ++i)
+ for(ch = SPLIT_OFFSET; ch < ckps.chan_number_split; ++ch)
  {
   //program queue for dwell event
-  if (chanstate[i].dwl_tooth[1] == ckps.cog)
+  if (chanstate[ch].dwl_tooth[1] == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].dwl_frac[1]);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T3COMPA(ICR1, delay);
-//   }
-   QUEUE_ADD(3, ICR1, (uint16_t)delay, QID_DWELL, i);
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].dwl_frac[1]);
+   QUEUE_ADD(3, ICR1, (uint16_t)delay, QID_DWELL, ch);
   }
 
   //program queue for spark event
-  if (chanstate[i].ign_tooth[1] == ckps.cog)
+  if (chanstate[ch].ign_tooth[1] == ckps.cog)
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[i].ign_frac[1]);
-//   if (QUEUE_IS_EMPTY(1))
-//   {
-//    SET_T3COMPA(ICR1, delay);
-//   }
-   QUEUE_ADD(3, ICR1, (uint16_t)delay, QID_SPARK, i);
+   uint16_t delay = FRAC_TO_TIME(chanstate[ch].ign_frac[1]);
+   QUEUE_ADD(3, ICR1, (uint16_t)delay, QID_SPARK, ch);
    //sync values
-   chanstate[i].dwl_tooth[1] = chanstate[i].dwl_tooth[0];
-   chanstate[i].dwl_frac[1] = chanstate[i].dwl_frac[0];
-   chanstate[i].ign_tooth[1] = chanstate[i].ign_tooth[0];
-   chanstate[i].ign_frac[1] = chanstate[i].ign_frac[0];
+   chanstate[ch].dwl_tooth[1] = chanstate[ch].dwl_tooth[0];
+   chanstate[ch].dwl_frac[1] = chanstate[ch].dwl_frac[0];
+   chanstate[ch].ign_tooth[1] = chanstate[ch].ign_tooth[0];
+   chanstate[ch].ign_frac[1] = chanstate[ch].ign_frac[0];
   }
  }
 #endif

@@ -154,8 +154,8 @@ typedef struct
 
 #ifdef SPLIT_ANGLE
  volatile uint8_t chan_number_split;  //!< number of ignition channels with splitting
- volatile uint8_t eq_tail2;           //!< event queue tail (index in a static array)
- volatile uint8_t eq_head2;           //!< event queue head (index), queue is empty if head = tail
+ volatile uint8_t eq_tail3;           //!< event queue tail (index in a static array)
+ volatile uint8_t eq_head3;           //!< event queue head (index), queue is empty if head = tail
 #endif
  uint8_t  starting_mode;              //!< state of state machine processing of teeth at the startup
 
@@ -247,7 +247,7 @@ ign_queue_t ign_eq1[IGN_QUEUE_SIZE];
 
 #ifdef SPLIT_ANGLE
 /**Event queue for scheduling of ignition spark events (T3 COMPA) */
-ign_queue_t ign_eq2[IGN_QUEUE_SIZE];
+ign_queue_t ign_eq3[IGN_QUEUE_SIZE];
 #endif
 
 /** Reset specified queue (makes it empty) */
@@ -261,15 +261,39 @@ ign_queue_t ign_eq2[IGN_QUEUE_SIZE];
  * chan Number of channel
  */
 #define QUEUE_ADD(q, r, time, aid, chan) \
-    ign_eq##q[ckps.eq_head##q].end_time = (r) + (time); \
-    ign_eq##q[ckps.eq_head##q].id = (aid); \
-    ign_eq##q[ckps.eq_head##q].ch = (chan); \
-    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1);
+    uint8_t i = ckps.eq_head##q; \
+    while((i != ckps.eq_tail##q) && ((time) < (ign_eq##q[(i - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
+    { \
+     uint8_t im1 = (i - 1) & (IGN_QUEUE_SIZE-1); \
+     ign_eq##q[i] = ign_eq##q[im1]; \
+     i = im1; \
+    } \
+    ign_eq##q[i].end_time = (r) + (time); \
+    ign_eq##q[i].id = (aid); \
+    ign_eq##q[i].ch = (chan); \
+    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1);\
+    if (i == ckps.eq_tail##q) \
+    { \
+     SET_T##q##COMPA((r), (time)); \
+    }
 
+/** A more computationally economical version of QUEUE_ADD() macro
+ */
 #define QUEUE_ADDF(q, r, time, aid) \
-    ign_eq##q[ckps.eq_head##q].end_time = (r) + (time); \
-    ign_eq##q[ckps.eq_head##q].id = (aid); \
-    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1);
+    uint8_t i = ckps.eq_head##q; \
+    while((i != ckps.eq_tail##q) && ((time) < (ign_eq##q[(i - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
+    { \
+     uint8_t im1 = (i - 1) & (IGN_QUEUE_SIZE-1); \
+     ign_eq##q[i] = ign_eq##q[im1]; \
+     i = im1; \
+    } \
+    ign_eq##q[i].end_time = (r) + (time); \
+    ign_eq##q[i].id = (aid); \
+    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1); \
+    if (i == ckps.eq_tail##q) \
+    { \
+     SET_T##q##COMPA((r), (time)); \
+    }
 
 /** Remove event from the queue (remove from tail)*/
 #define QUEUE_REMOVE(q) ckps.eq_tail##q = (ckps.eq_tail##q + 1) & (IGN_QUEUE_SIZE-1)
@@ -333,7 +357,7 @@ void ckps_init_state_variables(void)
  ckps.starting_mode = 0;
  QUEUE_RESET(1);
 #ifdef SPLIT_ANGLE
- QUEUE_RESET(2);
+ QUEUE_RESET(3);
 #endif
  _END_ATOMIC_BLOCK();
 }
@@ -1004,11 +1028,11 @@ ISR(TIMER1_COMPA_vect)
    if (0==QUEUE_TAIL(1).ch)
    {
     IOCFG_SET(IOP_STROBE, 1);  //start pulse
-    if (QUEUE_IS_EMPTY(1))
-    {
-     SET_T1COMPA(TCNT1, STROBE_PW); //strobe pulse is 100uS by default
-    }
-    QUEUE_ADD(1, TCNT1, STROBE_PW, QID_STROBE, 0);
+//    if (QUEUE_IS_EMPTY(1))
+//    {
+//     SET_T1COMPA(TCNT1, STROBE_PW); //strobe pulse is 100uS by default
+//    }
+    QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE);
    }
 #endif
    break;
@@ -1082,14 +1106,14 @@ ISR(TIMER3_COMPA_vect)
 {
  TIMSK3&= ~_BV(OCIE3A); //disable this interrupt
 
- switch(QUEUE_TAIL(2).id) //what exactly happen?
+ switch(QUEUE_TAIL(3).id) //what exactly happen?
  {
   case QID_DWELL: //start accumulation
    if (CHECKBIT(flags, F_IGNIEN)) //Does ignition enabled?
    {
-    ((iocfg_pfn_set)chanstate[QUEUE_TAIL(2).ch].io_callback1)(IGNOUTCB_OFF_VAL);
+    ((iocfg_pfn_set)chanstate[QUEUE_TAIL(3).ch].io_callback1)(IGNOUTCB_OFF_VAL);
 #ifdef PHASED_IGNITION
-    ((iocfg_pfn_set)chanstate[QUEUE_TAIL(2).ch].io_callback2)(IGNOUTCB_OFF_VAL);
+    ((iocfg_pfn_set)chanstate[QUEUE_TAIL(3).ch].io_callback2)(IGNOUTCB_OFF_VAL);
 #endif
    }
    break;
@@ -1098,9 +1122,9 @@ ISR(TIMER3_COMPA_vect)
   {
    //line of port in the low level, now set it into a high level - makes the transistor to close and coil to stop 
    //the accumulation of energy (spark)
-   ((iocfg_pfn_set)chanstate[QUEUE_TAIL(2).ch].io_callback1)(IGNOUTCB_ON_VAL);
+   ((iocfg_pfn_set)chanstate[QUEUE_TAIL(3).ch].io_callback1)(IGNOUTCB_ON_VAL);
 #ifdef PHASED_IGNITION
-   ((iocfg_pfn_set)chanstate[QUEUE_TAIL(2).ch].io_callback2)(IGNOUTCB_ON_VAL);
+   ((iocfg_pfn_set)chanstate[QUEUE_TAIL(3).ch].io_callback2)(IGNOUTCB_ON_VAL);
 #endif
    break;
   }
@@ -1108,10 +1132,10 @@ ISR(TIMER3_COMPA_vect)
 
  //Remove already processed event from queue. After that, if queue is not empty, then start
  //next event in chain. Also, prevent effects when event already expired.
- QUEUE_REMOVE(2);
- if (!QUEUE_IS_EMPTY(2))
+ QUEUE_REMOVE(3);
+ if (!QUEUE_IS_EMPTY(3))
  {
-  uint16_t t = (QUEUE_TAIL(2).end_time-(uint16_t)2) - TCNT1;
+  uint16_t t = (QUEUE_TAIL(3).end_time-(uint16_t)2) - TCNT1;
   if (t > 65520)             //end_time < TCNT3, so, it is expired (forbidden range is 65520...65535)
    t = 2;
   SET_T3COMPA(TCNT3, t);
@@ -1222,15 +1246,14 @@ static void process_ckps_cogs(void)
 
  for(i = 0; i < ckps.chan_number; ++i)
  {
-
   //program queue for dwell event
   if (chanstate[i].dwl_tooth[1] == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].dwl_frac[1]);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T1COMPA(ICR1, delay);
+//   }
    QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL, i);
   }
 
@@ -1238,10 +1261,10 @@ static void process_ckps_cogs(void)
   if (chanstate[i].ign_tooth[1] == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].ign_frac[1]);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T1COMPA(ICR1, delay);
+//   }
    QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_SPARK, i);
    //sync values
    chanstate[i].dwl_tooth[1] = chanstate[i].dwl_tooth[0];
@@ -1254,10 +1277,10 @@ static void process_ckps_cogs(void)
   if (chanstate[i].rpm_tooth == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].rpm_frac);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T1COMPA(ICR1, delay);
+//   }
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_RPMSAMP);
   }
 
@@ -1265,10 +1288,10 @@ static void process_ckps_cogs(void)
   if (chanstate[i].msr_tooth == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].msr_frac);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T1COMPA(ICR1, delay);
+//   }
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_MEASURE);
   }
 
@@ -1278,10 +1301,10 @@ static void process_ckps_cogs(void)
    if (chanstate[i].knb_tooth == ckps.cog)
    {
     uint16_t delay = FRAC_TO_TIME(chanstate[i].knb_frac);
-    if (QUEUE_IS_EMPTY(1))
-    {
-     SET_T1COMPA(ICR1, delay);
-    }
+//    if (QUEUE_IS_EMPTY(1))
+//    {
+//     SET_T1COMPA(ICR1, delay);
+//    }
     QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_KNKBEG);
    }
 
@@ -1289,10 +1312,10 @@ static void process_ckps_cogs(void)
    if (chanstate[i].kne_tooth == ckps.cog)
    {
     uint16_t delay = FRAC_TO_TIME(chanstate[i].kne_frac);
-    if (QUEUE_IS_EMPTY(1))
-    {
-     SET_T1COMPA(ICR1, delay);
-    }
+//    if (QUEUE_IS_EMPTY(1))
+//    {
+//     SET_T1COMPA(ICR1, delay);
+//    }
     QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_KNKEND);
    }
   }
@@ -1302,10 +1325,10 @@ static void process_ckps_cogs(void)
   if (chanstate[i].hob_tooth == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].hob_frac);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T1COMPA(ICR1, delay);
+//   }
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPBEG);
   }
 
@@ -1313,10 +1336,10 @@ static void process_ckps_cogs(void)
   if (chanstate[i].hoe_tooth == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].hoe_frac);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T1COMPA(ICR1, delay);
+//   }
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPEND);
   }
 #endif
@@ -1340,22 +1363,22 @@ static void process_ckps_cogs(void)
   if (chanstate[i].dwl_tooth[1] == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].dwl_frac[1]);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
-   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL, i);
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T3COMPA(ICR1, delay);
+//   }
+   QUEUE_ADD(3, ICR1, (uint16_t)delay, QID_DWELL, i);
   }
 
   //program queue for spark event
   if (chanstate[i].ign_tooth[1] == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[i].ign_frac[1]);
-   if (QUEUE_IS_EMPTY(1))
-   {
-    SET_T1COMPA(ICR1, delay);
-   }
-   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_SPARK, i);
+//   if (QUEUE_IS_EMPTY(1))
+//   {
+//    SET_T3COMPA(ICR1, delay);
+//   }
+   QUEUE_ADD(3, ICR1, (uint16_t)delay, QID_SPARK, i);
    //sync values
    chanstate[i].dwl_tooth[1] = chanstate[i].dwl_tooth[0];
    chanstate[i].dwl_frac[1] = chanstate[i].dwl_frac[0];

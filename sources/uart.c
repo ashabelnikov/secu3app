@@ -1224,10 +1224,15 @@ void uart_send_packet(uint8_t send_mode)
 
 #ifdef DEBUG_VARIABLES
   case DBGVAR_DAT:
-   build_i16h(dbg_var1);
-   build_i16h(dbg_var2);
-   build_i16h(dbg_var3);
-   build_i16h(dbg_var4);
+   {
+   _BEGIN_ATOMIC_BLOCK();
+   uint16_t dbg_var[4] = {dbg_var1, dbg_var2, dbg_var3, dbg_var4};
+   _END_ATOMIC_BLOCK();
+   build_i16h(dbg_var[0]);
+   build_i16h(dbg_var[1]);
+   build_i16h(dbg_var[2]);
+   build_i16h(dbg_var[3]);
+   }
    break;
 #endif
 #ifdef DIAGNOSTICS

@@ -29,10 +29,10 @@
 
 #ifdef DEBUG_VARIABLES
 //See also uart.c
-extern uint16_t dbg_var1;  //User's debug variable 1
-extern uint16_t dbg_var2;  //User's debug variable 2
-extern uint16_t dbg_var3;  //User's debug variable 3
-extern uint16_t dbg_var4;  //User's debug variable 4
+extern volatile uint16_t dbg_var1;  //User's debug variable 1
+extern volatile uint16_t dbg_var2;  //User's debug variable 2
+extern volatile uint16_t dbg_var3;  //User's debug variable 3
+extern volatile uint16_t dbg_var4;  //User's debug variable 4
 #endif
 
 #endif //_DBGVAR_H_

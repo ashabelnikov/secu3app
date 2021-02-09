@@ -35,9 +35,9 @@
 
 //User's debug variables. See also dbgvar.h header file.
 //Default values are zero.
-uint16_t dbg_var1 = 0;   /**User's debug variable 1*/
-uint16_t dbg_var2 = 0;   /**User's debug variable 2*/
-uint16_t dbg_var3 = 0;   /**User's debug variable 3*/
-uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
+volatile uint16_t dbg_var1 = 0;   /**User's debug variable 1*/
+volatile uint16_t dbg_var2 = 0;   /**User's debug variable 2*/
+volatile uint16_t dbg_var3 = 0;   /**User's debug variable 3*/
+volatile uint16_t dbg_var4 = 0;   /**User's debug variable 4*/
 #endif
 

@@ -434,7 +434,7 @@ void static angle_to_tooth(int16_t angle, uint16_t* tooth_num, uint16_t* tooth_f
  int16_t tooth = ((((int32_t)angle) * ckps.wheel_deg_r) >> (16+5)) - 1;
  if (tooth < 0)
   tooth+= ckps.wheel_cogs_num2;
- uint16_t frac = angle - ckps.cogang[tooth];
+ uint16_t frac = _normalize_angle(angle - ckps.cogang[tooth]);
  *tooth_fr = ((((uint32_t)frac) * 1024) * ckps.degrees_per_cog_r) >> 16;
  *tooth_num = tooth;
 }

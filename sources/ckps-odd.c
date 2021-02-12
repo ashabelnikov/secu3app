@@ -41,10 +41,6 @@
 
 #include "knock.h"
 
-#ifdef CAM_SYNC
- #error "TODO: implement CAM_SYNC!"
-#endif
-
 #ifdef STROBOSCOPE
 #define STROBE_PW 31    //!< Strobe pulse width (100uS), value in tics ot timer, 1 tick = 3.2uS
 #endif
@@ -127,7 +123,9 @@ typedef struct
  volatile uint16_t period_curr;       //!< last measured inter-tooth period
  uint16_t period_prev;                //!< previous value of inter-tooth period
  volatile uint16_t cog;               //!< counts teeth starting from missing teeth (2 revolutions), begins from 1
+#ifndef CAM_SYNC
  volatile uint8_t cog360;             //!< counts teeth starting from missing teeth (1 revolution).
+#endif
  uint16_t cogang[TEETH_MAX];          //!< look up table for converting cog's number to corresponding angle
  volatile uint8_t eq_tail1;           //!< event queue tail (index in a static array)
  volatile uint8_t eq_head1;           //!< event queue head (index), queue is empty if head = tail
@@ -136,7 +134,9 @@ typedef struct
  volatile uint8_t wheel_cogs_num;     //!< Number of teeth, including missing
  volatile uint8_t miss_cogs_num;      //!< Count of crank wheel's missing teeth (0, 1, 2)
  volatile uint8_t wheel_cogs_numm2;   //!< wheel_cogs_num - 2
+#ifndef CAM_SYNC
  volatile uint16_t wheel_cogs_num2;   //!< Number of teeth which corresponds to 720° (2 revolutions)
+#endif
  volatile uint8_t ignout_on_val;      //!< value used to turn on ignition channel
  volatile uint8_t ignout_off_val;     //!< value used to turn off ignition channel
  volatile uint16_t stroke_period;     //!< stores the last measurement of period between neighbor strokes
@@ -351,7 +351,11 @@ void ckps_init_state_variables(void)
 #if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
  CLEARBIT(flags2, F_CAMISS);
 #endif
+#ifdef CAM_SYNC
+ ckps.cog = 0;
+#else
  ckps.cog = ckps.cog360 = 0;
+#endif
  ckps.stroke_period = 0xFFFF;
  ckps.cr_acc_time = 0;
  ckps.starting_mode = 0;
@@ -401,7 +405,7 @@ static uint16_t dwell_to_angle(void)
  _END_ATOMIC_BLOCK();
  //limit dwell time, convert it to corresponding angle (value * ANGLE_MULTIPLIER)
  uint16_t dpw = ckps.cr_acc_time;
-#ifdef PHASED_IGNITION
+#if defined(PHASED_IGNITION) && !defined(CAM_SYNC)
  uint32_t maxdwl = (((uint32_t)period_curr) * ckps.wheel_cogs_num2) - PGM_GET_WORD(&fw_data.exdata.dwl_dead_time);
 #else
  uint32_t maxdwl = (((uint32_t)period_curr) * ckps.wheel_cogs_num) - PGM_GET_WORD(&fw_data.exdata.dwl_dead_time);
@@ -433,7 +437,11 @@ void static angle_to_tooth(int16_t angle, uint16_t* tooth_num, uint16_t* tooth_f
 {
  int16_t tooth = ((((int32_t)angle) * ckps.wheel_deg_r) >> (16+5)) - 1;
  if (tooth < 0)
+#ifdef CAM_SYNC
+  tooth+= ckps.wheel_cogs_num;
+#else
   tooth+= ckps.wheel_cogs_num2;
+#endif
  uint16_t frac = _normalize_angle(angle - ckps.cogang[tooth]);
  *tooth_fr = ((((uint32_t)frac) * 1024) * ckps.degrees_per_cog_r) >> 16;
  *tooth_num = tooth;
@@ -805,7 +813,11 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
   set_channels_ss();  // Tune for semi-sequential mode
 #else //phased ignition
   //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
+#ifdef CAM_SYNC
+  set_channels_fs(1);
+#else
   set_channels_fs(cams_is_ready());
+#endif
 #endif
  }
 
@@ -864,7 +876,11 @@ void ckps_set_merge_outs(uint8_t i_merge)
 #ifndef PHASED_IGNITION
   set_channels_ss();  // Tune for semi-sequential mode
 #else //phased ignition
+#ifdef CAM_SYNC
+  set_channels_fs(1);
+#else
   set_channels_fs(cams_is_ready()); //Tune for full sequential mode if cam sensor works, otherwise tune for semi-sequential mode
+#endif
 #endif
  }
 }
@@ -897,12 +913,20 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
 {
  uint16_t i; uint8_t _t;
 #ifdef PHASE_SENSOR
+#ifdef CAM_SYNC
+ uint16_t err_thrd = norm_num + (norm_num >> 3); //+ 12.5%
+#else
  uint16_t err_thrd = (norm_num * 2) + (norm_num >> 3); //+ 12.5%
+#endif
 #endif
  uint16_t degrees_per_cog, degrees_per_cog_r;
 
  //precalculate value of degrees per 1 cog, it is fractional number multiplied by ANGLE_MULTIPLIER
+#ifdef CAM_SYNC
+ degrees_per_cog = (((((uint32_t)720) << 8) / norm_num) * ANGLE_MULTIPLIER) >> 8;
+#else
  degrees_per_cog = (((((uint32_t)360) << 8) / norm_num) * ANGLE_MULTIPLIER) >> 8;
+#endif
 
  //precalculate value of 1 / degrees_per_cog (reciprocal), result value multiplied by ~65536
  degrees_per_cog_r = (1*65535) / degrees_per_cog;
@@ -915,7 +939,9 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  ckps.wheel_cogs_num = norm_num;             //set number of teeth (normal and missing)
  ckps.miss_cogs_num = miss_num;
  ckps.wheel_cogs_numm2 = norm_num - 2;
+#ifndef CAM_SYNC
  ckps.wheel_cogs_num2 = norm_num * 2;
+#endif
  ckps.degrees_per_cog = degrees_per_cog;
  ckps.degrees_per_cog_r = degrees_per_cog_r; //reciprocal of the degrees_per_cog
 #ifdef PHASE_SENSOR
@@ -924,8 +950,13 @@ void ckps_set_cogs_num(uint8_t norm_num, uint8_t miss_num)
  _RESTORE_INTERRUPT(_t);
 
  //build look up table which will contain angles for each cog, value * ANGLE_MULTIPLIER
+#ifdef CAM_SYNC
+ for(i = 0; i < ckps.wheel_cogs_num; ++i)
+  ckps.cogang[i] = ((((uint32_t)(720))*ANGLE_MULTIPLIER) * i) / ckps.wheel_cogs_num;
+#else
  for(i = 0; i < ckps.wheel_cogs_num2; ++i)
   ckps.cogang[i] = ((((uint32_t)(720))*ANGLE_MULTIPLIER) * i) / ckps.wheel_cogs_num2;
+#endif
 
  //Set angles for measuring values of sensors and rpm
  for(i = 0; i < ckps.chan_number; ++i)
@@ -1180,7 +1211,7 @@ static uint8_t sync_at_startup(void)
      ckps.starting_mode = 1; //switch to this mode if cam reference was enabled
     else
 #endif
-#ifdef PHASED_IGNITION
+#if defined(PHASED_IGNITION) && !defined(CAM_SYNC)
     //if cylinder number is even, then cam synchronization will be performed later
     ckps.starting_mode = (ckps.chan_number & 1) ? 1 : 2;
 #else
@@ -1203,16 +1234,22 @@ static uint8_t sync_at_startup(void)
     SETBIT(flags2, F_CAMISS);
 #endif
 #ifdef FUEL_INJECT
-   inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
+    inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
 #endif
+#ifdef CAM_SYNC
+    SETBIT(flags, F_ISSYNC);
+    ckps.cog = 0; //first tooth
+    return 1; //finish
+#else
     if (CHECKBIT(flags2, F_CAMREF))
     {
      SETBIT(flags, F_ISSYNC);
-     ckps.cog = ckps.cog360 = 1; //first tooth
+     ckps.cog = ckps.cog360 = 0; //first tooth
      return 1; //finish
     }
     else
      ckps.starting_mode = 2;
+#endif
    }
    break;
 #endif
@@ -1221,9 +1258,24 @@ static uint8_t sync_at_startup(void)
    //if missing teeth = 0, then reference will be identified by additional VR sensor (REF_S input)
    if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
    {
+#ifdef CAM_SYNC
+#ifdef PHASED_IGNITION
+    if (CHECKBIT(flags2, F_SINGCH))
+     set_channels_sc(); //single channel mode
+    else
+     set_channels_fs(1);
+#endif
+#ifdef FUEL_INJECT
+    inject_set_fullsequential(1);
+#endif
+#endif
     SETBIT(flags, F_ISSYNC);
     ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period
-    ckps.cog = ckps.cog360 = 1; //first tooth
+#ifdef CAM_SYNC
+    ckps.cog = 0; //first tooth
+#else
+    ckps.cog = ckps.cog360 = 0; //first tooth
+#endif
     return 1; //finish process of synchronization
    }
    break;
@@ -1345,6 +1397,13 @@ static void process_ckps_cogs(void)
 
  ++ckps.cog;
 
+#ifdef CAM_SYNC
+#ifdef PHASE_SENSOR
+ //search for level's toggle from camshaft sensor on each cog
+ if (CHECKBIT(flags2, F_CAMREF))
+  cams_detect_edge();
+#endif
+#else
 #ifdef PHASE_SENSOR
  //search for level's toggle from camshaft sensor on each cog
  cams_detect_edge();
@@ -1392,6 +1451,7 @@ static void process_ckps_cogs(void)
  }
 #endif
 #endif
+#endif
 }
 
 /**Input capture interrupt of timer 1 (called at passage of each tooth)
@@ -1418,11 +1478,17 @@ ISR(TIMER1_CAPT_vect)
 #ifdef PHASE_SENSOR
  if (CHECKBIT(flags2, F_CAMREF))
  {
+#ifndef CAM_SYNC
   if ((ckps.cog360 == ckps.wheel_cogs_num))
    ckps.cog360 = 0;
+#endif
   if (cams_is_event_r())
   {
+#ifdef CAM_SYNC
+   if (ckps.cog != ckps.wheel_cogs_num)
+#else
    if (ckps.cog != ckps.wheel_cogs_num2) //check if sync is correct
+#endif
     SETBIT(flags, F_ERROR); //ERROR
    ckps.cog = 0; //each 720°
   }
@@ -1436,6 +1502,12 @@ ISR(TIMER1_CAPT_vect)
   //count of teeth being found incorrect, then set error flag.
   if ((0==ckps.miss_cogs_num) ? cams_vr_is_event_r() : (ckps.period_curr > CKPS_GAP_BARRIER(ckps.period_prev)))
   {
+#ifdef CAM_SYNC
+   if ((ckps.cog != ckps.wheel_cogs_num)) //also taking into account recovered teeth
+    SETBIT(flags, F_ERROR); //ERROR
+   ckps.cog = 0;
+   ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
+#else
    if ((ckps.cog360 != ckps.wheel_cogs_num)) //also taking into account recovered teeth
    {
     SETBIT(flags, F_ERROR); //ERROR
@@ -1448,6 +1520,7 @@ ISR(TIMER1_CAPT_vect)
    if (ckps.cog == ckps.wheel_cogs_num2)
     ckps.cog = 0;
    ckps.period_curr = ckps.period_prev;  //exclude value of missing teeth's period (for missing teeth only)
+#endif
   }
  }
 
@@ -1459,14 +1532,19 @@ sync_enter:
   //If the last tooth before missing teeth, we begin the countdown for
   //the restoration of missing teeth, as the initial data using the last
   //value of inter-teeth period.
+#ifdef CAM_SYNC
+  if (ckps.miss_cogs_num && ckps.cog == ckps.wheel_last_cog)
+#else
   if (ckps.miss_cogs_num && ckps.cog360 == ckps.wheel_last_cog)
+#endif
    set_timer0(ckps.period_curr);
  }
 
  //call handler for normal teeth
  process_ckps_cogs();
+#ifndef CAM_SYNC
  ++ckps.cog360;
-
+#endif
  ckps.icr_prev = ICR1;
  ckps.period_prev = ckps.period_curr;
 }
@@ -1488,13 +1566,19 @@ ISR(TIMER0_COMPA_vect)
   if (ckps.miss_cogs_num > 1)
   {
    //start timer to recover 60th tooth
+#ifdef CAM_SYNC
+   if (ckps.cog == ckps.wheel_cogs_numm2)
+#else
    if (ckps.cog360 == ckps.wheel_cogs_numm2)
+#endif
     set_timer0(ckps.period_curr);
   }
 
   //Call handler for missing teeth
   process_ckps_cogs();
+#ifndef CAM_SYNC
   ++ckps.cog360;
+#endif
  }
 }
 

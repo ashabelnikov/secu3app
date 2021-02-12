@@ -1455,6 +1455,7 @@ static void process_ckps_cogs(void)
 
  //tooth passed - angle before TDC decriased (e.g 6° per tooth for 60-2).
  ckps.current_angle-= ckps.degrees_per_cog;
+ ++ckps.cog;
 
 #ifdef PHASE_SENSOR
  //search for level's toggle from camshaft sensor on each cog
@@ -1529,7 +1530,6 @@ sync_enter:
 
  //call handler for normal teeth
  process_ckps_cogs();
- ++ckps.cog;
 
  ckps.icr_prev = ICR1;
  ckps.period_prev = ckps.period_curr;
@@ -1558,7 +1558,6 @@ ISR(TIMER0_COMPA_vect)
 
   //Call handler for missing teeth
   process_ckps_cogs();
-  ++ckps.cog;
  }
 }
 

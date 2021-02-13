@@ -461,12 +461,13 @@ typedef struct fw_ex_data_t
   uint16_t tdc_angle[8];  //Angle of TDC for each cylinder, value * ANGLE_MULTIPLIER, relatively to 0 tooth.
   uint16_t smp_angle;     //Angle for sampling of sensors, value * ANGLE_MULTIPLIER, relatively to TDC (BTDC)
   uint16_t dwl_dead_time; //Dwell dead time, 1 discrete = 3.2us
+  uint8_t  sfc_tps_thrd;  //TPS threshold used for immediate leaving fuel cut mode
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3758];
+  uint8_t reserved[3757];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

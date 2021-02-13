@@ -938,6 +938,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .smp_angle = 66*32,  //66°
   .dwl_dead_time = 312, //1ms
 
+  .sfc_tps_thrd = TPS_MAGNITUDE(3.0), //3%
+
   /**reserved bytes*/
   {0}
  },

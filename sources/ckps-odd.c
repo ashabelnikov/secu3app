@@ -45,6 +45,9 @@
 #define STROBE_PW 31    //!< Strobe pulse width (100uS), value in tics ot timer, 1 tick = 3.2uS
 #endif
 
+/**Threshold value used for detection of expiration of events in timer's queue*/
+#define EXPEVENT_THRD 65400
+
 /**Maximim number of teeth */
 #define TEETH_MAX 200
 
@@ -105,6 +108,8 @@
 #define F_STROKE    3                 //!< flag for synchronization with rotation
 #define F_USEKNK    4                 //!< flag which indicates using of knock channel
 #define F_IGNIEN    5                 //!< Ignition enabled/disabled
+#define F_STROBE    6                 //!< Stroboscope function is active (output mapped to the real I/O)
+#define F_HALOUT    7                 //!< Hall output function is active (output mapped to the real I/O)
 
 //Additional flags (see flags2 variable)
 #if defined(PHASED_IGNITION) || (defined(PHASE_SENSOR) && defined(FUEL_INJECT))
@@ -371,6 +376,9 @@ void ckps_init_state(void)
  _BEGIN_ATOMIC_BLOCK();
  ckps_init_state_variables();
  CLEARBIT(flags, F_ERROR);
+
+ WRITEBIT(flags, F_STROBE, IOCFG_CHECK(IOP_STROBE));
+ WRITEBIT(flags, F_HALOUT, IOCFG_CHECK(IOP_HALL_OUT));
 
  //Compare channels do not connected to lines of ports (normal port mode)
  TCCR1A = 0;
@@ -1056,13 +1064,28 @@ ISR(TIMER1_COMPA_vect)
 #endif
 
 #ifdef STROBOSCOPE
-   if (0==QUEUE_TAIL(1).ch)
+    uint8_t ch = QUEUE_TAIL(1).ch;
+#endif
+    QUEUE_REMOVE(1);
+    if (!QUEUE_IS_EMPTY(1))
+    {
+     uint16_t t = (QUEUE_TAIL(1).end_time-(uint16_t)2) - TCNT1;
+     if (t > EXPEVENT_THRD)             //end_time < TCNT1, so, it is expired (forbidden range is EXPEVENT_THRD...65535)
+      t = 2;
+     SET_T1COMPA(TCNT1, t);
+    }
+
+#ifdef STROBOSCOPE
+   if (CHECKBIT(flags, F_STROBE))
    {
-    IOCFG_SET(IOP_STROBE, 1);  //start pulse
-    QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE); //strobe pulse is 100uS by default
+    if (0==ch)
+    {
+     IOCFG_SET(IOP_STROBE, 1);  //start pulse
+     QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE); //strobe pulse is 100uS by default
+    }
    }
 #endif
-   break;
+   return;
   }
 
   case QID_RPMSAMP:
@@ -1121,7 +1144,7 @@ ISR(TIMER1_COMPA_vect)
  if (!QUEUE_IS_EMPTY(1))
  {
   uint16_t t = (QUEUE_TAIL(1).end_time-(uint16_t)2) - TCNT1;
-  if (t > 65520)             //end_time < TCNT1, so, it is expired (forbidden range is 65520...65535)
+  if (t > EXPEVENT_THRD)             //end_time < TCNT1, so, it is expired (forbidden range is EXPEVENT_THRD...65535)
    t = 2;
   SET_T1COMPA(TCNT1, t);
  }
@@ -1163,7 +1186,7 @@ ISR(TIMER3_COMPA_vect)
  if (!QUEUE_IS_EMPTY(3))
  {
   uint16_t t = (QUEUE_TAIL(3).end_time-(uint16_t)2) - TCNT1;
-  if (t > 65520)             //end_time < TCNT3, so, it is expired (forbidden range is 65520...65535)
+  if (t > EXPEVENT_THRD)             //end_time < TCNT3, so, it is expired (forbidden range is EXPEVENT_THRD...65535)
    t = 2;
   SET_T3COMPA(TCNT3, t);
  }
@@ -1344,18 +1367,21 @@ static void process_ckps_cogs(void)
   }
 
 #ifdef HALL_OUTPUT
-  //program queue for hall output pulse's start event
-  if (chanstate[ch].hob_tooth == ckps.cog)
+  if (CHECKBIT(flags, F_HALOUT))
   {
-   uint16_t delay = FRAC_TO_TIME(chanstate[ch].hob_frac);
-   QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPBEG);
-  }
+   //program queue for hall output pulse's start event
+   if (chanstate[ch].hob_tooth == ckps.cog)
+   {
+    uint16_t delay = FRAC_TO_TIME(chanstate[ch].hob_frac);
+    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPBEG);
+   }
 
-  //program queue for hall output pulse's end event
-  if (chanstate[ch].hoe_tooth == ckps.cog)
-  {
-   uint16_t delay = FRAC_TO_TIME(chanstate[ch].hoe_frac);
-   QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPEND);
+   //program queue for hall output pulse's end event
+   if (chanstate[ch].hoe_tooth == ckps.cog)
+   {
+    uint16_t delay = FRAC_TO_TIME(chanstate[ch].hoe_frac);
+    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_HOPEND);
+   }
   }
 #endif
 

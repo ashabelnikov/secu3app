@@ -434,4 +434,11 @@ uint16_t pwmiac_ucoef(void);
 uint16_t aftstr_strokes(uint8_t mode);
 #endif
 
+#if defined(FUEL_INJECT)
+/** IAC position correction vs MAT
+ * \return value in % * 4
+ */
+int8_t inj_iac_mat_corr(void);
+#endif
+
 #endif //_FUNCONV_H_

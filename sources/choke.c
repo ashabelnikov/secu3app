@@ -384,7 +384,7 @@ static uint16_t calc_rpm_thrd2(uint16_t rpm)
  return (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd2) + 128)) >> 7;
 }
 
-/** Calculate stepper motor position for normal mode
+/** Calculate stepper motor position for normal mode (fuel injection)
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
  * \return stepper motor position in steps
@@ -395,6 +395,7 @@ int16_t calc_sm_position(uint8_t pwm)
  {
   case 0:  //cranking mode
    chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 0)) << 4; //use crank pos, x16
+   chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3); //x4x8=x32
    if (d.st_block)
    {
     CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
@@ -418,11 +419,14 @@ int16_t calc_sm_position(uint8_t pwm)
     {
      chks.strt_mode = 3; //transition has finished, we will immediately fall into mode 2, use run value
      chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 4; //run pos x16
+     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
     }
     else
     {
      int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0); //crank pos
+     crnk_ppos += (((int16_t)inj_iac_mat_corr()) << 3);
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1);  //run pos
+     run_ppos += (((int16_t)inj_iac_mat_corr()) << 3);
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 128) >> 3; //result will be x16
      if (d.sens.frequen >= calc_rpm_thrd1(calc_cl_rpm()) || chks.strt_mode > 1)
       chks.strt_mode = 2; //allow closed loop before finishing of crank to run transition
@@ -475,7 +479,10 @@ int16_t calc_sm_position(uint8_t pwm)
     else
     { //closed loop is not active
      if (chks.strt_mode > 2)
+     {
       chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x16, work position as base
+      chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
+     }
      if (d.engine_mode == EM_IDLE)
      {
       if  (d.sens.inst_frq > rpm_thrd2)
@@ -546,6 +553,7 @@ int16_t calc_sm_position(uint8_t pwm)
     if (chks.strt_mode > 2)
     {
      chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
+     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
      //Displace IAC position when cooling fan turns on
      if (d.vent_req_on)
       chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;

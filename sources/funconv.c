@@ -1431,3 +1431,25 @@ uint16_t aftstr_strokes(uint8_t mode)
  }
 }
 #endif
+
+#if defined(FUEL_INJECT)
+int8_t inj_iac_mat_corr(void)
+{
+ int16_t i, i1, t = inj_corrected_mat(); //use corrected MAT
+ if (!IOCFG_CHECK(IOP_AIR_TEMP))
+  return 0;   //do not use correcton if air temperature sensor is turned off
+
+ //-30 - minimum temperature value
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= INJ_ATS_CORR_SIZE-1) i = i1 = INJ_ATS_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, _GB(iac_mat_corr[i]), _GB(iac_mat_corr[i1]), //<--values in table are signed
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 128) >> 7;
+}
+#endif

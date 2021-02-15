@@ -70,6 +70,7 @@
 #define ETMT_PWM1_MAP 26    //!< PWM duty 1
 #define ETMT_PWM2_MAP 27    //!< PWM duty 2
 #define ETMT_TEMPI_MAP 28   //!< temp.corr. map id (idling)
+#define ETMT_IACMAT_MAP 29  //!< IAC position's correction vs MAT
 
 /**Define internal state variables */
 typedef struct
@@ -1161,6 +1162,11 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_ATSC_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_ats_corr, INJ_ATS_CORR_SIZE);
+     state = ETMT_IACMAT_MAP;
+     break;
+    case ETMT_IACMAT_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.iac_mat_corr, INJ_ATS_CORR_SIZE);
      state = ETMT_PWM1_MAP, wrk_index = 0;
      break;
     case ETMT_PWM1_MAP: //PWM1 map
@@ -1714,6 +1720,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_ATSC_MAP: //PW correction from air temperature
      recept_rb(((uint8_t*)&d.tables_ram.inj_ats_corr) + addr, INJ_ATS_CORR_SIZE); /*INJ_ATS_CORR_SIZE max*/
+     break;
+    case ETMT_IACMAT_MAP: //IAC position's correction vs MAT
+     recept_rb(((uint8_t*)&d.tables_ram.iac_mat_corr) + addr, INJ_ATS_CORR_SIZE); /*INJ_ATS_CORR_SIZE max*/
      break;
     case ETMT_PWM1_MAP: //PWM1 map
      recept_rb(((uint8_t*)&d.tables_ram.pwm_duty1[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/

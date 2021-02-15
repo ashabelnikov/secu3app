@@ -257,10 +257,12 @@ typedef struct f_data_t
 
   int8_t f_tmp_idl[F_TMP_POINTS];                     //!< coolant temper. correction of advance angle, discrete = 0.5 degr.
 
+  int8_t iac_mat_corr[INJ_ATS_CORR_SIZE];             //!< IAC position correction vs MAT, discrete = 0.25% (signed value * 4)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[487];
+  uint8_t reserved[471];
 }f_data_t;
 
 

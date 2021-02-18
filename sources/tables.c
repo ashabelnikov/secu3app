@@ -939,6 +939,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .dwl_dead_time = 312, //1ms
 
   .sfc_tps_thrd = TPS_MAGNITUDE(3.0), //3%
+  .evap_map_thrd = PRESSURE_MAGNITUDE(250.0),
 
   /**reserved bytes*/
   {0}

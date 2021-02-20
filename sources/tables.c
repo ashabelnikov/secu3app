@@ -940,6 +940,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .sfc_tps_thrd = TPS_MAGNITUDE(3.0), //3%
   .evap_map_thrd = PRESSURE_MAGNITUDE(250.0),
+  .ckps_skip_trig = 5, //skip 5 teeth
 
   /**reserved bytes*/
   {0}

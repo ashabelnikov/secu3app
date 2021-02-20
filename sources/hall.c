@@ -409,7 +409,7 @@ void ckps_set_merge_outs(uint8_t i_merge)
 }
 
 #ifdef HALL_OUTPUT
-void ckps_set_hall_pulse(int8_t i_offset, uint8_t i_duration)
+void ckps_set_hall_pulse(int16_t i_offset, uint16_t i_duration)
 {
  //not supported by Hall sensor
 }

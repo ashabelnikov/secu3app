@@ -78,9 +78,6 @@
  */
 #define CKPS_GAP_BARRIER(p) ( ((p) << (ckps.miss_cogs_num==2)) + ((p) >> 1) )
 
-/** number of teeth that will be skipped at the start of cranking before synchronization */
-#define CKPS_ON_START_SKIP_COGS      5
-
 //Define values for controlling of outputs
 #define IGN_OUTPUTS_INIT_VAL 1        //!< value used for initialization
 #define IGN_OUTPUTS_ON_VAL   1        //!< value used to turn on ignition channel
@@ -1227,7 +1224,7 @@ static uint8_t sync_at_startup(void)
  {
   case 0: //skip certain number of teeth
    CLEARBIT(flags, F_VHTPER);
-   if (ckps.cog >= CKPS_ON_START_SKIP_COGS)
+   if (ckps.cog >= PGM_GET_WORD(&fw_data.exdata.ckps_skip_trig)) // number of teeth that wes skip at the start of cranking before synchronization
    {
 #ifdef PHASE_SENSOR
     if (CHECKBIT(flags2, F_CAMREF))

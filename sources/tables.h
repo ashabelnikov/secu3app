@@ -465,12 +465,13 @@ typedef struct fw_ex_data_t
   uint16_t dwl_dead_time; //Dwell dead time, 1 discrete = 3.2us
   uint8_t  sfc_tps_thrd;  //TPS threshold used for immediate leaving fuel cut mode
   uint16_t evap_map_thrd;
+  uint16_t ckps_skip_trig; //Number of teeth to skip before searching for missing tooth
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3755];
+  uint8_t reserved[3753];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

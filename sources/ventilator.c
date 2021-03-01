@@ -68,8 +68,10 @@ uint8_t vent_soft_cnt = 0;
 
 void vent_init_ports(void)
 {
-#ifdef COOLINGFAN_PWM
- IOCFG_INIT(IOP_ECF, 1); //coolong fan is turned Off
+#if defined(COOLINGFAN_PWM)
+ IOCFG_INIT(IOP_ECF, 1); //cooling fan is turned Off
+#else //relay only
+ IOCFG_INIT(IOP_ECF, 0); //cooling fan is turned Off
 #endif
 }
 

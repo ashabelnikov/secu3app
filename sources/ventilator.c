@@ -68,8 +68,10 @@ uint8_t vent_soft_cnt = 0;
 
 void vent_init_ports(void)
 {
-#ifdef COOLINGFAN_PWM
- IOCFG_INIT(IOP_ECF, 1); //coolong fan is turned Off
+#if defined(COOLINGFAN_PWM)
+ IOCFG_INIT(IOP_ECF, 1); //cooling fan is turned Off
+#else //relay only
+ IOCFG_INIT(IOP_ECF, 0); //cooling fan is turned Off
 #endif
 }
 
@@ -181,7 +183,7 @@ void vent_control(void)
   { //delay has been expired
    if ((s_timer_gtc() - vent_tmr1) > PGM_GET_BYTE(&fw_data.exdata.vent_delay))
     IOCFG_SETF(IOP_ECF, 1), d.cool_fan = 1; //turn on
-  }
+ }
  }
  else if (vent_tmrexp || d.sens.temperat <= d.param.vent_off)
  {

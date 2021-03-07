@@ -71,6 +71,7 @@
 #define ETMT_PWM2_MAP 27    //!< PWM duty 2
 #define ETMT_TEMPI_MAP 28   //!< temp.corr. map id (idling)
 #define ETMT_IACMAT_MAP 29  //!< IAC position's correction vs MAT
+#define ETMT_VE2_MAP 30     //!< Secondary VE map
 
 /**Define internal state variables */
 typedef struct
@@ -452,6 +453,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.mapsel_uni);
    build_i8h(d.param.barocorr_type);
    build_i8h(d.param.func_flags);
+   build_i8h(d.param.ve2_map_func);
    break;
 
   case STARTR_PAR:
@@ -1009,6 +1011,17 @@ void uart_send_packet(uint8_t send_mode)
      if (wrk_index >= INJ_VE_POINTS_L-1 )
      {
       wrk_index = 0;
+      state = ETMT_VE2_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_VE2_MAP:
+     build_i8h(wrk_index*INJ_VE_POINTS_F); //cell address
+     build_rb((uint8_t*)&d.tables_ram.inj_ve2[wrk_index][0], (INJ_VE_POINTS_F*3)/2); //24 bytes per packet (row), INJ_VE_POINTS_L rows
+     if (wrk_index >= INJ_VE_POINTS_L-1 )
+     {
+      wrk_index = 0;
       state = ETMT_AFR_MAP;
      }
      else
@@ -1423,6 +1436,7 @@ uint8_t uart_recept_packet(void)
    d.param.mapsel_uni = recept_i8h();
    d.param.barocorr_type = recept_i8h();
    d.param.func_flags = recept_i8h();
+   d.param.ve2_map_func = recept_i8h();
    break;
 
   case STARTR_PAR:
@@ -1660,6 +1674,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_VE_MAP:   //VE, 12-bit per cell
      recept_rb(((uint8_t*)&d.tables_ram.inj_ve[0][0]) + (((uint16_t)addr)+(((uint16_t)addr)>>1)), (INJ_VE_POINTS_F*3)/2); /*INJ_VE_POINTS_F*1.5 max*/
+     break;
+    case ETMT_VE2_MAP:   //Secondary VE, 12-bit per cell
+     recept_rb(((uint8_t*)&d.tables_ram.inj_ve2[0][0]) + (((uint16_t)addr)+(((uint16_t)addr)>>1)), (INJ_VE_POINTS_F*3)/2); /*INJ_VE_POINTS_F*1.5 max*/
      break;
     case ETMT_AFR_MAP:  //AFR
      recept_rb(((uint8_t*)&d.tables_ram.inj_afr[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/

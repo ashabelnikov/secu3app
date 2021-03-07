@@ -623,7 +623,7 @@ void calc_ve_afr(void)
 {
  uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  if (d.sens.carb || (!d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve)) || (d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve_g)))
-  //look into VE table
+ {//look into VE table
   fcs.vecurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
@@ -633,6 +633,33 @@ void calc_ve_afr(void)
         use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
         use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8) >> 3;
+
+  if (d.param.ve2_map_func != VE2MF_1ST)
+  {
+   int16_t tps = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
+   int8_t t = (tps / TPS_AXIS_STEP), tp1;
+
+   if (t >= (GASDOSE_POS_TPS_SIZE - 1))
+    tp1 = t = GASDOSE_POS_TPS_SIZE - 1;
+   else
+    tp1 = t + 1;
+
+   int16_t ve2 = bilinear_interpolation(fcs.la_rpm, tps,  //note that tps is additionally multiplied by 16
+        _GWU12(inj_ve2, t, fcs.la_f),
+        _GWU12(inj_ve2, tp1, fcs.la_f),
+        _GWU12(inj_ve2, tp1, fcs.la_fp1),
+        _GWU12(inj_ve2, t, fcs.la_fp1),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        (TPS_AXIS_STEP*t),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        TPS_AXIS_STEP, 8) >> 3;
+
+   if (d.param.ve2_map_func == VE2MF_MUL)
+    fcs.vecurr = (((int32_t)fcs.vecurr) * ve2) >> 11;
+   if (d.param.ve2_map_func == VE2MF_ADD)
+    fcs.vecurr = fcs.vecurr + ve2;
+  }
+ }
  else
   fcs.vecurr = d.sens.gas ? PGM_GET_WORD(&fw_data.exdata.idl_ve_g) : PGM_GET_WORD(&fw_data.exdata.idl_ve);
 

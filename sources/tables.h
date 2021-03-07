@@ -198,6 +198,11 @@
 //Functions tab flags
 #define FUNC_LDAX_GRID                  0           //!< Use grid table for load axis (load grid is defined by two values (default) or load grid is defined by table if this flag is set)
 
+//VE2 map functions
+#define VE2MF_1ST                       0           //VE = VE1 (default)
+#define VE2MF_MUL                       1           //VE = VE1 * VE2
+#define VE2MF_ADD                       2           //VE = VE1 + VE2
+
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
 {
@@ -259,10 +264,12 @@ typedef struct f_data_t
 
   int8_t iac_mat_corr[INJ_ATS_CORR_SIZE];             //!< IAC position correction vs MAT, discrete = 0.25% (signed value * 4)
 
+  uint8_t inj_ve2[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< Secondary volumetric efficiency lookup table, value * 2048 (12-bit)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[471];
+  uint8_t reserved[87];
 }f_data_t;
 
 
@@ -737,11 +744,13 @@ typedef struct params_t
 
   uint8_t  inj_aftstr_strokes1;          //!< Number of engine strokes, during this time afterstart enrichment is applied (divided by 4) second fuel
 
+  uint8_t  ve2_map_func;                 //!< Selected function of the secondary VE map (0 - just use 1st map, 1 - multiply by the main VE map, 2 - add to the main VE map).
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[186];
+  uint8_t  reserved[185];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

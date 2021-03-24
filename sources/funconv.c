@@ -1480,3 +1480,30 @@ int8_t inj_iac_mat_corr(void)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 128) >> 7;
 }
 #endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+int16_t exsens_lookup(uint16_t adcvalue, int16_t _PGM *lutab)
+{
+ int16_t i, i1;
+#if ((FTLS_LOOKUP_TABLE_SIZE!=EGTS_LOOKUP_TABLE_SIZE) || (FTLS_LOOKUP_TABLE_SIZE!=OPS_LOOKUP_TABLE_SIZE))
+ #error "Sizes of maps differ!"
+#endif
+ //Voltage value at the start of axis in ADC discretes
+ uint16_t v_start = PGM_GET_WORD(&lutab[FTLS_LOOKUP_TABLE_SIZE]);
+ //Voltage value at the end of axis in ADC discretes
+ uint16_t v_end = PGM_GET_WORD(&lutab[FTLS_LOOKUP_TABLE_SIZE+1]);
+
+ uint16_t v_step = (v_end - v_start) / (FTLS_LOOKUP_TABLE_SIZE - 1);
+
+ if (adcvalue < v_start)
+  adcvalue = v_start;
+
+ i = (adcvalue - v_start) / v_step;
+
+ if (i >= FTLS_LOOKUP_TABLE_SIZE-1) i = i1 = FTLS_LOOKUP_TABLE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation(adcvalue, (int16_t)PGM_GET_WORD(&lutab[i]), (int16_t)PGM_GET_WORD(&lutab[i1]), //<--values in table are signed
+        (i * v_step) + v_start, v_step, 4)) >> 2;
+}
+#endif

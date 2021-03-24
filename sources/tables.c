@@ -159,6 +159,15 @@
 /***/
 #define _PW(d) ROUND(((d)*255.0)/100.0)
 
+/**for filling fuel tank's level map*/
+#define _FTL(v) ROUND((v) * 64.0)
+
+/**for filling exhaust gas's temperature map*/
+#define _EGT(v) ROUND((v) * 4.0)
+
+/**for filling oil pressure's map*/
+#define _OIP(v) ROUND((v) * 256.0)
+
 /**Used to encode values in the knock zones look up table*/
 #define _KNR(b15, b14, b13, b12, b11, b10, b9, b8, b7, b6, b5, b4, b3, b2 ,b1, b0) (_CBV16(b15, 0) | _CBV16(b14, 1) | _CBV16(b13, 2) | _CBV16(b12, 3) | _CBV16(b11, 4) | _CBV16(b10, 5) | _CBV16(b9, 6) | _CBV16(b8, 7) | _CBV16(b7, 8) | _CBV16(b6, 9) | _CBV16(b5, 10) | _CBV16(b4, 11) | _CBV16(b3, 12) | _CBV16(b2, 13) | _CBV16(b1, 14) | _CBV16(b0, 15))
 
@@ -346,14 +355,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub)
    },
 
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 3.3
-   IOREMVER(3,3),
+   //Version of this structure - 3.4
+   IOREMVER(3,4),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -895,6 +904,27 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   /**Fill gas valve's opening delay vs gas reducer's temperature map*/
   {1200,1100,1000,900,800,700,600,500,420,340,260,180,100,50,30,10},
+
+  /**Fill "fuel tank level vs voltage" map*/
+  {
+   _FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),
+   _FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),_FTL(0.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
+  },
+
+  /**Fill "exhaust gas temperature vs voltage" map*/
+  {
+   _EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),
+   _EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
+  },
+
+  /**Fill "oil pressure vs voltage" map*/
+  {
+   _OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),
+   _OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),_OIP(0.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
+  },
 
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%

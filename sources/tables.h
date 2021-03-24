@@ -118,6 +118,10 @@
 #define PWMIAC_UCOEF_SIZE               16          //!< size of PWM IAC duty coefficient vs board voltage map
 #define AFTSTR_STRK_SIZE                16
 
+#define FTLS_LOOKUP_TABLE_SIZE          17          //!< Size of "fuel tank level vs voltage" map
+#define EGTS_LOOKUP_TABLE_SIZE          17          //!< Size of "exhaust gas temperature vs voltage" map
+#define OPS_LOOKUP_TABLE_SIZE           17          //!< Size of "oil pressure vs voltage" map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -428,6 +432,15 @@ typedef struct fw_ex_data_t
   /**Gas valve's opening delay vs gas reducer's temperature*/
   uint16_t grv_delay[F_TMP_POINTS];
 
+ /**Fuel tank level vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+  int16_t ftls_curve[FTLS_LOOKUP_TABLE_SIZE+2];
+
+ /**Exhaust gas temperature vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+  int16_t egts_curve[EGTS_LOOKUP_TABLE_SIZE+2];
+
+ /**Oil pressure vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+  int16_t ops_curve[OPS_LOOKUP_TABLE_SIZE+2];
+
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
@@ -478,7 +491,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3753];
+  uint8_t reserved[3639];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

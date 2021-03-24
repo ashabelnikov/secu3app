@@ -367,9 +367,9 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_GRTEMP       86     //!< GRTEMP          (input)
 #define IOP_GRHEAT       87     //!< GRHEAT          (output)
 #define IOP_GASVAL_O     88     //!< GASVAL_O        (output)
-#define IOP_RESERVED23   89     //!< reserved plug   ()
-#define IOP_RESERVED24   90     //!< reserved plug   ()
-#define IOP_RESERVED25   91     //!< reserved plug   ()
+#define IOP_FTLS_I       89     //!< FTLS_T          (input)
+#define IOP_EGTS_I       90     //!< EGTS_I          (input)
+#define IOP_OPS_I        91     //!< OPS_I           (input)
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c
 #define IOP_INJPLG_OFF   (IOP_INJ_OUT6-(IOP_INJ_OUT5+1)) //!< needed by injector.c

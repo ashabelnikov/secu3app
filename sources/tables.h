@@ -203,9 +203,11 @@
 #define FUNC_LDAX_GRID                  0           //!< Use grid table for load axis (load grid is defined by two values (default) or load grid is defined by table if this flag is set)
 
 //VE2 map functions
-#define VE2MF_1ST                       0           //VE = VE1 (default)
-#define VE2MF_MUL                       1           //VE = VE1 * VE2
-#define VE2MF_ADD                       2           //VE = VE1 + VE2
+#define VE2MF_1ST                       0           //!< VE = VE1 (default)
+#define VE2MF_MUL                       1           //!< VE = VE1 * VE2
+#define VE2MF_ADD                       2           //!< VE = VE1 + VE2
+
+#define INJPWCOEF_LUT_SIZE              17          //!< inj. PW coefficient look up table size
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
@@ -441,6 +443,9 @@ typedef struct fw_ex_data_t
  /**Oil pressure vs voltage. 16 points of function, plus two values for setting of x-axis range*/
   int16_t ops_curve[OPS_LOOKUP_TABLE_SIZE+2];
 
+  /**Injection PW coefficient vs voltage, value * 4096, range: 0.5...1.5 */
+  int16_t injpw_coef[INJPWCOEF_LUT_SIZE];
+
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
@@ -486,12 +491,13 @@ typedef struct fw_ex_data_t
   uint8_t  sfc_tps_thrd;  //TPS threshold used for immediate leaving fuel cut mode
   uint16_t evap_map_thrd;
   uint16_t ckps_skip_trig; //Number of teeth to skip before searching for missing tooth
+  uint8_t  maninjpw_idl;  //0 - don't apply manual inj.PW correction on idling, 1 - apply manual inj.PW correction on idling
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3639];
+  uint8_t reserved[3572];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -772,7 +778,7 @@ typedef struct params_t
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
 #define IOREM_SLOTS  49                  //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS  92                  //!< Number of plugs used in I/O remapping
+#define IOREM_PLUGS  100                 //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t

@@ -450,4 +450,12 @@ int8_t inj_iac_mat_corr(void);
 int16_t exsens_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
 #endif
 
+#if !defined(SECU3T)
+/**Inj. PW coefficient vs voltage (specified by adcvalue)
+ * \param adcvalue Voltage from the selected input
+ * \return inj.PW coeff value * 4096
+ */
+int16_t injpwcoef_function(uint16_t adcvalue);
+#endif
+
 #endif //_FUNCONV_H_

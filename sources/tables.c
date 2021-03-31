@@ -177,6 +177,9 @@
 /**For specifying load values*/
 #define _LM(v) PRESSURE_MAGNITUDE(v)
 
+/**For specifying inj. PW coeff. values*/
+#define _IPC(v) ROUND((v)*4096.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -245,6 +248,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
@@ -262,7 +267,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
 #else //---SECU-3i---
@@ -333,6 +340,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
@@ -355,7 +364,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
 #endif
@@ -926,6 +937,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
   },
 
+  /**Fill inj. PW coeff. vs voltage map*/
+  {
+   _IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),
+   _IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000),_IPC(1.000)
+  },
+
   .evap_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .evap_tps_lo = TPS_MAGNITUDE(4.0), //4%
   .evap_tps_hi = TPS_MAGNITUDE(98.0), //98%
@@ -973,6 +990,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .sfc_tps_thrd = TPS_MAGNITUDE(3.0), //3%
   .evap_map_thrd = PRESSURE_MAGNITUDE(250.0),
   .ckps_skip_trig = 5, //skip 5 teeth
+
+  .maninjpw_idl = 1, //use manual inj.PW correction on idling
 
   /**reserved bytes*/
   {0}

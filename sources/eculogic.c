@@ -88,7 +88,7 @@ void pw_gascorr(int32_t* pw)
 /** Calculates manual ignition timing correction value depending on the selected input (PA4 for SECU-3T or ADD_I3|ADD_I4 for SECU-3i)
  * \return value * ANGLE_MULTIPLIER
  */
-int16_t manual_igntim(void)
+static int16_t manual_igntim(void)
 {
 #ifdef SECU3T
  return pa4_function(d.sens.add_i3); //PA4 only, can't be remapped
@@ -106,6 +106,29 @@ int16_t manual_igntim(void)
  else
   return 0; //not mapped to real I/O
 #endif
+}
+#endif
+
+#if !defined(SECU3T) && defined(FUEL_INJECT)
+/** Calculates manual ignition timing correction value depending on the selected input (PA4 for SECU-3T or ADD_I3|ADD_I4 for SECU-3i)
+ * \return value * 4096
+ */
+static int16_t manual_injpw(void)
+{
+ if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i3i)
+  return injpwcoef_function(d.sens.add_i3);
+#ifdef TPIC8101
+ else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i4i)
+  return injpwcoef_function(d.sens.add_i4);
+#endif
+#ifdef MCP3204
+ else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i7i)
+  return injpwcoef_function(d.sens.add_i7);
+ else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i8i)
+  return injpwcoef_function(d.sens.add_i8);
+#endif
+ else
+  return 4096; //not mapped to real I/O, return 1.000
 }
 #endif
 
@@ -235,6 +258,14 @@ static void fuel_calc(void)
   pw_gascorr(&pw);                              //apply gas corrections
 #endif
  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
+
+#ifndef SECU3T
+ if (IOCFG_CHECK(IOP_INJPWC_I))
+ {
+  if (PGM_GET_BYTE(&fw_data.exdata.maninjpw_idl) || !(d.engine_mode==EM_IDLE))
+   pw = (pw * manual_injpw()) >> 12;             //apply manual inj.PW coefficient
+ }
+#endif
 
  d.inj_pw = finalize_inj_time(&pw);
  d.inj_pw = apply_smooth_fuelcut(d.inj_pw);

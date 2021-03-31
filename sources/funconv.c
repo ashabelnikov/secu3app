@@ -1507,3 +1507,28 @@ int16_t exsens_lookup(uint16_t adcvalue, int16_t _PGM *lutab)
         (i * v_step) + v_start, v_step, 4)) >> 2;
 }
 #endif
+
+#ifndef SECU3T
+int16_t injpwcoef_function(uint16_t adcvalue)
+{
+ int16_t i, i1;
+
+ //Voltage value at the start of axis in ADC discretes
+ uint16_t v_start = ROUND(0.00 / ADC_DISCRETE);
+ //Voltage value at the end of axis in ADC discretes
+ uint16_t v_end = ROUND(5.00 / ADC_DISCRETE);
+
+ uint16_t v_step = (v_end - v_start) / (INJPWCOEF_LUT_SIZE - 1);
+
+ if (adcvalue < v_start)
+  adcvalue = v_start;
+
+ i = (adcvalue - v_start) / v_step;
+
+ if (i >= INJPWCOEF_LUT_SIZE-1) i = i1 = INJPWCOEF_LUT_SIZE-1;
+ else i1 = i + 1;
+
+ return  simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.injpw_coef[i]), PGM_GET_WORD(&fw_data.exdata.injpw_coef[i1]),
+        (i * v_step) + v_start, v_step, 4) >> 2;
+}
+#endif //SECU-3i

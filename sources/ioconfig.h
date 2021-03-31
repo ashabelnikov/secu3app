@@ -186,6 +186,14 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_RESERVED42   89     //!< reserved plug   ()
 #define IOP_RESERVED43   90     //!< reserved plug   ()
 #define IOP_RESERVED44   91     //!< reserved plug   ()
+#define IOP_RESERVED45   92     //!< reserved plug   ()
+#define IOP_RESERVED46   93     //!< reserved plug   ()
+#define IOP_RESERVED47   94     //!< reserved plug   ()
+#define IOP_RESERVED48   95     //!< reserved plug   ()
+#define IOP_RESERVED49   96     //!< reserved plug   ()
+#define IOP_RESERVED50   97     //!< reserved plug   ()
+#define IOP_RESERVED51   98     //!< reserved plug   ()
+#define IOP_RESERVED52   99     //!< reserved plug   ()
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT7-(IOP_IGN_OUT6+1)) //!< needed by ckps.c
 #define IOP_INJPLG_OFF   (IOP_INJ_OUT5-(IOP_INJ_OUT4+1)) //!< needed by injector.c
@@ -370,6 +378,14 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_FTLS_I       89     //!< FTLS_T          (input)
 #define IOP_EGTS_I       90     //!< EGTS_I          (input)
 #define IOP_OPS_I        91     //!< OPS_I           (input)
+#define IOP_INJPWC_I     92     //!< INJPWC_I        (input)
+#define IOP_RESERVED21   93     //!< reserved plug   ()
+#define IOP_RESERVED22   94     //!< reserved plug   ()
+#define IOP_RESERVED23   95     //!< reserved plug   ()
+#define IOP_RESERVED24   96     //!< reserved plug   ()
+#define IOP_RESERVED25   97     //!< reserved plug   ()
+#define IOP_RESERVED26   98     //!< reserved plug   ()
+#define IOP_RESERVED27   99     //!< reserved plug   ()
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c
 #define IOP_INJPLG_OFF   (IOP_INJ_OUT6-(IOP_INJ_OUT5+1)) //!< needed by injector.c

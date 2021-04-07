@@ -257,7 +257,11 @@ static void fuel_calc(void)
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
   pw_gascorr(&pw);                              //apply gas corrections
 #endif
- pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment
+
+ if (0==d.param.inj_ae_type)
+  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
+ else
+  pw+= acc_enrich_calc_tb(0, lambda_get_stoichval());//add acceleration enrichment (time based)
 
 #ifndef SECU3T
  if (IOCFG_CHECK(IOP_INJPWC_I))
@@ -334,7 +338,8 @@ void eculogic_system_state_machine(void)
  {
   case EM_START: //cranking mode
 #ifdef FUEL_INJECT
-   reset_smooth_fuelcut();
+   reset_smooth_fuelcut();   //reset fuel cut state variables
+   acc_enrich_calc_tb(1, 0); //reset state variables of the AE algo
 #ifndef SECU3T
    if (d.gasval_res)
     lgs.prime_delay_tmr = s_timer_gtc();

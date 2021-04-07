@@ -357,13 +357,21 @@ uint8_t engine_blowing_cond(void);
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-/** Calculates AE value.
+/** Calculates AE value (accel.pump).
  * Uses d ECU data structure
- * \param Mode of calculation: 0 - fuel injection, 1 - gas dispenser
+ * \param mode Mode of calculation: 0 - fuel injection, 1 - gas dispenser
  * \param stoich_val Stoichiometric value of current fuel. This parement is ignored for gas dispenser mode
  * \return AE value in PW units
  */
 int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val);
+
+/** Calculates AE value (time based).
+ * Uses d ECU data structure
+ * \param res 0 - normal operation, 1 - reset internal state machine and do nothing
+ * \param stoich_val Stoichiometric value of current fuel. This parement is ignored for gas dispenser mode
+ * \return AE value in PW units
+ */
+int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val);
 
 /**Update AE decay counter. Must be called for each stroke*/
 void acc_enrich_decay_counter(void);

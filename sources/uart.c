@@ -967,6 +967,8 @@ void uart_send_packet(uint8_t send_mode)
   build_i8h(d.param.inj_ae_tpsdot_thrd);
   build_i8h(d.param.inj_ae_coldacc_mult);
   build_i8h(d.param.inj_ae_decay_time);
+  build_i8h(d.param.inj_ae_type);
+  build_i8h(d.param.inj_ae_time);
   break;
 #endif
 
@@ -1654,6 +1656,8 @@ uint8_t uart_recept_packet(void)
   d.param.inj_ae_tpsdot_thrd = recept_i8h();
   d.param.inj_ae_coldacc_mult = recept_i8h();
   d.param.inj_ae_decay_time = recept_i8h();
+  d.param.inj_ae_type = recept_i8h();
+  d.param.inj_ae_time = recept_i8h();
   break;
 #endif
 

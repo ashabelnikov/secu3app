@@ -652,6 +652,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ve2_map_func =                VE2MF_1ST,           //use 1st VE map
 
+  .inj_ae_type =                 0,                   //accel. pump
+  .inj_ae_time =                 30,                  //30 strokes
+
   .reserved =                    {0},
   .crc =                         0
  },

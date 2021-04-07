@@ -100,6 +100,10 @@ typedef struct
  //AE decay:
  uint8_t  ae_decay_counter; //!< AE decay counter
  int16_t  aef_decay;        //!< AE factor value at the start of decay
+#ifdef FUEL_INJECT
+ uint8_t  ae_state;   //!< state machine for time based AE algorithm
+ int32_t  ae_pwmax;   //!< value of PW corresponding to maximum value of AE
+#endif
 }fcs_t;
 
 /**Instance of state variables*/
@@ -1303,6 +1307,79 @@ void acc_enrich_decay_counter(void)
 {
  if (fcs.ae_decay_counter)
   --fcs.ae_decay_counter; //update AE decay counter
+}
+#endif
+
+#ifdef FUEL_INJECT
+int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val)
+{
+ if (res)
+ { //reset state machine
+  fcs.ae_state = 0;
+  d.acceleration = 0;
+  return 0;
+ }
+
+ //calculate normal conditions PW, MAP=100kPa, IAT=20.C, AFR=14.7 (petrol) or d.param.gd_lambda_stoichval (gas).
+ //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
+ int32_t pwnc = ((((((uint32_t)PWNC_CONST) * nr_1x_afr(stoich_val << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15);
+
+ //Calculate AE PW:
+ int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);   //calculate basic AE factor value
+ if (aef >= 0)
+  aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
+ else
+  aef = (((int32_t)aef) * (((uint16_t)65535) / inj_ae_clt_corr())) >> (16-7); //use inverse CLT correction factor if AE factor is negative, so mixture will be less lean when engine is cold
+
+ pwnc = (pwnc * aef) >> 7;                        //apply AE factor to the normal conditions PW
+
+ //Implement simple behaviour for deceleration case:
+ if (d.sens.tpsdot < -((int16_t)d.param.inj_ae_tpsdot_thrd))
+ {
+  d.acceleration = 1; //deceleration
+  fcs.ae_state = 0;   //kill any pending AE
+  return (pwnc * inj_ae_rpm_lookup()) >> 7; //apply RPM correction factor to AE factor
+ }
+
+ switch(fcs.ae_state)
+ {
+  case 0: //no active AE
+   pwnc = 0;
+   d.acceleration = 0;
+   fcs.ae_decay_counter = d.param.inj_ae_time;     //init counter with AE active time
+   fcs.ae_pwmax = 0;
+   if (d.sens.tpsdot > d.param.inj_ae_tpsdot_thrd)
+   {
+    fcs.ae_state = 1; //start AE
+   }
+   else
+    break;
+
+  case 1: //active phase of AE
+   d.acceleration = 1;
+   if (pwnc > fcs.ae_pwmax)
+    fcs.ae_pwmax = pwnc;
+   else
+    pwnc = fcs.ae_pwmax;
+
+   if (0==fcs.ae_decay_counter)
+   {
+    fcs.ae_decay_counter = d.param.inj_ae_decay_time; //init counter with AE decay time
+    fcs.ae_state = 2; //start decaying of AE
+   }
+   else
+    break;
+
+  case 2: //decay phase of AE
+   pwnc = (fcs.ae_pwmax * fcs.ae_decay_counter) / d.param.inj_ae_decay_time; //TODO: replace division by multiplication with 1 / inj_ae_decay_time constant
+   if (0==fcs.ae_decay_counter)
+   {
+    fcs.ae_state = 0;
+   }
+   break;
+ }
+
+ return (pwnc * inj_ae_rpm_lookup()) >> 7; //apply RPM correction factor to AE factor
 }
 #endif
 

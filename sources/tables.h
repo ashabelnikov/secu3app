@@ -765,11 +765,14 @@ typedef struct params_t
 
   uint8_t  ve2_map_func;                 //!< Selected function of the secondary VE map (0 - just use 1st map, 1 - multiply by the main VE map, 2 - add to the main VE map).
 
+  uint8_t  inj_ae_type;                  //!< Type of selected AE: 0 - acceleration pump, 1 - time based
+  uint8_t  inj_ae_time;                  //!< time of AE in strokes, used by "Time based AE"
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[185];
+  uint8_t  reserved[183];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

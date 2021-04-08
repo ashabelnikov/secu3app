@@ -1166,7 +1166,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill mixture correction vs IAC position*/
    {//   0        10         20         30        40          50          60        70
-    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
    },
 
@@ -1452,7 +1452,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill mixture correction vs IAC position*/
    {//   0        10         20         30        40          50          60        70
-    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
    },
 
@@ -1737,7 +1737,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill mixture correction vs IAC position*/
    {//   0        10         20         30        40          50          60        70
-    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
    },
 
@@ -2022,7 +2022,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    /**Fill mixture correction vs IAC position*/
    {//   0        10         20         30        40          50          60        70
-    _MC(1.000),_MC(1.000),_MC(1.050),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),_MC(1.100),
+    _MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),_MC(1.000),
     _MCX(00.0),_MCX(70.0) //0-70% IAC pos.
    },
 

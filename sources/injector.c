@@ -202,6 +202,7 @@ static void set_channels_fs(uint8_t fs_mode)
  */
 static void set_channels_ss(uint8_t _2bnk)
 {
+ inj.shrinktime = 0; //not used by this mode
  uint8_t idxNum = (inj.num_squirts == inj.cyl_number) ? inj.cyl_number / 2 : inj.cyl_number;
  uint8_t _t, i = 0, ch = 0;
  for(; i < inj.cyl_number; ++i)
@@ -384,6 +385,10 @@ void inject_set_config(uint8_t cfg, uint8_t irs)
 #endif
   );                 //full sequential
 #endif
+ else
+ {
+  inj.shrinktime = 0; //because shrinking of inj. time is not used by simultaneous and cetral injection modes
+ }
 
 #ifndef SECU3T //only in SECU-3i
  if (1==inj.rowmod)

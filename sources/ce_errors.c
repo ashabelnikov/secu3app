@@ -246,6 +246,19 @@ void check(ce_sett_t _PGM *cesd)
   ce_clear_error(ECUERROR_ADD_I8_SENSOR);
 #endif
 #endif
+
+#ifndef SECU3T //SECU-3i
+ //perform checking only if IOP_I input is mapped to real input and if set number of strokes elapsed since last engine start
+ if (IOCFG_CHECK(IOP_OPS_I) && s_timer_sss() > PGM_GET_WORD(&cesd->oilpress_timer))
+ {
+  if (d.sens.ops < PGM_GET_WORD(&cesd->oilpress_thrd))
+   ce_set_error(ECUERROR_OILPRESSURE);
+  else
+   ce_clear_error(ECUERROR_OILPRESSURE);
+ }
+ else
+  ce_clear_error(ECUERROR_OILPRESSURE); //can't monitor oil pressure on stall engine
+#endif
 }
 
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),

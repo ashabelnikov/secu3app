@@ -106,6 +106,8 @@ extern uint8_t vent_soft_cnt;
 
 static volatile uint8_t diagnostics = 0;   //!< diagnostics flag
 
+uint16_t strokes_since_start = 0;
+
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
  */
@@ -278,3 +280,8 @@ void s_timer_enter_diag(void)
  diagnostics = 1;
 }
 #endif
+
+uint16_t s_timer_sss(void)
+{
+ return strokes_since_start;
+}

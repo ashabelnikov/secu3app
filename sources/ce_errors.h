@@ -53,7 +53,8 @@
 #define ECUERROR_ADD_I6_SENSOR         17  //!< ADD_I6 input error
 #define ECUERROR_ADD_I7_SENSOR         18  //!< ADD_I7 input error
 #define ECUERROR_ADD_I8_SENSOR         19  //!< ADD_I8 input error
-#define ECUERROR_NUM                   20  //!< number of ECU error codes
+#define ECUERROR_OILPRESSURE           20  //!< Oil pressure is crytical
+#define ECUERROR_NUM                   21  //!< number of ECU error codes
 
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure

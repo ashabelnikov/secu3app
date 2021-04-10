@@ -467,6 +467,7 @@ MAIN()
 
   if (s_timer_is_action(engine_rotation_timeout_counter))
   { //engine is stopped (RPM is below critical threshold)
+   strokes_since_start = 0; //reset strokes counter
 #ifdef DWELL_CONTROL
    ckps_init_ports();           //prevent permanent current through coils
    //TODO: Make soft cutoff of possible active current in coil to eliminate undesirable spark. How?
@@ -533,7 +534,7 @@ MAIN()
   ckps_set_acc_time(accumulation_time(0));
 #endif
 #endif
-  if (d.sys_locked || !pwrrelay_get_state())
+  if (d.sys_locked || !pwrrelay_get_state() || (ce_is_error(ECUERROR_OILPRESSURE) && PGM_GET_BYTE(&fw_data.exdata.oilpress_cut)))
    ckps_enable_ignition(0);
   else
   {
@@ -554,6 +555,9 @@ MAIN()
   //execute some operations, which require execution one time per engine stroke
   if (ckps_is_stroke_event_r())
   {
+   if ((strokes_since_start < 65535) && (d.engine_mode != EM_START))
+    ++strokes_since_start; //update strokes counter (counts up to 65535 and stops)
+
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
    s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
@@ -566,9 +570,9 @@ MAIN()
 #ifdef FUEL_INJECT
 #ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
-   inject_set_fuelcut(!d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
+   inject_set_fuelcut(!(ce_is_error(ECUERROR_OILPRESSURE) && PGM_GET_BYTE(&fw_data.exdata.oilpress_cut)) && !d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
 #else
-   inject_set_fuelcut(!d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
+   inject_set_fuelcut(!(ce_is_error(ECUERROR_OILPRESSURE) && PGM_GET_BYTE(&fw_data.exdata.oilpress_cut)) && !d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
 #endif
 #endif
 

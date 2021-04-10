@@ -89,6 +89,9 @@ void s_timer_init(void);
 void s_timer_enter_diag(void);
 #endif
 
+/**Get number of strokes elapsed since last start of engine*/
+uint16_t s_timer_sss(void);
+
 //////////////////////////////////////////////////////////////////
 extern volatile s_timer8_t  send_packet_interval_counter;
 extern volatile s_timer8_t  force_measure_timeout_counter;
@@ -101,6 +104,7 @@ extern volatile s_timer16_t save_param_timeout_counter;
 extern volatile s_timer16_t fuel_pump_time_counter;
 #endif
 extern volatile s_timer16_t powerdown_timeout_counter;
+extern uint16_t strokes_since_start;
 //////////////////////////////////////////////////////////////////
 
 #endif //_VSTIMER_H_

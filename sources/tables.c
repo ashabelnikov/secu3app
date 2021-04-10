@@ -794,6 +794,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .add_i8_v_max = VOLTAGE_MAGNITUDE(5.10),
    .add_i8_v_em = VOLTAGE_MAGNITUDE(2.50),
    .add_i8_v_flg = 1,
+
+   .oilpress_thrd = 128, //0.5 kg/cm2
+   .oilpress_timer = 1000 //1000 strokes
   },
 
    /**Fill barometric correction lookup table*/
@@ -995,6 +998,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ckps_skip_trig = 5, //skip 5 teeth
 
   .maninjpw_idl = 1, //use manual inj.PW correction on idling
+
+  .oilpress_cut = 0, //do not cut ignition and fuel
 
   /**reserved bytes*/
   {0}

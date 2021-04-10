@@ -346,6 +346,9 @@ typedef struct ce_sett_t
  uint16_t add_i8_v_max;
  uint16_t add_i8_v_em;
  uint8_t  add_i8_v_flg;
+
+ uint16_t oilpress_thrd;
+ uint16_t oilpress_timer;
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware
@@ -492,12 +495,13 @@ typedef struct fw_ex_data_t
   uint16_t evap_map_thrd;
   uint16_t ckps_skip_trig; //Number of teeth to skip before searching for missing tooth
   uint8_t  maninjpw_idl;  //0 - don't apply manual inj.PW correction on idling, 1 - apply manual inj.PW correction on idling
+  uint8_t  oilpress_cut;  //cut off ignition and injection of fuel if oil pressire falls to crytical value
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3572];
+  uint8_t reserved[3567];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

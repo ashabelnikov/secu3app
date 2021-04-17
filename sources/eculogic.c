@@ -122,6 +122,10 @@ static int16_t manual_injpw(void)
   return injpwcoef_function(d.sens.add_i4);
 #endif
 #ifdef MCP3204
+ else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i5i)
+  return injpwcoef_function(d.sens.add_i5);
+ else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i6i)
+  return injpwcoef_function(d.sens.add_i6);
  else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i7i)
   return injpwcoef_function(d.sens.add_i7);
  else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i8i)

@@ -496,12 +496,13 @@ typedef struct fw_ex_data_t
   uint16_t ckps_skip_trig; //Number of teeth to skip before searching for missing tooth
   uint8_t  maninjpw_idl;  //0 - don't apply manual inj.PW correction on idling, 1 - apply manual inj.PW correction on idling
   uint8_t  oilpress_cut;  //cut off ignition and injection of fuel if oil pressire falls to crytical value
+  uint16_t tpsdot_mindt;  //minimum time delta used for calculation of d%/dt, 1 discrete = 3.2 us
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3567];
+  uint8_t reserved[3565];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

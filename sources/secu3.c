@@ -295,6 +295,9 @@ void init_modules(void)
 
  //Initialization of ADC
  adc_init();
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ adc_set_tpsdot_mindt(PGM_GET_WORD(&fw_data.exdata.tpsdot_mindt));
+#endif
 
  //Take away of starter blocking
  starter_set_blocking_state(0);

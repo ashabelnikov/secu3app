@@ -57,8 +57,6 @@
 /**номер канала используемого для канала детонации */
 #define ADCI_KNOCK              3
 
-/**Value of the time differential for TPSdot calculation, ticks of timer*/
-#define TPSDOT_TIME_DELTA 10000
 /**Tics of TCNT1 timer per 1 second */
 #define TMR_TICKS_PER_SEC 312500L
 
@@ -86,6 +84,7 @@ typedef struct
  volatile uint16_t carb_value;   //!< last measured value of TPS
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
+ volatile uint16_t tpsdot_mindt; //!< minimum time diffrencial used in calculation of d%/dt
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
 #ifndef TPIC8101
@@ -281,7 +280,7 @@ ISR(ADC_vect)
    SETBIT(ADCSRA,ADSC);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-   if ((TCNT1 - adc.tpsdot[0].tps_tmr) >= TPSDOT_TIME_DELTA)
+   if ((TCNT1 - adc.tpsdot[0].tps_tmr) >= adc.tpsdot_mindt)
    {
     //save values for TPSdot calculations
     adc.tpsdot[1] = adc.tpsdot[0];          //previous = current
@@ -462,3 +461,11 @@ uint16_t adc_get_add_i8_value(void)
 }
 
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+void adc_set_tpsdot_mindt(uint16_t mindt)
+{
+ adc.tpsdot_mindt = mindt;
+}
+#endif
+

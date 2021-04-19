@@ -1001,6 +1001,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .oilpress_cut = 0, //do not cut ignition and fuel
 
+  .tpsdot_mindt = 10000, //32ms
+
   /**reserved bytes*/
   {0}
  },

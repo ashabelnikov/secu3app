@@ -123,6 +123,13 @@ uint8_t adc_is_measure_ready(void);
 /**инициализация АЦП и его переменных состояния */
 void adc_init(void);
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Set value of minimum dt (time diffrencial) used by calculation of TPS dot
+ * mindt Value of minimum time differencial in 3.2 us units
+ */
+void adc_set_tpsdot_mindt(uint16_t mindt);
+#endif
+
 /**компенсация погрешностей АЦП или входных цепей (погрешность смещения и передаточная погрешность)
  * \param adcvalue значение АЦП для компенсации
  * \param factor коэффициен масштабирования

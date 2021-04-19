@@ -68,7 +68,7 @@ void process_uart_interface(void)
  }
 #endif
 
- if (uart_is_packet_received())//приняли новый фрейм ?
+ if (uart_is_packet_received()) //did we receive new data packet ?
  {
   descriptor = uart_recept_packet();
   switch(descriptor)
@@ -84,7 +84,7 @@ void process_uart_interface(void)
 #ifdef GD_CONTROL
    case GASDOSE_PAR:
 #endif
-    //если были изменены параметры то сбрасываем счетчик времени
+    //reset time counter if parameters have been changed
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 
@@ -101,7 +101,7 @@ void process_uart_interface(void)
     CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
    case ACCEL_PAR:
-    //если были изменены параметры то сбрасываем счетчик времени
+    //reset time counter if parameters have been changed
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 #endif
@@ -122,7 +122,7 @@ void process_uart_interface(void)
     break;
 
    case FUNSET_PAR:
-    //если были изменены параметры то сбрасываем счетчик времени
+    //reset time counter if parameters have been changed
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 
@@ -250,7 +250,7 @@ void process_uart_interface(void)
     //процессор детонации или нет.
     d.use_knock_channel_prev = d.param.knock_use_knock_channel;
 
-    //если были изменены параметры то сбрасываем счетчик времени
+    //reset time counter if parameters have been changed
     s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
     break;
 
@@ -291,7 +291,7 @@ void process_uart_interface(void)
     ce_clear_error(ECUERROR_SYS_START);
    //----------------------------------
 
-   uart_send_packet(0);                  //теперь передатчик озабочен передачей данных
+   uart_send_packet(0);                  //the transmitter become busy now
 
 #ifdef DEBUG_VARIABLES
    if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc || DIAGINP_DAT==desc)

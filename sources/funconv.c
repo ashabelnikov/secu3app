@@ -1358,7 +1358,10 @@ int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val)
   case 1: //active phase of AE
    d.acceleration = 1;
    if (pwnc > fcs.ae_pwmax)
+   {
     fcs.ae_pwmax = pwnc;
+  //fcs.ae_decay_counter = d.param.inj_ae_time;     //EXPERIMENTAL: init counter with AE active time at maximum
+   }
    else
     pwnc = fcs.ae_pwmax;
 

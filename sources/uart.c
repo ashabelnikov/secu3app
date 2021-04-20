@@ -354,6 +354,18 @@ static void recept_rw(uint16_t* ramBuffer, uint8_t size)
  while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = recept_i16h();
 }
 
+/** Recepts 1 byte
+ * \return code of new send mode
+ */
+static uint8_t recept_byte(void)
+{
+#ifdef UART_BINARY
+ return takeout_rx_buff();
+#else
+ return uart.recv_buf[uart.recv_index++];
+#endif
+}
+
 //--------------------------------------------------------------------
 
 /**Makes sender to start sending */
@@ -1338,10 +1350,13 @@ uint8_t uart_recept_packet(void)
  switch(descriptor)
  {
   case CHANGEMODE:
-   uart_set_send_mode(uart.recv_buf[uart.recv_index++]);
+   uart_set_send_mode(recept_byte());
    break;
 
   case BOOTLOADER:
+   if (recept_byte() != 'l')
+     break; //wrong code - don't continue
+
    //TODO: in the future use callback and move following code out
    //init steppers if necessary
    pwrrelay_init_steppers();
@@ -1776,9 +1791,9 @@ uint8_t uart_recept_packet(void)
 
   case LZBLHS:
   {
-   uint8_t buff[5];
+   uint8_t buff[5]; //4 bytes - string plus 1 byte - address
    recept_rs(buff, 5);
-   if (!MEMCPY_P(buff, lzblhs_str, 4))
+   if (!MEMCMP_P(buff, lzblhs_str, 4))
     uart_set_send_mode(SILENT);
   }
   break;

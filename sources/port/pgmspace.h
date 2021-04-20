@@ -52,6 +52,7 @@ __flash__ variable@sect_name
  #define PGM_GET_WORD(addr) *(addr)
  #define PGM_GET_DWORD(addr) *(addr)
  #define MEMCPY_P(dest, src, len) memcpy_P(dest, src, len)
+ #define MEMCMP_P(src1, src2, len) memcmp_P(src1, src2, len)
 
  #define _PGM __flash__
  #define _HPGM __hugeflash__
@@ -70,11 +71,13 @@ __flash__ variable@sect_name
   #define PGM_GET_WORD(addr) pgm_read_word_far(addr)
   #define PGM_GET_DWORD(addr) pgm_read_dword_far(addr)
   #define MEMCPY_P(dest, src, len) memcpy_PF(dest, (uint_farptr_t)(src), len)
+  #define MEMCMP_P(src1, src2, len) memcmp_PF(src1, (uint_farptr_t)(src2), len)
  #else //644
   #define PGM_GET_BYTE(addr) pgm_read_byte(addr)
   #define PGM_GET_WORD(addr) pgm_read_word(addr)
   #define PGM_GET_DWORD(addr) pgm_read_dword(addr)
   #define MEMCPY_P(dest, src, len) memcpy_P(dest, src, len)
+  #define MEMCMP_P(src1, src2, len) memcmp_P(src1, src2, len)
  #endif
 
  //GCC doesn't support Harvard's architecture, so use const at least to indicate

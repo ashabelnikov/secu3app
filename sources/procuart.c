@@ -263,7 +263,7 @@ void process_uart_interface(void)
     break;
   }
 
-  //мы обработали принятые данные - приемник ничем теперь не озабочен
+  //we have processed received data, receiver is not busy now
   uart_notify_processed();
  }
 

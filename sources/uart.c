@@ -79,14 +79,20 @@ typedef struct
  uint8_t send_mode;                     //!< current descriptor of packets beeing send
  uint8_t recv_buf[UART_RECV_BUFF_SIZE]; //!< receiver's buffer
  uint8_t send_buf[UART_SEND_BUFF_SIZE]; //!< transmitter's buffer
+ uint8_t send_buf_c[UART_SEND_BUFF_SIZE];
+ uint8_t recv_buf_c[UART_RECV_BUFF_SIZE];//!< contain checked data (verified by checksum)
  volatile uint8_t send_size;            //!< size of data to be send
+ uint8_t send_size_c;                   //!<
  uint8_t send_index;                    //!< index in transmitter's buffer
  volatile uint8_t recv_size;            //!< size of received data
+ volatile uint8_t recv_size_c;          //!< size of received data
  uint8_t recv_index;                    //!< index in receiver's buffer
+ uint8_t recv_index_c;                  //!< index in the recv_buf_c[]
+ uint8_t packet_crc[2];                 //!< 16-bit Fletcher checksum
 }uartstate_t;
 
 /**State variables */
-uartstate_t uart = {0,{0},{0},0,0,0,0};
+uartstate_t uart = {0,{0},{0},{0},{0},0,0,0,0,0,0,0,{0,0}};
 
 #ifdef UART_BINARY //binary mode
 // There are several special reserved symbols in binary mode: 0x21, 0x40, 0x0D, 0x0A
@@ -99,6 +105,15 @@ uartstate_t uart = {0,{0},{0},0,0,0,0};
 #define TFOBEGIN 0x82       //!< Transposed FOBEGIN
 #define TFIOEND  0x83       //!< Transposed FIOEND
 #define TFESC    0x84       //!< Transposed FESC
+
+/**Updates Fletcher checksum with 8-bit value */
+#define UPD_CHKSUM(v) uart.packet_crc[0]+=(v), uart.packet_crc[1]+=uart.packet_crc[0];
+
+/**Reset Fletcher checksum*/
+#define RST_CHKSUM() uart.packet_crc[0]=0, uart.packet_crc[1]=0;
+
+/**Get calculated checksum*/
+#define GET_CHKSUM() (*((uint16_t*)(&uart.packet_crc[0])))
 
 /** Appends transmitter's buffer
  * \param b byte which will be used to append tx buffer
@@ -166,7 +181,7 @@ PGM_DECLARE(uint8_t lzblhs_str[4]) = "3MAN";
 void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
 {
 #ifdef UART_BINARY
- while(size--) append_tx_buff(PGM_GET_BYTE(romBuffer++));
+ while(size--) {uart.send_buf_c[uart.send_size_c++] = PGM_GET_BYTE(romBuffer++);}
 #else
  MEMCPY_P(&uart.send_buf[uart.send_size], romBuffer, size);
  uart.send_size+=size;
@@ -178,7 +193,7 @@ void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
 void build_rs(const uint8_t* ramBuffer, uint8_t size)
 {
 #ifdef UART_BINARY
- while(size--) append_tx_buff(*ramBuffer++);
+ while(size--) {uart.send_buf_c[uart.send_size_c++] = *ramBuffer++;}
 #else
  memcpy(&uart.send_buf[uart.send_size], ramBuffer, size);
  uart.send_size+=size;
@@ -187,7 +202,7 @@ void build_rs(const uint8_t* ramBuffer, uint8_t size)
 
 /**Appends sender's buffer by one HEX byte */
 #ifdef UART_BINARY
-#define build_i4h(i) {append_tx_buff((i));}
+#define build_i4h(i) {uart.send_buf_c[uart.send_size_c++] = i;}
 #else
 static void build_i4h(uint8_t i)
 {
@@ -201,7 +216,7 @@ static void build_i4h(uint8_t i)
 static void build_i8h(uint8_t i)
 {
 #ifdef UART_BINARY
- append_tx_buff(i);           //1 byte
+ uart.send_buf_c[uart.send_size_c++] = i; //1 byte
 #else
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);          //High byte of hex number
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);          //low byte of hex number
@@ -214,8 +229,8 @@ static void build_i8h(uint8_t i)
 static void build_i16h(uint16_t i)
 {
 #ifdef UART_BINARY
- append_tx_buff(_AB(i,1));    //high byte
- append_tx_buff(_AB(i,0));    //low byte
+ uart.send_buf_c[uart.send_size_c++] = _AB(i,1);    //high byte
+ uart.send_buf_c[uart.send_size_c++] = _AB(i,0);    //low byte
 #else
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);   //High byte of hex number (high byte)
  uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);   //Low byte of hex number (high byte)
@@ -269,7 +284,7 @@ static void build_rw(const uint16_t* ramBuffer, uint8_t size)
 static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 {
 #ifdef UART_BINARY
- while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = takeout_rx_buff();
+ while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = uart.recv_buf_c[uart.recv_index_c++];
 #else
  while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = uart.recv_buf[uart.recv_index++];
 #endif
@@ -277,7 +292,7 @@ static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 
 /**Retrieves from receiver's buffer 4-bit value */
 #ifdef UART_BINARY
-#define recept_i4h() (takeout_rx_buff())
+#define recept_i4h() (uart.recv_buf_c[uart.recv_index_c++])
 #else
 static uint8_t recept_i4h(void)
 {
@@ -292,7 +307,7 @@ static uint8_t recept_i4h(void)
 static uint8_t recept_i8h(void)
 {
 #ifdef UART_BINARY
- return takeout_rx_buff();
+ return uart.recv_buf_c[uart.recv_index_c++];
 #else
  uint8_t i8;
  i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
@@ -310,8 +325,8 @@ static uint16_t recept_i16h(void)
 {
  uint16_t i16;
 #ifdef UART_BINARY
- _AB(i16,1) = takeout_rx_buff(); //Hi byte
- _AB(i16,0) = takeout_rx_buff(); //Lo byte
+ _AB(i16,1) = uart.recv_buf_c[uart.recv_index_c++]; //Hi byte
+ _AB(i16,0) = uart.recv_buf_c[uart.recv_index_c++]; //Lo byte
 #else
  _AB(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
  ++uart.recv_index;
@@ -341,7 +356,11 @@ static uint32_t recept_i32h(void)
  * can be used for binary data */
 static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 {
+#ifdef UART_BINARY
+ while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = recept_i8h();
+#else
  while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = recept_i8h();
+#endif
 }
 
 /**Recepts sequence of words from receiver's buffer and places it into the RAM buffer
@@ -351,7 +370,11 @@ static void recept_rb(uint8_t* ramBuffer, uint8_t size)
  */
 static void recept_rw(uint16_t* ramBuffer, uint8_t size)
 {
+#ifdef UART_BINARY
+ while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = recept_i16h();
+#else
  while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = recept_i16h();
+#endif
 }
 
 /** Recepts 1 byte
@@ -360,7 +383,7 @@ static void recept_rw(uint16_t* ramBuffer, uint8_t size)
 static uint8_t recept_byte(void)
 {
 #ifdef UART_BINARY
- return takeout_rx_buff();
+ return uart.recv_buf_c[uart.recv_index_c++];
 #else
  return uart.recv_buf[uart.recv_index++];
 #endif
@@ -381,13 +404,12 @@ void uart_send_packet(uint8_t send_mode)
 {
  static uint8_t index = 0;
 
- //служит индексом во врем€ сборки пакетов, а после сборки будет содержать размер пакета
- uart.send_size = 0;
+ uart.send_size = uart.send_size_c = 0;
 
- if (send_mode==0) //используем текущий дескриптор
+ if (send_mode==0) //use current context
   send_mode = uart.send_mode;
 
- //обща€ часть дл€ всех пакетов
+ //common part for all packets
  uart.send_buf[uart.send_size++] = '@';
  uart.send_buf[uart.send_size++] = send_mode;
 
@@ -493,8 +515,13 @@ void uart_send_packet(uint8_t send_mode)
     if (eeprom_is_idle())
     {
      build_i8h(index);
+#ifdef UART_BINARY
+     eeprom_read(&uart.send_buf_c[uart.send_size_c], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))->name, F_NAME_SIZE);
+     uart.send_size_c+=F_NAME_SIZE;
+#else
      eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))->name, F_NAME_SIZE);
      uart.send_size+=F_NAME_SIZE;
+#endif
     }
     else //skip this item - will be transferred next time
     {
@@ -1317,6 +1344,24 @@ void uart_send_packet(uint8_t send_mode)
 #endif
  }//switch
 
+//checksum verification implemented only for binary mode
+#ifdef UART_BINARY
+ //reset checksum before we will update it with data
+ RST_CHKSUM();
+
+ //calculate checksum for whole packet
+ uint8_t i = 0;
+ for(; i < uart.send_size_c; ++i)
+  UPD_CHKSUM(uart.send_buf_c[i]);
+
+ build_i16h(GET_CHKSUM()); //append packet with 2 bytes of checksum
+
+ //Esc. packet
+ //convert packet's data (replace some bytes with esc. seq.)
+ for(i = 0; i < uart.send_size_c; ++i)
+  append_tx_buff(uart.send_buf_c[i]);
+#endif
+
  //common part for all packets
  uart.send_buf[uart.send_size++] = '\r';
 
@@ -1343,8 +1388,37 @@ uint8_t uart_recept_packet(void)
 
  descriptor = uart.recv_buf[uart.recv_index++];
 
-// TODO: сделать проверку uart_recv_size дл€ каждого типа пакета.
-// ѕровер€ть байты пакетов на принадлежность к шестнадцатерчным символам
+ //checksum verification implemented only for binary mode
+#ifdef UART_BINARY
+ //convert packet's data (replace esc. seq. with original bytes)
+ uart.recv_size_c = 0;
+ while(uart.recv_index < uart.recv_size)
+  uart.recv_buf_c[uart.recv_size_c++] = takeout_rx_buff();
+ uart.recv_index_c = 0;
+
+ if (uart.recv_size_c < 3)
+  return 0; //error, do nothing (just ignore damaged packet)
+
+ uint16_t checksum = (uart.recv_buf_c[uart.recv_size_c-2] << 8) | uart.recv_buf_c[uart.recv_size_c-1];
+ uart.recv_size_c-=2; //2 bytes for check sum
+
+ //reset checksum before it will be updated with incoming data
+ RST_CHKSUM();
+
+ //calculate checksum for whole packet (except two last bytes of checksum)
+ uint8_t chkidx = 0;
+ for(; chkidx < uart.recv_size_c; ++chkidx)
+  UPD_CHKSUM(uart.recv_buf_c[chkidx]);
+
+ dbg_var3 = checksum;
+ dbg_var4 = GET_CHKSUM();
+
+ if (checksum!=GET_CHKSUM())
+  return 0; //error, packet corrupted, don't accept it
+#endif
+
+// TODO: implement check of uart_recv_size for each packet
+//       in hex mode: check packets' bytes for Hex characters
 
  //interpret received data depending on the descriptor
  switch(descriptor)

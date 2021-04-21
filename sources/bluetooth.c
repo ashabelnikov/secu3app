@@ -53,8 +53,6 @@
 void uart_reset_send_buff(void);
 void uart_append_send_buff(uint8_t ch);
 void uart_begin_send(void);
-void build_fs(uint8_t _PGM *romBuffer, uint8_t size);
-void build_rs(const uint8_t *ramBuffer, uint8_t size);
 
 /**Template for AT+BAUDx command */
 PGM_DECLARE(uint8_t AT_BAUD[]) = "AT+BAUD";
@@ -75,6 +73,20 @@ typedef struct
 
 /**Instance of internal state variables */
 bts_t bts;
+
+/**Appends sender's buffer by sequence of bytes from flash.
+ * note! can NOT be used for binary data! */
+static void bt_build_fs(uint8_t _PGM *romBuffer, uint8_t size)
+{
+ while(size--) uart_append_send_buff(PGM_GET_BYTE(romBuffer++));
+}
+
+/**Appends sender's buffer by sequence of bytes from RAM.
+ * note! can NOT be used for binary data! */
+static void bt_build_rs(const uint8_t *ramBuffer, uint8_t size)
+{
+ while(size--) uart_append_send_buff(*ramBuffer++);
+}
 
 void bt_init(uint8_t en_set_baud)
 {
@@ -102,7 +114,7 @@ static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
 {
  uart_reset_send_buff();
  build_crlf(); //use CRLF before AT command to reset possible errors
- build_fs(AT_BAUD, 7);
+ bt_build_fs(AT_BAUD, 7);
  if (baud == CBR_9600) uart_append_send_buff('4');
  else if (baud == CBR_19200) uart_append_send_buff('5');
  else if (baud == CBR_38400) uart_append_send_buff('6');
@@ -243,8 +255,8 @@ static void append_tx_buff_with_at_name_cmd(uint8_t* name)
 {
  uart_reset_send_buff();
  build_crlf();
- build_fs(AT_NAME, 7);
- build_rs(&name[1], name[0]);
+ bt_build_fs(AT_NAME, 7);
+ bt_build_rs(&name[1], name[0]);
  build_crlf();
 }
 
@@ -255,8 +267,8 @@ static void append_tx_buff_with_at_pass_cmd(uint8_t* pass)
 {
  uart_reset_send_buff();
  build_crlf();
- build_fs(AT_PIN, 6);
- build_rs(&pass[1], pass[0]);
+ bt_build_fs(AT_PIN, 6);
+ bt_build_rs(&pass[1], pass[0]);
  build_crlf();
 }
 

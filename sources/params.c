@@ -101,7 +101,9 @@ void reset_eeprom_params(void)
  ce_clear_errors(); //reset saved errors
  wdt_reset_timer();
 #ifdef REALTIME_TABLES
- eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+ crc = crc16f_b((uint8_t _PGM*)&fw_data.tables[0], sizeof(f_data_t)-sizeof(uint16_t));
+ eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t)-sizeof(uint16_t));
+ eeprom_write(&crc, EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)-sizeof(uint16_t)), sizeof(uint16_t));
 #endif
  //write 4 bytes of magic number identifying platform
  eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
@@ -139,7 +141,9 @@ void load_eeprom_params(void)
   MEMCPY_P(&d.param, &fw_data.def_param, sizeof(params_t));
   ce_clear_errors(); //clear saved CE errors
 #ifdef REALTIME_TABLES
-  eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+  uint16_t crc = crc16f_b((uint8_t _PGM*)&fw_data.tables[0], sizeof(f_data_t)-sizeof(uint16_t));
+  eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t)-sizeof(uint16_t));
+  eeprom_write(&crc, EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)-sizeof(uint16_t)), sizeof(uint16_t));
 #endif
   //write 4 bytes of magic number identifying platform
   eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
@@ -153,7 +157,13 @@ void load_specified_tables_into_ram(uint8_t index)
  if (index < TABLES_NUMBER_PGM)
   MEMCPY_P(&d.tables_ram, &fw_data.tables[index], sizeof(f_data_t));
  else
+ { //load set of tables from EEPROM
   eeprom_read(&d.tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+  if (crc16_b((uint8_t*)&d.tables_ram, (sizeof(f_data_t)-sizeof(uint16_t)))!=d.tables_ram.checksum)
+  {
+   ce_set_error(ECUERROR_EEPROM_TABL_BROKEN);
+  }
+ }
 
  //notification will be sent about that new set of tables has been loaded
  sop_set_operation(SOP_SEND_NC_TABLSET_LOADED);

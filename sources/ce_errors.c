@@ -342,6 +342,7 @@ void ce_stroke_event_notification(void)
   {
    ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
    ce_clear_error(ECUERROR_PROGRAM_CODE_BROKEN);
+   ce_clear_error(ECUERROR_EEPROM_TABL_BROKEN);
   }
   if (ce_state.turnout_low_priority_errors_counter < 255)
    ce_state.turnout_low_priority_errors_counter++;

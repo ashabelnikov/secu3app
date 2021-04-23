@@ -27,6 +27,7 @@
 
 #include "port/port.h"
 #include "crc16.h"
+#include "wdt.h"
 
 #define      P_16   0xA001     //!< polynomial
 
@@ -89,7 +90,6 @@ uint8_t update_crc8(uint8_t data, uint8_t crc)
  return crc;
 }
 
-#ifdef DEFERRED_CRC
 uint16_t upd_crc16f(uint16_t crc, uint8_t _HPGM *buf, uint16_t num)
 {
  uint8_t i;
@@ -107,4 +107,61 @@ uint16_t upd_crc16f(uint16_t crc, uint8_t _HPGM *buf, uint16_t num)
  }
  return crc;
 }
-#endif
+
+uint16_t upd_crc16(uint16_t crc, uint8_t *buf, uint16_t num)
+{
+ uint8_t i;
+ while(num--)
+ {
+  crc ^= *buf++;
+  i = 8;
+  do
+  {
+   if (crc & 1)
+    crc = (crc >> 1) ^ P_16;
+   else
+    crc >>= 1;
+  } while(--i);
+ }
+ return crc;
+}
+
+uint16_t crc16f_b(uint8_t _HPGM *buf, pgmsize_t num)
+{
+ uint16_t crc = 0xFFFF;
+ uint16_t blockSize = 128;
+ num+= ((uint32_t)buf);
+
+ while(1)
+ {
+  wdt_reset_timer();
+  uint16_t d = num - ((uint32_t)buf);
+  if (d > blockSize)
+  {
+   crc = upd_crc16f(crc, buf, blockSize);
+  }
+  else
+   return upd_crc16f(crc, buf, d);
+  buf+=blockSize;
+ }
+}
+
+uint16_t crc16_b(uint8_t *buf, uint16_t num)
+{
+ uint16_t crc = 0xFFFF;
+ uint16_t blockSize = 128;
+ num+=((uint16_t)buf);
+
+ while(1)
+ {
+  wdt_reset_timer();
+  uint16_t d = num - ((uint16_t)buf);
+  if (d > blockSize)
+  {
+   crc = upd_crc16(crc, buf, blockSize);
+  }
+  else
+   return upd_crc16(crc, buf, d);
+  buf+=blockSize;
+ }
+}

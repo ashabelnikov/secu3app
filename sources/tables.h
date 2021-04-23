@@ -275,7 +275,9 @@ typedef struct f_data_t
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[87];
+  uint8_t reserved[85];
+
+  uint16_t checksum;                                  //!< CRC16 checksum of this structure (except these 16 bits)
 }f_data_t;
 
 

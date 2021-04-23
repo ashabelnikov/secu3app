@@ -37,6 +37,7 @@
  * \return Calculated CRC16
  */
 uint16_t crc16(uint8_t *buf, uint16_t num);
+uint16_t crc16_b(uint8_t *buf, uint16_t num);
 
 /** Calculates CRC16 for a given block of data in ROM
  * \param buf Pointer to a block of data (ROM)
@@ -44,6 +45,7 @@ uint16_t crc16(uint8_t *buf, uint16_t num);
  * \return Calculated CRC16
  */
 uint16_t crc16f(uint8_t _HPGM *buf, pgmsize_t num);
+uint16_t crc16f_b(uint8_t _HPGM *buf, pgmsize_t num);
 
 /** Calculates CRC8 for given byte using given seed (previous CRC value)
  * The polynomial is X8 + X5 + X4 + 1 (1-Wire bus)
@@ -53,7 +55,6 @@ uint16_t crc16f(uint8_t _HPGM *buf, pgmsize_t num);
  */
 uint8_t update_crc8(uint8_t data, uint8_t crc);
 
-#ifdef DEFERRED_CRC
 /** Calculates and updates CRC16 for given block of data in ROM
  * \param crc Previous value of the CRC to be updated (or zero)
  * \param buf Pointer to block of data (ROM)
@@ -61,6 +62,6 @@ uint8_t update_crc8(uint8_t data, uint8_t crc);
  * \return updated value on the crc
  */
 uint16_t upd_crc16f(uint16_t crc, uint8_t _HPGM *buf, uint16_t num);
-#endif
+uint16_t upd_crc16(uint16_t crc, uint8_t *buf, uint16_t num);
 
 #endif //_CRC16_H_

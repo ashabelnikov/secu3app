@@ -1293,7 +1293,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    },
 
    /**reserved bytes */
-   {0}
+   {0},
+   .checksum = 0
   },
 
   {
@@ -1579,7 +1580,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    },
 
    /**reserved bytes */
-   {0}
+   {0},
+   .checksum = 0
   },
 
   {
@@ -1864,7 +1866,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    },
 
    /**reserved bytes */
-   {0}
+   {0},
+   .checksum = 0
   },
 
   {//Ignition maps
@@ -2149,7 +2152,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    },
 
    /**reserved bytes */
-   {0}
+   {0},
+   .checksum = 0
   }
  },
 

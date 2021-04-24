@@ -870,6 +870,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.knock_threshold);
    build_i8h(d.param.knock_recovery_delay);
    build_i8h(d.param.knock_selch);
+   build_i16h(d.param.knkclt_thrd);
    break;
 
   case CE_SAVED_ERR:
@@ -1608,6 +1609,7 @@ uint8_t uart_recept_packet(void)
    d.param.knock_threshold = recept_i16h();
    d.param.knock_recovery_delay = recept_i8h();
    d.param.knock_selch = recept_i8h();
+   d.param.knkclt_thrd = recept_i16h();
    break;
 
   case CE_SAVED_ERR:

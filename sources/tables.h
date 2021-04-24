@@ -466,7 +466,7 @@ typedef struct fw_ex_data_t
   uint16_t frap;
   int16_t  idl_ve_g;
   uint8_t  stbl_str_cnt;
-  int16_t  knkclt_thrd;
+  uint16_t  reserv_0;   //reserved
   int16_t  heating_t_off; //Heating off temperature
   uint8_t  heating_time;  //Input manifold heating time
   uint8_t  idltorun_stp_en;
@@ -777,11 +777,13 @@ typedef struct params_t
 
   uint8_t  knock_selch;                  //!< 1 bit per channel (cylinder). 0 - 1st KS, 1 - 2nd KS
 
+  int16_t  knkclt_thrd;
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[182];
+  uint8_t  reserved[180];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

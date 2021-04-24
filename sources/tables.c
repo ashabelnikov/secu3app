@@ -657,6 +657,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .knock_selch =                 0,                   //use 1st sensor for all channels (cylinders)
 
+  .knkclt_thrd =                 TEMPERATURE_MAGNITUDE(70.0), //70°C
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -964,7 +966,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
   .idl_ve_g = ROUND(0*2048), //turned off
   .stbl_str_cnt = 10, //10 strokes
-  .knkclt_thrd = TEMPERATURE_MAGNITUDE(70.0), //70°C
+  .reserv_0 = 0, //reserved
   .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
   .heating_time = 100, //10 min
   .idltorun_stp_en = 8, //0.25%

@@ -747,4 +747,9 @@ ISR(TIMER1_OVF_vect)
  ++hall.t1oc;
 }
 
+void ckps_set_knock_chanmap(uint8_t chanmap)
+{
+ //not implemented
+}
+
 #endif //CKPS_NPLUS1

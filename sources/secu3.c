@@ -348,6 +348,7 @@ void init_modules(void)
 #ifdef PHASE_SENSOR
  ckps_use_cam_ref_s(CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF) && !d.param.ckps_miss_num);
 #endif
+ ckps_set_knock_chanmap(d.param.knock_selch);
 
 #ifdef FUEL_INJECT
  //We set some settings using first fuel's parameters, d.sens.gas_v = 0 now

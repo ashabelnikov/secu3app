@@ -186,4 +186,9 @@ void ckps_use_cam_ref_s(uint8_t i_camref);
 uint16_t ckps_get_stroke_period(void);
 #endif
 
+/** Sets bit map containing selection of KS_n for each channel (cylinder)
+ * \param chanmap Bit map containing selection of KS_n for each channel (1 bit per cylinder)
+ */
+void ckps_set_knock_chanmap(uint8_t chanmap);
+
 #endif //_CKPS_H_

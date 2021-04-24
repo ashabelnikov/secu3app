@@ -118,6 +118,9 @@
 #define F_CAMREF     3                //!< Specifies to use camshaft sensor as reference
 #endif
 
+/**Calculates index of next channel using specified index i*/
+#define NEXT_CHIDX(i) (((i) < ckps.chan_number-1) ? (i) + 1 : 0)
+
 /** State variables */
 typedef struct
 {
@@ -202,6 +205,8 @@ typedef struct
  volatile uint16_t inj_tooth[2];      //!< Injection timing's tooth
  volatile uint16_t inj_frac[2];       //!< Injection timing's fraction of tooth
 #endif
+
+ volatile uint8_t knock_chan;         //!< Selected knock channel (0 - KS_1 or 1 - KS_2)
 }chanstate_t;
 
 ckpsstate_t ckps;                         //!< instance of state variables
@@ -1106,7 +1111,11 @@ ISR(TIMER1_COMPA_vect)
    break;
 
   case QID_KNKBEG:
+   {
+   uint8_t i = QUEUE_TAIL(1).ch;
+   knock_set_channel(chanstate[NEXT_CHIDX(i)].knock_chan); //set KS channel for next ignition event
    knock_set_integration_mode(KNOCK_INTMODE_INT); //start listening a detonation (opening the window)
+   }
    break;
 
   case QID_KNKEND:
@@ -1611,6 +1620,12 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER1_OVF_vect)
 {
  ++ckps.t1oc;
+}
+
+void ckps_set_knock_chanmap(uint8_t chanmap)
+{
+ for(uint8_t i = 0; i < ckps.chan_number; ++i)
+  chanstate[i].knock_chan = !!CHECKBIT(chanmap, i);
 }
 
 #endif //ODDFIRE_ALGO

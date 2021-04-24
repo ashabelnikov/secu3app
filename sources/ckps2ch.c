@@ -119,6 +119,9 @@
  #define F_CALTIM1   6                //!< Indicates that time calculation is started before the spark
 #endif
 
+/**Calculates index of next channel using specified index i*/
+#define NEXT_CHIDX(i) (((i) < ckps.chan_number-1) ? (i) + 1 : 0)
+
 /** State variables */
 typedef struct
 {
@@ -211,6 +214,8 @@ typedef struct
 
  uint8_t output_state1;                //!< This variable specifies state of channel's output to be set, I/O1
  uint8_t output_state2;                //!< This variable specifies state of channel's output to be set, I/O2
+
+ volatile uint8_t knock_chan;         //!< Selected knock channel (0 - KS_1 or 1 - KS_2)
 }chanstate_t;
 
 ckpsstate_t ckps;                         //!< instance of state variables
@@ -929,7 +934,10 @@ static void process_ckps_cogs(void)
   {
    //start listening a detonation (opening the window)
    if (ckps.cog == chanstate[i].knock_wnd_begin)
+   {
+    knock_set_channel(chanstate[NEXT_CHIDX(i)].knock_chan); //set KS channel for next ignition event
     knock_set_integration_mode(KNOCK_INTMODE_INT);
+   }
 
    //finish listening a detonation (closing the window) and start the process of measuring integrated value
    if (ckps.cog == chanstate[i].knock_wnd_end)
@@ -1195,6 +1203,12 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER1_OVF_vect)
 {
  ++ckps.t1oc;
+}
+
+void ckps_set_knock_chanmap(uint8_t chanmap)
+{
+ for(uint8_t i = 0; i < ckps.chan_number; ++i)
+  chanstate[i].knock_chan = !!CHECKBIT(chanmap, i);
 }
 
 #endif //CKPS_2CHIGN

@@ -245,6 +245,7 @@ void process_uart_interface(void)
     knock_set_int_time_constant(d.param.knock_int_time_const);
     ckps_set_knock_window(d.param.knock_k_wnd_begin_angle, d.param.knock_k_wnd_end_angle);
     ckps_use_knock_channel(d.param.knock_use_knock_channel);
+    ckps_set_knock_chanmap(d.param.knock_selch);
 
     //запоминаем состояние флага для того чтобы потом можно было определить нужно инициализировать
     //процессор детонации или нет.

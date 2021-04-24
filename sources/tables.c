@@ -655,6 +655,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_ae_type =                 0,                   //accel. pump
   .inj_ae_time =                 30,                  //30 strokes
 
+  .knock_selch =                 0,                   //use 1st sensor for all channels (cylinders)
+
   .reserved =                    {0},
   .crc =                         0
  },

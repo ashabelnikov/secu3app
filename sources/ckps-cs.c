@@ -117,6 +117,9 @@
 #endif
 #endif
 
+/**Calculates index of next channel using specified index i*/
+#define NEXT_CHIDX(i) (((i) < ckps.chan_number-1) ? (i) + 1 : 0)
+
 /** State variables */
 typedef struct
 {
@@ -223,6 +226,8 @@ typedef struct
  volatile uint16_t knock_wnd_begin;
  /** Determines number of tooth at which phase selection window for knock detection is closed */
  volatile uint16_t knock_wnd_end;
+
+ volatile uint8_t knock_chan;         //!< Selected knock channel (0 - KS_1 or 1 - KS_2)
 }chanstate_t;
 
 ckpsstate_t ckps;                         //!< instance of state variables
@@ -1004,7 +1009,7 @@ ISR(TIMER1_COMPA_vect)
     if (acc_delay < DWL_DEAD_TIME)
      acc_delay = DWL_DEAD_TIME;
 
-    ckps.channel_mode_b = (ckps.channel_mode < ckps.chan_number-1) ? ckps.channel_mode + 1 : 0;
+    ckps.channel_mode_b = NEXT_CHIDX(ckps.channel_mode);
     SETBIT(flags, F_PNDDWL);
 
     //if less than 1 teeth remains to the accumulation beginning we have to program compare channel
@@ -1304,7 +1309,10 @@ static void process_ckps_cogs(void)
    //start listening a detonation (opening the window)
    //начинаем слушать детонацию
    if (ckps.cog == chanstate[i].knock_wnd_begin)
+   {
+    knock_set_channel(chanstate[NEXT_CHIDX(i)].knock_chan); //set KS channel for next ignition event
     knock_set_integration_mode(KNOCK_INTMODE_INT);
+   }
 
    //finish listening a detonation (closing the window) and start the process of measuring integrated value
    if (ckps.cog == chanstate[i].knock_wnd_end)
@@ -1564,6 +1572,12 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER1_OVF_vect)
 {
  ++ckps.t1oc;
+}
+
+void ckps_set_knock_chanmap(uint8_t chanmap)
+{
+ for(uint8_t i = 0; i < ckps.chan_number; ++i)
+  chanstate[i].knock_chan = !!CHECKBIT(chanmap, i);
 }
 
 #endif //CAM_SYNC

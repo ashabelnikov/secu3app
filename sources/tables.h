@@ -775,11 +775,13 @@ typedef struct params_t
   uint8_t  inj_ae_type;                  //!< Type of selected AE: 0 - acceleration pump, 1 - time based
   uint8_t  inj_ae_time;                  //!< time of AE in strokes, used by "Time based AE"
 
+  uint8_t  knock_selch;                  //!< 1 bit per channel (cylinder). 0 - 1st KS, 1 - 2nd KS
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[183];
+  uint8_t  reserved[182];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -310,6 +310,10 @@ typedef struct ecudata_t
  uint8_t gasval_on;                     //!< State of the GASVAL_O output
  uint8_t gasval_res;
 #endif
+
+#ifdef FUEL_INJECT
+ uint8_t iac_closed_loop;               //!< Flag. Indicates closed loop mode for IAC
+#endif
 }ecudata_t;
 
 

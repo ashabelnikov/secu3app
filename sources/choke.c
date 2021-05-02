@@ -570,6 +570,8 @@ int16_t calc_sm_position(uint8_t pwm)
    break;
  }
 
+ d.iac_closed_loop = !!CHECKBIT(chks.flags, CF_CL_LOOP);
+
  if (d.floodclear)
   return 0; //0% (use d.param.sm_steps for 100%)
  else

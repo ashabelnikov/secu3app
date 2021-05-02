@@ -585,6 +585,10 @@ void uart_send_packet(uint8_t send_mode)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
              | _CBV16(d.aftstr_enr, 14)    // after start enrichment flag
 #endif
+
+#if defined(FUEL_INJECT)
+             | _CBV16(d.iac_closed_loop, 15) // IAC closed loop flag
+#endif
              );
 
 #ifdef SEND_INST_VAL

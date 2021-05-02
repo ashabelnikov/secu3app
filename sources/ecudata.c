@@ -127,6 +127,9 @@ struct ecudata_t d =
 ,.gasval_on = 0
 ,.gasval_res = 0
 #endif
+#ifdef FUEL_INJECT
+,.iac_closed_loop = 0
+#endif
 };
 
 #ifdef REALTIME_TABLES

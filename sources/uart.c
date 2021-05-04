@@ -1416,9 +1416,6 @@ uint8_t uart_recept_packet(void)
  for(; chkidx < uart.recv_size_c; ++chkidx)
   UPD_CHKSUM(uart.recv_buf_c[chkidx]);
 
- dbg_var3 = checksum;
- dbg_var4 = GET_CHKSUM();
-
  if (checksum!=GET_CHKSUM())
   return 0; //error, packet corrupted, don't accept it
 #endif

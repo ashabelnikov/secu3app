@@ -346,15 +346,23 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   d.sens.ftls = 0; //input is not selected
 #endif
 
+#ifndef SECU3T
+ if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3i)
+  d.sens.egts = exsens_lookup(d.sens.add_i3, fw_data.exdata.egts_curve); //ADD_I3 input selected as input for EGT sensor
+#ifdef TPIC8101
+ if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4i)
+  d.sens.egts = exsens_lookup(d.sens.add_i4, fw_data.exdata.egts_curve); //ADD_I4 input selected as input for EGT sensor
+#endif
 #ifdef MCP3204
  if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.egts = exsens_lookup(d.sens.add_i5, fw_data.exdata.egts_curve); //ADD_I5 input selected as input for fuel tank level sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i5, fw_data.exdata.egts_curve); //ADD_I5 input selected as input for EGT sensor
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6i)
   d.sens.egts = exsens_lookup(d.sens.add_i6, fw_data.exdata.egts_curve); //ADD_I6 input selected
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7i)
   d.sens.egts = exsens_lookup(d.sens.add_i7, fw_data.exdata.egts_curve); //ADD_I7 input selected
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.egts = exsens_lookup(d.sens.add_i8, fw_data.exdata.egts_curve); //ADD_I8 input selected as input for fuel tank level sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i8, fw_data.exdata.egts_curve); //ADD_I8 input selected as input for EGT sensor
+#endif
  else
   d.sens.egts = 0; //input is not selected
 #endif

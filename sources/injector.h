@@ -90,6 +90,11 @@ void inject_calc_fuel_flow(void);
  */
 uint8_t inject_is_shrinked(void);
 
+/** Calculates injector's duty
+ * \return injector's duty in %, value * 2
+ */
+uint8_t inject_calc_duty(void);
+
 #endif //FUEL_INJECT
 
 #endif //_INJECTOR_H_

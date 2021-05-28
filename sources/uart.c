@@ -781,6 +781,12 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
    build_i16h(0);
 #endif
+
+#ifdef FUEL_INJECT
+   build_i8h(d.sens.inj_duty);          //injector's duty in % (value * 2)
+#else
+   build_i8h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

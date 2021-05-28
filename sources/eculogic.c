@@ -545,6 +545,10 @@ void eculogic_system_state_machine(void)
  }
 
  lgs.calc_adv_ang = angle; //save calculated advance angle
+
+#ifdef FUEL_INJECT
+ d.sens.inj_duty = inject_calc_duty();
+#endif
 }
 
 void eculogic_stroke_event_notification(void)

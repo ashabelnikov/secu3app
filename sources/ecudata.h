@@ -184,6 +184,10 @@ typedef struct sensors_t
  uint16_t rxlaf;                         //!< Calculated RxLxVE value
 #endif
 
+#if defined(FUEL_INJECT)
+ uint8_t inj_duty;                      //!< Injector's duty in %, value * 2
+#endif
+
  uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
 }sensors_t;
 

@@ -657,4 +657,35 @@ uint8_t inject_is_shrinked(void)
  return inj.shrinktime > 0;
 }
 
+uint8_t inject_calc_duty(void)
+{
+ //stroke period measured between spark strokes (not each stroke). So, for 1 cyl. engine it is 2 revolutions, for 2 cylinder engine it is 1 revolution and so on.
+ uint32_t cycleper = ((uint32_t)ckps_get_stroke_period()) * d.param.ckps_engine_cyl;
+
+ uint8_t num_squirts = 1;
+
+ uint8_t stmul = 1;
+ if (inj.cfg == INJCFG_FULLSEQUENTIAL)
+ {
+  if (inj.shrinktime == 0)
+   stmul = 1; //normal full sequential
+  else if (inj.shrinktime == 1)
+   stmul = 2; //even-cylinder num. engines, like for semi-sequential (full sequential without cam sensor - failure mode)
+  else
+   stmul = d.param.ckps_engine_cyl; //odd-cylinder num. engines: N times
+ }
+ else if (inj.cfg == INJCFG_2BANK_ALTERN)
+  num_squirts = inj.num_squirts / 2;
+ else if ((inj.cfg == INJCFG_SEMISEQUENTIAL) || (inj.cfg == INJCFG_SEMISEQSEPAR))
+  num_squirts = inj.num_squirts / (d.param.ckps_engine_cyl >> 1);
+ else //Throttle body or simultaneous
+  num_squirts = inj.num_squirts;
+
+ uint16_t duty = (((uint32_t)d.inj_pw) * num_squirts * stmul * 200) / cycleper;
+ if (duty > 200)
+  duty = 200;  //limit to 100%
+
+ return duty;
+}
+
 #endif

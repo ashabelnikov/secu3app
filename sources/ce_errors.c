@@ -259,6 +259,14 @@ void check(ce_sett_t _PGM *cesd)
  else
   ce_clear_error(ECUERROR_OILPRESSURE); //can't monitor oil pressure on stall engine
 #endif
+
+#ifdef FUEL_INJECT
+ //perform checking only if IOP_I input is mapped to real input and if set number of strokes elapsed since last engine start
+ if (d.sens.inj_duty > 199)
+  ce_set_error(ECUERROR_INJDUTY_LIMIT);
+ else
+  ce_clear_error(ECUERROR_INJDUTY_LIMIT);
+#endif
 }
 
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),

@@ -266,7 +266,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -365,15 +365,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 3.4
-   IOREMVER(3,4),
+   //Version of this structure - 3.5
+   IOREMVER(3,5),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),

@@ -189,6 +189,9 @@ typedef struct sensors_t
 #endif
 
  uint16_t baro_press;                    //!< Barometric pressure (measured before cranking or dynamicaly updated using additional pressure sensor)
+
+ uint8_t input1;
+ uint8_t input2;
 }sensors_t;
 
 typedef struct correct_t

@@ -42,6 +42,34 @@
 
 #define RPMREQSTEP 2
 
+#ifndef SECU3T
+/** Calculates value of condition used to turn on clutch
+ * \return 0 or 1
+ */
+static uint8_t get_refprs_on_cond(void)
+{
+ if (IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3i)
+  return (d.param.cond_pvt_on ? (d.sens.add_i3 < d.param.cond_pvt_on) : 1) && !ce_is_error(ECUERROR_ADD_I3_SENSOR); //don't use ADD_I3 if threshold is set to 0
+ else if (IOCFG_CHECK(IOP_REFPRS_I))
+  !IOCFG_GET(IOP_REFPRS_I); //digital
+ else //not used
+  return 1;
+}
+
+/** Calculates value of condition used to turn off clutch
+ * \return 0 or 1
+ */
+static uint8_t get_refprs_off_cond(void)
+{
+ if (IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3i)
+  return (d.param.cond_pvt_off ? (d.sens.add_i3 > d.param.cond_pvt_off) : 0) || ce_is_error(ECUERROR_ADD_I3_SENSOR); //don't use ADD_I3 if threshold is set to 0
+ else if (IOCFG_CHECK(IOP_REFPRS_I))
+  IOCFG_GET(IOP_REFPRS_I); //digital
+ else //not used
+  return 0;
+}
+#endif
+
 /**Define state variables */
 typedef struct
 {
@@ -91,8 +119,7 @@ void aircond_control(void)
 #else
    IOCFG_SETF(IOP_COND_O, 0); //turned off
    d.cond_state = 0;
-   uint8_t add_i3_cond = d.param.cond_pvt_on ? (d.sens.add_i3 < d.param.cond_pvt_on) : 1; //don't use ADD_I3 if threshold is set to 0
-   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && (add_i3_cond) && !ce_is_error(ECUERROR_ADD_I3_SENSOR) && (d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_BYTE(&fw_data.exdata.aircond_tps))))
+   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && get_refprs_on_cond() && (d.sens.temperat > PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_BYTE(&fw_data.exdata.aircond_tps))))
 #endif
    {
     if (d.sens.frequen < d.param.cond_min_rpm)
@@ -130,8 +157,7 @@ void aircond_control(void)
 #ifdef SECU3T
    if (!IOCFG_GET(IOP_COND_I))
 #else
-   uint8_t add_i3_cond = d.param.cond_pvt_off ? (d.sens.add_i3 > d.param.cond_pvt_off) : 0; //don't use ADD_I3 if threshold is set to 0
-   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || (add_i3_cond) || ce_is_error(ECUERROR_ADD_I3_SENSOR) || (d.sens.tps > (PGM_GET_BYTE(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0))))))
+   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || get_refprs_off_cond() || (d.sens.tps > (PGM_GET_BYTE(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0))))))
 #endif
     ac.state = 1;
    if ((s_timer_gtc() - ac.t1) > SYSTIM_MAGS(1.5) && ac.state == 3)

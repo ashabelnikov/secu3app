@@ -499,12 +499,14 @@ typedef struct fw_ex_data_t
   uint8_t  maninjpw_idl;  //0 - don't apply manual inj.PW correction on idling, 1 - apply manual inj.PW correction on idling
   uint8_t  oilpress_cut;  //cut off ignition and injection of fuel if oil pressire falls to crytical value
   uint16_t tpsdot_mindt;  //minimum time delta used for calculation of d%/dt, 1 discrete = 3.2 us
+  uint8_t  irr_k_load;    //coefficient of load used to calcultate argument in rigidity map, value * 32.0, max 6.0
+  uint8_t  irr_k_rpm;     //coefficient of rpm used to calcultate argument in rigidity map, value * 32.0, max 6.0
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3565];
+  uint8_t reserved[3563];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

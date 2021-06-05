@@ -925,7 +925,7 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
  //if targ_map == 0, then do not use load component
- uint8_t k_load = targ_map ?  ROUND(2.0*32) : 0, k_rpm = ROUND(2.0*32); //value * 32, max 6.0
+ uint8_t k_load = targ_map ?  PGM_GET_BYTE(&fw_data.exdata.irr_k_load) : 0, k_rpm = PGM_GET_BYTE(&fw_data.exdata.irr_k_rpm); //value * 32, max 6.0
 
  //normalize values (function argument components)
  //as a result dload and drpm values multiplied by 1024

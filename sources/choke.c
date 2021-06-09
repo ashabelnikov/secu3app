@@ -462,6 +462,7 @@ int16_t calc_sm_position(uint8_t pwm)
 
      if (abs(error) > d.param.iac_reg_db)
      {
+      d.iac_in_deadband = 0;
       int16_t derror = error - chks.prev_rpm_error;
 
       uint16_t idl_reg_i = (derror < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
@@ -482,6 +483,9 @@ int16_t calc_sm_position(uint8_t pwm)
       }
 #endif
      }
+     else
+      d.iac_in_deadband = 1;
+
      chks.prev_rpm_error = error; //save for further calculation of derror
     }
     else

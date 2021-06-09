@@ -370,6 +370,12 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
  idling_rpm = d.param.idling_rpm;
 #endif
 
+#ifdef FUEL_INJECT
+ //When closed loop mode enabled for IAC, then ign.tim regulator will work only if IAC regulator is in dead band
+ if (d.iac_closed_loop && !d.iac_in_deadband)
+  return 0; //no correction from ign. tim regulator
+#endif
+
  //regulator will be turned on with delay
  if (d.sens.frequen < (idling_rpm + PGM_GET_WORD(&fw_data.exdata.idlreg_captrange)))
  {
@@ -399,7 +405,7 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
  if (abs(error) <= d.param.MINEFR)
   return idl_prstate.output_state >> IRUSDIV;
 
- //select corresponding coefficient depending on sign of error
+ //select corresponding coefficient depending on the sign of error
  if (error > 0)
   factor = d.param.ifac1;
  else

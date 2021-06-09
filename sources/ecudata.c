@@ -129,6 +129,7 @@ struct ecudata_t d =
 #endif
 #ifdef FUEL_INJECT
 ,.iac_closed_loop = 0
+,.iac_in_deadband = 0
 #endif
 };
 

@@ -320,6 +320,7 @@ typedef struct ecudata_t
 
 #ifdef FUEL_INJECT
  uint8_t iac_closed_loop;               //!< Flag. Indicates closed loop mode for IAC
+ uint8_t iac_in_deadband;               //!< Flag. Indicates that IAC regulator is in dead band of error.
 #endif
 }ecudata_t;
 

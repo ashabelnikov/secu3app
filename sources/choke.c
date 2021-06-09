@@ -609,6 +609,7 @@ void choke_control(void)
   pos = (((uint32_t)pos) * pwmiac_ucoef()) >> 12;
   if (pos > 255) pos = 255;
   vent_set_duty8(pos);
+  chks.state = 5; //set for proper operation of choke_is_ready()
   return;
  }
 #endif

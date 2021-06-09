@@ -232,6 +232,7 @@ void gasdose_control(void)
   pos = (((uint32_t)pos) * pwmiac_ucoef()) >> 12;
   if (pos > 255) pos = 255;
   vent_set_duty8(pos);
+  gds.state = 5; //set for proper operation of gasdose_is_ready()
   return;
  }
 

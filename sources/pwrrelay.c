@@ -131,11 +131,11 @@ void pwrrelay_init_steppers(void)
   return; //do nothing if power management is not used
 
 #ifdef SM_CONTROL
- if (IOCFG_CHECK(IOP_SM_STP))
+ if (IOCFG_CHECK(IOP_SM_STP) && !IOCFG_CHECK(IOP_IAC_PWM))
   choke_init_motor();   //send initialization command to choke/IAC motor
 #endif
 #ifdef GD_CONTROL
- if (IOCFG_CHECK(IOP_GD_STP))
+ if (IOCFG_CHECK(IOP_GD_STP) && !IOCFG_CHECK(IOP_GD_PWM))
   gasdose_init_motor(); //send initialization command to stepper gas valve motor
 #endif
 

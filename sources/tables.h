@@ -693,8 +693,8 @@ typedef struct params_t
 
   uint8_t  idl_to_run_add;               //!< Value (in %) added to IAC position when exiting from closed loop (value * 2)
   uint8_t  rpm_on_run_add;               //!< Value added to target RPM when vehicle starts to run (min-1, value / 10)
-  uint16_t idl_reg_p;                    //!< IAC closeed loop proportional coefficient (value * 256, max 5.0)
-  uint16_t idl_reg_i;                    //!< IAC closed loop integral coefficient (value * 256, max 5.0)
+  uint16_t idl_reg_p[2];                 //!< IAC closeed loop proportional coefficient (value * 256, max 5.0), [0] - negative error, [1] - positive error
+  uint16_t idl_reg_i[2];                 //!< IAC closed loop integral coefficient (value * 256, max 5.0), [0] - negative error, [1] - positive error
   uint8_t  idl_coef_thrd1;               //!< coefficient for calculating closed loop entering RPM threshold (value - 1.0) * 128, max 1.99)
   uint8_t  idl_coef_thrd2;               //!< coefficient for calculating closed loop leaving RPM threshold (value - 1.0) * 128, max 1.99)
   uint8_t  idl_intrpm_lim;               //!< RPM error limit for integrator (min-1, value / 10, max 1200)
@@ -785,7 +785,7 @@ typedef struct params_t
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[180];
+  uint8_t  reserved[176];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

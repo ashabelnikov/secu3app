@@ -453,8 +453,10 @@ void uart_send_packet(uint8_t send_mode)
    //closed loop parameters:
    build_i8h(d.param.idl_to_run_add);
    build_i8h(d.param.rpm_on_run_add);
-   build_i16h(d.param.idl_reg_p);
-   build_i16h(d.param.idl_reg_i);
+   build_i16h(d.param.idl_reg_p[0]);
+   build_i16h(d.param.idl_reg_p[1]);
+   build_i16h(d.param.idl_reg_i[0]);
+   build_i16h(d.param.idl_reg_i[1]);
    build_i8h(d.param.idl_coef_thrd1);
    build_i8h(d.param.idl_coef_thrd2);
    build_i8h(d.param.idl_intrpm_lim);
@@ -1502,8 +1504,10 @@ uint8_t uart_recept_packet(void)
    //closed loop parameters:
    d.param.idl_to_run_add = recept_i8h();
    d.param.rpm_on_run_add = recept_i8h();
-   d.param.idl_reg_p = recept_i16h();
-   d.param.idl_reg_i = recept_i16h();
+   d.param.idl_reg_p[0] = recept_i16h();
+   d.param.idl_reg_p[1] = recept_i16h();
+   d.param.idl_reg_i[0] = recept_i16h();
+   d.param.idl_reg_i[1] = recept_i16h();
    d.param.idl_coef_thrd1 = recept_i8h();
    d.param.idl_coef_thrd2 = recept_i8h();
    d.param.idl_intrpm_lim = recept_i8h();

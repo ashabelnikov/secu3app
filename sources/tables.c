@@ -572,8 +572,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .idl_to_run_add =              60,                   //30%
   .rpm_on_run_add =              20,                   //200 min-1
-  .idl_reg_p =                   25,                   //0.1 (proportional)
-  .idl_reg_i =                   25,                   //0.1 (integral)
+  .idl_reg_p =                   {25,25},              //0.1 (proportional)
+  .idl_reg_i =                   {25,25},              //0.1 (integral)
   .idl_coef_thrd1 =              64,                   //rpm x 1.5
   .idl_coef_thrd2 =              110,                  //rpm x 1.86
   .idl_intrpm_lim =              20,                   //200 min-1

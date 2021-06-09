@@ -781,11 +781,13 @@ typedef struct params_t
 
   int16_t  knkclt_thrd;
 
+  uint16_t  iac_reg_db;                  //!< IAC regulator's dead band (rpm).
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[176];
+  uint8_t  reserved[174];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -459,25 +459,29 @@ int16_t calc_sm_position(uint8_t pwm)
     if (CHECKBIT(chks.flags, CF_CL_LOOP))
     { //closed loop mode is active
      uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
-     int16_t derror = error - chks.prev_rpm_error;
 
-     uint16_t idl_reg_i = (derror < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
-     uint16_t idl_reg_p = (error < 0) ? d.param.idl_reg_p[0] : d.param.idl_reg_p[1];
+     if (abs(error) > d.param.iac_reg_db)
+     {
+      int16_t derror = error - chks.prev_rpm_error;
+
+      uint16_t idl_reg_i = (derror < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
+      uint16_t idl_reg_p = (error < 0) ? d.param.idl_reg_p[0] : d.param.idl_reg_p[1];
 
 #ifdef COLD_ENG_INT
-     chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
-#else
-     if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
-     { //hot engine or RPM above or equal target idling RPM
       chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
-      SETBIT(chks.flags, CF_HOT_ENG);
-     }
-     else
-     { //cold engine
-      if ((error > 0) && (derror > 0)) //works only if errors are positive
-       chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * idl_reg_i)) >> (8+7-2));
-     }
+#else
+      if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
+      { //hot engine or RPM above or equal target idling RPM
+       chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
+       SETBIT(chks.flags, CF_HOT_ENG);
+      }
+      else
+      { //cold engine
+       if ((error > 0) && (derror > 0)) //works only if errors are positive
+        chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * idl_reg_i)) >> (8+7-2));
+      }
 #endif
+     }
      chks.prev_rpm_error = error; //save for further calculation of derror
     }
     else

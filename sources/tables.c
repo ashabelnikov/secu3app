@@ -659,6 +659,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .knkclt_thrd =                 TEMPERATURE_MAGNITUDE(70.0), //70°C
 
+  .iac_reg_db =                  10,                  //10 min-1
+
   .reserved =                    {0},
   .crc =                         0
  },

@@ -69,8 +69,9 @@
 /** Barrier for detecting of missing teeth
  * e.g. for 60-2 crank wheel, p * 2.5
  *      for 36-1 crank wheel, p * 1.5
+ *      for 12-3 crank wheel, p * 3.0
  */
-#define CKPS_GAP_BARRIER(p) ( ((p) << (ckps.miss_cogs_num==2)) + ((p) >> 1) )
+#define CKPS_GAP_BARRIER(p) (((p)*ckps.miss_cogs_num) + ((ckps.miss_cogs_num==3) ? 0 : ((p) >> 1)))
 
 /** Access Input Capture Register */
 #define GetICR() (ICR1)
@@ -1184,12 +1185,9 @@ ISR(TIMER0_COMPA_vect)
   ICR1 = TCNT1;  //simulate input capture
   CLEARBIT(TIMSK0, OCIE0A); //disable this interrupt
 
-  if (ckps.miss_cogs_num > 1)
-  {
-   //start timer to recover 60th tooth
-   if (ckps.cog360 == ckps.wheel_cogs_numm1)
-    set_timer0(ckps.period_curr);
-  }
+  //start timer to recover 60th tooth
+  if (ckps.cog360 != ckps.wheel_cogs_num)
+   set_timer0(ckps.period_curr);
 
   //Call handler for missing teeth
   process_ckps_cogs();

@@ -51,8 +51,6 @@
 
 #ifdef FUEL_INJECT
 
-//#define COLD_ENG_INT      //! Use integral component on cold engine
-
 /**RPM regulator call period, 100ms*/
 #define RPMREG_CORR_TIME 10
 
@@ -66,6 +64,7 @@
 #define CF_CL_LOOP      3  //!< IAC closed loop flag
 #define CF_HOT_ENG      4  //!<
 #define CF_INITFRQ      5  //!<  indicates that we are ready to set normal frequency after initialization and first movement
+#define CF_REACH_TR     6  //!<
 
 #else // Carburetor's choke stuff
 //#define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
@@ -404,10 +403,10 @@ int16_t calc_sm_position(uint8_t pwm)
     chks.strt_t1 = s_timer_gtc();
     ++chks.strt_mode; //next state - 1
     chks.rpmreg_t1 = s_timer_gtc();
+    CLEARBIT(chks.flags, CF_REACH_TR);
    }
    break;
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
-  case 2:
    if (!d.st_block)
    {
     chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
@@ -428,10 +427,13 @@ int16_t calc_sm_position(uint8_t pwm)
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 1;  //run pos
      run_ppos += ((int16_t)inj_iac_mat_corr());
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 64) >> 3; //result will be x32
-     if (d.sens.frequen >= calc_rpm_thrd1(calc_cl_rpm()) || chks.strt_mode > 1)
-      chks.strt_mode = 2; //allow closed loop before finishing of crank to run transition
+
+     if (d.sens.frequen > (calc_cl_rpm() + d.param.iac_reg_db))
+      SETBIT(chks.flags, CF_REACH_TR);
+     if ((d.sens.frequen < (calc_cl_rpm() + (d.param.iac_reg_db/2))) && CHECKBIT(chks.flags, CF_REACH_TR))
+      chks.strt_mode = 3; //allow closed loop before finishing crank to run transition (abort transition and start closed loop)
      else
-      break;              //use interpolated value
+      break;              //use interpolated value (still in mode 2)
     }
    }
   case 3: //run mode
@@ -460,7 +462,7 @@ int16_t calc_sm_position(uint8_t pwm)
     { //closed loop mode is active
      uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
 
-     if (abs(error) > d.param.iac_reg_db)
+     if (abs(rpm - d.sens.frequen) > d.param.iac_reg_db)
      {
       d.iac_in_deadband = 0;
       int16_t derror = error - chks.prev_rpm_error;
@@ -468,20 +470,23 @@ int16_t calc_sm_position(uint8_t pwm)
       uint16_t idl_reg_i = (derror < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
       uint16_t idl_reg_p = (error < 0) ? d.param.idl_reg_p[0] : d.param.idl_reg_p[1];
 
-#ifdef COLD_ENG_INT
-      chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
-#else
-      if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
-      { //hot engine or RPM above or equal target idling RPM
-       chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
-       SETBIT(chks.flags, CF_HOT_ENG);
+      if (PGM_GET_BYTE(&fw_data.exdata.cold_eng_int))
+      { //use special algorithm
+       if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
+       { //hot engine or RPM above or equal target idling RPM
+        chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
+        SETBIT(chks.flags, CF_HOT_ENG);
+       }
+       else
+       { //cold engine
+        if ((error > 0) && (derror > 0)) //works only if errors are positive
+         chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * idl_reg_i)) >> (8+7-2));
+       }
       }
       else
-      { //cold engine
-       if ((error > 0) && (derror > 0)) //works only if errors are positive
-        chks.iac_pos += (((int32_t)rigidity * ((int32_t)derror * idl_reg_i)) >> (8+7-2));
+      { //use regular alrorithm
+       chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
       }
-#endif
      }
      else
       d.iac_in_deadband = 1;
@@ -490,11 +495,8 @@ int16_t calc_sm_position(uint8_t pwm)
     }
     else
     { //closed loop is not active
-     if (chks.strt_mode > 2)
-     {
       chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x16, work position as base
       chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
-     }
      if (d.engine_mode == EM_IDLE)
      {
       if  (d.sens.inst_frq > rpm_thrd2)
@@ -562,19 +564,16 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    else
    { //open loop mode
-    if (chks.strt_mode > 2)
-    {
-     chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
-     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
-     //Displace IAC position when cooling fan turns on
-     if (d.vent_req_on)
-      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
-     //Displace IAC position when EPAS turns on
-     #ifndef SECU3T
-     if (IOCFG_CHECK(IOP_EPAS_I) && !IOCFG_GET(IOP_EPAS_I))
-      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
-     #endif
-    }
+    chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
+    chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
+    //Displace IAC position when cooling fan turns on
+    if (d.vent_req_on)
+     chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
+    //Displace IAC position when EPAS turns on
+    #ifndef SECU3T
+    if (IOCFG_CHECK(IOP_EPAS_I) && !IOCFG_GET(IOP_EPAS_I))
+     chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
+    #endif
    }
 
    if (!d.st_block)

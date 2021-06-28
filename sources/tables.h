@@ -501,12 +501,13 @@ typedef struct fw_ex_data_t
   uint16_t tpsdot_mindt;  //minimum time delta used for calculation of d%/dt, 1 discrete = 3.2 us
   uint8_t  irr_k_load;    //coefficient of load used to calcultate argument in rigidity map, value * 32.0, max 6.0
   uint8_t  irr_k_rpm;     //coefficient of rpm used to calcultate argument in rigidity map, value * 32.0, max 6.0
+  uint8_t  cold_eng_int;  //!Use only integral component on cold engine (1), use regular algorithm (0)
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3563];
+  uint8_t reserved[3562];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

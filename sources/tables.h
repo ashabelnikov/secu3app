@@ -503,12 +503,14 @@ typedef struct fw_ex_data_t
   uint8_t  irr_k_rpm;     //coefficient of rpm used to calcultate argument in rigidity map, value * 32.0, max 6.0
   uint8_t  cold_eng_int;  //!Use only integral component on cold engine (1), use regular algorithm (0)
   uint8_t  iacreg_period; //!Period between calls of IAC's closed loop regulator, value in 0.01s units
+  int16_t  iacreg_turn_on_temp;//!< IAC closed loop regulator turn on temperature
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3561];
+  uint8_t reserved[3559];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

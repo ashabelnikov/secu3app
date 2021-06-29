@@ -1013,6 +1013,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .cold_eng_int = 1,
   .iacreg_period = 10, //100ms
+  .iacreg_turn_on_temp = 200,
 
   /**reserved bytes*/
   {0}

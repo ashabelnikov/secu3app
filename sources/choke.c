@@ -468,7 +468,7 @@ int16_t calc_sm_position(uint8_t pwm)
 
       if (PGM_GET_BYTE(&fw_data.exdata.cold_eng_int))
       { //use special algorithm
-       if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= d.param.idlreg_turn_on_temp) || (d.sens.frequen >= rpm))
+       if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.frequen >= rpm))
        { //hot engine or RPM above or equal target idling RPM
         chks.iac_pos += (((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p))) >> (8+7-2));
         SETBIT(chks.flags, CF_HOT_ENG);

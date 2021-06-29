@@ -60,7 +60,7 @@ void intkheat_control(void)
  switch(ih.state)
  {
   case 0: //turn on heating and start timer
-   IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < PGM_GET_WORD(&fw_data.exdata.heating_t_off)));   // control heating
+   IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < (int16_t)PGM_GET_WORD(&fw_data.exdata.heating_t_off)));   // control heating
    ih.strt_t1 = s_timer_gtc();
    ih.state = 1;
    break;
@@ -76,7 +76,7 @@ void intkheat_control(void)
   case 2: //control heating if engine is running, otherwise turn it off
    if (d.st_block)
    { //engine is running
-    IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < PGM_GET_WORD(&fw_data.exdata.heating_t_off)));  // control heating
+    IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < (int16_t)PGM_GET_WORD(&fw_data.exdata.heating_t_off)));  // control heating
    }
    else
     IOCFG_SETF(IOP_INTK_HEAT, 0);

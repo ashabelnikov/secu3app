@@ -51,9 +51,6 @@
 
 #ifdef FUEL_INJECT
 
-/**RPM regulator call period, 100ms*/
-#define RPMREG_CORR_TIME 10
-
 #ifdef SM_CONTROL
 
 //See flags variable in choke_st_t
@@ -68,9 +65,6 @@
 
 #else // Carburetor's choke stuff
 //#define USE_RPMREG_TURNON_DELAY 1  //undefine this constant if you don't need delay
-
-/**RPM regulator call period, 100ms*/
-#define RPMREG_CORR_TIME 10
 
 /**During this time system can't exit from RPM regulation mode*/
 #define RPMREG_ENEX_TIME (10*100)
@@ -247,7 +241,7 @@ int16_t calc_sm_position(void)
   case 4:
   {
    uint16_t tmr = s_timer_gtc();
-   if ((tmr - chks.rpmreg_t1) >= RPMREG_CORR_TIME)
+   if ((tmr - chks.rpmreg_t1) >= PGM_GET_BYTE(&fw_data.exdata.iacreg_period))
    {
     chks.rpmreg_t1 = tmr;  //reset timer
     if ((tmr - chks.strt_t2) >= RPMREG_ENEX_TIME) //do we ready to enable RPM regulation mode exiting?
@@ -406,6 +400,7 @@ int16_t calc_sm_position(uint8_t pwm)
     CLEARBIT(chks.flags, CF_REACH_TR);
    }
    break;
+
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
    if (!d.st_block)
    {
@@ -416,7 +411,7 @@ int16_t calc_sm_position(uint8_t pwm)
     uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
     if (time_since_crnk >= d.param.inj_cranktorun_time)
     {
-     chks.strt_mode = 3; //transition has finished, we will immediately fall into mode 2, use run value
+     chks.strt_mode = 2; //transition has finished, we will immediately fall into mode 2, use run value
      chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 4; //run pos x16
      chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
     }
@@ -428,19 +423,20 @@ int16_t calc_sm_position(uint8_t pwm)
      run_ppos += ((int16_t)inj_iac_mat_corr());
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 64) >> 3; //result will be x32
 
-     if (d.sens.frequen > (calc_cl_rpm() + d.param.iac_reg_db))
+     if (d.sens.frequen > (calc_cl_rpm() + (d.param.iac_reg_db*2)))
       SETBIT(chks.flags, CF_REACH_TR);
-     if ((d.sens.frequen < (calc_cl_rpm() + (d.param.iac_reg_db/2))) && CHECKBIT(chks.flags, CF_REACH_TR))
-      chks.strt_mode = 3; //allow closed loop before finishing crank to run transition (abort transition and start closed loop)
+     if ((d.sens.frequen <= calc_cl_rpm()) && CHECKBIT(chks.flags, CF_REACH_TR))
+      chks.strt_mode = 2; //allow closed loop before finishing crank to run transition (abort transition and start closed loop)
      else
-      break;              //use interpolated value (still in mode 2)
+      break;              //use interpolated value (still in mode 1)
     }
    }
-  case 3: //run mode
+
+  case 2: //run mode
    if (CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
    { //closed loop mode
     uint16_t tmr = s_timer_gtc();
-    if ((tmr - chks.rpmreg_t1) < RPMREG_CORR_TIME)
+    if ((tmr - chks.rpmreg_t1) < PGM_GET_BYTE(&fw_data.exdata.iacreg_period))
      break; //not time to call regulator, exit
     chks.rpmreg_t1 = tmr;  //reset timer
 

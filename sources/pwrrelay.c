@@ -70,7 +70,7 @@ static uint8_t clt_is_ready(void)
  {
 #ifdef COOLINGFAN_PWM
   if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM)) //PWM is available and enabled
-   temperature_ok = (d.cool_fan == 0) || (d.sens.temperat <= (d.param.vent_on - TEMPERATURE_MAGNITUDE(3.0)));
+   temperature_ok = (d.cool_fan == 0) || (d.sens.temperat <= d.param.vent_off);
   else //PWM is available, but disabled
    temperature_ok = (d.cool_fan == 0);
 #else

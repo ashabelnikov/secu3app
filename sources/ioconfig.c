@@ -546,6 +546,28 @@ uint8_t iocfg_g_ckpsi(void)           //inverted version
  return !CHECKBIT(PIND, PIND6);
 }
 
+void iocfg_i_map_s(uint8_t value)
+{
+ WRITEBIT(PORTA, PA2, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA2);                 //input
+}
+
+void iocfg_i_map_si(uint8_t value)
+{
+ WRITEBIT(PORTA, PA2, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA2);                 //input
+}
+
+uint8_t iocfg_g_map_s(void)
+{
+ return !!CHECKBIT(PINA, PINA2);
+}
+
+uint8_t iocfg_g_map_si(void)          //inverted version
+{
+ return !CHECKBIT(PINA, PINA2);
+}
+
 #ifdef MCP3204
  #error "MCP3204 supported only in SECU-3i, please compile without SECU3T option"
 #endif
@@ -1538,6 +1560,29 @@ uint8_t iocfg_g_add_i8i(void)          //inverted version
 #else
  return 0; //stub
 #endif
+}
+
+//-----------------------------------------------------------------------------
+void iocfg_i_map_s(uint8_t value)
+{
+ WRITEBIT(PORTA, PA2, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA2);                 //input
+}
+
+void iocfg_i_map_si(uint8_t value)
+{
+ WRITEBIT(PORTA, PA2, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA2);                 //input
+}
+
+uint8_t iocfg_g_map_s(void)
+{
+ return !!CHECKBIT(PINA, PINA2);
+}
+
+uint8_t iocfg_g_map_si(void)          //inverted version
+{
+ return !CHECKBIT(PINA, PINA2);
 }
 
 //-----------------------------------------------------------------------------

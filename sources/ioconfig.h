@@ -112,7 +112,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_GAS_V        16     //!< GAS_V           (input)
 #define IOP_REF_S        17     //!< REF_S           (input)
 #define IOP_CKPS         18     //!< CKPS            (input)
-#define IOP_RESERVED0    19     //!< reserved slot   ()
+#define IOP_MAP_S        19     //!< MAP_S           (input)
 #define IOP_RESERVED1    20     //!< reserved slot   ()
 #define IOP_RESERVED2    21     //!< reserved slot   ()
 #define IOP_RESERVED3    22     //!< reserved slot   ()
@@ -183,7 +183,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_VTACHOM      86     //!< VTACHOM         (output)
 #define IOP_INPUT1       87     //!< INPUT1          (input)
 #define IOP_INPUT2       88     //!< INPUT2          (input)
-#define IOP_RESERVED42   89     //!< reserved plug   ()
+#define IOP_MAF          89     //!< MAF             (input)
 #define IOP_RESERVED43   90     //!< reserved plug   ()
 #define IOP_RESERVED44   91     //!< reserved plug   ()
 #define IOP_RESERVED45   92     //!< reserved plug   ()
@@ -278,8 +278,10 @@ void iocfg_i_ckps(uint8_t value);        //!< init CKPS input
 void iocfg_i_ckpsi(uint8_t value);       //!< init CKPS input         (inverted)
 uint8_t iocfg_g_ckps(void);              //!< get CKPS input
 uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
-
-
+void iocfg_i_map_s(uint8_t value);      //!< init MAP_S input
+void iocfg_i_map_si(uint8_t value);     //!< init MAP_S input        (inverted)
+uint8_t iocfg_g_map_s(void);            //!< set  MAP_S input
+uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
 #else //---SECU-3i---
 
 //List all I/O plugs
@@ -322,10 +324,10 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_ADD_I6       35     //!< ADD_I6          (input)    spiadc
 #define IOP_ADD_I7       36     //!< ADD_I7          (input)    spiadc
 #define IOP_ADD_I8       37     //!< ADD_I8          (input)    spiadc
-#define IOP_OILP_I       38     //!< OILP_I          (input)    spi
-#define IOP_GENS_I       39     //!< GENS_I          (input)    spi
+#define IOP_MAP_S        38     //!< MAP_S           (input)
+#define IOP_OILP_I       39     //!< OILP_I          (input)    spi
+#define IOP_GENS_I       40     //!< GENS_I          (input)    spi
 //reserved slots
-#define IOP_RESERVED3    40     //!< reserved slot   ()
 #define IOP_RESERVED4    41     //!< reserved slot   ()
 #define IOP_RESERVED5    42     //!< reserved slot   ()
 #define IOP_RESERVED6    43     //!< reserved slot   ()
@@ -382,7 +384,7 @@ uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
 #define IOP_INPUT1       93     //!< INPUT1          (input)
 #define IOP_INPUT2       94     //!< INPUT2          (input)
 #define IOP_REFPRS_I     95     //!< REFPRS_I        (input)
-#define IOP_RESERVED24   96     //!< reserved plug   ()
+#define IOP_MAF          96     //!< MAF             (input)
 #define IOP_RESERVED25   97     //!< reserved plug   ()
 #define IOP_RESERVED26   98     //!< reserved plug   ()
 #define IOP_RESERVED27   99     //!< reserved plug   ()
@@ -592,6 +594,11 @@ void iocfg_i_add_i8(uint8_t value);      //!< init ADD_I8 input
 void iocfg_i_add_i8i(uint8_t value);     //!< init ADD_I8 input       (inverted)
 uint8_t iocfg_g_add_i8(void);            //!< set  ADD_I8 input
 uint8_t iocfg_g_add_i8i(void);           //!< set  ADD_I8 input       (inverted)
+//MAP_I
+void iocfg_i_map_s(uint8_t value);      //!< init MAP_S input
+void iocfg_i_map_si(uint8_t value);     //!< init MAP_S input        (inverted)
+uint8_t iocfg_g_map_s(void);            //!< set  MAP_S input
+uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
 
 #ifdef MCP3204
 #define SPIADC_CHNUM 4

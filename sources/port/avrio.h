@@ -195,7 +195,7 @@
 #endif
 
 #ifndef PA2
-#define Pa2 PORTA2
+#define PA2 PORTA2
 #endif
 
 #ifndef PA3

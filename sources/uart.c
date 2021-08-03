@@ -491,6 +491,10 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.barocorr_type);
    build_i8h(d.param.func_flags);
    build_i8h(d.param.ve2_map_func);
+   //redundant values:
+   build_i8h(d.param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
+   build_i16h(d.param.inj_cyl_disp);        //used for calculations on SECU-3 Manager side
+   build_i32h(d.param.mafload_const);
    break;
 
   case STARTR_PAR:
@@ -790,6 +794,8 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i8h(0);
 #endif
+
+   build_i16h(d.sens.maf);              //Air flow (g/sec) * 64 from the MAF sensor
    break;
 
   case ADCCOR_PAR:
@@ -988,6 +994,9 @@ void uart_send_packet(uint8_t send_mode)
   build_i8h(d.param.inj_anglespec);
   build_i16h(d.param.fff_const);
   build_i16h(*((uint16_t*)&d.param.inj_min_pw[0]));
+  build_i32h(d.param.inj_maf_const[0]);
+  build_i32h(d.param.inj_maf_const[1]);
+  build_i32h(d.param.mafload_const);
   break;
 #endif
 
@@ -1546,13 +1555,17 @@ uint8_t uart_recept_packet(void)
    d.param.tps_curve_gradient = recept_i16h();
 
    temp = recept_i4h();
-   if (temp < 4)
+   if (temp < 5)
     d.param.load_src_cfg = temp;
 
    d.param.mapsel_uni = recept_i8h();
    d.param.barocorr_type = recept_i8h();
    d.param.func_flags = recept_i8h();
    d.param.ve2_map_func = recept_i8h();
+
+   recept_i8h();  //stub
+   recept_i16h(); //stub
+   d.param.mafload_const = recept_i32h();      //calculated in the SECU-3 Manager
    break;
 
   case STARTR_PAR:
@@ -1729,6 +1742,9 @@ uint8_t uart_recept_packet(void)
   d.param.inj_anglespec = recept_i8h();
   d.param.fff_const = recept_i16h();
   *((uint16_t*)&d.param.inj_min_pw[0]) = recept_i16h();
+  d.param.inj_maf_const[0] = recept_i32h();
+  d.param.inj_maf_const[1] = recept_i32h();
+  d.param.mafload_const = recept_i32h();
   break;
 #endif
 

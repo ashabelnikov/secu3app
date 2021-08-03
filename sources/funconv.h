@@ -466,4 +466,10 @@ int16_t exsens_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
 int16_t injpwcoef_function(uint16_t adcvalue);
 #endif
 
+/** Calculates MAF flow using a lookup table.
+ * \param adcvalue - voltage from the MAF sensor
+ * \return Value of flow in g/sec * 64
+ */
+uint16_t calc_maf_flow(uint16_t adcvalue);
+
 #endif //_FUNCONV_H_

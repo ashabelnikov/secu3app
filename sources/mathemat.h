@@ -40,6 +40,8 @@
  */
 int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l, uint8_t m);
 
+uint16_t simple_interpolation_u(uint16_t x,uint16_t a1,uint16_t a2,uint16_t x_s,uint16_t x_l, uint8_t m);
+
 /** f(x,y) liniar interpolation for function with two arguments
  * \param x first argument value
  * \param y second argument value

@@ -192,6 +192,8 @@ typedef struct sensors_t
 
  uint8_t input1;
  uint8_t input2;
+
+ uint16_t maf;                           //! Value of air flow (g/sec) * 64
 }sensors_t;
 
 typedef struct correct_t

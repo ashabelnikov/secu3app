@@ -122,6 +122,8 @@
 #define EGTS_LOOKUP_TABLE_SIZE          17          //!< Size of "exhaust gas temperature vs voltage" map
 #define OPS_LOOKUP_TABLE_SIZE           17          //!< Size of "oil pressure vs voltage" map
 
+#define MAF_FLOW_CURVE_SIZE             64          //!< Size of the MAF's flow curve lookup table
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -451,6 +453,12 @@ typedef struct fw_ex_data_t
   /**Injection PW coefficient vs voltage, value * 4096, range: 0.5...1.5 */
   int16_t injpw_coef[INJPWCOEF_LUT_SIZE];
 
+  /**MAF's flow curve lookup table. Value in g/sec  * 64. Last value - Y axis's range in g/sec */
+  uint16_t maf_curve[MAF_FLOW_CURVE_SIZE+1];
+
+  /**reserved*/
+  uint8_t reserved1[1429];
+
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
@@ -510,7 +518,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[3559];
+  uint8_t reserved[2000];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -693,7 +701,7 @@ typedef struct params_t
 
   uint16_t inj_lambda_dead_band;         //!< lambda switch point dead band
 
-  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - MAP(baro), 2 - TPS, 3 - MAP+TPS)
+  uint8_t  load_src_cfg;                 //!< Engine load source selection (0 - MAP, 1 - MAP(baro), 2 - TPS, 3 - MAP+TPS, 4 - MAF)
 
   uint8_t  idl_to_run_add;               //!< Value (in %) added to IAC position when exiting from closed loop (value * 2)
   uint8_t  rpm_on_run_add;               //!< Value added to target RPM when vehicle starts to run (min-1, value / 10)
@@ -787,11 +795,14 @@ typedef struct params_t
 
   uint16_t  iac_reg_db;                  //!< IAC regulator's dead band (rpm).
 
+  uint32_t inj_maf_const[2];             //!< Constant used to calculate inj. PW with MAF.  Const = (((120 * 18750000) / Ifr ) * (Nbnk / (Nsq * Ninj))) / 64
+  uint32_t mafload_const;                //!< Constant used to calculate synthetic load based on MAF. Const = (((101.35 * 64 * 128) * 120) / (64 * 0.0012041)) / (CYL_DISP * Ncyl), where CYL_DISP is in cc units
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[174];
+  uint8_t  reserved[162];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

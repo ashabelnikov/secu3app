@@ -132,6 +132,19 @@ static int16_t calc_synthetic_load(void)
  return load;
 }
 
+/**Calculates synthetic load value basing on MAF and RPM (scaling factor*MAF/RPM)*/
+static uint16_t calc_maf_load(void)
+{
+ if (d.sens.inst_frq > 10)
+#if defined(FUEL_INJECT)
+  return (((uint32_t)d.param.mafload_const/inj_airtemp_corr(0)) * d.sens.maf) / d.sens.inst_frq;
+#else
+  return (((uint32_t)d.param.mafload_const/128) * d.sens.maf) / d.sens.inst_frq; ///don't use air density correction
+#endif
+ else
+  return 0;
+}
+
 /** Get upper load value
  * Uses d ECU data structure
  * \return value of upper load
@@ -177,8 +190,10 @@ void calc_lookup_args(void)
   d.load = d.sens.map;
  else if (d.param.load_src_cfg == 2) //Alpha-N
   d.load = d.sens.tps << 5;
- else                                //mixed (MAP+TPS)
+ else if (d.param.load_src_cfg == 3) //mixed (MAP+TPS)
   d.load = calc_synthetic_load();
+ else
+  d.load = calc_maf_load();          //MAF
 
  if (CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID))
  { //use grid table
@@ -750,6 +765,11 @@ uint16_t inj_base_pw(void)
    uint16_t map = (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul)==2) ? PRESSURE_MAGNITUDE(101.5) : d.sens.map;
    pw32 = (((uint32_t)(map >> nsht)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
   }
+ }
+ else if (d.param.load_src_cfg == 4) //MAF
+ {
+  pw32 = ((((uint32_t)d.sens.maf) * d.param.inj_maf_const[d.sens.gas]) / d.sens.inst_frq);
+  nsht = 4;  //no shift
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
  {
@@ -1627,3 +1647,17 @@ int16_t injpwcoef_function(uint16_t adcvalue)
         (i * v_step) + v_start, v_step, 4) >> 2;
 }
 #endif //SECU-3i
+
+uint16_t calc_maf_flow(uint16_t adcvalue)
+{
+ int16_t i, i1;
+ adcvalue*=32;
+
+ i = adcvalue / VOLTAGE_MAGNITUDE(0.07936*32); //value / step
+
+ if (i >= MAF_FLOW_CURVE_SIZE-1) i = i1 = MAF_FLOW_CURVE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.exdata.maf_curve[i]), PGM_GET_WORD(&fw_data.exdata.maf_curve[i1]),
+        (i * VOLTAGE_MAGNITUDE(0.07936*32)), VOLTAGE_MAGNITUDE(0.07936*32), 1)) >> 0;
+}

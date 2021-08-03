@@ -21,7 +21,7 @@
 
 /** \file measure.c
  * \author Alexey A. Shabelnikov
- * Implementation pf processing (averaging, corrections etc) of data comes from ADC and sensors
+ * Implementation of processing (averaging, corrections etc) of data comes from ADC and sensors
  */
 
 #include "port/avrio.h"
@@ -143,7 +143,10 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 
 #ifdef SEND_INST_VAL
  rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : adc_compensate(_RESDIV(rawval, 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
- d.sens.inst_map = map_adc_to_kpa(rawval, d.param.map_curve_offset, d.param.map_curve_gradient);
+ if (IOCFG_CHECK(IOP_MAP_S))
+  d.sens.inst_map = map_adc_to_kpa(rawval, d.param.map_curve_offset, d.param.map_curve_gradient);
+ else
+  d.sens.inst_map = 0;
 #endif
 
  rawval = update_buffer(BAT_INPIDX, adc_get_ubat_value());
@@ -223,7 +226,10 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 {
  int16_t rawval;
  d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(MAP_INPIDX), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
- d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
+ if (IOCFG_CHECK(IOP_MAP_S))
+  d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
+ else
+  d.sens.map = 0;
 
  d.sens.voltage_raw = adc_compensate(average_buffer(BAT_INPIDX) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
  d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->vbat_v_flg) ? PGM_GET_WORD(&cesd->vbat_v_em) : d.sens.voltage_raw);
@@ -395,6 +401,29 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  d.sens.lambda1 = d.sens.add_i1; //in SECU-3T only ADD_I1 can be used for lambda sensor
 #endif
 #endif
+
+ //select an input for MAF sensor
+ if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_s || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_si)
+  d.sens.maf = calc_maf_flow(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw); //MAP input selected as input for MAF sensor
+#ifndef SECU3T
+#ifdef TPIC8101
+ else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4i)
+  d.sens.maf = calc_maf_flow(d.sens.add_i4); //ADD_I4 input selected as input for MAF sensor
+#endif
+#ifdef MCP3204
+ else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i5i)
+  d.sens.maf = calc_maf_flow(d.sens.add_i5); //ADD_I5 input selected as input for MAF sensor
+ else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i6i)
+  d.sens.maf = calc_maf_flow(d.sens.add_i6); //ADD_I6 input selected as input for MAF sensor
+ else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i7i)
+  d.sens.maf = calc_maf_flow(d.sens.add_i7); //ADD_I7 input selected as input for MAF sensor
+ else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i8i)
+  d.sens.maf = calc_maf_flow(d.sens.add_i8); //ADD_I8 input selected as input for MAF sensor
+#endif
+#endif
+ else
+  d.sens.maf = 0; //input is not selected
+
 }
 
 //Call this function for making preliminary measurements before starting of engine. Call it only after

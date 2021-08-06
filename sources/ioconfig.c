@@ -1324,24 +1324,24 @@ uint8_t iocfg_g_igni(void)              //!< get IGN_I input value   (inverted)
  return !CHECKBIT(spi_PORTA, 3);
 }
 //-----------------------------------------------------------------------------
-void iocfg_i_cond_i(uint8_t value)      //!< init IGN_I input
+void iocfg_i_cond_i(uint8_t value)      //!< init COND_I input
 {
  WRITEBIT(spi_GPPUA, 2, value);         //controlls pullup resistor
  SETBIT(spi_IODIRA, 2);                 //input
 }
 
-void iocfg_i_cond_ii(uint8_t value)     //!< init IGN_I input        (inverted)
+void iocfg_i_cond_ii(uint8_t value)     //!< init COND_I input        (inverted)
 {
  WRITEBIT(spi_GPPUA, 2, value);         //controlls pullup resistor
  SETBIT(spi_IODIRA, 2);                 //input
 }
 
-uint8_t iocfg_g_cond_i(void)            //!< get IGN_I input value
+uint8_t iocfg_g_cond_i(void)            //!< get COND_I input value
 {
  return !!CHECKBIT(spi_PORTA, 2);
 }
 
-uint8_t iocfg_g_cond_ii(void)           //!< get IGN_I input value   (inverted)
+uint8_t iocfg_g_cond_ii(void)           //!< get COND_I input value   (inverted)
 {
  return !CHECKBIT(spi_PORTA, 2);
 }

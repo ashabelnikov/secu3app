@@ -341,7 +341,7 @@ ISR(ADC_vect)
 
 int16_t adc_compensate(int16_t adcvalue, uint16_t factor, int32_t correction)
 {
- return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
+  return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
 }
 
 uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)

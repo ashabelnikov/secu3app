@@ -454,10 +454,10 @@ typedef struct fw_ex_data_t
   int16_t injpw_coef[INJPWCOEF_LUT_SIZE];
 
   /**MAF's flow curve lookup table. Value in g/sec  * 64. Last value - Y axis's range in g/sec */
-  uint16_t maf_curve[MAF_FLOW_CURVE_SIZE+1];
+  uint16_t maf_curve[MAF_FLOW_CURVE_SIZE+1+2];
 
   /**reserved*/
-  uint8_t reserved1[1429];
+  uint8_t reserved1[1425];
 
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
@@ -512,13 +512,14 @@ typedef struct fw_ex_data_t
   uint8_t  cold_eng_int;  //!Use only integral component on cold engine (1), use regular algorithm (0)
   uint8_t  iacreg_period; //!Period between calls of IAC's closed loop regulator, value in 0.01s units
   int16_t  iacreg_turn_on_temp;//!< IAC closed loop regulator turn on temperature
+  uint8_t  vent_maxband;  //!< used with air conditioner
 
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[2000];
+  uint8_t reserved[1999];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -798,11 +799,13 @@ typedef struct params_t
   uint32_t inj_maf_const[2];             //!< Constant used to calculate inj. PW with MAF.  Const = (((120 * 18750000) / Ifr ) * (Nbnk / (Nsq * Ninj))) / 64
   uint32_t mafload_const;                //!< Constant used to calculate synthetic load based on MAF. Const = (((101.35 * 64 * 128) * 120) / (64 * 0.0012041)) / (CYL_DISP * Ncyl), where CYL_DISP is in cc units
 
+  uint8_t adc_flags;
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[162];
+  uint8_t  reserved[161];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

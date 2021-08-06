@@ -34,6 +34,7 @@
 #include "ioconfig.h"
 #include "ventilator.h"
 #include "vstimer.h"
+#include "magnitude.h"
 
 /**Turns on/off cooling fan
  * This is redundant definitions (see ioconfig.c), but it is opportunity to
@@ -58,6 +59,11 @@ uint16_t vent_tmr;
 uint8_t vent_tmrexp;
 uint16_t vent_tmr1;             //!< used for delay
 uint8_t vent_delst;
+#ifdef AIRCONDIT
+uint8_t acss_state = 0;         //!< State machine used for soft start (air conditioner)
+uint16_t acss_tmr;
+uint8_t acss_duty;
+#endif
 
 #if defined(COOLINGFAN_PWM) && !defined(SECU3T)
 //see vstimer.c for more information
@@ -86,6 +92,11 @@ void vent_init_state(void)
  vent_tmrexp = 0;
  vent_tmr1 = 0;
  vent_delst = 0;
+#ifdef AIRCONDIT
+ acss_state = 0;
+ acss_tmr = s_timer_gtc();
+ acss_duty = 0;
+#endif
 }
 
 #ifdef COOLINGFAN_PWM
@@ -228,14 +239,43 @@ void vent_control(void)
   }
  }
  else
- {
+ { //PWM
   uint16_t d_val;
   int16_t dd = d.param.vent_on - d.sens.temperat;
-  if (dd < 0
+
 #ifdef AIRCONDIT
-     || d.cond_req_fan  //always fully turn on cooling fan if request from air conditioner exists
+  //smoothly turn on cooling fan if request from air conditioner exists
+   if (0==d.cond_req_fan)
+   {
+    acss_state = 0;
+    acss_duty = 0;
+   }
+   else
+   {
+    if (0==acss_state)
+    { //start soft starting
+     acss_tmr = s_timer_gtc();
+     acss_duty = PGM_GET_BYTE(&fw_data.exdata.vent_minband);
+     acss_state++;  //=1
+    }
+    else if (1==acss_state)
+    { //transition
+     uint16_t period = SYSTIM_MAGS(3.0) / (PGM_GET_BYTE(&fw_data.exdata.vent_maxband) - PGM_GET_BYTE(&fw_data.exdata.vent_minband));
+     if ((s_timer_gtc() - acss_tmr) > period)
+     {
+      acss_tmr = s_timer_gtc();
+      acss_duty++;  //=2
+     }
+     if (acss_duty >= PGM_GET_BYTE(&fw_data.exdata.vent_maxband))
+      acss_state++; //=3
+    }
+   }
+  int16_t aa = PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps)-acss_duty;
+  if (aa < dd) //select duty from air conditioner only if it greater than duty from temperature
+   dd = aa;
 #endif
-     )
+
+  if (dd < 0)
    dd = 0;         //restrict to max.
   if (vent_tmrexp || dd > (PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps)-PGM_GET_BYTE(&fw_data.exdata.vent_minband)))
   {

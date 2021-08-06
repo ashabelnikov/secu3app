@@ -585,9 +585,9 @@ void uart_send_packet(uint8_t send_mode)
              | _CBV16(d.sys_locked, 10)  // system locked flag (immobilizer)
 #ifndef SECU3T
              | _CBV16(d.sens.ign_i, 11)  // IGN_I flag
-             | _CBV16(d.sens.cond_i, 12) // COND_I flag
              | _CBV16(d.sens.epas_i, 13) // EPAS_I flag
 #endif
+             | _CBV16(d.sens.cond_i, 12) // COND_I flag (available also in the SECU3T)
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
              | _CBV16(d.aftstr_enr, 14)    // after start enrichment flag
@@ -799,6 +799,7 @@ void uart_send_packet(uint8_t send_mode)
    break;
 
   case ADCCOR_PAR:
+   build_i8h(d.param.adc_flags);
    build_i16h(d.param.map_adc_factor);
    build_i32h(d.param.map_adc_correction);
    build_i16h(d.param.ubat_adc_factor);
@@ -1581,6 +1582,7 @@ uint8_t uart_recept_packet(void)
    break;
 
   case ADCCOR_PAR:
+   d.param.adc_flags          = recept_i8h();
    d.param.map_adc_factor     = recept_i16h();
    d.param.map_adc_correction = recept_i32h();
    d.param.ubat_adc_factor    = recept_i16h();

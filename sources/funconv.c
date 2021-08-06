@@ -1650,6 +1650,7 @@ int16_t injpwcoef_function(uint16_t adcvalue)
 
 uint16_t calc_maf_flow(uint16_t adcvalue)
 {
+/*
  int16_t i, i1;
  adcvalue*=32;
 
@@ -1660,4 +1661,26 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
 
  return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.exdata.maf_curve[i]), PGM_GET_WORD(&fw_data.exdata.maf_curve[i1]),
         (i * VOLTAGE_MAGNITUDE(0.07936*32)), VOLTAGE_MAGNITUDE(0.07936*32), 1)) >> 0;
+*/
+
+ int16_t i, i1;
+ adcvalue*=32;
+
+ //Voltage value at the start of axis in ADC discretes
+ uint16_t v_start = PGM_GET_WORD(&fw_data.exdata.maf_curve[MAF_FLOW_CURVE_SIZE+1]) * 32;
+ //Voltage value at the end of axis in ADC discretes
+ uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.maf_curve[MAF_FLOW_CURVE_SIZE+2]) * 32;
+
+ uint16_t v_step = (v_end - v_start) / (MAF_FLOW_CURVE_SIZE - 1);
+
+ if (adcvalue < v_start)
+  adcvalue = v_start;
+
+ i = (adcvalue - v_start) / v_step;
+
+ if (i >= MAF_FLOW_CURVE_SIZE-1) i = i1 = MAF_FLOW_CURVE_SIZE-1;
+ else i1 = i + 1;
+
+ return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.exdata.maf_curve[i]), PGM_GET_WORD(&fw_data.exdata.maf_curve[i1]),
+        (i * v_step) + v_start, v_step, 1)) >> 0;
 }

@@ -665,10 +665,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .iac_reg_db =                  10,                  //10 min-1
 
 
-  .inj_maf_const =              {30947, 40994},       //(((120 * 18750000) / 142g) * (1 / (2 * 4))) / 64, petrol density is 0.71 g/cc, 1bank,2squirts,4injectors
+  .inj_maf_const =               {30947, 40994},      //(((120 * 18750000) / 142g) * (1 / (2 * 4))) / 64, petrol density is 0.71 g/cc, 1bank,2squirts,4injectors
                                                       //(((120 * 18750000) / 107.2g) * (1 / (2 * 4))) / 64, LPG density is 0.536 g/cc, 1bank,2squirts,4injectors
-  .mafload_const =              861909,               //(((101.35 * 64 * 128) * 120) / (64 * 0.0012041)) / (375cc * 4), 4cyl
+  .mafload_const =               861909,              //(((101.35 * 64 * 128) * 120) / (64 * 0.0012041)) / (375cc * 4), 4cyl
 
+
+  .adc_flags =                   1,                   //multilpy ADC offset by corr. factor
 
   .reserved =                    {0},
   .crc =                         0
@@ -974,7 +976,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _MAF(80.55), _MAF(85.74), _MAF(91.19), _MAF(96.87), _MAF(102.71),_MAF(108.69),_MAF(114.79),_MAF(121.01),
    _MAF(127.37),_MAF(133.87),_MAF(140.53),_MAF(147.39),_MAF(154.51),_MAF(161.95),_MAF(169.78),_MAF(177.90),
    _MAF(186.12),_MAF(194.20),_MAF(202.14),_MAF(210.56),_MAF(220.17),_MAF(231.68),_MAF(246.10),_MAF(261.22),
-   650
+   650, ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
   },
 
   /**reserved*/
@@ -1039,6 +1041,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .cold_eng_int = 1,
   .iacreg_period = 10, //100ms
   .iacreg_turn_on_temp = 200,
+
+  .vent_maxband = 30,
 
   /**reserved bytes*/
   {0}

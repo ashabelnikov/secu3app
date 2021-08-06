@@ -161,7 +161,7 @@ void control_engine_units(void)
  evap_control(); //canister purge valve control
 #endif
 
-#if defined(AIRCONDIT) && !defined(SECU3T)
+#if defined(AIRCONDIT)
  aircond_control(); //air conditioner control
 #endif
 }

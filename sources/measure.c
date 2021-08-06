@@ -115,9 +115,9 @@ static uint16_t average_buffer(uint8_t idx)
 void meas_init_ports(void)
 {
  IOCFG_INIT(IOP_GAS_V, 0);    //don't use internal pullup resistor
+ IOCFG_INIT(IOP_COND_I, 0);   //don't use internal pullup resistor
 #ifndef SECU3T //SECU-3i
  IOCFG_INIT(IOP_IGN, 0);      //don't use internal pullup resistor
- IOCFG_INIT(IOP_COND_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_EPAS_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_OILP_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GENS_I, 0);   //don't use internal pullup resistor
@@ -546,10 +546,10 @@ void meas_take_discrete_inputs(void)
  d.sens.generator_ok = IOCFG_GET(IOP_GENS_I); //generator status
 
  d.sens.ign_i = IOCFG_GET(IOP_IGN);
- d.sens.cond_i = IOCFG_GET(IOP_COND_I);
  d.sens.epas_i = IOCFG_GET(IOP_EPAS_I);
 #endif
 
+ d.sens.cond_i = IOCFG_GET(IOP_COND_I);
  d.sens.input1 = IOCFG_GET(IOP_INPUT1);
  d.sens.input2 = IOCFG_GET(IOP_INPUT2);
 }

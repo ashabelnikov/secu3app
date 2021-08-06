@@ -126,9 +126,9 @@ typedef struct sensors_t
  uint8_t generator_ok;                   //!< Flag.1 - dynamo generator is OK, 0 - failure
 
  uint8_t ign_i;
- uint8_t cond_i;
  uint8_t epas_i;
 #endif
+ uint8_t cond_i;
 
  //raw values of sensors (ADC discretes with compensated errors)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor

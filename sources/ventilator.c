@@ -237,6 +237,7 @@ void vent_control(void)
    vent_delst = 0;
    d.vent_req_on = 0;
   }
+  d.vent_duty = 0;
  }
  else
  { //PWM
@@ -285,7 +286,8 @@ void vent_control(void)
   else
    d.cool_fan = 1; //turned on
 
-  //TODO: implement kick on turn on
+  //save duty in % for later display (1 discrete = 0.5%)
+  d.vent_duty = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 200) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
 
 #ifndef SECU3T
   if (IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2i ||

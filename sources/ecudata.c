@@ -131,6 +131,7 @@ struct ecudata_t d =
 ,.iac_closed_loop = 0
 ,.iac_in_deadband = 0
 #endif
+,.vent_duty = 0
 };
 
 #ifdef REALTIME_TABLES

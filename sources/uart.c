@@ -796,6 +796,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 
    build_i16h(d.sens.maf);              //Air flow (g/sec) * 64 from the MAF sensor
+   build_i8h(d.vent_duty);              //PWM duty of cooling fan
    break;
 
   case ADCCOR_PAR:

@@ -324,6 +324,8 @@ typedef struct ecudata_t
  uint8_t iac_closed_loop;               //!< Flag. Indicates closed loop mode for IAC
  uint8_t iac_in_deadband;               //!< Flag. Indicates that IAC regulator is in dead band of error.
 #endif
+
+ uint8_t vent_duty;                    //PWM duty of coolong fan (value in % * 2)
 }ecudata_t;
 
 

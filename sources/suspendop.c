@@ -121,6 +121,7 @@ void sop_execute_operations(void)
   if (!uart_is_sender_busy())
   {
    _AB(d.op_comp_code, 0) = OPCODE_EEPROM_PARAM_SAVE;
+   _AB(d.op_comp_code, 1) = 0;      //not used
    uart_send_packet(OP_COMP_NC);    //sender become busy now
 
    //remove this operation from list because it has already completed
@@ -145,6 +146,7 @@ void sop_execute_operations(void)
   if (!uart_is_sender_busy())
   {
    _AB(d.op_comp_code, 0) = OPCODE_CE_SAVE_ERRORS;
+   _AB(d.op_comp_code, 1) = 0;      //not used
    uart_send_packet(OP_COMP_NC);    //sender become busy now
 
    //remove this operation from list because it has already completed
@@ -267,6 +269,7 @@ void sop_execute_operations(void)
   if (!uart_is_sender_busy())
   {
    _AB(d.op_comp_code, 0) = OPCODE_DIAGNOST_ENTER;
+   _AB(d.op_comp_code, 1) = 0;      //not used
    uart_send_packet(OP_COMP_NC);    //sender become busy now
    //remove this operation from list because it has already completed
    sop_reset_operation(SOP_SEND_NC_ENTER_DIAG);
@@ -278,6 +281,7 @@ void sop_execute_operations(void)
   if (!uart_is_sender_busy())
   {
    _AB(d.op_comp_code, 0) = OPCODE_DIAGNOST_LEAVE;
+   _AB(d.op_comp_code, 1) = 0;      //not used
    uart_send_packet(OP_COMP_NC);    //sender become busy now
    delay_25ms();       //wait 25ms because of pending UART packet
    wdt_reset_device(); //wait for death :-)

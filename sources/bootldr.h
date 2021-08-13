@@ -53,7 +53,8 @@
  CALL_ADDRESS(SECU3BOOTSTART+0xA); else CALL_ADDRESS(SECU3BOOTSTART+0x14);
 #endif
 #else //M1284
-#define boot_loader_start() CALL_ADDRESS(SECU3BOOTSTART+0x14);
+ #define boot_loader_start() if (0x94F8 == *((uint16_t _PGM *)((SECU3BOOTSTART+0x14)))) \
+ CALL_ADDRESS(SECU3BOOTSTART+0x14); else CALL_ADDRESS(SECU3BOOTSTART+0x60);
 #endif
 
 #endif //_BOOTLDR_H_

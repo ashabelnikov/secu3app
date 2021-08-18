@@ -753,7 +753,7 @@ typedef struct params_t
 
   uint16_t fff_const;                    //!< Constant for calculating frequency value of fuel flow rate (value  = (kf/(1000*60))*65536, e.g kf = 16000)
 
-  uint8_t mapsel_uni;                    //!< Selection of universal outputs used as conditions for selection set map sets (7-4 bits: for gas, 3-0 bits: for petrol). Allowed values: 0,1,2,0xFF, 0xFF means disabled
+  uint8_t mapsel_uni;                    //!< Selection of universal outputs used as conditions for selection set map sets (7-4 bits: for gas, 3-0 bits: for petrol). Allowed values: 0,1,2,3,4,5,0xFF, 0xFF means disabled
 
   uint8_t barocorr_type;                 //!< Values: 0 - not barocorrection, 1 - static corr. using primary MAP, 2 - dynamic corr. using primary MAP, 3 - dynamic corr. using additional MAP (SECU-3i only)
 
@@ -801,11 +801,13 @@ typedef struct params_t
 
   uint8_t adc_flags;
 
+  uint8_t fuelcut_uni;                   //!< Selection of universal output used as condition for fuel cut Allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[161];
+  uint8_t  reserved[160];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

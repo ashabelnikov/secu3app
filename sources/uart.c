@@ -439,6 +439,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.fuelcut_cts_thrd);
    build_i16h(d.param.revlim_lot);
    build_i16h(d.param.revlim_hit);
+   build_i8h(d.param.fuelcut_uni);
    break;
 
   case IDLREG_PAR:
@@ -1502,6 +1503,7 @@ uint8_t uart_recept_packet(void)
    d.param.fuelcut_cts_thrd = recept_i16h();
    d.param.revlim_lot = recept_i16h();
    d.param.revlim_hit = recept_i16h();
+   d.param.fuelcut_uni = recept_i8h();
    break;
 
   case IDLREG_PAR:

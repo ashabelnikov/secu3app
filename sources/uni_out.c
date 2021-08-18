@@ -704,19 +704,20 @@ void uniout_control(void)
  //Process 6 outputs, we process them only if they are active (remapped to real I/O)
  if (d.param.uniout_12lf != 15)
  { //special processing for 1st and 2nd outputs
-  if (IOCFG_CHECK(IOP_UNI_OUT0) || d.param.mapsel_uni != 0xFF)
+  if (IOCFG_CHECK(IOP_UNI_OUT0) || d.param.mapsel_uni != 0xFF || d.param.fuelcut_uni != 0x0F)
   {
    uint8_t state1 = process_output(i++, 0);
    uint8_t state2 = process_output(i++, 0);
    state1 = logic_function(d.param.uniout_12lf, state1, state2);
    d.mapsel_uni0 = d.mapsel_uni1 = state1; //save result for selection of set of maps
+   d.fuelcut_uni = state1; //save result for fuel cut
    IOCFG_SETF(IOP_UNI_OUT0, state1);
   }
  }
  //process remaining outputs
  for(; i < UNI_OUTPUT_NUMBER; ++i)
  {
-  if (IOCFG_CHECK(IOP_UNI_OUT0 + i) || d.param.mapsel_uni != 0xFF)
+  if (IOCFG_CHECK(IOP_UNI_OUT0 + i) || d.param.mapsel_uni != 0xFF || d.param.fuelcut_uni != 0x0F)
   {
    uint8_t result = process_output(i, 1);
    //save result for selection of set of maps
@@ -724,6 +725,8 @@ void uniout_control(void)
     d.mapsel_uni0 = result; //petrol
    if ((d.param.mapsel_uni >> 4)==i)
     d.mapsel_uni1 = result; //gas
+   if (d.param.fuelcut_uni==i)
+    d.fuelcut_uni = result; //fuel cut
   }
  }
 }

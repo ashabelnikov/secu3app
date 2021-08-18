@@ -134,6 +134,11 @@ void fuelcut_control(void)
   state = 0;
  }
 
+#ifdef UNI_OUTPUT
+  if (d.param.fuelcut_uni != 0x0F)
+   d.ie_valve = d.ie_valve && d.fuelcut_uni; //use condition result from selected univ.out (use AND function)
+#endif
+
 #ifdef GD_CONTROL
 revlim:
 #endif

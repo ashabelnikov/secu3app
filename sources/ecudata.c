@@ -132,6 +132,9 @@ struct ecudata_t d =
 ,.iac_in_deadband = 0
 #endif
 ,.vent_duty = 0
+#ifdef UNI_OUTPUT
+,.fuelcut_uni = 0,
+#endif
 };
 
 #ifdef REALTIME_TABLES

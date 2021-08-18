@@ -325,7 +325,12 @@ typedef struct ecudata_t
  uint8_t iac_in_deadband;               //!< Flag. Indicates that IAC regulator is in dead band of error.
 #endif
 
- uint8_t vent_duty;                    //PWM duty of coolong fan (value in % * 2)
+ uint8_t vent_duty;                     //!< PWM duty of coolong fan (value in % * 2)
+
+#ifdef UNI_OUTPUT
+ uint8_t fuelcut_uni;                   //!< for fuel cut
+#endif
+
 }ecudata_t;
 
 

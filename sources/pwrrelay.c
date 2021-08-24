@@ -46,9 +46,10 @@ typedef struct
  uint8_t state;    //!< state mashine for managing of power states
  uint8_t pwrdown;  //!< power-down flag
  uint8_t opmode;   //!< mode of operation
+ uint16_t timer;   //!< powerdown timer
 }pwrstate_t;
 
-pwrstate_t pwrs = {0,0,0};   //!< instance of state variables
+pwrstate_t pwrs = {0,0,0,0};   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
@@ -96,6 +97,7 @@ void pwrrelay_control(void)
   {
    pwrs.state = 1;
    s_timer16_set(powerdown_timeout_counter, 60000); //10 min. max. after ignition turn off
+   pwrs.timer = s_timer_gtc();
   }
 
   //We will wait while temperature is high (only if temperature sensor is enabled
@@ -108,6 +110,7 @@ void pwrrelay_control(void)
 #ifdef GD_CONTROL
       && gasdose_is_ready()
 #endif
+      && ((s_timer_gtc() - pwrs.timer) >= PGM_GET_WORD(&fw_data.exdata.pwron_time))
       ) || s_timer16_is_action(powerdown_timeout_counter) || pwrs.opmode)
    IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay, there is no way back
  }

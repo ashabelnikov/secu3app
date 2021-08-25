@@ -1046,6 +1046,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .vent_maxband = 30,
   .pwron_time = SYSTIM_MAGS(0.1),   //0.1 sec
+  .pwron_time1 = SYSTIM_MAGS(0.1),   //0.1 sec
 
   /**reserved bytes*/
   {0}

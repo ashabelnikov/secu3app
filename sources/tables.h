@@ -514,13 +514,14 @@ typedef struct fw_ex_data_t
   int16_t  iacreg_turn_on_temp;//!< IAC closed loop regulator turn on temperature
   uint8_t  vent_maxband;  //!< used with air conditioner
   uint16_t pwron_time;    //!< Keep power on during this time after switching ignition off. Value in 0.01 sec units
+  uint16_t pwron_time1;   //!< Keep power on (including ignition and fuel injection) during this time after switching ignition off. Value in 0.01 sec units
 
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1997];
+  uint8_t reserved[1995];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

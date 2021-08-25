@@ -47,9 +47,10 @@ typedef struct
  uint8_t pwrdown;  //!< power-down flag
  uint8_t opmode;   //!< mode of operation
  uint16_t timer;   //!< powerdown timer
+ uint16_t timer1;  //!< powerdown timer1
 }pwrstate_t;
 
-pwrstate_t pwrs = {0,0,0,0};   //!< instance of state variables
+pwrstate_t pwrs = {0,0,0,0,0};   //!< instance of state variables
 
 void pwrrelay_init_ports(void)
 {
@@ -118,7 +119,17 @@ void pwrrelay_control(void)
   pwrs.state = 0;
 
  //if IGN input is not available, then we will check board voltage
- pwrs.pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d.sens.voltage < VOLTAGE_MAGNITUDE(4.5));
+ uint8_t pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d.sens.voltage < VOLTAGE_MAGNITUDE(4.5));
+ if (!pwrdown)
+ {
+  pwrs.timer1 = s_timer_gtc();
+  pwrs.pwrdown = 0;
+ }
+ else
+ {
+  if ((s_timer_gtc() - pwrs.timer1) >= PGM_GET_WORD(&fw_data.exdata.pwron_time1))
+   pwrs.pwrdown = 1;
+ }
 }
 
 uint8_t pwrrelay_get_state(void)

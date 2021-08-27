@@ -527,7 +527,7 @@ typedef struct fw_ex_data_t
 /**Describes a universal programmable output*/
 typedef struct uni_output_t
 {
- uint8_t flags;                          //!< MS Nibble - logic function, LS Nibble - flags (inversion)
+ uint8_t flags;                          //!< MS Nibble - logic function, LS Nibble - flags (0,1 bits - inversion, 2nd bit - usage flag),
  uint8_t condition1;                     //!< code of condition 1
  uint8_t condition2;                     //!< code of condition 2
  uint16_t on_thrd_1;                     //!< ON threshold (if value > on_thrd_1)

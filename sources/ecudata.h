@@ -301,11 +301,6 @@ typedef struct ecudata_t
  uint8_t  cond_req_fan;                  //!< Flag, indicates request from air conditioner to turn on cooling fan
 #endif
 
-#ifdef UNI_OUTPUT
- uint8_t mapsel_uni0;                   //!< for petrol maps
- uint8_t mapsel_uni1;                   //!< for gas maps
-#endif
-
  uint8_t floodclear;                    //!< Flood clear mode flag
 
  uint8_t cond_state;                    //!< Current state of the air conditioner (0 - off, 1 - on)
@@ -328,7 +323,7 @@ typedef struct ecudata_t
  uint8_t vent_duty;                     //!< PWM duty of coolong fan (value in % * 2)
 
 #ifdef UNI_OUTPUT
- uint8_t fuelcut_uni;                   //!< for fuel cut
+ uint8_t uniout[UNI_OUTPUT_NUMBER];     //!< states of universal outputs
 #endif
 
 }ecudata_t;

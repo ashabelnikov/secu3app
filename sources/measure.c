@@ -509,7 +509,7 @@ void meas_take_discrete_inputs(void)
  {
 #ifdef UNI_OUTPUT
   if ((d.param.mapsel_uni & 0xF0) != 0xF0)
-   mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
+   mapsel0 = d.uniout[d.param.mapsel_uni >> 4]; //use condition result from selected univ.output instead
 #endif
   d.fn_dat = mapsel0 ? &fw_data.tables[1] : &fw_data.tables[d.param.fn_gas];
  }
@@ -517,7 +517,7 @@ void meas_take_discrete_inputs(void)
  {
 #ifdef UNI_OUTPUT
   if ((d.param.mapsel_uni & 0x0F) != 0x0F)
-   mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
+   mapsel0 = d.uniout[d.param.mapsel_uni & 0x0F]; //use condition result from selected univ.output instead
 #endif
   d.fn_dat = mapsel0 ? &fw_data.tables[0] : &fw_data.tables[d.param.fn_gasoline];
  }
@@ -527,7 +527,7 @@ void meas_take_discrete_inputs(void)
  {
 #ifdef UNI_OUTPUT
   if ((d.param.mapsel_uni & 0xF0) != 0xF0)
-   mapsel0 = d.mapsel_uni1; //use condition result from selected univ.output instead
+   mapsel0 = d.uniout[d.param.mapsel_uni >> 4]; //use condition result from selected univ.output instead
 #endif
   select_table_set(mapsel0 ? 1 : d.param.fn_gas);          //on gas
  }
@@ -535,7 +535,7 @@ void meas_take_discrete_inputs(void)
  {
 #ifdef UNI_OUTPUT
   if ((d.param.mapsel_uni & 0x0F) != 0x0F)
-   mapsel0 = d.mapsel_uni0; //use condition result from selected univ.output instead
+   mapsel0 = d.uniout[d.param.mapsel_uni & 0x0F]; //use condition result from selected univ.output instead
 #endif
   select_table_set(mapsel0 ? 0 : d.param.fn_gasoline);     //on petrol
  }

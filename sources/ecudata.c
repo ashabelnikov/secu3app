@@ -112,11 +112,6 @@ struct ecudata_t d =
  .cond_req_fan = 0
 #endif
 
-#ifdef UNI_OUTPUT
-,.mapsel_uni0 = 0,
- .mapsel_uni1 = 0
-#endif
-
  ,.floodclear = 0
  ,.cond_state = 0,
  .vent_req_on = 0
@@ -133,7 +128,7 @@ struct ecudata_t d =
 #endif
 ,.vent_duty = 0
 #ifdef UNI_OUTPUT
-,.fuelcut_uni = 0,
+,.uniout = {0}
 #endif
 };
 

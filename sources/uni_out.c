@@ -689,7 +689,7 @@ static uint8_t process_output(uint8_t index, uint8_t action)
 
  //apply inversion flags
  state1^=p_out_param->flags & 0x1;
- state2^=(p_out_param->flags >> 1) & 0x2;
+ state2^=(p_out_param->flags >> 1) & 0x1;
 
  //apply specified logic function and update output state
  state1 = logic_function(p_out_param->flags >> 4, state1, state2);
@@ -704,30 +704,30 @@ void uniout_control(void)
  //Process 6 outputs, we process them only if they are active (remapped to real I/O)
  if (d.param.uniout_12lf != 15)
  { //special processing for 1st and 2nd outputs
-  if (IOCFG_CHECK(IOP_UNI_OUT0) || d.param.mapsel_uni != 0xFF || d.param.fuelcut_uni != 0x0F)
+  if (IOCFG_CHECK(IOP_UNI_OUT0) || ((d.param.uni_output[0].flags & 0x4) && (d.param.uni_output[1].flags & 0x4)))
   {
    uint8_t state1 = process_output(i++, 0);
    uint8_t state2 = process_output(i++, 0);
    state1 = logic_function(d.param.uniout_12lf, state1, state2);
-   d.mapsel_uni0 = d.mapsel_uni1 = state1; //save result for selection of set of maps
-   d.fuelcut_uni = state1; //save result for fuel cut
+   d.uniout[0] = state1; //save result for further processing
+   d.uniout[1] = 0;      //save result
    IOCFG_SETF(IOP_UNI_OUT0, state1);
+  }
+  else
+  {
+   d.uniout[0] = 0;
+   d.uniout[1] = 0;
   }
  }
  //process remaining outputs
  for(; i < UNI_OUTPUT_NUMBER; ++i)
  {
-  if (IOCFG_CHECK(IOP_UNI_OUT0 + i) || d.param.mapsel_uni != 0xFF || d.param.fuelcut_uni != 0x0F)
+  if (IOCFG_CHECK(IOP_UNI_OUT0 + i) || (d.param.uni_output[i].flags & 0x4))
   {
-   uint8_t result = process_output(i, 1);
-   //save result for selection of set of maps
-   if ((d.param.mapsel_uni & 0xF)==i)
-    d.mapsel_uni0 = result; //petrol
-   if ((d.param.mapsel_uni >> 4)==i)
-    d.mapsel_uni1 = result; //gas
-   if (d.param.fuelcut_uni==i)
-    d.fuelcut_uni = result; //fuel cut
+   d.uniout[i] = process_output(i, 1); //save result for further processing
   }
+  else
+   d.uniout[i] = 0;
  }
 }
 

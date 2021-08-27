@@ -798,6 +798,17 @@ void uart_send_packet(uint8_t send_mode)
 
    build_i16h(d.sens.maf);              //Air flow (g/sec) * 64 from the MAF sensor
    build_i8h(d.vent_duty);              //PWM duty of cooling fan
+
+#ifdef UNI_OUTPUT
+   build_i8h(_CBV8(d.uniout[0], 0)      //states of universal outputs
+            |_CBV8(d.uniout[1], 1)
+            |_CBV8(d.uniout[2], 2)
+            |_CBV8(d.uniout[3], 3)
+            |_CBV8(d.uniout[4], 4)
+            |_CBV8(d.uniout[5], 5));
+#else
+   build_i8h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

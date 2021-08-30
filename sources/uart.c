@@ -1437,19 +1437,22 @@ uint8_t uart_recept_packet(void)
  if (uart.recv_size_c < 3)
   return 0; //error, do nothing (just ignore damaged packet)
 
- uint16_t checksum = (uart.recv_buf_c[uart.recv_size_c-2] << 8) | uart.recv_buf_c[uart.recv_size_c-1];
- uart.recv_size_c-=2; //2 bytes for check sum
+ if (descriptor!=LZBLHS) //disable checksum for LZBLHS packets because a lot of users already have units with boot loaders not supporting checksum
+ {
+  uint16_t checksum = (uart.recv_buf_c[uart.recv_size_c-2] << 8) | uart.recv_buf_c[uart.recv_size_c-1];
+  uart.recv_size_c-=2; //2 bytes for check sum
 
- //reset checksum before it will be updated with incoming data
- RST_CHKSUM();
+  //reset checksum before it will be updated with incoming data
+  RST_CHKSUM();
 
- //calculate checksum for whole packet (except two last bytes of checksum)
- uint8_t chkidx = 0;
- for(; chkidx < uart.recv_size_c; ++chkidx)
-  UPD_CHKSUM(uart.recv_buf_c[chkidx]);
+  //calculate checksum for whole packet (except two last bytes of checksum)
+  uint8_t chkidx = 0;
+  for(; chkidx < uart.recv_size_c; ++chkidx)
+   UPD_CHKSUM(uart.recv_buf_c[chkidx]);
 
- if (checksum!=GET_CHKSUM())
-  return 0; //error, packet corrupted, don't accept it
+  if (checksum!=GET_CHKSUM())
+   return 0; //error, packet corrupted, don't accept it
+ }
 #endif
 
 // TODO: implement check of uart_recv_size for each packet

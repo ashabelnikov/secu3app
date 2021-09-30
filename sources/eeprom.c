@@ -80,10 +80,13 @@ uint8_t eeprom_is_idle(void)
  return (eewd.eews) ? 0 : 1;
 }
 
+uint8_t eeprom_get_pending_opcode(void)
+{
+ return eewd.opcode;
+}
+
 /**Interrupt handler from EEPROM. Each time when state machine finishes we set address
  * register to zero.
- * (Обработчик прерывания от EEPROM при завершении работы автомата всегда заносим в
- * регистр адреса - адрес нулевой ячейки).
  */
 ISR(EE_RDY_vect)
 {
@@ -104,7 +107,7 @@ ISR(EE_RDY_vect)
    ++eewd.sram_addr;
    ++eewd.ee_addr;
    if (--eewd.count==0)
-    eewd.eews = 2;   //последний байт запущен на запись.
+    eewd.eews = 2;   //started to write last byte
    else
     eewd.eews = 1;
    break;
@@ -113,6 +116,7 @@ ISR(EE_RDY_vect)
    EEAR=0x000;      //this will help to prevent corruption of EEPROM
    eewd.eews = 0;
    eewd.completed_opcode = eewd.opcode;
+   eewd.opcode = 0;
    break;
  }//switch
 }

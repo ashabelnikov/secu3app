@@ -326,6 +326,10 @@ typedef struct ecudata_t
  uint8_t uniout[UNI_OUTPUT_NUMBER];     //!< states of universal outputs
 #endif
 
+#ifdef FUEL_INJECT
+ int8_t inj_ltft[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Long Term Fuel Trim map, value * 512 (range -0.247...+0.247)
+ uint16_t inj_ltft_crc;                //!< used when saving to EEPROM, must follow inj_ltft array!
+#endif
 }ecudata_t;
 
 

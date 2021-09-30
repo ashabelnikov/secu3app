@@ -79,4 +79,6 @@
 #define   CLTGRD_PAR   '('   //!< used for transferring of CLT grid
 #define   LODGRD_PAR   ')'   //!< used for transferring of load grid
 
+#define    LTFT_DAT    'K'   //!< LTFT map(s)
+
 #endif //_UFCODES_H_

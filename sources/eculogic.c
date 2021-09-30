@@ -275,6 +275,9 @@ static void fuel_calc(void)
  }
 #endif
 
+ if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)!=0)
+  pw = (pw * (512 + calc_ltft())) >> 9;                  //apply LTFT correction
+
  d.inj_pw = finalize_inj_time(&pw);
  d.inj_pw = apply_smooth_fuelcut(d.inj_pw);
  if (!(d.inj_pw > INJPW_MAG(0.1) && !d.fc_revlim && d.eng_running))

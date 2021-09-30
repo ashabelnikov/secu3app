@@ -1330,6 +1330,21 @@ void uart_send_packet(uint8_t send_mode)
    break;
   }
 
+#ifdef FUEL_INJECT
+  case LTFT_DAT:
+  {
+   static uint8_t ltft_index = 0;
+   build_i8h(0); //reserved (map Id)
+   build_i8h(ltft_index*INJ_VE_POINTS_F); //cell address
+   build_rb((uint8_t*)&d.inj_ltft[ltft_index][0], INJ_VE_POINTS_F); //16 bytes per packet (row), INJ_VE_POINTS_L rows
+   if (ltft_index >= INJ_VE_POINTS_L-1 )
+    ltft_index = 0;
+   else
+    ++ltft_index;
+   break;
+  }
+#endif
+
 #ifdef DEBUG_VARIABLES
   case DBGVAR_DAT:
    {
@@ -1997,6 +2012,9 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
 #endif
 #ifdef DIAGNOSTICS
   case DIAGINP_DAT:
+#endif
+#ifdef FUEL_INJECT
+  case LTFT_DAT:
 #endif
   case SILENT:
   case LZBLHS:

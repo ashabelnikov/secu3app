@@ -516,7 +516,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .bt_flags =                    _BV(BTF_SET_BBR) | _BV(BTF_CHK_FWCRC)
 #ifndef SECU3T
-| _BV(BTF_BT_TYPE) | _BV(BTF_USE_BT)
+| _BV(BTF_BT_TYPE0) | _BV(BTF_USE_BT)
 #endif
 ,
   .ibtn_keys =                   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
@@ -1047,6 +1047,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_maxband = 30,
   .pwron_time = SYSTIM_MAGS(0.1),   //0.1 sec
   .pwron_time1 = SYSTIM_MAGS(0.1),   //0.1 sec
+
+  .ltft_mode = 0,      //LTFT is off
+  .ltft_learn_clt = TEMPERATURE_MAGNITUDE(90.0), //90°C
+  .ltft_cell_band = 51, //~20%
+  .ltft_stab_time = 10, //!< 100ms
+  .ltft_learn_grad = 13, //~0.05
 
   /**reserved bytes*/
   {0}

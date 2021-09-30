@@ -58,4 +58,14 @@ uint8_t lambda_is_activated(void);
 int16_t lambda_get_stoichval(void);
 #endif
 
+#ifdef FUEL_INJECT
+/** Reset counter of level switches*/
+void lambda_reset_swt_counter(void);
+
+/** Get counter of level switches
+ * \return number of level switches since last call of lambda_reset_swt_counter()
+ */
+uint8_t lambda_get_swt_counter(void);
+#endif
+
 #endif //_LAMBDA_H_

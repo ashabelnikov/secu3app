@@ -61,4 +61,11 @@ void load_specified_tables_into_ram(uint8_t index);
  */
 void reset_eeprom_params(void);
 
+#ifdef FUEL_INJECT
+/** Load LTFT map from EEPROM to RAM
+ * Uses d ECU data structure
+ */
+void load_ltft_tables_into_ram(void);
+#endif
+
 #endif //_PARAMS_H_

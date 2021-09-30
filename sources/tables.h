@@ -141,7 +141,8 @@
 #define BTF_USE_IMM                     2           //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 #define BTF_USE_RESPAR                  3           //!< Use reserve parameters instead of parameters stored in the EEPROM
 #define BTF_CHK_FWCRC                   4           //!< Check firmware CRC (time consuming operation)
-#define BTF_BT_TYPE                     5           //!< Bluetooth chip type: 0 - BC417, 1 - BK3231
+#define BTF_BT_TYPE0                    5           //!< Bluetooth chip type (2 bits): 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31)
+#define BTF_BT_TYPE1                    6           //!< See BTF_BT_TYPE0
 
 //Injection configuration constants
 #define INJCFG_THROTTLEBODY             0           //!< Throttle-body or central injection
@@ -516,12 +517,18 @@ typedef struct fw_ex_data_t
   uint16_t pwron_time;    //!< Keep power on during this time after switching ignition off. Value in 0.01 sec units
   uint16_t pwron_time1;   //!< Keep power on (including ignition and fuel injection) during this time after switching ignition off. Value in 0.01 sec units
 
+  uint8_t  ltft_mode;      //!< 0 - LTFT is turned off, 1 - use only for petrol, 2 - use only for gas, 3 - use for both petrol and gas
+  int16_t  ltft_learn_clt; //!< Temperature threshold for learning, value in 0.25°C units
+  uint8_t  ltft_cell_band; //!< cell band in %, Value 256 corresponds to 100%, e.g. 1 discrete correspons to 0,390625%
+  uint8_t  ltft_stab_time; //!< Learn stability time, value in 0.01 second units
+  uint8_t  ltft_learn_grad; //!< Learning gradient, 256 corresponds to 1.0, range 0...0.99
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1995];
+  uint8_t reserved[1989];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

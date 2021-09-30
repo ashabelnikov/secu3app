@@ -302,6 +302,70 @@ void sop_execute_operations(void)
   }
  }
 
+#ifdef FUEL_INJECT
+ if (sop_is_operation_active(SOP_RESET_LTFT))
+ {
+  //TODO: d.op_actn_code may become overwritten while we are waiting here...
+  if (eeprom_is_idle())
+  {
+   memset(&d.inj_ltft[0][0], 0, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //reset contents of LTFT map in RAM
+
+   d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+   eeprom_start_wr_data(OPCODE_RESET_LTFT, EEPROM_LTFT_TABLES_START, &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+
+   //clear possibly present error because after saving checksum become correct
+   ce_clear_error(ECUERROR_EEPROM_LTFT_BROKEN);
+
+   //remove this operation from list because it has already completed
+   sop_reset_operation(SOP_RESET_LTFT);
+  }
+ }
+
+ if (sop_is_operation_active(SOP_SEND_NC_LTFT_RESET))
+ {
+  //is sender busy?
+  if (!uart_is_sender_busy())
+  {
+   _AB(d.op_comp_code, 0) = OPCODE_RESET_LTFT;
+   _AB(d.op_comp_code, 1) = 0;      //not used
+   uart_send_packet(OP_COMP_NC);    //sender become busy now
+
+   //remove this operation from list because it has already completed
+   sop_reset_operation(SOP_SEND_NC_LTFT_RESET);
+  }
+ }
+
+ if (sop_is_operation_active(SOP_SAVE_LTFT))
+ {
+  //TODO: d.op_actn_code may become overwritten while we are waiting here...
+  if (eeprom_is_idle())
+  {
+   d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+   eeprom_start_wr_data(OPCODE_SAVE_LTFT, EEPROM_LTFT_TABLES_START, &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+
+   //clear possibly present error because after saving checksum become correct
+   ce_clear_error(ECUERROR_EEPROM_LTFT_BROKEN);
+
+   //remove this operation from list because it has already completed
+   sop_reset_operation(SOP_SAVE_LTFT);
+  }
+ }
+
+ if (sop_is_operation_active(SOP_SEND_NC_LTFT_SAVE))
+ {
+  //is sender busy?
+  if (!uart_is_sender_busy())
+  {
+   _AB(d.op_comp_code, 0) = OPCODE_SAVE_LTFT;
+   _AB(d.op_comp_code, 1) = 0;      //not used
+   uart_send_packet(OP_COMP_NC);    //sender become busy now
+
+   //remove this operation from list because it has already completed
+   sop_reset_operation(SOP_SEND_NC_LTFT_SAVE);
+  }
+ }
+#endif
+
  //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
  switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take!
  {
@@ -316,6 +380,16 @@ void sop_execute_operations(void)
 #ifdef REALTIME_TABLES
   case OPCODE_SAVE_TABLSET:
    sop_set_operation(SOP_SEND_NC_TABLSET_SAVED);
+   break;
+#endif
+
+#ifdef FUEL_INJECT
+  case OPCODE_RESET_LTFT:
+   sop_set_operation(SOP_SEND_NC_LTFT_RESET);
+   break;
+
+  case OPCODE_SAVE_LTFT:
+   sop_set_operation(SOP_SEND_NC_LTFT_SAVE);
    break;
 #endif
  }

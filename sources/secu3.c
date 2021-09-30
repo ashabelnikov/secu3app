@@ -77,6 +77,7 @@
 #include "vstimer.h"
 #include "wdt.h"
 #include "grvalve.h"
+#include "ltft.h"
 
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
@@ -442,6 +443,10 @@ MAIN()
  load_specified_tables_into_ram(TABLES_NUMBER - 1);
 #endif
 
+#ifdef FUEL_INJECT
+ load_ltft_tables_into_ram();
+#endif
+
  //perform initialization of all system modules
  init_modules();
 
@@ -528,6 +533,10 @@ MAIN()
   eculogic_system_state_machine();
   //control peripheral devices (actuators)
   control_engine_units();
+#ifdef FUEL_INJECT
+  //call LTFT algorithm
+  ltft_control();
+#endif
 
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)

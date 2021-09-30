@@ -105,6 +105,13 @@ void reset_eeprom_params(void)
  eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t)-sizeof(uint16_t));
  eeprom_write(&crc, EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)-sizeof(uint16_t)), sizeof(uint16_t));
 #endif
+#ifdef FUEL_INJECT
+ //Write default values to LTFT map
+ memset(&d.inj_ltft[0][0], 0, 256); //set to zero all cells
+ crc = crc16((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&d.inj_ltft[0][0], EEPROM_LTFT_TABLES_START, INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, EEPROM_LTFT_TABLES_START+(INJ_VE_POINTS_L*INJ_VE_POINTS_F), sizeof(uint16_t));
+#endif
  //write 4 bytes of magic number identifying platform
  eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
  wdt_reset_device(); //reboot!
@@ -145,6 +152,13 @@ void load_eeprom_params(void)
   eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t)-sizeof(uint16_t));
   eeprom_write(&crc, EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)-sizeof(uint16_t)), sizeof(uint16_t));
 #endif
+#ifdef FUEL_INJECT
+ //Write default values to LTFT map
+ memset(d.inj_ltft, 0, 256); //set to zero all cells
+ crc = crc16((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&d.inj_ltft[0][0], EEPROM_LTFT_TABLES_START, INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, EEPROM_LTFT_TABLES_START+(INJ_VE_POINTS_L*INJ_VE_POINTS_F), sizeof(uint16_t));
+#endif
   //write 4 bytes of magic number identifying platform
   eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
  }
@@ -169,4 +183,17 @@ void load_specified_tables_into_ram(uint8_t index)
  sop_set_operation(SOP_SEND_NC_TABLSET_LOADED);
 }
 
+#endif
+
+#ifdef FUEL_INJECT
+void load_ltft_tables_into_ram(void)
+{
+ uint16_t crc = 0;
+ eeprom_read(&d.inj_ltft[0][0], EEPROM_LTFT_TABLES_START, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //read contents of LTFT map
+ eeprom_read(&crc, EEPROM_LTFT_TABLES_START+(INJ_VE_POINTS_L*INJ_VE_POINTS_F), sizeof(uint16_t)); //read value of checksum (2 bytes)
+ if (crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F)!=crc)
+ { //LTFT table is corrupted!
+  ce_set_error(ECUERROR_EEPROM_LTFT_BROKEN);
+ }
+}
 #endif

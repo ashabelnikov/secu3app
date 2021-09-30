@@ -174,6 +174,19 @@ void process_uart_interface(void)
       sop_set_operation(SOP_SEND_NC_RESET_EEPROM);
      _AB(d.op_actn_code, 0) = 0; //processed
     }
+#ifdef FUEL_INJECT
+    if (_AB(d.op_actn_code, 0) == OPCODE_RESET_LTFT) //LTFT reset command had been received
+    {
+     if (_AB(d.op_actn_code, 1) == 0xBB) //second byte must be 0xBB
+      sop_set_operation(SOP_RESET_LTFT);
+     _AB(d.op_actn_code, 0) = 0; //processed
+    }
+    if (_AB(d.op_actn_code, 0) == OPCODE_SAVE_LTFT) //LTFT save command had been received
+    {
+     sop_set_operation(SOP_SAVE_LTFT);
+     _AB(d.op_actn_code, 0) = 0; //processed
+    }
+#endif
     break;
 
    case CE_SAVED_ERR:

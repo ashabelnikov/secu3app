@@ -49,10 +49,12 @@ typedef struct
  uint8_t fc_delay;               //!< delay in strokes before lambda correction will be turned on after fuel cut off
  uint8_t gasv_prev;              //!< previous value of GAS_V input
  uint8_t ms_mask;                //!< correction mask (used for ms per step)
+ uint8_t last_sign;              //!< 0 - below, 1 - above
+ uint8_t swt_counter;            //!< counter of level switch
 }lambda_state_t;
 
 /**Instance of internal state variables structure*/
-static lambda_state_t ego = {0,0,0,0,0,0,0};
+static lambda_state_t ego = {0,0,0,0,0,0,0,0,0};
 
 void lambda_control(void)
 {
@@ -105,6 +107,12 @@ static uint8_t lambda_iteration(uint8_t mask)
    {
     d.corr.lambda-=d.param.inj_lambda_step_size_m;
     updated = 1;
+#ifdef FUEL_INJECT
+    //update switch counter
+    if (0 == ego.last_sign)
+     ++ego.swt_counter;
+    ego.last_sign = 1;
+#endif
    }
   }
   else if (d.sens.lambda1 /*d.sens.inst_add_i1*/ < int_p_thrd)
@@ -113,6 +121,12 @@ static uint8_t lambda_iteration(uint8_t mask)
    {
     d.corr.lambda+=d.param.inj_lambda_step_size_p;
     updated = 2;
+#ifdef FUEL_INJECT
+    //update switch counter
+    if (1 == ego.last_sign)
+     ++ego.swt_counter;
+    ego.last_sign = 0;
+#endif
    }
   }
  }
@@ -134,6 +148,12 @@ static uint8_t lambda_iteration(uint8_t mask)
    {
     d.corr.lambda-=d.param.inj_lambda_step_size_m;
     updated = 1;
+#ifdef FUEL_INJECT
+    //update switch counter
+    if (1 == ego.last_sign)
+     ++ego.swt_counter;
+    ego.last_sign = 0;
+#endif
    }
   }
   else if (d.sens.afr > int_p_thrd)
@@ -142,6 +162,12 @@ static uint8_t lambda_iteration(uint8_t mask)
    {
     d.corr.lambda+=d.param.inj_lambda_step_size_p;
     updated = 2;
+#ifdef FUEL_INJECT
+    //update switch counter
+    if (0 == ego.last_sign)
+     ++ego.swt_counter;
+    ego.last_sign = 1;
+#endif
    }
   }
  }
@@ -281,5 +307,17 @@ void lambda_eng_stopped_notification(void)
 {
  d.corr.lambda = 0;
 }
+
+#ifdef FUEL_INJECT
+void lambda_reset_swt_counter(void)
+{
+ ego.swt_counter = 0;
+}
+
+uint8_t lambda_get_swt_counter(void)
+{
+ return ego.swt_counter;
+}
+#endif
 
 #endif

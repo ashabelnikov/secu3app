@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * EEPROM related functions (API).
  * Functions for read/write EEPROM and related functionality
- * (Функции для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
 #ifndef _SECU3_EEPROM_H_
@@ -32,14 +31,17 @@
 #include "port/pgmspace.h"
 #include <stdint.h>
 
-/**Address of parameters structure in EEPROM (адрес структуры параметров в EEPROM) */
+/**Address of parameters structure in EEPROM */
 #define EEPROM_PARAM_START     0x001
 
-/**Address of errors's array (Check Engine) in EEPROM (адрес массива ошибок (Check Engine) в EEPROM) */
+/**Address of errors's array (Check Engine) in EEPROM */
 #define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
 
 /**Address of tables which can be edited in real time */
 #define EEPROM_REALTIME_TABLES_START (EEPROM_ECUERRORS_START + 8)
+
+/**Long Term Fuel Trim map, size = (INJ_VE_POINTS_L*INJ_VE_POINTS_F) + 2 bytes of checksum */
+#define EEPROM_LTFT_TABLES_START (EEPROM_REALTIME_TABLES_START + (sizeof(f_data_t)))
 
 /**Address of magic number in EEPROM (last 4 bytes) */
 #define EEPROM_MAGIC_START (E2END-3)
@@ -47,7 +49,6 @@
 //Interface of module (интерфейс модуля)
 
 /**Start writing process of EEPROM for selected block of data
- * (запускает процесс записи в EEPROM указанного блока данных)
  * \param opcode some code which will be remembered and can be retrieved when process finishes
  * \param eeaddr address in the EEPROM for write into
  * \param sramaddr address of block of data in RAM
@@ -56,13 +57,12 @@
 void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint16_t size);
 
 /**Checks if EEPROM is busy
- * (возвращает не 0 если в текущий момент никакая операция не выполняется).
+ * (return non-zero if no operation is executed now).
  * \return 0 - busy, > 0 - idle
  */
 uint8_t eeprom_is_idle(void);
 
 /**Reads specified block of data from EEPROM to RAM (without using of interrupts)
- * читает указанный блок данных из EEPROM (без использования прерываний)
  * \param sram_dest address of buffer in the RAM which will receive data
  * \param eeaddr address in the EEPROM for read from
  * \param size size of data block to read
@@ -70,7 +70,6 @@ uint8_t eeprom_is_idle(void);
 void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size);
 
 /**Writes specified block of data from RAM into EEPROM (without using of interrupts)
- * записывает указанный блок данных в EEPROM (без использования прерываний)
  * \param sram_src address of buffer in the RAM which contains data to write
  * \param eeaddr address in the EEPROM for write into
  * \param size size of block of data to write
@@ -78,7 +77,6 @@ void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size);
 void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
 
 /**Writes specified block of data from FLASH into EEPROM (without using of interrupts)
- * записывает указанный блок данных в EEPROM (без использования прерываний)
  * \param pgm_src address of buffer in the FLASH wich contains data to write
  * \param eeaddr address in the EEPROM for write into
  * \param size size of block of data to write
@@ -86,9 +84,13 @@ void eeprom_write(const void* sram_src, uint16_t eeaddr, uint16_t size);
 void eeprom_write_P(void _PGM *pgm_src, uint16_t eeaddr, uint16_t size);
 
 /**Returns code of last finished operation (code which was passed into eeprom_start_wr_data())
- * возвращает код выполненной операции (код переданный в функцию eeprom_start_wr_data())
  * \return code of last finished operation
  */
 uint8_t eeprom_take_completed_opcode(void);
+
+/** Get opcode of pending operation
+ * \retrun code of pending operation. Function return 0 if there are no pending operations (idle)
+ */
+uint8_t eeprom_get_pending_opcode(void);
 
 #endif //_SECU3_EEPROM_H_

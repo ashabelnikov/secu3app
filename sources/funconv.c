@@ -1684,3 +1684,47 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
  return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.exdata.maf_curve[i]), PGM_GET_WORD(&fw_data.exdata.maf_curve[i1]),
         (i * v_step) + v_start, v_step, 1)) >> 0;
 }
+
+#ifdef FUEL_INJECT
+int16_t calc_ltft(void)
+{
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
+ return (bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        d.inj_ltft[fcs.la_l][fcs.la_f],   //values in table are signed, 8 bit
+        d.inj_ltft[fcs.la_lp1][fcs.la_f],
+        d.inj_ltft[fcs.la_lp1][fcs.la_fp1],
+        d.inj_ltft[fcs.la_l][fcs.la_fp1],
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 128) >> 7) + 512;
+}
+
+uint8_t ltft_check_rpm_hit(void)
+{
+ uint16_t rpm = d.sens.inst_frq;
+ uint16_t band = (((uint32_t)PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f])) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+
+ if (rpm < (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]) + band))
+  return fcs.la_f; //near to lower point
+ else if (rpm > (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_fp1]) - band))
+  return fcs.la_fp1; //near to upper point
+
+ return 255; //no hit
+}
+
+uint8_t ltft_check_load_hit(void)
+{
+ uint16_t load = d.load;
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
+ uint16_t band = (((uint32_t)(use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad)) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+
+ if (load < ((use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l)) + band))
+  return fcs.la_l; //near to lower point
+ else if (load > ((use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) : (fcs.la_grad * fcs.la_lp1)) - band))
+  return fcs.la_lp1; //near to upper point
+
+ return 255; //no hit
+}
+
+#endif

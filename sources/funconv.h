@@ -472,4 +472,22 @@ int16_t injpwcoef_function(uint16_t adcvalue);
  */
 uint16_t calc_maf_flow(uint16_t adcvalue);
 
+#ifdef FUEL_INJECT
+/** Calculates current value of LTFT correction (LTFT(load, rpm))
+ * \return Correction coefficient, value * 512
+ */
+int16_t calc_ltft(void);
+
+/** Finds an index at the RPM grid which current RPM is near to
+ * \return index of cell on RPM grid, 255 - if there are no near cells
+ */
+uint8_t ltft_check_rpm_hit(void);
+
+/** Finds an index at the load grid which current load is near to
+ * \return index of cell on load grid, 255 - if there are no near cells
+ */
+uint8_t ltft_check_load_hit(void);
+
+#endif
+
 #endif //_FUNCONV_H_

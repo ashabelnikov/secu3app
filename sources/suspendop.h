@@ -52,6 +52,12 @@
 #define SOP_SEND_NC_LEAVE_DIAG      15    //!< notify that device has left diagnostic mode
 #endif
 #define SOP_SEND_NC_RESET_EEPROM    16    //!< notify that device has entered into the EEPROM resetting mode
+#ifdef FUEL_INJECT
+#define SOP_RESET_LTFT              17    //!< reset to 0 and save LTFT map to EEPROM
+#define SOP_SEND_NC_LTFT_RESET      18    //!< notify that LTFT table has been reset
+#define SOP_SAVE_LTFT               21    //!< save LTFT map to EEPROM
+#define SOP_SEND_NC_LTFT_SAVE       22    //!< notify that LTFT table has been saved
+#endif
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters
@@ -67,6 +73,10 @@
 #endif
 #define OPCODE_RESET_EEPROM       0xCF    //!< reset EEPROM, second byte must be 0xAA
 #define OPCODE_BL_CONFIRM         0xCB    //!< boot loader starting confirmation
+#ifdef FUEL_INJECT
+#define OPCODE_RESET_LTFT         0xCA    //!< reset LTFT table, second byte must be 0xBB
+#define OPCODE_SAVE_LTFT             9    //!< save LTFT map to EEPROM
+#endif
 
 /**Set specified operation to execution queue
  * \param opcode code of operation to be executed

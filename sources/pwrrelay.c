@@ -38,6 +38,7 @@
 #include "gdcontrol.h"
 #include "choke.h"
 #include "gasdose.h"
+#include "suspendop.h"
 #include "wdt.h"
 
 /**Define state variables */
@@ -111,6 +112,9 @@ void pwrrelay_control(void)
 #ifdef GD_CONTROL
       && gasdose_is_ready()
 #endif
+#ifdef FUEL_INJECT
+      && !sop_is_operation_active(SOP_SAVE_LTFT)
+#endif
       && ((s_timer_gtc() - pwrs.timer) >= PGM_GET_WORD(&fw_data.exdata.pwron_time))
       ) || s_timer16_is_action(powerdown_timeout_counter) || pwrs.opmode)
    IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay, there is no way back
@@ -128,7 +132,13 @@ void pwrrelay_control(void)
  else
  {
   if ((s_timer_gtc() - pwrs.timer1) >= PGM_GET_WORD(&fw_data.exdata.pwron_time1))
+  {
+#ifdef FUEL_INJECT
+   if (0==pwrs.pwrdown)
+    sop_set_operation(SOP_SAVE_LTFT);
+#endif
    pwrs.pwrdown = 1;
+  }
  }
 }
 

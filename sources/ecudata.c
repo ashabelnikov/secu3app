@@ -130,6 +130,10 @@ struct ecudata_t d =
 #ifdef UNI_OUTPUT
 ,.uniout = {0}
 #endif
+#ifdef FUEL_INJECT
+,.inj_ltft = {0}
+,.inj_ltft_crc = 0
+#endif
 };
 
 #ifdef REALTIME_TABLES

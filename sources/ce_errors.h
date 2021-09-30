@@ -56,7 +56,8 @@
 #define ECUERROR_OILPRESSURE           20  //!< Oil pressure is crytical
 #define ECUERROR_EEPROM_TABL_BROKEN    21  //!< Tables in EEPROM are broken. CE turns off after a few seconds after the engine starts
 #define ECUERROR_INJDUTY_LIMIT         22  //!< Injector's duty limit reached
-#define ECUERROR_NUM                   23  //!< number of ECU error codes
+#define ECUERROR_EEPROM_LTFT_BROKEN    23  //!< LTFT table is corrupted
+#define ECUERROR_NUM                   24  //!< number of ECU error codes
 
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure

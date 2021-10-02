@@ -685,7 +685,7 @@ typedef struct params_t
   uint8_t  inj_lambda_activ_delay;       //!< Lambda sensor activation delay
 
   uint8_t  inj_ae_tpsdot_thrd;           //!< TPS %/sec threshold, max rate is 255%/sec
-  uint8_t  inj_ae_coldacc_mult;          //!< Cold acceleration multiplier (-30°C), (value - 1.0) * 128
+  uint16_t inj_ae_coldacc_mult;          //!< Cold acceleration multiplier (-30°C), (value - 1.0) * 128
 
   uint16_t gd_steps;                     //!< Number of steps of gas dosator stepper motor
 
@@ -816,7 +816,7 @@ typedef struct params_t
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[160];
+  uint8_t  reserved[159];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

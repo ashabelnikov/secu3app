@@ -546,7 +546,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_lambda_activ_delay =      45,                   //activation after 45 seconds
 
   .inj_ae_tpsdot_thrd =          50,                   //50%/sec
-  .inj_ae_coldacc_mult =         AE_CAM(1.5),          //*150% at -30°C, allowed range is 1.0...2.99
+  .inj_ae_coldacc_mult =         AE_CAM(1.5),          //*150% at -30°C, allowed range is 1.0...6.00
 
   .gd_steps =                    256,                  //256 steps, gas dose number of steps
 

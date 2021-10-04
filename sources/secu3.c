@@ -556,7 +556,7 @@ MAIN()
    if (d.param.ign_cutoff)
     ckps_enable_ignition((d.sens.inst_frq < d.param.ign_cutoff_thrd)
 #ifdef UNI_OUTPUT
-    && (d.param.igncut_uni == 0xFF || d.uniout[d.param.igncut_uni])
+    && (d.param.igncut_uni == 0x0F || d.uniout[d.param.igncut_uni])
 #endif
 #ifdef FUEL_INJECT
     && (/*IOCFG_CHECK(IOP_FE) ||*/ d.sens.map < d.param.fe_on_threshold)

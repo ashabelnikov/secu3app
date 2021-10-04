@@ -115,6 +115,9 @@ void pwrrelay_control(void)
 #ifdef FUEL_INJECT
       && !sop_is_operation_active(SOP_SAVE_LTFT)
 #endif
+#ifdef UNI_OUTPUT
+     && (PGM_GET_BYTE(&fw_data.exdata.pwrrelay_uni) == 0x0F || d.uniout[PGM_GET_BYTE(&fw_data.exdata.pwrrelay_uni)])
+#endif
       && ((s_timer_gtc() - pwrs.timer) >= PGM_GET_WORD(&fw_data.exdata.pwron_time))
       ) || s_timer16_is_action(powerdown_timeout_counter) || pwrs.opmode)
    IOCFG_SETF(IOP_PWRRELAY, 0); //turn off relay, there is no way back

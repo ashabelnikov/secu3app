@@ -1055,6 +1055,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ltft_stab_time = 10, //!< 100ms
   .ltft_learn_grad = 13, //~0.05
 
+  .pwrrelay_uni = 0x0F, //not used
+
   /**reserved bytes*/
   {0}
  },

@@ -523,12 +523,14 @@ typedef struct fw_ex_data_t
   uint8_t  ltft_stab_time; //!< Learn stability time, value in 0.01 second units
   uint8_t  ltft_learn_grad; //!< Learning gradient, 256 corresponds to 1.0, range 0...0.99
 
+  uint8_t pwrrelay_uni;    //!< Selection of universal output used as condition for power managment, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1989];
+  uint8_t reserved[1988];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

@@ -705,6 +705,10 @@ static uint8_t process_output(uint8_t index, uint8_t action)
 
  //apply specified logic function and update output state
  state1 = logic_function(p_out_param->flags >> 4, state1, state2);
+
+ //apply common inversion flag (invert result)
+ state1^= (p_out_param->flags >> 3) & 0x1;
+
  if (action)
   IOCFG_SETF(index + IOP_UNI_OUT0, state1);
  return state1;

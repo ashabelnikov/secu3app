@@ -552,9 +552,9 @@ MAIN()
   else
   {
    //If enabled, do ignition cut off when RPM or MAP exceed set thresholds. We do cut off from MAP only if FE is not mapped
-   //to its I/O and only in the firmware with fuel injection support.
+   //to its I/O and only in the firmware with fuel injection support. Also, if uni.out selected we combine its state with mentioned conditions using "AND" logic function.
    if (d.param.ign_cutoff)
-    ckps_enable_ignition((d.sens.inst_frq < d.param.ign_cutoff_thrd)
+    ckps_enable_ignition((d.sens.inst_frq < d.param.ign_cutoff_thrd) && (d.param.igncut_uni == 0xFF || d.uniout[d.param.igncut_uni])
 #ifdef FUEL_INJECT
     && (/*IOCFG_CHECK(IOP_FE) ||*/ d.sens.map < d.param.fe_on_threshold)
 #endif

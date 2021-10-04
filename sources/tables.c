@@ -673,6 +673,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .adc_flags =                   1,                   //multilpy ADC offset by corr. factor
 
   .fuelcut_uni =                 0x0F,                //Don't use uni.outs for fuel cut
+  .igncut_uni =                  0x0F,                //Don't use uni.outs for ignition cut
 
   .reserved =                    {0},
   .crc =                         0

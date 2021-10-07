@@ -58,23 +58,11 @@ void ltft_control(void)
  if (ee_opcode == OPCODE_RESET_LTFT || ee_opcode == OPCODE_SAVE_LTFT)
   return; //do not write to LTFT map during saving to EEPROM
 
- if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==0)
- {
-  return; //LTFT functionality turned off
- }
- else if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==1)
- {
-  if (1==d.sens.gas)
-   return; // LTFT enabled only for petrol
- }
- else if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==2)
- {
-  if (0==d.sens.gas)
-   return; // LTFT enabled only for gas
- }
-
  if (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt)))
   return; //CLT is too low for learning
+
+ if (!ltft_is_active())
+  return; //LTFT functionality turned off or not active for current fuel
 
  //do learning:
  switch(ltft_state)
@@ -143,6 +131,25 @@ void ltft_control(void)
    }
   }
  }
+}
+
+uint8_t ltft_is_active(void)
+{
+ if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==0)
+ {
+  return 0; //LTFT functionality turned off
+ }
+ else if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==1)
+ {
+  if (1==d.sens.gas)
+   return 0; // LTFT enabled only for petrol
+ }
+ else if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==2)
+ {
+  if (0==d.sens.gas)
+   return 0; // LTFT enabled only for gas
+ }
+ return 1;
 }
 
 #endif

@@ -36,6 +36,11 @@
  */
 void ltft_control(void);
 
+/** Get LTFT status
+ * \return 0 - not active, 1 - active (used)
+ */
+uint8_t ltft_is_active(void);
+
 #endif
 
 #endif //_LTFT_H_

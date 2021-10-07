@@ -277,7 +277,7 @@ static void fuel_calc(void)
 #endif
 
  if (ltft_is_active())
-  pw = (pw * (512 + calc_ltft())) >> 9;          //apply LTFT correction
+  pw = (pw * calc_ltft()) >> 9;          //apply LTFT correction
 
  d.inj_pw = finalize_inj_time(&pw);
  d.inj_pw = apply_smooth_fuelcut(d.inj_pw);

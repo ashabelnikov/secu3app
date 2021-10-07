@@ -1702,12 +1702,12 @@ int16_t calc_ltft(void)
 
 uint8_t ltft_check_rpm_hit(void)
 {
- uint16_t rpm = d.sens.inst_frq;
+ uint16_t rpm = fcs.la_rpm;
  uint16_t band = (((uint32_t)PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f])) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
 
- if (rpm < (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]) + band))
+ if (rpm <= (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]) + band))
   return fcs.la_f; //near to lower point
- else if (rpm > (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_fp1]) - band))
+ else if (rpm >= (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_fp1]) - band))
   return fcs.la_fp1; //near to upper point
 
  return 255; //no hit
@@ -1715,14 +1715,25 @@ uint8_t ltft_check_rpm_hit(void)
 
 uint8_t ltft_check_load_hit(void)
 {
- uint16_t load = d.load;
+ uint16_t load = fcs.la_load;
  uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
- uint16_t band = (((uint32_t)(use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad)) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
 
- if (load < ((use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l)) + band))
-  return fcs.la_l; //near to lower point
- else if (load > ((use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) : (fcs.la_grad * fcs.la_lp1)) - band))
-  return fcs.la_lp1; //near to upper point
+ if (!use_grid)
+ { //use grid map
+  uint16_t band = (((uint32_t)fcs.la_grad) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+  if (load >= ((fcs.la_grad * fcs.la_lp1) - band))
+   return fcs.la_lp1; //near to lower point
+  else if (load <= ((fcs.la_grad * fcs.la_l) + band))
+   return fcs.la_l; //near to upper point
+ }
+ else
+ { //use two values (min and max)
+  uint16_t band = (((uint32_t)(PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]))) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+  if (load <= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) + band))
+   return fcs.la_l; //near to lower point
+  else if (load >= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - band))
+   return fcs.la_l; //near to upper point
+ }
 
  return 255; //no hit
 }

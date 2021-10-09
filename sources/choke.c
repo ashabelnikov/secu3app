@@ -389,9 +389,9 @@ int16_t calc_sm_position(uint8_t pwm)
   case 0:  //cranking mode
    chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 0)) << 4; //use crank pos, x16
    chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3); //x4x8=x32
+   CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
    if (d.st_block)
    {
-    CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
     chks.iac_add = 0;
     CLEARBIT(chks.flags, CF_HOT_ENG);
     chks.strt_t1 = s_timer_gtc();
@@ -491,8 +491,8 @@ int16_t calc_sm_position(uint8_t pwm)
     }
     else
     { //closed loop is not active
-      chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x16, work position as base
-      chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
+     chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x16, work position as base
+     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
      if (d.engine_mode == EM_IDLE)
      {
       if  (d.sens.inst_frq > rpm_thrd2)
@@ -560,6 +560,7 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    else
    { //open loop mode
+    CLEARBIT(chks.flags, CF_CL_LOOP);
     chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
     //Displace IAC position when cooling fan turns on

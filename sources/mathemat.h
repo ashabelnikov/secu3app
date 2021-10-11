@@ -81,4 +81,16 @@ uint16_t nr_1x_afr(uint16_t x);
 uint16_t ui32_sqrt(uint32_t input);
 #endif
 
+/**Right-Shift for negative values (16-bit version)
+ * \param v input value
+ * \param k power (1,2,4...)
+ */
+#define SHTDIV16(v, k) (((v)<0) ? ((v)+((((int16_t)1)<<(k))-1)) >> (k) : ((v)>>(k)))
+
+/**Right-Shift for negative values (32-bit version)
+ * \param v input value
+ * \param k power (1,2,4...)
+ */
+#define SHTDIV32(v, k) (((v)<0) ? ((v)+((((int32_t)1)<<(k))-1)) >> (k) : ((v)>>(k)))
+
 #endif //_MATHEMAT_H_

@@ -118,7 +118,7 @@ static int16_t calc_synthetic_load(void)
  int16_t load = ROUND(50.0 * 64); //50%
  uint16_t pbaro = (((uint32_t)d.sens.baro_press) * ROUND(0.9*16384)) >> 14; //90% of barometric pressure
 
- if (d.sens.map < pbaro)
+ if (d.sens.map < pbaro || d.sens.tps <= d.param.tps_threshold) //TODO: use a separate TPS threshold
  { //find value on the load axis corresponding to current MAP
   load = (((int32_t) d.sens.map * load) / pbaro);
  }

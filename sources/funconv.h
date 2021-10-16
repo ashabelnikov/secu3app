@@ -261,11 +261,17 @@ uint16_t inj_iacmixtcorr_lookup(void);
 uint16_t inj_idling_rpm(void);
 #endif
 
-/** Calculates TPS switch point depending on RPM using look up table
+/** Calculates TPS switch point depending on RPM using a look up table
  * Uses d ECU data structure
  * \return TPS value in % * 2
  */
 uint16_t tpsswt_function(void);
+
+/** Calculates MAP/TPS load axis allocation depending on RPM using a look up table
+ * Uses d ECU data structure
+ * \return TPS value in % * 64
+ */
+uint16_t tpszon_function(void);
 
 #ifdef PA4_INP_IGNTIM
 /**Ignition timing correction vs voltage (specified by adcvalue)

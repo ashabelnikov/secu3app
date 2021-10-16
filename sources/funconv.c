@@ -115,7 +115,7 @@ fcs_t fcs = {0};
  */
 static int16_t calc_synthetic_load(void)
 {
- int16_t load = ROUND(50.0 * 64); //50%
+ int16_t load = tpszon_function(); /*ROUND(50.0 * 64); //50%*/
  uint16_t pbaro = (((uint32_t)d.sens.baro_press) * ROUND(0.9*16384)) >> 14; //90% of barometric pressure
 
  if (d.sens.map < pbaro || d.sens.tps <= d.param.tps_threshold) //TODO: use a separate TPS threshold
@@ -1051,8 +1051,14 @@ uint16_t inj_idling_rpm(void)
 
 uint16_t tpsswt_function(void)
 {
- return simple_interpolation(fcs.la_rpm, _GB(inj_tpsswt[fcs.la_f]), _GB(inj_tpsswt[fcs.la_fp1]),
+ return simple_interpolation(fcs.la_rpm, _GBU(inj_tpsswt[fcs.la_f]), _GBU(inj_tpsswt[fcs.la_fp1]),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+}
+
+uint16_t tpszon_function(void)
+{
+ return simple_interpolation(fcs.la_rpm, _GBU(inj_tpszon[fcs.la_f]), _GBU(inj_tpszon[fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 32); //result is x 64
 }
 
 #ifdef PA4_INP_IGNTIM

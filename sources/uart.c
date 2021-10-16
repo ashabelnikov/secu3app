@@ -72,6 +72,7 @@
 #define ETMT_TEMPI_MAP 28   //!< temp.corr. map id (idling)
 #define ETMT_IACMAT_MAP 29  //!< IAC position's correction vs MAT
 #define ETMT_VE2_MAP 30     //!< Secondary VE map
+#define ETMT_TPSZON_MAP 31  //!< MAP/TPS load axis allocation
 
 /**Define internal state variables */
 typedef struct
@@ -1289,10 +1290,15 @@ void uart_send_packet(uint8_t send_mode)
      if (wrk_index >= F_WRK_POINTS_L-1 )
      {
       wrk_index = 0;
-      state = ETMT_STRT_MAP;
+      state = ETMT_TPSZON_MAP;
      }
      else
       ++wrk_index;
+     break;
+    case ETMT_TPSZON_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_tpszon, INJ_TPSZON_SIZE);
+     state = ETMT_STRT_MAP;
      break;
    }
    break;
@@ -1918,6 +1924,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_PWM2_MAP: //PWM2 map
      recept_rb(((uint8_t*)&d.tables_ram.pwm_duty2[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
+     break;
+    case ETMT_TPSZON_MAP: //MAP/TPS load axis allocation
+     recept_rb(((uint8_t*)&d.tables_ram.inj_tpszon) + addr, INJ_TPSZON_SIZE); /*INJ_TPSZON_SIZE max*/
      break;
    }
   }

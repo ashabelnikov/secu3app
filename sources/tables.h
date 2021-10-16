@@ -102,6 +102,7 @@
 #define GASDOSE_POS_RPM_SIZE            16          //!< RPM axis size
 #define GASDOSE_POS_TPS_SIZE            16          //!< TPS axis size
 #define INJ_TPSSWT_SIZE                 16          //!< Size of the TPS switch point lookup table
+#define INJ_TPSZON_SIZE                 16          //!< Size of the MAP/TPS load axis aloocation table
 #define INJ_GTS_CORR_SIZE               16          //!< Size of gas temperature correction map
 #define INJ_GPS_CORR_SIZE               17          //!< Size of gas pressure correction map
 #define INJ_ATS_CORR_SIZE               16          //!< Size of air temperature correction map
@@ -275,10 +276,12 @@ typedef struct f_data_t
 
   uint8_t inj_ve2[INJ_VE_POINTS_L][(INJ_VE_POINTS_F*3)/2]; //!< Secondary volumetric efficiency lookup table, value * 2048 (12-bit)
 
+  uint8_t inj_tpszon[INJ_TPSZON_SIZE];                //!< Speed-density/Alpha-N load axis allocation
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[85];
+  uint8_t reserved[69];
 
   uint16_t checksum;                                  //!< CRC16 checksum of this structure (except these 16 bits)
 }f_data_t;

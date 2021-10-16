@@ -129,6 +129,7 @@ static int16_t calc_synthetic_load(void)
    load = simple_interpolation(d.sens.tps, load, ROUND(100.0*64), swtpt, (TPS_MAGNITUDE(100.0) - swtpt), 4) >> 2;
  }
 
+ restrict_value_to(&load, ROUND(0.0*64), ROUND(100.0*64));
  return load;
 }
 

@@ -693,15 +693,13 @@ static uint8_t process_output(uint8_t index, uint8_t action)
 
  //execute specified conditions
  state1 = ((cond_fptr_t)PGM_GET_WORD(&cond_fptr[cond_1]))(&d, p_out_param->on_thrd_1, p_out_param->off_thrd_1, &uni.states[index].ctx1);
+ state1^=p_out_param->flags & 0x1; //apply inversion flag for 1st condition
  if (15 != (p_out_param->flags >> 4))
  {
   uni.states[index].ctx2.other = state1;
   state2 = ((cond_fptr_t)PGM_GET_WORD(&cond_fptr[cond_2]))(&d, p_out_param->on_thrd_2, p_out_param->off_thrd_2, &uni.states[index].ctx2);
+  state2^=(p_out_param->flags >> 1) & 0x1; //apply inversion flag for 2nd condition
  }
-
- //apply inversion flags
- state1^=p_out_param->flags & 0x1;
- state2^=(p_out_param->flags >> 1) & 0x1;
 
  //apply specified logic function and update output state
  state1 = logic_function(p_out_param->flags >> 4, state1, state2);

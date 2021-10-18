@@ -450,9 +450,9 @@ static uint8_t cond_ai8(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
 /**Condition function for gas valve input*/
 static uint8_t cond_gasv(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
- if (d->sens.gas == on_thrd)
+ if (d->sens.gas_raw == on_thrd)
   p_ctx->state = 1; //ON
- if (d->sens.gas == off_thrd)
+ if (d->sens.gas_raw == off_thrd)
   p_ctx->state = 0; //OFF
  return p_ctx->state;
 }

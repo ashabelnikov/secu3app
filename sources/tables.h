@@ -818,11 +818,13 @@ typedef struct params_t
   uint8_t fuelcut_uni;                   //!< Selection of universal output used as condition for fuel cut, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
   uint8_t igncut_uni;                    //!< Selection of universal output used as condition for ignition cut, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
 
+  uint8_t gas_v_uni;                     //!< Selection of universal output used as condition for emulation of GAS_V input, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[158];
+  uint8_t  reserved[157];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

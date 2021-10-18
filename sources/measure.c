@@ -480,7 +480,9 @@ void meas_take_discrete_inputs(void)
 
  //read state of gas valve input
  //if GAS_V input remapped to other function, then petrol
- uint8_t gas_v_trig = IOCFG_GET(IOP_GAS_V);
+ d.sens.gas_raw = IOCFG_GET(IOP_GAS_V);
+ //use condition result from selected univ.output instead of GAS_V input
+ uint8_t gas_v_trig = (d.param.gas_v_uni != 0x0F) ? d.uniout[d.param.gas_v_uni] : d.sens.gas_raw;
  if (d.sens.gas != gas_v_trig)
  {
   d.sens.gas = gas_v_trig;

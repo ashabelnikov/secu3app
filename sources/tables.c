@@ -675,6 +675,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .fuelcut_uni =                 0x0F,                //Don't use uni.outs for fuel cut
   .igncut_uni =                  0x0F,                //Don't use uni.outs for ignition cut
 
+  .gas_v_uni =                   0x0F,                //Don't use uni.outs for emulation of GAS_V input
+
   .reserved =                    {0},
   .crc =                         0
  },

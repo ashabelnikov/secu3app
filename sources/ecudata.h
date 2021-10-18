@@ -89,6 +89,7 @@ typedef struct sensors_t
  uint16_t inst_frq;                      //!< Instant RPM - not averaged
  uint8_t  carb;                          //!< State of carburetor's limit switch (throttle limit switch)
  uint8_t  gas;                           //!< State of gas valve
+ uint8_t  gas_raw;                       //!< State of gas valve (raw input value)
  uint16_t knock_k;                       //!< Knock signal level
  uint8_t  tps;                           //!< Throttle position sensor (0...100%, x2)
  uint16_t add_i1;                        //!< ADD_I1 input voltage

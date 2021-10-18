@@ -494,6 +494,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.barocorr_type);
    build_i8h(d.param.func_flags);
    build_i8h(d.param.ve2_map_func);
+   build_i8h(d.param.gas_v_uni);
    //redundant values:
    build_i8h(d.param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
    build_i16h(d.param.inj_cyl_disp);        //used for calculations on SECU-3 Manager side
@@ -572,7 +573,7 @@ void uart_send_packet(uint8_t send_mode)
    //boolean values
    build_i16h(_CBV16(d.ie_valve, 0)      // IE flag
              | _CBV16(d.sens.carb, 1)    // carb. limit switch flag
-             | _CBV16(d.sens.gas, 2)     // gas valve flag
+             | _CBV16(d.sens.gas_raw, 2) // gas valve flag
              | _CBV16(d.fe_valve, 3)     // power valve flag
              | _CBV16 (d.ce_state, 4)    // CE flag
              | _CBV16(d.cool_fan, 5)     // cooling fan flag
@@ -1603,6 +1604,7 @@ uint8_t uart_recept_packet(void)
    d.param.barocorr_type = recept_i8h();
    d.param.func_flags = recept_i8h();
    d.param.ve2_map_func = recept_i8h();
+   d.param.gas_v_uni = recept_i8h();
 
    recept_i8h();  //stub
    recept_i16h(); //stub

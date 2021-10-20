@@ -68,4 +68,7 @@ void reset_eeprom_params(void);
 void load_ltft_tables_into_ram(void);
 #endif
 
+/** Sets parameters' save timeout timer*/
+void param_set_save_timer(void);
+
 #endif //_PARAMS_H_

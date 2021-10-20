@@ -34,6 +34,9 @@
 #include "vstimer.h"
 #endif //!CARB_AFR || GD_CONTROL
 
+/**Idle cut off timer. Used by idle cut off controlling algorithm */
+s_timer16_t epxx_delay_time_counter = {0,0,1}; //already fired!
+
 #if defined(CARB_AFR) && defined(FUEL_INJECT)
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
@@ -65,12 +68,12 @@ static void simple_fuel_cut(uint8_t apply)
  if (d.sens.carb)
  {
   d.ie_valve = 1;
-  s_timer_set(epxx_delay_time_counter, d.param.shutoff_delay);
+  s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
  }
  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  else
  {
-  d.ie_valve = ((s_timer_is_action(epxx_delay_time_counter))
+  d.ie_valve = ((s_timer_is_action(&epxx_delay_time_counter))
   &&(((d.sens.inst_frq > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_frq > get_fc_hit())))?0:1;
  }
  if (apply)
@@ -113,12 +116,12 @@ void fuelcut_control(void)
   {
    if (0==state)
    {
-    s_timer_set(epxx_delay_time_counter, d.param.shutoff_delay);
+    s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
     state = 1;
    }
    else
    {
-    if (s_timer_is_action(epxx_delay_time_counter))
+    if (s_timer_is_action(&epxx_delay_time_counter))
      d.ie_valve = 0;  //Cut fuel
    }
   }

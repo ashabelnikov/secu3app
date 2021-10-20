@@ -61,9 +61,8 @@
 
 /**checks for errors and manages the CE lamp
  * Uses d ECU data structure
- * \param ce_control_time_counter time counter object
  */
-void ce_check_engine(volatile s_timer8_t* ce_control_time_counter);
+void ce_check_engine(void);
 
 /**Set specified error (number of bit)
  * \param error code of error

@@ -86,6 +86,11 @@
 #define ENGINE_ROTATION_TIMEOUT_VALUE 20    //!< timeout value used to determine that engine is stopped (this value must not exceed 25)
 #endif
 
+/** Timer object for measure timeout. Used by measuring process when engine is stopped*/
+s_timer16_t force_measure_timeout_counter = {0,0,1}; //already fired!
+/** Used to determine that engine has stopped */
+s_timer16_t engine_rotation_timeout_counter = {0,0,1}; //already fired!
+
 /**Control of certain units of engine
  * Uses d ECU data structure
  */
@@ -462,7 +467,7 @@ MAIN()
  {
   if (ckps_is_cog_changed())
   {
-   s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
+   s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
    eculogic_cog_changed_notification();
    #ifdef INTK_HEATING
    intkheat_cog_changed_notification();
@@ -474,9 +479,9 @@ MAIN()
 #endif
   }
 
-  if (s_timer_is_action(engine_rotation_timeout_counter))
+  if (s_timer_is_action(&engine_rotation_timeout_counter))
   { //engine is stopped (RPM is below critical threshold)
-   strokes_since_start = 0; //reset strokes counter
+   s_timer_eng_stopped_notification();
 #ifdef DWELL_CONTROL
    ckps_init_ports();           //prevent permanent current through coils
    //TODO: Make soft cutoff of possible active current in coil to eliminate undesirable spark. How?
@@ -497,17 +502,17 @@ MAIN()
     knock_start_settings_latching();
 
    meas_update_values_buffers(1, &fw_data.exdata.cesd);  //<-- update RPM only
-   s_timer_set(engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
+   s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 
   //Start ADC measurements at regular intervals of time. This timer reinitialize each time of detecting of new stroke.
   //Thus, when RPM exceed spcified value, this condition will cease to be carried out.
-  if (s_timer_is_action(force_measure_timeout_counter))
+  if (s_timer_is_action(&force_measure_timeout_counter))
   {
    _DISABLE_INTERRUPT();
    adc_begin_measure(0);  //normal speed
    _ENABLE_INTERRUPT();
-   s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+   s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
   }
 
@@ -516,7 +521,7 @@ MAIN()
   //process and execute suspended operations
   sop_execute_operations();
   //Detection and recording of errors (checking engine)
-  ce_check_engine(&ce_control_time_counter);
+  ce_check_engine();
   //processing of ingoing and outgoing data via UART
   process_uart_interface();
   //detection of changes in parameters and its saving
@@ -571,11 +576,11 @@ MAIN()
   //execute some operations, which require execution one time per engine stroke
   if (ckps_is_stroke_event_r())
   {
-   if ((strokes_since_start < 65535) && (d.engine_mode != EM_START))
-    ++strokes_since_start; //update strokes counter (counts up to 65535 and stops)
+   if (d.engine_mode != EM_START)
+    s_timer_stroke_event_notification();
 
    meas_update_values_buffers(0, &fw_data.exdata.cesd);
-   s_timer_set(force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
+   s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    eculogic_stroke_event_notification();
 

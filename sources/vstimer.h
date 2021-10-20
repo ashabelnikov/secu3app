@@ -31,55 +31,30 @@
 #include "port/intrinsic.h"
 #include <stdint.h>
 
-//инструментарий для реализации виртуальных таймерв
+/**Context data for timers*/
+typedef struct
+{
+ uint16_t start;   //!< Start value of the 10ms system counter
+ uint16_t time;    //!< Time for timer in 10ms units
+ uint8_t  action;  //!< Action flag (becomes 1 when timer's time has come)
+}s_timer16_t;
 
-//Типы объектов таймеров. 8-ми разрядный тамйер может отсчитывать периоды
-//до 2.56 сек. 16-ти разрядный таймер может отсчитывать периоды до 655 сек.
-typedef uint8_t   s_timer8_t;  //!< used by 8-bit timers
-typedef uint16_t  s_timer16_t; //!< used by 16-bit timers
+/**Initialization of state of specified timer. One tick = 10ms. Set specified timer for specified period
+ * \param ctx Context data structure (timer's object)
+ * \param time Time in 10ms units
+ */
+void s_timer_set(s_timer16_t* ctx, uint16_t time);
 
-/**Update state of specified timer (обновление состояния указанного таймера) */
-#define s_timer_update(T)    { if ((T) > 0) (T)--; }
+/**Checks whenever specified timer is fired
+ * \param ctx Context data structure (timer's object)
+ * \return 1 - timer has fired, 0 - timer is not fired
+ */
+uint8_t s_timer_is_action(s_timer16_t* ctx);
 
-/**Initialization of state of specified timer. One tick = 10ms
- *(инициализация состояния указанного таймера. Один тик таймера равен 10 мс). */
-#define s_timer_set(T, V)    { (T) = (V); }
-
-/**Checks whenever specified timer is completed (Проверяет сработал ли указанный таймер) */
-#define s_timer_is_action(T) ((T)==0)
-
-//Ниже, варианты функций для 16-ти разрядных виртуальных таймеров.
-//Так как для этих таймеров используется не атомарный тип данных, то
-//необходимо запрещать прерывания.
-
-/**Set specified timer for specified period */
-#define s_timer16_set(T, V)  \
-{                            \
- _BEGIN_ATOMIC_BLOCK();      \
- (T) = (V);                  \
- _END_ATOMIC_BLOCK();        \
-}
-
-/**Check specified timer for action */
-/*static inline */uint8_t s_timer16_is_action(s_timer16_t i_timer);
-/*{
- uint8_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = (i_timer == 0);
- _END_ATOMIC_BLOCK();
- return result;
-}*/
-
-extern volatile uint16_t sys_counter;
-/**Get value of the system 10ms counter */
-/*static inline*/ uint16_t s_timer_gtc(void);
-/*{
- uint16_t result;
- _BEGIN_ATOMIC_BLOCK();
- result = sys_counter;
- _END_ATOMIC_BLOCK();
- return result;
-}*/
+/**Get value of the system 10ms counter
+ * \return Current value of the system's counter
+ */
+uint16_t s_timer_gtc(void);
 
 /**Initialization of system timers */
 void s_timer_init(void);
@@ -92,19 +67,10 @@ void s_timer_enter_diag(void);
 /**Get number of strokes elapsed since last start of engine*/
 uint16_t s_timer_sss(void);
 
-//////////////////////////////////////////////////////////////////
-extern volatile s_timer8_t  send_packet_interval_counter;
-extern volatile s_timer8_t  force_measure_timeout_counter;
-extern volatile s_timer8_t  ce_control_time_counter;
-extern volatile s_timer8_t  engine_rotation_timeout_counter;
-extern volatile s_timer8_t  epxx_delay_time_counter;
-extern volatile s_timer8_t  idle_period_time_counter;
-extern volatile s_timer16_t save_param_timeout_counter;
-#ifdef FUEL_PUMP
-extern volatile s_timer16_t fuel_pump_time_counter;
-#endif
-extern volatile s_timer16_t powerdown_timeout_counter;
-extern uint16_t strokes_since_start;
-//////////////////////////////////////////////////////////////////
+/**Updates stroke related logic. Must be called from the main loop*/
+void s_timer_stroke_event_notification(void);
+
+/**Called from the main loop when engine is stopped*/
+void s_timer_eng_stopped_notification(void);
 
 #endif //_VSTIMER_H_

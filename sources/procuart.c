@@ -51,6 +51,9 @@
 uint8_t startup_packets = 5;  //number of packets before start up bit will be cleared
 uint8_t silent = 0;
 
+/**UART processing timer. Used for sending packets*/
+s_timer16_t send_packet_interval_counter = {0,0,1}; //initially fired
+
 void process_uart_interface(void)
 {
  uint8_t descriptor;
@@ -84,8 +87,8 @@ void process_uart_interface(void)
 #ifdef GD_CONTROL
    case GASDOSE_PAR:
 #endif
-    //reset time counter if parameters have been changed
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    //reset timeout counter if parameters have been changed
+    param_set_save_timer();
     break;
 
 #ifdef FUEL_INJECT
@@ -101,14 +104,15 @@ void process_uart_interface(void)
     CHECKBIT(d.param.hall_flags, CKPF_USE_CAM_REF));
 #endif
    case ACCEL_PAR:
-    //reset time counter if parameters have been changed
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    //reset timeout counter if parameters have been changed
+    param_set_save_timer();
     break;
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    case LAMBDA_PAR:
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE); //paramaters were altered, so reset time counter
+    //paramaters were altered, so reset time counter
+    param_set_save_timer();
     break;
 #endif
 
@@ -116,14 +120,13 @@ void process_uart_interface(void)
 #ifdef HALL_OUTPUT
     ckps_set_hall_pulse(d.param.hop_start_ang, d.param.hop_durat_ang);
 #endif
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    param_set_save_timer(); //paramaters were altered, so reset time counter
     pwm2_set_pwmfrq(0, d.param.pwmfrq[0]);
     pwm2_set_pwmfrq(1, d.param.pwmfrq[1]);
     break;
 
    case FUNSET_PAR:
-    //reset time counter if parameters have been changed
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    param_set_save_timer(); //paramaters were altered, so reset time counter
     break;
 
    case OP_COMP_NC:
@@ -207,7 +210,7 @@ void process_uart_interface(void)
 #else
     ckps_set_rising_spark(CHECKBIT(d.param.hall_flags, CKPF_RISING_SPARK));
 #endif
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    param_set_save_timer(); //paramaters were altered, so reset time counter
 
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
     ckps_set_shutter_wnd_width(d.param.hall_wnd_width);
@@ -264,8 +267,7 @@ void process_uart_interface(void)
     //процессор детонации или нет.
     d.use_knock_channel_prev = d.param.knock_use_knock_channel;
 
-    //reset time counter if parameters have been changed
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    param_set_save_timer(); //paramaters were altered, so reset time counter
     break;
 
    case SECUR_PAR:
@@ -273,7 +275,7 @@ void process_uart_interface(void)
     if (d.bt_name[0] && d.bt_pass[0])
      bt_start_set_namepass();
 #endif
-    s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+    param_set_save_timer(); //paramaters were altered, so reset time counter
     break;
   }
 
@@ -296,7 +298,7 @@ void process_uart_interface(void)
    silent = 0;
   }
 
-  if (s_timer_is_action(send_packet_interval_counter) && !silent)
+  if (s_timer_is_action(&send_packet_interval_counter) && !silent)
   {
    //----------------------------------
    if (startup_packets > 0)
@@ -312,7 +314,7 @@ void process_uart_interface(void)
     sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information
 #endif
 
-   s_timer_set(send_packet_interval_counter, d.param.uart_period_t_ms);
+   s_timer_set(&send_packet_interval_counter, d.param.uart_period_t_ms);
 
    //после передачи очищаем кеш ошибок, передача битов ошибок осуществляется только в 1 из 2 пакетов
    if (SENSOR_DAT==desc || CE_ERR_CODES==desc)

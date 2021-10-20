@@ -66,6 +66,9 @@ static logic_state_t lgs = {
  0,0
 };
 
+/**Used by idling regulator's controlling algorithm*/
+s_timer16_t idle_period_time_counter = {0,0,1}; //already fired!
+
 void eculogic_init(void)
 {
 #ifdef FUEL_INJECT

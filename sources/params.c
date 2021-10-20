@@ -44,15 +44,18 @@
 #include "wdt.h"
 #include "pwrrelay.h"
 
+/**Used for saving parameters (automatic saving). It counts down a timeout. */
+s_timer16_t save_param_timeout_counter = {0,0,1}; //already fired!
+
 void save_param_if_need(void)
 {
  //did parameters chane during specified time?
- if (s_timer16_is_action(save_param_timeout_counter))
+ if (s_timer_is_action(&save_param_timeout_counter))
  {
   //Are current and saved parameters differ?
   if (memcmp(&eeprom_parameters_cache, &d.param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
-  s_timer16_set(save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+  s_timer_set(&save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
  }
 }
 
@@ -197,3 +200,8 @@ void load_ltft_tables_into_ram(void)
  }
 }
 #endif
+
+void param_set_save_timer(void)
+{
+ s_timer_set(&save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+}

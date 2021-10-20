@@ -64,14 +64,15 @@ ce_state_t ce_state = {0,0,0,0,0,0,0,
 #endif
 };
 
+/**CE timer. Used for counting of time intervals for CE*/
+s_timer16_t ce_control_time_counter = {0,CE_CONTROL_STATE_TIME_VALUE,0};
+
 //operations under errors
-/*#pragma inline*/
 void ce_set_error(uint8_t error)
 {
  SETBIT32(ce_state.ecuerrors, error);
 }
 
-/*#pragma inline*/
 void ce_clear_error(uint8_t error)
 {
  CLEARBIT32(ce_state.ecuerrors, error);
@@ -272,14 +273,14 @@ void check(ce_sett_t _PGM *cesd)
 //If any error occurs, the CE is light up for a fixed time. If the problem persists (eg corrupted the program code),
 //then the CE will be turned on continuously. At the start of program CE lights up for 0.5 seconds. for indicating
 //of the operability.
-void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
+void ce_check_engine(void)
 {
  uint32_t temp_errors;
 
  check(&fw_data.exdata.cesd);
 
  //If the timer counted the time, then turn off the CE
- if (s_timer_is_action(*ce_control_time_counter))
+ if (s_timer_is_action(&ce_control_time_counter))
  {
   ce_set_state(CE_STATE_OFF);
   d.ce_state = 0; //<--doubling
@@ -288,7 +289,7 @@ void ce_check_engine(volatile s_timer8_t* ce_control_time_counter)
  //If at least one error is present  - turn on CE and start timer
  if (ce_state.ecuerrors!=0)
  {
-  s_timer_set(*ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
+  s_timer_set(&ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
   ce_set_state(CE_STATE_ON);
   d.ce_state = 1;  //<--doubling
  }

@@ -74,10 +74,10 @@ void idling_regulator_init(void);
 
 /** Idling RPM Regulator function
  * Uses d ECU data structure
- * \param io_timer
+ * \param io_timer Pointer to timer's object
  * \return value of advance angle * 32
  */
-int16_t idling_pregulator(volatile s_timer8_t* io_timer);
+int16_t idling_pregulator(s_timer16_t* io_timer);
 
 /** function for restricting of advance angle alternation speed
  * \param new_advance_angle New value of advance angle (input)

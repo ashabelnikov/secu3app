@@ -361,7 +361,7 @@ void idling_regulator_init(void)
 
 //»нтегральный регул€тор (интегрирование по выходу) дл€ регулировани€ оборотов ’’ углом опережени€ зажигани€
 // ¬озвращает значение угла опережени€ в целом виде * 32.
-int16_t idling_pregulator(volatile s_timer8_t* io_timer)
+int16_t idling_pregulator(s_timer16_t* io_timer)
 {
  int16_t error,factor,idling_rpm;
  #define IRUSDIV 1
@@ -398,14 +398,14 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
   switch(idl_prstate.enter_state)
   {
    case 0:
-    s_timer_set(*io_timer, PGM_GET_BYTE(&fw_data.exdata.idlent_timval));
+    s_timer_set(io_timer, PGM_GET_BYTE(&fw_data.exdata.idlent_timval));
     ++idl_prstate.enter_state; //=1
     return 0; //no correction
    case 1:
-    if (s_timer_is_action(*io_timer))
+    if (s_timer_is_action(io_timer))
     {
      ++idl_prstate.enter_state; //=2
-     s_timer_set(*io_timer, IDLE_PERIOD_TIME_VALUE);
+     s_timer_set(io_timer, IDLE_PERIOD_TIME_VALUE);
      break;
     }
     return 0; //no correction
@@ -428,9 +428,9 @@ int16_t idling_pregulator(volatile s_timer8_t* io_timer)
   factor = d.param.ifac2;
 
  //update regulator's value only by timer events
- if (s_timer_is_action(*io_timer))
+ if (s_timer_is_action(io_timer))
  {
-  s_timer_set(*io_timer, IDLE_PERIOD_TIME_VALUE);
+  s_timer_set(io_timer, IDLE_PERIOD_TIME_VALUE);
 
   int32_t add = (((int32_t)error) * factor);
   if (CHECKBIT(d.param.idl_flags, IRF_PREG_MODE))

@@ -40,24 +40,10 @@
  frequency will be divided by 6 */
 #define DIVIDER_RELOAD       5
 
-//TODO: Do refactoring of timers! Implement callback mechanism.
-
-volatile s_timer8_t  send_packet_interval_counter = 0;    //!< used for sending of packets
-volatile s_timer8_t  force_measure_timeout_counter = 0;   //!< used by measuring process when engine is stopped
-volatile s_timer8_t  ce_control_time_counter = CE_CONTROL_STATE_TIME_VALUE; //!< used for counting of time intervals for CE
-volatile s_timer8_t  engine_rotation_timeout_counter = 0; //!< used to determine that engine was stopped
-volatile s_timer8_t  epxx_delay_time_counter = 0;         //!< used by idle economizer's controlling algorithm
-volatile s_timer8_t  idle_period_time_counter = 0;        //!< used by idling regulator's controlling algorithm
-volatile s_timer16_t save_param_timeout_counter = 0;      //!< used for saving of parameters (automatic saving)
-#ifdef FUEL_PUMP
-volatile s_timer16_t fuel_pump_time_counter = 0;          //!< used for fuel pump
-#endif
-volatile s_timer16_t powerdown_timeout_counter = 0;       //!< used for power-down timeout 
-
-/**for division, to achieve 10ms, because timer overflovs each 2 ms */
-uint8_t divider = DIVIDER_RELOAD;
-
-volatile uint16_t sys_counter = 0;                        //!< system tick counter, 1 tick = 10ms
+static volatile uint16_t sys_counter = 0;                 //!< system tick counter, 1 tick = 10ms
+static volatile uint8_t diagnostics = 0;                  //!< diagnostics flag
+static uint8_t divider = DIVIDER_RELOAD;                  //!< for division, to achieve 10ms, because timer overflovs each 2 ms
+static uint16_t strokes_since_start = 0;                  //!< number of strokes since engine start
 
 #ifdef SM_CONTROL
 //See smcontrol.c
@@ -104,9 +90,6 @@ extern volatile uint8_t vent_duty;
 extern uint8_t vent_soft_cnt;
 #endif
 
-static volatile uint8_t diagnostics = 0;   //!< diagnostics flag
-
-uint16_t strokes_since_start = 0;
 
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
@@ -229,17 +212,6 @@ if (!diagnostics) {
  else
  {//each 10 ms
   divider = DIVIDER_RELOAD;
-  s_timer_update(force_measure_timeout_counter);
-  s_timer_update(save_param_timeout_counter);
-  s_timer_update(send_packet_interval_counter);
-  s_timer_update(ce_control_time_counter);
-  s_timer_update(engine_rotation_timeout_counter);
-  s_timer_update(epxx_delay_time_counter);
-  s_timer_update(idle_period_time_counter);
-#ifdef FUEL_PUMP
-  s_timer_update(fuel_pump_time_counter);
-#endif
-  s_timer_update(powerdown_timeout_counter);
   ++sys_counter;
  }
 
@@ -256,13 +228,32 @@ void s_timer_init(void)
  TIMSK2|= _BV(TOIE2);
 }
 
-uint8_t s_timer16_is_action(s_timer16_t i_timer)
+void s_timer_set(s_timer16_t* ctx, uint16_t time)
 {
- uint8_t result;
  _BEGIN_ATOMIC_BLOCK();
- result = (i_timer == 0);
+ ctx->start = sys_counter;
  _END_ATOMIC_BLOCK();
- return result;
+ ctx->time = time;
+ ctx->action = 0;
+}
+
+uint8_t s_timer_is_action(s_timer16_t* ctx)
+{
+ if (ctx->action)
+  return 1; //already fired
+
+ uint16_t current;
+ _BEGIN_ATOMIC_BLOCK();
+ current = sys_counter;
+ _END_ATOMIC_BLOCK();
+
+ if ((current - ctx->start) > ctx->time)
+ {
+  ctx->action = 1;
+  return 1; //fire!
+ }
+
+ return 0; //still not fired
 }
 
 uint16_t s_timer_gtc(void)
@@ -284,4 +275,15 @@ void s_timer_enter_diag(void)
 uint16_t s_timer_sss(void)
 {
  return strokes_since_start;
+}
+
+void s_timer_stroke_event_notification(void)
+{
+ if (strokes_since_start < 65535)
+  ++strokes_since_start; //update strokes counter (counts up to 65535 and stops)
+}
+
+void s_timer_eng_stopped_notification(void)
+{
+ strokes_since_start = 0; //reset strokes counter
 }

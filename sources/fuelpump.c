@@ -49,6 +49,9 @@ typedef struct
 /**Global instance of state variables */
 fp_state_t fpstate = {0};
 
+/**Used for fuel pump control */
+s_timer16_t fuel_pump_time_counter = {0,0,1}; //already fired!
+
 void fuelpump_init_ports(void)
 {
  IOCFG_INIT(IOP_FL_PUMP, 1); //fuel pump is on
@@ -57,7 +60,7 @@ void fuelpump_init_ports(void)
 void fuelpump_init(void)
 {
  TURN_ON_ELPUMP(1); //turn on
- s_timer16_set(fuel_pump_time_counter, ((uint16_t)d.param.fp_timeout_strt) * 10);
+ s_timer_set(&fuel_pump_time_counter, ((uint16_t)d.param.fp_timeout_strt) * 10);
  fpstate.state = 0;
 }
 
@@ -76,7 +79,7 @@ void fuelpump_control(void)
  if (d.sys_locked || !pwrrelay_get_state())
  { //system locked by immobilizer
   TURN_ON_ELPUMP(0); //turn off
-  s_timer16_set(fuel_pump_time_counter, ((uint16_t)d.param.fp_timeout_strt) * 10); //reset timer, so after power up rfuel pump will be ready again
+  s_timer_set(&fuel_pump_time_counter, ((uint16_t)d.param.fp_timeout_strt) * 10); //reset timer, so after power up rfuel pump will be ready again
   fpstate.state = 0;
   return;
  }
@@ -85,7 +88,7 @@ void fuelpump_control(void)
  {
   case 0: //pump is turned on
    //Turn off pump if timer is expired or gas valve is turned on
-   if (gas_v_logic() || s_timer16_is_action(fuel_pump_time_counter))
+   if (gas_v_logic() || s_timer_is_action(&fuel_pump_time_counter))
    {
     TURN_ON_ELPUMP(0); //turn off
     fpstate.state = 1;
@@ -97,7 +100,7 @@ void fuelpump_control(void)
 
    //reset timer periodically if engine is still running
    if (d.sens.frequen > 0)
-    s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
+    s_timer_set(&fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
 
    break;
 
@@ -106,7 +109,7 @@ void fuelpump_control(void)
    if (!gas_v_logic() && d.sens.frequen > 0)
    {
     TURN_ON_ELPUMP(1); //turn on
-    s_timer16_set(fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
+    s_timer_set(&fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
     fpstate.state = 0;
    }
 

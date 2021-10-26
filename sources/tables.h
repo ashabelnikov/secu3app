@@ -471,7 +471,6 @@ typedef struct fw_ex_data_t
   uint8_t fi_enter_strokes;
   uint8_t fi_leave_strokes;
   uint8_t iac_cond_add;
-  uint16_t inj_max_pw;
   int16_t  aircond_clt;
   uint8_t  aircond_tps;
   int16_t  idl_ve;
@@ -533,7 +532,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1988];
+  uint8_t reserved[1990];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -820,11 +819,13 @@ typedef struct params_t
 
   uint8_t gas_v_uni;                     //!< Selection of universal output used as condition for emulation of GAS_V input, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
 
+  uint16_t inj_max_pw[2];                //!< Maximum injection PW, value in 3.2us units
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[157];
+  uint8_t  reserved[153];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

@@ -677,6 +677,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gas_v_uni =                   0x0F,                //Don't use uni.outs for emulation of GAS_V input
 
+  .inj_max_pw =                  {31250, 31250},      //100ms for petrol and gas
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -993,7 +995,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .fi_enter_strokes = 5,  //5 strokes
   .fi_leave_strokes = 5,  //5 strokes
   .iac_cond_add = 15*2,    //+15%
-  .inj_max_pw = 31250,     //100ms
   .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .aircond_tps = TPS_MAGNITUDE(68.0), //68%
   .idl_ve = ROUND(0*2048), //turned off

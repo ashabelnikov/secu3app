@@ -1014,6 +1014,8 @@ void uart_send_packet(uint8_t send_mode)
   build_i32h(d.param.inj_maf_const[0]);
   build_i32h(d.param.inj_maf_const[1]);
   build_i32h(d.param.mafload_const);
+  build_i16h(d.param.inj_max_pw[0]);
+  build_i16h(d.param.inj_max_pw[1]);
   break;
 #endif
 
@@ -1789,6 +1791,8 @@ uint8_t uart_recept_packet(void)
   d.param.inj_maf_const[0] = recept_i32h();
   d.param.inj_maf_const[1] = recept_i32h();
   d.param.mafload_const = recept_i32h();
+  d.param.inj_max_pw[0] = recept_i16h();
+  d.param.inj_max_pw[1] = recept_i16h();
   break;
 #endif
 

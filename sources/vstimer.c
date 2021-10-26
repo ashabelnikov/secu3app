@@ -49,7 +49,7 @@ static uint16_t strokes_since_start = 0;                  //!< number of strokes
 //See smcontrol.c
 extern volatile uint16_t sm_steps;
 extern volatile uint8_t sm_latch;
-extern uint16_t sm_steps_b;
+extern volatile uint16_t sm_steps_b;
 extern uint8_t sm_pulse_state;
 extern volatile uint16_t sm_steps_cnt;
 extern volatile uint8_t sm_freq;

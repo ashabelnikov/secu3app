@@ -33,12 +33,12 @@
 #include "smcontrol.h"
 #include "tables.h"
 
-volatile uint16_t sm_steps = 0;
-volatile uint8_t sm_latch = 0;
-uint16_t sm_steps_b = 0;
-uint8_t sm_pulse_state = 0;
-volatile uint16_t sm_steps_cnt = 0;
-volatile uint8_t sm_freq = 0;
+volatile uint16_t sm_steps = 0;    //!< Used to transfer steps from main loop to interrupt
+volatile uint8_t sm_latch = 0;     //!< Used to help transfer steps from main loop to interrupt (trigger)
+volatile uint16_t sm_steps_b = 0;  //!< Counter of SM steps used in interrupt
+uint8_t sm_pulse_state = 0;        //!< State of step's pulse, used in interrupt
+volatile uint16_t sm_steps_cnt = 0;//!< Number of actually run steps
+volatile uint8_t sm_freq = 0;      //!< Used to transfer frequency divider's value from main loop to interrupt
 
 void stpmot_init_ports(void)
 {
@@ -62,8 +62,8 @@ void stpmot_run(uint16_t steps)
   _ENABLE_INTERRUPT();
  }
  _DISABLE_INTERRUPT();
-  sm_steps = steps;
-  sm_latch = 1;
+ sm_steps = steps;
+ sm_latch = 1;
  _ENABLE_INTERRUPT();
 }
 

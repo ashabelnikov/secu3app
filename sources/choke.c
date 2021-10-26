@@ -304,7 +304,6 @@ static void initial_pos(uint8_t dir)
  */
 void sm_motion_control(int16_t pos)
 {
- int16_t diff;
  restrict_value_to(&pos, 0, d.param.sm_steps);
  if (CHECKBIT(chks.flags, CF_SMDIR_CHG))                      //direction has changed
  {
@@ -316,17 +315,18 @@ void sm_motion_control(int16_t pos)
  }
  if (!CHECKBIT(chks.flags, CF_SMDIR_CHG))                     //normal operation
  {
-  diff = pos - chks.smpos;
   if (!stpmot_is_busy())
   {
    if (!CHECKBIT(chks.flags, CF_INITFRQ))                     //set normal frequency after first complete movement
     stpmot_freq(d.param.sm_freq);
    SETBIT(chks.flags, CF_INITFRQ);
 
+   int16_t diff = pos - chks.smpos;
    if (diff != 0)
    {
     chks.cur_dir = diff < 0 ? SM_DIR_CW : SM_DIR_CCW;
     stpmot_dir(chks.cur_dir);
+    _DELAY_US(2);                                             //ensure dir to step minimum delay
     stpmot_run(abs(diff));                                    //start stepper motor
     chks.smpos_prev = chks.smpos;                             //remember position when SM started motion
     chks.smpos = pos;                                         //this is a target position

@@ -1296,7 +1296,7 @@ uint8_t inj_gps_pwcorr(void)
  */
 uint8_t engine_blowing_cond(void)
 {
- if (PGM_GET_BYTE(&fw_data.exdata.fldclr_start))
+ if (CHECKBIT(d.param.strt_flags, STRTF_FLDCLRSTR))
   d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
  else
  { //start of engine in flood clear mode is not allowed
@@ -1441,7 +1441,7 @@ uint16_t cranking_thrd_rpm(void)
 uint16_t cranking_thrd_tmr(void)
 {
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
-  return PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt);   //coolant temperature sensor is not enabled (or not installed), use simple constant
+  return d.param.stbl_str_cnt;   //coolant temperature sensor is not enabled (or not installed), use simple constant
 
  return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i1]),  //<--values in table are unsigned
          (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;

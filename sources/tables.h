@@ -217,6 +217,9 @@
 #define IGNTF_WRKMAP                    0           //!< 1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
 #define IGNTF_MANIDL                    1           //!< 0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
 
+//Cranking flags
+#define STRTF_FLDCLRSTR                 0           //!< allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
+
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
 {
@@ -480,7 +483,6 @@ typedef struct fw_ex_data_t
   int16_t  idl_ve;
   uint16_t frap;
   int16_t  idl_ve_g;
-  uint8_t  stbl_str_cnt;
   uint16_t  reserv_0;   //reserved
   int16_t  heating_t_off; //Heating off temperature
   uint8_t  heating_time;  //Input manifold heating time
@@ -493,7 +495,6 @@ typedef struct fw_ex_data_t
   uint8_t  vent_pwmsteps;
   uint8_t  vent_minband;
   uint8_t  an_tps_mul;
-  uint8_t  fldclr_start;  //allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
   uint8_t  hall_predict;  //prediction mode for hall (N=Ncyl) synchronization mode: 0 - last interval (default), 1 - 1st derivative
   uint16_t vtachom_mult;  //Event multiplier for VTACHO output, value * 8192, value in range 0.125...7.900
   uint16_t grheat_time;   //Maximum time for heating on stopped engine
@@ -533,7 +534,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1994];
+  uint8_t reserved[1996];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -825,11 +826,14 @@ typedef struct params_t
   uint8_t igntim_flags;                  //!< Ignition timing flags, see IGNTF_* defines for more information
   int16_t shift_igntim;                  //!< Ignition timing for shifting
 
+  uint8_t  stbl_str_cnt;
+  uint8_t  strt_flags;                   //!< Cranking flags, see STRTF_* defines for more information
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[150];
+  uint8_t  reserved[148];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

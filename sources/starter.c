@@ -66,7 +66,7 @@ void starter_control(void)
    break;
   case 1:
    {
-    uint8_t stbl_str_cnt = PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt) ? PGM_GET_BYTE(&fw_data.exdata.stbl_str_cnt) : cranking_thrd_tmr();
+    uint8_t stbl_str_cnt = d.param.stbl_str_cnt ? d.param.stbl_str_cnt : cranking_thrd_tmr();
     if (str_counter >= stbl_str_cnt)
      starter_set_blocking_state(1), d.st_block = 1;
    }

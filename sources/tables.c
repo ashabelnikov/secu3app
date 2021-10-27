@@ -682,6 +682,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .igntim_flags =                _BV(IGNTF_MANIDL),   //use manual ignition timing on idling
   .shift_igntim =                0,
 
+  .stbl_str_cnt =                10,                  //10 strokes
+  .strt_flags =                  _BV(STRTF_FLDCLRSTR),// start of engine in flood clear mode enabled
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -1003,7 +1006,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_ve = ROUND(0*2048), //turned off
   .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
   .idl_ve_g = ROUND(0*2048), //turned off
-  .stbl_str_cnt = 10, //10 strokes
   .reserv_0 = 0, //reserved
   .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
   .heating_time = 100, //10 min
@@ -1017,7 +1019,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_pwmsteps = 31, //number of PWM discretes for 5kHz with 20MHz quartz
   .vent_minband = 2,
   .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
-  .fldclr_start = 1,  //allowed
   .hall_predict = 0,  //last interval
   .vtachom_mult = ROUNDU16(0.5*8192), //generate tachometer pulses as for 4 cylinder 4 stroke engine
   .grheat_time = SYSTIM_MAGS(180), //3 minutes

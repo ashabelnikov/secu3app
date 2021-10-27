@@ -476,6 +476,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.angle_dec_speed);
    build_i16h(d.param.angle_inc_speed);
    build_i4h(d.param.zero_adv_ang);
+   build_i8h(d.param.igntim_flags);
+   build_i16h(d.param.shift_igntim);
    break;
 
   case FUNSET_PAR:
@@ -1578,6 +1580,8 @@ uint8_t uart_recept_packet(void)
    d.param.angle_dec_speed = recept_i16h();
    d.param.angle_inc_speed = recept_i16h();
    d.param.zero_adv_ang = recept_i4h();
+   d.param.igntim_flags = recept_i8h();
+   d.param.shift_igntim = recept_i16h();
    break;
 
   case FUNSET_PAR:

@@ -679,6 +679,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .inj_max_pw =                  {31250, 31250},      //100ms for petrol and gas
 
+  .igntim_flags =                _BV(IGNTF_MANIDL),   //use manual ignition timing on idling
+  .shift_igntim =                0,
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -1014,8 +1017,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .vent_pwmsteps = 31, //number of PWM discretes for 5kHz with 20MHz quartz
   .vent_minband = 2,
   .an_tps_mul = 0,     //0 - multiply by MAP, 1 - multiply by TPS
-  .igntim_wrkmap = 0,  //0 - regular behaviour (separate maps for idling and working modes)
-  .shift_igntim = 0,
   .fldclr_start = 1,  //allowed
   .hall_predict = 0,  //last interval
   .vtachom_mult = ROUNDU16(0.5*8192), //generate tachometer pulses as for 4 cylinder 4 stroke engine
@@ -1023,7 +1024,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .add_i1_sub = 1,
   .add_i2_sub = 2,
   .idlreg_captrange = 200, //200 min-1
-  .manigntim_idl = 1, //use manual ignition timing on idling
+
   .idlent_timval = 150,
   .gasval_ontime = 500, //5 sec.
 

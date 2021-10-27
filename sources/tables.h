@@ -213,6 +213,10 @@
 
 #define INJPWCOEF_LUT_SIZE              17          //!< inj. PW coefficient look up table size
 
+//Ignition timing flags
+#define IGNTF_WRKMAP                    0           //!< 1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
+#define IGNTF_MANIDL                    1           //!< 0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
+
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t
 {
@@ -489,8 +493,6 @@ typedef struct fw_ex_data_t
   uint8_t  vent_pwmsteps;
   uint8_t  vent_minband;
   uint8_t  an_tps_mul;
-  uint8_t  igntim_wrkmap; //1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
-  int16_t  shift_igntim;  //ignition timing for shifting
   uint8_t  fldclr_start;  //allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
   uint8_t  hall_predict;  //prediction mode for hall (N=Ncyl) synchronization mode: 0 - last interval (default), 1 - 1st derivative
   uint16_t vtachom_mult;  //Event multiplier for VTACHO output, value * 8192, value in range 0.125...7.900
@@ -498,7 +500,6 @@ typedef struct fw_ex_data_t
   uint8_t  add_i1_sub;    // 1 - default (ADD_i1), 2 - ADD_i2, 3 - ADD_i3, 4 - ADD_i4, 5 - ADD_i5, 6 - ADD_i6, 7 - ADD_I7, 8 - ADD_I8
   uint8_t  add_i2_sub;    // 1 - ADD_i1, 2 - default (ADD_i2), 3 - ADD_i3, 4 - ADD_i4, 5 - ADD_i5, 6 - ADD_i6, 7 - ADD_I7, 8 - ADD_I8
   uint16_t idlreg_captrange; //capture range for ign. tim. idling regulator
-  uint8_t  manigntim_idl; //0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
   uint8_t  idlent_timval;
   uint16_t gasval_ontime; //time during which gas valve will be turned on when engine is stopped (10 ms units)
   uint16_t tdc_angle[8];  //Angle of TDC for each cylinder, value * ANGLE_MULTIPLIER, relatively to 0 tooth.
@@ -532,7 +533,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1990];
+  uint8_t reserved[1994];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -821,11 +822,14 @@ typedef struct params_t
 
   uint16_t inj_max_pw[2];                //!< Maximum injection PW, value in 3.2us units
 
+  uint8_t igntim_flags;                  //!< Ignition timing flags, see IGNTF_* defines for more information
+  int16_t shift_igntim;                  //!< Ignition timing for shifting
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[153];
+  uint8_t  reserved[150];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

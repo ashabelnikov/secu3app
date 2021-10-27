@@ -438,7 +438,7 @@ void eculogic_system_state_machine(void)
    {
     d.engine_mode = EM_WORK;
    }
-   if (PGM_GET_BYTE(&fw_data.exdata.igntim_wrkmap))
+   if (CHECKBIT(d.param.igntim_flags, IGNTF_WRKMAP))
    { //it is selected always to use working mode's map
     angle = d.corr.work_aalt = work_function();//basic ignition timing - work map
     d.corr.idle_aalt = AAV_NOTUSED;
@@ -457,7 +457,7 @@ void eculogic_system_state_machine(void)
    d.corr.airt_aalt = 0;
 #endif
 #ifdef PA4_INP_IGNTIM
-   if (PGM_GET_BYTE(&fw_data.exdata.manigntim_idl))
+   if (CHECKBIT(d.param.igntim_flags, IGNTF_MANIDL))
    {
     d.corr.pa4_aac = manual_igntim();
     angle+=d.corr.pa4_aac;
@@ -548,7 +548,7 @@ void eculogic_system_state_machine(void)
  if (IOCFG_CHECK(IOP_AUTO_I))
  {
   if (IOCFG_GET(IOP_AUTO_I))
-   angle = (int16_t)PGM_GET_WORD(&fw_data.exdata.shift_igntim);
+   angle = d.param.shift_igntim;
  }
 
  lgs.calc_adv_ang = angle; //save calculated advance angle

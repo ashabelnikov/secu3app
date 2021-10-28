@@ -546,7 +546,10 @@ void eculogic_system_state_machine(void)
   if (IOCFG_GET(IOP_AUTO_I))
   {
    angle = d.param.shift_igntim;
-   d.corr.octan_aac = d.corr.pa4_aac = AAV_NOTUSED;
+   d.corr.octan_aac = AAV_NOTUSED;
+#ifdef PA4_INP_IGNTIM
+   d.corr.pa4_aac = AAV_NOTUSED;
+#endif
    d.corr.knkret_aac = d.corr.temp_aalt = d.corr.strt_aalt = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
   }
  }
@@ -558,13 +561,18 @@ void eculogic_system_state_machine(void)
  if (d.param.zero_adv_ang)
  {
   angle = 0;
-  d.corr.octan_aac = d.corr.pa4_aac = AAV_NOTUSED;
+  d.corr.octan_aac = AAV_NOTUSED;
+#ifdef PA4_INP_IGNTIM
+   d.corr.pa4_aac = AAV_NOTUSED;
+#endif
   d.corr.knkret_aac = d.corr.temp_aalt = d.corr.strt_aalt = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
  }
  else if (CHECKBIT(d.param.igntim_flags, IGNTF_MANZERO))
  {
   angle = d.param.angle_corr;
+#ifdef PA4_INP_IGNTIM
   d.corr.pa4_aac = AAV_NOTUSED;
+#endif
   d.corr.knkret_aac = d.corr.temp_aalt = d.corr.strt_aalt = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
  }
 

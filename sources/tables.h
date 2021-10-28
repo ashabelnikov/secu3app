@@ -589,7 +589,7 @@ typedef struct params_t
   int16_t  max_angle;                    //!< system's maximum advance angle limit
   int16_t  min_angle;                    //!< system's minimum advance angle limit
   int16_t  angle_corr;                   //!< octane correction of advance angle
-  uint8_t  zero_adv_ang;                 //!< Zero advance angle flag
+  uint8_t  zero_adv_ang;                 //!< Zero advance angle flag, TODO: move it to igntim_flags
 
   uint8_t  fn_gasoline;                  //!< index of set of characteristics used for gasoline
   uint8_t  fn_gas;                       //!< index of set of characteristics used for gas

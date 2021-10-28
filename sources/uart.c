@@ -720,12 +720,19 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.corr.temp_aalt);         // advance angle from coolant temperature correction map
    build_i16h(d.corr.airt_aalt);         // advance angle from air temperature correction map
    build_i16h(d.corr.idlreg_aac);        // advance angle correction from idling RPM regulator
-   int16_t igntim_corr = (((d.corr.octan_aac != AAV_NOTUSED) ? d.corr.octan_aac : 0)
+
 #ifdef PA4_INP_IGNTIM
-   + ((d.corr.pa4_aac != AAV_NOTUSED) ? d.corr.pa4_aac : 0)
+   if ((d.corr.pa4_aac != AAV_NOTUSED) && (d.corr.octan_aac != AAV_NOTUSED))
+    build_i16h(d.corr.octan_aac + d.corr.pa4_aac);// octane correction value (sum of two values: octane correction and manual ign.tim. correction)
+   else if (d.corr.pa4_aac != AAV_NOTUSED)
+    build_i16h(d.corr.pa4_aac);
+   else if (d.corr.octan_aac != AAV_NOTUSED)
+    build_i16h(d.corr.octan_aac);
+   else
+    build_i16h(AAV_NOTUSED);
+#else
+    build_i16h(d.corr.octan_aac);
 #endif
-   );
-   build_i16h(igntim_corr);              // octane correction value (sum of two values: octane correction and manual ign.tim. correction)
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    build_i16h(d.corr.lambda);            // lambda correction

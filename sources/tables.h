@@ -216,6 +216,7 @@
 //Ignition timing flags
 #define IGNTF_WRKMAP                    0           //!< 1 - always use work map for ignition timing (idle map will be not used), 0 - regular behaviour (work map for working mode, idle map for idling mode)
 #define IGNTF_MANIDL                    1           //!< 0 - don't apply manual ignition timing correction on idling, 1 - apply manual ign. tim. correction on idling
+#define IGNTF_MANZERO                   2           //!< If this flag is set, manual ignition timing correction is available in the "zero advance angle mode".
 
 //Cranking flags
 #define STRTF_FLDCLRSTR                 0           //!< allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)

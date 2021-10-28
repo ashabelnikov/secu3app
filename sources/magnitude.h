@@ -95,4 +95,9 @@
 /** For representation of system timer's values */
 #define SYSTIM_MAGS(v) ROUND((v) * SYSTIM_MULTIPLIER)
 
+/**Reserved value used to indicate that value is not used in corresponding mode
+ * This constant is used for values of advance angle
+ */
+#define AAV_NOTUSED 0x7FFF
+
 #endif //_MAGNITUDE_H_

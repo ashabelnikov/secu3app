@@ -38,6 +38,7 @@
 #include "uart.h"
 #include "ufcodes.h"
 #include "wdt.h"
+#include "magnitude.h"
 
 #define ETMT_NAME_STR 0     //!< name of tables's set id
 //ignition maps
@@ -572,7 +573,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.sens.temperat);          // coolant temperature
    build_i16h(d.corr.curr_angle);        // advance angle
    build_i16h(d.sens.knock_k);           // knock value
-   build_i16h(d.corr.knock_retard);      // knock retard
+   build_i16h(d.corr.knkret_aac);        // knock retard
    build_i8h(d.airflow);                 // index of the map axis curve
    //boolean values
    build_i16h(_CBV16(d.ie_valve, 0)      // IE flag
@@ -719,11 +720,12 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.corr.temp_aalt);         // advance angle from coolant temperature correction map
    build_i16h(d.corr.airt_aalt);         // advance angle from air temperature correction map
    build_i16h(d.corr.idlreg_aac);        // advance angle correction from idling RPM regulator
-   build_i16h(d.corr.octan_aac
+   int16_t igntim_corr = (((d.corr.octan_aac != AAV_NOTUSED) ? d.corr.octan_aac : 0)
 #ifdef PA4_INP_IGNTIM
-   + d.corr.pa4_aac
+   + ((d.corr.pa4_aac != AAV_NOTUSED) ? d.corr.pa4_aac : 0)
 #endif
-                               );         // octane correction value
+   );
+   build_i16h(igntim_corr);              // octane correction value (sum of two values: octane correction and manual ign.tim. correction)
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    build_i16h(d.corr.lambda);            // lambda correction

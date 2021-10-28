@@ -39,9 +39,7 @@
 #include "mathemat.h"
 #include "ltft.h"
 
-/**Reserved value used to indicate that value is not used in corresponding mode*/
-#define AAV_NOTUSED 0x7FFF
-
+/**Module's local state variables*/
 typedef struct
 {
 #ifdef FUEL_INJECT
@@ -395,7 +393,7 @@ void eculogic_system_state_machine(void)
    angle = d.corr.strt_aalt = start_function();     //basic ignition timing - cranking map
    d.corr.temp_aalt = crkclt_function();            //CLT corr. on cranking
    angle+=d.corr.temp_aalt;
-   d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
+   d.corr.knkret_aac = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
    d.airflow = 0;                                   //no "air flow" on cranking
 
 #ifdef SPLIT_ANGLE
@@ -428,7 +426,7 @@ void eculogic_system_state_machine(void)
 #endif
 
 #ifdef PA4_INP_IGNTIM
-   d.corr.pa4_aac = 0;
+   d.corr.pa4_aac = AAV_NOTUSED;                      //manual ignition timing correction is not used during cranking
 #endif
 
    break;
@@ -462,10 +460,12 @@ void eculogic_system_state_machine(void)
     d.corr.pa4_aac = manual_igntim();
     angle+=d.corr.pa4_aac;
    }
+   else
+    d.corr.pa4_aac = AAV_NOTUSED;
 #endif
    d.corr.idlreg_aac = idling_pregulator(&idle_period_time_counter);//add correction from idling regulator
    angle+=d.corr.idlreg_aac;
-   d.corr.strt_aalt = AAV_NOTUSED;
+   d.corr.knkret_aac = d.corr.strt_aalt = AAV_NOTUSED; //knock control is not used during idling
 
 #ifdef SPLIT_ANGLE
    d.corr.split_angle = split_function();        //calculate and store split angle value
@@ -519,6 +519,7 @@ void eculogic_system_state_machine(void)
 #endif
    //substract correction obtained from detonation regulator
    angle-=d.corr.knock_retard;
+   d.corr.knkret_aac = d.corr.knock_retard;
    d.corr.strt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
 
 #ifdef SPLIT_ANGLE
@@ -538,17 +539,33 @@ void eculogic_system_state_machine(void)
  //Add octane correction (constant value specified by user) and remember it in the octan_aac variable
  angle+=d.param.angle_corr;
  d.corr.octan_aac = d.param.angle_corr;
- //Limit ignition timing using set limits
- restrict_value_to(&angle, d.param.min_angle, d.param.max_angle);
- //If zero ignition timing mode is set, then 0
- if (d.param.zero_adv_ang)
-  angle = 0;
 
  //if input is active, then use specified value of ignition timing
  if (IOCFG_CHECK(IOP_AUTO_I))
  {
   if (IOCFG_GET(IOP_AUTO_I))
+  {
    angle = d.param.shift_igntim;
+   d.corr.octan_aac = d.corr.pa4_aac = AAV_NOTUSED;
+   d.corr.knkret_aac = d.corr.temp_aalt = d.corr.strt_aalt = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
+  }
+ }
+
+ //Limit ignition timing using set limits
+ restrict_value_to(&angle, d.param.min_angle, d.param.max_angle);
+
+ //If zero ignition timing mode is set, then 0
+ if (d.param.zero_adv_ang)
+ {
+  angle = 0;
+  d.corr.octan_aac = d.corr.pa4_aac = AAV_NOTUSED;
+  d.corr.knkret_aac = d.corr.temp_aalt = d.corr.strt_aalt = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
+ }
+ else if (CHECKBIT(d.param.igntim_flags, IGNTF_MANZERO))
+ {
+  angle = d.param.angle_corr;
+  d.corr.pa4_aac = AAV_NOTUSED;
+  d.corr.knkret_aac = d.corr.temp_aalt = d.corr.strt_aalt = d.corr.idle_aalt = d.corr.work_aalt = d.corr.airt_aalt = d.corr.idlreg_aac = AAV_NOTUSED;
  }
 
  lgs.calc_adv_ang = angle; //save calculated advance angle

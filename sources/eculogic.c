@@ -265,12 +265,7 @@ static void fuel_calc(void)
 #endif
 
  if (ltft_is_active())
-  pw = (pw * calc_ltft()) >> 9;          //apply LTFT correction
-
- if (0==d.param.inj_ae_type)
-  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
- else
-  pw+= acc_enrich_calc_tb(0, lambda_get_stoichval());//add acceleration enrichment (time based)
+  pw = (pw * calc_ltft()) >> 9;                 //apply LTFT correction
 
 #ifndef SECU3T
  if (IOCFG_CHECK(IOP_INJPWC_I))
@@ -279,6 +274,11 @@ static void fuel_calc(void)
    pw = (pw * manual_injpw()) >> 12;             //apply manual inj.PW coefficient
  }
 #endif
+
+ if (0==d.param.inj_ae_type)
+  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
+ else
+  pw+= acc_enrich_calc_tb(0, lambda_get_stoichval());//add acceleration enrichment (time based)
 
  d.inj_pw = finalize_inj_time(&pw);
  d.inj_pw = apply_smooth_fuelcut(d.inj_pw);

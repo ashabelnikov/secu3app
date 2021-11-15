@@ -264,6 +264,9 @@ static void fuel_calc(void)
   pw_gascorr(&pw);                              //apply gas corrections
 #endif
 
+ if (ltft_is_active())
+  pw = (pw * calc_ltft()) >> 9;          //apply LTFT correction
+
  if (0==d.param.inj_ae_type)
   pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
  else
@@ -276,9 +279,6 @@ static void fuel_calc(void)
    pw = (pw * manual_injpw()) >> 12;             //apply manual inj.PW coefficient
  }
 #endif
-
- if (ltft_is_active())
-  pw = (pw * calc_ltft()) >> 9;          //apply LTFT correction
 
  d.inj_pw = finalize_inj_time(&pw);
  d.inj_pw = apply_smooth_fuelcut(d.inj_pw);

@@ -770,8 +770,11 @@ uint16_t inj_base_pw(void)
  }
  else if (d.param.load_src_cfg == 4) //MAF
  {
-  pw32 = ((((uint32_t)d.sens.maf) * d.param.inj_maf_const[d.sens.gas]) / d.sens.inst_frq);
-  nsht = 4;  //no shift
+  if (d.sens.maf > (300*64))
+   pw32 = ((((uint32_t)(d.sens.maf >> 1)) * d.param.inj_maf_const[d.sens.gas]) / d.sens.inst_frq) << 1;
+  else
+   pw32 = ((((uint32_t)d.sens.maf) * d.param.inj_maf_const[d.sens.gas]) / d.sens.inst_frq);
+  nsht = 4; //no shift
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
  {

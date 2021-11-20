@@ -125,6 +125,8 @@
 
 #define MAF_FLOW_CURVE_SIZE             64          //!< Size of the MAF's flow curve lookup table
 
+#define FTLSCOR_UCOEF_SIZE              32          //!< size of FTLS correction's coefficient vs board voltage map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -468,8 +470,11 @@ typedef struct fw_ex_data_t
   /**MAF's flow curve lookup table. Value in g/sec  * 64. Last value - Y axis's range in g/sec */
   uint16_t maf_curve[MAF_FLOW_CURVE_SIZE+1+2];
 
+  /**FTLS correction coefficient vs board voltage map, value * 4096*/
+  uint16_t ftlscor_ucoef[FTLSCOR_UCOEF_SIZE];
+
   /**reserved*/
-  uint8_t reserved1[1425];
+  uint8_t reserved1[1361];
 
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...

@@ -462,6 +462,12 @@ int8_t inj_iac_mat_corr(void);
  * \return physical magnitude * multiplier (x64/x4/x256)
  */
 int16_t exsens_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
+
+/** Calculates FTLS correction coefficient vs board voltage.
+ * \return value of coefficient * 4096
+ */
+uint16_t ftlscor_ucoef(void);
+
 #endif
 
 #if !defined(SECU3T)

@@ -1750,3 +1750,21 @@ uint8_t ltft_check_load_hit(void)
 }
 
 #endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+uint16_t ftlscor_ucoef(void)
+{
+ int16_t i, i1, voltage = d.sens.voltage;
+
+ if (voltage < VOLTAGE_MAGNITUDE(5.4))
+  voltage = VOLTAGE_MAGNITUDE(5.4); //5.4 -  minimum voltage value corresponding to 1st value in table for 12V board voltage
+
+ i = (voltage - VOLTAGE_MAGNITUDE(5.4)) / VOLTAGE_MAGNITUDE(0.4);   //0.4 - voltage step
+
+ if (i >= FTLSCOR_UCOEF_SIZE-1) i = i1 = FTLSCOR_UCOEF_SIZE-1;
+  else i1 = i + 1;
+
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.ftlscor_ucoef[i]), PGM_GET_WORD(&fw_data.exdata.ftlscor_ucoef[i1]),
+        (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 2) >> 1;
+}
+#endif

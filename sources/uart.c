@@ -502,6 +502,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.ckps_engine_cyl);      //used for calculations on SECU-3 Manager side
    build_i16h(d.param.inj_cyl_disp);        //used for calculations on SECU-3 Manager side
    build_i32h(d.param.mafload_const);
+   build_i16h(d.sens.tps_raw);              //for TPS learning
    break;
 
   case STARTR_PAR:

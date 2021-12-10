@@ -535,12 +535,14 @@ typedef struct fw_ex_data_t
 
   uint8_t pwrrelay_uni;    //!< Selection of universal output used as condition for power managment, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
 
+  uint16_t ltft_learn_gpa; //!< Absolute gas pressure threshold for learning, value in kPa * 64
+  uint16_t ltft_learn_gpd; //!< Differential (gps - map) gas pressure threshold for learning, value in kPa * 64
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1996];
+  uint8_t reserved[1992];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

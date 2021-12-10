@@ -60,6 +60,12 @@ void ltft_control(void)
  if (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt)))
   return; //CLT is too low for learning
 
+ if (d.sens.map2 < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpa))
+  return; //gas pressure is below threshold
+
+ if ((d.sens.map2 - d.sens.map) < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpd))
+  return; //differential gas pressure is below threshold
+
  if (!ltft_is_active())
   return; //LTFT functionality turned off or not active for current fuel
 

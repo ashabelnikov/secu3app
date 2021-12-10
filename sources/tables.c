@@ -1073,6 +1073,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .pwrrelay_uni = 0x0F, //not used
 
+  .ltft_learn_gpa = PRESSURE_MAGNITUDE(100.0), //100 kPa
+  .ltft_learn_gpd = PRESSURE_MAGNITUDE(0.0),  //0 kPa
+
   /**reserved bytes*/
   {0}
  },

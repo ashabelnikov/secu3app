@@ -63,7 +63,7 @@ void ltft_control(void)
  if (d.sens.map2 < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpa))
   return; //gas pressure is below threshold
 
- if ((d.sens.map2 - d.sens.map) < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpd))
+ if (PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpd) && ((d.sens.map2 - d.sens.map) < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpd)))
   return; //differential gas pressure is below threshold
 
  if (!ltft_is_active())

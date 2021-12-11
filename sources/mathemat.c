@@ -106,3 +106,9 @@ uint16_t ui32_sqrt(uint32_t input)
 }
 
 #endif //FUEL_INJECT || GD_CONTROL
+
+uint8_t abs8(int8_t x)
+{
+ int8_t y = (x >> 7);
+ return (x ^ y) - y;
+}

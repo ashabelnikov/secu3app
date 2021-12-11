@@ -1075,6 +1075,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ltft_learn_gpa = PRESSURE_MAGNITUDE(0.0),  //0 kPa
   .ltft_learn_gpd = PRESSURE_MAGNITUDE(0.0),  //0 kPa
+  .ltft_neigh_rad = 15, //all cells
 
   /**reserved bytes*/
   {0}

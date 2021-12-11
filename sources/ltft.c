@@ -116,14 +116,18 @@ void ltft_control(void)
 
   case 2: //perform correction of neighbour cells
   {
-   if (ltft_idx_r != idx_r || ltft_idx_l != idx_l) //skip already corrected (current) cell
+   uint8_t r = PGM_GET_BYTE(&fw_data.exdata.ltft_neigh_rad);
+   if ((abs8((int8_t)idx_r - ltft_idx_r) <= r) && (abs8((int8_t)idx_l - ltft_idx_l) <= r)) //skip cells which lay out of radius
    {
-    int8_t dist_l = abs(ltft_idx_l - idx_l);
-    int8_t dist_r = abs(ltft_idx_r - idx_r);
-    int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
-    int16_t new_val = ((int16_t)d.inj_ltft[idx_l][idx_r]) + (((((int32_t)ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
-    restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
-    d.inj_ltft[idx_l][idx_r] = new_val;
+    if (ltft_idx_r != idx_r || ltft_idx_l != idx_l) //skip already corrected (current) cell
+    {
+     int8_t dist_l = abs(ltft_idx_l - idx_l);
+     int8_t dist_r = abs(ltft_idx_r - idx_r);
+     int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
+     int16_t new_val = ((int16_t)d.inj_ltft[idx_l][idx_r]) + (((((int32_t)ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
+     restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
+     d.inj_ltft[idx_l][idx_r] = new_val;
+    }
    }
 
    idx_r++;

@@ -93,4 +93,7 @@ uint16_t ui32_sqrt(uint32_t input);
  */
 #define SHTDIV32(v, k) (((v)<0) ? ((v)+((((int32_t)1)<<(k))-1)) >> (k) : ((v)>>(k)))
 
+/**Calculates absolute value for a 8 bit integer */
+uint8_t abs8(int8_t x);
+
 #endif //_MATHEMAT_H_

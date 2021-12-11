@@ -537,12 +537,14 @@ typedef struct fw_ex_data_t
 
   uint16_t ltft_learn_gpa; //!< Absolute gas pressure threshold for learning, value in kPa * 64
   uint16_t ltft_learn_gpd; //!< Differential (gps - map) gas pressure threshold for learning, value in kPa * 64
+  uint8_t  ltft_neigh_rad; //!< Radius for learning neighbours, value in cells (0...15)
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1992];
+  uint8_t reserved[1991];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

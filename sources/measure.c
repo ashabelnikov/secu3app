@@ -342,17 +342,23 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #endif
 
 #ifdef MCP3204
+ int16_t add_ix;
  if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.ftls = exsens_lookup(d.sens.add_i5, fw_data.exdata.ftls_curve); //ADD_I5 input selected as input for fuel tank level sensor
+  add_ix = d.sens.add_i5; //ADD_I5 input selected as input for fuel tank level sensor
  else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.ftls = exsens_lookup(d.sens.add_i6, fw_data.exdata.ftls_curve); //ADD_I6 input selected
+  add_ix = d.sens.add_i6; //ADD_I6 input selected
  else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.ftls = exsens_lookup(d.sens.add_i7, fw_data.exdata.ftls_curve); //ADD_I7 input selected
+  add_ix = d.sens.add_i7; //ADD_I7 input selected
  else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.ftls = exsens_lookup(d.sens.add_i8, fw_data.exdata.ftls_curve); //ADD_I8 input selected as input for fuel tank level sensor
+  add_ix = d.sens.add_i8; //ADD_I8 input selected as input for fuel tank level sensor
  else
+ {
   d.sens.ftls = 0; //input is not selected
- d.sens.ftls = (((uint32_t)d.sens.ftls) * ftlscor_ucoef()) >> 12; //apply board voltage correction
+  goto ftls_notsel;
+ }
+ add_ix = (((uint32_t)add_ix) * ftlscor_ucoef()) >> 12; //apply board voltage correction
+ d.sens.ftls = exsens_lookup(add_ix, fw_data.exdata.ftls_curve);
+ftls_notsel:
 #endif
 
 #ifndef SECU3T

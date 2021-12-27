@@ -40,9 +40,6 @@
 #define LTFT_MIN -126 //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
 #define LTFT_MAX  126 //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
 
-/**Number of successive switches of signal*/
-#define LAMBDA_SWT_NUM 4
-
 uint8_t ltft_state = 0;  //!< SM state
 uint16_t stat_tmr = 0;   //!< timer
 uint8_t ltft_idx_r = 0;  //!< rpm index of current work point
@@ -98,7 +95,7 @@ void ltft_control(void)
     break;
    }
 
-   if (((s_timer_gtc() - stat_tmr) >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_time)) && lambda_get_swt_counter() >= LAMBDA_SWT_NUM)
+   if (((s_timer_gtc() - stat_tmr) >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_time)) && lambda_get_swt_counter() >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
    {
     int16_t ltft_curr = d.inj_ltft[l][r];
     int16_t new_val = ltft_curr + d.corr.lambda;

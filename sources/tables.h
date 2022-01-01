@@ -144,7 +144,7 @@
 #define BTF_USE_IMM                     2           //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 #define BTF_USE_RESPAR                  3           //!< Use reserve parameters instead of parameters stored in the EEPROM
 #define BTF_CHK_FWCRC                   4           //!< Check firmware CRC (time consuming operation)
-#define BTF_BT_TYPE0                    5           //!< Bluetooth chip type (2 bits): 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31)
+#define BTF_BT_TYPE0                    5           //!< Bluetooth chip type (2 bits): 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31), 3 - BC352(HC-05)
 #define BTF_BT_TYPE1                    6           //!< See BTF_BT_TYPE0
 
 //Injection configuration constants

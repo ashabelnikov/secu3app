@@ -51,9 +51,10 @@
 
 /**Get BT type*/
 #define GETBTTYPE() ((d.param.bt_flags >> BTF_BT_TYPE0) & 0x3)
-#define BTT_BC417   0   //!< BC417
+#define BTT_BC417   0   //!< BC417(HC-06)
 #define BTT_BK3231  1   //!< BK3231
 #define BTT_BK3231S 2   //!< BK3231S (JDY-31)
+#define BTT_BC352   3   //!< BC352(HC-05)
 
 //External functions (from uart.c)
 void uart_reset_send_buff(void);
@@ -62,12 +63,15 @@ void uart_begin_send(void);
 
 /**Template for AT+BAUDx command */
 PGM_DECLARE(uint8_t AT_BAUD[]) = "AT+BAUD";
+PGM_DECLARE(uint8_t AT_UART[]) = "AT+UART=";
 
 /**Template for AT+NAMEx command */
 PGM_DECLARE(uint8_t AT_NAME[]) = "AT+NAME";
+PGM_DECLARE(uint8_t AT_NAME1[]) = "AT+NAME=";
 
 /**Template for AT+PINx command */
 PGM_DECLARE(uint8_t AT_PIN[])  = "AT+PIN";
+PGM_DECLARE(uint8_t AT_PSWD[])  = "AT+PSWD=";
 
 /**Template for AT+RESET command */
 PGM_DECLARE(uint8_t AT_RESET[])  = "AT+RESET";
@@ -143,7 +147,12 @@ static void append_tx_buff_with_at_baud_cmd(uint16_t baud)
 {
  uart_reset_send_buff();
  build_crlf_b(); //use CRLF before AT command to reset possible errors
- bt_build_fs(AT_BAUD, 7);
+
+ if (GETBTTYPE()==BTT_BC352)
+  bt_build_fs(AT_UART, 8);
+ else
+  bt_build_fs(AT_BAUD, 7);
+
  if (baud == CBR_9600) uart_append_send_buff('4');
  else if (baud == CBR_19200) uart_append_send_buff('5');
  else if (baud == CBR_38400) uart_append_send_buff('6');
@@ -282,7 +291,12 @@ static void append_tx_buff_with_at_name_cmd(uint8_t* name)
 {
  uart_reset_send_buff();
  build_crlf_b();
- bt_build_fs(AT_NAME, 7);
+
+ if (GETBTTYPE()==BTT_BC352)
+  bt_build_fs(AT_NAME1, 8);
+ else
+  bt_build_fs(AT_NAME, 7);
+
  bt_build_rs(&name[1], name[0]);
  build_crlf_e();
 }
@@ -294,7 +308,12 @@ static void append_tx_buff_with_at_pass_cmd(uint8_t* pass)
 {
  uart_reset_send_buff();
  build_crlf_b();
- bt_build_fs(AT_PIN, 6);
+
+ if (GETBTTYPE()==BTT_BC352)
+  bt_build_fs(AT_PSWD, 8);
+ else
+  bt_build_fs(AT_PIN, 6);
+
  bt_build_rs(&pass[1], pass[0]);
  build_crlf_e();
 }

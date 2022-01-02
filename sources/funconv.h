@@ -502,4 +502,11 @@ uint8_t ltft_check_load_hit(void);
 
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/**Gets lambda zone flag from a look up table using current RPM and load values
+ * \return flag value (0, 1)
+ */
+uint8_t lambda_zone_val(void);
+#endif
+
 #endif //_FUNCONV_H_

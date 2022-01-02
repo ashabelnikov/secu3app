@@ -257,6 +257,13 @@ void lambda_stroke_event_notification(void)
   }
  }
 
+ //Reset EGO correction if work point is out of set zone
+ if (!lambda_zone_val())
+ {
+  d.corr.lambda = 0;
+  return; //not allowed for this (RPM,load)
+ }
+
 #endif // FUEL_INJECT || GD_CONTROL
 
  //Reset EGO correction each time fuel type(set of maps) is changed (triggering of level on the GAS_V input)

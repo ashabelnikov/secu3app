@@ -126,6 +126,7 @@
 #define MAF_FLOW_CURVE_SIZE             64          //!< Size of the MAF's flow curve lookup table
 
 #define FTLSCOR_UCOEF_SIZE              32          //!< size of FTLS correction's coefficient vs board voltage map
+#define EGOZONE_LOAD_SIZE               16          //! Number of points along load axis in the lambda zones look up table
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -473,8 +474,11 @@ typedef struct fw_ex_data_t
   /**FTLS correction coefficient vs board voltage map, value * 4096*/
   uint16_t ftlscor_ucoef[FTLSCOR_UCOEF_SIZE];
 
+  /**EGO correction zones vs rpm, load*/
+  uint16_t lambda_zones[EGOZONE_LOAD_SIZE];
+
   /**reserved*/
-  uint8_t reserved1[1361];
+  uint8_t reserved1[1329];
 
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...

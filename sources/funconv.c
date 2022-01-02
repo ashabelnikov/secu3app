@@ -1768,3 +1768,22 @@ uint16_t ftlscor_ucoef(void)
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 2) >> 1;
 }
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/**Gets lambda zone flag from a look up table using current RPM and load values
+ * \return flag value (0, 1)
+ */
+uint8_t lambda_zone_val(void)
+{
+ uint16_t rpm = d.sens.inst_frq;
+ int8_t f;
+
+ //find interpolation points, then restrict RPM if it fall outside set range
+ for(f = F_WRK_POINTS_F-1; f >= 0; f--)
+  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+ //lookup table works from rpm_grid_points[0] and upper
+ if (f < 0) f = 0;
+
+ return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.lambda_zones[fcs.la_lp1]) >> f)) & 1;
+}
+#endif

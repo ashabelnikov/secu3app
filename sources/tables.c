@@ -1100,6 +1100,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ltft_neigh_rad = 15, //all cells
   .ltft_sigswt_num = 4, //4 successive switches
 
+  .thrass_algo = 0,
   /**reserved bytes*/
   {0}
  },

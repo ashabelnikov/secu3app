@@ -500,7 +500,8 @@ int16_t calc_sm_position(uint8_t pwm)
      chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
      if (d.engine_mode == EM_IDLE)
      {
-      if  (d.sens.inst_frq > rpm_thrd2)
+      //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
+      if  (d.sens.inst_frq > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
       {
        chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
       }

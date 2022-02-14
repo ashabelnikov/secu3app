@@ -1101,6 +1101,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ltft_sigswt_num = 4, //4 successive switches
 
   .thrass_algo = 0,
+
+  .btbaud_use = {1,0,0,0,0}, //use only 9600 because this is default (factory) baud rate used by Bluetooth
+
   /**reserved bytes*/
   {0}
  },

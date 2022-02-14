@@ -198,6 +198,20 @@ void next_state_with_new_baud(uint16_t baud)
  bts.strt_t1 = s_timer_gtc();    //set timer
 }
 
+/** Skips unused baud rates, increments bts.cur_baud
+ * \return 0 - reached the end, 1 - bts.cur_baud contains index of current baud rate
+ */
+uint8_t skip_btbauds(void)
+{
+ while(bts.cur_baud < BT_BAUDS_NUM)
+ {
+  if (PGM_GET_BYTE(&fw_data.exdata.btbaud_use[bts.cur_baud]))
+   return 1;
+  ++bts.cur_baud;
+ }
+ return 0; //reached the end / an empty list
+}
+
 uint8_t bt_set_baud(uint16_t baud)
 {
  if (255 == bts.btbr_mode)
@@ -207,9 +221,16 @@ uint8_t bt_set_baud(uint16_t baud)
  {
   //wait some time before we start to send first AT command
   case 0:
-   ++bts.btbr_mode;
-   bts.strt_t1 = s_timer_gtc();    //set timer
    bts.cur_baud = 0;
+   if (!skip_btbauds())
+   {
+    bts.btbr_mode = 4; //finishing
+   }
+   else
+   {
+    ++bts.btbr_mode;
+    bts.strt_t1 = s_timer_gtc();    //set timer
+   }
    return 0;
   case 1:
    if ((s_timer_gtc() - bts.strt_t1) >= AT_COMMAND_STRT_TIME)
@@ -225,7 +246,7 @@ uint8_t bt_set_baud(uint16_t baud)
    if (next_state_if_tmr_expired_br())
    {
     ++bts.cur_baud;
-    if (bts.cur_baud < BT_BAUDS_NUM)
+    if (skip_btbauds())
     {
      bts.btbr_mode = 2; //continue...
     }
@@ -235,6 +256,7 @@ uint8_t bt_set_baud(uint16_t baud)
      {
       bts.btbr_mode = 5; //we need to perform additional operations to reset bluetooth
       bts.cur_baud = 0;
+      skip_btbauds();
      }
     }
    }
@@ -262,7 +284,7 @@ uint8_t bt_set_baud(uint16_t baud)
    if (next_state_if_tmr_expired_br())
    {
     ++bts.cur_baud;
-    if (bts.cur_baud < BT_BAUDS_NUM)
+    if (skip_btbauds())
      bts.btbr_mode = 5; //continue...
     else
      bts.btbr_mode = 4; //end

@@ -546,12 +546,14 @@ typedef struct fw_ex_data_t
 
   uint8_t thrass_algo;     //!< Throttle assist algorithm (0,1)
 
+  uint8_t btbaud_use[5];   //!< 9600,19200,38400,57600,115200;
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1989];
+  uint8_t reserved[1984];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

@@ -183,6 +183,12 @@
 /**For filling of MAF's flow curve*/
 #define _MAF(v) ROUND((v)*64.0)
 
+/**Inj. multiplier (0.5...1.49) */
+#define _IML(v) ROUND(((v) - 0.5)*256.0)
+
+/**Inj. addition (ms) in 25.6 us steps*/
+#define _IAD(v) ROUND((v)/0.0256)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -396,7 +402,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {0,0,0},
 
   /**Version of the firmware. Do not forget to write out same value into the signature info! */
-  0x49,
+  0x50,
 
   /**2 bytes - size of this structure. */
   sizeof(cd_data_t)
@@ -1396,6 +1402,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0)},
 
+   //Fill inj. multiplier map
+   //     1           2           3           4           5           6           7           8
+   { _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00)},
+
+   //Fill inj. addition map
+   //    1           2           3           4           5           6           7           8
+   {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -1686,6 +1700,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0)},
 
+   //Fill inj. multiplier map
+   //     1           2           3           4           5           6           7           8
+   { _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00)},
+
+   //Fill inj. addition map
+   //    1           2           3           4           5           6           7           8
+   {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -1974,6 +1996,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0)},
+
+   //Fill inj. multiplier map
+   //     1           2           3           4           5           6           7           8
+   { _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00)},
+
+   //Fill inj. addition map
+   //    1           2           3           4           5           6           7           8
+   {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
 
    /**reserved bytes */
    {0},
@@ -2264,6 +2294,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
    {_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0),_TP(50.0)},
 
+   //Fill inj. multiplier map
+   //     1           2           3           4           5           6           7           8
+   { _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00), _IML(1.00)},
+
+   //Fill inj. addition map
+   //    1           2           3           4           5           6           7           8
+   {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2274,7 +2312,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   * Date in format Mmm dd yyyy.
   * Do not forget to write out same value of version into to the fw_version field of cd_data_t!
   */
- {"SECU-3 firmware v4.9. Build ["__DATE__"]       "},
+ {"SECU-3 firmware v5.0. Build ["__DATE__"]       "},
 
  /**Version of this structure - 0.0*/
  0x00,

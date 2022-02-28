@@ -128,6 +128,8 @@
 #define FTLSCOR_UCOEF_SIZE              32          //!< size of FTLS correction's coefficient vs board voltage map
 #define EGOZONE_LOAD_SIZE               16          //! Number of points along load axis in the lambda zones look up table
 
+#define INJ_CYLADD_SIZE                 8           //!< Size of injection multiplier and injection addition maps
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -289,10 +291,13 @@ typedef struct f_data_t
 
   uint8_t inj_tpszon[INJ_TPSZON_SIZE];                //!< Speed-density/Alpha-N load axis allocation
 
+  uint8_t inj_cylmult[INJ_CYLADD_SIZE];               //!< per cylinder inj. correction multiplier
+  int8_t  inj_cyladd[INJ_CYLADD_SIZE];                //!< per cylinder inj. correction addition
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[69];
+  uint8_t reserved[53];
 
   uint16_t checksum;                                  //!< CRC16 checksum of this structure (except these 16 bits)
 }f_data_t;

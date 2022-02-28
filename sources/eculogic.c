@@ -224,6 +224,9 @@ static uint16_t finalize_inj_time(int32_t* pw)
  else
   pwns[1] = pw_s;
 
+ pwns[0] = apply_smooth_fuelcut(pwns[0]);
+ pwns[1] = apply_smooth_fuelcut(pwns[1]);
+
  //store precalculated values (see inject_set_fullsequential() for more information)
  _BEGIN_ATOMIC_BLOCK();
  d.inj_pwns[0] = pwns[0];
@@ -281,7 +284,6 @@ static void fuel_calc(void)
   pw+= acc_enrich_calc_tb(0, lambda_get_stoichval());//add acceleration enrichment (time based)
 
  d.inj_pw = finalize_inj_time(&pw);
- d.inj_pw = apply_smooth_fuelcut(d.inj_pw);
  if (!(d.inj_pw > INJPW_MAG(0.1) && !d.fc_revlim && d.eng_running))
   d.inj_pw = 0;
 #ifdef GD_CONTROL

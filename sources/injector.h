@@ -75,7 +75,7 @@ void inject_open_inj(uint16_t time);
  */
 void inject_set_config(uint8_t cfg, uint8_t irs);
 
-/** Set full sequential mode 
+/** Set full sequential mode. Note: this function is called from interrupts
  * Uses d ECU data structure
  * \param mode - 0 - semi-sequential, 1 - full sequential
  */

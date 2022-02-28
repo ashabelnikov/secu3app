@@ -74,6 +74,8 @@
 #define ETMT_IACMAT_MAP 29  //!< IAC position's correction vs MAT
 #define ETMT_VE2_MAP 30     //!< Secondary VE map
 #define ETMT_TPSZON_MAP 31  //!< MAP/TPS load axis allocation
+#define ETMT_CYLMULT_MAP 32 //!< Inj. multiplication
+#define ETMT_CYLADD_MAP 33  //!< Inj. addition
 
 /**Define internal state variables */
 typedef struct
@@ -665,7 +667,7 @@ void uart_send_packet(uint8_t send_mode)
    uint8_t ai2sub = PGM_GET_BYTE(&fw_data.exdata.add_i2_sub);
    if (1==ai2sub)
     build_i16h(d.sens.add_i1);            // ADD_I1 voltage
-   if (2==ai2sub)
+   else if (2==ai2sub)
     build_i16h(d.sens.add_i2);            // ADD_I2 voltage
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
    else if (3==ai2sub)
@@ -1315,6 +1317,16 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_TPSZON_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_tpszon, INJ_TPSZON_SIZE);
+     state = ETMT_CYLMULT_MAP;
+     break;
+    case ETMT_CYLMULT_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_cylmult, INJ_CYLADD_SIZE);
+     state = ETMT_CYLADD_MAP;
+     break;
+    case ETMT_CYLADD_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_cyladd, INJ_CYLADD_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -1951,6 +1963,12 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_TPSZON_MAP: //MAP/TPS load axis allocation
      recept_rb(((uint8_t*)&d.tables_ram.inj_tpszon) + addr, INJ_TPSZON_SIZE); /*INJ_TPSZON_SIZE max*/
+     break;
+    case ETMT_CYLMULT_MAP: //Inj. multiplier
+     recept_rb(((uint8_t*)&d.tables_ram.inj_cylmult) + addr, INJ_CYLADD_SIZE); /*INJ_CYLADD_SIZE max*/
+     break;
+    case ETMT_CYLADD_MAP: //Inj. addition
+     recept_rb(((uint8_t*)&d.tables_ram.inj_cyladd) + addr, INJ_CYLADD_SIZE); /*INJ_CYLADD_SIZE max*/
      break;
    }
   }

@@ -62,16 +62,12 @@ uint16_t ckps_get_stroke_period(void);
 /**COMPB interrupt calibration*/
 #define INJ_COMPB_CALIB 2
 
-/**Maximum number of injection channels */
-#define INJ_CHANNELS_MAX 8
-
 /**Maximum queue size per timer channel */
 #define INJ_CH_QUEUE_SIZE 4
 
 /** Define injector state variables structure*/
 typedef struct
 {
- volatile uint16_t inj_time;     //!< Current injection time, used in interrupts
  volatile uint8_t tmr2b_h;       //!< used in timer2 COMPB interrupt to perform 16-bit timing
  volatile uint8_t tmr0b_h;       //!< used in timer0 COMPB interrupt to perform 16-bit timing
  volatile uint8_t cyl_number;    //!< number of engine cylinders
@@ -103,6 +99,7 @@ typedef struct
  volatile fnptr_t io_callback1;  //!< callback pointer (function which sets corresponding I/O)
  volatile fnptr_t io_callback2;  //!< second callback to allow semi-sequential mode with separate outputs
  uint8_t io_map;                 //!< for mapping of channel number to a particular I/O
+ volatile uint16_t inj_time;     //!< Current injection time, used in interrupts
 }inj_chanstate_t;
 
 
@@ -114,7 +111,7 @@ typedef struct
 }inj_queue_t;
 
 /** Global instance of injector state variable structure*/
-inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /** I/O information for each channel */
 inj_chanstate_t inj_chanstate[INJ_CHANNELS_MAX];
@@ -230,7 +227,8 @@ static void set_channels_ss(uint8_t _2bnk)
 void inject_init_state(void)
 {
  inj.cfg = INJCFG_THROTTLEBODY;
- inj.inj_time = 0xFFFF;
+ for(uint8_t i = 0; i < INJ_CHANNELS_MAX; ++i)
+  inj_chanstate[i].inj_time = 0xFFFF;
  inj.fuelcut = 1;  //no fuel cut
  inj.prime_pulse = 0; //no prime pulse
  inj.tmr_chan = 0;
@@ -330,15 +328,22 @@ void inject_set_num_squirts(uint8_t numsqr)
  _END_ATOMIC_BLOCK();
 }
 
-void inject_set_inj_time(uint16_t time)
-{
- time = (time >> 1) - INJ_COMPB_CALIB;        //subtract calibration ticks
- if (0==_AB(time, 0))                         //avoid strange bug which appears when OCR2B is set to the same value as TCNT2
-  (_AB(time, 0))++;
+void inject_set_inj_time(void)
+{ //Note, input values are not allowed to be close to zero!
+ uint16_t time;
+ uint16_t volatile *p_time = (inj.shrinktime == 0) ? &d.inj_pwns[0][0] : &d.inj_pwns[1][0];
+ uint8_t ch = inj.rowswt_add;
+ for (uint8_t i = 0; i < inj.cyl_number; ++i)
+ {
+  time = ((p_time[ch]) >> 1) - INJ_COMPB_CALIB;//obtain PW for channel and subtract calibration ticks
+  if (0==_AB(time, 0))                         //avoid strange bug which appears when OCR2B is set to the same value as TCNT2
+   (_AB(time, 0))++;
 
- _BEGIN_ATOMIC_BLOCK();
- inj.inj_time = time;
- _END_ATOMIC_BLOCK();
+  _BEGIN_ATOMIC_BLOCK();
+  inj_chanstate[i].inj_time = time;
+  _END_ATOMIC_BLOCK();
+  ++ch;
+ }
 }
 
 void inject_set_fuelcut(uint8_t state)
@@ -419,9 +424,9 @@ void inject_start_inj(uint8_t chan)
   {//central/simultaneous, We use only one timer channel
    //interrupts must be disabled!
    _BEGIN_ATOMIC_BLOCK();
-   OCR2B = TCNT2 + _AB(inj.inj_time, 0);
+   OCR2B = TCNT2 + _AB(inj_chanstate[0].inj_time, 0);
    SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
-   inj.tmr2b_h = _AB(inj.inj_time, 1);
+   inj.tmr2b_h = _AB(inj_chanstate[0].inj_time, 1);
    SET_ALL_INJ(INJ_ON);                       //turn on injector 1-8
    SETBIT(TIMSK2, OCIE2B);
    _END_ATOMIC_BLOCK();
@@ -438,21 +443,22 @@ void inject_start_inj(uint8_t chan)
      CLEARBIT(inj.mask_chan, inj_chanstate[chan].io_map); //mask it if it is still active
 
     SETBIT(inj.active_chan, inj_chanstate[chan].io_map);
+    uint16_t inj_time = inj_chanstate[chan].inj_time;
     if (QUEUE_IS_EMPTY(1))
     {
-     OCR2B = TCNT2 + _AB(inj.inj_time, 0);
+     OCR2B = TCNT2 + _AB(inj_time, 0);
      SETBIT(TIFR2, OCF2B);                    //reset possible pending interrupt flag
-     inj.tmr2b_h = _AB(inj.inj_time, 1);
+     inj.tmr2b_h = _AB(inj_time, 1);
      SETBIT(TIMSK2, OCIE2B);
      SETBIT(inj.mask_chan, inj_chanstate[chan].io_map); //unmask channel
     }
-    QUEUE_ADD(1, (inj.inj_time << 1), chan);  //append queue by channel requiring processing
+    QUEUE_ADD(1, (inj_time << 1), chan);  //append queue by channel requiring processing
     _END_ATOMIC_BLOCK();
     ++inj.tmr_chan;                           //next channel
    }
    else
    { //use 2-nd timer channel
-    uint16_t t = inj.inj_time << 1;           //this timer has 1 tick = 3.2uS
+    uint16_t t = (inj_chanstate[chan].inj_time) << 1;          //this timer has 1 tick = 3.2uS
     _BEGIN_ATOMIC_BLOCK();
     ((iocfg_pfn_set)inj_chanstate[chan].io_callback1)(INJ_ON); //turn on current injector pair
     ((iocfg_pfn_set)inj_chanstate[chan].io_callback2)(INJ_ON);
@@ -595,7 +601,7 @@ void inject_set_fullsequential(uint8_t mode)
  if (inj.cfg == INJCFG_FULLSEQUENTIAL)
  {
   set_channels_fs(mode);
-  inject_set_inj_time((inj.shrinktime == 0) ? d.inj_pwns[0] : d.inj_pwns[1]);
+  inject_set_inj_time();
  }
 }
 
@@ -603,7 +609,7 @@ void inject_calc_fuel_flow(void)
 {
  //TODO: limit inj.PW if it exceed period between successive injections (case when injector(s) is always turned on)
  //TODO: How to take into account prime pulse injection?
- //TODO: maybe we need avaraging of inj_fff?
+ //TODO: maybe we need to average inj_fff?
 
  //stroke period measured between spark strokes (not each stroke). So, for 1 cyl. engine it is 2 revolutions, for 2 cylinder engine it is 1 revolution and so on.
  uint32_t cycleper = ((uint32_t)ckps_get_stroke_period()) * d.param.ckps_engine_cyl;

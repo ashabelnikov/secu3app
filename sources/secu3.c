@@ -630,7 +630,7 @@ MAIN()
 #endif
 #ifdef FUEL_INJECT
   //set current injection time and fuel cut state
-  if (d.inj_pw > 0) inject_set_inj_time(d.inj_pw);
+  if (d.inj_pw > 0) inject_set_inj_time();
   //set injection timing depending on current mode of engine
   ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, (d.sens.gas ? (d.param.inj_anglespec >> 4) : (d.param.inj_anglespec & 0xF)));
 #endif

@@ -31,6 +31,9 @@
 
 #include <stdint.h>
 
+/**Maximum number of injection channels */
+#define INJ_CHANNELS_MAX 8
+
 /**Initialization of injector module (hardware & variables)*/
 void inject_init_state(void);
 
@@ -48,10 +51,9 @@ uint8_t inject_set_cyl_number(uint8_t cylnum);
  */
 void inject_set_num_squirts(uint8_t numsqr);
 
-/**Set injection time
- * \param time Injection time, one tick = 3.2us. Value is not allowed to be close to zero!
+/**Set injection PW. This function uses d.inj_pwns array
  */
-void inject_set_inj_time(uint16_t time);
+void inject_set_inj_time(void);
 
 /**Set fuel cut on/off
  * \param state Fuel cut flag (1 - fuel is On, 0 - fuel of Off)

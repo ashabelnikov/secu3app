@@ -509,4 +509,13 @@ uint8_t ltft_check_load_hit(void);
 uint8_t lambda_zone_val(void);
 #endif
 
+#if defined(FUEL_INJECT)
+/** Get inj. multiplier and adder
+ * \param idx Index of channel
+ * \param Pointer to variable which receive multiplier, value * 256
+ * \param Pointer to variable which receive adder, value in 3.2us units
+ */
+void inj_cylmultadd(uint8_t idx, uint16_t *p_mult, int16_t *p_add);
+#endif
+
 #endif //_FUNCONV_H_

@@ -1787,3 +1787,11 @@ uint8_t lambda_zone_val(void)
  return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.lambda_zones[fcs.la_lp1]) >> f)) & 1;
 }
 #endif
+
+#ifdef FUEL_INJECT
+void inj_cylmultadd(uint8_t idx, uint16_t *p_mult, int16_t *p_add)
+{
+ *p_mult = ((uint16_t)_GBU(inj_cylmult[idx])) + 128;
+ *p_add = ((int16_t)_GB(inj_cyladd[idx])) * 8;
+}
+#endif

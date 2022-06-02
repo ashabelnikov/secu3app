@@ -186,54 +186,69 @@ static uint16_t apply_smooth_fuelcut(uint16_t pw)
 
 /** Finalizes specified inj. PW value (adds injector lag and precalculates normal and shrinked values)
  * \param pw Pointer to the variable which contains value of PW
- * \return PW value ready to be used to drive injectors
+ * \return PW value ready to be used. Note that values of PW used to drive injectors are stored to inj_pwns array
  */
 static uint16_t finalize_inj_time(int32_t* pw)
 {
- int32_t pw_s = *pw;
  uint16_t pwns[2];
-
  d.inj_dt = (int16_t)accumulation_time(1);      //calculate dead time (injector lag), value is signed
-
  uint16_t inj_min_pw = ((uint16_t)(d.param.inj_min_pw[d.sens.gas])) * 8;
  uint16_t inj_max_pw = d.param.inj_max_pw[d.sens.gas];
 
- //add inj. lag and restrict result
- (*pw)+= d.inj_dt;
- if ((*pw) < inj_min_pw)
-  pwns[0] = inj_min_pw;
- else if ((*pw) > inj_max_pw)
-  pwns[0] = inj_max_pw;
- else
-  pwns[0] = *pw;
+ uint8_t i;
+ for (i = 0; i < INJ_CHANNELS_MAX; ++i)
+ {
+  uint16_t m; int16_t a;
+  inj_cylmultadd(i, &m, &a);
 
- //Precalculate shrinked injection time depending on cylinder number for emergency semi-sequential/simultaneous mode
- if (!(d.param.ckps_engine_cyl & 1))
-  pw_s>>= 1; //2 times (even cylinder number engines)
- else if (d.param.ckps_engine_cyl == 5)
-  pw_s = (pw_s * 13107) >> 16;  //divide by 5 (13107 = (1/5)*65536)
- else if (d.param.ckps_engine_cyl == 3)
-  pw_s = (pw_s * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
+  //Precalculate normal injection time
+  int32_t tpw = (*pw * m) >> 8;
+  tpw+= a;
+  //add inj. lag and restrict result
+  tpw+= d.inj_dt;
+  if (tpw < inj_min_pw)
+   pwns[0] = inj_min_pw;
+  else if (tpw > inj_max_pw)
+   pwns[0] = inj_max_pw;
+  else
+   pwns[0] = tpw;
+  pwns[0] = apply_smooth_fuelcut(pwns[0]);
 
- //add inj. lag and restrict result
- pw_s+= d.inj_dt;
- if (pw_s < inj_min_pw)
-  pwns[1] = inj_min_pw;
- else if (pw_s > inj_max_pw)
-  pwns[1] = inj_max_pw;
- else
-  pwns[1] = pw_s;
+  //Precalculate shrinked injection time depending on cylinder number for emergency semi-sequential/simultaneous mode
+  tpw = (*pw * m) >> 8;
+  tpw+= a;
+  if (!(d.param.ckps_engine_cyl & 1))
+   tpw>>= 1; //2 times (even cylinder number engines)
+  else if (d.param.ckps_engine_cyl == 5)
+   tpw = (tpw * 13107) >> 16;  //divide by 5 (13107 = (1/5)*65536)
+  else if (d.param.ckps_engine_cyl == 3)
+   tpw = (tpw * 21845) >> 16;  //divide by 3 (21845 = (1/3)*65536)
+  //add inj. lag and restrict result
+  tpw+= d.inj_dt;
+  if (tpw < inj_min_pw)
+   pwns[1] = inj_min_pw;
+  else if (tpw > inj_max_pw)
+   pwns[1] = inj_max_pw;
+  else
+   pwns[1] = tpw;
+  pwns[1] = apply_smooth_fuelcut(pwns[1]);
 
- pwns[0] = apply_smooth_fuelcut(pwns[0]);
- pwns[1] = apply_smooth_fuelcut(pwns[1]);
+  //store precalculated values (see inject_set_fullsequential() for more information)
+  _BEGIN_ATOMIC_BLOCK();
+  d.inj_pwns[0][i] = pwns[0];
+  d.inj_pwns[1][i] = pwns[1];
+  _END_ATOMIC_BLOCK();
+ }
 
- //store precalculated values (see inject_set_fullsequential() for more information)
- _BEGIN_ATOMIC_BLOCK();
- d.inj_pwns[0] = pwns[0];
- d.inj_pwns[1] = pwns[1];
- _END_ATOMIC_BLOCK();
-
- return (inject_is_shrinked() ? pwns[1] : pwns[0]);
+ //calculate value for user based on the avarage result
+ uint32_t inj_pw = 0;
+ uint8_t s = inject_is_shrinked();
+ uint8_t rowadd = 0;
+ if (CHECKBIT(d.param.inj_flags, INJFLG_SECINJROWSWT) && d.sens.gas)
+  rowadd = INJ_CHANNELS_MAX / 2;
+ for (i = 0; i < d.param.ckps_engine_cyl; ++i)
+  inj_pw+=d.inj_pwns[s][i + rowadd];
+ return inj_pw / d.param.ckps_engine_cyl;
 }
 
 /** Perform fuel calculations used on idling and work

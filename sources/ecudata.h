@@ -288,7 +288,7 @@ typedef struct ecudata_t
 
 #ifdef FUEL_INJECT
  uint16_t inj_pw;                        //!< current value of injector pulse width
- volatile uint16_t inj_pwns[2];
+ volatile uint16_t inj_pwns[2][8];       //!< normal and shrinked injection PW for each channel
  int16_t inj_dt;                         //!< current value of injector's dead time
  uint16_t inj_fff;                       //!< Instant fuel flow as frequency (Hz), 16000 pulses per 1L of burnt fuel (value * 256)
  uint8_t  eng_running;                   //!< flag, indicates that engine is operating now (running)

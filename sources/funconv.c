@@ -1730,7 +1730,7 @@ uint8_t ltft_check_load_hit(void)
  uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
 
  if (!use_grid)
- { //use grid map
+ { //use two values (min and max)
   uint16_t band = (((uint32_t)fcs.la_grad) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
   if (load >= ((fcs.la_grad * fcs.la_lp1) - band))
    return fcs.la_lp1; //near to lower point
@@ -1738,12 +1738,18 @@ uint8_t ltft_check_load_hit(void)
    return fcs.la_l; //near to upper point
  }
  else
- { //use two values (min and max)
+ { //use grid map
   uint16_t band = (((uint32_t)(PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]))) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
-  if (load <= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) + band))
-   return fcs.la_l; //near to lower point
-  else if (load >= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - band))
-   return fcs.la_l; //near to upper point
+  uint8_t idx;
+  //find index of the nearest point
+  if (fcs.la_load < (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - (PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) / 2)))
+   idx = fcs.la_l;
+  else
+   idx = fcs.la_lp1;
+  //check cell with obtained index
+  if (load < (PGM_GET_WORD(&fw_data.exdata.load_grid_points[idx]) + band) &&
+      load > (PGM_GET_WORD(&fw_data.exdata.load_grid_points[idx]) - band))
+   return idx;
  }
 
  return 255; //no hit

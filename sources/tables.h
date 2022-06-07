@@ -853,11 +853,14 @@ typedef struct params_t
   uint8_t  stbl_str_cnt;
   uint8_t  strt_flags;                   //!< Cranking flags, see STRTF_* defines for more information
 
+  uint8_t  inj_ae_balance;               //!< MAP/TPS balance for acceleration enrichment, 0...1.0, value * 256. So, value 255 correspond to 100% (actually 99.6%)
+  uint8_t  inj_ae_mapdot_thrd;           //!< MAP kPa/sec threshold, max rate is 255kPa/sec
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[148];
+  uint8_t  reserved[146];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

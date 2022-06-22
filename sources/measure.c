@@ -219,6 +219,17 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  else
   d.sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_MAP_SENSOR_FAIL))
+ {
+  d.sens.mapdot = adc_compensate(_RESDIV(adc_get_mapdot_value(), 2, 1), d.param.map_adc_factor, 0);
+  d.sens.mapdot = mapdot_adc_to_kpa(d.sens.mapdot, d.param.map_curve_gradient);
+ }
+ else
+  d.sens.mapdot = 0; //disable accel.enrichment during cranking or in case of MAP error
+#endif
+
 }
 
 //Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values

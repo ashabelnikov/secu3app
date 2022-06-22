@@ -691,17 +691,16 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .stbl_str_cnt =                10,                  //10 strokes
   .strt_flags =                  _BV(STRTF_FLDCLRSTR),// start of engine in flood clear mode enabled
 
-  .inj_ae_balance =              128,                 //50%
+  .inj_ae_ballance =             128,                 //50%
   .inj_ae_mapdot_thrd =          50,                  //50kPa per second
 
   .reserved =                    {0},
   .crc =                         0
  },
 
- /**Дополнительные данные по умолчанию Fill additional data with default values */
+ /**Fill additional data with default values */
  {
-  /**Таблица аттенюатора, по умолчанию k = 1.000
-   * attenuator's lookup table (for knock channel), by default k = 1.000 */
+  /**Attenuator's lookup table (for knock channel), by default k = 1.000 */
   {0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
    0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
    0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
@@ -1113,6 +1112,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .btbaud_use = {1,0,0,0,0}, //use only 9600 because this is default (factory) baud rate used by Bluetooth
 
+  .mapdot_mindt = 10000, //32ms
+
   /**reserved bytes*/
   {0}
  },
@@ -1413,6 +1414,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //    1           2           3           4           5           6           7           8
    {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
 
+   /**Fill values of the AE's MAP lookup table, range is -55...199% */
+   {
+    AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(1.0), AE_TPS_V(20.0), AE_TPS_V(120.0), AE_TPS_V(160.0)
+   },
+   /**Fill bins of the AE's MAP lookup table, range is -1000...+1000kPa / 1s */
+   {
+    AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
+   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -1443,7 +1453,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    },
    {0x22,0x1C,0x19,0x16,0x13,0x0F,0x0C,0x0A,0x07,0x05,0x02,0x00,0x00,0xFD,0xF6,0xEC},  //coolant temperature correction map
 
-   //Таблицы для впрыска топлива
+   //tables used for injection
    /**Fill VE lookup table, value can be in range 0...1.99 */
    {//  600       720        840       990      1170      1380     1650      1950      2310      2730       3210      3840      4530      5370      6360      7500 (min-1)
     {_PACK16(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //16
@@ -1710,6 +1720,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //Fill inj. addition map
    //    1           2           3           4           5           6           7           8
    {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
+
+   /**Fill values of the AE's MAP lookup table, range is -55...199% */
+   {
+    AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(1.0), AE_TPS_V(20.0), AE_TPS_V(120.0), AE_TPS_V(160.0)
+   },
+   /**Fill bins of the AE's MAP lookup table, range is -1000...+1000kPa / 1s */
+   {
+    AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
+   },
 
    /**reserved bytes */
    {0},
@@ -2008,6 +2027,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //    1           2           3           4           5           6           7           8
    {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
 
+   /**Fill values of the AE's MAP lookup table, range is -55...199% */
+   {
+    AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(1.0), AE_TPS_V(20.0), AE_TPS_V(120.0), AE_TPS_V(160.0)
+   },
+   /**Fill bins of the AE's MAP lookup table, range is -1000...+1000kPa / 1s */
+   {
+    AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
+   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2304,6 +2332,15 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //Fill inj. addition map
    //    1           2           3           4           5           6           7           8
    {_IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00), _IAD(0.00)},
+
+   /**Fill values of the AE's MAP lookup table, range is -55...199% */
+   {
+    AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(0.0), AE_TPS_V(1.0), AE_TPS_V(20.0), AE_TPS_V(120.0), AE_TPS_V(160.0)
+   },
+   /**Fill bins of the AE's MAP lookup table, range is -1000...+1000kPa / 1s */
+   {
+    AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
+   },
 
    /**reserved bytes */
    {0},

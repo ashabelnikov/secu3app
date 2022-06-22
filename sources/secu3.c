@@ -303,6 +303,7 @@ void init_modules(void)
  adc_init();
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  adc_set_tpsdot_mindt(PGM_GET_WORD(&fw_data.exdata.tpsdot_mindt));
+ adc_set_mapdot_mindt(PGM_GET_WORD(&fw_data.exdata.mapdot_mindt));
 #endif
 
  //Take away of starter blocking

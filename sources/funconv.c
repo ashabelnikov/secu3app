@@ -903,6 +903,21 @@ int16_t inj_ae_tps_lookup(int16_t tpsdot)
              ((int16_t)_GB(inj_ae_tps_bins[i]))*10,((int16_t)(_GB(inj_ae_tps_bins[i+1])-_GB(inj_ae_tps_bins[i])))*10, 164) >> 7; //*1.28, so output value will be x 128
 }
 
+int16_t inj_ae_map_lookup(int16_t mapdot)
+{
+ int8_t i;
+
+ for(i = INJ_AE_MAP_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
+  if (mapdot >= ((int16_t)_GB(inj_ae_map_bins[i])*10)) break;
+
+ if (i < 0)  {i = 0; mapdot = (int16_t)_GB(inj_ae_map_bins[0])*10;}
+ if (mapdot > ((int16_t)_GB(inj_ae_map_bins[INJ_AE_MAP_LOOKUP_TABLE_SIZE-1])*10)) mapdot = ((int16_t)_GB(inj_ae_map_bins[INJ_AE_MAP_LOOKUP_TABLE_SIZE-1])*10);
+
+ return simple_interpolation(mapdot,
+             ((int16_t)_GBU(inj_ae_map_enr[i]))-55, ((int16_t)_GBU(inj_ae_map_enr[i+1]))-55,  //<--values in inj_ae_map_enr table are unsigned
+             ((int16_t)_GB(inj_ae_map_bins[i]))*10,((int16_t)(_GB(inj_ae_map_bins[i+1])-_GB(inj_ae_map_bins[i])))*10, 164) >> 7; //*1.28, so output value will be x 128
+}
+
 uint8_t inj_ae_rpm_lookup(void)
 {
  int8_t i;
@@ -1322,9 +1337,35 @@ int32_t acc_enrich_calc(uint8_t mode, int16_t stoich_val)
  //calculate normal conditions PW, MAP=100kPa, IAT=20.C, AFR=14.7 (petrol) or d.param.gd_lambda_stoichval (gas).
  //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
  int32_t pwnc = mode ? GD_MAGNITUDE(100.0) : ((((((uint32_t)PWNC_CONST) * nr_1x_afr(stoich_val << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15);
- int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);               //calculate basic AE factor value
+ int16_t aef_tps, aef_map, aef;
 
- if (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)
+ //blend from TPS
+ if (d.param.inj_ae_ballance > 0 && abs(d.sens.tpsdot) > d.param.inj_ae_tpsdot_thrd) //ballance > 0%
+ {
+  aef_tps = inj_ae_tps_lookup(d.sens.tpsdot);  //calculate basic AE factor value from TPS
+  aef_tps = (((int32_t)aef_tps) * d.param.inj_ae_ballance) >> 8;
+ }
+ else
+ {
+  aef_tps = 0;
+ }
+
+ //blend from MAP
+ if (d.param.inj_ae_ballance < 255 && abs(d.sens.mapdot) > d.param.inj_ae_mapdot_thrd) //ballance < 100%
+ {
+  aef_map = inj_ae_map_lookup(d.sens.mapdot);  //calculate basic AE factor value from MAP
+  aef_map = (((int32_t)aef_map) * (256 - d.param.inj_ae_ballance)) >> 8;
+ }
+ else
+ {
+  aef_map = 0;
+ }
+
+ aef = aef_tps + aef_map; //calculate total blend value
+
+ if (((d.param.inj_ae_ballance == 0) && (abs(d.sens.mapdot) < d.param.inj_ae_mapdot_thrd)) ||
+    ((d.param.inj_ae_ballance == 255) && (abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd)) ||
+    ((abs(d.sens.tpsdot) < d.param.inj_ae_tpsdot_thrd) && (abs(d.sens.mapdot) < d.param.inj_ae_mapdot_thrd)))
  {
   //stop decay if gas pedal fully released
   if (!d.sens.carb)
@@ -1359,6 +1400,8 @@ void acc_enrich_decay_counter(void)
 #ifdef FUEL_INJECT
 int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val)
 {
+ int16_t aef_tps, aef_map, aef;
+
  if (res)
  { //reset state machine
   fcs.ae_state = 0;
@@ -1370,8 +1413,30 @@ int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val)
  //For AFR=14.7 and inj_sd_igl_const=86207 we should get result near to 2000.48
  int32_t pwnc = ((((((uint32_t)PWNC_CONST) * nr_1x_afr(stoich_val << 3)) >> 12) * d.param.inj_sd_igl_const[d.sens.gas]) >> 15);
 
- //Calculate AE PW:
- int16_t aef = inj_ae_tps_lookup(d.sens.tpsdot);   //calculate basic AE factor value
+ //blend from TPS
+ if (d.param.inj_ae_ballance > 0) //ballance > 0%
+ {
+  aef_tps = inj_ae_tps_lookup(d.sens.tpsdot);  //calculate basic AE factor value from TPS
+  aef_tps = (((int32_t)aef_tps) * d.param.inj_ae_ballance) >> 8;
+ }
+ else
+ {
+  aef_tps = 0;
+ }
+
+ //blend from MAP
+ if (d.param.inj_ae_ballance < 255) //ballance < 100%
+ {
+  aef_map = inj_ae_map_lookup(d.sens.mapdot);  //calculate basic AE factor value from MAP
+  aef_map = (((int32_t)aef_map) * (256 - d.param.inj_ae_ballance)) >> 8;
+ }
+ else
+ {
+  aef_map = 0;
+ }
+
+ aef = aef_tps + aef_map; //calculate total blend value
+
  if (aef >= 0)
   aef = ((int32_t)aef * inj_ae_clt_corr()) >> 7;   //apply CLT correction factor to AE factor
  else
@@ -1380,7 +1445,8 @@ int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val)
  pwnc = (pwnc * aef) >> 7;                        //apply AE factor to the normal conditions PW
 
  //Implement simple behaviour for deceleration case:
- if (d.sens.tpsdot < -((int16_t)d.param.inj_ae_tpsdot_thrd))
+ if (((d.param.inj_ae_ballance != 0) && (d.sens.tpsdot < -((int16_t)d.param.inj_ae_tpsdot_thrd))) ||
+     ((d.param.inj_ae_ballance != 255) && (d.sens.mapdot < -((int16_t)d.param.inj_ae_mapdot_thrd))))
  {
   d.acceleration = 1; //deceleration
   fcs.ae_state = 0;   //kill any pending AE
@@ -1394,7 +1460,8 @@ int32_t acc_enrich_calc_tb(uint8_t res, int16_t stoich_val)
    d.acceleration = 0;
    fcs.ae_decay_counter = d.param.inj_ae_time;     //init counter with AE active time
    fcs.ae_pwmax = 0;
-   if (d.sens.tpsdot > d.param.inj_ae_tpsdot_thrd)
+   if (((d.param.inj_ae_ballance != 0) && (d.sens.tpsdot > d.param.inj_ae_tpsdot_thrd)) ||
+       ((d.param.inj_ae_ballance != 255) && (d.sens.mapdot > d.param.inj_ae_mapdot_thrd)))
    {
     fcs.ae_state = 1; //start AE
    }

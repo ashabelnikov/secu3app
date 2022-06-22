@@ -76,6 +76,7 @@
 #define ETMT_TPSZON_MAP 31  //!< MAP/TPS load axis allocation
 #define ETMT_CYLMULT_MAP 32 //!< Inj. multiplication
 #define ETMT_CYLADD_MAP 33  //!< Inj. addition
+#define ETMT_AEMAP_MAP 34   //!< AE MAP map
 
 /**Define internal state variables */
 typedef struct
@@ -828,6 +829,13 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i8h(0);
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   build_i16h(d.sens.mapdot);            // MAPdot
+#else
+   build_i16h(0);
+#endif
+
    break;
 
   case ADCCOR_PAR:
@@ -1067,7 +1075,7 @@ void uart_send_packet(uint8_t send_mode)
   build_i8h(d.param.inj_ae_decay_time);
   build_i8h(d.param.inj_ae_type);
   build_i8h(d.param.inj_ae_time);
-  build_i8h(d.param.inj_ae_balance);
+  build_i8h(d.param.inj_ae_ballance);
   build_i8h(d.param.inj_ae_mapdot_thrd);
   break;
 #endif
@@ -1329,6 +1337,12 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_CYLADD_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_cyladd, INJ_CYLADD_SIZE);
+     state = ETMT_AEMAP_MAP;
+     break;
+    case ETMT_AEMAP_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_ae_map_enr,  INJ_AE_MAP_LOOKUP_TABLE_SIZE);
+     build_rb((uint8_t*)&d.tables_ram.inj_ae_map_bins, INJ_AE_MAP_LOOKUP_TABLE_SIZE);
      state = ETMT_STRT_MAP;
      break;
    }
@@ -1860,7 +1874,7 @@ uint8_t uart_recept_packet(void)
   d.param.inj_ae_decay_time = recept_i8h();
   d.param.inj_ae_type = recept_i8h();
   d.param.inj_ae_time = recept_i8h();
-  d.param.inj_ae_balance = recept_i8h();
+  d.param.inj_ae_ballance = recept_i8h();
   d.param.inj_ae_mapdot_thrd = recept_i8h();
   break;
 #endif
@@ -1973,6 +1987,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_CYLADD_MAP: //Inj. addition
      recept_rb(((uint8_t*)&d.tables_ram.inj_cyladd) + addr, INJ_CYLADD_SIZE); /*INJ_CYLADD_SIZE max*/
+     break;
+    case ETMT_AEMAP_MAP: //AE MAP, Note! Here we consider inj_ae_map_bins and inj_ae_map_enr as single table
+     recept_rb(((uint8_t*)&d.tables_ram.inj_ae_map_enr) + addr, INJ_AE_MAP_LOOKUP_TABLE_SIZE*2); /*INJ_AE_MAP_LOOKUP_TABLE_SIZE*2 max*/
      break;
    }
   }

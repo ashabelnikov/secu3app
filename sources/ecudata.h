@@ -120,6 +120,7 @@ typedef struct sensors_t
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  int16_t tpsdot;                         //!< Speed of TPS movement (d%/dt = %/s), positive when acceleration, negative when deceleration
+ int16_t mapdot;                         //!< Speed of MAP changing (dP/dt = kPa/s), positive when acceleration, negative when deceleration
 #endif
 
 #ifndef SECU3T //SECU-3i

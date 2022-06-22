@@ -92,6 +92,11 @@ uint16_t adc_get_carb_value(void);
  * \return 1-st derivative value of TPS position (V/s), can be negative, voltage in ADC discretes
  */
 int16_t adc_get_tpsdot_value(void);
+
+/** Get MAPdot value (dv/dt)
+ * \return 1-st derivative value of the MAP (V/s), can be negative, voltage in ADC discretes
+ */
+int16_t adc_get_mapdot_value(void);
 #endif
 
 /** Get last measured value from the knock sensor(s) or ADD_I4 (if TPIC8101 option defined)
@@ -128,6 +133,11 @@ void adc_init(void);
  * mindt Value of minimum time differencial in 3.2 us units
  */
 void adc_set_tpsdot_mindt(uint16_t mindt);
+
+/** Set value of minimum dt (time diffrencial) used by calculation of MAP dot
+ * mindt Value of minimum time differencial in 3.2 us units
+ */
+void adc_set_mapdot_mindt(uint16_t mindt);
 #endif
 
 /**компенсация погрешностей АЦП или входных цепей (погрешность смещения и передаточная погрешность)
@@ -176,11 +186,18 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Converts ADC value discretes/sec of the TPSdot to the %/sec value
- * \param adcvalue значение в дискретах АЦП (Value in ADC discretes)
- * \param gradient наклон кривой ДПДЗ (Curve gradient)
+ * \param adcvalue Value in ADC discretes
+ * \param gradient Curve gradient of TPS
  * \return percentage/sec
  */
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
+
+/**Converts ADC value discretes/sec of the MAPdot to the kPa/sec value
+ * \param adcvalue Value in ADC discretes
+ * \param gradient Curve gradient of MAP
+ * \return kPa/sec
+ */
+int16_t mapdot_adc_to_kpa(int16_t adcvalue, int16_t gradient);
 #endif
 
 /**Measure value of voltage in special mode when interrupts are disabled.

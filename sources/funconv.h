@@ -215,6 +215,13 @@ uint8_t inj_warmup_en(void);
  */
 int16_t inj_ae_tps_lookup(int16_t tpsdot);
 
+/** Calculates MAP based acceleration value
+ * Uses d ECU data structure
+ * \param mapdot MAP dot value (kPa/s)
+ * \return acceleration factor * 128, value can be negative
+ */
+int16_t inj_ae_map_lookup(int16_t mapdot);
+
 /** Calculates RPM correction factor for AE
  * Uses d ECU data structure
  * \return factor * 128, positive value

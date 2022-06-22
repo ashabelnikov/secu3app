@@ -86,6 +86,7 @@
 #define INJ_WARMUP_LOOKUP_TABLE_SIZE    16          //!< number of points in the warmup enrichment lookup table
 #define INJ_IAC_POS_TABLE_SIZE          16          //!< number of points in the IAC/PWM position lookup table
 #define INJ_AE_TPS_LOOKUP_TABLE_SIZE    8           //!< number of points in AE TPS (d%/dt) lookup table
+#define INJ_AE_MAP_LOOKUP_TABLE_SIZE    8           //!< number of points in AE MAP (dP/dt) lookup table, where P is pressure in kPa
 #define INJ_AE_RPM_LOOKUP_TABLE_SIZE    4           //!< number of points in AE RPM lookup table size
 #define INJ_AFTSTR_LOOKUP_TABLE_SIZE    16          //!< afterstart enrichment lookup table
 #define INJ_TARGET_RPM_TABLE_SIZE       16          //!< idling target RPM lookup table size
@@ -294,10 +295,14 @@ typedef struct f_data_t
   uint8_t inj_cylmult[INJ_CYLADD_SIZE];               //!< per cylinder inj. correction multiplier
   int8_t  inj_cyladd[INJ_CYLADD_SIZE];                //!< per cylinder inj. correction addition
 
+  //note! inj_ae_map_enr must be followed by inj_ae_map_bins.
+  uint8_t inj_ae_map_enr[INJ_AE_MAP_LOOKUP_TABLE_SIZE];  //!< values of the AE's MAP lookup table (additive factor), value + 55, e.g. 155 = 1.00, this means AE = 100% (so PW will be increased by 100%))
+  int8_t  inj_ae_map_bins[INJ_AE_MAP_LOOKUP_TABLE_SIZE]; //!< bins of the AE's MAP lookup table (dP/dt, (signed value in kPa) / 100ms)
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[53];
+  uint8_t reserved[37];
 
   uint16_t checksum;                                  //!< CRC16 checksum of this structure (except these 16 bits)
 }f_data_t;
@@ -552,13 +557,14 @@ typedef struct fw_ex_data_t
   uint8_t thrass_algo;     //!< Throttle assist algorithm (0,1)
 
   uint8_t btbaud_use[5];   //!< 9600,19200,38400,57600,115200;
+  uint16_t mapdot_mindt;   //!< minimum time delta used for calculation of dP/dt, 1 discrete = 3.2 us
 
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1984];
+  uint8_t reserved[1982];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -853,7 +859,7 @@ typedef struct params_t
   uint8_t  stbl_str_cnt;
   uint8_t  strt_flags;                   //!< Cranking flags, see STRTF_* defines for more information
 
-  uint8_t  inj_ae_balance;               //!< MAP/TPS balance for acceleration enrichment, 0...1.0, value * 256. So, value 255 correspond to 100% (actually 99.6%)
+  uint8_t  inj_ae_ballance;              //!< MAP/TPS balance for acceleration enrichment, 0...1.0, value * 256. So, value 255 correspond to 100% (actually 99.6%)
   uint8_t  inj_ae_mapdot_thrd;           //!< MAP kPa/sec threshold, max rate is 255kPa/sec
 
   /**Following reserved bytes required for keeping binary compatibility between

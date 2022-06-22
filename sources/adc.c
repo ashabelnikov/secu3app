@@ -61,12 +61,13 @@
 #define TMR_TICKS_PER_SEC 312500L
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-/**Used for TPSdot calculations*/
+
+/**Used for TPSdot and MAPdot calculations*/
 typedef struct
 {
- int16_t tps_volt;              //!< Voltage
- uint16_t tps_tmr;              //!< Timer value
-}tpsval_t;
+ int16_t volt;              //!< Voltage
+ uint16_t tmr;              //!< Timer value
+}dotval_t;
 #endif
 
 /** Data structure of the ADC state variables */
@@ -83,8 +84,10 @@ typedef struct
 #endif
  volatile uint16_t carb_value;   //!< last measured value of TPS
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
- volatile tpsval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
+ volatile dotval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
+ volatile dotval_t mapdot[2];    //!< two value pairs used for MAPdot calculations
  volatile uint16_t tpsdot_mindt; //!< minimum time diffrencial used in calculation of d%/dt
+ volatile uint16_t mapdot_mindt; //!< minimum time diffrencial used in calculation of dP/dt
 #endif
  volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
 #ifndef TPIC8101
@@ -163,19 +166,37 @@ uint16_t adc_get_carb_value(void)
 int16_t adc_get_tpsdot_value(void)
 {
  int16_t dv; uint16_t dt;
- tpsval_t tpsval[2];
+ dotval_t tpsval[2];
  _BEGIN_ATOMIC_BLOCK();
  tpsval[0] = adc.tpsdot[0];
  tpsval[1] = adc.tpsdot[1];
  _END_ATOMIC_BLOCK();
 
- dv = tpsval[0].tps_volt - tpsval[1].tps_volt;  //calculate voltage change in ADC discretes
- dt = (tpsval[0].tps_tmr - tpsval[1].tps_tmr);  //calculate time change in ticks of timer
+ dv = tpsval[0].volt - tpsval[1].volt;  //calculate voltage change in ADC discretes
+ dt = (tpsval[0].tmr - tpsval[1].tmr);  //calculate time change in ticks of timer
  if (abs(dv) > 512) dv = (dv < 0) ? -512 : 512; //limit voltage change to the half of ADC range
  if (dt < TMR_TICKS_PER_SEC/1000) return 0;     //avoid overflow, limit time change to minimum 1ms
 
  return (((int32_t)dv) * TMR_TICKS_PER_SEC) / dt; //calculate 1-st derivative, num of ADC discr / sec
 }
+
+int16_t adc_get_mapdot_value(void)
+{
+ int16_t dv; uint16_t dt;
+ dotval_t mapval[2];
+ _BEGIN_ATOMIC_BLOCK();
+ mapval[0] = adc.mapdot[0];
+ mapval[1] = adc.mapdot[1];
+ _END_ATOMIC_BLOCK();
+
+ dv = mapval[0].volt - mapval[1].volt;  //calculate voltage change in ADC discretes
+ dt = (mapval[0].tmr - mapval[1].tmr);  //calculate time change in ticks of timer
+ if (abs(dv) > 512) dv = (dv < 0) ? -512 : 512; //limit voltage change to the half of ADC range
+ if (dt < TMR_TICKS_PER_SEC/1000) return 0;     //avoid overflow, limit time change to minimum 1ms
+
+ return (((int32_t)dv) * TMR_TICKS_PER_SEC) / dt; //calculate 1-st derivative, num of ADC discr / sec
+}
+
 #endif
 
 uint16_t adc_get_knock_value(void)
@@ -257,6 +278,17 @@ ISR(ADC_vect)
    ADMUX = ADCI_UBAT|ADC_VREF_TYPE;
    _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts
    SETBIT(ADCSRA,ADSC);
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   if ((TCNT1 - adc.mapdot[0].tmr) >= adc.mapdot_mindt)
+   {
+    //save values for TPSdot calculations
+    adc.mapdot[1] = adc.mapdot[0];          //previous = current
+    adc.mapdot[0].volt = adc.map_value;     //save voltage
+    adc.mapdot[0].tmr = TCNT1;              //save timer's value
+   }
+#endif
+
    break;
 
   case ADCI_UBAT: //Measurement of board voltage completed
@@ -280,12 +312,12 @@ ISR(ADC_vect)
    SETBIT(ADCSRA,ADSC);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-   if ((TCNT1 - adc.tpsdot[0].tps_tmr) >= adc.tpsdot_mindt)
+   if ((TCNT1 - adc.tpsdot[0].tmr) >= adc.tpsdot_mindt)
    {
     //save values for TPSdot calculations
     adc.tpsdot[1] = adc.tpsdot[0];          //previous = current
-    adc.tpsdot[0].tps_volt = adc.carb_value;//save voltage
-    adc.tpsdot[0].tps_tmr = TCNT1;          //save timer value
+    adc.tpsdot[0].volt = adc.carb_value;//save voltage
+    adc.tpsdot[0].tmr = TCNT1;          //save timer value
    }
 #endif
    break;
@@ -413,6 +445,11 @@ int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
 {
  return (((int32_t)adcvalue) * gradient) >> (7+6+1);
 }
+
+int16_t mapdot_adc_to_kpa(int16_t adcvalue, int16_t gradient)
+{
+ return (((int32_t)adcvalue) * gradient) >> (7+6);
+}
 #endif
 
 void adc_measure_voltage(void)
@@ -466,6 +503,11 @@ uint16_t adc_get_add_i8_value(void)
 void adc_set_tpsdot_mindt(uint16_t mindt)
 {
  adc.tpsdot_mindt = mindt;
+}
+
+void adc_set_mapdot_mindt(uint16_t mindt)
+{
+ adc.mapdot_mindt = mindt;
 }
 #endif
 

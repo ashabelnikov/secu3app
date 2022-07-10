@@ -352,9 +352,12 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   d.sens.grts = 0; //input is not selected
 #endif
 
-#ifdef MCP3204
+#ifndef SECU3T
  int16_t add_ix;
- if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5i)
+ if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i3i)
+  add_ix = d.sens.add_i3; //ADD_I3 input selected as input for fuel tank level sensor
+#ifdef MCP3204
+ else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5i)
   add_ix = d.sens.add_i5; //ADD_I5 input selected as input for fuel tank level sensor
  else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i6i)
   add_ix = d.sens.add_i6; //ADD_I6 input selected
@@ -371,16 +374,17 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  d.sens.ftls = exsens_lookup(add_ix, fw_data.exdata.ftls_curve);
 ftls_notsel:
 #endif
+#endif
 
 #ifndef SECU3T
  if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3i)
   d.sens.egts = exsens_lookup(d.sens.add_i3, fw_data.exdata.egts_curve); //ADD_I3 input selected as input for EGT sensor
 #ifdef TPIC8101
- if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4i)
+ else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4i)
   d.sens.egts = exsens_lookup(d.sens.add_i4, fw_data.exdata.egts_curve); //ADD_I4 input selected as input for EGT sensor
 #endif
 #ifdef MCP3204
- if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5i)
+ else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5i)
   d.sens.egts = exsens_lookup(d.sens.add_i5, fw_data.exdata.egts_curve); //ADD_I5 input selected as input for EGT sensor
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6i)
   d.sens.egts = exsens_lookup(d.sens.add_i6, fw_data.exdata.egts_curve); //ADD_I6 input selected

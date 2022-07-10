@@ -381,8 +381,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 3.6
-   IOREMVER(3,6),
+   //Version of this structure - 3.7
+   IOREMVER(3,7),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -395,7 +395,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _CBV32(COPT_DEBUG_VARIABLES, 12) | _CBV32(COPT_PHASE_SENSOR, 13) | _CBV32(COPT_PHASED_IGNITION, 14) | _CBV32(COPT_FUEL_PUMP, 15) |
   _CBV32(COPT_THERMISTOR_CS, 16) | _CBV32(COPT_SECU3T, 17) | _CBV32(COPT_DIAGNOSTICS, 18) | _CBV32(COPT_HALL_OUTPUT, 19) |
   _CBV32(COPT_REV9_BOARD, 20) | _CBV32(COPT_STROBOSCOPE, 21) | _CBV32(COPT_SM_CONTROL, 22) | _CBV32(COPT_VREF_5V, 23) |
-  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(COPT_UART_BINARY, 25) | _CBV32(COPT_CKPS_2CHIGN, 26) | _CBV32(COPT_ATMEGA644, 27) |
+  _CBV32(COPT_HALL_SYNC, 24) | _CBV32(0/*UART_BINARY, left for compatibility*/, 25) | _CBV32(COPT_CKPS_2CHIGN, 26) | _CBV32(COPT_ATMEGA644, 27) |
   _CBV32(COPT_FUEL_INJECT, 28) | _CBV32(COPT_GD_CONTROL, 29) | _CBV32(COPT_CARB_AFR, 30) | _CBV32(COPT_CKPS_NPLUS1, 31),
 
   /**Reserved bytes*/

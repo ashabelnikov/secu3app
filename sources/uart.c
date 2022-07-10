@@ -99,7 +99,6 @@ typedef struct
 /**State variables */
 uartstate_t uart = {0,{0},{0},{0},{0},0,0,0,0,0,0,0,{0,0}};
 
-#ifdef UART_BINARY //binary mode
 // There are several special reserved symbols in binary mode: 0x21, 0x40, 0x0D, 0x0A
 #define FIBEGIN  0x21       //!< '!' indicates beginning of the ingoing packet
 #define FOBEGIN  0x40       //!< '@' indicates beginning of the outgoing packet
@@ -167,16 +166,6 @@ uint8_t takeout_rx_buff(void)
   return b1;
 }
 
-#else //HEX mode
-
-/**For BIN-->HEX encoding */
-PGM_DECLARE(uint8_t hdig[]) = "0123456789ABCDEF";
-
-/**Decodes from HEX to BIN */
-#define HTOD(h) (((h)<0x3A) ? ((h)-'0') : ((h)-'A'+10))
-
-#endif
-
 PGM_DECLARE(uint8_t lzblhs_str[4]) = "3MAN";
 
 //--------helpful functions for building of packets-------------
@@ -185,47 +174,25 @@ PGM_DECLARE(uint8_t lzblhs_str[4]) = "3MAN";
  * note! can NOT be used for binary data! */
 void build_fs(uint8_t _PGM *romBuffer, uint8_t size)
 {
-#ifdef UART_BINARY
  while(size--) {uart.send_buf_c[uart.send_size_c++] = PGM_GET_BYTE(romBuffer++);}
-#else
- MEMCPY_P(&uart.send_buf[uart.send_size], romBuffer, size);
- uart.send_size+=size;
-#endif
 }
 
 /**Appends sender's buffer by sequence of bytes from RAM. This function is also used in the bluetooth module
  * note! can NOT be used for binary data! */
 void build_rs(const uint8_t* ramBuffer, uint8_t size)
 {
-#ifdef UART_BINARY
  while(size--) {uart.send_buf_c[uart.send_size_c++] = *ramBuffer++;}
-#else
- memcpy(&uart.send_buf[uart.send_size], ramBuffer, size);
- uart.send_size+=size;
-#endif
 }
 
 /**Appends sender's buffer by one HEX byte */
-#ifdef UART_BINARY
 #define build_i4h(i) {uart.send_buf_c[uart.send_size_c++] = i;}
-#else
-static void build_i4h(uint8_t i)
-{
- uart.send_buf[uart.send_size++] = (i < 0xA) ? i+0x30 : i+0x37;
-}
-#endif
 
 /**Appends sender's buffer by two HEX bytes
  * \param i 8-bit value to be converted into hex
  */
 static void build_i8h(uint8_t i)
 {
-#ifdef UART_BINARY
  uart.send_buf_c[uart.send_size_c++] = i; //1 byte
-#else
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i/16]);          //High byte of hex number
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[i%16]);          //low byte of hex number
-#endif
 }
 
 /**Appends sender's buffer by 4 HEX bytes
@@ -233,15 +200,8 @@ static void build_i8h(uint8_t i)
  */
 static void build_i16h(uint16_t i)
 {
-#ifdef UART_BINARY
  uart.send_buf_c[uart.send_size_c++] = _AB(i,1);    //high byte
  uart.send_buf_c[uart.send_size_c++] = _AB(i,0);    //low byte
-#else
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)/16]);   //High byte of hex number (high byte)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,1)%16]);   //Low byte of hex number (high byte)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)/16]);   //High byte of hex number (low byte)
- uart.send_buf[uart.send_size++] = PGM_GET_BYTE(&hdig[_AB(i,0)%16]);   //Low byte of hex number (low byte)
-#endif
 }
 
 static void build_i24h(uint32_t i)
@@ -288,39 +248,18 @@ static void build_rw(const uint16_t* ramBuffer, uint8_t size)
  * can NOT be used for binary data */
 static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 {
-#ifdef UART_BINARY
  while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = uart.recv_buf_c[uart.recv_index_c++];
-#else
- while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = uart.recv_buf[uart.recv_index++];
-#endif
 }
 
 /**Retrieves from receiver's buffer 4-bit value */
-#ifdef UART_BINARY
 #define recept_i4h() (uart.recv_buf_c[uart.recv_index_c++])
-#else
-static uint8_t recept_i4h(void)
-{
- uint8_t i = uart.recv_buf[uart.recv_index++];
- return  (i < 0x3A) ? i - 0x30 : i - 0x37;
-}
-#endif
 
 /**Retrieves from receiver's buffer 8-bit value
  * \return retrieved value
  */
 static uint8_t recept_i8h(void)
 {
-#ifdef UART_BINARY
  return uart.recv_buf_c[uart.recv_index_c++];
-#else
- uint8_t i8;
- i8 = HTOD(uart.recv_buf[uart.recv_index])<<4;
- ++uart.recv_index;
- i8|= HTOD(uart.recv_buf[uart.recv_index]);
- ++uart.recv_index;
- return i8;
-#endif
 }
 
 /**Retrieves from receiver's buffer 16-bit value
@@ -329,19 +268,8 @@ static uint8_t recept_i8h(void)
 static uint16_t recept_i16h(void)
 {
  uint16_t i16;
-#ifdef UART_BINARY
  _AB(i16,1) = uart.recv_buf_c[uart.recv_index_c++]; //Hi byte
  _AB(i16,0) = uart.recv_buf_c[uart.recv_index_c++]; //Lo byte
-#else
- _AB(i16,1) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
- ++uart.recv_index;
- _AB(i16,1)|= (HTOD(uart.recv_buf[uart.recv_index]));
- ++uart.recv_index;
- _AB(i16,0) = (HTOD(uart.recv_buf[uart.recv_index]))<<4;
- ++uart.recv_index;
- _AB(i16,0)|= (HTOD(uart.recv_buf[uart.recv_index]));
- ++uart.recv_index;
-#endif
  return i16;
 }
 
@@ -361,11 +289,7 @@ static uint32_t recept_i32h(void)
  * can be used for binary data */
 static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 {
-#ifdef UART_BINARY
  while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = recept_i8h();
-#else
- while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = recept_i8h();
-#endif
 }
 
 /**Recepts sequence of words from receiver's buffer and places it into the RAM buffer
@@ -375,11 +299,7 @@ static void recept_rb(uint8_t* ramBuffer, uint8_t size)
  */
 static void recept_rw(uint16_t* ramBuffer, uint8_t size)
 {
-#ifdef UART_BINARY
  while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = recept_i16h();
-#else
- while(size-- && uart.recv_index < uart.recv_size) *ramBuffer++ = recept_i16h();
-#endif
 }
 
 /** Recepts 1 byte
@@ -387,11 +307,7 @@ static void recept_rw(uint16_t* ramBuffer, uint8_t size)
  */
 static uint8_t recept_byte(void)
 {
-#ifdef UART_BINARY
  return uart.recv_buf_c[uart.recv_index_c++];
-#else
- return uart.recv_buf[uart.recv_index++];
-#endif
 }
 
 //--------------------------------------------------------------------
@@ -535,13 +451,8 @@ void uart_send_packet(uint8_t send_mode)
     if (eeprom_is_idle())
     {
      build_i8h(index);
-#ifdef UART_BINARY
      eeprom_read(&uart.send_buf_c[uart.send_size_c], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))->name, F_NAME_SIZE);
      uart.send_size_c+=F_NAME_SIZE;
-#else
-     eeprom_read(&uart.send_buf[uart.send_size], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))->name, F_NAME_SIZE);
-     uart.send_size+=F_NAME_SIZE;
-#endif
     }
     else //skip this item - will be transferred next time
     {
@@ -1450,7 +1361,6 @@ void uart_send_packet(uint8_t send_mode)
  }//switch
 
 //checksum verification implemented only for binary mode
-#ifdef UART_BINARY
  //reset checksum before we will update it with data
  RST_CHKSUM();
 
@@ -1465,7 +1375,6 @@ void uart_send_packet(uint8_t send_mode)
  //convert packet's data (replace some bytes with esc. seq.)
  for(i = 0; i < uart.send_size_c; ++i)
   append_tx_buff(uart.send_buf_c[i]);
-#endif
 
  //common part for all packets
  uart.send_buf[uart.send_size++] = '\r';
@@ -1494,7 +1403,6 @@ uint8_t uart_recept_packet(void)
  descriptor = uart.recv_buf[uart.recv_index++];
 
  //checksum verification implemented only for binary mode
-#ifdef UART_BINARY
  //convert packet's data (replace esc. seq. with original bytes)
  uart.recv_size_c = 0;
  while(uart.recv_index < uart.recv_size)
@@ -1520,7 +1428,6 @@ uint8_t uart_recept_packet(void)
   if (checksum!=GET_CHKSUM())
    return 0; //error, packet corrupted, don't accept it
  }
-#endif
 
 // TODO: implement check of uart_recv_size for each packet
 //       in hex mode: check packets' bytes for Hex characters
@@ -2131,7 +2038,6 @@ void uart_init(uint16_t baud)
 
 
 /**Interrupt handler for the transfer of bytes through the UART (transmitter data register empty)
- *Обработчик прерывания по передаче байтов через UART (регистр данных передатчика пуст)
  */
 ISR(USART_UDRE_vect)
 {

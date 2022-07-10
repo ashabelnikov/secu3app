@@ -93,10 +93,6 @@ Makefile и начнется сборка проекта. Проект собирается для ATMega644/ATMega644P.
                          Собрать прошивку с поддержкой 2-х канальных
                          коммутаторов (управляются 2-мя фронтами)
 
-    UART_BINARY          Use binary mode for UART instead of ASCII
-                         Использовать бинарный режим при передаче данных через
-                         UART вместо ASCII
-
     FUEL_INJECT          Include support of fuel injection
                          Включить поддержку управления впрыском топлива
 

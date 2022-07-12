@@ -854,7 +854,7 @@ void uart_send_packet(uint8_t send_mode)
    break;
 
   case FWINFO_DAT:
-   //проверка на то, чтобы мы не вылезли за пределы буфера. 3 символа - заголовок и конец пакета.
+   //this check ensures that we not clibm out of buffer's bounds. 3 symbols: header and end of packet
 #if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE+8)
  #error "Out of buffer!"
 #endif
@@ -1284,7 +1284,7 @@ void uart_send_packet(uint8_t send_mode)
 
   case ATTTAB_PAR:
   {
-   //провер€ем чтобы размер таблицы был кратен 16
+   //check that size of table is a multiple of 16
 #if (KC_ATTENUATOR_LOOKUP_TABLE_SIZE % 16)
  #error "KC_ATTENUATOR_LOOKUP_TABLE_SIZE must be a number divisible by 16, if not, you have to change the code below!"
 #endif
@@ -1495,13 +1495,13 @@ uint8_t uart_recept_packet(void)
    IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
    IOCFG_SETF(IOP_ST_BLOCK, 0);    //block starter
 
-   //передатчик зан€т. необходимо подождать его освобождени€ и только потом запускать бутлоадер
+   //transmitter is busy, it is necessary to wait when it become free and only after that start a boot loader
    while (uart_is_sender_busy()) { wdt_reset_timer(); }
 
    //send confirmation that firmware is ready to start boot loader
    sop_send_gonna_bl_start();
 
-   //если в бутлоадере есть команда "cli", то эту строчку можно убрать
+   //if boot loader already has a "cli" instruction, then following line may be removed.
    _DISABLE_INTERRUPT();
    ckps_init_ports();
 #ifdef FUEL_INJECT
@@ -2078,9 +2078,8 @@ ISR(USART_UDRE_vect)
 {
  if (uart.send_size > 0)
  {
-  UDR = uart.send_buf[uart.send_index];
+  UDR = uart.send_buf[uart.send_index++];
   --uart.send_size;
-  ++uart.send_index;
  }
  else
  {//all data have transmitted
@@ -2100,7 +2099,6 @@ ISR(USART_RXC_vect)
   //receive buffer overflow! What to do?
  }
  */
-
 }
 
 void uart_transmitter(uint8_t state)

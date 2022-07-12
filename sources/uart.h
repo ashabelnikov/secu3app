@@ -65,43 +65,40 @@
  * Uses d ECU data structure
  * \param send_mode code of descriptor of packet to be send
  */
- void uart_send_packet(uint8_t send_mode);
+void uart_send_packet(uint8_t send_mode);
 
 /**This function does not check was or wasn't frame received, checking must be done before the
  * call.
  * Uses d ECU data structure
  * \return Descriptor of processed frame
  */
- uint8_t uart_recept_packet(void);
-
-/**Call this function to tell service that you already accepted frame (reset busy state) */
- void uart_notify_processed(void);
+uint8_t uart_recept_packet(void);
 
 /**\return 1 if sender is busy, otherwise - 0 */
- uint8_t uart_is_sender_busy(void);
+uint8_t uart_is_sender_busy(void);
 
-/**This function checks for received frame
- * \return 1 if unprocessed frame is pending
+/** Finds a packet in the stream of bytes
+ * \return 0 - no paket found (pending), 1 - packet is ready
  */
- uint8_t uart_is_packet_received(void);
+uint8_t uart_get_packet(void);
 
 /** \return code of current descriptor (type of frame) */
- uint8_t uart_get_send_mode(void);
+uint8_t uart_get_send_mode(void);
 
 /**Sets current type of frame
  * \param descriptor code of descriptor of packet
  * \return code of passed(set) descriptor
  */
- uint8_t uart_set_send_mode(uint8_t descriptor);
+uint8_t uart_set_send_mode(uint8_t descriptor);
 
 /**Initialization of module
  * \param baud ID of baud rate (divisor's value - see datasheet)
  */
- void uart_init(uint16_t baud);
+void uart_init(uint16_t baud);
 
 /** Turn on/off UART transmitter. When transmitter is disabled PD1 goes into high impedance state
  * \param state 0 - transmitter is turned off, 1 - transmitter is tuirned on
  */
- void uart_transmitter(uint8_t state);
+void uart_transmitter(uint8_t state);
 
 #endif //_UART_H_

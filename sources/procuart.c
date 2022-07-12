@@ -71,7 +71,7 @@ void process_uart_interface(void)
  }
 #endif
 
- if (uart_is_packet_received()) //did we receive new data packet ?
+ if (uart_get_packet()) //did we receive new data?
  {
   descriptor = uart_recept_packet();
   switch(descriptor)
@@ -278,9 +278,6 @@ void process_uart_interface(void)
     param_set_save_timer(); //paramaters were altered, so reset time counter
     break;
   }
-
-  //we have processed received data, receiver is not busy now
-  uart_notify_processed();
  }
 
  //periodically send frames with data

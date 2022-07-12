@@ -92,12 +92,15 @@ typedef struct
  volatile uint8_t recv_size;            //!< size of received data
  volatile uint8_t recv_size_c;          //!< size of received data
  uint8_t recv_index;                    //!< index in receiver's buffer
+ uint8_t recv_index1;                   //!< index in receiver's buffer
+ volatile uint8_t recv_head;            //!< receiver's head
+ uint8_t recv_tail;                     //!< receiver's tail
  uint8_t recv_index_c;                  //!< index in the recv_buf_c[]
  uint8_t packet_crc[2];                 //!< 16-bit Fletcher checksum
 }uartstate_t;
 
 /**State variables */
-uartstate_t uart = {0,{0},{0},{0},{0},0,0,0,0,0,0,0,{0,0}};
+uartstate_t uart = {0,{0},{0},{0},{0},0,0,0,0,0,0,0,0,0,0,{0,0}};
 
 // There are several special reserved symbols in binary mode: 0x21, 0x40, 0x0D, 0x0A
 #define FIBEGIN  0x21       //!< '!' indicates beginning of the ingoing packet
@@ -109,6 +112,10 @@ uartstate_t uart = {0,{0},{0},{0},{0},0,0,0,0,0,0,0,{0,0}};
 #define TFOBEGIN 0x82       //!< Transposed FOBEGIN
 #define TFIOEND  0x83       //!< Transposed FIOEND
 #define TFESC    0x84       //!< Transposed FESC
+
+/**Increments specified index of receiver's buffer (FIFO)*/
+#define RECV_INC_INDEX(v) {if (++(v) == UART_RECV_BUFF_SIZE) \
+                            (v) = 0;}
 
 /**Updates Fletcher checksum with 8-bit value */
 #define UPD_CHKSUM(v) uart.packet_crc[0]+=(v), uart.packet_crc[1]+=uart.packet_crc[0];
@@ -150,10 +157,16 @@ void append_tx_buff(uint8_t b)
 /*inline*/
 uint8_t takeout_rx_buff(void)
 {
- uint8_t b1 = uart.recv_buf[uart.recv_index++];
+ uint8_t b1 = uart.recv_buf[uart.recv_index];
+ RECV_INC_INDEX(uart.recv_index);
+ ++uart.recv_index1;
+
  if (b1 == FESC)
  {
-  uint8_t b2 = uart.recv_buf[uart.recv_index++];
+  uint8_t b2 = uart.recv_buf[uart.recv_index];
+  RECV_INC_INDEX(uart.recv_index);
+  ++uart.recv_index1;
+
   if (b2 == TFIBEGIN)
    return FIBEGIN;
   else if (b2 == TFIOEND)
@@ -300,14 +313,6 @@ static void recept_rb(uint8_t* ramBuffer, uint8_t size)
 static void recept_rw(uint16_t* ramBuffer, uint8_t size)
 {
  while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = recept_i16h();
-}
-
-/** Recepts 1 byte
- * \return code of new send mode
- */
-static uint8_t recept_byte(void)
-{
- return uart.recv_buf_c[uart.recv_index_c++];
 }
 
 //--------------------------------------------------------------------
@@ -1393,19 +1398,59 @@ void sop_send_gonna_bl_start(void);
 void pwrrelay_init_steppers(void);
 void vent_turnoff(void);
 
+// When this function finish:
+// uart.recv_tail contain index of the first byte of packet (skipping '!')
+// uart.recv.size contain number of raw bytes in packet (except '!' and '\r')
+uint8_t uart_get_packet(void)
+{
+ static uint8_t state = 0;
+
+ while(uart.recv_tail != uart.recv_head)
+ {
+  uint8_t chr = uart.recv_buf[uart.recv_tail];
+  RECV_INC_INDEX(uart.recv_tail);
+  if (0==state)        //search for a symbol indicating packet's start
+  {
+   if (chr == '!')     //begin of the packet?
+   {
+    ++state;
+    uart.recv_index = uart.recv_tail; //remember begin of packet
+    uart.recv_size = 0;
+   }
+  }
+  else if (1==state)   //search for a symbol indicating the packet's end
+  {
+   if (chr == '\r')
+   {
+    --state;           //set finite state machine to the initial state
+    return 1;          //packet is ready
+   }
+   else if (chr == '!') //reset and start again
+   {
+    uart.recv_index = uart.recv_tail; //remember begin of packet
+    uart.recv_size = 0;
+   }
+   else
+   {
+    ++uart.recv_size;
+   }
+  }
+ }
+
+ return 0; //packet is not ready
+}
+
 uint8_t uart_recept_packet(void)
 {
  //receiver's buffer contains packet descriptor and data
  uint8_t temp, descriptor;
 
- uart.recv_index = 0;
+ descriptor = uart.recv_buf[uart.recv_index];
+ RECV_INC_INDEX(uart.recv_index);
 
- descriptor = uart.recv_buf[uart.recv_index++];
-
- //checksum verification implemented only for binary mode
  //convert packet's data (replace esc. seq. with original bytes)
- uart.recv_size_c = 0;
- while(uart.recv_index < uart.recv_size)
+ uart.recv_size_c = 0; uart.recv_index1 = 1;
+ while(uart.recv_index1 < uart.recv_size)
   uart.recv_buf_c[uart.recv_size_c++] = takeout_rx_buff();
  uart.recv_index_c = 0;
 
@@ -1436,11 +1481,11 @@ uint8_t uart_recept_packet(void)
  switch(descriptor)
  {
   case CHANGEMODE:
-   uart_set_send_mode(recept_byte());
+   uart_set_send_mode(recept_i8h());
    break;
 
   case BOOTLOADER:
-   if (recept_byte() != 'l')
+   if (recept_i8h() != 'l')
      break; //wrong code - don't continue
 
    //TODO: in the future use callback and move following code out
@@ -1924,20 +1969,9 @@ uint8_t uart_recept_packet(void)
  return descriptor;
 }
 
-
-void uart_notify_processed(void)
-{
- uart.recv_size = 0;
-}
-
 uint8_t uart_is_sender_busy(void)
 {
  return (uart.send_size > 0);
-}
-
-uint8_t uart_is_packet_received(void)
-{
- return (uart.recv_size > 0);
 }
 
 uint8_t uart_get_send_mode(void)
@@ -2025,15 +2059,16 @@ void uart_init(uint16_t baud)
  // Set baud rate
  UBRRH = (uint8_t)(baud>>8);
  UBRRL = (uint8_t)baud;
- UCSRA = _BV(U2X);                                           //удвоение используем для минимизации ошибки
- UCSRB=_BV(RXCIE)|_BV(RXEN)|_BV(TXEN);                       //приемник,прерывание по приему и передатчик разрешены
+ UCSRA = _BV(U2X);                                           //use speed doubling to minimize time error
+ UCSRB=_BV(RXCIE)|_BV(RXEN)|_BV(TXEN);                       //receiver, receiver's interrupt and transmitter are enabled
 #ifdef URSEL
- UCSRC=_BV(URSEL)/*|_BV(USBS)*/|_BV(UCSZ1)|_BV(UCSZ0);       //8 бит, 1 стоп, нет контроля четности
+ UCSRC=_BV(URSEL)/*|_BV(USBS)*/|_BV(UCSZ1)|_BV(UCSZ0);       //8 bit, 1 stop, no parity control
 #else
- UCSRC=/*_BV(USBS)|*/_BV(UCSZ1)|_BV(UCSZ0);                  //8 бит, 1 стоп, нет контроля четности
+ UCSRC=/*_BV(USBS)|*/_BV(UCSZ1)|_BV(UCSZ0);                  //8 bit, 1 stop, no parity control
 #endif
 
  uart.send_mode = SENSOR_DAT;
+ uart.recv_head = uart.recv_tail = 0;                        //receiver's buffer is empty
 }
 
 
@@ -2048,7 +2083,7 @@ ISR(USART_UDRE_vect)
   ++uart.send_index;
  }
  else
- {//все данные переданы
+ {//all data have transmitted
   UCSRB &= ~_BV(UDRIE); // disable UDRE interrupt
  }
 }
@@ -2056,41 +2091,16 @@ ISR(USART_UDRE_vect)
 /**Interrupt handler for receive data through the UART */
 ISR(USART_RXC_vect)
 {
- static uint8_t state=0;
- uint8_t chr = UDR;
+ uart.recv_buf[uart.recv_head] = UDR;
+ RECV_INC_INDEX(uart.recv_head);
 
- _ENABLE_INTERRUPT();
- switch(state)
+ /*
+ if (uart.recv_head == uart.recv_tail)
  {
-  case 0:            //принимаем (ожидаем символ начала посылки)
-   if (uart.recv_size!=0) //предыдущий принятый фрейм еще не обработан, а нам уже прислали новый.
-    break;
-
-   if (chr=='!')   //начало пакета?
-   {
-    state = 1;
-    uart.recv_index = 0;
-   }
-   break;
-
-  case 1:           //прием данных посылки
-   if (chr=='\r')
-   {
-    state = 0;       //КА в исходное состояние
-    uart.recv_size = uart.recv_index; //данные готовы, сохраняем их размер
-   }
-   else
-   {
-    if (uart.recv_index >= UART_RECV_BUFF_SIZE)
-    {
-     //Ошибка: переполнение! - КА в исходное состояние, фрейм нельзя считать принятым!
-     state = 0;
-    }
-    else
-     uart.recv_buf[uart.recv_index++] = chr;
-   }
-   break;
+  //receive buffer overflow! What to do?
  }
+ */
+
 }
 
 void uart_transmitter(uint8_t state)

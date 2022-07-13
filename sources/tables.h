@@ -559,12 +559,14 @@ typedef struct fw_ex_data_t
   uint8_t btbaud_use[5];   //!< 9600,19200,38400,57600,115200;
   uint16_t mapdot_mindt;   //!< minimum time delta used for calculation of dP/dt, 1 discrete = 3.2 us
 
+  uint8_t uart_silent;     //!< silent flag for UART. If this flag is set, then transmitter will not send any packet until it receive any packet from a PC.
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1982];
+  uint8_t reserved[1981];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

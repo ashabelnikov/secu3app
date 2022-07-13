@@ -310,7 +310,7 @@ void init_modules(void)
  starter_set_blocking_state(0);
 
  //Initialization of UART
- uart_init(d.param.uart_divisor);
+ uart_init(d.param.uart_divisor, PGM_GET_BYTE(&fw_data.exdata.uart_silent));
 
 #ifdef BLUETOOTH_SUPP
  //Initialization of Bluetooth related module. BT baud rate can't be set if user selected to use parameters from FLASH

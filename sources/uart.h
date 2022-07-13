@@ -93,8 +93,9 @@ uint8_t uart_set_send_mode(uint8_t descriptor);
 
 /**Initialization of module
  * \param baud ID of baud rate (divisor's value - see datasheet)
+ * \param silent 0 - normal mode (SENSOR_DAT), 1 - silent (don't send packets)
  */
-void uart_init(uint16_t baud);
+void uart_init(uint16_t baud, uint8_t silent);
 
 /** Turn on/off UART transmitter. When transmitter is disabled PD1 goes into high impedance state
  * \param state 0 - transmitter is turned off, 1 - transmitter is tuirned on

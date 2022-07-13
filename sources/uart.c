@@ -2054,7 +2054,7 @@ void uart_append_send_buff(uint8_t ch)
  uart.send_buf[uart.send_size++] = ch;
 }
 
-void uart_init(uint16_t baud)
+void uart_init(uint16_t baud, uint8_t silent)
 {
  // Set baud rate
  UBRRH = (uint8_t)(baud>>8);
@@ -2067,7 +2067,11 @@ void uart_init(uint16_t baud)
  UCSRC=/*_BV(USBS)|*/_BV(UCSZ1)|_BV(UCSZ0);                  //8 bit, 1 stop, no parity control
 #endif
 
- uart.send_mode = SENSOR_DAT;
+ if (silent)
+  uart.send_mode = SILENT;
+ else
+  uart.send_mode = SENSOR_DAT;
+
  uart.recv_head = uart.recv_tail = 0;                        //receiver's buffer is empty
 }
 

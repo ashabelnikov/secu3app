@@ -1114,6 +1114,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .mapdot_mindt = 10000, //32ms
 
+  .uart_silent = 0, //don't use silent mode by default
+
   /**reserved bytes*/
   {0}
  },

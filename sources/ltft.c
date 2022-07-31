@@ -40,13 +40,14 @@
 #define LTFT_MIN -126 //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
 #define LTFT_MAX  126 //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
 
-uint8_t ltft_state = 0;  //!< SM state
-uint16_t stat_tmr = 0;   //!< timer
-uint8_t ltft_idx_r = 0;  //!< rpm index of current work point
-uint8_t ltft_idx_l = 0;  //!< load index of current work point
-int16_t ltft_corr = 0;   //!< value of actual correction
-uint8_t idx_l = 0;       //!< index for iteration throught load axis
-uint8_t idx_r = 0;       //!< index for iteration throught rpm axis
+static uint8_t ltft_state = 0;  //!< SM state
+static uint16_t stat_tmr = 0;   //!< timer
+static uint8_t ltft_idx_r = 0;  //!< rpm index of current work point
+static uint8_t ltft_idx_l = 0;  //!< load index of current work point
+static int16_t ltft_corr = 0;   //!< value of actual correction
+static uint8_t idx_l = 0;       //!< index for iteration throught load axis
+static uint8_t idx_r = 0;       //!< index for iteration throught rpm axis
+static uint8_t strokes = 0;     //!< counter of eng. strokes
 
 void ltft_control(void)
 {
@@ -79,6 +80,7 @@ void ltft_control(void)
    {
     lambda_reset_swt_counter();
     stat_tmr = s_timer_gtc();
+    strokes = 0;
     ltft_state++;
    }
    else
@@ -95,7 +97,14 @@ void ltft_control(void)
     break;
    }
 
-   if (((s_timer_gtc() - stat_tmr) >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_time)) && lambda_get_swt_counter() >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
+   uint8_t stab_time_ready = 0;
+
+   if (0==PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str))
+    stab_time_ready = ((s_timer_gtc() - stat_tmr) >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_time)); //use time
+   else
+    stab_time_ready = strokes >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str); //use eng. strokes
+
+   if (stab_time_ready && lambda_get_swt_counter() >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
    {
     int16_t ltft_curr = d.inj_ltft[l][r];
     int16_t new_val = ltft_curr + d.corr.lambda;
@@ -158,6 +167,11 @@ uint8_t ltft_is_active(void)
    return 0; // LTFT enabled only for gas
  }
  return 1;
+}
+
+void ltft_stroke_event_notification(void)
+{
+ ++strokes;
 }
 
 #endif

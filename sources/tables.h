@@ -561,12 +561,13 @@ typedef struct fw_ex_data_t
 
   uint8_t uart_silent;     //!< silent flag for UART. If this flag is set, then transmitter will not send any packet until it receive any packet from a PC.
 
+  uint8_t ltft_stab_str;   //!< Learn stability time in eng. strokes
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1981];
+  uint8_t reserved[1980];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

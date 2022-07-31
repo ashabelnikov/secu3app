@@ -611,6 +611,10 @@ MAIN()
    aircond_stroke_event_notification();
 #endif
 
+#if defined(FUEL_INJECT)
+   ltft_stroke_event_notification();
+#endif
+
    //----------------------------------------------
    if (d.param.knock_use_knock_channel)
    {

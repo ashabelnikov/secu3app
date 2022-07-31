@@ -1116,6 +1116,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .uart_silent = 0, //don't use silent mode by default
 
+  .ltft_stab_str = 0, //not used, ltft_stab_time is used by default
+
   /**reserved bytes*/
   {0}
  },

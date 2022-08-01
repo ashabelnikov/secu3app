@@ -42,7 +42,6 @@ void ltft_control(void);
 uint8_t ltft_is_active(void);
 
 /** Must be called from the main loop to notify about stroke events
- * Uses d ECU data structure
  */
 void ltft_stroke_event_notification(void);
 

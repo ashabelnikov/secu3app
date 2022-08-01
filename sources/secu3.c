@@ -502,6 +502,10 @@ MAIN()
    if (d.param.knock_use_knock_channel)
     knock_start_settings_latching();
 
+#if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
+   fuelcut_eng_stopped_notification();
+#endif
+
    meas_update_values_buffers(1, &fw_data.exdata.cesd);  //<-- update RPM only
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }

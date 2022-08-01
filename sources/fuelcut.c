@@ -37,6 +37,11 @@
 /**Idle cut off timer. Used by idle cut off controlling algorithm */
 s_timer16_t epxx_delay_time_counter = {0,0,1}; //already fired!
 
+#if !defined(CARB_AFR) || defined(GD_CONTROL)
+/**Used to disable idle cut off during some time after start of engine*/
+s_timer16_t idlecutoff_crnk_delay = {0,0,0};
+#endif
+
 #if defined(CARB_AFR) && defined(FUEL_INJECT)
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
@@ -64,18 +69,26 @@ static uint16_t get_fc_hit(void)
  */
 static void simple_fuel_cut(uint8_t apply)
 {
- //if throttle gate is opened, then open valve,reload timer and exit from condition
- if (d.sens.carb)
+ if (s_timer_is_action(&idlecutoff_crnk_delay))
  {
-  d.ie_valve = 1;
-  s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
+  //if throttle gate is opened, then open valve,reload timer and exit from condition
+  if (d.sens.carb )
+  {
+   d.ie_valve = 1;
+   s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
+  }
+  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
+  else
+  {
+   d.ie_valve = ((s_timer_is_action(&epxx_delay_time_counter))
+   &&(((d.sens.inst_frq > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_frq > get_fc_hit())))?0:1;
+  }
  }
- //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
  else
  {
-  d.ie_valve = ((s_timer_is_action(&epxx_delay_time_counter))
-  &&(((d.sens.inst_frq > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_frq > get_fc_hit())))?0:1;
+  d.ie_valve = 1; //always ON while delay is not over
  }
+
  if (apply)
  {
   if (d.floodclear)   //Turn off carburetor's idle cut off valve if flood clear mode is active. Here we rely that apply=1 only if gas dosator is NOT active.
@@ -108,31 +121,39 @@ void fuelcut_control(void)
  }
 #endif
 
- //fuel cut off for fuel injection
- if (d.sens.inst_frq > get_fc_hit())
+ if (s_timer_is_action(&idlecutoff_crnk_delay))
  {
-  //When RPM > hi threshold, then check TPS, CTS and MAP
-  if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd))
+  //fuel cut off for fuel injection
+  if (d.sens.inst_frq > get_fc_hit())
   {
-   if (0==state)
+   //When RPM > hi threshold, then check TPS, CTS and MAP
+   if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd))
    {
-    s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
-    state = 1;
+    if (0==state)
+    {
+     s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
+     state = 1;
+    }
+    else
+    {
+     if (s_timer_is_action(&epxx_delay_time_counter))
+      d.ie_valve = 0;  //Cut fuel
+    }
    }
    else
    {
-    if (s_timer_is_action(&epxx_delay_time_counter))
-     d.ie_valve = 0;  //Cut fuel
+    d.ie_valve = 1;   //normal operation
+    state = 0;
    }
   }
-  else
-  {
-   d.ie_valve = 1;   //normal operation
+  else if (d.sens.inst_frq < get_fc_lot() || d.sens.carb)
+  { //always turn on fuel when RPM < low threshold or throttle is opened
+   d.ie_valve = 1;
    state = 0;
   }
  }
- else if (d.sens.inst_frq < get_fc_lot() || d.sens.carb)
- { //always turn on fuel when RPM < low threshold or throttle is opened
+ else
+ { //always ON while delay is not over
   d.ie_valve = 1;
   state = 0;
  }
@@ -200,4 +221,11 @@ void fuelcut_control(void)
 
 #endif //!CARB_AFR || GD_CONTROL
 
+#endif
+
+#if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
+void fuelcut_eng_stopped_notification(void)
+{
+ s_timer_set(&idlecutoff_crnk_delay, 500); //5 seconds
+}
 #endif

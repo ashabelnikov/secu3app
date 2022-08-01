@@ -37,6 +37,9 @@ void fuelcut_init_ports(void);
  */
 void fuelcut_control(void);
 
+/**called from main loop when system detects engine stop*/
+void fuelcut_eng_stopped_notification(void);
+
 #endif //!CARB_AFR || GD_CONTROL
 
 #endif //_IDLECON_H_

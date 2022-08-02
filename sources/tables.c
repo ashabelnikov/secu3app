@@ -1427,6 +1427,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
    },
 
+   //Fill throttle assist map
+   {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -1734,6 +1737,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
    },
 
+   //Fill throttle assist map
+   {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2040,6 +2046,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
    },
 
+   //Fill throttle assist map
+   {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2345,6 +2354,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {
     AE_TPS_B(-500.0), AE_TPS_B(-200.0), AE_TPS_B(-100.0), AE_TPS_B(-50.0), AE_TPS_B(50.0), AE_TPS_B(100.0), AE_TPS_B(200.0), AE_TPS_B(500.0)
    },
+
+   //Fill throttle assist map
+   {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
 
    /**reserved bytes */
    {0},

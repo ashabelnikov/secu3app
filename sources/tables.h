@@ -131,6 +131,8 @@
 
 #define INJ_CYLADD_SIZE                 8           //!< Size of injection multiplier and injection addition maps
 
+#define INJ_THRASS_SIZE                 16          //!< Size of the throttle assist map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -191,6 +193,7 @@
 #define IRF_USE_INJREG                  2           //!< Using of closed loop mode for IAC valve (fuel injection only)
 #define IRF_PREG_MODE                   3           //!< Use P-regulator instead on I-regulator
 #define IRF_USE_CLONGAS                 4           //!< Use closed loop on gas
+#define IRF_USE_THRASSMAP               5           //!< Use throttle assist map instead of a simple constant
 
 //CKPS flags
 #define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark
@@ -299,10 +302,12 @@ typedef struct f_data_t
   uint8_t inj_ae_map_enr[INJ_AE_MAP_LOOKUP_TABLE_SIZE];  //!< values of the AE's MAP lookup table (additive factor), value + 55, e.g. 155 = 1.00, this means AE = 100% (so PW will be increased by 100%))
   int8_t  inj_ae_map_bins[INJ_AE_MAP_LOOKUP_TABLE_SIZE]; //!< bins of the AE's MAP lookup table (dP/dt, (signed value in kPa) / 100ms)
 
+  uint8_t inj_thrass[INJ_THRASS_SIZE];                //!< Thorottle assist map, value in % * 2
+
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[37];
+  uint8_t reserved[21];
 
   uint16_t checksum;                                  //!< CRC16 checksum of this structure (except these 16 bits)
 }f_data_t;

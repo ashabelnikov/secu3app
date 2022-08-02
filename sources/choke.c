@@ -503,7 +503,8 @@ int16_t calc_sm_position(uint8_t pwm)
       //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
       if  (d.sens.inst_frq > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
       {
-       chks.iac_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+       //use throttle assist map or just a simple constant
+       chks.iac_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
       }
       else
       { //RPM between thrd1 and thrd2
@@ -518,7 +519,8 @@ int16_t calc_sm_position(uint8_t pwm)
       if  (d.sens.inst_frq > rpm_thrd2)
       {
        chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
-       uint16_t max_add = ((uint16_t)d.param.idl_to_run_add) << 4; //x16
+       //use throttle assist map or just a simple constant
+       uint16_t max_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
        if (chks.iac_add > max_add)
         chks.iac_add = max_add;
        chks.iac_pos+=chks.iac_add; //x16, work position + addition

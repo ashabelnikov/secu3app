@@ -611,8 +611,8 @@ uint16_t choke_cranking_time(void)
 #endif
 
 #ifdef AIRTEMP_SENS
-//Реализует функцию коррекции УОЗ по температуре воздуха(°C)
-// Возвращает значение угла опережения в целом виде * 32
+//Implements ignition timing correction vs coolant temperature(°C) function
+//Returns value of ignition timing * 32
 int16_t airtemp_function(void)
 {
  int16_t i, i1, t = d.sens.air_temp;
@@ -1866,5 +1866,13 @@ void inj_cylmultadd(uint8_t idx, uint16_t *p_mult, int16_t *p_add)
 {
  *p_mult = ((uint16_t)_GBU(inj_cylmult[idx])) + 128;
  *p_add = ((int16_t)_GB(inj_cyladd[idx])) * 8;
+}
+#endif
+
+#ifdef FUEL_INJECT
+uint8_t inj_iac_thrass(void)
+{
+ return simple_interpolation(fcs.la_rpm, _GBU(inj_thrass[fcs.la_f]), _GBU(inj_thrass[fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 }
 #endif

@@ -525,4 +525,11 @@ uint8_t lambda_zone_val(void);
 void inj_cylmultadd(uint8_t idx, uint16_t *p_mult, int16_t *p_add);
 #endif
 
+#if defined(FUEL_INJECT)
+/** Calculates throttle assistant's value
+ * \return position percentage (value * 2)
+ */
+uint8_t inj_iac_thrass(void);
+#endif
+
 #endif //_FUNCONV_H_

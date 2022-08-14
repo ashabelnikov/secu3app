@@ -375,14 +375,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
 
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 3.7
-   IOREMVER(3,7),
+   //Version of this structure - 3.8
+   IOREMVER(3,8),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -1031,6 +1031,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //3
   _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), //2  ^
   _KNR(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)  //1  |
+  },
+
+  /**Fill "fuel temperature vs voltage" map*/
+  {
+   _EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),
+   _EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
   },
 
   /**reserved*/

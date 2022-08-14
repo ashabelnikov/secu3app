@@ -385,7 +385,7 @@ uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
 #define IOP_INPUT2       94     //!< INPUT2          (input)
 #define IOP_REFPRS_I     95     //!< REFPRS_I        (input)
 #define IOP_MAF          96     //!< MAF             (input)
-#define IOP_RESERVED25   97     //!< reserved plug   ()
+#define IOP_FTS_I        97     //!< FTS             (input)
 #define IOP_RESERVED26   98     //!< reserved plug   ()
 #define IOP_RESERVED27   99     //!< reserved plug   ()
 

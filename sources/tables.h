@@ -133,6 +133,8 @@
 
 #define INJ_THRASS_SIZE                 16          //!< Size of the throttle assist map
 
+#define FTS_LOOKUP_TABLE_SIZE           17          //!< Size of the "fuel temperature vs voltage" map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -474,10 +476,10 @@ typedef struct fw_ex_data_t
  /**Fuel tank level vs voltage. 16 points of function, plus two values for setting of x-axis range*/
   int16_t ftls_curve[FTLS_LOOKUP_TABLE_SIZE+2];
 
- /**Exhaust gas temperature vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+ /**Exhaust gas temperature vs voltage. 17 points of function, plus two values for setting of x-axis range*/
   int16_t egts_curve[EGTS_LOOKUP_TABLE_SIZE+2];
 
- /**Oil pressure vs voltage. 16 points of function, plus two values for setting of x-axis range*/
+ /**Oil pressure vs voltage. 17 points of function, plus two values for setting of x-axis range*/
   int16_t ops_curve[OPS_LOOKUP_TABLE_SIZE+2];
 
   /**Injection PW coefficient vs voltage, value * 4096, range: 0.5...1.5 */
@@ -492,8 +494,11 @@ typedef struct fw_ex_data_t
   /**EGO correction zones vs rpm, load*/
   uint16_t lambda_zones[EGOZONE_LOAD_SIZE];
 
+ /**Fuel temperature vs voltage. 17 points of function, plus two values for setting of x-axis range*/
+  int16_t fts_curve[FTS_LOOKUP_TABLE_SIZE+2];
+
   /**reserved*/
-  uint8_t reserved1[1329];
+  uint8_t reserved1[1291];
 
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...

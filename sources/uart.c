@@ -77,6 +77,7 @@
 #define ETMT_CYLMULT_MAP 32 //!< Inj. multiplication
 #define ETMT_CYLADD_MAP 33  //!< Inj. addition
 #define ETMT_AEMAP_MAP 34   //!< AE MAP map
+#define ETMT_THRASS_MAP 35  //!< Throttle assist map
 
 /**Define internal state variables */
 typedef struct
@@ -752,6 +753,12 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
+#if !defined(SECU3T) && defined(MCP3204)
+   build_i16h(d.sens.fts);              //fuel temperature
+#else
+   build_i16h(0);
+#endif
+
    break;
 
   case ADCCOR_PAR:
@@ -1109,6 +1116,11 @@ void uart_send_packet(uint8_t send_mode)
     case ETMT_IDLC_MAP:
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&d.tables_ram.inj_iac_crank_pos, INJ_IAC_POS_TABLE_SIZE);
+     state = ETMT_THRASS_MAP;
+     break;
+    case ETMT_THRASS_MAP:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&d.tables_ram.inj_thrass, INJ_THRASS_SIZE);
      state = ETMT_AETPS_MAP;
      break;
     case ETMT_AETPS_MAP:
@@ -1879,6 +1891,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_IDLC_MAP: //IAC/PWM position on cranking
      recept_rb(((uint8_t*)&d.tables_ram.inj_iac_crank_pos) + addr, INJ_IAC_POS_TABLE_SIZE); /*INJ_IAC_POS_TABLE_SIZE max*/
+     break;
+    case ETMT_THRASS_MAP: //Throttle assistant
+     recept_rb(((uint8_t*)&d.tables_ram.inj_thrass) + addr, INJ_THRASS_SIZE); /*INJ_THRASS_SIZE max*/
      break;
     case ETMT_AETPS_MAP: //AE TPS, Note! Here we consider inj_ae_tps_bins and inj_ae_tps_enr as single table
      recept_rb(((uint8_t*)&d.tables_ram.inj_ae_tps_enr) + addr, INJ_AE_TPS_LOOKUP_TABLE_SIZE*2); /*INJ_AE_TPS_LOOKUP_TABLE_SIZE*2 max*/

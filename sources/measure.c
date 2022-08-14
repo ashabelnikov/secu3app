@@ -351,6 +351,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  else
   d.sens.grts = 0; //input is not selected
 #endif
+#endif
 
 #ifndef SECU3T
  int16_t add_ix;
@@ -397,6 +398,7 @@ ftls_notsel:
   d.sens.egts = 0; //input is not selected
 #endif
 
+#ifndef SECU3T
 #ifdef MCP3204
  if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5i)
   d.sens.ops = exsens_lookup(d.sens.add_i5, fw_data.exdata.ops_curve); //ADD_I5 input selected as input for fuel tank level sensor
@@ -409,7 +411,6 @@ ftls_notsel:
  else
   d.sens.ops = 0; //input is not selected
 #endif
-
 #endif
 
 //select input for lambda sensor
@@ -446,6 +447,20 @@ ftls_notsel:
  else
   d.sens.maf = 0; //input is not selected
 
+#ifndef SECU3T
+#ifdef MCP3204
+ if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5i)
+  d.sens.fts = exsens_lookup(d.sens.add_i5, fw_data.exdata.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
+ else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6i)
+  d.sens.fts = exsens_lookup(d.sens.add_i6, fw_data.exdata.fts_curve); //ADD_I6 input selected as input for fuel temperature sensor
+ else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7i)
+  d.sens.fts = exsens_lookup(d.sens.add_i7, fw_data.exdata.fts_curve); //ADD_I7 input selected as input for fuel temperature sensor
+ else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8i)
+  d.sens.fts = exsens_lookup(d.sens.add_i8, fw_data.exdata.fts_curve); //ADD_I8 input selected as input for fuel temperature sensor
+ else
+  d.sens.fts = 0; //input is not selected
+#endif
+#endif
 }
 
 //Call this function for making preliminary measurements before starting of engine. Call it only after

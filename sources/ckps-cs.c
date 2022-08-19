@@ -117,6 +117,12 @@
  #define F_PNDDWL1   6                //!< Indicates that it is necessary to set compare channel for dwell (start of dwell)
 #endif
 #endif
+#ifdef DWELL_CONTROL
+ #define F_BLKDWL    7                //!< flag for fixing the issue with dwell time on 1 cylinder engines
+#ifdef SPLIT_ANGLE
+ #define F_BLKDWL1   0                //!< flag for fixing the issue with dwell time on 1 cylinder engines
+#endif
+#endif
 
 /**Calculates index of next channel using specified index i*/
 #define NEXT_CHIDX(i) (((i) < ckps.chan_number-1) ? (i) + 1 : 0)
@@ -343,8 +349,10 @@ void ckps_init_state_variables(void)
  ckps.channel_mode_b1 = 0; //prevent missing spark on first ignition event
 #endif
  CLEARBIT(flags, F_PNDDWL);
+ CLEARBIT(flags2, F_BLKDWL);
 #ifdef SPLIT_ANGLE
  CLEARBIT(flags2, F_PNDDWL1);
+ CLEARBIT(flags2, F_BLKDWL1);
 #endif
  QUEUE_RESET(1);
 #ifdef SPLIT_ANGLE
@@ -1006,6 +1014,7 @@ ISR(TIMER1_COMPA_vect)
    }
    else
    { //IDI mode
+    SETBIT(flags2, F_BLKDWL);
     acc_delay-= ckps.cr_acc_time;    //apply dwell time
     if (acc_delay < DWL_DEAD_TIME)
      acc_delay = DWL_DEAD_TIME;
@@ -1110,6 +1119,7 @@ ISR(TIMER3_COMPA_vect)
    }
    else
    { //IDI mode
+    SETBIT(flags2, F_BLKDWL1);
     acc_delay-= ckps.cr_acc_time;    //apply dwell time
     if (acc_delay < DWL_DEAD_TIME)
      acc_delay = DWL_DEAD_TIME;
@@ -1263,20 +1273,24 @@ static void process_ckps_cogs(void)
  {
   //calculate delay between current tooth and next spark
   int32_t angle_to_spark = (((int32_t)_normalize_tn(chanstate[ckps.channel_mode_b].cogs_btdc - ckps.cog)) * ckps.degrees_per_cog) - ckps.advance_angle;
-  int32_t delay =  (angle_to_spark * (((int32_t)ckps.period_curr * ckps.degrees_per_cog_r) >> 10)) >> 6; //convert angle to delay
-  delay-= ckps.cr_acc_time;    //apply dwell time
-
-  if (delay < (ckps.period_curr<<1))
+  if (1!=ckps.chan_number || !CHECKBIT(flags2, F_BLKDWL) || angle_to_spark > ANGLE_MAGNITUDE(66.0)) //prevent wrong dwell time on 1 cylinder engine
   {
-   if (delay < DWL_DEAD_TIME)
-    delay = DWL_DEAD_TIME; //restrict accumulation time.
+   CLEARBIT(flags2, F_BLKDWL);
+   int32_t delay =  (angle_to_spark * (((int32_t)ckps.period_curr * ckps.degrees_per_cog_r) >> 10)) >> 6; //convert angle to delay
+   delay-= ckps.cr_acc_time;    //apply dwell time
 
-   if (QUEUE_IS_EMPTY(1))
+   if (delay < (ckps.period_curr<<1))
    {
-    SET_T1COMPA(ICR1, (uint16_t)delay);
+    if (delay < DWL_DEAD_TIME)
+     delay = DWL_DEAD_TIME; //restrict accumulation time.
+
+    if (QUEUE_IS_EMPTY(1))
+    {
+     SET_T1COMPA(ICR1, (uint16_t)delay);
+    }
+    QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL);
+    CLEARBIT(flags, F_PNDDWL);  // To avoid entering into setup mode
    }
-   QUEUE_ADD(1, ICR1, (uint16_t)delay, QID_DWELL);
-   CLEARBIT(flags, F_PNDDWL);  // To avoid entering into setup mode
   }
  }
 #ifdef SPLIT_ANGLE
@@ -1284,20 +1298,24 @@ static void process_ckps_cogs(void)
  {
   //calculate delay between current tooth and next spark
   int32_t angle_to_spark = (((int32_t)_normalize_tn(chanstate[ckps.channel_mode_b1].cogs_btdc - ckps.cog)) * ckps.degrees_per_cog) - ckps.advance_angle1;
-  int32_t delay =  (angle_to_spark * (((int32_t)ckps.period_curr * ckps.degrees_per_cog_r) >> 10)) >> 6; //convert angle to delay
-  delay-= ckps.cr_acc_time;    //apply dwell time
-
-  if (delay < (ckps.period_curr<<1))
+  if (1!=ckps.chan_number || !CHECKBIT(flags2, F_BLKDWL) || angle_to_spark > ANGLE_MAGNITUDE(66.0)) //prevent wrong dwell time on 1 cylinder engine
   {
-   if (delay < DWL_DEAD_TIME)
-    delay = DWL_DEAD_TIME; //restrict accumulation time.
+   CLEARBIT(flags2, F_BLKDWL1);
+   int32_t delay =  (angle_to_spark * (((int32_t)ckps.period_curr * ckps.degrees_per_cog_r) >> 10)) >> 6; //convert angle to delay
+   delay-= ckps.cr_acc_time;    //apply dwell time
 
-   if (QUEUE_IS_EMPTY(2))
+   if (delay < (ckps.period_curr<<1))
    {
-    SET_T3COMPA(ICR1, (uint16_t)delay);  //note: we rely that timers 1 and 3 are synchronized!
+    if (delay < DWL_DEAD_TIME)
+     delay = DWL_DEAD_TIME; //restrict accumulation time.
+
+    if (QUEUE_IS_EMPTY(2))
+    {
+     SET_T3COMPA(ICR1, (uint16_t)delay);  //note: we rely that timers 1 and 3 are synchronized!
+    }
+    QUEUE_ADD(2, ICR1, (uint16_t)delay, QID_DWELL);
+    CLEARBIT(flags2, F_PNDDWL1);  // To avoid entering into setup mode
    }
-   QUEUE_ADD(2, ICR1, (uint16_t)delay, QID_DWELL);
-   CLEARBIT(flags2, F_PNDDWL1);  // To avoid entering into setup mode
   }
  }
 #endif
@@ -1484,8 +1502,10 @@ ISR(TIMER1_CAPT_vect)
   {
 #ifdef DWELL_CONTROL
    SETBIT(flags, F_PNDDWL); //it is need to set compare channel for dwell start
+   SETBIT(flags2, F_BLKDWL);
 #ifdef SPLIT_ANGLE
    SETBIT(flags2, F_PNDDWL1);
+   SETBIT(flags2, F_BLKDWL1);
 #endif
 #endif
 #ifdef FUEL_INJECT

@@ -293,6 +293,12 @@ static void fuel_calc(void)
  }
 #endif
 
+#if !defined(SECU3T) && defined(FUEL_INJECT)
+ uint8_t fdc_use = PGM_GET_BYTE(&fw_data.exdata.fueldens_corr_use);
+ if ((fdc_use==d.sens.gas) || (fdc_use==2))
+  pw = (pw * fueldens_corr()) >> 14;            //apply fuel density correction
+#endif
+
  if (0==d.param.inj_ae_type)
   pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
  else

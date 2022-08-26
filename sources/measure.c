@@ -448,6 +448,8 @@ ftls_notsel:
   d.sens.maf = 0; //input is not selected
 
 #ifndef SECU3T
+if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
+{ //use sensor
 #ifdef MCP3204
  if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5i)
   d.sens.fts = exsens_lookup(d.sens.add_i5, fw_data.exdata.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
@@ -460,6 +462,13 @@ ftls_notsel:
  else
   d.sens.fts = 0; //input is not selected
 #endif
+}
+else
+{//use CTS+IAT model
+ //FTS = IAT + IAT * (CLT - IAT) * 0.01
+ int32_t add = (((int32_t)(d.sens.temperat - d.sens.air_temp) * d.sens.air_temp) * 655);
+ d.sens.fts = d.sens.air_temp + (add >> 16); //TODO: use SHTDIV32() macro instead of a simple right shift (this will increase accuracy)
+}
 #endif
 }
 

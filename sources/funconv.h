@@ -532,4 +532,11 @@ void inj_cylmultadd(uint8_t idx, uint16_t *p_mult, int16_t *p_add);
 uint8_t inj_iac_thrass(void);
 #endif
 
+#if !defined(SECU3T) && defined(FUEL_INJECT)
+/** Calculates fuel density correction
+ * \return coefficient of correction, value * 16384
+ */
+uint16_t fueldens_corr(void);
+#endif
+
 #endif //_FUNCONV_H_

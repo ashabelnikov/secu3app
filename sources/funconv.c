@@ -1876,3 +1876,23 @@ uint8_t inj_iac_thrass(void)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 }
 #endif
+
+#if !defined(SECU3T) && defined(FUEL_INJECT)
+uint16_t fueldens_corr(void)
+{
+ int16_t i, i1, t = d.sens.fts;
+
+ //-30 - minimum temperature value
+ if (t < TEMPERATURE_MAGNITUDE(-30))
+  t = TEMPERATURE_MAGNITUDE(-30);
+
+ //10 - step between interpolation points
+ i = (t - TEMPERATURE_MAGNITUDE(-30)) / TEMPERATURE_MAGNITUDE(10);
+
+ if (i >= FUELDENS_CORR_SIZE-1) i = i1 = FUELDENS_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(t, PGM_GET_WORD(&fw_data.exdata.fueldens_corr[i]), PGM_GET_WORD(&fw_data.exdata.fueldens_corr[i1]),
+ (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 2) >> 1;
+}
+#endif

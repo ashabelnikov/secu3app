@@ -189,6 +189,9 @@
 /**Inj. addition (ms) in 25.6 us steps*/
 #define _IAD(v) ROUND((v)/0.0256)
 
+/**Fuel density correction */
+#define _FDC(v) ROUNDU16((v)*16384.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -1040,6 +1043,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
   },
 
+  /**Fill fuel density correction map (coefficient vs temperature of fuel in ramp)*/
+  {_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),
+   _FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000)
+  },
+
   /**reserved*/
   {0},
 
@@ -1124,6 +1132,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .uart_silent = 0, //don't use silent mode by default
 
   .ltft_stab_str = 0, //not used, ltft_stab_time is used by default
+
+  .fueldens_corr_use = 2, //use for both fuels
+
+  .fts_source = 0, //use CTS+IAT model
 
   /**reserved bytes*/
   {0}

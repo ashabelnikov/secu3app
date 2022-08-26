@@ -135,6 +135,8 @@
 
 #define FTS_LOOKUP_TABLE_SIZE           17          //!< Size of the "fuel temperature vs voltage" map
 
+#define FUELDENS_CORR_SIZE              16          //!< Size of fuel density correction map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -494,11 +496,14 @@ typedef struct fw_ex_data_t
   /**EGO correction zones vs rpm, load*/
   uint16_t lambda_zones[EGOZONE_LOAD_SIZE];
 
- /**Fuel temperature vs voltage. 17 points of function, plus two values for setting of x-axis range*/
+  /**Fuel temperature vs voltage. 17 points of function, plus two values for setting of x-axis range*/
   int16_t fts_curve[FTS_LOOKUP_TABLE_SIZE+2];
 
+  /**Fuel density correction (coefficient vs temperature of fuel), value * 16384*/
+  uint16_t fueldens_corr[FUELDENS_CORR_SIZE];
+
   /**reserved*/
-  uint8_t reserved1[1291];
+  uint8_t reserved1[1259];
 
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
@@ -572,12 +577,16 @@ typedef struct fw_ex_data_t
   uint8_t uart_silent;     //!< silent flag for UART. If this flag is set, then transmitter will not send any packet until it receive any packet from a PC.
 
   uint8_t ltft_stab_str;   //!< Learn stability time in eng. strokes
+
+  uint8_t fueldens_corr_use; //!< 0 - only for petrol, 1 - only for gas, 2 - use both, 3 - don't use for both
+
+  uint8_t fts_source;      //!< 0 - use CTS+IAT model, 1 - use fuel temperature sensor
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1980];
+  uint8_t reserved[1978];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

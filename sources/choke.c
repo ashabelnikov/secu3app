@@ -442,7 +442,8 @@ int16_t calc_sm_position(uint8_t pwm)
 
     //calculate target RPM and transition RPM thresholds
     int16_t rpm = calc_cl_rpm();
-    uint16_t rpm_thrd1 = calc_rpm_thrd1(rpm), rpm_thrd2 = calc_rpm_thrd2(rpm);
+    int16_t rpmt = PGM_GET_BYTE(&fw_data.exdata.tmrpmtc_mode) ? inj_idling_rpm() : rpm;
+    uint16_t rpm_thrd1 = calc_rpm_thrd1(rpmt), rpm_thrd2 = calc_rpm_thrd2(rpmt);
     int16_t error = rpm - d.sens.frequen, intlim = d.param.idl_intrpm_lim * 10;
     restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
 

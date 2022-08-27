@@ -1137,6 +1137,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .fts_source = 0, //use CTS+IAT model
 
+  .tmrpmtc_mode = 0, //use standard calculation of RPM thresholds
+
   /**reserved bytes*/
   {0}
  },

@@ -198,9 +198,6 @@ void build_rs(const uint8_t* ramBuffer, uint8_t size)
  while(size--) {uart.send_buf_c[uart.send_size_c++] = *ramBuffer++;}
 }
 
-/**Appends sender's buffer by one HEX byte */
-#define build_i4h(i) {uart.send_buf_c[uart.send_size_c++] = i;}
-
 /**Appends sender's buffer by two HEX bytes
  * \param i 8-bit value to be converted into hex
  */
@@ -264,9 +261,6 @@ static void recept_rs(uint8_t* ramBuffer, uint8_t size)
 {
  while(size-- && uart.recv_index_c < uart.recv_size_c) *ramBuffer++ = uart.recv_buf_c[uart.recv_index_c++];
 }
-
-/**Retrieves from receiver's buffer 4-bit value */
-#define recept_i4h() (uart.recv_buf_c[uart.recv_index_c++])
 
 /**Retrieves from receiver's buffer 8-bit value
  * \return retrieved value
@@ -356,7 +350,7 @@ void uart_send_packet(uint8_t send_mode)
   case CARBUR_PAR:
    build_i16h(d.param.ie_lot);
    build_i16h(d.param.ie_hit);
-   build_i4h(d.param.carb_invers);
+   build_i8h(d.param.carb_invers);
    build_i16h(d.param.fe_on_threshold);
    build_i16h(d.param.ie_lot_g);
    build_i16h(d.param.ie_hit_g);
@@ -401,7 +395,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.angle_corr);
    build_i16h(d.param.angle_dec_speed);
    build_i16h(d.param.angle_inc_speed);
-   build_i4h(d.param.zero_adv_ang);
+   build_i8h(d.param.zero_adv_ang);
    build_i8h(d.param.igntim_flags);
    build_i16h(d.param.shift_igntim);
    break;
@@ -417,7 +411,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.map2_curve_gradient); //map2
    build_i16h(d.param.tps_curve_offset);
    build_i16h(d.param.tps_curve_gradient);
-   build_i4h(d.param.load_src_cfg);
+   build_i8h(d.param.load_src_cfg);
    build_i8h(d.param.mapsel_uni);
    build_i8h(d.param.barocorr_type);
    build_i8h(d.param.func_flags);
@@ -841,7 +835,7 @@ void uart_send_packet(uint8_t send_mode)
    break;
 
   case KNOCK_PAR:
-   build_i4h(d.param.knock_use_knock_channel);
+   build_i8h(d.param.knock_use_knock_channel);
    build_i8h(d.param.knock_bpf_frequency);
    build_i16h(d.param.knock_k_wnd_begin_angle);
    build_i16h(d.param.knock_k_wnd_end_angle);
@@ -877,7 +871,7 @@ void uart_send_packet(uint8_t send_mode)
   case MISCEL_PAR:
    build_i16h(d.param.uart_divisor);
    build_i8h(d.param.uart_period_t_ms);
-   build_i4h(d.param.ign_cutoff);
+   build_i8h(d.param.ign_cutoff);
    build_i16h(d.param.ign_cutoff_thrd);
    build_i16h(d.param.hop_start_ang);
    build_i16h(d.param.hop_durat_ang);
@@ -891,7 +885,7 @@ void uart_send_packet(uint8_t send_mode)
 
   case CHOKE_PAR:
    build_i16h(d.param.sm_steps);
-   build_i4h(d.choke_testing);      //fake parameter (actually it is command)
+   build_i8h(d.choke_testing);      //fake parameter (actually it is command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
    build_i16h(d.param.choke_rpm_if);
    build_i16h(d.param.choke_corr_time[0]);
@@ -904,7 +898,7 @@ void uart_send_packet(uint8_t send_mode)
 #ifdef GD_CONTROL
   case GASDOSE_PAR:
    build_i16h(d.param.gd_steps);
-   build_i4h(d.gasdose_testing);    //fake parameter (actually it is command)
+   build_i8h(d.gasdose_testing);    //fake parameter (actually it is command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
    build_i8h(d.param.gd_fc_closing);
    build_i16h(d.param.gd_lambda_corr_limit_p);
@@ -916,8 +910,8 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 
   case SECUR_PAR:
-   build_i4h(0);
-   build_i4h(0);
+   build_i8h(0);
+   build_i8h(0);
    build_i8h(d.param.bt_flags);
    build_rb(d.param.ibtn_keys[0], IBTN_KEY_SIZE);  //1st iButton key
    build_rb(d.param.ibtn_keys[1], IBTN_KEY_SIZE);  //2nd iButton key
@@ -936,7 +930,7 @@ void uart_send_packet(uint8_t send_mode)
     build_i16h(d.param.uni_output[oi].on_thrd_2);
     build_i16h(d.param.uni_output[oi].off_thrd_2);
    }
-   build_i4h(d.param.uniout_12lf);
+   build_i8h(d.param.uniout_12lf);
    break;
   }
 
@@ -1538,7 +1532,7 @@ uint8_t uart_recept_packet(void)
   case CARBUR_PAR:
    d.param.ie_lot  = recept_i16h();
    d.param.ie_hit  = recept_i16h();
-   d.param.carb_invers= recept_i4h();
+   d.param.carb_invers= recept_i8h();
    d.param.fe_on_threshold= recept_i16h();
    d.param.ie_lot_g = recept_i16h();
    d.param.ie_hit_g = recept_i16h();
@@ -1583,7 +1577,7 @@ uint8_t uart_recept_packet(void)
    d.param.angle_corr= recept_i16h();
    d.param.angle_dec_speed = recept_i16h();
    d.param.angle_inc_speed = recept_i16h();
-   d.param.zero_adv_ang = recept_i4h();
+   d.param.zero_adv_ang = recept_i8h();
    d.param.igntim_flags = recept_i8h();
    d.param.shift_igntim = recept_i16h();
    break;
@@ -1606,7 +1600,7 @@ uint8_t uart_recept_packet(void)
    d.param.tps_curve_offset = recept_i16h();
    d.param.tps_curve_gradient = recept_i16h();
 
-   temp = recept_i4h();
+   temp = recept_i8h();
    if (temp < 5)
     d.param.load_src_cfg = temp;
 
@@ -1679,7 +1673,7 @@ uint8_t uart_recept_packet(void)
    break;
 
   case KNOCK_PAR:
-   d.param.knock_use_knock_channel = recept_i4h();
+   d.param.knock_use_knock_channel = recept_i8h();
    d.param.knock_bpf_frequency   = recept_i8h();
    d.param.knock_k_wnd_begin_angle = recept_i16h();
    d.param.knock_k_wnd_end_angle = recept_i16h();
@@ -1705,7 +1699,7 @@ uint8_t uart_recept_packet(void)
    if (d.param.uart_divisor != old_divisor)
     d.param.bt_flags|= _BV(BTF_SET_BBR); //set flag indicating that we have to set bluetooth baud rate on next reset
    d.param.uart_period_t_ms = recept_i8h();
-   d.param.ign_cutoff = recept_i4h();
+   d.param.ign_cutoff = recept_i8h();
    d.param.ign_cutoff_thrd = recept_i16h();
    d.param.hop_start_ang = recept_i16h();
    d.param.hop_durat_ang = recept_i16h();
@@ -1720,7 +1714,7 @@ uint8_t uart_recept_packet(void)
 
   case CHOKE_PAR:
    d.param.sm_steps = recept_i16h();
-   d.choke_testing = recept_i4h(); //fake parameter (actually it is status)
+   d.choke_testing = recept_i8h(); //fake parameter (actually it is status)
    d.choke_manpos_d = recept_i8h();//fake parameter
    d.param.choke_rpm_if = recept_i16h();
    d.param.choke_corr_time[0] = recept_i16h();
@@ -1733,7 +1727,7 @@ uint8_t uart_recept_packet(void)
 #ifdef GD_CONTROL
   case GASDOSE_PAR:
    d.param.gd_steps = recept_i16h();
-   d.gasdose_testing = recept_i4h(); //fake parameter (actually it is status)
+   d.gasdose_testing = recept_i8h(); //fake parameter (actually it is status)
    d.gasdose_manpos_d = recept_i8h();//fake parameter
    d.param.gd_fc_closing = recept_i8h();
    d.param.gd_lambda_corr_limit_p = recept_i16h();
@@ -1747,10 +1741,10 @@ uint8_t uart_recept_packet(void)
   case SECUR_PAR:
   {
    uint8_t old_bt_flags = d.param.bt_flags;
-   d.bt_name[0] = recept_i4h();
+   d.bt_name[0] = recept_i8h();
    if (d.bt_name[0] > 8)
     d.bt_name[0] = 8;
-   d.bt_pass[0] = recept_i4h();
+   d.bt_pass[0] = recept_i8h();
    if (d.bt_pass[0] > 6)
     d.bt_pass[0] = 6;
    recept_rs(&d.bt_name[1], d.bt_name[0]);
@@ -1776,7 +1770,7 @@ uint8_t uart_recept_packet(void)
     d.param.uni_output[oi].on_thrd_2 = recept_i16h();
     d.param.uni_output[oi].off_thrd_2 = recept_i16h();
    }
-   d.param.uniout_12lf = recept_i4h();
+   d.param.uniout_12lf = recept_i8h();
    break;
   }
 

@@ -34,12 +34,15 @@
 #include "vstimer.h"
 #endif //!CARB_AFR || GD_CONTROL
 
+/**Idle cut off delay after cranking, 5 seconds*/
+#define ICOCD 500
+
 /**Idle cut off timer. Used by idle cut off controlling algorithm */
 s_timer16_t epxx_delay_time_counter = {0,0,1}; //already fired!
 
 #if !defined(CARB_AFR) || defined(GD_CONTROL)
 /**Used to disable idle cut off during some time after start of engine*/
-s_timer16_t idlecutoff_crnk_delay = {0,0,0};
+s_timer16_t idlecutoff_crnk_delay = {0,ICOCD,0};
 #endif
 
 #if defined(CARB_AFR) && defined(FUEL_INJECT)
@@ -226,6 +229,6 @@ void fuelcut_control(void)
 #if !defined(CARB_AFR) || defined(GD_CONTROL) //Carb. AFR control supersede idle cut-off functionality
 void fuelcut_eng_stopped_notification(void)
 {
- s_timer_set(&idlecutoff_crnk_delay, 500); //5 seconds
+ s_timer_set(&idlecutoff_crnk_delay, ICOCD);
 }
 #endif

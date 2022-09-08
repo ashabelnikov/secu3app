@@ -467,7 +467,7 @@ else
 {//use CTS+IAT model
  //FTS = IAT + IAT * (CLT - IAT) * 0.01
  int32_t add = (((int32_t)(d.sens.temperat - d.sens.air_temp) * d.sens.air_temp) * 655);
- d.sens.fts = d.sens.air_temp + (add >> 16); //TODO: use SHTDIV32() macro instead of a simple right shift (this will increase accuracy)
+ d.sens.fts = d.sens.air_temp + (add >> 18); //TODO: use SHTDIV32() macro instead of a simple right shift (this will increase accuracy)
 }
 #endif
 }

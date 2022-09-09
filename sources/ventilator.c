@@ -291,7 +291,8 @@ void vent_control(void)
 
 #ifndef SECU3T
   if (IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2i ||
-      IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_o || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_oi)
+      IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_o || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_oi ||
+      IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_pwrr_o || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_pwrr_oi)
   { //low frequency software PWM
    vent_duty = dd;
    if (vent_duty == 0)

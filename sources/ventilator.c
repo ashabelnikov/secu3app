@@ -244,6 +244,10 @@ void vent_control(void)
   uint16_t d_val;
   int16_t dd = d.param.vent_on - d.sens.temperat;
 
+  //use hysteresis when a cooling fan is going to fully turn off
+  if (d.cool_fan && dd > (PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps)-PGM_GET_BYTE(&fw_data.exdata.vent_minband)))
+   dd = (d.param.vent_on - (int16_t)PGM_GET_BYTE(&fw_data.exdata.vent_pwm_turnoff_hyst)) - d.sens.temperat;
+
 #ifdef AIRCONDIT
   //smoothly turn on cooling fan if request from air conditioner exists
    if (0==d.cond_req_fan)

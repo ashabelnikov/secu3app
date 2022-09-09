@@ -1139,6 +1139,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .tmrpmtc_mode = 0, //use standard calculation of RPM thresholds
 
+  .vent_pwm_turnoff_hyst = TEMPERATURE_MAGNITUDE(0.5), //0.5°C
+
   /**reserved bytes*/
   {0}
  },

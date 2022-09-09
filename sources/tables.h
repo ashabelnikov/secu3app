@@ -583,12 +583,14 @@ typedef struct fw_ex_data_t
   uint8_t fts_source;      //!< 0 - use CTS+IAT model, 1 - use fuel temperature sensor
 
   uint8_t tmrpmtc_mode;     //!< 0 - standard, 1 - use only target RPM map for calculation of transient mode RPM thresholds for IAC
+
+  int8_t vent_pwm_turnoff_hyst; //!< Hysteresys value used when cooling fan is going to turn off, value in °C.
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1977];
+  uint8_t reserved[1976];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

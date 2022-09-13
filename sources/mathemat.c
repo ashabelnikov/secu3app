@@ -49,7 +49,7 @@ int16_t simple_interpolation(int16_t x, int16_t a1, int16_t a2, int16_t x_s, int
 
 uint16_t simple_interpolation_u(uint16_t x, uint16_t a1, uint16_t a2, uint16_t x_s, uint16_t x_l, uint8_t m)
 {
- return ((a1 * m) + (((uint32_t)(a2 - a1) * m) * (x - x_s)) / x_l);
+ return ((int32_t)(a1 * m) + ((((int32_t)a2 - a1) * m) * ((int32_t)x - x_s)) / x_l);
 }
 
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit)

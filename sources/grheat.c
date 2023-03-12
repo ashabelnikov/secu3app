@@ -34,16 +34,16 @@
 #include "vstimer.h"
 #include "funconv.h"
 
-/***/
+/**Used in calculation of PWM duty*/
 #define GRH_DUTY_MULT 10
 
-/***/
+/**Number of PWM discretes */
 #define GRH_PWM_STEPS (GRH_DUTY_MULT*2)
 
 /**Declare state variables structure*/
 typedef struct
 {
- uint8_t timeout;       //!<
+ uint8_t timeout;       //!< timeout flag
  uint8_t pwm_state;     //!< Needed by finite state machine (current state)
  uint16_t strt_t1;      //!< Used for timing of PWM
  uint16_t strt_t2;      //!< Used for timer

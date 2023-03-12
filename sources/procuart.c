@@ -130,45 +130,45 @@ void process_uart_interface(void)
     break;
 
    case OP_COMP_NC:
-    if (_AB(d.op_actn_code, 0) == OPCODE_EEPROM_PARAM_SAVE) //приняли команду сохранения параметров
+    if (_AB(d.op_actn_code, 0) == OPCODE_EEPROM_PARAM_SAVE) //We have received command to save parameters
     {
      sop_set_operation(SOP_SAVE_PARAMETERS);
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
-    if (_AB(d.op_actn_code, 0) == OPCODE_CE_SAVE_ERRORS) //приняли команду чтения сохраненных кодов ошибок
+    if (_AB(d.op_actn_code, 0) == OPCODE_CE_SAVE_ERRORS) //We have received command to read saved error codes (CE)
     {
      sop_set_operation(SOP_READ_CE_ERRORS);
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
-    if (_AB(d.op_actn_code, 0) == OPCODE_READ_FW_SIG_INFO) //приняли команду чтения и передачи информации о прошивке
+    if (_AB(d.op_actn_code, 0) == OPCODE_READ_FW_SIG_INFO) //We have received command to read and transmit information about firmware
     {
      sop_set_operation(SOP_SEND_FW_SIG_INFO);
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
 #ifdef REALTIME_TABLES
-    if (_AB(d.op_actn_code, 0) == OPCODE_LOAD_TABLSET) //приняли команду выбора нового набора таблиц
+    if (_AB(d.op_actn_code, 0) == OPCODE_LOAD_TABLSET) //We have received command to select new set of tables
     {
      sop_set_operation(SOP_LOAD_TABLSET);
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
-    if (_AB(d.op_actn_code, 0) == OPCODE_SAVE_TABLSET) //приняли команду сохранения набора таблиц для указанного типа топлива
+    if (_AB(d.op_actn_code, 0) == OPCODE_SAVE_TABLSET) //We have received command to save set of tables for specified type of fuel
     {
      sop_set_operation(SOP_SAVE_TABLSET);
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
 #endif
 #ifdef DIAGNOSTICS
-    if (_AB(d.op_actn_code, 0) == OPCODE_DIAGNOST_ENTER) //"enter diagnostic mode" command has been received
+    if (_AB(d.op_actn_code, 0) == OPCODE_DIAGNOST_ENTER) //'enter diagnostic mode' command has been received
     {
      //this function will send confirmation answer and start diagnostic mode (it will has its own separate loop)
      diagnost_start();
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
-    if (_AB(d.op_actn_code, 0) == OPCODE_DIAGNOST_LEAVE) //"leave diagnostic mode" command has been received
+    if (_AB(d.op_actn_code, 0) == OPCODE_DIAGNOST_LEAVE) //'leave diagnostic mode' command has been received
     {
      //this function will send confirmation answer and reset device
      diagnost_stop();
-     _AB(d.op_actn_code, 0) = 0; //обработали
+     _AB(d.op_actn_code, 0) = 0; //processed
     }
 #endif
     if (_AB(d.op_actn_code, 0) == OPCODE_RESET_EEPROM) //reset EEPROM command received
@@ -197,8 +197,8 @@ void process_uart_interface(void)
     break;
 
    case CKPS_PAR:
-    //если были изменены параметры ДПКВ, то немедленно применяем их на работающем двигателе и сбрасываем счетчик времени
-    ckps_set_cyl_number(d.param.ckps_engine_cyl);  //<--обязательно в первую очередь!
+    //if CKPS parameters have been changed, then immidiately apply them on the working engine and reset counter of time
+    ckps_set_cyl_number(d.param.ckps_engine_cyl);  //<-- obligatory frirst of all!
     ckps_set_cogs_num(d.param.ckps_cogs_num, d.param.ckps_miss_num);
     ckps_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_CKPS_EDGE));     //CKPS (CKP sensor)
     cams_vr_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_REFS_EDGE));  //REF_S (Reference sensor)
@@ -241,14 +241,14 @@ void process_uart_interface(void)
     break;
 
    case KNOCK_PAR:
-    //аналогично для контороля детонации, обязательно после CKPS_PAR!
-    //инициализируем процессор детонации в случае если он не использовался, а теперь поступила команда его использовать.
+    //the same is for knock control, obligatory after CKPS_PAR!
+    //initialize knock IC only if user has turned on control of knock in the parameters (avoid multiple time initialization)
     if (d.param.knock_use_knock_channel)
     {
      if (!d.use_knock_channel_prev)
      {
       if (!knock_module_initialize())
-      {//чип сигнального процессора детонации неисправен - зажигаем СЕ
+      {//knock IC is not working - light up CE
        ce_set_error(ECUERROR_KSP_CHIP_FAILED);
       }
      }
@@ -257,14 +257,13 @@ void process_uart_interface(void)
      ce_clear_error(ECUERROR_KNOCK_DETECTED);
 
     knock_set_band_pass(d.param.knock_bpf_frequency);
-    //gain устанавливается в каждом рабочем цикле
+    //gain is set in each working stroke (see main loop)
     knock_set_int_time_constant(d.param.knock_int_time_const);
     ckps_set_knock_window(d.param.knock_k_wnd_begin_angle, d.param.knock_k_wnd_end_angle);
     ckps_use_knock_channel(d.param.knock_use_knock_channel);
     ckps_set_knock_chanmap(d.param.knock_selch);
 
-    //запоминаем состояние флага для того чтобы потом можно было определить нужно инициализировать
-    //процессор детонации или нет.
+    //remember state of the flag so later it will be possible to check if it is need to initialize knock IC or not
     d.use_knock_channel_prev = d.param.knock_use_knock_channel;
 
     param_set_save_timer(); //paramaters were altered, so reset time counter
@@ -313,7 +312,7 @@ void process_uart_interface(void)
 
    s_timer_set(&send_packet_interval_counter, d.param.uart_period_t_ms);
 
-   //после передачи очищаем кеш ошибок, передача битов ошибок осуществляется только в 1 из 2 пакетов
+   //clear cache of errors after transmitting them, transmission of error bits performed only in 1 of 2 packets
    if (SENSOR_DAT==desc || CE_ERR_CODES==desc)
     d.ecuerrors_for_transfer = 0;
   }

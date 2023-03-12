@@ -539,4 +539,12 @@ uint8_t inj_iac_thrass(void);
 uint16_t fueldens_corr(void);
 #endif
 
+#ifdef SPEED_SENSOR
+/** Calculate vehicle speed (km/h)
+ * Uses d ECU data structure
+ * \return vehicle speed, value * 32
+ */
+uint16_t calc_speed(void);
+#endif
+
 #endif //_FUNCONV_H_

@@ -29,8 +29,6 @@
 
 #include <stdint.h>
 
-#define SAVE_PARAM_TIMEOUT_VALUE      3000  //!< timeout value used to count time before automatic saving of parameters
-
 /**Write data to EEPROM - the process is very slow. It will take place in parallel with
  * the execution of the program. Storing data in the EEPROM will only happen if for a given
  * time, there was not a single receive operation of parameters via UART, and saved settings

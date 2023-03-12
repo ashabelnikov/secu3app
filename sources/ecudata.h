@@ -111,8 +111,9 @@ typedef struct sensors_t
 #endif
 
 #ifdef SPEED_SENSOR
- uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 4us)
+ uint16_t speed;                         //!< Vehicle speed expressed by period between speed sensor pulses (1 tick = 3.2us)
  uint32_t distance;                      //!< Distance expressed by number of speed sensor pulses since last ignition turn on
+ //uint16_t vss_speed;                     //!< Speed in km/h, value * 32
 #endif
 #ifdef AIRTEMP_SENS
  int16_t air_temp;                       //!< Intake air temperature
@@ -340,6 +341,6 @@ typedef struct ecudata_t
 
 
 extern struct ecudata_t d;               //!< ECU data structure. Contains all related data and state information
-extern struct params_t eeprom_parameters_cache;//!< Cache for buffering of EEPROM parameters
+extern struct params_t eeprom_parameters_cache;//!< Cache for buffering EEPROM parameters
 
 #endif //_ECUDATA_H_

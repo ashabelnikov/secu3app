@@ -49,13 +49,14 @@ s_timer16_t save_param_timeout_counter = {0,0,1}; //already fired!
 
 void save_param_if_need(void)
 {
- //did parameters chane during specified time?
- if (s_timer_is_action(&save_param_timeout_counter))
+ uint16_t save_param_timeout = PGM_GET_WORD(&fw_data.exdata.save_param_timeout);
+ //did parameters change during specified time? Also check if auto saving was enabled.
+ if (s_timer_is_action(&save_param_timeout_counter) && save_param_timeout)
  {
   //Are current and saved parameters differ?
   if (memcmp(&eeprom_parameters_cache, &d.param, sizeof(params_t)-PAR_CRC_SIZE))
    sop_set_operation(SOP_SAVE_PARAMETERS);
-  s_timer_set(&save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+  s_timer_set(&save_param_timeout_counter, save_param_timeout);
  }
 }
 
@@ -135,7 +136,7 @@ void load_eeprom_params(void)
    //Load parameters from EEPROM, and after, check integrity of them
    //Don't take into account bytes of CRC when calculating check sum
    //If check sums don't match, then load default (reserve) parameters from flash
-   eeprom_read(&d.param,EEPROM_PARAM_START,sizeof(params_t));
+   eeprom_read(&d.param, EEPROM_PARAM_START, sizeof(params_t));
 
    if (crc16((uint8_t*)&d.param, (sizeof(params_t)-PAR_CRC_SIZE))!=d.param.crc)
    {
@@ -203,5 +204,5 @@ void load_ltft_tables_into_ram(void)
 
 void param_set_save_timer(void)
 {
- s_timer_set(&save_param_timeout_counter, SAVE_PARAM_TIMEOUT_VALUE);
+ s_timer_set(&save_param_timeout_counter, PGM_GET_WORD(&fw_data.exdata.save_param_timeout));
 }

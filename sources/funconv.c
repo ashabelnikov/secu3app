@@ -1896,3 +1896,17 @@ uint16_t fueldens_corr(void)
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 2) >> 1;
 }
 #endif
+
+#ifdef SPEED_SENSOR
+/** Calculate vehicle speed (km/h)
+ * Uses d ECU data structure
+ * \return vehicle speed, value * 32
+ */
+uint16_t calc_speed(void)
+{
+ if (d.sens.speed == 0xFFFF || d.sens.speed == 0)
+  return 0; //return 0 if speed is too low (overflow) or SPD_SENS is not mapped to real I/O
+ //TODO: use 1/speed approximation instead of division, so division will be replaced by multiplication
+ return ((((uint32_t)d.param.vss_period_dist) * 1098) / d.sens.speed);   //V = (period_dist * 1125000) / period_tics, 112500 = (3600 * 312500) / 1000
+}
+#endif

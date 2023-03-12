@@ -23,7 +23,6 @@
  * \author Alexey A. Shabelnikov
  * Implementation of EEPROM related functions (API).
  * Functions for read/write EEPROM and related functionality
- * (Реализация Функций для для чтения/записи EEPROM и связанная с ним функциональность)
  */
 
 #include "port/avrio.h"
@@ -35,14 +34,13 @@
 #include "wdt.h"
 
 /**Describes information is necessary for storing of data into EEPROM
- * (Описывает информацию необходимую для сохранения данных в EEPROM)
  */
 typedef struct
 {
- uint16_t ee_addr;             //!< Address for EEPROM (адрес для записи в EEPROM)
- uint8_t* sram_addr;           //!< Address of data in RAM (адрес данных в ОЗУ)
- uint16_t count;               //!< Number of bytes (количество байтов)
- uint8_t eews;                 //!< State of writing process (состояние процесса записи)
+ uint16_t ee_addr;             //!< Address for EEPROM
+ uint8_t* sram_addr;           //!< Address of data in RAM
+ uint16_t count;               //!< Number of bytes
+ uint8_t eews;                 //!< State of writing process
  uint8_t opcode;               //!< code of specific operation which caused writing process
  uint8_t completed_opcode;     //!< will be equal to opcode after finish of process
 }eeprom_wr_desc_t;
@@ -50,7 +48,7 @@ typedef struct
 /**State variables */
 eeprom_wr_desc_t eewd = {0,0,0,0,0,0};
 
-/** Initiates process of byte's writing (инициирует процесс записи байта в EEPROM) */
+/** Initiates process of byte's writing */
 #define EE_START_WR_BYTE()  {EECR|= _BV(EEMPE);  EECR|= _BV(EEPE);}
 
 uint8_t eeprom_take_completed_opcode(void)
@@ -63,7 +61,7 @@ uint8_t eeprom_take_completed_opcode(void)
  return result;
 }
 
-//запускает процесс записи в EEPROM указанного блока данных
+//starts the process of writing specified block of data to EEPROM
 void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint16_t size)
 {
  eewd.eews = 1;
@@ -74,7 +72,7 @@ void eeprom_start_wr_data(uint8_t opcode, uint16_t eeaddr, void* sramaddr, uint1
  SETBIT(EECR, EERIE);
 }
 
-//возвращает не 0 если в текущий момент никакая операция не выполняется
+//returns 0 - EEPROM is busy, 1 - EEPEOM is idle (not busy)
 uint8_t eeprom_is_idle(void)
 {
  return (eewd.eews) ? 0 : 1;
@@ -129,7 +127,7 @@ void eeprom_read(void* sram_dest, uint16_t eeaddr, uint16_t size)
  {
   _t=_SAVE_INTERRUPT();
   _DISABLE_INTERRUPT();
-  __EEGET(*dest,eeaddr);
+  __EEGET(*dest, eeaddr);
   _RESTORE_INTERRUPT(_t);
 
   eeaddr++;

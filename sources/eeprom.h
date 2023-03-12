@@ -46,7 +46,7 @@
 /**Address of magic number in EEPROM (last 4 bytes) */
 #define EEPROM_MAGIC_START (E2END-3)
 
-//Interface of module (интерфейс модуля)
+//Interface of module
 
 /**Start writing process of EEPROM for selected block of data
  * \param opcode some code which will be remembered and can be retrieved when process finishes

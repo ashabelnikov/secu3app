@@ -83,17 +83,17 @@ void sop_execute_operations(void)
 {
  if (sop_is_operation_active(SOP_SAVE_PARAMETERS))
  {
-  //мы не можем начать сохранение параметров, так как EEPROM на данный момент занято - сохранение
-  //откладывается и будет осуществлено когда EEPROM освободится и будет вновь вызвана эта функция.
+  //we can't start saving parameters because EEPROM is busy at the moment - some other saving is pending,
+  //so we postpone new saving and it will be executed when the EEPROM become idle and this function is called again.
   if (eeprom_is_idle())
   {
-   //для обеспечения атомарности данные будут скопированы в отдельный буфер и из него потом записаны в EEPROM.
+   //to ensure atomicity, the data will be copied to a separate buffer and then written from it to EEPROM.
    memcpy(&eeprom_parameters_cache, &d.param, sizeof(params_t));
    eeprom_parameters_cache.crc = crc16((uint8_t*)&eeprom_parameters_cache, sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
    eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, &eeprom_parameters_cache, sizeof(params_t));
 
-   //если была соответствующая ошибка, то она теряет смысл после того как в EEPROM будут
-   //записаны новые параметры с корректной контрольной суммой
+   //if there was a corresponding error, then it becomes unneeded after EEPROM contains
+   //new parameters written with correct checksum
    ce_clear_error(ECUERROR_EEPROM_PARAM_BROKEN);
 
    //remove this operation from list because it has already completed
@@ -103,9 +103,9 @@ void sop_execute_operations(void)
 
  if (sop_is_operation_active(SOP_SAVE_CE_MERGED_ERRORS))
  {
-  //Если EEPROM не занято, то необходимо сохранить массив с кодами ошибок Cehck Engine.
-  //Для сбережения ресурса EEPROM cохранение ошибки произойдет только в том случае, если
-  //она еще не была сохранена. Для этого производится чтение и сравнение.
+  //If EEPROM is not busy, then we need to save an array with 'Check Engine' error codes.
+  //To save the EEPROM resource, the error will only be saved if
+  //it hasn't been saved yet. This is done by reading and comparing.
   if (eeprom_is_idle())
   {
    ce_save_merged_errors(0);
@@ -366,7 +366,7 @@ void sop_execute_operations(void)
  }
 #endif
 
- //если есть завершенная операция EEPROM, то сохраняем ее код для отправки нотификации
+ //if completed operation exist, then save its code for sending notification
  switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take!
  {
   case OPCODE_EEPROM_PARAM_SAVE:

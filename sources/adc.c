@@ -36,25 +36,25 @@
 #include "mathemat.h"
 #include "ioconfig.h"
 
-/**номер канала используемого для ДАД */
+/**number of ADC channel used for MAP */
 #define ADCI_MAP                2
-/**номер канала используемого для напряжения бортовой сети */
+/**number of ADC channel used for board voltage */
 #define ADCI_UBAT               1
-/**номер канала используемого для ДТОЖ */
+/**number of ADC channel used for CLT */
 #define ADCI_TEMP               0
-/*channel number for ADD_IO1 */
+/*ADC channel number for ADD_IO1 */
 #define ADCI_ADD_I1             6
-/*channel number for ADD_IO2 */
+/*ADC channel number for ADD_IO2 */
 #define ADCI_ADD_I2             5
 
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
-/*channel number for ADD_I3 */
+/*ADC channel number for ADD_I3 */
 #define ADCI_ADD_I3             4
 #endif
 
-/*channel number for CARB */
+/*ADC channel number for CARB */
 #define ADCI_CARB               7
-/**номер канала используемого для канала детонации */
+/**number of ADC channel used for knock */
 #define ADCI_KNOCK              3
 
 /**Tics of TCNT1 timer per 1 second */
@@ -73,14 +73,14 @@ typedef struct
 /** Data structure of the ADC state variables */
 typedef struct
 {
- volatile uint16_t map_value;    //!< последнее измеренное значение абсолютного давления
- volatile uint16_t ubat_value;   //!< последнее измеренное значение напряжения бортовой сети
- volatile uint16_t temp_value;   //!< последнее измеренное значение температуры охлаждающей жидкости
- volatile uint16_t knock_value;  //!< последнее измеренное значение сигнала c датчика(ов) детонации
- volatile uint16_t add_i1_value;//!< last measured value od ADD_I1
- volatile uint16_t add_i2_value;//!< last measured value of ADD_I2
+ volatile uint16_t map_value;    //!< last measured value of the manifold absolute pressure
+ volatile uint16_t ubat_value;   //!< last measured value of the board voltage
+ volatile uint16_t temp_value;   //!< last measured value from the coolant temperature sensor (CLT)
+ volatile uint16_t knock_value;  //!< last measured value from knock sensor(s)
+ volatile uint16_t add_i1_value; //!< last measured value od ADD_I1
+ volatile uint16_t add_i2_value; //!< last measured value of ADD_I2
 #if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
- volatile uint16_t add_i3_value;//!< last measured value of ADD_I3
+ volatile uint16_t add_i3_value; //!< last measured value of ADD_I3
 #endif
  volatile uint16_t carb_value;   //!< last measured value of TPS
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
@@ -89,7 +89,7 @@ typedef struct
  volatile uint16_t tpsdot_mindt; //!< minimum time diffrencial used in calculation of d%/dt
  volatile uint16_t mapdot_mindt; //!< minimum time diffrencial used in calculation of dP/dt
 #endif
- volatile uint8_t sensors_ready; //!< датчики обработаны и значения готовы к считыванию
+ volatile uint8_t sensors_ready; //!< all sensors have been processed and their values are ready for reading
 #ifndef TPIC8101
  uint8_t  waste_meas;            //!< if 1, then waste measurement will be performed for knock
 #endif
@@ -253,19 +253,19 @@ void adc_init(void)
 #endif
 
  //initialization of ADC, f = 125.000 kHz,
- //внутренний источник опорного напряжения или внешний зависит от опции VREF_5V, прерывание разрешено
+ //internal or external reference voltage source will be used depends on VREF_5V option, interrupt enabled
  ADMUX=ADC_VREF_TYPE;
  ADCSRA=_BV(ADEN)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
 
- //модуль АЦП готов к новому измерению
+ //ADC is ready for new measurement
  adc.sensors_ready = 1;
 
  //disable comparator - it is not needed
  ACSR=_BV(ACD);
 }
 
-/**прерывание по завершению преобразования АЦП. Измерение значений всех аналоговых датчиков. После запуска
- * измерения это прерывание будет вызываться для каждого входа, до тех пор пока все входы не будут обработаны.
+/**Interrupt for completion of ADC conversion. Measurement of values of all analog sensors.
+ * After starting measurements this interrupt routine will be called for each input untill all inputs will be processed.
  */
 ISR(ADC_vect)
 {
@@ -383,7 +383,7 @@ uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
  if (adcvalue < 0)
   adcvalue = 0;
 
- //выражение выглядит так: ((adcvalue + offset) * gradient ) / 128, где offset,gradient - константы.
+ //Expression looks like this: ((adcvalue + offset) * gradient ) / 128, where offset,gradient - constants.
  t = adcvalue + offset;
  if (gradient > 0)
  {

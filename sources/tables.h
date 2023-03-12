@@ -585,12 +585,14 @@ typedef struct fw_ex_data_t
   uint8_t tmrpmtc_mode;     //!< 0 - standard, 1 - use only target RPM map for calculation of transient mode RPM thresholds for IAC
 
   int8_t vent_pwm_turnoff_hyst; //!< Hysteresys value used when cooling fan is going to turn off, value in °C.
+
+  uint16_t save_param_timeout; //!< Timeout value used to count down of time for automatic saving, set to zero to disable automatic saving
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1976];
+  uint8_t reserved[1974];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

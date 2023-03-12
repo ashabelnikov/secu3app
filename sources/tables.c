@@ -601,7 +601,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .hall_degrees_btdc =           60*32,                //60° BTDC
 
-  .vss_period_dist =             ROUND(0.16666*32768), //0.16666m per pulse, max 0.9999
+  .vss_period_dist =             ROUNDU16(0.16666*32768), //0.16666m per pulse, max 0.9999
 
   .inj_anglespec =               ((INJANGLESPEC_BEGIN << 4) || INJANGLESPEC_BEGIN),   //beginning of pulse
 
@@ -1140,6 +1140,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .tmrpmtc_mode = 0, //use standard calculation of RPM thresholds
 
   .vent_pwm_turnoff_hyst = TEMPERATURE_MAGNITUDE(0.5), //0.5°C
+
+  .save_param_timeout = 30000, //30 seconds
 
   /**reserved bytes*/
   {0}

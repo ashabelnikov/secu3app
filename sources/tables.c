@@ -1145,6 +1145,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .fuelcut_vss_thrd = VSSSPEED_MAG(10.0), //10km/h
 
+  .evap_on_vss_thrd = VSSSPEED_MAG(10.0), // 10km/h
+  .evap_off_vss_thrd = VSSSPEED_MAG(7.0), // 7km/h
+  .iac_onrunadd_vss_thrd = VSSSPEED_MAG(7.0), // 7km/h
+
   /**reserved bytes*/
   {0}
  },

@@ -81,9 +81,9 @@ void evap_control(void)
   if (IOCFG_CHECK(IOP_SPDSENS))
   {
    //thresholds must be 10 and 7 km/h
-   if (d.sens.vss_speed > VSSSPEED_MAG(10.0))
+   if (d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.evap_on_vss_thrd))
     evap.state = 1;
-   if (d.sens.vss_speed < VSSSPEED_MAG(7.0))
+   if (d.sens.vss_speed < PGM_GET_WORD(&fw_data.exdata.evap_off_vss_thrd))
     evap.state = 0;
   }
   else

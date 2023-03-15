@@ -589,12 +589,18 @@ typedef struct fw_ex_data_t
   uint16_t save_param_timeout; //!< Timeout value used to count down of time for automatic saving, set to zero to disable automatic saving
 
   uint16_t fuelcut_vss_thrd; //!< Speed threshold for fuel cut (km/h), value * 32
+
+  uint16_t evap_on_vss_thrd;  //!< EVAP on VSS thereshold
+  uint16_t evap_off_vss_thrd; //!< EVAP off VSS threshold
+
+  uint16_t iac_onrunadd_vss_thrd; //!< VSS threshold for applying on run add for IAC
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1970];
+  uint8_t reserved[1964];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

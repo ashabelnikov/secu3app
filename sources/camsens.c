@@ -78,7 +78,7 @@ typedef struct
  uint16_t spdsens_period_prev;        //!< for storing previous value of timer counting time between speed sensor pulse interrupts
  volatile uint16_t spdsens_period;    //!< period between speed sensor pulses (1 tick  = 4us)
  uint16_t spdsens_period_buff;        //!< period between speed sensor pulses (buffered and everflow free)
- volatile uint32_t spdsens_counter;   //!< number of speed sensor pulses since last ignition turn on
+ volatile uint16_t spdsens_counter;   //!< number of speed sensor's pulses since last ignition turn on and before next clearing
  volatile uint8_t spdsens_event;      //!< indicates pending event from speed sensor
  uint8_t spdsens_state;               //!< Used in special state machine to filter overflows
 #endif
@@ -439,12 +439,22 @@ uint16_t spdsens_get_period(void)
  return CHECKBIT(flags, F_USEVSS) ? camstate.spdsens_period_buff : 0;
 }
 
-uint32_t spdsens_get_pulse_count(void)
+uint16_t spdsens_get_pulse_count(uint8_t reset)
 {
- uint32_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = camstate.spdsens_counter;
- _END_ATOMIC_BLOCK();
+ uint16_t value;
+ if (reset)
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  value = camstate.spdsens_counter;
+  camstate.spdsens_counter = 0; //also reset counter
+  _END_ATOMIC_BLOCK();
+ }
+ else
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  value = camstate.spdsens_counter; //just get value of counter
+  _END_ATOMIC_BLOCK();
+ }
  return CHECKBIT(flags, F_USEVSS) ? value : 0;
 }
 #endif

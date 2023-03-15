@@ -58,6 +58,9 @@
 #define SOP_SAVE_LTFT               21    //!< save LTFT map to EEPROM
 #define SOP_SEND_NC_LTFT_SAVE       22    //!< notify that LTFT table has been saved
 #endif
+#ifdef SPEED_SENSOR
+#define SOP_SAVE_ODOMET             23    //!< save odometer's data
+#endif
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters

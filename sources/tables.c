@@ -1141,7 +1141,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .vent_pwm_turnoff_hyst = TEMPERATURE_MAGNITUDE(0.5), //0.5°C
 
-  .save_param_timeout = 30000, //30 seconds
+  .save_param_timeout = 3000, //30 seconds
 
   /**reserved bytes*/
   {0}

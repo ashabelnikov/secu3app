@@ -206,3 +206,10 @@ void param_set_save_timer(void)
 {
  s_timer_set(&save_param_timeout_counter, PGM_GET_WORD(&fw_data.exdata.save_param_timeout));
 }
+
+#ifdef SPEED_SENSOR
+void load_odomet_data_into_ram(void)
+{
+ eeprom_read(&d.sens.vss_int_dist, EEPROM_ODOMETER_START, sizeof(uint32_t));
+}
+#endif

@@ -985,7 +985,8 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  if (R > RAD_MAG(1.0))
   R = RAD_MAG(1.0);
 
- uint16_t arg = R >> 2;
+ //calculate value for user (which is sent to PC)
+ uint16_t arg = R >> 2; //R/4
  if (arg > 254)  //note: value 255 is reserved
   arg = 254;
  d.corr.rigid_arg = arg;
@@ -1898,15 +1899,16 @@ uint16_t fueldens_corr(void)
 #endif
 
 #ifdef SPEED_SENSOR
-/** Calculate vehicle speed (km/h)
- * Uses d ECU data structure
- * \return vehicle speed, value * 32
- */
-uint16_t calc_speed(void)
+uint16_t calc_speed(uint16_t period)
 {
- if (d.sens.speed == 0xFFFF || d.sens.speed == 0)
+ if (period == 0xFFFF || period == 0)
   return 0; //return 0 if speed is too low (overflow) or SPD_SENS is not mapped to real I/O
  //TODO: use 1/speed approximation instead of division, so division will be replaced by multiplication
- return ((((uint32_t)d.param.vss_period_dist) * 1098) / d.sens.speed);   //V = (period_dist * 1125000) / period_tics, 112500 = (3600 * 312500) / 1000
+ return ((((uint32_t)d.param.vss_period_dist) * 1098) / period);   //V = (period_dist * 1125000) / period_tics, 112500 = (3600 * 312500) / 1000
+}
+
+uint32_t calc_dist(uint16_t pulse_count)
+{
+ return ((uint32_t)pulse_count * d.param.vss_period_dist) >> (15-5);
 }
 #endif

@@ -100,4 +100,7 @@
  */
 #define AAV_NOTUSED 0x7FFF
 
+/**VSS speed, value in km/h*/
+#define VSSSPEED_MAG(spd) ROUND((spd)*32.0)
+
 #endif //_MAGNITUDE_H_

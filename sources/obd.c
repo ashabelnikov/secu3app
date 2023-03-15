@@ -34,6 +34,7 @@
 #include "knock.h"
 #include "obd.h"
 #include "magnitude.h"
+#include "funconv.h"
 
 #define OBD_SEND_PERIOD      10    //!< 100ms
 #define OBD_SEND_PERIOD_MSG   2    //!< 20ms
@@ -87,7 +88,7 @@ void obd_process(void)
     obd.msg.data[0] = 0x00;
     obd.msg.data[1] = 0x00;
 #ifdef SPEED_SENSOR
-    obd.msg.data[2] = (((uint32_t)((calc_speed() > 240*32) ? 240*32 : calc_speed())) * 410) >> 15; // divide by 2.5, so 1 discrete = 2.5kmH, 0.4 * 1024 = 410
+    obd.msg.data[2] = (((uint32_t)((d.sens.vss_speed > VSSSPEED_MAG(240.0)) ? VSSSPEED_MAG(240.0) : d.sens.vss_speed)) * 410) >> 15; // divide by 2.5, so 1 discrete = 2.5kmH, 0.4 * 1024 = 410
 #else
     obd.msg.data[2] = 0;  //no speed sensor
 #endif

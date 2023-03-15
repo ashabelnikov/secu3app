@@ -80,11 +80,10 @@ void evap_control(void)
 #ifdef SPEED_SENSOR
   if (IOCFG_CHECK(IOP_SPDSENS))
   {
-   //TODO: calculate VSS in km/h and use here instead of time constants (bad)
    //thresholds must be 10 and 7 km/h
-   if (d.sens.speed < 65450)
+   if (d.sens.vss_speed > VSSSPEED_MAG(10.0))
     evap.state = 1;
-   if (d.sens.speed > 65530)
+   if (d.sens.vss_speed < VSSSPEED_MAG(7.0))
     evap.state = 0;
   }
   else

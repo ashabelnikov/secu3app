@@ -37,8 +37,11 @@
 /**Address of errors's array (Check Engine) in EEPROM */
 #define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
 
+/**Address of odometer data (passed distance)*/
+#define EEPROM_ODOMETER_START (EEPROM_ECUERRORS_START+4)
+
 /**Address of tables which can be edited in real time */
-#define EEPROM_REALTIME_TABLES_START (EEPROM_ECUERRORS_START + 8)
+#define EEPROM_REALTIME_TABLES_START (EEPROM_ODOMETER_START+4)
 
 /**Long Term Fuel Trim map, size = (INJ_VE_POINTS_L*INJ_VE_POINTS_F) + 2 bytes of checksum */
 #define EEPROM_LTFT_TABLES_START (EEPROM_REALTIME_TABLES_START + (sizeof(f_data_t)))

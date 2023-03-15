@@ -32,15 +32,16 @@
 
 #include <stdint.h>
 
-/** Get current period between speed pulses
+/** Get current period between VSS speed pulses
  * \return Value in us multiplied by 4 (when clock=16mHz), by 3.2 (when clock=20mHz)
  */
 uint16_t spdsens_get_period(void);
 
-/** Get current value of pulse counter (begins to count after switching on of ignition)
- * \return Number of pulses since last ignition turn on
+/** Get current value of VSS pulse counter (begins to count after switching on ignition)
+ * \param reset If this parameter is 1, then counter will be reset after obtaining value from it
+ * \return count of VSS pulses (number of pulses since last ignition turn on and before next clearing
  */
-uint32_t spdsens_get_pulse_count(void);
+uint16_t spdsens_get_pulse_count(uint8_t reset);
 
 #endif //SPEED_SENSOR
 

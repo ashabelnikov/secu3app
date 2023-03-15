@@ -35,7 +35,7 @@
 #include "ecudata.h"
 #include "eculogic.h"
 #include "spdsens.h"
-#include "funconv.h"    //thermistor_lookup()
+#include "funconv.h"    //thermistor_lookup(), calc_speed()
 #include "injector.h"   //inject_set_config(), inject_set_num_squirts()
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -88,6 +88,9 @@ typedef struct
 
 /**Ring buffers for all inputs */
 meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
+
+/**Stores last value of the VSS pulse counter*/
+static uint16_t vss_pulse_count = 0;
 
 static uint16_t update_buffer(uint8_t idx, uint16_t value)
 {
@@ -206,8 +209,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
   d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off or engine is stopped
 
 #ifdef SPEED_SENSOR
- update_buffer(SPD_INPIDX, spdsens_get_period());
- d.sens.distance = spdsens_get_pulse_count();
+ update_buffer(SPD_INPIDX, calc_speed(spdsens_get_period()));
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
@@ -263,7 +265,15 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  d.sens.frequen=average_buffer(FRQ_INPIDX);
 
 #ifdef SPEED_SENSOR
- d.sens.speed=average_buffer(SPD_INPIDX);
+ //speed
+ d.sens.vss_speed=average_buffer(SPD_INPIDX);
+ //distance
+ uint8_t reset_flag = (vss_pulse_count > 63000);
+ vss_pulse_count = spdsens_get_pulse_count(reset_flag);
+ uint32_t dist = calc_dist(vss_pulse_count);
+ d.sens.vss_dist = (d.sens.vss_int_dist + dist) << (5+3); //calculate distance shown for user
+ if (reset_flag)
+  d.sens.vss_int_dist+= dist; //accumulate distance
 #endif
 
  d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(TPS_INPIDX), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);

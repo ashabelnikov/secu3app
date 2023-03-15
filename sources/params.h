@@ -69,4 +69,11 @@ void load_ltft_tables_into_ram(void);
 /** Sets parameters' save timeout timer*/
 void param_set_save_timer(void);
 
+#ifdef SPEED_SENSOR
+/** Load odometer's data from EEPROM to RAM
+ * Uses d ECU data structure
+ */
+void load_odomet_data_into_ram(void);
+#endif
+
 #endif //_PARAMS_H_

@@ -608,8 +608,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.choke_pos);               // choke position
    build_i8h(d.gasdose_pos);             // gas dosator position
 #ifdef SPEED_SENSOR
-   build_i16h(d.sens.speed);             // vehicle speed (2 bytes)
-   build_i24h(d.sens.distance);          // distance (3 bytes)
+   build_i16h(d.sens.vss_speed);         // vehicle speed (2 bytes), km/h
+   build_i24h(d.sens.vss_dist);          // distance (3 bytes), m
 #else
    build_i16h(0);
    build_i24h(0);
@@ -881,6 +881,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.fp_timeout_strt);
    build_i16h(d.param.pwmfrq[0]);
    build_i16h(d.param.pwmfrq[1]);
+   build_i16h(d.param.vss_period_dist);
    break;
 
   case CHOKE_PAR:
@@ -1709,6 +1710,7 @@ uint8_t uart_recept_packet(void)
    d.param.fp_timeout_strt = recept_i8h();
    d.param.pwmfrq[0] = recept_i16h();
    d.param.pwmfrq[1] = recept_i16h();
+   d.param.vss_period_dist = recept_i16h();
   }
   break;
 

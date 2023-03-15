@@ -118,6 +118,9 @@ void pwrrelay_control(void)
 #ifdef FUEL_INJECT
       && !sop_is_operation_active(SOP_SAVE_LTFT)
 #endif
+#ifdef SPEED_SENSOR
+      && !sop_is_operation_active(SOP_SAVE_ODOMET)
+#endif
 #ifdef UNI_OUTPUT
      && (PGM_GET_BYTE(&fw_data.exdata.pwrrelay_uni) == 0x0F || d.uniout[PGM_GET_BYTE(&fw_data.exdata.pwrrelay_uni)])
 #endif
@@ -142,6 +145,10 @@ void pwrrelay_control(void)
 #ifdef FUEL_INJECT
    if (0==pwrs.pwrdown)
     sop_set_operation(SOP_SAVE_LTFT);
+#endif
+#ifdef SPEED_SENSOR
+   if (0==pwrs.pwrdown)
+    sop_set_operation(SOP_SAVE_ODOMET);
 #endif
    pwrs.pwrdown = 1;
   }

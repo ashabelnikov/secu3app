@@ -453,6 +453,12 @@ MAIN()
  load_ltft_tables_into_ram();
 #endif
 
+#ifdef SPEED_SENSOR
+ //load previously saved odometer's data (only if power management is used)
+ if (IOCFG_CHECK(IOP_PWRRELAY))
+  load_odomet_data_into_ram();
+#endif
+
  //perform initialization of all system modules
  init_modules();
 
@@ -511,7 +517,7 @@ MAIN()
   }
 
   //Start ADC measurements at regular intervals of time. This timer reinitialize each time of detecting of new stroke.
-  //Thus, when RPM exceed spcified value, this condition will cease to be carried out.
+  //Thus, when RPM exceed specified value, this condition will cease to be carried out.
   if (s_timer_is_action(&force_measure_timeout_counter))
   {
    _DISABLE_INTERRUPT();

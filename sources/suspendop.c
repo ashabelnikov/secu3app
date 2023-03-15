@@ -31,10 +31,12 @@
 #include "crc16.h"
 #include "ecudata.h"
 #include "eeprom.h"
+#include "funconv.h"
 #include "params.h"
 #include "suspendop.h"
 #include "uart.h"
 #include "ufcodes.h"
+#include "spdsens.h"
 #include "wdt.h"
 
 /**Maximum allowed number of suspended operations */
@@ -42,6 +44,9 @@
 
 /**Contains queue of suspended operations. Each operation can appear one time */
 uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
+
+/**Buffered value of the VSS distance used for saving*/
+static uint32_t vss_int_dist_buff = 0;
 
 /*inline*/
 void sop_set_operation(uint8_t opcode)
@@ -362,6 +367,25 @@ void sop_execute_operations(void)
 
    //remove this operation from list because it has already completed
    sop_reset_operation(SOP_SEND_NC_LTFT_SAVE);
+  }
+ }
+#endif
+
+#ifdef SPEED_SENSOR
+ if (sop_is_operation_active(SOP_SAVE_ODOMET))
+ {
+  //TODO: d.op_actn_code may become overwritten while we are waiting here...
+  if (eeprom_is_idle())
+  {
+   uint16_t pulse_count = spdsens_get_pulse_count(1); //reset
+   d.sens.vss_int_dist+= calc_dist(pulse_count); //accumulate ramaining distance
+
+   //save odometer's data
+   vss_int_dist_buff = d.sens.vss_int_dist;
+   eeprom_start_wr_data(0, EEPROM_ODOMETER_START, &vss_int_dist_buff, sizeof(uint32_t));
+
+   //remove this operation from list because it has already completed
+   sop_reset_operation(SOP_SAVE_ODOMET);
   }
  }
 #endif

@@ -541,10 +541,18 @@ uint16_t fueldens_corr(void);
 
 #ifdef SPEED_SENSOR
 /** Calculate vehicle speed (km/h)
- * Uses d ECU data structure
+ *  Uses d ECU data structure
+ * \param period Period of one VSS pulse in tics of timer
  * \return vehicle speed, value * 32
  */
-uint16_t calc_speed(void);
+uint16_t calc_speed(uint16_t period);
+
+/** Calculates passed distance (m)
+ * Uses d ECU data structure
+ * \param pulse_count Number of pulses to be used to calculate correspondant distance
+ * \return passed distance (m), value * 32
+ */
+uint32_t calc_dist(uint16_t pulse_count);
 #endif
 
 #endif //_FUNCONV_H_

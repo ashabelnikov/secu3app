@@ -971,13 +971,13 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
  //if targ_map == 0, then do not use load component
- uint8_t k_load = targ_map ?  PGM_GET_BYTE(&fw_data.exdata.irr_k_load) : 0, k_rpm = PGM_GET_BYTE(&fw_data.exdata.irr_k_rpm); //value * 32, max 6.0
+ uint16_t k_load = targ_map ?  PGM_GET_WORD(&fw_data.exdata.irr_k_load) : 0, k_rpm = PGM_GET_WORD(&fw_data.exdata.irr_k_rpm); //value * 32, max 48.0
 
  //normalize values (function argument components)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
- int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)128 * k_load) / (get_load_upper() - d.param.load_lower)) >> 2; //TODO: use d.sens.map or d.load ???
- int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_frq) - targ_rpm) * (int16_t)128 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 2;
+ int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)32 * k_load) / (get_load_upper() - d.param.load_lower)) >> 0;
+ int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_frq) - targ_rpm) * (int16_t)32 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 0;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)
  int16_t i, i1, R = ui32_sqrt(((int32_t)dload * dload) + ((int32_t)drpm * drpm));

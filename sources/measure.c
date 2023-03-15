@@ -271,7 +271,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  uint8_t reset_flag = (vss_pulse_count > 63000);
  vss_pulse_count = spdsens_get_pulse_count(reset_flag);
  uint32_t dist = calc_dist(vss_pulse_count);
- d.sens.vss_dist = (d.sens.vss_int_dist + dist) << (5+3); //calculate distance shown for user
+ d.sens.vss_dist = (d.sens.vss_int_dist + dist) >> (5+3); //calculate distance shown for user
  if (reset_flag)
   d.sens.vss_int_dist+= dist; //accumulate distance
 #endif

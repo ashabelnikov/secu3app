@@ -74,17 +74,21 @@ static void simple_fuel_cut(uint8_t apply)
 {
  if (s_timer_is_action(&idlecutoff_crnk_delay))
  {
-  //if throttle gate is opened, then open valve,reload timer and exit from condition
-  if (d.sens.carb )
+  //if throttle is opened, then open valve,reload timer and exit from condition
+  if (d.sens.carb
+#ifdef SPEED_SENSOR
+ || (d.sens.vss_speed < PGM_GET_WORD(&fw_data.exdata.fuelcut_vss_thrd))
+#endif
+     )
   {
    d.ie_valve = 1;
    s_timer_set(&epxx_delay_time_counter, d.param.shutoff_delay);
   }
-  //if throttle gate is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
+  //if throttle is closed, then state of valve depends on RPM,previous state of valve,timer and type of fuel
   else
   {
-   d.ie_valve = ((s_timer_is_action(&epxx_delay_time_counter))
-   &&(((d.sens.inst_frq > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_frq > get_fc_hit())))?0:1;
+   d.ie_valve = (s_timer_is_action(&epxx_delay_time_counter)&&
+                (((d.sens.inst_frq > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_frq > get_fc_hit())))?0:1;
   }
  }
  else
@@ -130,7 +134,11 @@ void fuelcut_control(void)
   if (d.sens.inst_frq > get_fc_hit())
   {
    //When RPM > hi threshold, then check TPS, CTS and MAP
-   if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd))
+   if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd)
+#ifdef SPEED_SENSOR
+    && (d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.fuelcut_vss_thrd))
+#endif
+      )
    {
     if (0==state)
     {

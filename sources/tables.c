@@ -1143,6 +1143,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .save_param_timeout = 3000, //30 seconds
 
+  .fuelcut_vss_thrd = VSSSPEED_MAG(10.0), //10km/h
+
   /**reserved bytes*/
   {0}
  },

@@ -587,12 +587,14 @@ typedef struct fw_ex_data_t
   int8_t vent_pwm_turnoff_hyst; //!< Hysteresys value used when cooling fan is going to turn off, value in °C.
 
   uint16_t save_param_timeout; //!< Timeout value used to count down of time for automatic saving, set to zero to disable automatic saving
+
+  uint16_t fuelcut_vss_thrd; //!< Speed threshold for fuel cut (km/h), value * 32
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1972];
+  uint8_t reserved[1970];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

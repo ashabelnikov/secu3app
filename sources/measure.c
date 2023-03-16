@@ -269,6 +269,12 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
  d.sens.vss_speed=average_buffer(SPD_INPIDX);
  //distance
  uint8_t reset_flag = (vss_pulse_count > 63000);
+ //check if we reach 100 000 km, then reset our odometer
+ if (d.sens.vss_dist >= VSSDIST_MAG(100000.0))
+ {
+  d.sens.vss_int_dist = 0; //reset accumulated (integral) value
+  reset_flag = 1;          //reset counter
+ }
  vss_pulse_count = spdsens_get_pulse_count(reset_flag);
  uint32_t dist = calc_dist(vss_pulse_count);
  d.sens.vss_dist = (d.sens.vss_int_dist + dist) >> (5+3); //calculate distance shown for user

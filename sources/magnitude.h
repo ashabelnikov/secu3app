@@ -103,4 +103,7 @@
 /**VSS speed, value in km/h*/
 #define VSSSPEED_MAG(spd) ROUND((spd)*32.0)
 
+/**VSS distance, value in km*/
+#define VSSDIST_MAG(dst) ROUND32((dst)*125)
+
 #endif //_MAGNITUDE_H_

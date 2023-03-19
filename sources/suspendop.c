@@ -345,8 +345,7 @@ void sop_execute_operations(void)
   //TODO: d.op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
-   d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
-   eeprom_start_wr_data(OPCODE_SAVE_LTFT, EEPROM_LTFT_TABLES_START, &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+   sop_start_saving_ltft();
 
    //clear possibly present error because after saving checksum become correct
    ce_clear_error(ECUERROR_EEPROM_LTFT_BROKEN);
@@ -377,12 +376,7 @@ void sop_execute_operations(void)
   //TODO: d.op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
-   uint16_t pulse_count = spdsens_get_pulse_count(1); //reset
-   d.sens.vss_int_dist+= calc_dist(pulse_count); //accumulate ramaining distance
-
-   //save odometer's data
-   vss_int_dist_buff = d.sens.vss_int_dist;
-   eeprom_start_wr_data(0, EEPROM_ODOMETER_START, &vss_int_dist_buff, sizeof(uint32_t));
+   sop_start_saving_odometer();
 
    //remove this operation from list because it has already completed
    sop_reset_operation(SOP_SAVE_ODOMET);
@@ -428,3 +422,22 @@ void sop_send_gonna_bl_start(void)
  //delay 25ms
  delay_25ms();
 }
+
+#ifdef SPEED_SENSOR
+void sop_start_saving_odometer(void)
+{
+ uint16_t pulse_count = spdsens_get_pulse_count(1); //reset
+ d.sens.vss_int_dist+= calc_dist(pulse_count); //accumulate ramaining distance
+ //save odometer's data
+ vss_int_dist_buff = d.sens.vss_int_dist;
+ eeprom_start_wr_data(0, EEPROM_ODOMETER_START, &vss_int_dist_buff, sizeof(uint32_t));
+}
+#endif
+
+#ifdef FUEL_INJECT
+void sop_start_saving_ltft(void)
+{
+ d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_start_wr_data(OPCODE_SAVE_LTFT, EEPROM_LTFT_TABLES_START, &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+}
+#endif

@@ -105,4 +105,18 @@ void sop_execute_operations(void);
  */
 void sop_send_gonna_bl_start(void);
 
+#ifdef SPEED_SENSOR
+/** Start saving odometer's value
+  * This function doesn't check EEPROM for busyness and doesn't wait for completion
+  */
+void sop_start_saving_odometer(void);
+#endif
+
+#ifdef FUEL_INJECT
+/**Start saving LTFT table
+  * This function doesn't check EEPROM for busyness and doesn't wait for completion
+  */
+void sop_start_saving_ltft(void);
+#endif
+
 #endif //#define _SUSPOP_H_

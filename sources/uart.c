@@ -886,7 +886,7 @@ void uart_send_packet(uint8_t send_mode)
 
   case CHOKE_PAR:
    build_i16h(d.param.sm_steps);
-   build_i8h(d.choke_testing);      //fake parameter (actually it is command)
+   build_i8h(d.choke_testing);      //fake parameter (actually it is a command)
    build_i8h(0);                     //fake parameter, not used in outgoing paket
    build_i16h(d.param.choke_rpm_if);
    build_i16h(d.param.choke_corr_time[0]);
@@ -1395,16 +1395,6 @@ void uart_send_packet(uint8_t send_mode)
  uart_begin_send();
 }
 
-//TODO: remove it from here. It must be in secu3.c, use callback. E.g. on_bl_starting()
-/** Initialization of used I/O ports */
-void ckps_init_ports(void);
-#ifdef FUEL_INJECT
-void inject_init_ports(void);
-#endif
-void sop_send_gonna_bl_start(void);
-void pwrrelay_init_steppers(void);
-void vent_turnoff(void);
-
 // When this function finish:
 // uart.recv_tail contain index of the first byte of packet (skipping '!')
 // uart.recv.size contain number of raw bytes in packet (except '!' and '\r')
@@ -1482,7 +1472,6 @@ uint8_t uart_recept_packet(void)
  }
 
 // TODO: implement check of uart_recv_size for each packet
-//       in hex mode: check packets' bytes for Hex characters
 
  //interpret received data depending on the descriptor
  switch(descriptor)
@@ -1493,31 +1482,8 @@ uint8_t uart_recept_packet(void)
 
   case BOOTLOADER:
    if (recept_i8h() != 'l')
-     break; //wrong code - don't continue
-
-   //TODO: in the future use callback and move following code out
-   //init steppers if necessary
-   pwrrelay_init_steppers();
-   vent_turnoff();
-   IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
-   IOCFG_SETF(IOP_ST_BLOCK, 0);    //block starter
-
-   //transmitter is busy, it is necessary to wait when it become free and only after that start a boot loader
-   while (uart_is_sender_busy()) { wdt_reset_timer(); }
-
-   //send confirmation that firmware is ready to start boot loader
-   sop_send_gonna_bl_start();
-
-   //if boot loader already has a "cli" instruction, then following line may be removed.
-   _DISABLE_INTERRUPT();
-   ckps_init_ports();
-#ifdef FUEL_INJECT
-   inject_init_ports();
-#endif
-   wdt_turnoff_timer();
-   //jump to the boot loader code skipping check of jumper's state
-   boot_loader_start();
-   break;
+     return 0; //wrong code - don't continue
+   break; //boot loader will be started in the caller function's code 
 
   case TEMPER_PAR:
    d.param.tmp_flags   = recept_i8h();

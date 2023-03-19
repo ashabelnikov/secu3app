@@ -24,6 +24,7 @@
  * Implementation of functionality for processing of pending data which is sent/received via serial interface (UART)
  */
 
+#include "port/avrio.h"
 #include "port/pgmspace.h"
 #include "port/intrinsic.h"
 #include "port/port.h"
@@ -34,11 +35,15 @@
 #include "ce_errors.h"
 #include "ckps.h"
 #include "diagnost.h"
+#include "eeprom.h"
 #include "ecudata.h"
 #include "injector.h"
+#include "ioconfig.h"
 #include "knock.h"
 #include "params.h"
 #include "procuart.h"
+#include "pwm2.h"
+#include "pwrrelay.h"
 #include "suspendop.h"
 #include "uart.h"
 #include "ufcodes.h"
@@ -46,7 +51,7 @@
 #include "vstimer.h"
 #include "smcontrol.h"
 #include "gdcontrol.h"
-#include "pwm2.h"
+#include "wdt.h"
 
 uint8_t startup_packets = 5;  //number of packets before start up bit will be cleared
 uint8_t silent = 0;
@@ -76,6 +81,43 @@ void process_uart_interface(void)
   descriptor = uart_recept_packet();
   switch(descriptor)
   {
+   case BOOTLOADER:
+    while(!eeprom_is_idle()) { wdt_reset_timer(); }
+#ifdef SPEED_SENSOR
+    if (IOCFG_CHECK(IOP_PWRRELAY))
+     sop_start_saving_odometer();   //save value of odometer to EEPROM
+#endif
+#ifdef FUEL_INJECT
+    if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode) > 0) //is LTFT used?
+    {
+     while(!eeprom_is_idle()) { wdt_reset_timer(); }
+     sop_start_saving_ltft();       //save value of LTFT table
+    }
+#endif
+    pwrrelay_init_steppers();       //init steppers if necessary
+    vent_turnoff();
+    IOCFG_SETF(IOP_FL_PUMP, 0);     //turn off fuel pump
+    IOCFG_SETF(IOP_ST_BLOCK, 0);    //block starter
+
+    //transmitter is busy, it is necessary to wait when it become free and only after that start a boot loader
+    while (uart_is_sender_busy()) { wdt_reset_timer(); }
+
+    while(!eeprom_is_idle()) { wdt_reset_timer(); }
+
+    //send confirmation that firmware is ready to start boot loader
+    sop_send_gonna_bl_start();
+
+    //if boot loader already has a "cli" instruction, then following line may be removed.
+    _DISABLE_INTERRUPT();
+    ckps_init_ports();
+#ifdef FUEL_INJECT
+    inject_init_ports();
+#endif
+    wdt_turnoff_timer();
+    //jump to the boot loader's code skipping check of jumper's state
+    boot_loader_start();
+    break;
+
    case TEMPER_PAR:
     vent_set_pwmfrq(d.param.vent_pwmfrq);
    case CARBUR_PAR:

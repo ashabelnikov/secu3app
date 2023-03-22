@@ -92,7 +92,7 @@ extern uint8_t vent_soft_cnt;
 
 
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
- *(for generic usage). Called each 2ms. System tick is 10ms, and so we divide frequency by 5
+ *(for generic usage). Called each 1.6384ms. System tick is 10ms, and so we divide frequency by 6
  */
 ISR(TIMER2_OVF_vect)
 {

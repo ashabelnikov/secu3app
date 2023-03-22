@@ -459,6 +459,12 @@ MAIN()
   load_odomet_data_into_ram();
 #endif
 
+#ifdef FUEL_INJECT
+ //load previously saved consumed fuel's data (only if power management is used)
+ if (IOCFG_CHECK(IOP_PWRRELAY))
+  load_consfuel_data_into_ram();
+#endif
+
  //perform initialization of all system modules
  init_modules();
 
@@ -652,6 +658,7 @@ MAIN()
 
 #ifdef FUEL_INJECT
   inject_calc_fuel_flow();
+  inject_calc_fuel_cons();
 #endif
 
 #ifdef DIAGNOSTICS

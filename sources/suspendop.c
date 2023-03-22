@@ -48,6 +48,9 @@ uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 /**Buffered value of the VSS distance used for saving*/
 static uint32_t vss_int_dist_buff = 0;
 
+/**Buffered value of the consumed fuel used for saving*/
+static uint32_t consfuel_int_buff = 0;
+
 /*inline*/
 void sop_set_operation(uint8_t opcode)
 {
@@ -384,6 +387,20 @@ void sop_execute_operations(void)
  }
 #endif
 
+#ifdef FUEL_INJECT
+ if (sop_is_operation_active(SOP_SAVE_CONSFUEL))
+ {
+  //TODO: d.op_actn_code may become overwritten while we are waiting here...
+  if (eeprom_is_idle())
+  {
+   sop_start_saving_consfuel();
+
+   //remove this operation from list because it has already completed
+   sop_reset_operation(SOP_SAVE_CONSFUEL);
+  }
+ }
+#endif
+
  //if completed operation exist, then save its code for sending notification
  switch(eeprom_take_completed_opcode()) //TODO: review assembler code -take!
  {
@@ -431,6 +448,17 @@ void sop_start_saving_odometer(void)
  //save odometer's data
  vss_int_dist_buff = d.sens.vss_int_dist;
  eeprom_start_wr_data(0, EEPROM_ODOMETER_START, &vss_int_dist_buff, sizeof(uint32_t));
+}
+#endif
+
+#ifdef FUEL_INJECT
+void sop_start_saving_consfuel(void)
+{
+ d.cons_fuel_int+= (d.cons_fuel_imm >> 9); //accumulate ramaining value of consumed fuel
+ d.cons_fuel_imm = 0;
+ //save odometer's data
+ consfuel_int_buff = d.cons_fuel_int;
+ eeprom_start_wr_data(0, EEPROM_ODOMETER_START+5, &consfuel_int_buff, sizeof(uint32_t));
 }
 #endif
 

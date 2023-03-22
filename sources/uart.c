@@ -753,6 +753,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
+#ifdef FUEL_INJECT
+   build_i24h(d.cons_fuel);             //consumed fuel, L * 1024
+#else
+   build_i24h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

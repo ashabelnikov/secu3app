@@ -88,6 +88,11 @@ void process_uart_interface(void)
      sop_start_saving_odometer();   //save value of odometer to EEPROM
 #endif
 #ifdef FUEL_INJECT
+    while(!eeprom_is_idle()) { wdt_reset_timer(); }
+    if (IOCFG_CHECK(IOP_PWRRELAY))
+     sop_start_saving_consfuel();   //save value of consumed fuel to EEPROM
+#endif
+#ifdef FUEL_INJECT
     if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode) > 0) //is LTFT used?
     {
      while(!eeprom_is_idle()) { wdt_reset_timer(); }

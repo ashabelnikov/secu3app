@@ -694,4 +694,67 @@ uint8_t inject_calc_duty(void)
  return duty;
 }
 
+void inject_calc_fuel_cons(void)
+{
+ static uint16_t TCNT1_p = 0;
+ uint16_t TCNT1_c = TCNT1;
+
+ uint16_t dtcnt = TCNT1_c - TCNT1_p;
+ if (dtcnt > 39062) //125ms (125000/3.2)
+ {
+  TCNT1_p = TCNT1_c;
+
+  //dtcnt - time near to 125ms, but not exactly equal because this function is called from the main loop. So, we will compensate
+  //this difference in following calculations
+
+  //Given:
+  //fff_const = N / (1000 * 60) * 65536, where N - number of pulses per 1L of burnt fuel
+  //fuel consumption (L/h) = (3600 * fhz) / N, where fhz - frequency in Hz of the fuel consumption signal.
+  //Then:
+  //N = (fff_const * (1000 * 60)) / 65536;
+  //fuel consumption (L/h) = (3600 * fhz) / ((fff_const * (1000 * 60)) / 65536) =  (3600 * fhz * 65536) / (fff_const * (1000 * 60));
+
+  //Calculating consumption of fuel:
+  //inj_fff = frequency in Hz * 256;
+  //L per hour * 256 = (3600 * inj_fff * 65536) / (fff_const * 1000 * 60);
+  //L per second  * 256 = (inj_fff * 65536) / (fff_const * 1000 * 60) = (inj_fff / fff_const)  * (65536 / (1000 * 60));
+
+  //We need to get result in L/0.125s * 2^27, then:
+  //L per second * 2^8 * 2^3 * 2^16 = (inj_fff * 65536) / fff_const; note, we have omitted (65536 / (1000 * 60)) multiplier
+  //2^3 appeared because we switched to use L/0.125s units from L/s units.
+
+  uint32_t fc_add = ((uint32_t)d.inj_fff*65536) / d.param.fff_const;
+
+  //time correction: dcnt/39062 * 65536/(1000*60) = (dcnt* 1,092266667)/39062 = dcnt/35763
+
+  //divide by 4 to avoid overflow, also 35763 / 4 = 8941
+  dtcnt = dtcnt >> 2;
+
+  //apply time correction combined with 65536/(1000*60) multiplier
+  //as a result fc_add is fuel consumed by 0.125s, value in L * 2^27
+  fc_add = (fc_add * dtcnt) / 8941;
+
+  //10000L max.
+  if (d.cons_fuel >= 10000UL*1024UL)
+  {
+   d.cons_fuel_int = 0;
+   d.cons_fuel_imm = 0;
+  }
+
+  //accumulate to intermidiate variable
+  d.cons_fuel_imm+= fc_add;
+
+  //calculate value for user (this valie is sent to PC)
+  fc_add = (d.cons_fuel_imm >> 9);
+  d.cons_fuel = (d.cons_fuel_int + fc_add) >> 8;
+
+  //accumulate intermidiate value in the long term variable
+  if (d.cons_fuel_imm & 0x80000000)
+  {
+   d.cons_fuel_int+= fc_add;
+   d.cons_fuel_imm = 0;
+  }
+ }
+}
+
 #endif

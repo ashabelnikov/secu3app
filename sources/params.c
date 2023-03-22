@@ -213,3 +213,10 @@ void load_odomet_data_into_ram(void)
  eeprom_read(&d.sens.vss_int_dist, EEPROM_ODOMETER_START, sizeof(uint32_t));
 }
 #endif
+
+#ifdef FUEL_INJECT
+void load_consfuel_data_into_ram(void)
+{
+ eeprom_read(&d.cons_fuel_int, EEPROM_ODOMETER_START+5, sizeof(uint32_t));
+}
+#endif

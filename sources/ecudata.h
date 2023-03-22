@@ -297,6 +297,9 @@ typedef struct ecudata_t
  int16_t inj_dt;                         //!< current value of injector's dead time
  uint16_t inj_fff;                       //!< Instant fuel flow as frequency (Hz), 16000 pulses per 1L of burnt fuel (value * 256)
  uint8_t  eng_running;                   //!< flag, indicates that engine is operating now (running)
+ uint32_t cons_fuel_int;                 //!< Quantity of fuel totally consumed by vehicle (L), value * 2^18. This value is stored in EEPROM
+ uint32_t cons_fuel_imm;                 //!< Quantity of fuel consumed by vehicle for a short period of time (L), value * 2^27
+ uint32_t cons_fuel;                     //!< Quantity of fuel consumed by vehicle shown for user (L), value * 1024. This valie is send to PC
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

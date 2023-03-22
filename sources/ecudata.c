@@ -100,7 +100,10 @@ struct ecudata_t d =
  .inj_pwns = {{0},{0}},
  .inj_dt = 0,
  .inj_fff = 0,
- .eng_running = 0           //fully stopped
+ .eng_running = 0,          //fully stopped
+ .cons_fuel_int = 0,
+ .cons_fuel_imm = 0,
+ .cons_fuel = 0
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

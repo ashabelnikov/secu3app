@@ -97,6 +97,11 @@ uint8_t inject_is_shrinked(void);
  */
 uint8_t inject_calc_duty(void);
 
+/** Calculates integral values of the fuel consumption
+ * Uses d ECU data structure
+ */
+void inject_calc_fuel_cons(void);
+
 #endif //FUEL_INJECT
 
 #endif //_INJECTOR_H_

@@ -61,6 +61,9 @@
 #ifdef SPEED_SENSOR
 #define SOP_SAVE_ODOMET             23    //!< save odometer's data
 #endif
+#ifdef FUEL_INJECT
+#define SOP_SAVE_CONSFUEL           24    //!< save consumed fuel's data
+#endif
 
 //Эти константы не должны быть равны 0
 #define OPCODE_EEPROM_PARAM_SAVE     1    //!< save EEPROM parameters
@@ -110,6 +113,13 @@ void sop_send_gonna_bl_start(void);
   * This function doesn't check EEPROM for busyness and doesn't wait for completion
   */
 void sop_start_saving_odometer(void);
+#endif
+
+#ifdef FUEL_INJECT
+/** Start saving consumed fuel's value
+  * This function doesn't check EEPROM for busyness and doesn't wait for completion
+  */
+void sop_start_saving_consfuel(void);
 #endif
 
 #ifdef FUEL_INJECT

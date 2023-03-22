@@ -76,4 +76,11 @@ void param_set_save_timer(void);
 void load_odomet_data_into_ram(void);
 #endif
 
+#ifdef FUEL_INJECT
+/** Load consumed fuel's data from EEPROM to RAM
+ * Uses d ECU data structure
+ */
+void load_consfuel_data_into_ram(void);
+#endif
+
 #endif //_PARAMS_H_

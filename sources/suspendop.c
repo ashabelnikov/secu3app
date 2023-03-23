@@ -45,11 +45,15 @@
 /**Contains queue of suspended operations. Each operation can appear one time */
 uint8_t suspended_opcodes[SUSPENDED_OPERATIONS_SIZE];
 
+#ifdef SPEED_SENSOR
 /**Buffered value of the VSS distance used for saving*/
 static uint32_t vss_int_dist_buff = 0;
+#endif
 
+#ifdef FUEL_INJECT
 /**Buffered value of the consumed fuel used for saving*/
 static uint32_t consfuel_int_buff = 0;
+#endif
 
 /*inline*/
 void sop_set_operation(uint8_t opcode)

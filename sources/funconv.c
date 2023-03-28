@@ -101,8 +101,8 @@ typedef struct
  uint8_t  ae_decay_counter; //!< AE decay counter
  int16_t  aef_decay;        //!< AE factor value at the start of decay
 #ifdef FUEL_INJECT
- uint8_t  ae_state;   //!< state machine for time based AE algorithm
- int32_t  ae_pwmax;   //!< value of PW corresponding to maximum value of AE
+ uint8_t  ae_state;    //!< state machine for time based AE algorithm
+ int32_t  ae_pwmax;    //!< value of PW corresponding to maximum value of AE
 #endif
 }fcs_t;
 
@@ -284,8 +284,8 @@ int16_t idling_function(void)
 }
 
 
-// Реализует функцию УОЗ от оборотов для пуска двигателя
-// Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
+// Implements function of advance angle by RPM for starting engine
+// Return value of advance angle in the integer format * 32 (2 * 16 = 32)
 int16_t start_function(void)
 {
  int16_t i, i1, rpm = d.sens.inst_frq;
@@ -300,8 +300,8 @@ int16_t start_function(void)
  return simple_interpolation(rpm, _GB(f_str[i]), _GB(f_str[i1]), (i * 40) + 200, 40, 16);
 }
 
-// Реализует функцию УОЗ от оборотов(мин-1) и нагрузки(кПа) для рабочего режима двигателя
-// Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
+// Implements function of advance angle by load(e.g kPa) and RPM(e.g. min-1) for working mode of engine
+// Return value of advance angle in the integer format * 32 (2 * 16 = 32)
 int16_t work_function(void)
 {
  uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
@@ -316,8 +316,8 @@ int16_t work_function(void)
         use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) : fcs.la_grad, 16);
 }
 
-//Реализует функцию коррекции УОЗ по температуре(град. Цельсия) охлаждающей жидкости
-// Возвращает значение угла опережения в целом виде * 32, 2 * 16 = 32.
+//Implements advance angle correction function by coolant temparature (degr. of Celsius)
+// Return value of advance angle in the integer format * 32 (2 * 16 = 32)
 int16_t coolant_function(uint8_t mode)
 {
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
@@ -344,7 +344,7 @@ int16_t crkclt_function(void)
 /**Describes state data for idling regulator */
 typedef struct
 {
- //память регулятора для хранения последнего значения управляющего воздействия (коррекции)
+ //regulator's memory, used for storing last value of regulator's output
  int16_t output_state;   //!< regulator's memory
  uint8_t enter_state;    //!< used for entering delay implementation
 }idlregul_state_t;
@@ -352,22 +352,21 @@ typedef struct
 /**Variable. State data for idling regulator */
 idlregul_state_t idl_prstate;
 
-//сброс состояния РХХ
+//reset state of idling regulator
 void idling_regulator_init(void)
 {
  idl_prstate.output_state = 0;
  idl_prstate.enter_state = 0;
 }
 
-//Интегральный регулятор (интегрирование по выходу) для регулирования оборотов ХХ углом опережения зажигания
-// Возвращает значение угла опережения в целом виде * 32.
+//I-regulator (with integration on the output side) for requlation of idling RPM by means of advance angle
+// Return value of advance angle in integer format * 32
 int16_t idling_pregulator(s_timer16_t* io_timer)
 {
  int16_t error,factor,idling_rpm;
  #define IRUSDIV 1
 
- //если PXX отключен или обороты значительно выше от нормальных холостых оборотов
- // или двигатель не прогрет то выходим  с нулевой корректировкой
+ //If this idling regulator is turned off or RPM significally higher from normal idling RPM or engine is not heat up, then exit with zero value (zero correction)
  if (!CHECKBIT(d.param.idl_flags, IRF_USE_REGULATOR) || (d.sens.temperat < d.param.idlreg_turn_on_temp && CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE)
 #ifdef FUEL_INJECT
   && d.param.idling_rpm  //Don't use temperature turn on threshold if lookup table used
@@ -414,8 +413,8 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
  else
   return 0; //no correction
 
- //вычисляем значение ошибки, ограничиваем ошибку (если нужно), а также, если мы в зоне
- //нечувствительности, то используем расчитанную ранее коррекцию.
+ //calculate value of error, restrict error value (if necessary), also,
+ //if we are in the dead band now, then use early calculated correction
  error = idling_rpm - d.sens.frequen;
  restrict_value_to(&error, -200, 200);
  if (abs(error) <= d.param.MINEFR)
@@ -444,11 +443,11 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
  return idl_prstate.output_state >> IRUSDIV;
 }
 
-//Нелинейный фильтр ограничивающий скорость изменения УОЗ на переходных режимах двигателя
-//new_advance_angle - новое значение УОЗ
-//ip_prev_state - значение УОЗ в предыдущем цикле
-//intstep_p,intstep_m - значения положительного и отрицательного шагов интегрирования, положительные числа
-//Возвращает скорректированный УОЗ
+//Non-linear filter, which  limits spped of ign. timing changing on engine's transient modes
+//new_advance_angle - new value of advance angle (ignition timing)
+//ip_prev_state - value of advance angle in the previous stroke
+//intstep_p,intstep_m - values of positive and negative steps of integration, positive values only
+//Return corrected advance angle
 int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m)
 {
  int16_t difference;
@@ -466,21 +465,21 @@ int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_stat
   return *ip_prev_state;
  }
 
- //текущий УОЗ будет предыдущим в следующий раз
+ //current value of ignition timing will be previous next time
  *ip_prev_state = new_advance_angle;
  return *ip_prev_state;
 }
 
-// Реализует функцию коэффициента усиления аттенюатора от оборотов
-// Возвращает код 0...63 соответсутвующий определенному коэфф. усиления
-//(см. HIP9011 datasheet).
+// Implements function of the attenuator's gain/attenuation vs RPM
+// Return 0...63 code corresponding to the certain gain coefficient
+//(see HIP9011/TPIC8101 datasheet).
 uint8_t knock_attenuator_function()
 {
  int16_t i, i1, rpm = d.sens.inst_frq;
 
- if (rpm < 200) rpm = 200; //200 - минимальное значение оборотов по оси
+ if (rpm < 200) rpm = 200; //200 - minimum RPM value at the horizontal axis
 
- i = (rpm - 200) / 60;   //60 - шаг по оборотам
+ i = (rpm - 200) / 60;   //60 - RPM step
 
  if (i >= (KC_ATTENUATOR_LOOKUP_TABLE_SIZE-1))
   i = i1 = (KC_ATTENUATOR_LOOKUP_TABLE_SIZE-1);

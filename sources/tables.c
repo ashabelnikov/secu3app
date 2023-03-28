@@ -1149,6 +1149,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .evap_off_vss_thrd = VSSSPEED_MAG(7.0), // 7km/h
   .iac_onrunadd_vss_thrd = VSSSPEED_MAG(7.0), // 7km/h
 
+  .iac_min_rpm_on_run = 1000, //1000 min-1
+
   /**reserved bytes*/
   {0}
  },

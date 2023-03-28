@@ -26,6 +26,7 @@
 
 #include "port/port.h"
 #include <string.h>
+#include <stddef.h>
 #include "bitmask.h"
 #include "ce_errors.h"
 #include "crc16.h"
@@ -102,7 +103,7 @@ void sop_execute_operations(void)
    //to ensure atomicity, the data will be copied to a separate buffer and then written from it to EEPROM.
    memcpy(&eeprom_parameters_cache, &d.param, sizeof(params_t));
    eeprom_parameters_cache.crc = crc16((uint8_t*)&eeprom_parameters_cache, sizeof(params_t)-PAR_CRC_SIZE); //calculate check sum
-   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, EEPROM_PARAM_START, &eeprom_parameters_cache, sizeof(params_t));
+   eeprom_start_wr_data(OPCODE_EEPROM_PARAM_SAVE, offsetof(eeprom_data_t, param), &eeprom_parameters_cache, sizeof(params_t));
 
    //if there was a corresponding error, then it becomes unneeded after EEPROM contains
    //new parameters written with correct checksum
@@ -170,7 +171,7 @@ void sop_execute_operations(void)
  {
   if (eeprom_is_idle())
   {
-   eeprom_read(&d.ecuerrors_saved_transfer, EEPROM_ECUERRORS_START, sizeof(uint32_t));
+   eeprom_read(&d.ecuerrors_saved_transfer, offsetof(eeprom_data_t, errors), sizeof(uint32_t));
    sop_set_operation(SOP_TRANSMIT_CE_ERRORS);
    //remove this operation from list because it has already completed
    sop_reset_operation(SOP_READ_CE_ERRORS);
@@ -249,7 +250,7 @@ void sop_execute_operations(void)
   if (eeprom_is_idle())
   {
    d.tables_ram.checksum = crc16_b((uint8_t*)&d.tables_ram, sizeof(f_data_t)-sizeof(uint16_t));
-   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, EEPROM_REALTIME_TABLES_START, &d.tables_ram, sizeof(f_data_t));
+   eeprom_start_wr_data(OPCODE_SAVE_TABLSET, offsetof(eeprom_data_t, tables), &d.tables_ram, sizeof(f_data_t));
 
    //clear possibly present error because after saving checksum become correct
    ce_clear_error(ECUERROR_EEPROM_TABL_BROKEN);
@@ -323,7 +324,7 @@ void sop_execute_operations(void)
    memset(&d.inj_ltft[0][0], 0, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //reset contents of LTFT map in RAM
 
    d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
-   eeprom_start_wr_data(OPCODE_RESET_LTFT, EEPROM_LTFT_TABLES_START, &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+   eeprom_start_wr_data(OPCODE_RESET_LTFT, offsetof(eeprom_data_t, ltft), &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
 
    //clear possibly present error because after saving checksum become correct
    ce_clear_error(ECUERROR_EEPROM_LTFT_BROKEN);
@@ -451,7 +452,7 @@ void sop_start_saving_odometer(void)
  d.sens.vss_int_dist+= calc_dist(pulse_count); //accumulate ramaining distance
  //save odometer's data
  vss_int_dist_buff = d.sens.vss_int_dist;
- eeprom_start_wr_data(0, EEPROM_ODOMETER_START, &vss_int_dist_buff, sizeof(uint32_t));
+ eeprom_start_wr_data(0, offsetof(eeprom_data_t, odometer), &vss_int_dist_buff, sizeof(uint32_t));
 }
 #endif
 
@@ -462,7 +463,7 @@ void sop_start_saving_consfuel(void)
  d.cons_fuel_imm = 0;
  //save odometer's data
  consfuel_int_buff = d.cons_fuel_int;
- eeprom_start_wr_data(0, EEPROM_ODOMETER_START+5, &consfuel_int_buff, sizeof(uint32_t));
+ eeprom_start_wr_data(0, offsetof(eeprom_data_t, consfuel), &consfuel_int_buff, sizeof(uint32_t));
 }
 #endif
 
@@ -470,6 +471,6 @@ void sop_start_saving_consfuel(void)
 void sop_start_saving_ltft(void)
 {
  d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_start_wr_data(OPCODE_SAVE_LTFT, EEPROM_LTFT_TABLES_START, &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+ eeprom_start_wr_data(OPCODE_SAVE_LTFT, offsetof(eeprom_data_t, ltft), &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
 }
 #endif

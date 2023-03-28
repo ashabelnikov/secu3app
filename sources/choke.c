@@ -360,7 +360,12 @@ static int16_t calc_cl_rpm(void)
  //use addition value when vehicle starts to run
 #ifdef SPEED_SENSOR
  if (IOCFG_CHECK(IOP_SPDSENS) && d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.iac_onrunadd_vss_thrd))
+ {
   rpm += (d.param.rpm_on_run_add * 10);
+
+  if (rpm < PGM_GET_WORD(&fw_data.exdata.iac_min_rpm_on_run))
+   rpm = PGM_GET_WORD(&fw_data.exdata.iac_min_rpm_on_run);
+ }
 #endif
  return rpm;
 }

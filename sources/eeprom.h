@@ -31,27 +31,6 @@
 #include "port/pgmspace.h"
 #include <stdint.h>
 
-/**Address of parameters structure in EEPROM */
-#define EEPROM_PARAM_START     0x001
-
-/**Address of errors's array (Check Engine) in EEPROM */
-#define EEPROM_ECUERRORS_START (EEPROM_PARAM_START+(sizeof(params_t)))
-
-/**Address of odometer data (passed distance, consumed fuel)
- * EEPROM_ODOMETER_START     passed dostance (5 bytes)
- * EEPROM_ODOMETER_START+5   consumed fuel   (5 bytes)
- */
-#define EEPROM_ODOMETER_START (EEPROM_ECUERRORS_START+8)
-
-/**Address of tables which can be edited in real time */
-#define EEPROM_REALTIME_TABLES_START (EEPROM_ODOMETER_START+10)
-
-/**Long Term Fuel Trim map, size = (INJ_VE_POINTS_L*INJ_VE_POINTS_F) + 2 bytes of checksum */
-#define EEPROM_LTFT_TABLES_START (EEPROM_REALTIME_TABLES_START + (sizeof(f_data_t)))
-
-/**Address of magic number in EEPROM (last 4 bytes) */
-#define EEPROM_MAGIC_START (E2END-3)
-
 //Interface of module
 
 /**Start writing process of EEPROM for selected block of data

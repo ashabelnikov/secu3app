@@ -30,6 +30,7 @@
 #include "port/pgmspace.h"
 #include "port/port.h"
 #include <string.h>
+#include <stddef.h>
 #include "bitmask.h"
 #include "dbgvar.h"
 #include "ecudata.h"
@@ -451,7 +452,7 @@ void uart_send_packet(uint8_t send_mode)
     if (eeprom_is_idle())
     {
      build_i8h(index);
-     eeprom_read(&uart.send_buf_c[uart.send_size_c], (uint16_t)((f_data_t*)(EEPROM_REALTIME_TABLES_START))->name, F_NAME_SIZE);
+     eeprom_read(&uart.send_buf_c[uart.send_size_c], offsetof(eeprom_data_t, tables.name), F_NAME_SIZE);
      uart.send_size_c+=F_NAME_SIZE;
     }
     else //skip this item - will be transferred next time

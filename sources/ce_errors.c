@@ -27,6 +27,7 @@
 #include "port/avrio.h"
 #include "port/port.h"
 #include <string.h>
+#include <stddef.h>
 #include "adc.h"
 #include "bitmask.h"
 #include "camsens.h"
@@ -317,22 +318,22 @@ void ce_save_merged_errors(uint32_t* p_merged_errors)
 
  if (!p_merged_errors) //overwrite with parameter?
  {
-  eeprom_read(&temp_errors, EEPROM_ECUERRORS_START, sizeof(uint32_t));
+  eeprom_read(&temp_errors, offsetof(eeprom_data_t, errors), sizeof(uint32_t));
   ce_state.write_errors = temp_errors | ce_state.merged_errors;
   if (ce_state.write_errors!=temp_errors)
-   eeprom_start_wr_data(0, EEPROM_ECUERRORS_START, &ce_state.write_errors, sizeof(uint32_t));
+   eeprom_start_wr_data(0, offsetof(eeprom_data_t, errors), &ce_state.write_errors, sizeof(uint32_t));
  }
  else
  {
   ce_state.merged_errors = *p_merged_errors;
-  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, EEPROM_ECUERRORS_START, (uint8_t*)&ce_state.merged_errors, sizeof(uint32_t));
+  eeprom_start_wr_data(OPCODE_CE_SAVE_ERRORS, offsetof(eeprom_data_t, errors), (uint8_t*)&ce_state.merged_errors, sizeof(uint32_t));
  }
 }
 
 void ce_clear_errors(void)
 {
  memset(&ce_state, 0, sizeof(ce_state_t));
- eeprom_write((uint8_t*)&ce_state.write_errors, EEPROM_ECUERRORS_START, sizeof(uint32_t));
+ eeprom_write((uint8_t*)&ce_state.write_errors, offsetof(eeprom_data_t, errors), sizeof(uint32_t));
 }
 
 void ce_init_ports(void)

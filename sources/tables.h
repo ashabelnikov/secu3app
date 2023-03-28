@@ -595,12 +595,14 @@ typedef struct fw_ex_data_t
 
   uint16_t iac_onrunadd_vss_thrd; //!< VSS threshold for applying on run add for IAC
 
+  uint16_t iac_min_rpm_on_run;
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1974];
+  uint8_t reserved[1972];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -907,6 +909,24 @@ typedef struct params_t
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;
 }params_t;
+
+/**Structure of data stored in EEPROM*/
+typedef struct eeprom_data_t
+{
+ uint8_t  notuse;      //!< zero-address byte, it is not used
+ params_t param;       //!< online parameters
+ uint32_t errors;      //!< CE errors (bits)
+ uint32_t reserv0;     //!< reserved for CE errors
+ uint32_t odometer;    //!< passed distance (mileage)
+ uint8_t  reserv1;     //!< reserved
+ uint32_t consfuel;    //!< consumed fuel
+ uint8_t  reserv2;     //!< reserved
+ f_data_t tables;      //!< online tables
+ uint8_t  ltft[INJ_VE_POINTS_L*INJ_VE_POINTS_F];
+ uint16_t ltft_crc;    //!< Checksum of the LTFT table
+ uint8_t  reserv[510]; //!< free bytes
+ uint8_t  magic[4];    //!< magic number in EEPROM (last 4 bytes)
+}eeprom_data_t;
 
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers

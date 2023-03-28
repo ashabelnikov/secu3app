@@ -29,6 +29,7 @@
 #include "port/port.h"
 
 #include <string.h>
+#include <stddef.h>
 #include "bitmask.h"
 #include "ce_errors.h"
 #include "crc16.h"
@@ -98,26 +99,26 @@ void reset_eeprom_params(void)
  wdt_reset_timer();
  //1. calculate CRC; 2. write all except 2 bytes of CRC; 3. write CRC
  crc = crc16f((uint8_t _PGM*)&fw_data.def_param, sizeof(params_t)-PAR_CRC_SIZE);
- eeprom_write_P(&fw_data.def_param, EEPROM_PARAM_START, sizeof(params_t)-PAR_CRC_SIZE);
- eeprom_write(&crc, EEPROM_PARAM_START+(sizeof(params_t)-PAR_CRC_SIZE), PAR_CRC_SIZE);
+ eeprom_write_P(&fw_data.def_param, offsetof(eeprom_data_t, param), sizeof(params_t)-PAR_CRC_SIZE);
+ eeprom_write(&crc, offsetof(eeprom_data_t, param.crc), PAR_CRC_SIZE);
 
  wdt_reset_timer();
  ce_clear_errors(); //reset saved errors
  wdt_reset_timer();
 #ifdef REALTIME_TABLES
  crc = crc16f_b((uint8_t _PGM*)&fw_data.tables[0], sizeof(f_data_t)-sizeof(uint16_t));
- eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t)-sizeof(uint16_t));
- eeprom_write(&crc, EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)-sizeof(uint16_t)), sizeof(uint16_t));
+ eeprom_write_P(&fw_data.tables[0], offsetof(eeprom_data_t, tables), sizeof(f_data_t)-sizeof(uint16_t));
+ eeprom_write(&crc, offsetof(eeprom_data_t, tables.checksum), sizeof(uint16_t));
 #endif
 #ifdef FUEL_INJECT
  //Write default values to LTFT map
  memset(&d.inj_ltft[0][0], 0, 256); //set to zero all cells
  crc = crc16((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&d.inj_ltft[0][0], EEPROM_LTFT_TABLES_START, INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&crc, EEPROM_LTFT_TABLES_START+(INJ_VE_POINTS_L*INJ_VE_POINTS_F), sizeof(uint16_t));
+ eeprom_write(&d.inj_ltft[0][0], offsetof(eeprom_data_t, ltft), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, offsetof(eeprom_data_t, ltft_crc), sizeof(uint16_t));
 #endif
  //write 4 bytes of magic number identifying platform
- eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
+ eeprom_write_P((void _PGM*)(FLASHEND-3), offsetof(eeprom_data_t, magic), 4);
  wdt_reset_device(); //reboot!
 }
 
@@ -136,7 +137,7 @@ void load_eeprom_params(void)
    //Load parameters from EEPROM, and after, check integrity of them
    //Don't take into account bytes of CRC when calculating check sum
    //If check sums don't match, then load default (reserve) parameters from flash
-   eeprom_read(&d.param, EEPROM_PARAM_START, sizeof(params_t));
+   eeprom_read(&d.param, offsetof(eeprom_data_t, param), sizeof(params_t));
 
    if (crc16((uint8_t*)&d.param, (sizeof(params_t)-PAR_CRC_SIZE))!=d.param.crc)
    {
@@ -153,18 +154,18 @@ void load_eeprom_params(void)
   ce_clear_errors(); //clear saved CE errors
 #ifdef REALTIME_TABLES
   uint16_t crc = crc16f_b((uint8_t _PGM*)&fw_data.tables[0], sizeof(f_data_t)-sizeof(uint16_t));
-  eeprom_write_P(&fw_data.tables[0], EEPROM_REALTIME_TABLES_START, sizeof(f_data_t)-sizeof(uint16_t));
-  eeprom_write(&crc, EEPROM_REALTIME_TABLES_START+(sizeof(f_data_t)-sizeof(uint16_t)), sizeof(uint16_t));
+  eeprom_write_P(&fw_data.tables[0], offsetof(eeprom_data_t, tables), sizeof(f_data_t)-sizeof(uint16_t));
+  eeprom_write(&crc, offsetof(eeprom_data_t, tables.checksum), sizeof(uint16_t));
 #endif
 #ifdef FUEL_INJECT
  //Write default values to LTFT map
  memset(d.inj_ltft, 0, 256); //set to zero all cells
  crc = crc16((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&d.inj_ltft[0][0], EEPROM_LTFT_TABLES_START, INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&crc, EEPROM_LTFT_TABLES_START+(INJ_VE_POINTS_L*INJ_VE_POINTS_F), sizeof(uint16_t));
+ eeprom_write(&d.inj_ltft[0][0], offsetof(eeprom_data_t, ltft), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, offsetof(eeprom_data_t, ltft_crc), sizeof(uint16_t));
 #endif
   //write 4 bytes of magic number identifying platform
-  eeprom_write_P((void _PGM*)(FLASHEND-3), EEPROM_MAGIC_START, 4);
+  eeprom_write_P((void _PGM*)(FLASHEND-3), offsetof(eeprom_data_t, magic), 4);
  }
 }
 
@@ -176,7 +177,7 @@ void load_specified_tables_into_ram(uint8_t index)
   MEMCPY_P(&d.tables_ram, &fw_data.tables[index], sizeof(f_data_t));
  else
  { //load set of tables from EEPROM
-  eeprom_read(&d.tables_ram, EEPROM_REALTIME_TABLES_START, sizeof(f_data_t));
+  eeprom_read(&d.tables_ram, offsetof(eeprom_data_t, tables), sizeof(f_data_t));
   if (crc16_b((uint8_t*)&d.tables_ram, (sizeof(f_data_t)-sizeof(uint16_t)))!=d.tables_ram.checksum)
   {
    ce_set_error(ECUERROR_EEPROM_TABL_BROKEN);
@@ -193,8 +194,8 @@ void load_specified_tables_into_ram(uint8_t index)
 void load_ltft_tables_into_ram(void)
 {
  uint16_t crc = 0;
- eeprom_read(&d.inj_ltft[0][0], EEPROM_LTFT_TABLES_START, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //read contents of LTFT map
- eeprom_read(&crc, EEPROM_LTFT_TABLES_START+(INJ_VE_POINTS_L*INJ_VE_POINTS_F), sizeof(uint16_t)); //read value of checksum (2 bytes)
+ eeprom_read(&d.inj_ltft[0][0], offsetof(eeprom_data_t, ltft), INJ_VE_POINTS_L*INJ_VE_POINTS_F); //read contents of LTFT map
+ eeprom_read(&crc, offsetof(eeprom_data_t, ltft_crc), sizeof(uint16_t)); //read value of checksum (2 bytes)
  if (crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F)!=crc)
  { //LTFT table is corrupted!
   ce_set_error(ECUERROR_EEPROM_LTFT_BROKEN);
@@ -210,13 +211,13 @@ void param_set_save_timer(void)
 #ifdef SPEED_SENSOR
 void load_odomet_data_into_ram(void)
 {
- eeprom_read(&d.sens.vss_int_dist, EEPROM_ODOMETER_START, sizeof(uint32_t));
+ eeprom_read(&d.sens.vss_int_dist, offsetof(eeprom_data_t, odometer), sizeof(uint32_t));
 }
 #endif
 
 #ifdef FUEL_INJECT
 void load_consfuel_data_into_ram(void)
 {
- eeprom_read(&d.cons_fuel_int, EEPROM_ODOMETER_START+5, sizeof(uint32_t));
+ eeprom_read(&d.cons_fuel_int, offsetof(eeprom_data_t, consfuel), sizeof(uint32_t));
 }
 #endif

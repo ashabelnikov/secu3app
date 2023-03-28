@@ -29,6 +29,7 @@
 #include "port/intrinsic.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
+#include <stddef.h>
 #include "adc.h"
 #include "bitmask.h"
 #include "ce_errors.h"
@@ -194,7 +195,7 @@ void bc_indication_mode(void)
   delay_hom(7);
 
   //read errors
-  eeprom_read(&errors, EEPROM_ECUERRORS_START, sizeof(uint32_t));
+  eeprom_read(&errors, offsetof(eeprom_data_t, errors), sizeof(uint32_t));
 
   for(i = 0; i < ECUERROR_NUM; ++i)
   {

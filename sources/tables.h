@@ -60,7 +60,7 @@
 
 //Define number of interpolation nodes for lookup tables and othe constants
 #define F_WRK_POINTS_F                  16          //!< number of points on RPM axis - work map
-#define F_WRK_POINTS_L                  16          //!< number of points on Pressure axis - work map
+#define F_WRK_POINTS_L                  16          //!< number of points on load axis - work map
 #define F_TMP_POINTS                    16          //!< number of points in temperature map
 #define F_STR_POINTS                    16          //!< number of points in start map
 #define F_IDL_POINTS                    16          //!< number of points in idle map

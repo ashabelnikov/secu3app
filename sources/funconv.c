@@ -200,25 +200,26 @@ void calc_lookup_args(void)
  { //use grid table
   fcs.la_load = d.load;
 
-  if (fcs.la_load > PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]))
+  //limit value, so it can not be out of frid range
+  if (fcs.la_load < PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]))
    fcs.la_load = PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]);
-  if (fcs.la_load < PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]))
+  if (fcs.la_load > PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]))
    fcs.la_load = PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]);
 
-  for(fcs.la_l = 1; fcs.la_l < F_WRK_POINTS_L; ++fcs.la_l)
+  for(fcs.la_l = F_WRK_POINTS_L-2; fcs.la_l >= 0; fcs.la_l--)
    if (fcs.la_load >= PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l])) break;
-  fcs.la_lp1 = fcs.la_l - 1;
+  fcs.la_lp1 = fcs.la_l + 1;
 
   //update air flow variable (find nearest point)
-  if (fcs.la_load < (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - (PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) / 2)))
-   d.airflow = (F_WRK_POINTS_L-1) - fcs.la_lp1;
+  if (fcs.la_load > (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) + (PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) / 2)))
+   d.airflow = fcs.la_lp1+1;
   else
-   d.airflow = F_WRK_POINTS_L - fcs.la_lp1;
+   d.airflow = fcs.la_l+1;
  }
  else
  {
   //Calculate arguments for load axis:
-  fcs.la_load = (get_load_upper() - d.load);
+  fcs.la_load = ((int16_t)d.load - d.param.load_lower);
   if (fcs.la_load < 0) fcs.la_load = 0;
 
   //load_upper - value of the upper load, load_lower - value of the lower load
@@ -235,10 +236,10 @@ void calc_lookup_args(void)
    fcs.la_lp1 = fcs.la_l + 1;
 
   //update air flow variable (find nearest point)
-  if (fcs.la_load < ((fcs.la_grad * fcs.la_lp1) - (fcs.la_grad / 2)))
-   d.airflow = (F_WRK_POINTS_L+1) - fcs.la_lp1;
+  if (fcs.la_load > ((fcs.la_grad * fcs.la_l) + (fcs.la_grad / 2)))
+   d.airflow = fcs.la_lp1+1;
   else
-   d.airflow = F_WRK_POINTS_L - fcs.la_lp1;
+   d.airflow = fcs.la_l+1;
  }
 
  //-----------------------------------------
@@ -313,7 +314,7 @@ int16_t work_function(void)
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
         use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) : fcs.la_grad, 16);
+        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
 }
 
 //Implements advance angle correction function by coolant temparature (degr. of Celsius)
@@ -662,7 +663,7 @@ void calc_ve_afr(void)
 
   if (d.param.ve2_map_func != VE2MF_1ST)
   {
-   int16_t tps = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
+   int16_t tps = d.sens.tps * 16;
    int8_t t = (tps / TPS_AXIS_STEP), tp1;
 
    if (t >= (GASDOSE_POS_TPS_SIZE - 1))
@@ -1127,7 +1128,7 @@ uint16_t gd_ve_afr(void)
  */
 int16_t gdp_function(void)
 {
- int16_t tps = (TPS_MAGNITUDE(100.0) - d.sens.tps) * 16;
+ int16_t tps = d.sens.tps * 16;
  int8_t t = (tps / TPS_AXIS_STEP), tp1;
 
  if (t >= (GASDOSE_POS_TPS_SIZE - 1))
@@ -1546,7 +1547,6 @@ uint8_t knock_zone_val(void)
  if (t > (KNKZONE_TPS_SIZE - 1))
   t = KNKZONE_TPS_SIZE - 1;
 
- t = (KNKZONE_TPS_SIZE-1)-t;
  return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.knock_zones[t]) >> f)) & 1;
 }
 
@@ -1799,24 +1799,19 @@ uint8_t ltft_check_load_hit(void)
  if (!use_grid)
  { //use two values (min and max)
   uint16_t band = (((uint32_t)fcs.la_grad) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
-  if (load >= ((fcs.la_grad * fcs.la_lp1) - band))
-   return fcs.la_lp1; //near to lower point
-  else if (load <= ((fcs.la_grad * fcs.la_l) + band))
-   return fcs.la_l; //near to upper point
+  if (load <= ((fcs.la_grad * fcs.la_l) + band))
+   return fcs.la_l; //near to lower point
+  else if (load >= ((fcs.la_grad * fcs.la_lp1) - band))
+   return fcs.la_lp1; //near to upper point
  }
  else
  { //use grid map
-  uint16_t band = (((uint32_t)(PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]))) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
-  uint8_t idx;
-  //find index of the nearest point
-  if (fcs.la_load < (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - (PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_lp1]) / 2)))
-   idx = fcs.la_l;
-  else
-   idx = fcs.la_lp1;
-  //check cell with obtained index
-  if (load < (PGM_GET_WORD(&fw_data.exdata.load_grid_points[idx]) + band) &&
-      load > (PGM_GET_WORD(&fw_data.exdata.load_grid_points[idx]) - band))
-   return idx;
+  uint16_t band = (((uint32_t)(PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]))) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+
+  if (load <= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) + band))
+   return fcs.la_l; //near to lower point
+  else if (load >= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - band))
+   return fcs.la_lp1; //near to upper point
  }
 
  return 255; //no hit
@@ -1857,7 +1852,7 @@ uint8_t lambda_zone_val(void)
  //lookup table works from rpm_grid_points[0] and upper
  if (f < 0) f = 0;
 
- return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.lambda_zones[fcs.la_lp1]) >> f)) & 1;
+ return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.lambda_zones[fcs.la_l]) >> f)) & 1;
 }
 #endif
 

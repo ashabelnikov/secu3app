@@ -740,7 +740,7 @@ static void pwm2_set_vtachom(void)
   rpm = 150; //prevent overflow in the following calculations
 
  //9375000 = (312500*60)/2
- uint32_t duty = ((((uint32_t)9375000) / d.sens.frequen) * PGM_GET_WORD(&fw_data.exdata.vtachom_mult)) >> 13;
+ uint32_t duty = ((((uint32_t)9375000) / rpm) * PGM_GET_WORD(&fw_data.exdata.vtachom_mult)) >> 13;
  if (duty > 65535)
   duty = 65535; //prevent possible overflow
  uint16_t duty_1 = duty;

@@ -1916,12 +1916,23 @@ void calc_xtau(int32_t* pw)
 {
  int16_t s_thrd = -((int16_t)d.param.inj_xtau_s_thrd); //kPa/sec
  int16_t f_thrd = -((int16_t)d.param.inj_xtau_f_thrd); //kPa/sec
- uint16_t xf, tf;
- uint8_t docor;
- static uint32_t M; //memory for correction
+ static uint32_t M = 0;  //amuunt of fuel in the film
+ static uint16_t xf = 0; //coefficient of fuel falling into the film, value * 1024
+ uint16_t tf = 0;        //fuel evaporation time constant, value in 0.1024ms units
+ static uint32_t pw1 = 0;
 
- if (xtau_str_cnt < d.param.ckps_engine_cyl) //check counter's value from interrupt
-  return; //necessary time has not yet come
+ if (xtau_str_cnt < 1/*d.param.ckps_engine_cyl*/) //check counter's value from interrupt
+ { //necessary time has not yet come - use previously calculated values to calculate fuel
+  if (pw1 > *pw)
+   pw1 = *pw;
+
+  uint32_t fi = ((uint32_t)(*pw - pw1) * 1024) / (1024 - xf); //calculate corrected PW
+  if (fi > 65535)
+   fi = 65535;
+
+  *pw = fi; //apply correction
+  return;
+ }
 
  if (d.sens.mapdot > s_thrd)
  { //Acceleration
@@ -1957,11 +1968,6 @@ void calc_xtau(int32_t* pw)
   tf = simple_interpolation_u(d.sens.mapdot, tfd, tfa, f_thrd, dthrd, 1) >> 0;
  }
 
- if (tf < 1)
-  tf = 1, docor = 0;           // do not apply correction
- else
-  docor = 1;
-
  //obtain value of passed time from interrupt. See adc.c for more information
  uint32_t dt;
  _DISABLE_INTERRUPT();
@@ -1971,7 +1977,6 @@ void calc_xtau(int32_t* pw)
 
  uint16_t ttdt = ((uint32_t)tf * 32) / dt; //tf is in 102.4us units, convert it to 3.2us units by multiplying it by 32
 
- uint32_t pw1;
  if (ttdt < 1)
   pw1 = 0, M = 0; // wall is fully dry
  else
@@ -1986,7 +1991,6 @@ void calc_xtau(int32_t* pw)
 
  M = M + (((uint32_t)xf * fi) >> 10) - pw1; //divide by 1024, because xf is factor x 1024
 
- if (docor)
-  *pw = fi; //apply correction
+ *pw = fi; //apply correction
 }
 #endif

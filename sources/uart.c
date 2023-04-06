@@ -1001,6 +1001,9 @@ void uart_send_packet(uint8_t send_mode)
   build_i8h(d.param.inj_ae_time);
   build_i8h(d.param.inj_ae_ballance);
   build_i8h(d.param.inj_ae_mapdot_thrd);
+  build_i8h(d.param.inj_xtau_s_thrd);
+  build_i8h(d.param.inj_xtau_f_thrd);
+  build_i8h(d.param.wallwet_model);
   break;
 #endif
 
@@ -1808,6 +1811,9 @@ uint8_t uart_recept_packet(void)
   d.param.inj_ae_time = recept_i8h();
   d.param.inj_ae_ballance = recept_i8h();
   d.param.inj_ae_mapdot_thrd = recept_i8h();
+  d.param.inj_xtau_s_thrd = recept_i8h();
+  d.param.inj_xtau_f_thrd = recept_i8h();
+  d.param.wallwet_model = recept_i8h();
   break;
 #endif
 

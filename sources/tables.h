@@ -137,6 +137,8 @@
 
 #define FUELDENS_CORR_SIZE              16          //!< Size of fuel density correction map
 
+#define XTAU_FACT_SIZE                  16          //!< This value must be equal to RPM_GRID_SIZE
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -502,8 +504,20 @@ typedef struct fw_ex_data_t
   /**Fuel density correction (coefficient vs temperature of fuel), value * 16384*/
   uint16_t fueldens_corr[FUELDENS_CORR_SIZE];
 
+  /**Film factors for accelaration, 0...0.99, value * 1024 */
+  uint16_t xtau_xfacc[XTAU_FACT_SIZE];
+
+  /**Film factors for deceleration, 0...0.99, value * 1024 */
+  uint16_t xtau_xfdec[XTAU_FACT_SIZE];
+
+  /**Time factors for accelaration, value in 102.4 us units (3.2us * 32)*/
+  uint16_t xtau_tfacc[XTAU_FACT_SIZE];
+
+  /**Time factors for deceleration, value in 102.4 us units (3.2us * 32)*/
+  uint16_t xtau_tfdec[XTAU_FACT_SIZE];
+
   /**reserved*/
-  uint8_t reserved1[1259];
+  uint8_t reserved1[1131];
 
   //---------------------------------------------------------------
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
@@ -900,11 +914,16 @@ typedef struct params_t
   uint8_t  inj_ae_ballance;              //!< MAP/TPS balance for acceleration enrichment, 0...1.0, value * 256. So, value 255 correspond to 100% (actually 99.6%)
   uint8_t  inj_ae_mapdot_thrd;           //!< MAP kPa/sec threshold, max rate is 255kPa/sec
 
+  uint8_t  inj_xtau_s_thrd;              //!< X-tau MAP kPa/sec start threshold, 255 max
+  uint8_t  inj_xtau_f_thrd;              //!< X-tau MAP kPa/sec finish threshold, 255 max
+
+  uint8_t  wallwet_model;                //!< 0 - don't use, 1 - use X-tau
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[136];
+  uint8_t  reserved[133];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

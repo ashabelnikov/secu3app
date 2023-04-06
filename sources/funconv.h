@@ -555,4 +555,11 @@ uint16_t calc_speed(uint16_t period);
 uint32_t calc_dist(uint16_t pulse_count);
 #endif
 
+#if defined(FUEL_INJECT) && defined(XTAU_CORR)
+/** Calculates X-tau corrections
+ * \param pw pointer to variable of injection PW, this variable also receives result
+ */
+void calc_xtau(int32_t* pw);
+#endif
+
 #endif //_FUNCONV_H_

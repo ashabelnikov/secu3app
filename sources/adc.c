@@ -264,6 +264,12 @@ void adc_init(void)
  ACSR=_BV(ACD);
 }
 
+#if defined(FUEL_INJECT) && defined(XTAU_CORR)
+volatile uint8_t xtau_str_cnt = 0;
+volatile uint32_t xtau_str_int = 0;
+static volatile uint16_t xtau_tcnt = 0;
+#endif
+
 /**Interrupt for completion of ADC conversion. Measurement of values of all analog sensors.
  * After starting measurements this interrupt routine will be called for each input untill all inputs will be processed.
  */
@@ -282,11 +288,18 @@ ISR(ADC_vect)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
    if ((TCNT1 - adc.mapdot[0].tmr) >= adc.mapdot_mindt)
    {
-    //save values for TPSdot calculations
+    //save values for MAPdot calculations
     adc.mapdot[1] = adc.mapdot[0];          //previous = current
     adc.mapdot[0].volt = adc.map_value;     //save voltage
     adc.mapdot[0].tmr = TCNT1;              //save timer's value
    }
+#endif
+
+#if defined(FUEL_INJECT) && defined(XTAU_CORR)
+   //TODO: calling this code here does not guarantee that it will be called for every engine stroke. So, rewrite it in the future
+   xtau_str_int+=(TCNT1 - xtau_tcnt);       //measure time between events and add it to the sum
+   xtau_tcnt = TCNT1;
+   ++xtau_str_cnt;                          //update counter of events
 #endif
 
    break;

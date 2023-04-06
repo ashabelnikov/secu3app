@@ -198,6 +198,12 @@
 /**Fuel density correction */
 #define _FDC(v) ROUNDU16((v)*16384.0)
 
+/** Factor */
+#define _XXF(v) ROUND((v) * 1024.0)
+
+/** Time in ms*/
+#define _XTF(v) ROUND(((v) * 1000.0) / 102.4)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -703,6 +709,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_ae_ballance =             128,                 //50%
   .inj_ae_mapdot_thrd =          50,                  //50kPa per second
 
+  .inj_xtau_s_thrd =             40,                  //-40kPa
+  .inj_xtau_f_thrd =             60,                  //-60kPa
+
+  .wallwet_model =               0,                  //don't use wall wetting model
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -1056,6 +1067,26 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill fuel density correction map (coefficient vs temperature of fuel in ramp)*/
   {_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),
    _FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000),_FDC(1.0000)
+  },
+
+  /**X-tau Factor - acceleration*/
+  {_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),
+   _XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300),_XXF(0.300)
+  },
+
+  /**X-tau Factor - deceleration*/
+  {_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),
+   _XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200),_XXF(0.200)
+  },
+
+  /**X-tau Time - acceleration*/
+  {_XTF(411.0),_XTF(407.0),_XTF(405.0),_XTF(403.0),_XTF(400.0),_XTF(396.0),_XTF(392.0),_XTF(387.0),
+   _XTF(382.0),_XTF(377.0),_XTF(372.0),_XTF(367.0),_XTF(362.0),_XTF(357.0),_XTF(352.0),_XTF(345.0)
+  },
+
+  /**X-tau Time - deceleration*/
+  {_XTF(511.0),_XTF(507.0),_XTF(505.0),_XTF(503.0),_XTF(500.0),_XTF(496.0),_XTF(492.0),_XTF(487.0),
+   _XTF(482.0),_XTF(477.0),_XTF(472.0),_XTF(467.0),_XTF(462.0),_XTF(457.0),_XTF(452.0),_XTF(445.0)
   },
 
   /**reserved*/

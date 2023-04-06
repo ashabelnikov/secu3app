@@ -195,6 +195,13 @@ static uint16_t finalize_inj_time(int32_t* pw)
  uint16_t inj_min_pw = ((uint16_t)(d.param.inj_min_pw[d.sens.gas])) * 8;
  uint16_t inj_max_pw = d.param.inj_max_pw[d.sens.gas];
 
+#ifdef XTAU_CORR
+ if (1==d.param.wallwet_model)
+ {
+  calc_xtau(pw); //apply x-tau corrections
+ }
+#endif
+
  uint8_t i;
  for (i = 0; i < INJ_CHANNELS_MAX; ++i)
  {

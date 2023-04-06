@@ -83,7 +83,7 @@
 
     SPLIT_ANGLE          Split angle for ignition on rotary engines
 
-    BL_BAUD_RATE   *     Baud rate for boot loader. Can be set to 9600, 14400,
+    BL_BAUD_RATE    *    Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600, 115200. Note! Will not take
                          effect without reprogramming using ISP programmator.
 
@@ -115,6 +115,9 @@
     IFR_VS_MAP_CORR *    Turn on correction of pressure in the fuel rail
 
     DEFERRED_CRC    *    Turn on background checking of the firmware's CRC
+
+    XTAU_CORR       *    Use X-tau wall wetting model. This option will take
+                         effect only together with FUEL_INJECT option
 
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager

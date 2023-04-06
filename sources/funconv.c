@@ -1906,3 +1906,87 @@ uint32_t calc_dist(uint16_t pulse_count)
  return ((uint32_t)pulse_count * d.param.vss_period_dist) >> (15-5);
 }
 #endif
+
+#if defined(FUEL_INJECT) && defined(XTAU_CORR)
+//from adc.c
+extern volatile uint8_t xtau_str_cnt;
+extern volatile uint32_t xtau_str_int;
+
+void calc_xtau(int32_t* pw)
+{
+ int16_t s_thrd = -((int16_t)d.param.inj_xtau_s_thrd); //kPa/sec
+ int16_t f_thrd = -((int16_t)d.param.inj_xtau_f_thrd); //kPa/sec
+ uint16_t xf, tf;
+ uint8_t docor;
+ static uint32_t M; //memory for correction
+
+ if (xtau_str_cnt < d.param.ckps_engine_cyl) //check counter's value from interrupt
+  return; //necessary time has not yet come
+
+ if (d.sens.mapdot > s_thrd)
+ { //Acceleration
+  xf = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+
+  tf = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+ }
+ else if (d.sens.mapdot < f_thrd)
+ { //Decelaration
+  xf = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+
+  tf = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+ }
+ else
+ { //in between
+  int16_t dthrd = (s_thrd - f_thrd);
+
+  uint16_t xfa = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+  uint16_t xfd = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+  xf = simple_interpolation(d.sens.mapdot, xfd, xfa, f_thrd, dthrd, 1) >> 0;
+
+  uint16_t tfa = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+
+  uint16_t tfd = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+  tf = simple_interpolation_u(d.sens.mapdot, tfd, tfa, f_thrd, dthrd, 1) >> 0;
+ }
+
+ if (tf < 1)
+  tf = 1, docor = 0;           // do not apply correction
+ else
+  docor = 1;
+
+ //obtain value of passed time from interrupt. See adc.c for more information
+ uint32_t dt;
+ _DISABLE_INTERRUPT();
+  dt = xtau_str_int;
+  xtau_str_int = xtau_str_cnt = 0;
+ _ENABLE_INTERRUPT();
+
+ uint16_t ttdt = ((uint32_t)tf * 32) / dt; //tf is in 102.4us units, convert it to 3.2us units by multiplying it by 32
+
+ uint32_t pw1;
+ if (ttdt < 1)
+  pw1 = 0, M = 0; // wall is fully dry
+ else
+  pw1 = M / ttdt; //calculate (M / (tf / dt))
+
+ if (pw1 > *pw)
+  pw1 = *pw;
+
+ uint32_t fi = ((uint32_t)(*pw - pw1) * 1024) / (1024 - xf); //calculate corrected PW
+ if (fi > 65535)
+  fi = 65535;
+
+ M = M + (((uint32_t)xf * fi) >> 10) - pw1; //divide by 1024, because xf is factor x 1024
+
+ if (docor)
+  *pw = fi; //apply correction
+}
+#endif

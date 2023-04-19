@@ -134,8 +134,10 @@ struct ecudata_t d =
 ,.uniout = {0}
 #endif
 #ifdef FUEL_INJECT
-,.inj_ltft = {0}
-,.inj_ltft_crc = 0
+,.inj_ltft1 = {0}
+,.inj_ltft1_crc = 0
+,.inj_ltft2 = {0}
+,.inj_ltft2_crc = 0
 #endif
 };
 

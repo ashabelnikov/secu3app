@@ -313,9 +313,9 @@ static void fuel_calc(void)
 
  if (ltft_is_active())
  {
-  pw = (pw * calc_ltft(/**0*/)) >> 9;            //apply LTFT correction #1
+  pw = (pw * calc_ltft(0)) >> 9;            //apply LTFT correction #1
   if (d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
-   pw2 = (pw2 * calc_ltft(/**1*/)) >> 9;          //apply LTFT correction #2
+   pw2 = (pw2 * calc_ltft(1)) >> 9;          //apply LTFT correction #2
  }
 
  if (0==d.param.inj_ae_type)

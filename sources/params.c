@@ -111,11 +111,16 @@ void reset_eeprom_params(void)
  eeprom_write(&crc, offsetof(eeprom_data_t, tables.checksum), sizeof(uint16_t));
 #endif
 #ifdef FUEL_INJECT
- //Write default values to LTFT map
- memset(&d.inj_ltft[0][0], 0, 256); //set to zero all cells
- crc = crc16((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&d.inj_ltft[0][0], offsetof(eeprom_data_t, ltft), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&crc, offsetof(eeprom_data_t, ltft_crc), sizeof(uint16_t));
+ //Write default values to LTFT 1 map
+ memset(&d.inj_ltft1[0][0], 0, 256); //set to zero all cells
+ crc = crc16((uint8_t*)&d.inj_ltft1[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&d.inj_ltft1[0][0], offsetof(eeprom_data_t, ltft1), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, offsetof(eeprom_data_t, ltft1_crc), sizeof(uint16_t));
+ //Write default values to LTFT 2 map
+ memset(&d.inj_ltft2[0][0], 0, 256); //set to zero all cells
+ crc = crc16((uint8_t*)&d.inj_ltft2[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&d.inj_ltft2[0][0], offsetof(eeprom_data_t, ltft2), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, offsetof(eeprom_data_t, ltft2_crc), sizeof(uint16_t));
 #endif
  //write 4 bytes of magic number identifying platform
  eeprom_write_P((void _PGM*)(FLASHEND-3), offsetof(eeprom_data_t, magic), 4);
@@ -158,11 +163,16 @@ void load_eeprom_params(void)
   eeprom_write(&crc, offsetof(eeprom_data_t, tables.checksum), sizeof(uint16_t));
 #endif
 #ifdef FUEL_INJECT
- //Write default values to LTFT map
- memset(d.inj_ltft, 0, 256); //set to zero all cells
- crc = crc16((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&d.inj_ltft[0][0], offsetof(eeprom_data_t, ltft), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_write(&crc, offsetof(eeprom_data_t, ltft_crc), sizeof(uint16_t));
+ //Write default values to LTFT 1 map
+ memset(d.inj_ltft1, 0, 256); //set to zero all cells
+ crc = crc16((uint8_t*)&d.inj_ltft1[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&d.inj_ltft1[0][0], offsetof(eeprom_data_t, ltft1), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, offsetof(eeprom_data_t, ltft1_crc), sizeof(uint16_t));
+ //Write default values to LTFT 2 map
+ memset(d.inj_ltft2, 0, 256); //set to zero all cells
+ crc = crc16((uint8_t*)&d.inj_ltft2[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&d.inj_ltft2[0][0], offsetof(eeprom_data_t, ltft2), INJ_VE_POINTS_L*INJ_VE_POINTS_F);
+ eeprom_write(&crc, offsetof(eeprom_data_t, ltft2_crc), sizeof(uint16_t));
 #endif
   //write 4 bytes of magic number identifying platform
   eeprom_write_P((void _PGM*)(FLASHEND-3), offsetof(eeprom_data_t, magic), 4);
@@ -194,10 +204,17 @@ void load_specified_tables_into_ram(uint8_t index)
 void load_ltft_tables_into_ram(void)
 {
  uint16_t crc = 0;
- eeprom_read(&d.inj_ltft[0][0], offsetof(eeprom_data_t, ltft), INJ_VE_POINTS_L*INJ_VE_POINTS_F); //read contents of LTFT map
- eeprom_read(&crc, offsetof(eeprom_data_t, ltft_crc), sizeof(uint16_t)); //read value of checksum (2 bytes)
- if (crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F)!=crc)
- { //LTFT table is corrupted!
+ eeprom_read(&d.inj_ltft1[0][0], offsetof(eeprom_data_t, ltft1), INJ_VE_POINTS_L*INJ_VE_POINTS_F); //read contents of LTFT map
+ eeprom_read(&crc, offsetof(eeprom_data_t, ltft1_crc), sizeof(uint16_t)); //read value of checksum (2 bytes)
+ if (crc16_b((uint8_t*)&d.inj_ltft1[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F)!=crc)
+ { //LTFT 1 table is corrupted!
+  ce_set_error(ECUERROR_EEPROM_LTFT_BROKEN);
+ }
+ crc = 0;
+ eeprom_read(&d.inj_ltft2[0][0], offsetof(eeprom_data_t, ltft2), INJ_VE_POINTS_L*INJ_VE_POINTS_F); //read contents of LTFT map
+ eeprom_read(&crc, offsetof(eeprom_data_t, ltft2_crc), sizeof(uint16_t)); //read value of checksum (2 bytes)
+ if (crc16_b((uint8_t*)&d.inj_ltft2[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F)!=crc)
+ { //LTFT 2 table is corrupted! TODO: add separate error code for 2nd LTFT map
   ce_set_error(ECUERROR_EEPROM_LTFT_BROKEN);
  }
 }

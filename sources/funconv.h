@@ -494,9 +494,10 @@ uint16_t calc_maf_flow(uint16_t adcvalue);
 
 #ifdef FUEL_INJECT
 /** Calculates current value of LTFT correction (LTFT(load, rpm))
+ * \param idx Index of LTFT map: 0 - LTFT #1, 1 - LTFT #2
  * \return Correction coefficient, value * 512
  */
-int16_t calc_ltft(void);
+int16_t calc_ltft(uint8_t idx);
 
 /** Finds an index at the RPM grid which current RPM is near to
  * \return index of cell on RPM grid, 255 - if there are no near cells

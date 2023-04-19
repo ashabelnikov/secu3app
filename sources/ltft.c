@@ -36,18 +36,25 @@
 #include "funconv.h"
 #include "lambda.h"
 #include "mathemat.h"
+#include "bitmask.h"
 
 #define LTFT_MIN -126 //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
 #define LTFT_MAX  126 //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
 
-static uint8_t ltft_state = 0;  //!< SM state
-static uint16_t stat_tmr = 0;   //!< timer
-static uint8_t ltft_idx_r = 0;  //!< rpm index of current work point
-static uint8_t ltft_idx_l = 0;  //!< load index of current work point
-static int16_t ltft_corr = 0;   //!< value of actual correction
-static uint8_t idx_l = 0;       //!< index for iteration throught load axis
-static uint8_t idx_r = 0;       //!< index for iteration throught rpm axis
-static uint8_t strokes = 0;     //!< counter of eng. strokes
+/**Describes data for each LTFT channel*/
+typedef struct
+{
+ uint8_t ltft_state;  //!< SM state
+ uint16_t stat_tmr;   //!< timer
+ uint8_t ltft_idx_r;  //!< rpm index of current work point
+ uint8_t ltft_idx_l;  //!< load index of current work point
+ int16_t ltft_corr;   //!< value of actual correction
+ uint8_t idx_l;       //!< index for iteration throught load axis
+ uint8_t idx_r;       //!< index for iteration throught rpm axis
+ uint8_t strokes;     //!< counter of eng. strokes
+}ltft_t;
+
+ltft_t ltft[2] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
 
 void ltft_control(void)
 {
@@ -69,82 +76,93 @@ void ltft_control(void)
  if (!ltft_is_active())
   return; //LTFT functionality turned off or not active for current fuel
 
- //do learning:
- switch(ltft_state)
+ uint8_t chnum = d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
+ for (uint8_t i = 0; i < chnum; ++i)
  {
-  case 0:
-  { //wait for work point to enter restricted band around a cell
-   uint8_t r = ltft_check_rpm_hit();
-   uint8_t l = ltft_check_load_hit();
-   if (r != 255 && l != 255)
-   {
-    lambda_reset_swt_counter(0);
-    stat_tmr = s_timer_gtc();
-    strokes = 0;
-    ltft_state++;
-   }
-   else
-    break;
-  }
-
-  case 1:
+  //do learning:
+  switch(ltft[i].ltft_state)
   {
-   uint8_t r = ltft_check_rpm_hit();
-   uint8_t l = ltft_check_load_hit();
-   if (r == 255 || l == 255)
-   { //work point came out restricted band - reset SM state
-    ltft_state = 0;
-    break;
-   }
-
-   uint8_t stab_time_ready = 0;
-
-   if (0==PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str))
-    stab_time_ready = ((s_timer_gtc() - stat_tmr) >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_time)); //use time
-   else
-    stab_time_ready = strokes >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str); //use eng. strokes
-
-   if (stab_time_ready && lambda_get_swt_counter(0) >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
-   {
-    int16_t ltft_curr = d.inj_ltft[l][r];
-    int16_t new_val = ltft_curr + d.corr.lambda[0];
-    restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
-    d.inj_ltft[l][r] = new_val;     //apply correction to current cell
-    ltft_corr = new_val - ltft_curr;
-    d.corr.lambda[0]-=ltft_corr;       //reduce current lambda by actual value of correction (taking into account possible min/max restriction)
-    ltft_idx_r = r, ltft_idx_l = l; //remember indexes of current work point
-    idx_l = 0, idx_r = 0;
-    ltft_state++;
-   }
-   else
-   {
-    break;
-   }
-  }
-
-  case 2: //perform correction of neighbour cells
-  {
-   uint8_t r = PGM_GET_BYTE(&fw_data.exdata.ltft_neigh_rad);
-   if ((abs8((int8_t)idx_r - ltft_idx_r) <= r) && (abs8((int8_t)idx_l - ltft_idx_l) <= r)) //skip cells which lay out of radius
-   {
-    if (ltft_idx_r != idx_r || ltft_idx_l != idx_l) //skip already corrected (current) cell
+   case 0:
+   { //wait for work point to enter restricted band around a cell
+    uint8_t r = ltft_check_rpm_hit();
+    uint8_t l = ltft_check_load_hit();
+    if (r != 255 && l != 255)
     {
-     int8_t dist_l = abs(ltft_idx_l - idx_l);
-     int8_t dist_r = abs(ltft_idx_r - idx_r);
-     int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
-     int16_t new_val = ((int16_t)d.inj_ltft[idx_l][idx_r]) + (((((int32_t)ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
+     lambda_reset_swt_counter(i);
+     ltft[i].stat_tmr = s_timer_gtc();
+     ltft[i].strokes = 0;
+     ltft[i].ltft_state++;
+    }
+    else
+     break;
+   }
+
+   case 1:
+   {
+    uint8_t r = ltft_check_rpm_hit();
+    uint8_t l = ltft_check_load_hit();
+    if (r == 255 || l == 255)
+    { //work point came out restricted band - reset SM state
+     ltft[i].ltft_state = 0;
+     break;
+    }
+
+    uint8_t stab_time_ready = 0;
+
+    if (0==PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str))
+     stab_time_ready = ((s_timer_gtc() - ltft[i].stat_tmr) >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_time)); //use time
+    else
+     stab_time_ready = ltft[i].strokes >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str); //use eng. strokes
+
+    if (stab_time_ready && lambda_get_swt_counter(i) >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
+    {
+     int16_t ltft_curr = i ? d.inj_ltft2[l][r] : d.inj_ltft1[l][r];
+     int16_t new_val = ltft_curr + d.corr.lambda[i];
      restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
-     d.inj_ltft[idx_l][idx_r] = new_val;
+     if (i)
+      d.inj_ltft2[l][r] = new_val;     //apply correction to current cell of LTFT 2
+     else
+      d.inj_ltft1[l][r] = new_val;     //apply correction to current cell of LTFT 1
+     ltft[i].ltft_corr = new_val - ltft_curr;
+     d.corr.lambda[i]-=ltft[i].ltft_corr;       //reduce current lambda by actual value of correction (taking into account possible min/max restriction)
+     ltft[i].ltft_idx_r = r, ltft[i].ltft_idx_l = l; //remember indexes of current work point
+     ltft[i].idx_l = 0, ltft[i].idx_r = 0;
+     ltft[i].ltft_state++;
+    }
+    else
+    {
+     break;
     }
    }
 
-   idx_r++;
-   if (idx_r == INJ_VE_POINTS_F)
+   case 2: //perform correction of neighbour cells
    {
-    idx_r = 0;
-    idx_l++;
-    if (idx_l == INJ_VE_POINTS_L)
-     ltft_state = 0; //all 256 cells updated, finish
+    uint8_t r = PGM_GET_BYTE(&fw_data.exdata.ltft_neigh_rad);
+    uint8_t idx_l = ltft[i].idx_l, idx_r = ltft[i].idx_r;
+    if ((abs8((int8_t)idx_r - ltft[i].ltft_idx_r) <= r) && (abs8((int8_t)idx_l - ltft[i].ltft_idx_l) <= r)) //skip cells which lay out of radius
+    {
+     if (ltft[i].ltft_idx_r != idx_r || ltft[i].ltft_idx_l != idx_l) //skip already corrected (current) cell
+     {
+      int8_t dist_l = abs(ltft[i].ltft_idx_l - idx_l);
+      int8_t dist_r = abs(ltft[i].ltft_idx_r - idx_r);
+      int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
+      int16_t new_val = ((int16_t)(i ? d.inj_ltft2[idx_l][idx_r] : d.inj_ltft1[idx_l][idx_r])) + (((((int32_t)ltft[i].ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
+      restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
+      if (i)
+       d.inj_ltft2[idx_l][idx_r] = new_val;
+      else
+       d.inj_ltft1[idx_l][idx_r] = new_val;
+     }
+    }
+
+    ltft[i].idx_r++;
+    if (ltft[i].idx_r == INJ_VE_POINTS_F)
+    {
+     ltft[i].idx_r = 0;
+     ltft[i].idx_l++;
+     if (ltft[i].idx_l == INJ_VE_POINTS_L)
+      ltft[i].ltft_state = 0; //all 256 cells updated, finish
+    }
    }
   }
  }
@@ -171,7 +189,8 @@ uint8_t ltft_is_active(void)
 
 void ltft_stroke_event_notification(void)
 {
- ++strokes;
+ ++ltft[0].strokes;
+ ++ltft[1].strokes;
 }
 
 #endif

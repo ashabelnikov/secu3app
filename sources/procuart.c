@@ -96,7 +96,7 @@ void process_uart_interface(void)
     if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode) > 0) //is LTFT used?
     {
      while(!eeprom_is_idle()) { wdt_reset_timer(); }
-     sop_start_saving_ltft();       //save value of LTFT table
+     sop_start_saving_ltft();       //save values of LTFT tables (1 and 2)
     }
 #endif
     pwrrelay_init_steppers();       //init steppers if necessary

@@ -1330,14 +1330,33 @@ void uart_send_packet(uint8_t send_mode)
 #ifdef FUEL_INJECT
   case LTFT_DAT:
   {
-   static uint8_t ltft_index = 0;
-   build_i8h(0); //reserved (map Id)
-   build_i8h(ltft_index*INJ_VE_POINTS_F); //cell address
-   build_rb((uint8_t*)&d.inj_ltft[ltft_index][0], INJ_VE_POINTS_F); //16 bytes per packet (row), INJ_VE_POINTS_L rows
-   if (ltft_index >= INJ_VE_POINTS_L-1 )
-    ltft_index = 0;
-   else
-    ++ltft_index;
+   static uint8_t state = 0, ltft_index = 0;
+   build_i8h(state);  //map Id
+   switch(state)
+   {
+    case 0: //LTFT 1
+     build_i8h(ltft_index*INJ_VE_POINTS_F); //cell address
+     build_rb((uint8_t*)&d.inj_ltft1[ltft_index][0], INJ_VE_POINTS_F); //16 bytes per packet (row), INJ_VE_POINTS_L rows
+     if (ltft_index >= INJ_VE_POINTS_L-1 )
+     {
+      ltft_index = 0;
+      state = 1;
+     }
+     else
+      ++ltft_index;
+     break;
+    case 1: //LTFT 2
+     build_i8h(ltft_index*INJ_VE_POINTS_F); //cell address
+     build_rb((uint8_t*)&d.inj_ltft2[ltft_index][0], INJ_VE_POINTS_F); //16 bytes per packet (row), INJ_VE_POINTS_L rows
+     if (ltft_index >= INJ_VE_POINTS_L-1 )
+     {
+      ltft_index = 0;
+      state = 0;
+     }
+     else
+      ++ltft_index;
+     break;
+   }
    break;
   }
 #endif

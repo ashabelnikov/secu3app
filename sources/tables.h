@@ -943,9 +943,11 @@ typedef struct eeprom_data_t
  uint32_t consfuel;    //!< consumed fuel
  uint8_t  reserv2;     //!< reserved
  f_data_t tables;      //!< online tables
- uint8_t  ltft[INJ_VE_POINTS_L*INJ_VE_POINTS_F];
- uint16_t ltft_crc;    //!< Checksum of the LTFT table
- uint8_t  reserv[510]; //!< free bytes
+ uint8_t  ltft1[INJ_VE_POINTS_L*INJ_VE_POINTS_F];
+ uint16_t ltft1_crc;   //!< Checksum of the LTFT 1 table
+ uint8_t  ltft2[INJ_VE_POINTS_L*INJ_VE_POINTS_F];
+ uint16_t ltft2_crc;   //!< Checksum of the LTFT 2 table
+ uint8_t  reserv[252]; //!< free bytes
  uint8_t  magic[4];    //!< magic number in EEPROM (last 4 bytes)
 }eeprom_data_t;
 

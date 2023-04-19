@@ -1766,14 +1766,14 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
 }
 
 #ifdef FUEL_INJECT
-int16_t calc_ltft(void)
+int16_t calc_ltft(uint8_t idx)
 {
  uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
  return (bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        d.inj_ltft[fcs.la_l][fcs.la_f],   //values in table are signed, 8 bit
-        d.inj_ltft[fcs.la_lp1][fcs.la_f],
-        d.inj_ltft[fcs.la_lp1][fcs.la_fp1],
-        d.inj_ltft[fcs.la_l][fcs.la_fp1],
+        idx ? d.inj_ltft2[fcs.la_l][fcs.la_f] : d.inj_ltft1[fcs.la_l][fcs.la_f],   //values in table are signed, 8 bit
+        idx ? d.inj_ltft2[fcs.la_lp1][fcs.la_f] : d.inj_ltft1[fcs.la_lp1][fcs.la_f],
+        idx ? d.inj_ltft2[fcs.la_lp1][fcs.la_fp1] : d.inj_ltft1[fcs.la_lp1][fcs.la_fp1],
+        idx ? d.inj_ltft2[fcs.la_l][fcs.la_fp1] : d.inj_ltft1[fcs.la_l][fcs.la_fp1],
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
         use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
         PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),

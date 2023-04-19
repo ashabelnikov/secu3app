@@ -321,10 +321,12 @@ void sop_execute_operations(void)
   //TODO: d.op_actn_code may become overwritten while we are waiting here...
   if (eeprom_is_idle())
   {
-   memset(&d.inj_ltft[0][0], 0, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //reset contents of LTFT map in RAM
-
-   d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
-   eeprom_start_wr_data(OPCODE_RESET_LTFT, offsetof(eeprom_data_t, ltft), &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+   memset(&d.inj_ltft1[0][0], 0, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //reset contents of LTFT 1 map in RAM
+   d.inj_ltft1_crc = crc16_b((uint8_t*)&d.inj_ltft1[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F); //calculate checksum of LTFT 1 map
+   memset(&d.inj_ltft2[0][0], 0, INJ_VE_POINTS_L*INJ_VE_POINTS_F); //reset contents of LTFT 2 map in RAM
+   d.inj_ltft2_crc = crc16_b((uint8_t*)&d.inj_ltft2[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F); //calculate checksum of LTFT 2 map
+   //write two LTFTs at once
+   eeprom_start_wr_data(OPCODE_RESET_LTFT, offsetof(eeprom_data_t, ltft1), &d.inj_ltft1[0][0], ((INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t)) * 2);
 
    //clear possibly present error because after saving checksum become correct
    ce_clear_error(ECUERROR_EEPROM_LTFT_BROKEN);
@@ -470,7 +472,9 @@ void sop_start_saving_consfuel(void)
 #ifdef FUEL_INJECT
 void sop_start_saving_ltft(void)
 {
- d.inj_ltft_crc = crc16_b((uint8_t*)&d.inj_ltft[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F);
- eeprom_start_wr_data(OPCODE_SAVE_LTFT, offsetof(eeprom_data_t, ltft), &d.inj_ltft[0][0], (INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t));
+ d.inj_ltft1_crc = crc16_b((uint8_t*)&d.inj_ltft1[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F); //calculate checksum of LTFT 1 map
+ d.inj_ltft2_crc = crc16_b((uint8_t*)&d.inj_ltft2[0][0], INJ_VE_POINTS_L*INJ_VE_POINTS_F); //calculate checksum of LTFT 2 map
+ //write two LTFTs at once
+ eeprom_start_wr_data(OPCODE_SAVE_LTFT, offsetof(eeprom_data_t, ltft1), &d.inj_ltft1[0][0], ((INJ_VE_POINTS_L*INJ_VE_POINTS_F)+sizeof(uint16_t)) * 2);
 }
 #endif

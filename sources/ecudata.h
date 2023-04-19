@@ -337,8 +337,10 @@ typedef struct ecudata_t
 #endif
 
 #ifdef FUEL_INJECT
- int8_t inj_ltft[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Long Term Fuel Trim map, value * 512 (range -0.247...+0.247)
- uint16_t inj_ltft_crc;                //!< used when saving to EEPROM, must follow inj_ltft array!
+ int8_t inj_ltft1[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Long Term Fuel Trim map 1, value * 512 (range -0.247...+0.247)
+ uint16_t inj_ltft1_crc;                //!< used when saving to EEPROM, must follow inj_ltft1 array!
+ int8_t inj_ltft2[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Long Term Fuel Trim map 2, value * 512 (range -0.247...+0.247)
+ uint16_t inj_ltft2_crc;                //!< used when saving to EEPROM, must follow inj_ltft2 array!
 #endif
 }ecudata_t;
 

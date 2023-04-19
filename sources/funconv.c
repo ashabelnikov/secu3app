@@ -1151,9 +1151,11 @@ int16_t gdp_function(void)
 
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
-int16_t ego_curve_lookup(void)
+int16_t ego_curve_lookup(uint8_t inp)
 {
- int16_t i, i1, voltage = d.sens.lambda1; /*d.sens.inst_add_i1*/
+ int16_t i, i1, voltage = d.sens.lambda[inp]; /*d.sens.inst_add_i1*/
+ if (0==voltage)
+  return 0; //if voltage is 0, it means that this sensor is not used or it is mixed into other one
 
  //Voltage value at the start of axis in ADC discretes
  uint16_t v_start = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE]);
@@ -1912,25 +1914,27 @@ uint32_t calc_dist(uint16_t pulse_count)
 extern volatile uint8_t xtau_str_cnt;
 extern volatile uint32_t xtau_str_int;
 
-void calc_xtau(int32_t* pw)
+void calc_xtau(int32_t* pw1, int32_t* pw2)
 {
  int16_t s_thrd = -((int16_t)d.param.inj_xtau_s_thrd); //kPa/sec
  int16_t f_thrd = -((int16_t)d.param.inj_xtau_f_thrd); //kPa/sec
- static uint32_t M = 0;  //amuunt of fuel in the film
- static uint16_t xf = 0; //coefficient of fuel falling into the film, value * 1024
- uint16_t tf = 0;        //fuel evaporation time constant, value in 0.1024ms units
- static uint32_t pw1 = 0;
+ static uint32_t mpw[2] = {0};
+ static uint32_t M[2] = {0};  //amuunt of fuel in the film
+ static uint16_t xf = 0;      //coefficient of fuel falling into the film, value * 1024
+ uint16_t tf = 0;             //fuel evaporation time constant, value in 0.1024ms units
+ uint8_t chnum = d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
 
  if (xtau_str_cnt < 1/*d.param.ckps_engine_cyl*/) //check counter's value from interrupt
  { //necessary time has not yet come - use previously calculated values to calculate fuel
-  if (pw1 > *pw)
-   pw1 = *pw;
-
-  uint32_t fi = ((uint32_t)(*pw - pw1) * 1024) / (1024 - xf); //calculate corrected PW
-  if (fi > 65535)
-   fi = 65535;
-
-  *pw = fi; //apply correction
+  for(uint8_t i = 0; i < chnum; ++i)
+  {
+   int32_t *pw = i ? pw2 : pw1;
+   if (mpw[i] > *pw)
+    mpw[i] = *pw;
+   *pw = ((uint32_t)(*pw - mpw[i]) * 1024) / (1024 - xf); //calculate corrected PW
+   if (*pw > 65535)
+    *pw = 65535;
+  }
   return;
  }
 
@@ -1977,20 +1981,23 @@ void calc_xtau(int32_t* pw)
 
  uint16_t ttdt = ((uint32_t)tf * 32) / dt; //tf is in 102.4us units, convert it to 3.2us units by multiplying it by 32
 
- if (ttdt < 1)
-  pw1 = 0, M = 0; // wall is fully dry
- else
-  pw1 = M / ttdt; //calculate (M / (tf / dt))
+ for(uint8_t i = 0; i < chnum; ++i)
+ {
+  int32_t *pw = i ? pw2 : pw1;
 
- if (pw1 > *pw)
-  pw1 = *pw;
+  if (ttdt < 1)
+   mpw[i] = 0, M[i] = 0; // wall is fully dry
+  else
+   mpw[i] = M[i] / ttdt; //calculate (M / (tf / dt))
 
- uint32_t fi = ((uint32_t)(*pw - pw1) * 1024) / (1024 - xf); //calculate corrected PW
- if (fi > 65535)
-  fi = 65535;
+  if (mpw[i] > *pw)
+   mpw[i] = *pw;
 
- M = M + (((uint32_t)xf * fi) >> 10) - pw1; //divide by 1024, because xf is factor x 1024
+  *pw = ((uint32_t)(*pw - mpw[i]) * 1024) / (1024 - xf); //calculate corrected PW
+  if (*pw > 65535)
+   *pw = 65535;
 
- *pw = fi; //apply correction
+  M[i] = M[i] + (((uint32_t)xf * (*pw)) >> 10) - mpw[i]; //divide by 1024, because xf is factor x 1024
+ }
 }
 #endif

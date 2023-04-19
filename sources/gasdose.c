@@ -39,6 +39,7 @@
 #include "pwrrelay.h"
 #include "ventilator.h"
 #include "eculogic.h"
+#include "lambda.h"
 
 /**Direction used to set stepper motor to the initial position */
 #define INIT_POS_DIR SM_DIR_CW
@@ -180,8 +181,8 @@ static int16_t calc_sm_position(uint8_t pwm)
   //apply correction from IAT sensor
   pos = ((int32_t)pos * inj_airtemp_corr(0)) >> 7; //use corrected MAT as argument to lookup table
 
-  //pos = (((int32_t)pos) * (512 + d.corr.lambda)) >> 9; //apply EGO correction
-  pos = pos + ((GD_MAGNITUDE(100.0) * d.corr.lambda) >> 9); //proposed by alvikagal
+  //pos = (((int32_t)pos) * (512 + lambda_get_mixcor())) >> 9; //apply EGO correction
+  pos = pos + ((GD_MAGNITUDE(100.0) * lambda_get_mixcor()) >> 9); //proposed by alvikagal
   if (pos > GD_MAGNITUDE(100.0))
    pos = GD_MAGNITUDE(100.0);
 

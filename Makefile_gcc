@@ -10,7 +10,7 @@
 include platform_cfg
 
 TARGET = secu-3_app
-OBJDIR = ./output
+OBJDIR = output
 CC = avr-gcc
 OBJCOPY = avr-objcopy
 FORMAT = ihex

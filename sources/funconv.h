@@ -306,9 +306,10 @@ int16_t gdp_function(void);
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 /** Converts ADC value (voltage) into AFR
  * Uses d ECU data structure
+ * \param inp Which input to use: 0 - lambda sensor 1, 1 - lambda sensor 2
  * \return AFR * 128
  */
-int16_t ego_curve_lookup(void);
+int16_t ego_curve_lookup(uint8_t inp);
 #endif
 
 #if defined(FUEL_INJECT) /*|| defined(CARB_AFR)*/ || defined(GD_CONTROL)
@@ -557,9 +558,10 @@ uint32_t calc_dist(uint16_t pulse_count);
 
 #if defined(FUEL_INJECT) && defined(XTAU_CORR)
 /** Calculates X-tau corrections
- * \param pw pointer to variable of injection PW, this variable also receives result
+ * \param pw1 pointer to variable of injection PW, this variable also receives result
+ * \param pw2 pointer to variable of injection PW, this variable also receives result
  */
-void calc_xtau(int32_t* pw);
+void calc_xtau(int32_t* pw1, int32_t* pw2);
 #endif
 
 #endif //_FUNCONV_H_

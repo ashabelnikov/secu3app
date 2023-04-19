@@ -169,8 +169,8 @@ typedef struct sensors_t
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
- uint16_t afr;                           //!< AFR value calculated from lambda sensor, value * 128
- uint16_t lambda1;                       //!< voltage from lambda sensor #1
+ uint16_t afr[2];                        //!< AFR value calculated from lambda sensor #1 and #2, value * 128
+ uint16_t lambda[2];                     //!< voltage from lambda sensor #1 and #2
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
@@ -219,7 +219,7 @@ typedef struct correct_t
  int16_t temp_aalt;                      //!< Advance angle from coolant temp. corr. map
  int16_t airt_aalt;                      //!< Advance angle from air temp. corr. map
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
- int16_t lambda;                         //!< Current value of lambda (EGO) correction, can be negative
+ int16_t lambda[2];                      //!< Current value of lambda (EGO) correction, can be negative
 #endif
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  uint16_t afr;                           //!< Current value of air to fuel ratio (from AFR map), value*128

@@ -651,7 +651,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
-   build_i16h(d.corr.lambda);            // lambda correction
+   build_i16h(d.corr.lambda[0]);         // lambda correction
 #else
    build_i16h(0);
 #endif
@@ -677,7 +677,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
-   build_i16h(d.sens.afr);
+   build_i16h(d.sens.afr[0]);
 #else
    build_i16h(0);
 #endif
@@ -758,6 +758,18 @@ void uart_send_packet(uint8_t send_mode)
    build_i24h(d.cons_fuel);             //consumed fuel, L * 1024
 #else
    build_i24h(0);
+#endif
+
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL) 
+   build_i16h(d.sens.afr[1]);
+#else
+   build_i16h(0);
+#endif
+
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
+   build_i16h(d.corr.lambda[1]);            // lambda correction #2
+#else
+   build_i16h(0);
 #endif
    break;
 
@@ -989,6 +1001,7 @@ void uart_send_packet(uint8_t send_mode)
   build_i8h(d.param.eh_temper_thrd);
   build_i8h(d.param.eh_heating_act);
   build_i16h(d.param.eh_aflow_thrd);
+  build_i8h(d.param.lambda_selch);
   break;
 #endif
 
@@ -1799,6 +1812,7 @@ uint8_t uart_recept_packet(void)
   d.param.eh_temper_thrd = recept_i8h();
   d.param.eh_heating_act = recept_i8h();
   d.param.eh_aflow_thrd = recept_i16h();
+  d.param.lambda_selch = recept_i8h();
   break;
 #endif
 

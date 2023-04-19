@@ -58,7 +58,7 @@
 #define SPLIT_OFFSET 4
 #endif
 
-/** Barrier threshold for detecting of missing teeth
+/** Barrier threshold for detecting missing teeth
  * e.g. for 60-2 crank wheel, p * 2.5
  *      for 36-1 crank wheel, p * 1.5
  *      for 12-3 crank wheel, p * 3.0

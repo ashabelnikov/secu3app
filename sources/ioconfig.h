@@ -184,7 +184,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_INPUT1       87     //!< INPUT1          (input)
 #define IOP_INPUT2       88     //!< INPUT2          (input)
 #define IOP_MAF          89     //!< MAF             (input)
-#define IOP_RESERVED43   90     //!< reserved plug   ()
+#define IOP_LAMBDA2      90     //!< LAMBDA2         (input)
 #define IOP_RESERVED44   91     //!< reserved plug   ()
 #define IOP_RESERVED45   92     //!< reserved plug   ()
 #define IOP_RESERVED46   93     //!< reserved plug   ()
@@ -386,7 +386,7 @@ uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
 #define IOP_REFPRS_I     95     //!< REFPRS_I        (input)
 #define IOP_MAF          96     //!< MAF             (input)
 #define IOP_FTS_I        97     //!< FTS             (input)
-#define IOP_RESERVED26   98     //!< reserved plug   ()
+#define IOP_LAMBDA2      98     //!< LAMBDA2         (input)
 #define IOP_RESERVED27   99     //!< reserved plug   ()
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c

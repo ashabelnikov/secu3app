@@ -433,12 +433,29 @@ ftls_notsel:
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
 #ifndef SECU3T //SECU-3i
  if (IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i1 || IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i1i)
-  d.sens.lambda1 = d.sens.add_i1; //use ADD_I1 /*d.sens.inst_add_i1*/
+  d.sens.lambda[0] = d.sens.add_i1; //use ADD_I1 /*d.sens.inst_add_i1*/
  else if (IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i3i)
-  d.sens.lambda1 = d.sens.add_i3; //use ADD_I3
-#else
- d.sens.lambda1 = d.sens.add_i1; //in SECU-3T only ADD_I1 can be used for lambda sensor
+  d.sens.lambda[0] = d.sens.add_i3; //use ADD_I3
+ if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i3i)
+  d.sens.lambda[1] = d.sens.add_i3; //use ADD_I3
+#ifdef TPIC8101
+ else if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4i)
+  d.sens.lambda[1] = d.sens.add_i4; //use ADD_I4
 #endif
+#else
+ if (IOCFG_CHECK(IOP_LAMBDA))
+  d.sens.lambda[0] = d.sens.add_i1; //in SECU-3T only ADD_I1 can be used for lambda sensor
+ if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2i)
+  d.sens.lambda[1] = d.sens.add_i2; //use ADD_I2
+#endif
+ if (CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+ { //mix 2 lambda sensors into 1
+  if (!d.sens.lambda[0] && d.sens.lambda[1])
+   d.sens.lambda[0] = d.sens.lambda[1];
+  else if (d.sens.lambda[0] && d.sens.lambda[1])
+   d.sens.lambda[0] = (d.sens.lambda[0] + d.sens.lambda[1]) / 2;
+  d.sens.lambda[1] = 0; //discard 2nd sensor because it has already mixed into the 1st one
+ }
 #endif
 
  //select an input for MAF sensor

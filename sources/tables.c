@@ -291,7 +291,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
@@ -390,14 +390,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub)
    },
 
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 3.8
-   IOREMVER(3,8),
+   //Version of this structure - 3.9
+   IOREMVER(3,9),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -713,6 +713,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_xtau_f_thrd =             60,                  //-60kPa
 
   .wallwet_model =               0,                  //don't use wall wetting model
+
+  .lambda_selch =                0,                  //Use 1st EGO for all cylinders
 
   .reserved =                    {0},
   .crc =                         0

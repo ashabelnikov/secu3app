@@ -14,7 +14,7 @@
 include platform_cfg
 
 TARGET = secu-3_app
-OBJDIR = ./output
+OBJDIR = output
 CC = "$(IAR_HOME)/avr/bin/iccavr.exe"
 LD = "$(IAR_HOME)/avr/bin/xlink.exe"
 #LD = "$(IAR_HOME)/common/bin/xlink.exe"

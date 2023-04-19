@@ -113,12 +113,13 @@ static int16_t get_discharge(void)
  */
 static void control_iv_and_pv(uint8_t mode)
 {
+ int16_t lambda = lambda_get_mixcor();
  if (mode)
  { //work, control FE, but also control IE if FE=0 and mixture is still rich
-   if (d.corr.lambda > -256)
+   if (lambda > -256)
    { //control AFR using power valve only, normal mode
     int16_t pv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-    pv_duty = (((uint32_t)pv_duty) * (512 + d.corr.lambda)) >> 9;
+    pv_duty = (((uint32_t)pv_duty) * (512 + lambda)) >> 9;
     restrict_value_to(&pv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
     SET_PV_DUTY(pv_duty); //control power valve
     SET_IV_DUTY(CAFR_PWM_STEPS-1); //idle cut-off valve is 100% opened
@@ -126,7 +127,7 @@ static void control_iv_and_pv(uint8_t mode)
    else
    { //mixture is too rich and power valve is not enough to make it lean, then use idle cut-off valve to additionally lean it
     int16_t iv_duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-    iv_duty = (((uint32_t)iv_duty) * (512 + d.corr.lambda)) >> 8; //div. by 256
+    iv_duty = (((uint32_t)iv_duty) * (512 + lambda)) >> 8; //div. by 256
     iv_duty+= (CAFR_PWM_STEPS/4);
     restrict_value_to(&iv_duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
     SET_IV_DUTY(iv_duty); //control
@@ -136,7 +137,7 @@ static void control_iv_and_pv(uint8_t mode)
  else
  { //idling, control IE only, FE = 50%
    int16_t duty = CAFR_PWM_STEPS/2; //basic duty is 50%
-   duty = (((uint32_t)duty) * (512 + d.corr.lambda)) >> 9;
+   duty = (((uint32_t)duty) * (512 + lambda)) >> 9;
    restrict_value_to(&duty, CAFR_PWM_STEPS/4, (CAFR_PWM_STEPS*3)/4);  //Do we need this?
    SET_IV_DUTY(duty); //control
    SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
@@ -167,7 +168,7 @@ void carbafr_control(void)
   //otherwise use 50% value for both valves
   //
   //(discharge > threshold) means engine is not under full load
-  if (lambda_is_activated() && (d.sens.temperat > d.param.inj_lambda_temp_thrd) && (d.sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge() > d.param.fe_on_threshold))
+  if (lambda_is_activated(2) && (d.sens.temperat > d.param.inj_lambda_temp_thrd) && (d.sens.inst_frq < CAFR_HLD_RPM_THRD) && (get_discharge() > d.param.fe_on_threshold))
   {
    if (d.sens.carb)
    { //throttle is opened
@@ -200,7 +201,7 @@ void carbafr_control(void)
         cas.state = 0;
        else
        {
-        d.corr.lambda = 0; //reset lambda correction, because we are in the open-loop mode now
+        d.corr.lambda[0] = d.corr.lambda[1] = 0; //reset lambda correction, because we are in the open-loop mode now
         SET_IV_DUTY(0); //0%
         SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
        }
@@ -210,7 +211,7 @@ void carbafr_control(void)
   }
   else
   {
-   d.corr.lambda = 0; //reset lambda correction, because we are in the open-loop mode now
+   d.corr.lambda[0] = d.corr.lambda[1] = 0; //reset lambda correction, because we are in the open-loop mode now
    SET_IV_DUTY(CAFR_PWM_STEPS/2); //50%
    SET_PV_DUTY(CAFR_PWM_STEPS/2); //50%
   }

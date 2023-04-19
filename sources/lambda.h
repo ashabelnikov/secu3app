@@ -43,9 +43,10 @@ void lambda_stroke_event_notification(void);
 void lambda_eng_stopped_notification(void);
 
 /** Check for activation of lambda sensor (heated-up)
+ * \param inp 0 - check sensor #1, 1 - check sensor #2, 2 - check all available sensors
  * \return 1 - activated, 0 - still not activated
  */
-uint8_t lambda_is_activated(void);
+uint8_t lambda_is_activated(uint8_t inp);
 
 #endif
 
@@ -60,12 +61,21 @@ int16_t lambda_get_stoichval(void);
 
 #ifdef FUEL_INJECT
 /** Reset counter of level switches*/
-void lambda_reset_swt_counter(void);
+void lambda_reset_swt_counter(uint8_t inp);
 
 /** Get counter of level switches
  * \return number of level switches since last call of lambda_reset_swt_counter()
  */
-uint8_t lambda_get_swt_counter(void);
+uint8_t lambda_get_swt_counter(uint8_t inp);
+#endif
+
+
+#if defined(CARB_AFR) || defined(GD_CONTROL)
+/** Calculated blend of two lambda correction values
+ * Uses d ECU data structure
+ * \return lambda correction
+ */
+int16_t lambda_get_mixcor(void);
 #endif
 
 #endif //_LAMBDA_H_

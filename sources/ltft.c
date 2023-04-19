@@ -78,7 +78,7 @@ void ltft_control(void)
    uint8_t l = ltft_check_load_hit();
    if (r != 255 && l != 255)
    {
-    lambda_reset_swt_counter();
+    lambda_reset_swt_counter(0);
     stat_tmr = s_timer_gtc();
     strokes = 0;
     ltft_state++;
@@ -104,14 +104,14 @@ void ltft_control(void)
    else
     stab_time_ready = strokes >= PGM_GET_BYTE(&fw_data.exdata.ltft_stab_str); //use eng. strokes
 
-   if (stab_time_ready && lambda_get_swt_counter() >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
+   if (stab_time_ready && lambda_get_swt_counter(0) >= PGM_GET_BYTE(&fw_data.exdata.ltft_sigswt_num))
    {
     int16_t ltft_curr = d.inj_ltft[l][r];
-    int16_t new_val = ltft_curr + d.corr.lambda;
+    int16_t new_val = ltft_curr + d.corr.lambda[0];
     restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
     d.inj_ltft[l][r] = new_val;     //apply correction to current cell
     ltft_corr = new_val - ltft_curr;
-    d.corr.lambda-=ltft_corr;       //reduce current lambda by actual value of correction (taking into account possible min/max restriction)
+    d.corr.lambda[0]-=ltft_corr;       //reduce current lambda by actual value of correction (taking into account possible min/max restriction)
     ltft_idx_r = r, ltft_idx_l = l; //remember indexes of current work point
     idx_l = 0, idx_r = 0;
     ltft_state++;

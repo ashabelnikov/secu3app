@@ -217,6 +217,7 @@
 #define LAMFLG_HTGDET                   0           //!< Determine oxygen sensor's heating by monitoring of voltage from it
 #define LAMFLG_IDLCORR                  1           //!< Use lambda correction on idling
 #define LAMFLG_CRKHEAT                  2           //!< Use heating before cranking
+#define LAMFLG_MIXSEN                   3           //!< Blend values of 2 sensors to sensor #1
 
 //Functions tab flags
 #define FUNC_LDAX_GRID                  0           //!< Use grid table for load axis (load grid is defined by two values (default) or load grid is defined by table if this flag is set)
@@ -271,7 +272,6 @@ typedef struct f_data_t
 
   uint16_t inj_idl_rigidity[INJ_IDL_RIGIDITY_SIZE];   //!< table containing idling regulator's rigidity function (value * 128)
 
-  //note! inj_ego_curve must be followed by ego_vl_begin and ego_vl_end values!
   uint16_t inj_ego_curve[INJ_EGO_CURVE_SIZE+2];       //!< Air-Fuel ratio lookup table, value * 128, the last two values are voltages corresponding to the beginning and to the end of axis (ADC discretes)
 
   uint8_t inj_iac_corr_w[INJ_IAC_CORR_W_SIZE+2];      //!< IAC correction weight lookup table (value * 256), the last two values are TPS corresponding to the beginning and to the end of axis
@@ -919,11 +919,13 @@ typedef struct params_t
 
   uint8_t  wallwet_model;                //!< 0 - don't use, 1 - use X-tau
 
+  uint8_t  lambda_selch;                 //!< 1 bit per channel (cylinder). 0 - 1st EGO, 1 - 2nd EGO
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[133];
+  uint8_t  reserved[132];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

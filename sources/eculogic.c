@@ -185,10 +185,11 @@ static uint16_t apply_smooth_fuelcut(uint16_t pw)
 }
 
 /** Finalizes specified inj. PW value (adds injector lag and precalculates normal and shrinked values)
- * \param pw Pointer to the variable which contains value of PW
+ * \param pw1 Pointer to the variable which contains value of PW for bank1
+ * \param pw2 Pointer to the variable which contains value of PW for bank2
  * \return PW value ready to be used. Note that values of PW used to drive injectors are stored to inj_pwns array
  */
-static uint16_t finalize_inj_time(int32_t* pw)
+static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2)
 {
  uint16_t pwns[2];
  d.inj_dt = (int16_t)accumulation_time(1);      //calculate dead time (injector lag), value is signed
@@ -197,9 +198,7 @@ static uint16_t finalize_inj_time(int32_t* pw)
 
 #ifdef XTAU_CORR
  if (1==d.param.wallwet_model)
- {
-  calc_xtau(pw); //apply x-tau corrections
- }
+  calc_xtau(pw1, pw2); //apply x-tau corrections
 #endif
 
  uint8_t i;
@@ -208,8 +207,11 @@ static uint16_t finalize_inj_time(int32_t* pw)
   uint16_t m; int16_t a;
   inj_cylmultadd(i, &m, &a);
 
+  //Always use 1st lambda channel if sensors' mixing is on
+  uint8_t chsel = CHECKBIT(d.param.lambda_selch, i) && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN);
+
   //Precalculate normal injection time
-  int32_t tpw = (*pw * m) >> 8;
+  int32_t tpw = ((chsel ? *pw2 : *pw1) * m) >> 8;
   tpw+= a;
   //add inj. lag and restrict result
   tpw+= d.inj_dt;
@@ -222,7 +224,7 @@ static uint16_t finalize_inj_time(int32_t* pw)
   pwns[0] = apply_smooth_fuelcut(pwns[0]);
 
   //Precalculate shrinked injection time depending on cylinder number for emergency semi-sequential/simultaneous mode
-  tpw = (*pw * m) >> 8;
+  tpw = ((chsel ? *pw2 : *pw1) * m) >> 8;
   tpw+= a;
   if (!(d.param.ckps_engine_cyl & 1))
    tpw>>= 1; //2 times (even cylinder number engines)
@@ -279,7 +281,7 @@ static void fuel_calc(void)
  pw = (pw * inj_warmup_en()) >> 7;              //apply warmup enrichemnt factor
  if (lgs.aftstr_enrich_counter)
   pw= (pw * (128 + scale_aftstr_enrich(lgs.aftstr_enrich_counter))) >> 7; //apply scaled afterstart enrichment factor
- pw= (pw * (512 + d.corr.lambda)) >> 9;         //apply lambda correction additive factor (signed)
+
  pw= (pw * inj_iacmixtcorr_lookup()) >> 13;     //apply mixture correction vs IAC
  if (d.param.barocorr_type)
   pw = (pw * barocorr_lookup()) >> 12;           //apply barometric correction
@@ -288,9 +290,6 @@ static void fuel_calc(void)
  if (CHECKBIT(d.param.inj_flags, INJFLG_USEADDCORRS))
   pw_gascorr(&pw);                              //apply gas corrections
 #endif
-
- if (ltft_is_active())
-  pw = (pw * calc_ltft()) >> 9;                 //apply LTFT correction
 
 #ifndef SECU3T
  if (IOCFG_CHECK(IOP_INJPWC_I))
@@ -306,12 +305,33 @@ static void fuel_calc(void)
   pw = (pw * fueldens_corr()) >> 14;            //apply fuel density correction
 #endif
 
- if (0==d.param.inj_ae_type)
-  pw+= acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
- else
-  pw+= acc_enrich_calc_tb(0, lambda_get_stoichval());//add acceleration enrichment (time based)
+ int32_t pw2 = pw;
 
- d.inj_pw = finalize_inj_time(&pw);
+ pw = (pw * (512 + d.corr.lambda[0])) >> 9;      //apply lambda correction additive factor (signed) from sensor #1
+ if (d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+  pw2 = (pw2 * (512 + d.corr.lambda[1])) >> 9;    //apply lambda correction additive factor (signed) from sensor #2
+
+ if (ltft_is_active())
+ {
+  pw = (pw * calc_ltft(/**0*/)) >> 9;            //apply LTFT correction #1
+  if (d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+   pw2 = (pw2 * calc_ltft(/**1*/)) >> 9;          //apply LTFT correction #2
+ }
+
+ if (0==d.param.inj_ae_type)
+ {
+  int32_t ae_add = acc_enrich_calc(0, lambda_get_stoichval());//add acceleration enrichment (accel. pump)
+  pw+=  ae_add;
+  pw2+= ae_add;
+ }
+ else
+ {
+  int32_t ae_add = acc_enrich_calc_tb(0, lambda_get_stoichval());//add acceleration enrichment (time based)
+  pw+=  ae_add;
+  pw2+= ae_add;
+ }
+
+ d.inj_pw = finalize_inj_time(&pw, &pw2);
  if (!(d.inj_pw > INJPW_MAG(0.1) && !d.fc_revlim && d.eng_running))
   d.inj_pw = 0;
 #ifdef GD_CONTROL
@@ -366,10 +386,17 @@ void eculogic_system_state_machine(void)
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  if (IOCFG_CHECK(IOP_LAMBDA))
  {
-  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated()) //NBO or not activated
-   d.sens.afr = 0;
+  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(0)) //NBO or not activated
+   d.sens.afr[0] = 0;
   else //WBO or emulation
-   d.sens.afr = ego_curve_lookup();
+   d.sens.afr[0] = ego_curve_lookup(0);
+ }
+ if (IOCFG_CHECK(IOP_LAMBDA2))
+ {
+  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(1)) //NBO or not activated
+   d.sens.afr[1] = 0;
+  else //WBO or emulation
+   d.sens.afr[1] = ego_curve_lookup(1);
  }
 #endif
 
@@ -443,7 +470,9 @@ void eculogic_system_state_machine(void)
     pw_gascorr(&pw);                                 //apply gas corrections
 #endif
 
-   d.inj_pw = finalize_inj_time(&pw);
+   int32_t pw2 = pw;
+
+   d.inj_pw = finalize_inj_time(&pw, &pw2);
    if (!(d.eng_running))
     d.inj_pw = 0;
 

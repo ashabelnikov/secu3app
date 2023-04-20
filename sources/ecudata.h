@@ -171,6 +171,7 @@ typedef struct sensors_t
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
  uint16_t afr[2];                        //!< AFR value calculated from lambda sensor #1 and #2, value * 128
  uint16_t lambda[2];                     //!< voltage from lambda sensor #1 and #2
+ uint16_t lambda_mx;                     //!< mixed value from available sensors
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)

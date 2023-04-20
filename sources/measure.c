@@ -448,12 +448,17 @@ ftls_notsel:
  if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2i)
   d.sens.lambda[1] = d.sens.add_i2; //use ADD_I2
 #endif
+ //calculate mix of two lambda sensors
+ if (d.sens.lambda[0] && d.sens.lambda[1])
+  d.sens.lambda_mx = (d.sens.lambda[0] + d.sens.lambda[1]) / 2;
+ else if (!d.sens.lambda[0] && d.sens.lambda[1])
+  d.sens.lambda_mx = d.sens.lambda[1];
+ else
+  d.sens.lambda_mx = d.sens.lambda[0];
+
  if (CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
  { //mix 2 lambda sensors into 1
-  if (!d.sens.lambda[0] && d.sens.lambda[1])
-   d.sens.lambda[0] = d.sens.lambda[1];
-  else if (d.sens.lambda[0] && d.sens.lambda[1])
-   d.sens.lambda[0] = (d.sens.lambda[0] + d.sens.lambda[1]) / 2;
+  d.sens.lambda[0] = d.sens.lambda_mx;
   d.sens.lambda[1] = 0; //discard 2nd sensor because it has already mixed into the 1st one
  }
 #endif

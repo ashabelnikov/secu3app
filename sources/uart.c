@@ -771,6 +771,12 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+#if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
+   build_i16h(d.sens.lambda_mx);            // mix of 2 lambda sensors
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

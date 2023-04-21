@@ -68,8 +68,8 @@
 #define AI1_INPIDX           5                 //!< Index of ring buffer for ADD_I1
 #define AI2_INPIDX           6                 //!< Index of ring buffer for ADD_I2
 #define SPD_INPIDX           7                 //!< Index of ring buffer for VSS (SPEED_SENSOR option must be included)
-#define AI3_INPIDX           8                 //!< Index of ring buffer for ADD_I3 (SECU3T option must be excluded OR PA4_INP_IGNTIM option must be included)
-#define AI4_INPIDX           9                 //!< Index of ring buffer for ADD_I4 (SECU3T option must be excluded AND TPIC8101 option must be included)
+#define AI3_INPIDX           8                 //!< Index of ring buffer for ADD_I3 (SECU3T option must be excluded)
+#define AI4_INPIDX           9                 //!< Index of ring buffer for ADD_I4 (TPIC8101 option must be included)
 #if !defined(SECU3T) && defined(MCP3204)
 #define AI5_INPIDX          10                 //!< Index of ring buffer for ADD_I5 (SECU3T option must be excluded AND MCP3204 option must be included)
 #define AI6_INPIDX          11                 //!< Index of ring buffer for ADD_I6 (SECU3T option must be excluded AND MCP3204 option must be included)
@@ -177,7 +177,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 
  update_buffer(AI2_INPIDX, adc_get_add_i2_value());
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
  update_buffer(AI3_INPIDX, adc_get_add_i3_value());
 #endif
 
@@ -297,14 +297,14 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   rawval = 0;
  d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && PGM_GET_BYTE(&cesd->add_i2_v_flg) ? PGM_GET_WORD(&cesd->add_i2_v_em) : rawval;
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
  d.sens.add_i3_raw = rawval = adc_compensate(average_buffer(AI3_INPIDX), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && PGM_GET_BYTE(&cesd->add_i3_v_flg) ? PGM_GET_WORD(&cesd->add_i3_v_em) : rawval;
 #endif
 
-#if !defined(SECU3T) && defined(TPIC8101)
+#if defined(TPIC8101)
  d.sens.add_i4_raw = rawval = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
  if (rawval < 0)
   rawval = 0;
@@ -438,16 +438,17 @@ ftls_notsel:
   d.sens.lambda[0] = d.sens.add_i3; //use ADD_I3
  if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i3i)
   d.sens.lambda[1] = d.sens.add_i3; //use ADD_I3
-#ifdef TPIC8101
- else if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.lambda[1] = d.sens.add_i4; //use ADD_I4
-#endif
 #else
  if (IOCFG_CHECK(IOP_LAMBDA))
   d.sens.lambda[0] = d.sens.add_i1; //in SECU-3T only ADD_I1 can be used for lambda sensor
  if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2i)
   d.sens.lambda[1] = d.sens.add_i2; //use ADD_I2
 #endif
+#ifdef TPIC8101
+ else if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4i)
+  d.sens.lambda[1] = d.sens.add_i4; //use ADD_I4
+#endif
+
  //calculate mix of two lambda sensors
  if (d.sens.lambda[0] && d.sens.lambda[1])
   d.sens.lambda_mx = (d.sens.lambda[0] + d.sens.lambda[1]) / 2;
@@ -466,11 +467,11 @@ ftls_notsel:
  //select an input for MAF sensor
  if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_s || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_si)
   d.sens.maf = calc_maf_flow(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw); //MAP input selected as input for MAF sensor
-#ifndef SECU3T
 #ifdef TPIC8101
  else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4i)
   d.sens.maf = calc_maf_flow(d.sens.add_i4); //ADD_I4 input selected as input for MAF sensor
 #endif
+#ifndef SECU3T
 #ifdef MCP3204
  else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i5i)
   d.sens.maf = calc_maf_flow(d.sens.add_i5); //ADD_I5 input selected as input for MAF sensor

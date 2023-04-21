@@ -184,32 +184,24 @@ void iocfg_s_add_o1i(uint8_t value)   //inverted version
 
 void iocfg_i_add_o2(uint8_t value)
 {
-#ifndef PA4_INP_IGNTIM
  WRITEBIT(PORTA, PA4, value);
  DDRA |= _BV(DDA4);
-#endif
 }
 
 void iocfg_i_add_o2i(uint8_t value)   //inverted version
 {
-#ifndef PA4_INP_IGNTIM
  WRITEBIT(PORTA, PA4, !value);
  DDRA |= _BV(DDA4);
-#endif
 }
 
 void iocfg_s_add_o2(uint8_t value)
 {
-#ifndef PA4_INP_IGNTIM
  WRITEBIT(PORTA, PA4, value);
-#endif
 }
 
 void iocfg_s_add_o2i(uint8_t value)   //inverted version
 {
-#ifndef PA4_INP_IGNTIM
  WRITEBIT(PORTA, PA4, !value);
-#endif
 }
 
 void iocfg_i_ecf(uint8_t value)
@@ -566,6 +558,28 @@ uint8_t iocfg_g_map_s(void)
 uint8_t iocfg_g_map_si(void)          //inverted version
 {
  return !CHECKBIT(PINA, PINA2);
+}
+
+void iocfg_i_add_i4(uint8_t value)
+{
+ WRITEBIT(PORTA, PA3, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA3);                 //input
+}
+
+void iocfg_i_add_i4i(uint8_t value)
+{
+ WRITEBIT(PORTA, PA3, value);          //controlls pullup resistor
+ CLEARBIT(DDRA, DDA3);                 //input
+}
+
+uint8_t iocfg_g_add_i4(void)
+{
+ return !!CHECKBIT(PINA, PINA3);
+}
+
+uint8_t iocfg_g_add_i4i(void)          //inverted version
+{
+ return !CHECKBIT(PINA, PINA3);
 }
 
 #ifdef MCP3204

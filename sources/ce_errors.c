@@ -211,12 +211,6 @@ void check(ce_sett_t _PGM *cesd)
  else
   ce_clear_error(ECUERROR_ADD_I2_SENSOR);
 
-#ifndef SECU3T //SECU-3i
- //checking ADD_I3 sensor
- if ((d.sens.add_i3_raw < PGM_GET_WORD(&cesd->add_i3_v_min)) || (d.sens.add_i3_raw > PGM_GET_WORD(&cesd->add_i3_v_max)))
-  ce_set_error(ECUERROR_ADD_I3_SENSOR);
- else
-  ce_clear_error(ECUERROR_ADD_I3_SENSOR);
 #ifdef TPIC8101
  //checking ADD_I4 sensor
  if ((d.sens.add_i4_raw < PGM_GET_WORD(&cesd->add_i4_v_min)) || (d.sens.add_i4_raw > PGM_GET_WORD(&cesd->add_i4_v_max)))
@@ -224,6 +218,13 @@ void check(ce_sett_t _PGM *cesd)
  else
   ce_clear_error(ECUERROR_ADD_I4_SENSOR);
 #endif
+
+#ifndef SECU3T //SECU-3i
+ //checking ADD_I3 sensor
+ if ((d.sens.add_i3_raw < PGM_GET_WORD(&cesd->add_i3_v_min)) || (d.sens.add_i3_raw > PGM_GET_WORD(&cesd->add_i3_v_max)))
+  ce_set_error(ECUERROR_ADD_I3_SENSOR);
+ else
+  ce_clear_error(ECUERROR_ADD_I3_SENSOR);
 
 #ifdef MCP3204
  //checking ADD_I5 sensor

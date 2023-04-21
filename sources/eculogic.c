@@ -87,14 +87,19 @@ void pw_gascorr(int32_t* pw)
 #endif
 
 #ifdef PA4_INP_IGNTIM
-/** Calculates manual ignition timing correction value depending on the selected input (PA4 for SECU-3T or ADD_I3|ADD_I4 for SECU-3i)
+/** Calculates manual ignition timing correction value depending on the selected input (ADD_I4 for SECU-3T or ADD_I3/4/5 for SECU-3i)
  * \return value * ANGLE_MULTIPLIER
  */
 static int16_t manual_igntim(void)
 {
 #ifdef SECU3T
- return pa4_function(d.sens.add_i3); //PA4 only, can't be remapped
-#else //SECU-3i
+#ifdef TPIC8101
+ if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4i)
+  return pa4_function(d.sens.add_i4);
+#else
+ return 0; //not mapped to real I/O
+#endif
+#else //SECU3i
  if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3i)
   return pa4_function(d.sens.add_i3);
 #ifdef TPIC8101
@@ -112,7 +117,7 @@ static int16_t manual_igntim(void)
 #endif
 
 #if !defined(SECU3T) && defined(FUEL_INJECT)
-/** Calculates manual ignition timing correction value depending on the selected input (PA4 for SECU-3T or ADD_I3|ADD_I4 for SECU-3i)
+/** Calculates manual correction value of injection PW depending on the selected input (ADD_I3/4/5/6/7/8 for SECU-3i)
  * \return value * 4096
  */
 static int16_t manual_injpw(void)

@@ -481,9 +481,9 @@ void diagnost_process(void)
    d.diag_inp.add_i2 = _ADC_COMPENSATE(adc_get_add_i2_value(), ADC_VREF_FACTOR, 0.0);
 #ifndef SECU3T
    d.diag_inp.add_i3 = _ADC_COMPENSATE(adc_get_add_i3_value(), ADC_VREF_FACTOR, 0.0);
+#endif
 #ifdef TPIC8101
    d.diag_inp.add_i4 = _ADC_COMPENSATE(adc_get_knock_value(), ADC_VREF_FACTOR, 0.0);
-#endif
 #endif
    d.diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
 

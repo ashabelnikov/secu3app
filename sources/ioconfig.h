@@ -113,7 +113,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_REF_S        17     //!< REF_S           (input)
 #define IOP_CKPS         18     //!< CKPS            (input)
 #define IOP_MAP_S        19     //!< MAP_S           (input)
-#define IOP_RESERVED1    20     //!< reserved slot   ()
+#define IOP_ADD_I4       20     //!< ADD_I4          (input)
 #define IOP_RESERVED2    21     //!< reserved slot   ()
 #define IOP_RESERVED3    22     //!< reserved slot   ()
 #define IOP_RESERVED4    23     //!< reserved slot   ()
@@ -185,7 +185,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_INPUT2       88     //!< INPUT2          (input)
 #define IOP_MAF          89     //!< MAF             (input)
 #define IOP_LAMBDA2      90     //!< LAMBDA2         (input)
-#define IOP_RESERVED44   91     //!< reserved plug   ()
+#define IOP_IGNTIM       91     //!< IOP_IGNTIM      (input)
 #define IOP_RESERVED45   92     //!< reserved plug   ()
 #define IOP_RESERVED46   93     //!< reserved plug   ()
 #define IOP_RESERVED47   94     //!< reserved plug   ()
@@ -203,38 +203,47 @@ void iocfg_i_ign_out1(uint8_t value);    //!< init IGN_OUT1
 void iocfg_i_ign_out1i(uint8_t value);   //!< init IGN_OUT1           (inverted)
 void iocfg_s_ign_out1(uint8_t value);    //!< set  IGN_OUT1
 void iocfg_s_ign_out1i(uint8_t value);   //!< set  IGN_OUT1           (inverted)
+
 void iocfg_i_ign_out2(uint8_t value);    //!< init IGN_OUT2
 void iocfg_i_ign_out2i(uint8_t value);   //!< init IGN_OUT2           (inverted)
 void iocfg_s_ign_out2(uint8_t value);    //!< set  IGN_OUT2
 void iocfg_s_ign_out2i(uint8_t value);   //!< set  IGN_OUT2           (inverted)
+
 void iocfg_i_ign_out3(uint8_t value);    //!< init IGN_OUT3
 void iocfg_i_ign_out3i(uint8_t value);   //!< init IGN_OUT3           (inverted)
 void iocfg_s_ign_out3(uint8_t value);    //!< set  IGN_OUT3
 void iocfg_s_ign_out3i(uint8_t value);   //!< set  IGN_OUT3           (inverted)
+
 void iocfg_i_ign_out4(uint8_t value);    //!< init IGN_OUT4
 void iocfg_i_ign_out4i(uint8_t value);   //!< init IGN_OUT4           (inverted)
 void iocfg_s_ign_out4(uint8_t value);    //!< set  IGN_OUT4
 void iocfg_s_ign_out4i(uint8_t value);   //!< set  IGN_OUT4           (inverted)
+
 void iocfg_i_add_o1(uint8_t value);      //!< init ADD_O1 output
 void iocfg_i_add_o1i(uint8_t value);     //!< init ADD_O1 output      (inverted)
 void iocfg_s_add_o1(uint8_t value);      //!< set  ADD_O1 output
 void iocfg_s_add_o1i(uint8_t value);     //!< set  ADD_O1 output      (inverted)
+
 void iocfg_i_add_o2(uint8_t value);      //!< init ADD_O2 output
 void iocfg_i_add_o2i(uint8_t value);     //!< init ADD_O2 output      (inverted)
 void iocfg_s_add_o2(uint8_t value);      //!< set  ADD_O2 output
 void iocfg_s_add_o2i(uint8_t value);     //!< set  ADD_O2 output      (inverted)
+
 void iocfg_i_ecf(uint8_t value);         //!< init ECF
 void iocfg_i_ecfi(uint8_t value);        //!< init ECF                (inverted)
 void iocfg_s_ecf(uint8_t value);         //!< set  ECF
 void iocfg_s_ecfi(uint8_t value);        //!< set  ECF                (inverted)
+
 void iocfg_i_st_block(uint8_t value);    //!< init ST_BLOCK
 void iocfg_i_st_blocki(uint8_t value);   //!< init ST_BLOCK           (inverted)
 void iocfg_s_st_block(uint8_t value);    //!< set  ST_BLOCK
 void iocfg_s_st_blocki(uint8_t value);   //!< set  ST_BLOCK           (inverted)
+
 void iocfg_i_ie(uint8_t value);          //!< init IE
 void iocfg_i_iei(uint8_t value);         //!< init IE                 (inverted)
 void iocfg_s_ie(uint8_t value);          //!< set  IE
 void iocfg_s_iei(uint8_t value);         //!< set  IE                 (inverted)
+
 void iocfg_i_fe(uint8_t value);          //!< init FE
 void iocfg_i_fei(uint8_t value);         //!< init FE                 (inverted)
 void iocfg_s_fe(uint8_t value);          //!< set  FE
@@ -244,10 +253,12 @@ void iocfg_i_ce(uint8_t value);          //!< init CE
 void iocfg_i_cei(uint8_t value);         //!< init CE                 (inverted)
 void iocfg_s_ce(uint8_t value);          //!< set  CE
 void iocfg_s_cei(uint8_t value);         //!< set  CE                 (inverted)
+
 void iocfg_i_bl(uint8_t value);          //!< init BL
 void iocfg_i_bli(uint8_t value);         //!< init BL                 (inverted)
 void iocfg_s_bl(uint8_t value);          //!< set  BL
 void iocfg_s_bli(uint8_t value);         //!< set  BL                 (inverted)
+
 void iocfg_i_de(uint8_t value);          //!< init DE
 void iocfg_i_dei(uint8_t value);         //!< init DE                 (inverted)
 void iocfg_s_de(uint8_t value);          //!< set  DE
@@ -258,30 +269,42 @@ void iocfg_i_ps(uint8_t value);          //!< init PS input
 void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
 uint8_t iocfg_g_ps(void);                //!< get PS input value
 uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
+
 void iocfg_i_add_i1(uint8_t value);      //!< init ADD_I1 input
 void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_I1 input       (inverted)
 uint8_t iocfg_g_add_i1(void);            //!< set  ADD_I1 input
 uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_I1 input       (inverted)
+
 void iocfg_i_add_i2(uint8_t value);      //!< init ADD_I2 input
 void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_I2 input       (inverted)
 uint8_t iocfg_g_add_i2(void);            //!< set  ADD_I2 input
 uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_I2 input       (inverted)
+
 void iocfg_i_ref_s(uint8_t value);       //!< init REF_S input
 void iocfg_i_ref_si(uint8_t value);      //!< init REF_S input        (inverted)
 uint8_t iocfg_g_ref_s(void);             //!< get REF_S input
 uint8_t iocfg_g_ref_si(void);            //!< get REF_S input         (inverted)
+
 void iocfg_i_gas_v(uint8_t value);       //!< init GAS_V input
 void iocfg_i_gas_vi(uint8_t value);      //!< init GAS_V input        (inverted)
 uint8_t iocfg_g_gas_v(void);             //!< get GAS_V input value
 uint8_t iocfg_g_gas_vi(void);            //!< get GAS_V input value   (inverted)
+
 void iocfg_i_ckps(uint8_t value);        //!< init CKPS input
 void iocfg_i_ckpsi(uint8_t value);       //!< init CKPS input         (inverted)
 uint8_t iocfg_g_ckps(void);              //!< get CKPS input
 uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
+
 void iocfg_i_map_s(uint8_t value);      //!< init MAP_S input
 void iocfg_i_map_si(uint8_t value);     //!< init MAP_S input        (inverted)
 uint8_t iocfg_g_map_s(void);            //!< set  MAP_S input
 uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
+
+void iocfg_i_add_i4(uint8_t value);      //!< init ADD_I4 input
+void iocfg_i_add_i4i(uint8_t value);     //!< init ADD_I4 input       (inverted)
+uint8_t iocfg_g_add_i4(void);            //!< set  ADD_I4 input
+uint8_t iocfg_g_add_i4i(void);           //!< set  ADD_I4 input       (inverted)
+
 #else //---SECU-3i---
 
 //List all I/O plugs

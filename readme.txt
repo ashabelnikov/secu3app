@@ -99,8 +99,8 @@
 
     UNI_OUTPUT      *    Include support of an universal programmable output
 
-    PA4_INP_IGNTIM  *    Use PA4 as analog input for manual correction of
-                         ignition timing
+    PA4_INP_IGNTIM  *    Use analog input for manual correction of ignition
+                         timing
 
     SEND_INST_VAL   *    Send instant values (RPM, voltage) instead of averaged
 

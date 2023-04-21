@@ -47,7 +47,7 @@
 /*ADC channel number for ADD_IO2 */
 #define ADCI_ADD_I2             5
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
 /*ADC channel number for ADD_I3 */
 #define ADCI_ADD_I3             4
 #endif
@@ -79,7 +79,7 @@ typedef struct
  volatile uint16_t knock_value;  //!< last measured value from knock sensor(s)
  volatile uint16_t add_i1_value; //!< last measured value od ADD_I1
  volatile uint16_t add_i2_value; //!< last measured value of ADD_I2
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
  volatile uint16_t add_i3_value; //!< last measured value of ADD_I3
 #endif
  volatile uint16_t carb_value;   //!< last measured value of TPS
@@ -143,7 +143,7 @@ uint16_t adc_get_add_i2_value(void)
  return value;
 }
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
 uint16_t adc_get_add_i3_value(void)
 {
  uint16_t value;
@@ -345,7 +345,7 @@ ISR(ADC_vect)
   case ADCI_ADD_I2: //Measurement of ADD_I2 completed
    adc.add_i2_value = ADC;
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
    ADMUX = ADCI_ADD_I3|ADC_VREF_TYPE;
    _DISABLE_INTERRUPT();
    SETBIT(ADCSRA,ADSC);

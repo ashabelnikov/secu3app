@@ -55,9 +55,9 @@ typedef struct diagnost_inp_t
  uint16_t add_i2;                        //!< additional input 2 (analog)
 #ifndef SECU3T //SECU-3i
  uint16_t add_i3;                        //!< additional input 3 (analog)
+#endif
 #ifdef TPIC8101
  uint16_t add_i4;                        //!< additional input 4 (analog)
-#endif
 #endif
 #if !defined(SECU3T) && defined(MCP3204)
  uint16_t add_i5;                        //!< additional input 5 (analog)
@@ -95,11 +95,11 @@ typedef struct sensors_t
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
  uint16_t add_i3;                        //!< ADD_I3 input voltage
 #endif
 
-#if !defined(SECU3T) && defined(TPIC8101)
+#if defined(TPIC8101)
  uint16_t add_i4;                        //!< ADD_I4 input voltage
 #endif
 
@@ -141,14 +141,12 @@ typedef struct sensors_t
  int16_t  add_i1_raw;                    //!< raw ADC value from ADD_I1 input
  int16_t  add_i2_raw;                    //!< raw ADC value from ADD_I2 input
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
  int16_t  add_i3_raw;                    //!< raw ADC value from ADD_I3 input
 #endif
 
-#ifndef SECU3T //SECU-3i
 #ifdef TPIC8101
  int16_t  add_i4_raw;                    //!< raw ADC value from ADD_I4 input
-#endif
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)

@@ -75,7 +75,7 @@ uint16_t adc_get_add_i1_value(void);
  */
 uint16_t adc_get_add_i2_value(void);
 
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
 /** Get last measured value from ADD_I3
  * \return value in the ADC discretes
  */

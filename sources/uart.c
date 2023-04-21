@@ -543,13 +543,13 @@ void uart_send_packet(uint8_t send_mode)
    {
     build_i16h(d.sens.add_i2);           // send value of ADD_I2
    }
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
    else if (3==ai1sub)
    {
     build_i16h(d.sens.add_i3);           // send value of ADD_I3
    }
 #endif
-#if !defined(SECU3T) && defined(TPIC8101)
+#if defined(TPIC8101)
    else if (4==ai1sub)
    {
     build_i16h(d.sens.add_i4);           // send value of ADD_I4
@@ -582,11 +582,11 @@ void uart_send_packet(uint8_t send_mode)
     build_i16h(d.sens.add_i1);            // ADD_I1 voltage
    else if (2==ai2sub)
     build_i16h(d.sens.add_i2);            // ADD_I2 voltage
-#if !defined(SECU3T) || defined(PA4_INP_IGNTIM)
+#if !defined(SECU3T)
    else if (3==ai2sub)
     build_i16h(d.sens.add_i3);            //send value of ADD_I3
 #endif
-#if !defined(SECU3T) && defined(TPIC8101)
+#if defined(TPIC8101)
    else if (4==ai2sub)
     build_i16h(d.sens.add_i4);            //send value of ADD_I4
 #endif
@@ -817,14 +817,13 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.sens.add_i2_raw);
 #ifndef SECU3T
    build_i16h(d.sens.add_i3_raw);
+#else
+   build_i16h(0);  //stub for ADD_I3
+#endif
 #ifdef TPIC8101
    build_i16h(d.sens.add_i4_raw);
 #else
    build_i16h(0);  //stub
-#endif
-#else
-   build_i16h(0);  //stub for ADD_I3
-   build_i16h(0);  //stub for ADD_I4
 #endif
 #if !defined(SECU3T) && defined(MCP3204)
    build_i16h(d.sens.add_i5_raw);
@@ -1390,16 +1389,14 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.diag_inp.add_i2);
 #ifndef SECU3T
    build_i16h(d.diag_inp.add_i3);
+#else //SECU-3T
+   build_i16h(0); //stub
+#endif
 #ifdef TPIC8101
    build_i16h(d.diag_inp.add_i4);
 #else
    build_i16h(0); //busy by HIP9011
 #endif
-#else //SECU-3T
-   build_i16h(0); //stub
-   build_i16h(0); //stub
-#endif
-
 #if !defined(SECU3T) && defined(MCP3204)
    build_i16h(d.diag_inp.add_i5);
    build_i16h(d.diag_inp.add_i6);

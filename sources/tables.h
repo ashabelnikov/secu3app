@@ -27,8 +27,8 @@
 /*Structure of program memory's allocation of the SECU-3 firmware
  *     _  ________________________
  *  c |  |                        |
- *  o |  |       код              |
- *  d |  |       code             |
+ *  o |  |       code             |
+ *  d |  |                        |
  *  e |  |------------------------|<--- free space between code and data (usually FF)
  *    |  |                        |
  *  a |  |   free space           |

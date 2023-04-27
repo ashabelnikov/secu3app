@@ -668,11 +668,10 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
-#ifndef SECU3T //SECU-3i
    build_i16h(d.sens.map2);
+#ifndef SECU3T //SECU-3i
    build_i16h(d.sens.tmp2);
 #else
-   build_i16h(0);
    build_i16h(0);
 #endif
 

@@ -167,9 +167,7 @@ typedef struct sensors_t
 
  int16_t  knock_raw;                     //!< raw value of signal from KS chip
 
-#ifndef SECU3T //SECU-3i
  uint16_t map2;                          //!< Secondary MAP sensor
-#endif
 
 #ifndef SECU3T //SECU-3i
  int16_t tmp2;                           //!< Secondary temperature sensor (gas temperature)

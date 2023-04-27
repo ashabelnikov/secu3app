@@ -336,13 +336,13 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   d.sens.air_temp = 0; //input is not selected
 #endif
 
-#ifndef SECU3T //SECU-3i
 #ifdef TPIC8101
  if (IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i4i)
   d.sens.map2 = map_adc_to_kpa(d.sens.add_i4, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I4 input selected as MAP2 sensor
  else
 #endif
  {
+#ifndef SECU3T //SECU-3i
 #ifdef MCP3204
   if (IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i5i)
    d.sens.map2 = map_adc_to_kpa(d.sens.add_i5, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I5 input selected as MAP2 sensor
@@ -350,9 +350,9 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
    d.sens.map2 = map_adc_to_kpa(d.sens.add_i7, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I7 input selected as MAP2 sensor
   else
 #endif
+#endif
   d.sens.map2 = 0; //input is not selected
  }
-#endif
 
 #ifndef SECU3T //SECU-3i
  if (IOCFG_CHECK(IOP_TMP2))

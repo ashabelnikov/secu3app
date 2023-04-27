@@ -561,11 +561,9 @@ static uint8_t cond_grts(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thr
 /**Condition function for MAP2 sensor*/
 static uint8_t cond_map2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
-#ifndef SECU3T
  if (d->sens.map2 >= on_thrd)
   p_ctx->state = 1; //ON
  if (d->sens.map2 <= off_thrd)
-#endif
   p_ctx->state = 0; //OFF
  return p_ctx->state;
 }

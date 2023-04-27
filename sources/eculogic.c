@@ -96,9 +96,11 @@ static int16_t manual_igntim(void)
 #ifdef TPIC8101
  if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4i)
   return pa4_function(d.sens.add_i4);
-#else
- return 0; //not mapped to real I/O
+ else
 #endif
+ {
+  return 0; //not mapped to real I/O
+ }
 #else //SECU3i
  if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3i)
   return pa4_function(d.sens.add_i3);
@@ -356,10 +358,8 @@ void sample_baro_pressure(void)
   d.sens.baro_press = PRESSURE_MAGNITUDE(101.3); //default, use atmospheric pressure measured from sea level
  else if (d.param.barocorr_type < 3)  //static or dynamic corr. using primary MAP
   d.sens.baro_press = d.sens.map;
-#ifndef SECU3T
- else //additional MAP, dynamic corr. (SECU-3i only)
+ else //additional MAP, dynamic corr.
   d.sens.baro_press = d.sens.map2;
-#endif
 
  restrict_value_to((int16_t*)&d.sens.baro_press, PRESSURE_MAGNITUDE(70.0), PRESSURE_MAGNITUDE(120.0));
 }

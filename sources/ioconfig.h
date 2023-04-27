@@ -186,7 +186,7 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_MAF          89     //!< MAF             (input)
 #define IOP_LAMBDA2      90     //!< LAMBDA2         (input)
 #define IOP_IGNTIM       91     //!< IOP_IGNTIM      (input)
-#define IOP_RESERVED45   92     //!< reserved plug   ()
+#define IOP_MAP2         92     //!< MAP2            (input)
 #define IOP_RESERVED46   93     //!< reserved plug   ()
 #define IOP_RESERVED47   94     //!< reserved plug   ()
 #define IOP_RESERVED48   95     //!< reserved plug   ()

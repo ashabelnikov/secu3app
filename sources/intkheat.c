@@ -74,7 +74,7 @@ void intkheat_control(void)
    break;
 
   case 2: //control heating if engine is running, otherwise turn it off
-   if (d.st_block)
+   if (d.engine_mode!=EM_START)
    { //engine is running
     IOCFG_SETF(IOP_INTK_HEAT, (d.sens.temperat < (int16_t)PGM_GET_WORD(&fw_data.exdata.heating_t_off)));  // control heating
    }

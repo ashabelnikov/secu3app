@@ -96,7 +96,7 @@ void check(ce_sett_t _PGM *cesd)
   if (pwrrelay_get_state()) //set error only if power is on
   {
    //ignore error in case of stall of an engine
-   if (!(((d.st_block) && (d.sens.inst_frq < d.param.starter_off)) || (d.sens.inst_frq < 30)))
+   if ((d.sens.inst_frq < 100) && (d.engine_mode != EM_START))
     ce_set_error(ECUERROR_CKPS_MALFUNCTION);
   }
   ckps_reset_error();

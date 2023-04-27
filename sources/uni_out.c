@@ -249,13 +249,13 @@ static uint8_t cond_ittmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_th
  return p_ctx->state;
 }
 
-/**Condition function for timer which starts to run after starting of engine*/
+/**Condition function for timer which starts to run after starting engine*/
 static uint8_t cond_estmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
  switch(p_ctx->sm)
  {
   case 0:
-   if (d->st_block)
+   if (EM_START != d->engine_mode)
    { //engine is running
     p_ctx->tmr = s_timer_gtc();
     p_ctx->sm = 1;
@@ -281,7 +281,7 @@ static uint8_t cond_estmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_th
    break;
  }
 
- if (!d->st_block)     //Has engine stopped?
+ if (EM_START == d->engine_mode)     //Has engine stopped?
   p_ctx->sm = 0;
 
  return p_ctx->state;

@@ -35,7 +35,6 @@
 #include "magnitude.h"
 #include "mathemat.h"
 #include "vstimer.h"
-#include "eculogic.h"  //EM_START
 
 #if defined(FUEL_INJECT) && !defined(AIRTEMP_SENS)
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"

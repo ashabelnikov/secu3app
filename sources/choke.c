@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include "bitmask.h"
 #include "ecudata.h"
-#include "eculogic.h"
 #include "ioconfig.h"
 #include "funconv.h"
 #include "magnitude.h"
@@ -163,7 +162,7 @@ static uint8_t is_rpmreg_allowed(void)
  */
 static int16_t choke_pos_final(int16_t regval, uint8_t mode, uint16_t time_since_crnk)
 {
- if (!d.st_block)
+ if (d.engine_mode==EM_START)
   chks.strt_mode = 0; //engine is stopped, so use cranking position again
 
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
@@ -197,7 +196,7 @@ int16_t calc_sm_position(void)
  switch(chks.strt_mode)
  {
   case 0:  //starting
-   if (d.st_block)
+   if (d.engine_mode!=EM_START)
    {
     chks.strt_t1 = s_timer_gtc();
     ++chks.strt_mode; // = 1
@@ -395,7 +394,7 @@ int16_t calc_sm_position(uint8_t pwm)
    chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 0)) << 4; //use crank pos, x16
    chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3); //x4x8=x32
    CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
-   if (d.st_block)
+   if (d.engine_mode!=EM_START)
    {
     chks.iac_add = 0;
     CLEARBIT(chks.flags, CF_HOT_ENG);
@@ -407,7 +406,7 @@ int16_t calc_sm_position(uint8_t pwm)
    break;
 
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
-   if (!d.st_block)
+   if (d.engine_mode==EM_START)
    {
     chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
     break;
@@ -587,7 +586,7 @@ int16_t calc_sm_position(uint8_t pwm)
     #endif
    }
 
-   if (!d.st_block)
+   if (d.engine_mode==EM_START)
     chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
    break;
  }

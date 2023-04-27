@@ -41,6 +41,7 @@ static uint8_t str_state = 0;
 
 void starter_set_blocking_state(uint8_t i_state)
 {
+ d.st_block = i_state;
  IOCFG_SETF(IOP_ST_BLOCK, !i_state);
 }
 
@@ -52,8 +53,8 @@ void starter_init_ports(void)
 void starter_control(void)
 {
  if (d.sys_locked || !pwrrelay_get_state())
- { //system locked by immobilizer
-  starter_set_blocking_state(1), d.st_block = 1;
+ { //system locked by immobilizer or by power management (starter must be blocked if system is in power down mode)
+  starter_set_blocking_state(1); //block starter
   return;
  }
 
@@ -68,7 +69,7 @@ void starter_control(void)
    {
     uint8_t stbl_str_cnt = d.param.stbl_str_cnt ? d.param.stbl_str_cnt : cranking_thrd_tmr();
     if (str_counter >= stbl_str_cnt)
-     starter_set_blocking_state(1), d.st_block = 1;
+     starter_set_blocking_state(1);
    }
  }
 }
@@ -84,5 +85,5 @@ void starter_eng_stopped_notification(void)
  str_counter = 0;
  str_state = 0;
  if (!d.sys_locked && pwrrelay_get_state())
-  starter_set_blocking_state(0), d.st_block = 0; //unblock starter
+  starter_set_blocking_state(0); //unblock starter
 }

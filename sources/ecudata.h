@@ -30,6 +30,15 @@
 
 #include "tables.h"
 
+/** Start mode of engine (used by state machine) */
+#define EM_START 0
+
+/** Idle mode of engine (used by state machine) */
+#define EM_IDLE  1
+
+/** Work mode of engine (used by state machine) */
+#define EM_WORK  2
+
 #ifdef REALTIME_TABLES
 typedef uint8_t  (*mm_func8_ptr_t)(uint16_t);
 typedef uint16_t (*mm_func16_ptr_t)(uint16_t);
@@ -295,7 +304,7 @@ typedef struct ecudata_t
  volatile uint16_t inj_pwns[2][8];       //!< normal and shrinked injection PW for each channel
  int16_t inj_dt;                         //!< current value of injector's dead time
  uint16_t inj_fff;                       //!< Instant fuel flow as frequency (Hz), 16000 pulses per 1L of burnt fuel (value * 256)
- uint8_t  eng_running;                   //!< flag, indicates that engine is operating now (running)
+ uint8_t  eng_running;                   //!< flag, indicates that engine is revolving now (even very slow revolving is taken into account)
  uint32_t cons_fuel_int;                 //!< Quantity of fuel totally consumed by vehicle (L), value * 2^18. This value is stored in EEPROM
  uint32_t cons_fuel_imm;                 //!< Quantity of fuel consumed by vehicle for a short period of time (L), value * 2^27
  uint32_t cons_fuel;                     //!< Quantity of fuel consumed by vehicle shown for user (L), value * 1024. This valie is send to PC

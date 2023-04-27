@@ -38,7 +38,6 @@
 #include "mathemat.h"
 #include "pwrrelay.h"
 #include "ventilator.h"
-#include "eculogic.h"
 #include "lambda.h"
 
 /**Direction used to set stepper motor to the initial position */

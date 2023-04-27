@@ -497,7 +497,6 @@ MAIN()
    s_timer_eng_stopped_notification();
 #ifdef DWELL_CONTROL
    ckps_init_ports();           //prevent permanent current through coils
-   //TODO: Make soft cutoff of possible active current in coil to eliminate undesirable spark. How?
 #endif
    ckps_init_state_variables();
    cams_init_state_variables();
@@ -563,7 +562,7 @@ MAIN()
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //Double dwell time if RPM is low and non-stable
-  ckps_set_acc_time(d.st_block ? accumulation_time(0) : accumulation_time(0) << 1);
+  ckps_set_acc_time(d.engine_mode!=EM_START ? accumulation_time(0) : accumulation_time(0) << 1);
 #else
   //calculate and update accumulation time (dwell control)
   ckps_set_acc_time(accumulation_time(0));

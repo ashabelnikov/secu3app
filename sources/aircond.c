@@ -93,7 +93,7 @@ void aircond_control(void)
   return; //COND_I remapped to other function. Air conditioner control is totally impossible
  //if COND_O mapped to other function, then simple control algorithm will be used. For SECU-3T only simple algorithm can be used.
 
- if (!d.st_block)
+ if (d.engine_mode==EM_START)
  { //reset timer if engine is not running
   ac.t1 = s_timer_gtc();
   ac.state = 0;

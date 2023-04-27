@@ -26,7 +26,6 @@
 
 #include "port/port.h"
 #include "ecudata.h"
-#include "eculogic.h"   //EM_START
 #include "bitmask.h"
 
 //TODO: To reduce memory usage it is possible to use crc or some simple hash algorithms to control state of memory(changes). So this variable becomes unneeded.

@@ -29,15 +29,6 @@
 
 #include <stdint.h>
 
-/** Start mode of engine (used by state machine) */
-#define EM_START 0
-
-/** Idle mode of engine (used by state machine) */
-#define EM_IDLE  1
-
-/** Work mode of engine (used by state machine) */
-#define EM_WORK  2
-
 /**Initialization of state variables */
 void eculogic_init(void);
 

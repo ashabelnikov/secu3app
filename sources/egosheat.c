@@ -83,7 +83,7 @@ void egosheat_control(void)
  switch(eh.state)
  {
   case 0:
-   if (!d.st_block)
+   if (d.engine_mode==EM_START)
     break;
    eh.t1 = s_timer_gtc(); //reset timer
    ++eh.state;            //Go into full-on mode
@@ -141,7 +141,7 @@ void egosheat_control(void)
    eh.t1 = s_timer_gtc(); //reset timer
  }
 
- if (!d.st_block)
+ if (d.engine_mode==EM_START)
  {
   IOCFG_SETF(IOP_O2SH_O, !!CHECKBIT(d.param.inj_lambda_flags, LAMFLG_CRKHEAT)); //turned off or turned on (depending on flag)
   eh.state = 0;

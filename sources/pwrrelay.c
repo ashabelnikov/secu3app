@@ -137,12 +137,12 @@ void pwrrelay_control(void)
  //if IGN input is not available, then we will check board voltage
  uint8_t pwrdown = IOCFG_CHECK(IOP_IGN) ? (!IOCFG_GET(IOP_IGN)) : (d.sens.voltage < VOLTAGE_MAGNITUDE(4.5));
  if (!pwrdown)
- {
+ { //ignition is ON
   pwrs.timer1 = s_timer_gtc();
   pwrs.pwrdown = 0;
  }
  else
- {
+ { //ignition is OFF
   if ((s_timer_gtc() - pwrs.timer1) >= PGM_GET_WORD(&fw_data.exdata.pwron_time1))
   {
 #ifdef FUEL_INJECT

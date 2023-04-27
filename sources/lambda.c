@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include "bitmask.h"
 #include "ecudata.h"
-#include "eculogic.h"
 #include "funconv.h"
 #include "ioconfig.h"
 #include "magnitude.h"

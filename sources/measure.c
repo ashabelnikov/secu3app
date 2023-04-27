@@ -33,7 +33,6 @@
 #include "camsens.h"    //cams_enable_cam()
 #include "ce_errors.h"
 #include "ecudata.h"
-#include "eculogic.h"
 #include "spdsens.h"
 #include "funconv.h"    //thermistor_lookup(), calc_speed()
 #include "injector.h"   //inject_set_config(), inject_set_num_squirts()

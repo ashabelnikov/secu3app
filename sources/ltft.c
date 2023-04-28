@@ -76,6 +76,9 @@ void ltft_control(void)
  if (!ltft_is_active())
   return; //LTFT functionality turned off or not active for current fuel
 
+ if (!d.sens.carb && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_IDLCORR))
+  return; //Lambda correction is disabled on idling
+
  uint8_t chnum = d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
  for (uint8_t i = 0; i < chnum; ++i)
  {

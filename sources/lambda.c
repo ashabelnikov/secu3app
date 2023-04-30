@@ -204,6 +204,18 @@ void lambda_stroke_event_notification(void)
   if (!IOCFG_CHECK(i ? IOP_LAMBDA2 : IOP_LAMBDA))
    continue; //EGO is not enabled (input was not remapped)
 
+  if (0x00==d.param.lambda_selch && 1 == i)
+  {
+   d.corr.lambda[1] = 0;
+   continue; //skip processing 2nd correction if 2nd sensor is not selected for any cylinder
+  }
+
+  if (0xFF==d.param.lambda_selch && 0 == i && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+  {
+   d.corr.lambda[0] = 0;
+   continue; //skip processing 1st correction if 1st sensor is not selected for any cylinder
+  }
+
   if (!ego.enabled[i])
    continue; //wait some time before oxygen sensor will be turned on
 

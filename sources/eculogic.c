@@ -314,14 +314,16 @@ static void fuel_calc(void)
 
  int32_t pw2 = pw;
 
- pw = (pw * (512 + d.corr.lambda[0])) >> 9;      //apply lambda correction additive factor (signed) from sensor #1
- if (d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+ if (0xFF!=d.param.lambda_selch)
+  pw = (pw * (512 + d.corr.lambda[0])) >> 9;      //apply lambda correction additive factor (signed) from sensor #1
+ if (0x00!=d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
   pw2 = (pw2 * (512 + d.corr.lambda[1])) >> 9;    //apply lambda correction additive factor (signed) from sensor #2
 
  if (ltft_is_active())
  {
-  pw = (pw * calc_ltft(0)) >> 9;            //apply LTFT correction #1
-  if (d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+  if (0xFF!=d.param.lambda_selch)
+   pw = (pw * calc_ltft(0)) >> 9;            //apply LTFT correction #1
+  if (0x00!=d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
    pw2 = (pw2 * calc_ltft(1)) >> 9;          //apply LTFT correction #2
  }
 

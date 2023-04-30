@@ -1921,11 +1921,12 @@ void calc_xtau(int32_t* pw1, int32_t* pw2)
  static uint32_t M[2] = {0};  //amuunt of fuel in the film
  static uint16_t xf = 0;      //coefficient of fuel falling into the film, value * 1024
  uint16_t tf = 0;             //fuel evaporation time constant, value in 0.1024ms units
- uint8_t chnum = d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
+ uint8_t chnum = (0x00!=d.param.lambda_selch) && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
+ uint8_t chbeg = (0xFF==d.param.lambda_selch) && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN);
 
  if (xtau_str_cnt < 1/*d.param.ckps_engine_cyl*/) //check counter's value from interrupt
  { //necessary time has not yet come - use previously calculated values to calculate fuel
-  for(uint8_t i = 0; i < chnum; ++i)
+  for(uint8_t i = chbeg; i < chnum; ++i)
   {
    int32_t *pw = i ? pw2 : pw1;
    if (mpw[i] > *pw)
@@ -1980,7 +1981,7 @@ void calc_xtau(int32_t* pw1, int32_t* pw2)
 
  uint16_t ttdt = ((uint32_t)tf * 32) / dt; //tf is in 102.4us units, convert it to 3.2us units by multiplying it by 32
 
- for(uint8_t i = 0; i < chnum; ++i)
+ for(uint8_t i = chbeg; i < chnum; ++i)
  {
   int32_t *pw = i ? pw2 : pw1;
 

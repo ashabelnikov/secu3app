@@ -611,12 +611,17 @@ typedef struct fw_ex_data_t
 
   uint16_t iac_min_rpm_on_run;
 
+  uint8_t ltft_on_idling;  //!< Control LTFT working on idling (0 - disabled, 1 - enabled)
+
+  int8_t ltft_min;         //!< limits for LTFT correction
+  int8_t ltft_max;
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1972];
+  uint8_t reserved[1969];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

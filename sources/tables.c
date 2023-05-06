@@ -1200,6 +1200,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .iac_min_rpm_on_run = 1000, //1000 min-1
 
+  .ltft_on_idling = 1,
+
+  .ltft_min = -126,           //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
+  .ltft_max =  126,           //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
+
   /**reserved bytes*/
   {0}
  },

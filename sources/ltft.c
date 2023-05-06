@@ -38,9 +38,6 @@
 #include "mathemat.h"
 #include "bitmask.h"
 
-#define LTFT_MIN -126 //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
-#define LTFT_MAX  126 //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
-
 /**Describes data for each LTFT channel*/
 typedef struct
 {
@@ -78,6 +75,9 @@ void ltft_control(void)
 
  if (!d.sens.carb && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_IDLCORR))
   return; //Lambda correction is disabled on idling
+
+ if (!d.sens.carb && !PGM_GET_BYTE(&fw_data.exdata.ltft_on_idling))
+  return; //LTFT updating on idling is disabled
 
  uint8_t chnum = d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
  for (uint8_t i = 0; i < chnum; ++i)
@@ -121,7 +121,7 @@ void ltft_control(void)
     {
      int16_t ltft_curr = i ? d.inj_ltft2[l][r] : d.inj_ltft1[l][r];
      int16_t new_val = ltft_curr + d.corr.lambda[i];
-     restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
+     restrict_value_to(&new_val, (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_min), (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_max));
      if (i)
       d.inj_ltft2[l][r] = new_val;     //apply correction to current cell of LTFT 2
      else
@@ -150,7 +150,7 @@ void ltft_control(void)
       int8_t dist_r = abs(ltft[i].ltft_idx_r - idx_r);
       int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
       int16_t new_val = ((int16_t)(i ? d.inj_ltft2[idx_l][idx_r] : d.inj_ltft1[idx_l][idx_r])) + (((((int32_t)ltft[i].ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
-      restrict_value_to(&new_val, LTFT_MIN, LTFT_MAX);
+      restrict_value_to(&new_val, (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_min), (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_max));
       if (i)
        d.inj_ltft2[idx_l][idx_r] = new_val;
       else

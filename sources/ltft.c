@@ -79,8 +79,10 @@ void ltft_control(void)
  if (!d.sens.carb && !PGM_GET_BYTE(&fw_data.exdata.ltft_on_idling))
   return; //LTFT updating on idling is disabled
 
- uint8_t chnum = d.param.lambda_selch && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
- for (uint8_t i = 0; i < chnum; ++i)
+ uint8_t chnum = (0x00!=d.param.lambda_selch) && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
+ uint8_t chbeg = (0xFF==d.param.lambda_selch) && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN);
+
+ for (uint8_t i = chbeg; i < chnum; ++i)
  {
   //do learning:
   switch(ltft[i].ltft_state)

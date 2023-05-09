@@ -391,19 +391,29 @@ void eculogic_system_state_machine(void)
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
- if (IOCFG_CHECK(IOP_LAMBDA))
- {
-  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(0)) //NBO or not activated
+ if (CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+ { //blend two sensors
+  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(2)) //NBO or not activated, check all available sensors
    d.sens.afr[0] = 0;
   else //WBO or emulation
    d.sens.afr[0] = ego_curve_lookup(0);
  }
- if (IOCFG_CHECK(IOP_LAMBDA2))
+ else
  {
-  if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(1)) //NBO or not activated
-   d.sens.afr[1] = 0;
-  else //WBO or emulation
-   d.sens.afr[1] = ego_curve_lookup(1);
+  if (IOCFG_CHECK(IOP_LAMBDA))
+  {
+   if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(0)) //NBO or not activated
+    d.sens.afr[0] = 0;
+   else //WBO or emulation
+    d.sens.afr[0] = ego_curve_lookup(0);
+  }
+  if (IOCFG_CHECK(IOP_LAMBDA2))
+  {
+   if (d.param.inj_lambda_senstype==0 || !lambda_is_activated(1)) //NBO or not activated
+    d.sens.afr[1] = 0;
+   else //WBO or emulation
+    d.sens.afr[1] = ego_curve_lookup(1);
+  }
  }
 #endif
 

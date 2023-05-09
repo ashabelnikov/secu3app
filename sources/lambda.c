@@ -76,12 +76,18 @@ void lambda_control(void)
 
     if (d.sens.lambda[0] < bot_thrd || d.sens.lambda[0] > top_thrd)
      ego.enabled[0] = 1;
-    if (d.sens.lambda[1] < bot_thrd || d.sens.lambda[1] > top_thrd)
-     ego.enabled[1] = 1;
+
+    if (!CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+    {
+     if (d.sens.lambda[1] < bot_thrd || d.sens.lambda[1] > top_thrd)
+      ego.enabled[1] = 1;
+    }
    }
    else
    {
-    ego.enabled[0] = ego.enabled[1] = 1;
+    ego.enabled[0] = 1;
+    if (!CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+     ego.enabled[1] = 1;
    }
   }
  }
@@ -201,8 +207,20 @@ void lambda_stroke_event_notification(void)
  uint8_t chnum = CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 1 : 2; //skip processing 2nd sensor if mixing is selected
  for(uint8_t i = 0; i < chnum; ++i)
  {
-  if (!IOCFG_CHECK(i ? IOP_LAMBDA2 : IOP_LAMBDA))
-   continue; //EGO is not enabled (input was not remapped)
+  if (1==chnum)
+  { //two sensors are blended into sensor #1
+   d.corr.lambda[1] = 0;
+   if (!IOCFG_CHECK(IOP_LAMBDA) && !IOCFG_CHECK(IOP_LAMBDA2))
+    continue;
+  }
+  else
+  {
+   if (!IOCFG_CHECK(i ? IOP_LAMBDA2 : IOP_LAMBDA))
+   {
+    d.corr.lambda[i] = 0;
+    continue; //EGO is not enabled (input was not remapped)
+   }
+  }
 
   if (0x00==d.param.lambda_selch && 1 == i)
   {
@@ -333,6 +351,8 @@ uint8_t lambda_is_activated(uint8_t inp)
  }
  else
  {
+  if (CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
+   return ego.enabled[0]; //already mixed at sensor level
   if (IOCFG_CHECK(IOP_LAMBDA) && IOCFG_CHECK(IOP_LAMBDA2))
    return ego.enabled[0] && ego.enabled[1];
   else if (IOCFG_CHECK(IOP_LAMBDA2))

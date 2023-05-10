@@ -255,7 +255,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_MAP)) //use linear sensor
    d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->cts_v_flg) ? PGM_GET_WORD(&cesd->cts_v_em) : d.sens.temperat_raw);
   else //use lookup table (actual for thermistor sensors)
-   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->cts_v_flg) ? PGM_GET_WORD(&cesd->cts_v_em) : d.sens.temperat_raw, fw_data.exdata.cts_curve);
+   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->cts_v_flg) ? PGM_GET_WORD(&cesd->cts_v_em) : d.sens.temperat_raw, fw_data.extabs.cts_curve);
 #endif
  }
  else                                       //CTS is not used
@@ -331,7 +331,7 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
-  d.sens.air_temp = thermistor_lookup(d.sens.add_i2, fw_data.exdata.ats_curve);   //ADD_I2 input selected as MAT sensor
+  d.sens.air_temp = thermistor_lookup(d.sens.add_i2, fw_data.extabs.ats_curve);   //ADD_I2 input selected as MAT sensor
  else
   d.sens.air_temp = 0; //input is not selected
 #endif
@@ -356,13 +356,13 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 
 #ifndef SECU3T //SECU-3i
  if (IOCFG_CHECK(IOP_TMP2))
-  d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, fw_data.exdata.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
+  d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, fw_data.extabs.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
  else
   d.sens.tmp2 = 0; //input is not selected
 
 #ifdef MCP3204
  if (IOCFG_CHECK(IOP_GRTEMP))
-  d.sens.grts = thermistor_lookup(d.sens.add_i6, fw_data.exdata.grts_curve); //ADD_I6 input selected as GRTEMP sensor
+  d.sens.grts = thermistor_lookup(d.sens.add_i6, fw_data.extabs.grts_curve); //ADD_I6 input selected as GRTEMP sensor
  else
   d.sens.grts = 0; //input is not selected
 #endif
@@ -387,27 +387,27 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   goto ftls_notsel;
  }
  add_ix = (((uint32_t)add_ix) * ftlscor_ucoef()) >> 12; //apply board voltage correction
- d.sens.ftls = exsens_lookup(add_ix, fw_data.exdata.ftls_curve);
+ d.sens.ftls = exsens_lookup(add_ix, fw_data.extabs.ftls_curve);
 ftls_notsel:
 #endif
 #endif
 
 #ifndef SECU3T
  if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3i)
-  d.sens.egts = exsens_lookup(d.sens.add_i3, fw_data.exdata.egts_curve); //ADD_I3 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i3, fw_data.extabs.egts_curve); //ADD_I3 input selected as input for EGT sensor
 #ifdef TPIC8101
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.egts = exsens_lookup(d.sens.add_i4, fw_data.exdata.egts_curve); //ADD_I4 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i4, fw_data.extabs.egts_curve); //ADD_I4 input selected as input for EGT sensor
 #endif
 #ifdef MCP3204
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.egts = exsens_lookup(d.sens.add_i5, fw_data.exdata.egts_curve); //ADD_I5 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i5, fw_data.extabs.egts_curve); //ADD_I5 input selected as input for EGT sensor
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.egts = exsens_lookup(d.sens.add_i6, fw_data.exdata.egts_curve); //ADD_I6 input selected
+  d.sens.egts = exsens_lookup(d.sens.add_i6, fw_data.extabs.egts_curve); //ADD_I6 input selected
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.egts = exsens_lookup(d.sens.add_i7, fw_data.exdata.egts_curve); //ADD_I7 input selected
+  d.sens.egts = exsens_lookup(d.sens.add_i7, fw_data.extabs.egts_curve); //ADD_I7 input selected
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.egts = exsens_lookup(d.sens.add_i8, fw_data.exdata.egts_curve); //ADD_I8 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i8, fw_data.extabs.egts_curve); //ADD_I8 input selected as input for EGT sensor
 #endif
  else
   d.sens.egts = 0; //input is not selected
@@ -416,13 +416,13 @@ ftls_notsel:
 #ifndef SECU3T
 #ifdef MCP3204
  if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.ops = exsens_lookup(d.sens.add_i5, fw_data.exdata.ops_curve); //ADD_I5 input selected as input for fuel tank level sensor
+  d.sens.ops = exsens_lookup(d.sens.add_i5, fw_data.extabs.ops_curve); //ADD_I5 input selected as input for fuel tank level sensor
  else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.ops = exsens_lookup(d.sens.add_i6, fw_data.exdata.ops_curve); //ADD_I6 input selected
+  d.sens.ops = exsens_lookup(d.sens.add_i6, fw_data.extabs.ops_curve); //ADD_I6 input selected
  else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.ops = exsens_lookup(d.sens.add_i7, fw_data.exdata.ops_curve); //ADD_I7 input selected
+  d.sens.ops = exsens_lookup(d.sens.add_i7, fw_data.extabs.ops_curve); //ADD_I7 input selected
  else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.ops = exsens_lookup(d.sens.add_i8, fw_data.exdata.ops_curve); //ADD_I8 input selected as input for fuel tank level sensor
+  d.sens.ops = exsens_lookup(d.sens.add_i8, fw_data.extabs.ops_curve); //ADD_I8 input selected as input for fuel tank level sensor
  else
   d.sens.ops = 0; //input is not selected
 #endif
@@ -486,17 +486,17 @@ ftls_notsel:
   d.sens.maf = 0; //input is not selected
 
 #ifndef SECU3T
-if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
+if (1==PGM_GET_BYTE(&fw_data.extabs.fts_source))
 { //use sensor
 #ifdef MCP3204
  if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.fts = exsens_lookup(d.sens.add_i5, fw_data.exdata.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i5, fw_data.extabs.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
  else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.fts = exsens_lookup(d.sens.add_i6, fw_data.exdata.fts_curve); //ADD_I6 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i6, fw_data.extabs.fts_curve); //ADD_I6 input selected as input for fuel temperature sensor
  else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.fts = exsens_lookup(d.sens.add_i7, fw_data.exdata.fts_curve); //ADD_I7 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i7, fw_data.extabs.fts_curve); //ADD_I7 input selected as input for fuel temperature sensor
  else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.fts = exsens_lookup(d.sens.add_i8, fw_data.exdata.fts_curve); //ADD_I8 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i8, fw_data.extabs.fts_curve); //ADD_I8 input selected as input for fuel temperature sensor
  else
   d.sens.fts = 0; //input is not selected
 #endif
@@ -522,10 +522,10 @@ void meas_init(void)
   adc_begin_measure(0); //<--normal speed
   while(!adc_is_measure_ready());
 
-  meas_update_values_buffers(0, &fw_data.exdata.cesd); //<-- all
+  meas_update_values_buffers(0, &fw_data.extabs.cesd); //<-- all
  }while(--i);
  _RESTORE_INTERRUPT(_t);
- meas_average_measured_values(&fw_data.exdata.cesd);
+ meas_average_measured_values(&fw_data.extabs.cesd);
 }
 
 

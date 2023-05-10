@@ -279,7 +279,7 @@ void ce_check_engine(void)
 {
  uint32_t temp_errors;
 
- check(&fw_data.exdata.cesd);
+ check(&fw_data.extabs.cesd);
 
  //If the timer counted the time, then turn off the CE
  if (s_timer_is_action(&ce_control_time_counter))

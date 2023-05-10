@@ -178,11 +178,11 @@ void calc_lookup_args(void)
 
  //find interpolation points, then restrict RPM if it fall outside set range
  for(fcs.la_f = F_WRK_POINTS_F-2; fcs.la_f >= 0; fcs.la_f--)
-  if (fcs.la_rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f])) break;
+  if (fcs.la_rpm >= PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f])) break;
 
  //lookup table works from rpm_grid_points[0] and upper
- if (fcs.la_f < 0)  {fcs.la_f = 0; fcs.la_rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]);}
- if (fcs.la_rpm > PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_WRK_POINTS_F-1])) fcs.la_rpm = PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[F_WRK_POINTS_F-1]);
+ if (fcs.la_f < 0)  {fcs.la_f = 0; fcs.la_rpm = PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[0]);}
+ if (fcs.la_rpm > PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[F_WRK_POINTS_F-1])) fcs.la_rpm = PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[F_WRK_POINTS_F-1]);
  fcs.la_fp1 = fcs.la_f + 1;
 
  //-----------------------------------------
@@ -200,17 +200,17 @@ void calc_lookup_args(void)
   fcs.la_load = d.load;
 
   //limit value, so it can not be out of frid range
-  if (fcs.la_load < PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]))
-   fcs.la_load = PGM_GET_WORD(&fw_data.exdata.load_grid_points[0]);
-  if (fcs.la_load > PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]))
-   fcs.la_load = PGM_GET_WORD(&fw_data.exdata.load_grid_points[F_WRK_POINTS_L-1]);
+  if (fcs.la_load < PGM_GET_WORD(&fw_data.extabs.load_grid_points[0]))
+   fcs.la_load = PGM_GET_WORD(&fw_data.extabs.load_grid_points[0]);
+  if (fcs.la_load > PGM_GET_WORD(&fw_data.extabs.load_grid_points[F_WRK_POINTS_L-1]))
+   fcs.la_load = PGM_GET_WORD(&fw_data.extabs.load_grid_points[F_WRK_POINTS_L-1]);
 
   for(fcs.la_l = F_WRK_POINTS_L-2; fcs.la_l >= 0; fcs.la_l--)
-   if (fcs.la_load >= PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l])) break;
+   if (fcs.la_load >= PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l])) break;
   fcs.la_lp1 = fcs.la_l + 1;
 
   //update air flow variable (find nearest point)
-  if (fcs.la_load > (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) + (PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) / 2)))
+  if (fcs.la_load > (PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) + (PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) / 2)))
    d.airflow = fcs.la_lp1+1;
   else
    d.airflow = fcs.la_l+1;
@@ -247,11 +247,11 @@ void calc_lookup_args(void)
 
  //find interpolation points, then restrict CLT if it fall outside set range
  for(fcs.ta_i = F_TMP_POINTS-2; fcs.ta_i >= 0; fcs.ta_i--)
-  if (fcs.ta_clt >= ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]))) break;
+  if (fcs.ta_clt >= ((int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]))) break;
 
  //lookup table works from clt_grid_points[0] and upper
- if (fcs.ta_i < 0)  {fcs.ta_i = 0; fcs.ta_clt = (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
- if (fcs.ta_clt > ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]))) fcs.ta_clt = (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
+ if (fcs.ta_i < 0)  {fcs.ta_i = 0; fcs.ta_clt = (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[0]);}
+ if (fcs.ta_clt > ((int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[F_TMP_POINTS-1]))) fcs.ta_clt = (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[F_TMP_POINTS-1]);
  fcs.ta_i1 = fcs.ta_i + 1;
 
 #if !defined(SECU3T) && defined(MCP3204)
@@ -261,11 +261,11 @@ void calc_lookup_args(void)
 
  //find interpolation points, then restrict CLT if it fall outside set range
  for(fcs.ga_i = F_TMP_POINTS-2; fcs.ga_i >= 0; fcs.ga_i--)
-  if (fcs.ga_grt >= ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]))) break;
+  if (fcs.ga_grt >= ((int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ga_i]))) break;
 
  //lookup table works from clt_grid_points[0] and upper
- if (fcs.ga_i < 0)  {fcs.ga_i = 0; fcs.ga_grt = (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[0]);}
- if (fcs.ga_grt > ((int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]))) fcs.ga_grt = (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[F_TMP_POINTS-1]);
+ if (fcs.ga_i < 0)  {fcs.ga_i = 0; fcs.ga_grt = (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[0]);}
+ if (fcs.ga_grt > ((int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[F_TMP_POINTS-1]))) fcs.ga_grt = (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[F_TMP_POINTS-1]);
  fcs.ga_i1 = fcs.ga_i + 1;
 #endif
 
@@ -280,7 +280,7 @@ void calc_lookup_args(void)
 int16_t idling_function(void)
 {
  return simple_interpolation(fcs.la_rpm, _GB(f_idl[fcs.la_f]), _GB(f_idl[fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16);
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16);
 }
 
 
@@ -310,10 +310,10 @@ int16_t work_function(void)
         _GB(f_wrk[fcs.la_lp1][fcs.la_f]),
         _GB(f_wrk[fcs.la_lp1][fcs.la_fp1]),
         _GB(f_wrk[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
 }
 
 //Implements advance angle correction function by coolant temparature (degr. of Celsius)
@@ -325,10 +325,10 @@ int16_t coolant_function(uint8_t mode)
 
  if (mode) //work mode
   return simple_interpolation(fcs.ta_clt, _GB(f_tmp[fcs.ta_i]), _GB(f_tmp[fcs.ta_i1]),
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16);
  else //idling mode
   return simple_interpolation(fcs.ta_clt, _GB(f_tmp_idl[fcs.ta_i]), _GB(f_tmp_idl[fcs.ta_i1]),
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16);
 }
 
 int16_t crkclt_function(void)
@@ -336,8 +336,8 @@ int16_t crkclt_function(void)
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return 0;   //no correction if CLT sensor is turned off
 
- return simple_interpolation(fcs.ta_clt, (int8_t)PGM_GET_BYTE(&fw_data.exdata.cts_crkcorr[fcs.ta_i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.cts_crkcorr[fcs.ta_i1]),
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16);
+ return simple_interpolation(fcs.ta_clt, (int8_t)PGM_GET_BYTE(&fw_data.extabs.cts_crkcorr[fcs.ta_i]), (int8_t)PGM_GET_BYTE(&fw_data.extabs.cts_crkcorr[fcs.ta_i1]),
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16);
 }
 
 //Idling regulator
@@ -486,8 +486,8 @@ uint8_t knock_attenuator_function()
  else
   i1 = i + 1;
 
- return simple_interpolation(rpm, PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i]),
-        PGM_GET_BYTE(&fw_data.exdata.attenuator_table[i1]), (i * 60) + 200, 60, 16) >> 4;
+ return simple_interpolation(rpm, PGM_GET_BYTE(&fw_data.extabs.attenuator_table[i]),
+        PGM_GET_BYTE(&fw_data.extabs.attenuator_table[i1]), (i * 60) + 200, 60, 16) >> 4;
 }
 
 #if defined(DWELL_CONTROL) || defined(FUEL_INJECT)
@@ -514,7 +514,7 @@ uint16_t accumulation_time(uint8_t mode)
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 8) >> 3;
  else //dwell time
 #endif
-  return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.coil_on_time[i]), PGM_GET_WORD(&fw_data.exdata.coil_on_time[i1]),
+  return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.extabs.coil_on_time[i]), PGM_GET_WORD(&fw_data.extabs.coil_on_time[i1]),
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 4) >> 2;
 }
 #endif
@@ -629,7 +629,7 @@ int16_t airtemp_function(void)
  if (i >= ATS_CORR_LOOKUP_TABLE_SIZE-1) i = i1 = ATS_CORR_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
- return simple_interpolation(t, (int8_t)PGM_GET_BYTE(&fw_data.exdata.ats_corr[i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.ats_corr[i1]), //<--values in table are signed
+ return simple_interpolation(t, (int8_t)PGM_GET_BYTE(&fw_data.extabs.ats_corr[i]), (int8_t)PGM_GET_BYTE(&fw_data.extabs.ats_corr[i1]), //<--values in table are signed
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 16);
 }
 
@@ -642,7 +642,7 @@ uint16_t inj_cranking_pw(void)
   return 1000;   //coolant temperature sensor is not enabled, default is 3.2mS
 
  return simple_interpolation(fcs.ta_clt, _GWU(inj_cranking[fcs.ta_i]), _GWU(inj_cranking[fcs.ta_i1]),  //<--values in table are unsigned
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 1) /*>> 0*/;
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 1) /*>> 0*/;
 }
 
 void calc_ve_afr(void)
@@ -655,10 +655,10 @@ void calc_ve_afr(void)
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_ve,fcs.la_l,fcs.la_fp1),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8) >> 3;
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8) >> 3;
 
   if (d.param.ve2_map_func != VE2MF_1ST)
   {
@@ -675,9 +675,9 @@ void calc_ve_afr(void)
         _GWU12(inj_ve2, tp1, fcs.la_f),
         _GWU12(inj_ve2, tp1, fcs.la_fp1),
         _GWU12(inj_ve2, t, fcs.la_fp1),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
         (TPS_AXIS_STEP*t),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
         TPS_AXIS_STEP, 8) >> 3;
 
    if (d.param.ve2_map_func == VE2MF_MUL)
@@ -695,10 +695,10 @@ void calc_ve_afr(void)
         _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
         _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
         _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
  fcs.afrcurr+=(8*256);
 
  d.corr.afr = fcs.afrcurr >> 1; //update value of AFR
@@ -809,10 +809,10 @@ int16_t inj_timing_lookup(void)
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_f),
         _GWU12(inj_timing,fcs.la_lp1,fcs.la_fp1),
         _GWU12(inj_timing,fcs.la_l,fcs.la_fp1),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8);
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 8);
  if (it > ROUND(720.0*16))
   it-=ROUND(720.0*16);
  return (it << 1);
@@ -864,7 +864,7 @@ uint8_t inj_iac_pos_lookup(prev_temp_t* p_pt, uint8_t mode)
 #endif
  //run/cranking
  return simple_interpolation(t, mode ? _GBU(inj_iac_run_pos[i]) : _GBU(inj_iac_crank_pos[i]), mode ? _GBU(inj_iac_run_pos[i1]) : _GBU(inj_iac_crank_pos[i1]),  //<--values in table are unsigned
-  (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[i]), 16) >> 4;
+  (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[i]), 16) >> 4;
 }
 #endif
 
@@ -875,7 +875,7 @@ uint8_t inj_aftstr_en(void)
   return 0;   //coolant temperature sensor is not enabled (or not installed), no afterstart enrichment
 
  return simple_interpolation(fcs.ta_clt, _GBU(inj_aftstr[fcs.ta_i]), _GBU(inj_aftstr[fcs.ta_i1]),  //<--values in table are unsigned
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
 }
 
 uint8_t inj_warmup_en(void)
@@ -884,7 +884,7 @@ uint8_t inj_warmup_en(void)
   return 128;   //coolant temperature sensor is not enabled (or not installed), no warmup enrichment
 
  return simple_interpolation(fcs.ta_clt, _GBU(inj_warmup[fcs.ta_i]), _GBU(inj_warmup[fcs.ta_i1]),  //<--values in table are unsigned
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
 }
 
 int16_t inj_ae_tps_lookup(int16_t tpsdot)
@@ -976,7 +976,7 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
  int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)32 * k_load) / (get_load_upper() - d.param.load_lower)) >> 0;
- int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_frq) - targ_rpm) * (int16_t)32 * k_rpm) / (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[0]))) >> 0;
+ int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_frq) - targ_rpm) * (int16_t)32 * k_rpm) / (PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[RPM_GRID_SIZE-1]) - PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[0]))) >> 0;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)
  int16_t i, i1, R = ui32_sqrt(((int32_t)dload * dload) + ((int32_t)drpm * drpm));
@@ -1064,20 +1064,20 @@ uint16_t inj_idling_rpm(void)
   return 900;   //coolant temperature sensor is not enabled (or not installed)
 
  return (simple_interpolation(fcs.ta_clt, _GBU(inj_target_rpm[fcs.ta_i]), _GBU(inj_target_rpm[fcs.ta_i1]),  //<--values in table are unsigned
-         (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
+         (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 #endif
 
 uint16_t tpsswt_function(void)
 {
  return simple_interpolation(fcs.la_rpm, _GBU(inj_tpsswt[fcs.la_f]), _GBU(inj_tpsswt[fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 }
 
 uint16_t tpszon_function(void)
 {
  return simple_interpolation(fcs.la_rpm, _GBU(inj_tpszon[fcs.la_f]), _GBU(inj_tpszon[fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 32); //result is x 64
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 32); //result is x 64
 }
 
 #ifdef PA4_INP_IGNTIM
@@ -1100,7 +1100,7 @@ int16_t pa4_function(uint16_t adcvalue)
  if (i >= PA4_LOOKUP_TABLE_SIZE-1) i = i1 = PA4_LOOKUP_TABLE_SIZE-1;
  else i1 = i + 1;
 
- return  simple_interpolation(adcvalue, (int8_t)PGM_GET_BYTE(&fw_data.exdata.pa4_igntim_corr[i]), (int8_t)PGM_GET_BYTE(&fw_data.exdata.pa4_igntim_corr[i1]), //<--values in table are signed
+ return  simple_interpolation(adcvalue, (int8_t)PGM_GET_BYTE(&fw_data.extabs.pa4_igntim_corr[i]), (int8_t)PGM_GET_BYTE(&fw_data.extabs.pa4_igntim_corr[i1]), //<--values in table are signed
         (i * v_step) + v_start, v_step, 16);
 }
 
@@ -1136,13 +1136,13 @@ int16_t gdp_function(void)
   tp1 = t + 1;
 
  return bilinear_interpolation(fcs.la_rpm, tps,  //note that tps is additionally multiplied by 16
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[t][fcs.la_f]),
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[tp1][fcs.la_f]),
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[tp1][fcs.la_fp1]),
-        PGM_GET_BYTE(&fw_data.exdata.gasdose_pos[t][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
+        PGM_GET_BYTE(&fw_data.extabs.gasdose_pos[t][fcs.la_f]),
+        PGM_GET_BYTE(&fw_data.extabs.gasdose_pos[tp1][fcs.la_f]),
+        PGM_GET_BYTE(&fw_data.extabs.gasdose_pos[tp1][fcs.la_fp1]),
+        PGM_GET_BYTE(&fw_data.extabs.gasdose_pos[t][fcs.la_fp1]),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
         (TPS_AXIS_STEP*t),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
         TPS_AXIS_STEP, 16) >> 4;
 }
 
@@ -1205,9 +1205,9 @@ int16_t barocorr_lookup(void)
  int16_t i, i1, press = d.sens.baro_press;
 
  //Pressure value at the start of axis
- uint16_t p_start = PGM_GET_WORD(&fw_data.exdata.barocorr[BAROCORR_SIZE]);
+ uint16_t p_start = PGM_GET_WORD(&fw_data.extabs.barocorr[BAROCORR_SIZE]);
  //Pressure value at the end of axis
- uint16_t p_end = PGM_GET_WORD(&fw_data.exdata.barocorr[BAROCORR_SIZE+1]);
+ uint16_t p_end = PGM_GET_WORD(&fw_data.extabs.barocorr[BAROCORR_SIZE+1]);
 
  uint16_t p_step = (p_end - p_start) / (BAROCORR_SIZE - 1);
 
@@ -1219,7 +1219,7 @@ int16_t barocorr_lookup(void)
  if (i >= BAROCORR_SIZE-1) i = i1 = BAROCORR_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation(press, (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.barocorr[i1]), //<--values in table are signed
+ return (simple_interpolation(press, (int16_t)PGM_GET_WORD(&fw_data.extabs.barocorr[i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.barocorr[i1]), //<--values in table are signed
         (i * p_step) + p_start, p_step, 4)) >> 2;
 }
 
@@ -1506,8 +1506,8 @@ uint16_t cranking_thrd_rpm(void)
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return d.param.starter_off;   //coolant temperature sensor is not enabled (or not installed), use simple constant
 
- return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_thrd[fcs.ta_i1]),  //<--values in table are unsigned
-         (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
+ return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.extabs.cranking_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.extabs.cranking_thrd[fcs.ta_i1]),  //<--values in table are unsigned
+         (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 
 uint16_t cranking_thrd_tmr(void)
@@ -1515,8 +1515,8 @@ uint16_t cranking_thrd_tmr(void)
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return d.param.stbl_str_cnt;   //coolant temperature sensor is not enabled (or not installed), use simple constant
 
- return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.cranking_time[fcs.ta_i1]),  //<--values in table are unsigned
-         (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
+ return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.extabs.cranking_time[fcs.ta_i]), PGM_GET_BYTE(&fw_data.extabs.cranking_time[fcs.ta_i1]),  //<--values in table are unsigned
+         (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 
 uint16_t smapaban_thrd_rpm(void)
@@ -1524,8 +1524,8 @@ uint16_t smapaban_thrd_rpm(void)
  if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
   return d.param.smap_abandon;   //coolant temperature sensor is not enabled (or not installed). use simple constant
 
- return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.smapaban_thrd[fcs.ta_i1]),  //<--values in table are unsigned
-         (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
+ return (simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.extabs.smapaban_thrd[fcs.ta_i]), PGM_GET_BYTE(&fw_data.extabs.smapaban_thrd[fcs.ta_i1]),  //<--values in table are unsigned
+         (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4) * 10;
 }
 
 #ifdef _PLATFORM_M1284_
@@ -1540,7 +1540,7 @@ uint8_t knock_zone_val(void)
 
  //find interpolation points, then restrict RPM if it fall outside set range
  for(f = F_WRK_POINTS_F-1; f >= 0; f--)
-  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+  if (rpm >= PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[f])) break;
  //lookup table works from rpm_grid_points[0] and upper
  if (f < 0) f = 0;
 
@@ -1548,7 +1548,7 @@ uint8_t knock_zone_val(void)
  if (t > (KNKZONE_TPS_SIZE - 1))
   t = KNKZONE_TPS_SIZE - 1;
 
- return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.knock_zones[t]) >> f)) & 1;
+ return ((uint8_t)(PGM_GET_WORD(&fw_data.extabs.knock_zones[t]) >> f)) & 1;
 }
 
 #endif
@@ -1562,20 +1562,20 @@ uint16_t pwm_function(uint8_t mode)
         _GBU(pwm_duty1[fcs.la_lp1][fcs.la_f]),
         _GBU(pwm_duty1[fcs.la_lp1][fcs.la_fp1]),
         _GBU(pwm_duty1[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 64) >> 6;
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 64) >> 6;
  else
  return bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GBU(pwm_duty2[fcs.la_l][fcs.la_f]),   //<-- values are unsigned
         _GBU(pwm_duty2[fcs.la_lp1][fcs.la_f]),
         _GBU(pwm_duty2[fcs.la_lp1][fcs.la_fp1]),
         _GBU(pwm_duty2[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 64) >> 6;
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 64) >> 6;
 }
 
 #ifdef SPLIT_ANGLE
@@ -1589,24 +1589,24 @@ int16_t split_function(void)
         _GB(pwm_duty1[fcs.la_lp1][fcs.la_f]),
         _GB(pwm_duty1[fcs.la_lp1][fcs.la_fp1]),
         _GB(pwm_duty1[fcs.la_l][fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 16);
 }
 #endif
 
 #ifndef SECU3T
 uint8_t grheat_pwm_duty(void)
 {
- return simple_interpolation(fcs.ga_grt, PGM_GET_BYTE(&fw_data.exdata.grheat_duty[fcs.ga_i]), PGM_GET_BYTE(&fw_data.exdata.grheat_duty[fcs.ga_i1]),
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ga_i]), 16) >> 4;
+ return simple_interpolation(fcs.ga_grt, PGM_GET_BYTE(&fw_data.extabs.grheat_duty[fcs.ga_i]), PGM_GET_BYTE(&fw_data.extabs.grheat_duty[fcs.ga_i1]),
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ga_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ga_i]), 16) >> 4;
 }
 
 uint16_t grv_delay(void)
 {
- return simple_interpolation(fcs.ga_grt, PGM_GET_WORD(&fw_data.exdata.grv_delay[fcs.ga_i]), PGM_GET_WORD(&fw_data.exdata.grv_delay[fcs.ga_i1]),
-        (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ga_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ga_i]), 2) >> 1;
+ return simple_interpolation(fcs.ga_grt, PGM_GET_WORD(&fw_data.extabs.grv_delay[fcs.ga_i]), PGM_GET_WORD(&fw_data.extabs.grv_delay[fcs.ga_i1]),
+        (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ga_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ga_i]), 2) >> 1;
 }
 #endif
 
@@ -1623,7 +1623,7 @@ uint16_t pwmiac_ucoef(void)
  if (i >= PWMIAC_UCOEF_SIZE-1) i = i1 = PWMIAC_UCOEF_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.pwmiac_ucoef[i]), PGM_GET_WORD(&fw_data.exdata.pwmiac_ucoef[i1]),
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.extabs.pwmiac_ucoef[i]), PGM_GET_WORD(&fw_data.extabs.pwmiac_ucoef[i1]),
         (i * VOLTAGE_MAGNITUDE(0.8)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.8), 2) >> 1;
 }
 #endif
@@ -1637,16 +1637,16 @@ uint16_t aftstr_strokes(uint8_t mode)
  if (mode)
  { //gas
   if (0==d.param.inj_aftstr_strokes1)
-   return simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk1[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk1[fcs.ta_i1]),  //<--values in table are unsigned
-         (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
+   return simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.extabs.inj_aftstr_strk1[fcs.ta_i]), PGM_GET_BYTE(&fw_data.extabs.inj_aftstr_strk1[fcs.ta_i1]),  //<--values in table are unsigned
+         (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
   else
    return ((uint16_t)d.param.inj_aftstr_strokes1) << 2;
  }
  else
  { //petrol
   if (0==d.param.inj_aftstr_strokes)
-   return simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk0[fcs.ta_i]), PGM_GET_BYTE(&fw_data.exdata.inj_aftstr_strk0[fcs.ta_i1]),  //<--values in table are unsigned
-         (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.exdata.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
+   return simple_interpolation(fcs.ta_clt, PGM_GET_BYTE(&fw_data.extabs.inj_aftstr_strk0[fcs.ta_i]), PGM_GET_BYTE(&fw_data.extabs.inj_aftstr_strk0[fcs.ta_i1]),  //<--values in table are unsigned
+         (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_points[fcs.ta_i]), (int16_t)PGM_GET_WORD(&fw_data.extabs.clt_grid_sizes[fcs.ta_i]), 16) >> 4;
   else
    return ((uint16_t)d.param.inj_aftstr_strokes) << 2;
  }
@@ -1722,7 +1722,7 @@ int16_t injpwcoef_function(uint16_t adcvalue)
  if (i >= INJPWCOEF_LUT_SIZE-1) i = i1 = INJPWCOEF_LUT_SIZE-1;
  else i1 = i + 1;
 
- return  simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.exdata.injpw_coef[i]), PGM_GET_WORD(&fw_data.exdata.injpw_coef[i1]),
+ return  simple_interpolation(adcvalue, PGM_GET_WORD(&fw_data.extabs.injpw_coef[i]), PGM_GET_WORD(&fw_data.extabs.injpw_coef[i1]),
         (i * v_step) + v_start, v_step, 4) >> 2;
 }
 #endif //SECU-3i
@@ -1738,7 +1738,7 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
  if (i >= MAF_FLOW_CURVE_SIZE-1) i = i1 = MAF_FLOW_CURVE_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.exdata.maf_curve[i]), PGM_GET_WORD(&fw_data.exdata.maf_curve[i1]),
+ return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.extabs.maf_curve[i]), PGM_GET_WORD(&fw_data.extabs.maf_curve[i1]),
         (i * VOLTAGE_MAGNITUDE(0.07936*32)), VOLTAGE_MAGNITUDE(0.07936*32), 1)) >> 0;
 */
 
@@ -1746,9 +1746,9 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
  adcvalue*=32;
 
  //Voltage value at the start of axis in ADC discretes
- uint16_t v_start = PGM_GET_WORD(&fw_data.exdata.maf_curve[MAF_FLOW_CURVE_SIZE+1]) * 32;
+ uint16_t v_start = PGM_GET_WORD(&fw_data.extabs.maf_curve[MAF_FLOW_CURVE_SIZE+1]) * 32;
  //Voltage value at the end of axis in ADC discretes
- uint16_t v_end = PGM_GET_WORD(&fw_data.exdata.maf_curve[MAF_FLOW_CURVE_SIZE+2]) * 32;
+ uint16_t v_end = PGM_GET_WORD(&fw_data.extabs.maf_curve[MAF_FLOW_CURVE_SIZE+2]) * 32;
 
  uint16_t v_step = (v_end - v_start) / (MAF_FLOW_CURVE_SIZE - 1);
 
@@ -1760,7 +1760,7 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
  if (i >= MAF_FLOW_CURVE_SIZE-1) i = i1 = MAF_FLOW_CURVE_SIZE-1;
  else i1 = i + 1;
 
- return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.exdata.maf_curve[i]), PGM_GET_WORD(&fw_data.exdata.maf_curve[i1]),
+ return (simple_interpolation_u(adcvalue, PGM_GET_WORD(&fw_data.extabs.maf_curve[i]), PGM_GET_WORD(&fw_data.extabs.maf_curve[i1]),
         (i * v_step) + v_start, v_step, 1)) >> 0;
 }
 
@@ -1773,20 +1773,20 @@ int16_t calc_ltft(uint8_t idx)
         idx ? d.inj_ltft2[fcs.la_lp1][fcs.la_f] : d.inj_ltft1[fcs.la_lp1][fcs.la_f],
         idx ? d.inj_ltft2[fcs.la_lp1][fcs.la_fp1] : d.inj_ltft1[fcs.la_lp1][fcs.la_fp1],
         idx ? d.inj_ltft2[fcs.la_l][fcs.la_fp1] : d.inj_ltft1[fcs.la_l][fcs.la_fp1],
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]),
-        use_grid ? PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 128) >> 7) + 512;
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) : (fcs.la_grad * fcs.la_l),
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]),
+        use_grid ? PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]) : fcs.la_grad, 128) >> 7) + 512;
 }
 
 uint8_t ltft_check_rpm_hit(void)
 {
  uint16_t rpm = fcs.la_rpm;
- uint16_t band = (((uint32_t)PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f])) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+ uint16_t band = (((uint32_t)PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f])) * PGM_GET_BYTE(&fw_data.extabs.ltft_cell_band)) >> 8;
 
- if (rpm <= (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]) + band))
+ if (rpm <= (PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]) + band))
   return fcs.la_f; //near to lower point
- else if (rpm >= (PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_fp1]) - band))
+ else if (rpm >= (PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_fp1]) - band))
   return fcs.la_fp1; //near to upper point
 
  return 255; //no hit
@@ -1799,7 +1799,7 @@ uint8_t ltft_check_load_hit(void)
 
  if (!use_grid)
  { //use two values (min and max)
-  uint16_t band = (((uint32_t)fcs.la_grad) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+  uint16_t band = (((uint32_t)fcs.la_grad) * PGM_GET_BYTE(&fw_data.extabs.ltft_cell_band)) >> 8;
   if (load <= ((fcs.la_grad * fcs.la_l) + band))
    return fcs.la_l; //near to lower point
   else if (load >= ((fcs.la_grad * fcs.la_lp1) - band))
@@ -1807,11 +1807,11 @@ uint8_t ltft_check_load_hit(void)
  }
  else
  { //use grid map
-  uint16_t band = (((uint32_t)(PGM_GET_WORD(&fw_data.exdata.load_grid_sizes[fcs.la_l]))) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
+  uint16_t band = (((uint32_t)(PGM_GET_WORD(&fw_data.extabs.load_grid_sizes[fcs.la_l]))) * PGM_GET_BYTE(&fw_data.exdata.ltft_cell_band)) >> 8;
 
-  if (load <= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_l]) + band))
+  if (load <= (PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_l]) + band))
    return fcs.la_l; //near to lower point
-  else if (load >= (PGM_GET_WORD(&fw_data.exdata.load_grid_points[fcs.la_lp1]) - band))
+  else if (load >= (PGM_GET_WORD(&fw_data.extabs.load_grid_points[fcs.la_lp1]) - band))
    return fcs.la_lp1; //near to upper point
  }
 
@@ -1833,7 +1833,7 @@ uint16_t ftlscor_ucoef(void)
  if (i >= FTLSCOR_UCOEF_SIZE-1) i = i1 = FTLSCOR_UCOEF_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.exdata.ftlscor_ucoef[i]), PGM_GET_WORD(&fw_data.exdata.ftlscor_ucoef[i1]),
+ return simple_interpolation(voltage, PGM_GET_WORD(&fw_data.extabs.ftlscor_ucoef[i]), PGM_GET_WORD(&fw_data.extabs.ftlscor_ucoef[i1]),
         (i * VOLTAGE_MAGNITUDE(0.4)) + VOLTAGE_MAGNITUDE(5.4), VOLTAGE_MAGNITUDE(0.4), 2) >> 1;
 }
 #endif
@@ -1849,11 +1849,11 @@ uint8_t lambda_zone_val(void)
 
  //find interpolation points, then restrict RPM if it fall outside set range
  for(f = F_WRK_POINTS_F-1; f >= 0; f--)
-  if (rpm >= PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[f])) break;
+  if (rpm >= PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[f])) break;
  //lookup table works from rpm_grid_points[0] and upper
  if (f < 0) f = 0;
 
- return ((uint8_t)(PGM_GET_WORD(&fw_data.exdata.lambda_zones[fcs.la_l]) >> f)) & 1;
+ return ((uint8_t)(PGM_GET_WORD(&fw_data.extabs.lambda_zones[fcs.la_l]) >> f)) & 1;
 }
 #endif
 
@@ -1869,7 +1869,7 @@ void inj_cylmultadd(uint8_t idx, uint16_t *p_mult, int16_t *p_add)
 uint8_t inj_iac_thrass(void)
 {
  return simple_interpolation(fcs.la_rpm, _GBU(inj_thrass[fcs.la_f]), _GBU(inj_thrass[fcs.la_fp1]),
-        PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+        PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 }
 #endif
 
@@ -1888,7 +1888,7 @@ uint16_t fueldens_corr(void)
  if (i >= FUELDENS_CORR_SIZE-1) i = i1 = FUELDENS_CORR_SIZE-1;
  else i1 = i + 1;
 
- return simple_interpolation_u(t, PGM_GET_WORD(&fw_data.exdata.fueldens_corr[i]), PGM_GET_WORD(&fw_data.exdata.fueldens_corr[i1]),
+ return simple_interpolation_u(t, PGM_GET_WORD(&fw_data.extabs.fueldens_corr[i]), PGM_GET_WORD(&fw_data.extabs.fueldens_corr[i1]),
  (i * TEMPERATURE_MAGNITUDE(10)) + TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(10), 2) >> 1;
 }
 #endif
@@ -1940,35 +1940,35 @@ void calc_xtau(int32_t* pw1, int32_t* pw2)
 
  if (d.sens.mapdot > s_thrd)
  { //Acceleration
-  xf = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+  xf = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_xfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_xfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 
-  tf = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+  tf = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_tfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_tfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 1);
  }
  else if (d.sens.mapdot < f_thrd)
  { //Decelaration
-  xf = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+  xf = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_xfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_xfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
 
-  tf = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+  tf = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_tfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_tfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 1);
  }
  else
  { //in between
   int16_t dthrd = (s_thrd - f_thrd);
 
-  uint16_t xfa = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfacc[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
-  uint16_t xfd = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_xfdec[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+  uint16_t xfa = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_xfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_xfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
+  uint16_t xfd = simple_interpolation(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_xfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_xfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 16) >> 4;
   xf = simple_interpolation(d.sens.mapdot, xfd, xfa, f_thrd, dthrd, 1) >> 0;
 
-  uint16_t tfa = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfacc[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+  uint16_t tfa = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_tfacc[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_tfacc[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 1);
 
-  uint16_t tfd = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.xtau_tfdec[fcs.la_fp1]),
-                 PGM_GET_WORD(&fw_data.exdata.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.exdata.rpm_grid_sizes[fcs.la_f]), 1);
+  uint16_t tfd = simple_interpolation_u(fcs.la_rpm, PGM_GET_WORD(&fw_data.extabs.xtau_tfdec[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.xtau_tfdec[fcs.la_fp1]),
+                 PGM_GET_WORD(&fw_data.extabs.rpm_grid_points[fcs.la_f]), PGM_GET_WORD(&fw_data.extabs.rpm_grid_sizes[fcs.la_f]), 1);
   tf = simple_interpolation_u(d.sens.mapdot, tfd, tfa, f_thrd, dthrd, 1) >> 0;
  }
 

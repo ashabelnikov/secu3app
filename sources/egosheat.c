@@ -66,7 +66,7 @@ static uint16_t get_eh_pause(void)
   voltage-=VOLTAGE_MAGNITUDE(0.4); //step between function samples
  }while(i > 0);
 
- return PGM_GET_BYTE(&fw_data.exdata.eh_pause[i]);
+ return PGM_GET_BYTE(&fw_data.extabs.eh_pause[i]);
 }
 
 void egosheat_control(void)

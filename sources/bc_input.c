@@ -136,11 +136,11 @@ void measure_voltage(void)
  do
  {
   adc_measure_voltage();
-  meas_update_values_buffers(0, &fw_data.exdata.cesd); //<-- all
+  meas_update_values_buffers(0, &fw_data.extabs.cesd); //<-- all
   _DELAY_US(100);
   wdt_reset_timer();
  }while(--i);
- meas_average_measured_values(&fw_data.exdata.cesd);
+ meas_average_measured_values(&fw_data.extabs.cesd);
 }
 
 void bc_indication_mode(void)

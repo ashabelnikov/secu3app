@@ -393,7 +393,7 @@ typedef struct ce_sett_t
 
 /**Describes separate tables stored in the firmware
  */
-typedef struct fw_ex_data_t
+typedef struct fw_ex_tabs_t
 {
   /**Knock. table of attenuator's gain factors (contains codes of gains, gain depends on RPM) */
   uint8_t attenuator_table[KC_ATTENUATOR_LOOKUP_TABLE_SIZE];
@@ -517,9 +517,13 @@ typedef struct fw_ex_data_t
   uint16_t xtau_tfdec[XTAU_FACT_SIZE];
 
   /**reserved*/
-  uint8_t reserved1[1131];
+  uint8_t reserved[1131];
+}fw_ex_tabs_t;
 
-  //---------------------------------------------------------------
+/**Describes offline parameters stored in the firmware
+ */
+typedef struct fw_ex_data_t
+{
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
   uint8_t evap_tps_lo;
@@ -532,7 +536,7 @@ typedef struct fw_ex_data_t
   int16_t  idl_ve;
   uint16_t frap;
   int16_t  idl_ve_g;
-  uint16_t  reserv_0;   //reserved
+  uint16_t  reserv_0;     //reserved
   int16_t  heating_t_off; //Heating off temperature
   uint8_t  heating_time;  //Input manifold heating time
   uint8_t  idltorun_stp_en;
@@ -1001,7 +1005,9 @@ typedef struct fw_data_t
  //following fields are belong to data area, not to the code area:
  params_t def_param;                     //!< Reserve parameters (loaded when instance in EEPROM is broken)
 
- fw_ex_data_t exdata;                    //!< Additional data containing separate tables
+ fw_ex_tabs_t extabs;                    //!< Additional data containing separate tables
+
+ fw_ex_data_t exdata;                    //!< Additional data containing offline parameters
 
  f_data_t tables[TABLES_NUMBER_PGM];     //!< Tables' sets for advance angle and fuel injection
 

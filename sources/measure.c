@@ -486,7 +486,7 @@ ftls_notsel:
   d.sens.maf = 0; //input is not selected
 
 #ifndef SECU3T
-if (1==PGM_GET_BYTE(&fw_data.extabs.fts_source))
+if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
 { //use sensor
 #ifdef MCP3204
  if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5i)

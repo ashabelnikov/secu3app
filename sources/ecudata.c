@@ -28,6 +28,9 @@
 #include "ecudata.h"
 #include "bitmask.h"
 
+/** Separate tables loaded from firmware */
+struct fw_ex_tabs_t ram_extabs;
+
 //TODO: To reduce memory usage it is possible to use crc or some simple hash algorithms to control state of memory(changes). So this variable becomes unneeded.
 /* Cache for buffering parameters used during suspended EEPROM operations */
 params_t eeprom_parameters_cache;

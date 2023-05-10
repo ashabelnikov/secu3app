@@ -238,3 +238,8 @@ void load_consfuel_data_into_ram(void)
  eeprom_read(&d.cons_fuel_int, offsetof(eeprom_data_t, consfuel), sizeof(uint32_t));
 }
 #endif
+
+void load_separate_tables_into_ram(void)
+{
+ MEMCPY_P(&ram_extabs, &fw_data.extabs, sizeof(fw_ex_tabs_t));
+}

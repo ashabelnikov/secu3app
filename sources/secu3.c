@@ -444,6 +444,9 @@ MAIN()
  immob_check_state();
 #endif
 
+ //load separate tables from flash to RAM
+ load_separate_tables_into_ram();
+
 #ifdef REALTIME_TABLES
  //load tables' set from EEPROM into RAM
  load_specified_tables_into_ram(TABLES_NUMBER - 1);

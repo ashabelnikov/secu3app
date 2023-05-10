@@ -353,5 +353,5 @@ typedef struct ecudata_t
 
 extern struct ecudata_t d;               //!< ECU data structure. Contains all related data and state information
 extern struct params_t eeprom_parameters_cache;//!< Cache for buffering EEPROM parameters
-
+extern struct fw_ex_tabs_t ram_extabs;   //!< Separate tables loaded from firmware
 #endif //_ECUDATA_H_

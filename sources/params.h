@@ -83,4 +83,7 @@ void load_odomet_data_into_ram(void);
 void load_consfuel_data_into_ram(void);
 #endif
 
+/**Load separate tables from flash to RAM*/
+void load_separate_tables_into_ram(void);
+
 #endif //_PARAMS_H_

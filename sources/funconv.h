@@ -104,7 +104,7 @@ uint16_t accumulation_time(uint8_t mode);
  * \param lutab Pointer to related look up table
  * \return physical magnitude * TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER
  */
-int16_t thermistor_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
+int16_t thermistor_lookup(uint16_t adcvalue, int16_t *lutab);
 #endif
 
 #if defined(SM_CONTROL) && !defined(FUEL_INJECT)
@@ -469,7 +469,7 @@ int8_t inj_iac_mat_corr(void);
  * \param lutab Pointer to related look up table (&ftls_curve, &egts_curve or &ops_curve)
  * \return physical magnitude * multiplier (x64/x4/x256)
  */
-int16_t exsens_lookup(uint16_t adcvalue, int16_t _PGM *lutab);
+int16_t exsens_lookup(uint16_t adcvalue, int16_t *lutab);
 
 /** Calculates FTLS correction coefficient vs board voltage.
  * \return value of coefficient * 4096

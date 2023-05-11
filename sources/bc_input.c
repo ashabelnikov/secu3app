@@ -34,6 +34,7 @@
 #include "bitmask.h"
 #include "ce_errors.h"
 #include "eeprom.h"
+#include "ecudata.h"
 #include "ioconfig.h"
 #include "knock.h"   //for knock_read_expander() and knock_write_expander()
 #include "pwrrelay.h"
@@ -136,11 +137,11 @@ void measure_voltage(void)
  do
  {
   adc_measure_voltage();
-  meas_update_values_buffers(0, &fw_data.extabs.cesd); //<-- all
+  meas_update_values_buffers(0, &ram_extabs.cesd); //<-- all
   _DELAY_US(100);
   wdt_reset_timer();
  }while(--i);
- meas_average_measured_values(&fw_data.extabs.cesd);
+ meas_average_measured_values(&ram_extabs.cesd);
 }
 
 void bc_indication_mode(void)

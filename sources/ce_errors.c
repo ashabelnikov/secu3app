@@ -88,7 +88,7 @@ uint8_t ce_is_error(uint8_t error)
  * Uses d ECU data structure
  * \param cesd Pointer to the CE settings data structure
  */
-void check(ce_sett_t _PGM *cesd)
+void check(ce_sett_t *cesd)
 {
  //If error of CKP sensor was, then set corresponding bit of error
  if (ckps_is_error())
@@ -129,7 +129,7 @@ void check(ce_sett_t _PGM *cesd)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
    knock_reset_error();
   }
-  else if ((d.sens.knock_k < PGM_GET_WORD(&cesd->ks_v_min) || d.sens.knock_k > PGM_GET_WORD(&cesd->ks_v_max)) && d.sens.frequen > 1000)
+  else if ((d.sens.knock_k < cesd->ks_v_min || d.sens.knock_k > cesd->ks_v_max) && d.sens.frequen > 1000)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   else
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
@@ -138,7 +138,7 @@ void check(ce_sett_t _PGM *cesd)
   ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
 
  //checking MAP sensor. TODO: implement additional check
- if (((d.sens.map_raw < PGM_GET_WORD(&cesd->map_v_min)) || (d.sens.map_raw > PGM_GET_WORD(&cesd->map_v_max))) && d.sens.carb)
+ if (((d.sens.map_raw < cesd->map_v_min) || (d.sens.map_raw > cesd->map_v_max)) && d.sens.carb)
   ce_set_error(ECUERROR_MAP_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_MAP_SENSOR_FAIL);
@@ -146,7 +146,7 @@ void check(ce_sett_t _PGM *cesd)
  //checking coolant temperature sensor
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
-  if (d.sens.temperat_raw < PGM_GET_WORD(&cesd->cts_v_min) || d.sens.temperat_raw > PGM_GET_WORD(&cesd->cts_v_max))
+  if (d.sens.temperat_raw < cesd->cts_v_min || d.sens.temperat_raw > cesd->cts_v_max)
    ce_set_error(ECUERROR_TEMP_SENSOR_FAIL);
   else
    ce_clear_error(ECUERROR_TEMP_SENSOR_FAIL);
@@ -157,11 +157,11 @@ void check(ce_sett_t _PGM *cesd)
  //checking the voltage using simple state machine
  if (0==ce_state.bv_eds) //voltage is OK
  {
-  if (d.sens.voltage_raw < PGM_GET_WORD(&cesd->vbat_v_min))
+  if (d.sens.voltage_raw < cesd->vbat_v_min)
   { //below normal
    ce_state.bv_dev = 0, ce_state.bv_eds = 1;
   }
-  else if (d.sens.voltage_raw > PGM_GET_WORD(&cesd->vbat_v_max))
+  else if (d.sens.voltage_raw > cesd->vbat_v_max)
   { //above normal
    ce_state.bv_dev = 1, ce_state.bv_eds = 1;
   }
@@ -175,8 +175,8 @@ void check(ce_sett_t _PGM *cesd)
   //use simple debouncing techique to eliminate errors during normal transients (e.g. switching ignition off) 
   if (ce_state.bv_tdc)
   {//state changed? If so, then reset state machine (start again)
-   if ((0==ce_state.bv_dev && d.sens.voltage_raw > PGM_GET_WORD(&cesd->vbat_v_min)) ||
-       (1==ce_state.bv_dev && d.sens.voltage_raw < PGM_GET_WORD(&cesd->vbat_v_max)))
+   if ((0==ce_state.bv_dev && d.sens.voltage_raw > cesd->vbat_v_min) ||
+       (1==ce_state.bv_dev && d.sens.voltage_raw < cesd->vbat_v_max))
     ce_state.bv_eds = 0;
 
    --ce_state.bv_tdc;
@@ -194,26 +194,26 @@ void check(ce_sett_t _PGM *cesd)
  }
 
  //checking TPS sensor
- if ((d.sens.tps_raw < PGM_GET_WORD(&cesd->tps_v_min)) || (d.sens.tps_raw > PGM_GET_WORD(&cesd->tps_v_max)))
+ if ((d.sens.tps_raw < cesd->tps_v_min) || (d.sens.tps_raw > cesd->tps_v_max))
   ce_set_error(ECUERROR_TPS_SENSOR_FAIL);
  else
   ce_clear_error(ECUERROR_TPS_SENSOR_FAIL);
 
  //checking ADD_I1 sensor
- if ((d.sens.add_i1_raw < PGM_GET_WORD(&cesd->add_i1_v_min)) || (d.sens.add_i1_raw > PGM_GET_WORD(&cesd->add_i1_v_max)))
+ if ((d.sens.add_i1_raw < cesd->add_i1_v_min) || (d.sens.add_i1_raw > cesd->add_i1_v_max))
   ce_set_error(ECUERROR_ADD_I1_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I1_SENSOR);
 
  //checking ADD_I2 sensor
- if ((d.sens.add_i2_raw < PGM_GET_WORD(&cesd->add_i2_v_min)) || (d.sens.add_i2_raw > PGM_GET_WORD(&cesd->add_i2_v_max)))
+ if ((d.sens.add_i2_raw < cesd->add_i2_v_min) || (d.sens.add_i2_raw > cesd->add_i2_v_max))
   ce_set_error(ECUERROR_ADD_I2_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I2_SENSOR);
 
 #ifdef TPIC8101
  //checking ADD_I4 sensor
- if ((d.sens.add_i4_raw < PGM_GET_WORD(&cesd->add_i4_v_min)) || (d.sens.add_i4_raw > PGM_GET_WORD(&cesd->add_i4_v_max)))
+ if ((d.sens.add_i4_raw < cesd->add_i4_v_min) || (d.sens.add_i4_raw > cesd->add_i4_v_max))
   ce_set_error(ECUERROR_ADD_I4_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I4_SENSOR);
@@ -221,29 +221,29 @@ void check(ce_sett_t _PGM *cesd)
 
 #ifndef SECU3T //SECU-3i
  //checking ADD_I3 sensor
- if ((d.sens.add_i3_raw < PGM_GET_WORD(&cesd->add_i3_v_min)) || (d.sens.add_i3_raw > PGM_GET_WORD(&cesd->add_i3_v_max)))
+ if ((d.sens.add_i3_raw < cesd->add_i3_v_min) || (d.sens.add_i3_raw > cesd->add_i3_v_max))
   ce_set_error(ECUERROR_ADD_I3_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I3_SENSOR);
 
 #ifdef MCP3204
  //checking ADD_I5 sensor
- if ((d.sens.add_i5_raw < PGM_GET_WORD(&cesd->add_i5_v_min)) || (d.sens.add_i5_raw > PGM_GET_WORD(&cesd->add_i5_v_max)))
+ if ((d.sens.add_i5_raw < cesd->add_i5_v_min) || (d.sens.add_i5_raw > cesd->add_i5_v_max))
   ce_set_error(ECUERROR_ADD_I5_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I5_SENSOR);
  //checking ADD_I6 sensor
- if ((d.sens.add_i6_raw < PGM_GET_WORD(&cesd->add_i6_v_min)) || (d.sens.add_i6_raw > PGM_GET_WORD(&cesd->add_i6_v_max)))
+ if ((d.sens.add_i6_raw < cesd->add_i6_v_min) || (d.sens.add_i6_raw > cesd->add_i6_v_max))
   ce_set_error(ECUERROR_ADD_I6_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I6_SENSOR);
  //checking ADD_I7 sensor
- if ((d.sens.add_i7_raw < PGM_GET_WORD(&cesd->add_i7_v_min)) || (d.sens.add_i7_raw > PGM_GET_WORD(&cesd->add_i7_v_max)))
+ if ((d.sens.add_i7_raw < cesd->add_i7_v_min) || (d.sens.add_i7_raw > cesd->add_i7_v_max))
   ce_set_error(ECUERROR_ADD_I7_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I7_SENSOR);
  //checking ADD_I8 sensor
- if ((d.sens.add_i8_raw < PGM_GET_WORD(&cesd->add_i8_v_min)) || (d.sens.add_i8_raw > PGM_GET_WORD(&cesd->add_i8_v_max)))
+ if ((d.sens.add_i8_raw < cesd->add_i8_v_min) || (d.sens.add_i8_raw > cesd->add_i8_v_max))
   ce_set_error(ECUERROR_ADD_I8_SENSOR);
  else
   ce_clear_error(ECUERROR_ADD_I8_SENSOR);
@@ -252,9 +252,9 @@ void check(ce_sett_t _PGM *cesd)
 
 #ifndef SECU3T //SECU-3i
  //perform checking only if IOP_I input is mapped to real input and if set number of strokes elapsed since last engine start
- if (IOCFG_CHECK(IOP_OPS_I) && s_timer_sss() > PGM_GET_WORD(&cesd->oilpress_timer))
+ if (IOCFG_CHECK(IOP_OPS_I) && s_timer_sss() > cesd->oilpress_timer)
  {
-  if (d.sens.ops < PGM_GET_WORD(&cesd->oilpress_thrd))
+  if (d.sens.ops < cesd->oilpress_thrd)
    ce_set_error(ECUERROR_OILPRESSURE);
   else
    ce_clear_error(ECUERROR_OILPRESSURE);
@@ -279,7 +279,7 @@ void ce_check_engine(void)
 {
  uint32_t temp_errors;
 
- check(&fw_data.extabs.cesd);
+ check(&ram_extabs.cesd);
 
  //If the timer counted the time, then turn off the CE
  if (s_timer_is_action(&ce_control_time_counter))

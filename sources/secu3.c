@@ -283,7 +283,7 @@ void init_modules(void)
 
  //preliminary initialization of the knock signal processor
  knock_set_band_pass(d.param.knock_bpf_frequency);
- knock_set_gain(PGM_GET_BYTE(&fw_data.extabs.attenuator_table[0]));
+ knock_set_gain(ram_extabs.attenuator_table[0]);
  knock_set_int_time_constant(d.param.knock_int_time_const);
  knock_set_channel(0);
  if (d.param.knock_use_knock_channel)
@@ -520,7 +520,7 @@ MAIN()
    fuelcut_eng_stopped_notification();
 #endif
 
-   meas_update_values_buffers(1, &fw_data.extabs.cesd);  //<-- update RPM only
+   meas_update_values_buffers(1, &ram_extabs.cesd);  //<-- update RPM only
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 
@@ -532,7 +532,7 @@ MAIN()
    adc_begin_measure(0);  //normal speed
    _ENABLE_INTERRUPT();
    s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-   meas_update_values_buffers(0, &fw_data.extabs.cesd);
+   meas_update_values_buffers(0, &ram_extabs.cesd);
   }
 
   //----------continious execution-----------------------------------------
@@ -548,7 +548,7 @@ MAIN()
   //calculation of instant RPM
   d.sens.inst_frq = ckps_calculate_instant_freq();
   //averaging of phisical magnitudes stored in the circular buffers
-  meas_average_measured_values(&fw_data.extabs.cesd);
+  meas_average_measured_values(&ram_extabs.cesd);
   //read discrete inputs of the system and switching of fuel type (sets of maps)
   meas_take_discrete_inputs();
   //calculate arguments for lookup tables
@@ -598,7 +598,7 @@ MAIN()
    if (d.engine_mode != EM_START)
     s_timer_stroke_event_notification();
 
-   meas_update_values_buffers(0, &fw_data.extabs.cesd);
+   meas_update_values_buffers(0, &ram_extabs.cesd);
    s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    eculogic_stroke_event_notification();

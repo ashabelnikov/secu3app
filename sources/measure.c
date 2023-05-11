@@ -132,7 +132,7 @@ void meas_init_ports(void)
 }
 
 //Update ring buffers
-void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
+void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
 {
  int16_t rawval;
 
@@ -144,7 +144,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  rawval = update_buffer(MAP_INPIDX, adc_get_map_value());
 
 #ifdef SEND_INST_VAL
- rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : adc_compensate(_RESDIV(rawval, 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : adc_compensate(_RESDIV(rawval, 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
  if (IOCFG_CHECK(IOP_MAP_S))
   d.sens.inst_map = map_adc_to_kpa(rawval, d.param.map_curve_offset, d.param.map_curve_gradient);
  else
@@ -153,7 +153,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 
  rawval = update_buffer(BAT_INPIDX, adc_get_ubat_value());
 #ifdef SEND_INST_VAL
- d.sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->vbat_v_flg) ? PGM_GET_WORD(&cesd->vbat_v_em) : adc_compensate(rawval * 6, d.param.ubat_adc_factor, d.param.ubat_adc_correction);
+ d.sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && cesd->vbat_v_flg ? cesd->vbat_v_em : adc_compensate(rawval * 6, d.param.ubat_adc_factor, d.param.ubat_adc_correction);
 #endif
 
  update_buffer(TMP_INPIDX, adc_get_temp_value());
@@ -161,7 +161,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  rawval = update_buffer(TPS_INPIDX, adc_get_carb_value());
 #ifdef SEND_INST_VAL
  rawval = adc_compensate(_RESDIV(rawval, 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
- d.sens.inst_tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->tps_v_flg) ? PGM_GET_WORD(&cesd->tps_v_em) : rawval, d.param.tps_curve_offset, d.param.tps_curve_gradient);
+ d.sens.inst_tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : rawval, d.param.tps_curve_offset, d.param.tps_curve_gradient);
  if (d.sens.inst_tps > TPS_MAGNITUDE(100))
   d.sens.inst_tps = TPS_MAGNITUDE(100);
 #endif
@@ -171,7 +171,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
  rawval = adc_compensate(_RESDIV(rawval, 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && PGM_GET_BYTE(&cesd->add_i1_v_flg) ? PGM_GET_WORD(&cesd->add_i1_v_em) : rawval;
+ d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
 #endif
 
  update_buffer(AI2_INPIDX, adc_get_add_i2_value());
@@ -202,7 +202,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
   d.sens.knock_raw = adc_get_knock_value() * 2;
 #endif
 #endif
-  d.sens.knock_k = ce_is_error(ECUERROR_KSP_CHIP_FAILED) && PGM_GET_BYTE(&cesd->ks_v_flg) ? PGM_GET_WORD(&cesd->ks_v_em) : d.sens.knock_raw;
+  d.sens.knock_k = ce_is_error(ECUERROR_KSP_CHIP_FAILED) && cesd->ks_v_flg ? cesd->ks_v_em : d.sens.knock_raw;
  }
  else
   d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off or engine is stopped
@@ -234,28 +234,28 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd)
 }
 
 //Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values
-void meas_average_measured_values(ce_sett_t _PGM *cesd)
+void meas_average_measured_values(ce_sett_t *cesd)
 {
  int16_t rawval;
  d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(MAP_INPIDX), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
  if (IOCFG_CHECK(IOP_MAP_S))
-  d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
+  d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
  else
   d.sens.map = 0;
 
  d.sens.voltage_raw = adc_compensate(average_buffer(BAT_INPIDX) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
- d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->vbat_v_flg) ? PGM_GET_WORD(&cesd->vbat_v_em) : d.sens.voltage_raw);
+ d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && cesd->vbat_v_flg ? cesd->vbat_v_em : d.sens.voltage_raw);
 
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
   d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(TMP_INPIDX), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
 #ifndef THERMISTOR_CS
-  d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->cts_v_flg) ? PGM_GET_WORD(&cesd->cts_v_em) : d.sens.temperat_raw);
+  d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && cesd->cts_v_flg ? cesd->cts_v_em : d.sens.temperat_raw);
 #else
   if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_MAP)) //use linear sensor
-   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->cts_v_flg) ? PGM_GET_WORD(&cesd->cts_v_em) : d.sens.temperat_raw);
+   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && cesd->cts_v_flg ? cesd->cts_v_em : d.sens.temperat_raw);
   else //use lookup table (actual for thermistor sensors)
-   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->cts_v_flg) ? PGM_GET_WORD(&cesd->cts_v_em) : d.sens.temperat_raw, fw_data.extabs.cts_curve);
+   d.sens.temperat = thermistor_lookup(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && cesd->cts_v_flg ? cesd->cts_v_em : d.sens.temperat_raw, ram_extabs.cts_curve);
 #endif
  }
  else                                       //CTS is not used
@@ -282,56 +282,56 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 #endif
 
  d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(TPS_INPIDX), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
- d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->tps_v_flg) ? PGM_GET_WORD(&cesd->tps_v_em) : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
+ d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
  if (d.sens.tps > TPS_MAGNITUDE(100))
   d.sens.tps = TPS_MAGNITUDE(100);
 
  d.sens.add_i1_raw = rawval = adc_compensate(_RESDIV(average_buffer(AI1_INPIDX), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && PGM_GET_BYTE(&cesd->add_i1_v_flg) ? PGM_GET_WORD(&cesd->add_i1_v_em) : rawval;
+ d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
 
  d.sens.add_i2_raw = rawval = adc_compensate(_RESDIV(average_buffer(AI2_INPIDX), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && PGM_GET_BYTE(&cesd->add_i2_v_flg) ? PGM_GET_WORD(&cesd->add_i2_v_em) : rawval;
+ d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && cesd->add_i2_v_flg ? cesd->add_i2_v_em : rawval;
 
 #if !defined(SECU3T)
  d.sens.add_i3_raw = rawval = adc_compensate(average_buffer(AI3_INPIDX), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && PGM_GET_BYTE(&cesd->add_i3_v_flg) ? PGM_GET_WORD(&cesd->add_i3_v_em) : rawval;
+ d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && cesd->add_i3_v_flg ? cesd->add_i3_v_em : rawval;
 #endif
 
 #if defined(TPIC8101)
  d.sens.add_i4_raw = rawval = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && PGM_GET_BYTE(&cesd->add_i4_v_flg) ? PGM_GET_WORD(&cesd->add_i4_v_em) : rawval;
+ d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && cesd->add_i4_v_flg ? cesd->add_i4_v_em : rawval;
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
  d.sens.add_i5_raw = rawval = adc_compensate(average_buffer(AI5_INPIDX), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && PGM_GET_BYTE(&cesd->add_i5_v_flg) ? PGM_GET_WORD(&cesd->add_i5_v_em) : rawval;
+ d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && cesd->add_i5_v_flg ? cesd->add_i5_v_em : rawval;
  d.sens.add_i6_raw = rawval = adc_compensate(average_buffer(AI6_INPIDX), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && PGM_GET_BYTE(&cesd->add_i6_v_flg) ? PGM_GET_WORD(&cesd->add_i6_v_em) : rawval;
+ d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && cesd->add_i6_v_flg ? cesd->add_i6_v_em : rawval;
  d.sens.add_i7_raw = rawval = adc_compensate(average_buffer(AI7_INPIDX), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && PGM_GET_BYTE(&cesd->add_i7_v_flg) ? PGM_GET_WORD(&cesd->add_i7_v_em) : rawval;
+ d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && cesd->add_i7_v_flg ? cesd->add_i7_v_em : rawval;
  d.sens.add_i8_raw = rawval =adc_compensate(average_buffer(AI8_INPIDX), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && PGM_GET_BYTE(&cesd->add_i8_v_flg) ? PGM_GET_WORD(&cesd->add_i8_v_em) : rawval;
+ d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && cesd->add_i8_v_flg ? cesd->add_i8_v_em : rawval;
 #endif
 
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
-  d.sens.air_temp = thermistor_lookup(d.sens.add_i2, fw_data.extabs.ats_curve);   //ADD_I2 input selected as MAT sensor
+  d.sens.air_temp = thermistor_lookup(d.sens.add_i2, ram_extabs.ats_curve);   //ADD_I2 input selected as MAT sensor
  else
   d.sens.air_temp = 0; //input is not selected
 #endif
@@ -356,13 +356,13 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
 
 #ifndef SECU3T //SECU-3i
  if (IOCFG_CHECK(IOP_TMP2))
-  d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, fw_data.extabs.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
+  d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, ram_extabs.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
  else
   d.sens.tmp2 = 0; //input is not selected
 
 #ifdef MCP3204
  if (IOCFG_CHECK(IOP_GRTEMP))
-  d.sens.grts = thermistor_lookup(d.sens.add_i6, fw_data.extabs.grts_curve); //ADD_I6 input selected as GRTEMP sensor
+  d.sens.grts = thermistor_lookup(d.sens.add_i6, ram_extabs.grts_curve); //ADD_I6 input selected as GRTEMP sensor
  else
   d.sens.grts = 0; //input is not selected
 #endif
@@ -387,27 +387,27 @@ void meas_average_measured_values(ce_sett_t _PGM *cesd)
   goto ftls_notsel;
  }
  add_ix = (((uint32_t)add_ix) * ftlscor_ucoef()) >> 12; //apply board voltage correction
- d.sens.ftls = exsens_lookup(add_ix, fw_data.extabs.ftls_curve);
+ d.sens.ftls = exsens_lookup(add_ix, ram_extabs.ftls_curve);
 ftls_notsel:
 #endif
 #endif
 
 #ifndef SECU3T
  if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3i)
-  d.sens.egts = exsens_lookup(d.sens.add_i3, fw_data.extabs.egts_curve); //ADD_I3 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i3, ram_extabs.egts_curve); //ADD_I3 input selected as input for EGT sensor
 #ifdef TPIC8101
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.egts = exsens_lookup(d.sens.add_i4, fw_data.extabs.egts_curve); //ADD_I4 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i4, ram_extabs.egts_curve); //ADD_I4 input selected as input for EGT sensor
 #endif
 #ifdef MCP3204
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.egts = exsens_lookup(d.sens.add_i5, fw_data.extabs.egts_curve); //ADD_I5 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i5, ram_extabs.egts_curve); //ADD_I5 input selected as input for EGT sensor
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.egts = exsens_lookup(d.sens.add_i6, fw_data.extabs.egts_curve); //ADD_I6 input selected
+  d.sens.egts = exsens_lookup(d.sens.add_i6, ram_extabs.egts_curve); //ADD_I6 input selected
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.egts = exsens_lookup(d.sens.add_i7, fw_data.extabs.egts_curve); //ADD_I7 input selected
+  d.sens.egts = exsens_lookup(d.sens.add_i7, ram_extabs.egts_curve); //ADD_I7 input selected
  else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.egts = exsens_lookup(d.sens.add_i8, fw_data.extabs.egts_curve); //ADD_I8 input selected as input for EGT sensor
+  d.sens.egts = exsens_lookup(d.sens.add_i8, ram_extabs.egts_curve); //ADD_I8 input selected as input for EGT sensor
 #endif
  else
   d.sens.egts = 0; //input is not selected
@@ -416,13 +416,13 @@ ftls_notsel:
 #ifndef SECU3T
 #ifdef MCP3204
  if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.ops = exsens_lookup(d.sens.add_i5, fw_data.extabs.ops_curve); //ADD_I5 input selected as input for fuel tank level sensor
+  d.sens.ops = exsens_lookup(d.sens.add_i5, ram_extabs.ops_curve); //ADD_I5 input selected as input for fuel tank level sensor
  else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.ops = exsens_lookup(d.sens.add_i6, fw_data.extabs.ops_curve); //ADD_I6 input selected
+  d.sens.ops = exsens_lookup(d.sens.add_i6, ram_extabs.ops_curve); //ADD_I6 input selected
  else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.ops = exsens_lookup(d.sens.add_i7, fw_data.extabs.ops_curve); //ADD_I7 input selected
+  d.sens.ops = exsens_lookup(d.sens.add_i7, ram_extabs.ops_curve); //ADD_I7 input selected
  else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.ops = exsens_lookup(d.sens.add_i8, fw_data.extabs.ops_curve); //ADD_I8 input selected as input for fuel tank level sensor
+  d.sens.ops = exsens_lookup(d.sens.add_i8, ram_extabs.ops_curve); //ADD_I8 input selected as input for fuel tank level sensor
  else
   d.sens.ops = 0; //input is not selected
 #endif
@@ -465,7 +465,7 @@ ftls_notsel:
 
  //select an input for MAF sensor
  if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_s || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_si)
-  d.sens.maf = calc_maf_flow(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && PGM_GET_BYTE(&cesd->map_v_flg) ? PGM_GET_WORD(&cesd->map_v_em) : d.sens.map_raw); //MAP input selected as input for MAF sensor
+  d.sens.maf = calc_maf_flow(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw); //MAP input selected as input for MAF sensor
 #ifdef TPIC8101
  else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4i)
   d.sens.maf = calc_maf_flow(d.sens.add_i4); //ADD_I4 input selected as input for MAF sensor
@@ -490,13 +490,13 @@ if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
 { //use sensor
 #ifdef MCP3204
  if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.fts = exsens_lookup(d.sens.add_i5, fw_data.extabs.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i5, ram_extabs.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
  else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.fts = exsens_lookup(d.sens.add_i6, fw_data.extabs.fts_curve); //ADD_I6 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i6, ram_extabs.fts_curve); //ADD_I6 input selected as input for fuel temperature sensor
  else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.fts = exsens_lookup(d.sens.add_i7, fw_data.extabs.fts_curve); //ADD_I7 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i7, ram_extabs.fts_curve); //ADD_I7 input selected as input for fuel temperature sensor
  else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.fts = exsens_lookup(d.sens.add_i8, fw_data.extabs.fts_curve); //ADD_I8 input selected as input for fuel temperature sensor
+  d.sens.fts = exsens_lookup(d.sens.add_i8, ram_extabs.fts_curve); //ADD_I8 input selected as input for fuel temperature sensor
  else
   d.sens.fts = 0; //input is not selected
 #endif
@@ -522,10 +522,10 @@ void meas_init(void)
   adc_begin_measure(0); //<--normal speed
   while(!adc_is_measure_ready());
 
-  meas_update_values_buffers(0, &fw_data.extabs.cesd); //<-- all
+  meas_update_values_buffers(0, &ram_extabs.cesd); //<-- all
  }while(--i);
  _RESTORE_INTERRUPT(_t);
- meas_average_measured_values(&fw_data.extabs.cesd);
+ meas_average_measured_values(&ram_extabs.cesd);
 }
 
 

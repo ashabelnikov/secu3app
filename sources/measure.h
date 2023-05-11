@@ -38,13 +38,13 @@ void meas_init_ports(void);
  * Uses d ECU data structure
  * \param rpm_only if != 0, then only RPM related buffers will be updated
  */
-void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t _PGM *cesd);
+void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd);
 
 /**Perform avaraging using data from ring buffers
  * Uses d ECU data structure
  * \param cesd Pointer to CE settings data structure
  */
-void meas_average_measured_values(ce_sett_t _PGM *cesd);
+void meas_average_measured_values(ce_sett_t *cesd);
 
 /**Initialization of ring buffers. Performs initial measurements. Used before start of engine
  * Uses d ECU data structure

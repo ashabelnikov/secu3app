@@ -233,10 +233,12 @@ static void build_i32h(uint32_t i)
 
 /**Appends sender's buffer by sequence of bytes from program memory buffer
  * can be used for binary data */
+/*
 static void build_fb(uint8_t _PGM *romBuffer, uint8_t size)
 {
  while(size--) build_i8h(PGM_GET_BYTE(romBuffer++));
 }
+*/
 
 /**Appends sender's buffer by sequence of bytes from RAM buffer
  * can be used for binary data */
@@ -1301,17 +1303,17 @@ void uart_send_packet(uint8_t send_mode)
   //Transferring of RPM grid
   case RPMGRD_PAR:
    build_i8h(0); //<--reserved
-   build_fb((uint8_t _PGM*)fw_data.extabs.rpm_grid_points, RPM_GRID_SIZE * sizeof(int16_t));
+   build_rb((uint8_t*)ram_extabs.rpm_grid_points, RPM_GRID_SIZE * sizeof(int16_t));
    break;
   //Transferring of CLT grid
   case CLTGRD_PAR:
    build_i8h(0); //<--reserved
-   build_fb((uint8_t _PGM*)fw_data.extabs.clt_grid_points, CLT_GRID_SIZE * sizeof(int16_t));
+   build_rb((uint8_t*)ram_extabs.clt_grid_points, CLT_GRID_SIZE * sizeof(int16_t));
    break;
   //Transferring of load grid
   case LODGRD_PAR:
    build_i8h(0); //<--reserved
-   build_fb((uint8_t _PGM*)fw_data.extabs.load_grid_points, LOAD_GRID_SIZE * sizeof(int16_t));
+   build_rb((uint8_t*)ram_extabs.load_grid_points, LOAD_GRID_SIZE * sizeof(int16_t));
    break;
 #endif
 
@@ -1323,7 +1325,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
    static uint8_t tab_index = 0;
    build_i8h(tab_index * 16);
-   build_fb(&fw_data.extabs.attenuator_table[tab_index * 16], 16);
+   build_rb(&ram_extabs.attenuator_table[tab_index * 16], 16);
    if (tab_index >= (KC_ATTENUATOR_LOOKUP_TABLE_SIZE / 16) - 1)
     tab_index = 0;
    else

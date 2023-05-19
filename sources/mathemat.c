@@ -32,7 +32,7 @@ int16_t bilinear_interpolation(int16_t x, int16_t y, int16_t a1, int16_t a2, int
                                int16_t x_s, int16_t y_s, int16_t x_l, int16_t y_l, uint8_t m)
 {
  int16_t a23,a14;
-#if 0 //max. speed
+#if 1 //max. speed
  a23 = ((a2 * m) + (((int32_t)(a3 - a2) * m) * (x - x_s)) / x_l);
  a14 = (a1 * m) + (((int32_t)(a4 - a1) * m) * (x - x_s)) / x_l;
 #else //min. size

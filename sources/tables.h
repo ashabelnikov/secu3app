@@ -926,7 +926,7 @@ typedef struct params_t
   uint8_t  inj_xtau_s_thrd;              //!< X-tau MAP kPa/sec start threshold, 255 max
   uint8_t  inj_xtau_f_thrd;              //!< X-tau MAP kPa/sec finish threshold, 255 max
 
-  uint8_t  wallwet_model;                //!< 0 - don't use, 1 - use X-tau
+  uint8_t  wallwet_model;                //!< 0 - don't use, 1 - use X-tau for petrol only, 2 - use X-tau for gas only, 3 - use X-tau for petrol and gas
 
   uint8_t  lambda_selch;                 //!< 1 bit per channel (cylinder). 0 - 1st EGO, 1 - 2nd EGO
 

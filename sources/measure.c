@@ -449,9 +449,9 @@ ftls_notsel:
 #endif
 
  //calculate mix of two lambda sensors
- if (d.sens.lambda[0] && d.sens.lambda[1])
+ if (IOCFG_CHECK(IOP_LAMBDA) && IOCFG_CHECK(IOP_LAMBDA2))
   d.sens.lambda_mx = (d.sens.lambda[0] + d.sens.lambda[1]) / 2;
- else if (!d.sens.lambda[0] && d.sens.lambda[1])
+ else if (!IOCFG_CHECK(IOP_LAMBDA) && IOCFG_CHECK(IOP_LAMBDA2))
   d.sens.lambda_mx = d.sens.lambda[1];
  else
   d.sens.lambda_mx = d.sens.lambda[0];

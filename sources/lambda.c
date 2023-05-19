@@ -74,20 +74,39 @@ void lambda_control(void)
     if (bot_thrd < 0)
      bot_thrd = 0;
 
-    if (d.sens.lambda[0] < bot_thrd || d.sens.lambda[0] > top_thrd)
-     ego.enabled[0] = 1;
-
+    uint8_t lambda0 = (d.sens.lambda[0] < bot_thrd || d.sens.lambda[0] > top_thrd);
     if (!CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
     {
-     if (d.sens.lambda[1] < bot_thrd || d.sens.lambda[1] > top_thrd)
+     if (lambda0 && IOCFG_CHECK(IOP_LAMBDA))
+      ego.enabled[0] = 1;
+
+     if ((d.sens.lambda[1] < bot_thrd || d.sens.lambda[1] > top_thrd) && IOCFG_CHECK(IOP_LAMBDA2))
       ego.enabled[1] = 1;
+    }
+    else
+    {
+     if (lambda0 && (IOCFG_CHECK(IOP_LAMBDA) || IOCFG_CHECK(IOP_LAMBDA2)))
+      ego.enabled[0] = 1;
+
+     ego.enabled[1] = 0;
     }
    }
    else
    {
-    ego.enabled[0] = 1;
     if (!CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN))
-     ego.enabled[1] = 1;
+    {
+     if (IOCFG_CHECK(IOP_LAMBDA))
+      ego.enabled[0] = 1;
+     if (IOCFG_CHECK(IOP_LAMBDA2))
+      ego.enabled[1] = 1;
+    }
+    else
+    {
+     if (IOCFG_CHECK(IOP_LAMBDA) || IOCFG_CHECK(IOP_LAMBDA2))
+      ego.enabled[0] = 1;
+
+     ego.enabled[1] = 0;
+    }
    }
   }
  }

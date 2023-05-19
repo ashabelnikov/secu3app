@@ -1153,8 +1153,6 @@ int16_t gdp_function(void)
 int16_t ego_curve_lookup(uint8_t inp)
 {
  int16_t i, i1, voltage = d.sens.lambda[inp]; /*d.sens.inst_add_i1*/
- if (0==voltage)
-  return 0; //if voltage is 0, it means that this sensor is not used or it is mixed into other one
 
  //Voltage value at the start of axis in ADC discretes
  uint16_t v_start = _GWU(inj_ego_curve[INJ_EGO_CURVE_SIZE]);

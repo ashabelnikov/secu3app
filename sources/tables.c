@@ -204,6 +204,9 @@
 /** Time in ms*/
 #define _XTF(v) ROUND(((v) * 1000.0) / 102.4)
 
+/**Inj PW in ms*/
+#define _INL(v) ROUND((v) * 312.5)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -1097,6 +1100,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _XTF(482.0),_XTF(477.0),_XTF(472.0),_XTF(467.0),_XTF(462.0),_XTF(457.0),_XTF(452.0),_XTF(445.0)
   },
 
+  /**Correction of injector's non-linearity at small PWs (petrol)*/
+  {_INL(0.000), _INL(0.286), _INL(0.571), _INL(0.857), _INL(1.143), _INL(1.428), _INL(1.714), _INL(2.000)}, //corr
+  {_INL(0.000), _INL(0.286), _INL(0.571), _INL(0.857), _INL(1.143), _INL(1.428), _INL(1.714), _INL(2.000)}, //bins
+
+  /**Correction of injector's non-linearity at small PWs (gas)*/
+  {_INL(0.000), _INL(0.286), _INL(0.571), _INL(0.857), _INL(1.143), _INL(1.428), _INL(1.714), _INL(2.000)}, //corr
+  {_INL(0.000), _INL(0.286), _INL(0.571), _INL(0.857), _INL(1.143), _INL(1.428), _INL(1.714), _INL(2.000)}, //bins
+
   /**reserved*/
   {0}
  },
@@ -1207,6 +1218,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ltft_min = -126,           //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
   .ltft_max =  126,           //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
+
+  .use_injnonlin_corr = 0,    //don't use correction
 
   /**reserved bytes*/
   {0}

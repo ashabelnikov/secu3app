@@ -208,6 +208,15 @@ static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2)
   calc_xtau(pw1, pw2); //apply x-tau corrections
 #endif
 
+ //apply correction of non-linearity at small PWs
+ if (PGM_GET_BYTE(&fw_data.exdata.use_injnonlin_corr))
+ {
+  if (*pw1 < inj_nonlin_binsmax())
+   *pw1 = inj_nonlin_lookup(*pw1);
+  if (*pw2 < inj_nonlin_binsmax())
+   *pw2 = inj_nonlin_lookup(*pw2);
+ }
+
  uint8_t i;
  for (i = 0; i < INJ_CHANNELS_MAX; ++i)
  {

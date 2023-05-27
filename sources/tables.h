@@ -139,6 +139,8 @@
 
 #define XTAU_FACT_SIZE                  16          //!< This value must be equal to RPM_GRID_SIZE
 
+#define INJ_NONLIN_SIZE                 8           //!< Size of inj. non-linearity correction table
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -516,8 +518,16 @@ typedef struct fw_ex_tabs_t
   /**Time factors for deceleration, value in 102.4 us units (3.2us * 32)*/
   uint16_t xtau_tfdec[XTAU_FACT_SIZE];
 
+  /**Correction of injector's non-linearity at small PWs (petrol)*/
+  uint16_t inj_nonlinp_corr[INJ_NONLIN_SIZE];
+  uint16_t inj_nonlinp_bins[INJ_NONLIN_SIZE];
+
+  /**Correction of injector's non-linearity at small PWs (gas)*/
+  uint16_t inj_nonling_corr[INJ_NONLIN_SIZE];
+  uint16_t inj_nonling_bins[INJ_NONLIN_SIZE];
+
   /**reserved*/
-  uint8_t reserved[1131];
+  uint8_t reserved[1067];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -620,12 +630,14 @@ typedef struct fw_ex_data_t
   int8_t ltft_min;         //!< limits for LTFT correction
   int8_t ltft_max;
 
+  uint8_t use_injnonlin_corr; //!< 0 - don't use inj. non-linearity correction, 1 - use inj. non-linearity correction
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1969];
+  uint8_t reserved[1968];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

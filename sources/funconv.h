@@ -565,4 +565,17 @@ uint32_t calc_dist(uint16_t pulse_count);
 void calc_xtau(int32_t* pw1, int32_t* pw2);
 #endif
 
+#ifdef FUEL_INJECT
+/** Corrects small inj. PW for non-linearity
+ * \param pw Injection PW in 3.2us units
+ * \return Corrected injection PW
+ */
+uint16_t inj_nonlin_lookup(uint16_t pw);
+
+/**Get maximum bin's value
+ * \return value of right side bin (horizontal axis)
+ */
+uint16_t inj_nonlin_binsmax(void);
+#endif
+
 #endif //_FUNCONV_H_

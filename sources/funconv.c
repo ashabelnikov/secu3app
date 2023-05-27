@@ -1999,3 +1999,25 @@ void calc_xtau(int32_t* pw1, int32_t* pw2)
  }
 }
 #endif
+
+#ifdef FUEL_INJECT
+uint16_t inj_nonlin_lookup(uint16_t pw)
+{
+ int8_t i;
+ uint16_t *p_bins = d.sens.gas ? ram_extabs.inj_nonling_bins : ram_extabs.inj_nonlinp_bins;
+ uint16_t *p_corr = d.sens.gas ? ram_extabs.inj_nonling_corr : ram_extabs.inj_nonlinp_corr;
+
+ for(i = INJ_NONLIN_SIZE-2; i >= 0; i--)
+  if (pw >= p_bins[i]) break;
+
+ if (i < 0)  {i = 0; pw = p_bins[0];}
+ if (pw > p_bins[INJ_NONLIN_SIZE-1]) pw = p_bins[INJ_NONLIN_SIZE-1];
+
+ return simple_interpolation(pw, p_corr[i], p_corr[i+1], p_bins[i], p_bins[i+1] - p_bins[i], 16) >> 4;
+}
+
+uint16_t inj_nonlin_binsmax(void)
+{
+ return d.sens.gas ? ram_extabs.inj_nonling_bins[INJ_NONLIN_SIZE-1] : ram_extabs.inj_nonlinp_bins[INJ_NONLIN_SIZE-1];
+}
+#endif

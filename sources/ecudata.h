@@ -94,8 +94,8 @@ typedef struct sensors_t
  uint8_t  inst_tps;                      //!< TPS - not averaged
 #endif
  int16_t  temperat;                      //!< Coolant temperature (averaged)
- uint16_t frequen;                       //!< Averaged RPM
- uint16_t inst_frq;                      //!< Instant RPM - not averaged
+ uint16_t aver_rpm;                      //!< Averaged RPM
+ uint16_t inst_rpm;                      //!< Instantaneous RPM - not averaged
  uint8_t  carb;                          //!< State of carburetor's limit switch (throttle limit switch)
  uint8_t  gas;                           //!< State of gas valve
  uint8_t  gas_raw;                       //!< State of gas valve (raw input value)

@@ -62,7 +62,7 @@ void starter_control(void)
  switch(str_state)
  {
   case 0:
-   if (d.sens.frequen > (d.param.starter_off ? d.param.starter_off : cranking_thrd_rpm()))
+   if (d.sens.aver_rpm > (d.param.starter_off ? d.param.starter_off : cranking_thrd_rpm()))
     str_state++;
    break;
   case 1:

@@ -83,9 +83,9 @@ static uint8_t cond_cts(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
 /**Condition function for RPM*/
 static uint8_t cond_rpm(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
- if (d->sens.inst_frq >= on_thrd)
+ if (d->sens.inst_rpm >= on_thrd)
   p_ctx->state = 1; //ON
- if (d->sens.inst_frq <= off_thrd)
+ if (d->sens.inst_rpm <= off_thrd)
   p_ctx->state = 0; //OFF
  return p_ctx->state;
 }

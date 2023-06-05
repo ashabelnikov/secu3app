@@ -136,7 +136,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
 {
  int16_t rawval;
 
- update_buffer(FRQ_INPIDX, d.sens.inst_frq);
+ update_buffer(FRQ_INPIDX, d.sens.inst_rpm);
 
  if (rpm_only)
   return;
@@ -191,7 +191,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
  update_buffer(AI8_INPIDX, adc_get_add_i8_value());
 #endif
 
- if (d.param.knock_use_knock_channel && d.sens.frequen > 200)
+ if (d.param.knock_use_knock_channel && d.sens.aver_rpm > 200)
  {
 #ifdef TPIC8101
   d.sens.knock_raw = adc_compensate(knock_get_adc_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
@@ -261,7 +261,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else                                       //CTS is not used
   d.sens.temperat = 0;
 
- d.sens.frequen=average_buffer(FRQ_INPIDX);
+ d.sens.aver_rpm=average_buffer(FRQ_INPIDX);
 
 #ifdef SPEED_SENSOR
  //speed

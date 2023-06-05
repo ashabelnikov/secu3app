@@ -474,9 +474,9 @@ void uart_send_packet(uint8_t send_mode)
 
   case SENSOR_DAT:
 #ifdef SEND_INST_VAL
-   build_i16h(d.sens.inst_frq);          // instant RPM
+   build_i16h(d.sens.inst_rpm);          // instant RPM
 #else
-   build_i16h(d.sens.frequen);           // averaged RPM
+   build_i16h(d.sens.aver_rpm);          // averaged RPM
 #endif
 #ifdef SEND_INST_VAL
    build_i16h(d.sens.inst_map);          // instant MAP pressure

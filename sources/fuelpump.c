@@ -99,14 +99,14 @@ void fuelpump_control(void)
    }
 
    //reset timer periodically if engine is still running
-   if (d.sens.frequen > 0)
+   if (d.sens.aver_rpm > 0)
     s_timer_set(&fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);
 
    break;
 
   case 1: //pump is turned off
    //Do not turn on pump if gas valve is turned on
-   if (!gas_v_logic() && d.sens.frequen > 0)
+   if (!gas_v_logic() && d.sens.aver_rpm > 0)
    {
     TURN_ON_ELPUMP(1); //turn on
     s_timer_set(&fuel_pump_time_counter, FP_TURNOFF_TIMEOUT_STOP);

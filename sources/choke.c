@@ -215,11 +215,11 @@ int16_t calc_sm_position(void)
   case 2: //wait specified crank-to-run time and interpolate between crank and run positions
    {
     time_since_crnk = (s_timer_gtc() - chks.strt_t1); //update time value
-    if ((time_since_crnk >= d.param.inj_cranktorun_time) || (d.sens.frequen <= inj_idling_rpm()))
+    if ((time_since_crnk >= d.param.inj_cranktorun_time) || (d.sens.aver_rpm <= inj_idling_rpm()))
     {
      ++chks.strt_mode;                 //transition has finished, we will immediately fall into mode 3, use run value
      chks.rpmreg_prev = 0;             //we will enter RPM regulation mode with zero correction
-     chks.rpmval_prev = d.sens.frequen;
+     chks.rpmval_prev = d.sens.aver_rpm;
      chks.strt_t2 = s_timer_gtc();     //set timer to prevent RPM regulation exiting during set period of time
      chks.rpmreg_t1 = s_timer_gtc();
      chokerpm_regulator_init();
@@ -253,14 +253,14 @@ int16_t calc_sm_position(void)
     rpm_corr = choke_rpm_regulator(&chks.rpmreg_prev);
     //detect fast throttle opening only if RPM > 1000
     if (d.sens.temperat >= (d.param.idlreg_turn_on_temp /*+ 1*/) ||
-       (CHECKBIT(chks.flags, CF_RPMREG_ENEX) && (d.sens.frequen > 1000) && (((int16_t)d.sens.frequen - (int16_t)chks.rpmval_prev) > 180)))
+       (CHECKBIT(chks.flags, CF_RPMREG_ENEX) && (d.sens.aver_rpm > 1000) && (((int16_t)d.sens.aver_rpm - (int16_t)chks.rpmval_prev) > 180)))
     {
      chks.strt_mode = 5;    //exit from closed loop mode
      rpm_corr = 0;
      d.choke_rpm_reg = 0;
     }
     else
-     chks.rpmval_prev = d.sens.frequen;
+     chks.rpmval_prev = d.sens.aver_rpm;
    }
    else
     rpm_corr = chks.rpmreg_prev;
@@ -427,9 +427,9 @@ int16_t calc_sm_position(uint8_t pwm)
      run_ppos += ((int16_t)inj_iac_mat_corr());
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 64) >> 3; //result will be x32
 
-     if (d.sens.frequen > (calc_cl_rpm() + (d.param.iac_reg_db*2)))
+     if (d.sens.aver_rpm > (calc_cl_rpm() + (d.param.iac_reg_db*2)))
       SETBIT(chks.flags, CF_REACH_TR);
-     if ((d.sens.frequen <= calc_cl_rpm()) && CHECKBIT(chks.flags, CF_REACH_TR))
+     if ((d.sens.aver_rpm <= calc_cl_rpm()) && CHECKBIT(chks.flags, CF_REACH_TR))
       chks.strt_mode = 2; //allow closed loop before finishing crank to run transition (abort transition and start closed loop)
      else
       break;              //use interpolated value (still in mode 1)
@@ -448,22 +448,22 @@ int16_t calc_sm_position(uint8_t pwm)
     int16_t rpm = calc_cl_rpm();
     int16_t rpmt = PGM_GET_BYTE(&fw_data.exdata.tmrpmtc_mode) ? inj_idling_rpm() : rpm;
     uint16_t rpm_thrd1 = calc_rpm_thrd1(rpmt), rpm_thrd2 = calc_rpm_thrd2(rpmt);
-    int16_t error = rpm - d.sens.frequen, intlim = d.param.idl_intrpm_lim * 10;
+    int16_t error = rpm - d.sens.aver_rpm, intlim = d.param.idl_intrpm_lim * 10;
     restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
 
-    if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.inst_frq < rpm_thrd1))
+    if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.inst_rpm < rpm_thrd1))
     {
      SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
      chks.prev_rpm_error = error;      //reset previous error
     }
-    if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.inst_frq > rpm_thrd2))
+    if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.inst_rpm > rpm_thrd2))
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
 
     if (CHECKBIT(chks.flags, CF_CL_LOOP))
     { //closed loop mode is active
      uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
 
-     if (abs(rpm - d.sens.frequen) > d.param.iac_reg_db)
+     if (abs(rpm - d.sens.aver_rpm) > d.param.iac_reg_db)
      {
       d.iac_in_deadband = 0;
       int16_t derror = error - chks.prev_rpm_error;
@@ -473,7 +473,7 @@ int16_t calc_sm_position(uint8_t pwm)
 
       if (PGM_GET_BYTE(&fw_data.exdata.cold_eng_int))
       { //use special algorithm
-       if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.frequen >= rpm))
+       if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.aver_rpm >= rpm))
        { //hot engine or RPM above or equal target idling RPM
         int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p)));
         chks.iac_pos += SHTDIV16(add, 8+7-2);
@@ -506,7 +506,7 @@ int16_t calc_sm_position(uint8_t pwm)
      if (d.engine_mode == EM_IDLE)
      {
       //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
-      if  (d.sens.inst_frq > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
+      if  (d.sens.inst_rpm > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
       {
        //use throttle assist map or just a simple constant
        chks.iac_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
@@ -521,7 +521,7 @@ int16_t calc_sm_position(uint8_t pwm)
      }
      else
      {
-      if  (d.sens.inst_frq > rpm_thrd2)
+      if  (d.sens.inst_rpm > rpm_thrd2)
       {
        chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
        //use throttle assist map or just a simple constant

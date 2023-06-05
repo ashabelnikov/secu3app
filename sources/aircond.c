@@ -122,9 +122,9 @@ void aircond_control(void)
    if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && get_refprs_on_cond() && (d.sens.temperat > (int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_BYTE(&fw_data.exdata.aircond_tps))))
 #endif
    {
-    if (d.sens.frequen < d.param.cond_min_rpm)
+    if (d.sens.aver_rpm < d.param.cond_min_rpm)
     {
-     d.cond_req_rpm = d.sens.frequen;
+     d.cond_req_rpm = d.sens.aver_rpm;
      ++ac.state;   // state = 2
     }
     else

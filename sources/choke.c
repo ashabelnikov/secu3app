@@ -448,7 +448,7 @@ int16_t calc_sm_position(uint8_t pwm)
     int16_t rpm = calc_cl_rpm();
     int16_t rpmt = PGM_GET_BYTE(&fw_data.exdata.tmrpmtc_mode) ? inj_idling_rpm() : rpm;
     uint16_t rpm_thrd1 = calc_rpm_thrd1(rpmt), rpm_thrd2 = calc_rpm_thrd2(rpmt);
-    int16_t error = rpm - d.sens.aver_rpm, intlim = d.param.idl_intrpm_lim * 10;
+    int16_t error = rpm - d.sens.inst_rpm, intlim = d.param.idl_intrpm_lim * 10;
     restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
 
     if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.inst_rpm < rpm_thrd1))

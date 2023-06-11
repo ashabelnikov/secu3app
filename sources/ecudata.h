@@ -183,9 +183,9 @@ typedef struct sensors_t
  int16_t grts;                           //!< Gas reducer temperature sensor
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
  int16_t ftls;                           //!< fuel tank level sensor (L), value * 64
- int16_t egts;                           //!< Exhaust gas temperature sensor (°Ñ), value * 4
+ int16_t egts;                           //!< Exhaust gas temperature sensor (°C), value * 4
  int16_t ops;                            //!< Oil pressure sensor (kg/cm2), value * 256
 #endif
 

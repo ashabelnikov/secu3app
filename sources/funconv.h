@@ -463,7 +463,7 @@ uint16_t aftstr_strokes(uint8_t mode);
 int8_t inj_iac_mat_corr(void);
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
 /**Converts ADC value into phisical magnitude (fuel tank level, exhaust gas temperature or oil pressure)
  * \param adcvalue Voltage from sensor (in ADC discretes)
  * \param lutab Pointer to related look up table (&ftls_curve, &egts_curve or &ops_curve)

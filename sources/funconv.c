@@ -1673,7 +1673,7 @@ int8_t inj_iac_mat_corr(void)
 }
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
 int16_t exsens_lookup(uint16_t adcvalue, int16_t *lutab)
 {
  int16_t i, i1;
@@ -1818,7 +1818,7 @@ uint8_t ltft_check_load_hit(void)
 
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
 uint16_t ftlscor_ucoef(void)
 {
  int16_t i, i1, voltage = d.sens.voltage;

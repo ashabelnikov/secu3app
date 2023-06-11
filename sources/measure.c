@@ -88,8 +88,10 @@ typedef struct
 /**Ring buffers for all inputs */
 meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
 
+#ifdef SPEED_SENSOR
 /**Stores last value of the VSS pulse counter*/
 static uint16_t vss_pulse_count = 0;
+#endif
 
 static uint16_t update_buffer(uint8_t idx, uint16_t value)
 {
@@ -381,6 +383,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
   add_ix = d.sens.add_i7; //ADD_I7 input selected
  else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i8i)
   add_ix = d.sens.add_i8; //ADD_I8 input selected as input for fuel tank level sensor
+#endif
  else
  {
   d.sens.ftls = 0; //input is not selected
@@ -389,7 +392,6 @@ void meas_average_measured_values(ce_sett_t *cesd)
  add_ix = (((uint32_t)add_ix) * ftlscor_ucoef()) >> 12; //apply board voltage correction
  d.sens.ftls = exsens_lookup(add_ix, ram_extabs.ftls_curve);
 ftls_notsel:
-#endif
 #endif
 
 #ifndef SECU3T
@@ -566,7 +568,12 @@ void meas_take_discrete_inputs(void)
  //if GAS_V input remapped to other function, then petrol
  d.sens.gas_raw = IOCFG_GET(IOP_GAS_V);
  //use condition result from selected univ.output instead of GAS_V input
- uint8_t gas_v_trig = (d.param.gas_v_uni != 0x0F) ? d.uniout[d.param.gas_v_uni] : d.sens.gas_raw;
+ uint8_t gas_v_trig =
+#ifdef UNI_OUTPUT
+ (d.param.gas_v_uni != 0x0F) ? d.uniout[d.param.gas_v_uni] :
+#endif
+ d.sens.gas_raw;
+
  if (d.sens.gas != gas_v_trig)
  {
   d.sens.gas = gas_v_trig;

@@ -289,6 +289,7 @@ ign_queue_t ign_eq3[IGN_QUEUE_SIZE];
     }
 
 /** A more computationally economical version of QUEUE_ADD() macro
+ * (without selection of channel)
  */
 #define QUEUE_ADDF(q, r, time, aid) \
     uint8_t qi = ckps.eq_head##q; \
@@ -1052,7 +1053,7 @@ void ckps_use_cam_ref_s(uint8_t i_camref)
 ISR(TIMER1_COMPA_vect)
 {
  TIMSK1&= ~_BV(OCIE1A); //disable this interrupt
-
+expired:
  switch(QUEUE_TAIL(1).id) //what exactly happen?
  {
   case QID_DWELL: //start accumulation
@@ -1073,28 +1074,15 @@ ISR(TIMER1_COMPA_vect)
 #endif
 
 #ifdef STROBOSCOPE
-    uint8_t ch = QUEUE_TAIL(1).ch;
-#endif
-    QUEUE_REMOVE(1);
-    if (!QUEUE_IS_EMPTY(1))
-    {
-     uint16_t t = (QUEUE_TAIL(1).end_time-(uint16_t)2) - TCNT1;
-     if (t > EXPEVENT_THRD)             //end_time < TCNT1, so, it is expired (forbidden range is EXPEVENT_THRD...65535)
-      t = 2;
-     SET_T1COMPA(TCNT1, t);
-    }
-
-#ifdef STROBOSCOPE
-   if (CHECKBIT(flags, F_STROBE))
+   if (CHECKBIT(flags, F_STROBE) && (0==QUEUE_TAIL(1).ch))
    {
-    if (0==ch)
-    {
-     IOCFG_SET(IOP_STROBE, 1);  //start pulse
-     QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE); //strobe pulse is 100uS by default
-    }
+    IOCFG_SET(IOP_STROBE, 1);  //start pulse
+    QUEUE_REMOVE(1); // remove already processed spark event from queue here. We will skip redundant removing using goto operator
+    QUEUE_ADDF(1, TCNT1, STROBE_PW, QID_STROBE); //strobe pulse is 100uS by default
+    goto settmr; //skip calling QUEUE_REMOVE() at the bottom
    }
 #endif
-   return;
+   break;
   }
 
   case QID_RPMSAMP:
@@ -1154,12 +1142,18 @@ ISR(TIMER1_COMPA_vect)
  //Remove already processed event from queue. After that, if queue is not empty, then start
  //next event in chain. Also, prevent effects when event already expired.
  QUEUE_REMOVE(1);
+settmr:
  if (!QUEUE_IS_EMPTY(1))
  {
-  uint16_t t = (QUEUE_TAIL(1).end_time-(uint16_t)2) - TCNT1;
+  uint16_t t = (QUEUE_TAIL(1).end_time-(uint16_t)2) - TCNT1; //substruct a little value to avoid missing possible pre-expiring event
   if (t > EXPEVENT_THRD)             //end_time < TCNT1, so, it is expired (forbidden range is EXPEVENT_THRD...65535)
-   t = 2;
-  SET_T1COMPA(TCNT1, t);
+  {
+   goto expired;                     //already expired
+  }
+  else
+  {
+   SET_T1COMPA(TCNT1, t);
+  }
  }
 }
 
@@ -1168,7 +1162,7 @@ ISR(TIMER1_COMPA_vect)
 ISR(TIMER3_COMPA_vect)
 {
  TIMSK3&= ~_BV(OCIE3A); //disable this interrupt
-
+expired:
  switch(QUEUE_TAIL(3).id) //what exactly happen?
  {
   case QID_DWELL: //start accumulation
@@ -1198,10 +1192,15 @@ ISR(TIMER3_COMPA_vect)
  QUEUE_REMOVE(3);
  if (!QUEUE_IS_EMPTY(3))
  {
-  uint16_t t = (QUEUE_TAIL(3).end_time-(uint16_t)2) - TCNT1;
+  uint16_t t = (QUEUE_TAIL(3).end_time-(uint16_t)2) - TCNT1; //substruct a little value to avoid missing possible pre-expiring event
   if (t > EXPEVENT_THRD)             //end_time < TCNT3, so, it is expired (forbidden range is EXPEVENT_THRD...65535)
-   t = 2;
-  SET_T3COMPA(TCNT3, t);
+  {
+   goto expired;                     //already expired
+  }
+  else
+  {
+   SET_T3COMPA(TCNT3, t);
+  }
  }
 }
 #endif

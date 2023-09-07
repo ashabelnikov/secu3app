@@ -270,16 +270,19 @@ ign_queue_t ign_eq3[IGN_QUEUE_SIZE];
  */
 #define QUEUE_ADD(q, r, time, aid, chan) \
     uint8_t qi = ckps.eq_head##q; \
-    while((qi != ckps.eq_tail##q) && ((time) < (ign_eq##q[(qi - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
+    while(qi != ckps.eq_tail##q) \
     { \
      uint8_t im1 = (qi - 1) & (IGN_QUEUE_SIZE-1); \
+     uint16_t dt = ign_eq##q[im1].end_time - (r); \
+     if (dt > EXPEVENT_THRD || (time) > dt) \
+      break; \
      ign_eq##q[qi] = ign_eq##q[im1]; \
      qi = im1; \
     } \
     ign_eq##q[qi].end_time = (r) + (time); \
     ign_eq##q[qi].id = (aid); \
     ign_eq##q[qi].ch = (chan); \
-    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1);\
+    ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1); \
     if (qi == ckps.eq_tail##q) \
     { \
      SET_T##q##COMPA((r), (time)); \
@@ -289,12 +292,15 @@ ign_queue_t ign_eq3[IGN_QUEUE_SIZE];
  */
 #define QUEUE_ADDF(q, r, time, aid) \
     uint8_t qi = ckps.eq_head##q; \
-    while((qi != ckps.eq_tail##q) && ((time) < (ign_eq##q[(qi - 1) & (IGN_QUEUE_SIZE-1)].end_time-(r)))) \
+    while(qi != ckps.eq_tail##q) \
     { \
      uint8_t im1 = (qi - 1) & (IGN_QUEUE_SIZE-1); \
+     uint16_t dt = ign_eq##q[im1].end_time - (r); \
+     if (dt > EXPEVENT_THRD || (time) > dt) \
+      break; \
      ign_eq##q[qi] = ign_eq##q[im1]; \
      qi = im1; \
-    }\
+    } \
     ign_eq##q[qi].end_time = (r) + (time); \
     ign_eq##q[qi].id = (aid); \
     ckps.eq_head##q = (ckps.eq_head##q + 1) & (IGN_QUEUE_SIZE-1); \

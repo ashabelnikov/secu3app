@@ -36,8 +36,6 @@
 #include "mathemat.h"
 #include "vstimer.h"
 
-#define EGO_FC_DELAY 6           //!< 6 strokes
-
 /**Internal state variables*/
 typedef struct
 {
@@ -275,7 +273,7 @@ void lambda_stroke_event_notification(void)
    //Turn off EGO correction on overrun or rev. limiting or on idling (if enabled)
    if (!d.ie_valve || d.fc_revlim || d.acceleration || (!d.sens.carb && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_IDLCORR)))
    { //overrun or rev.limiting
-    ego.fc_delay[i] = EGO_FC_DELAY;
+    ego.fc_delay[i] = PGM_GET_BYTE(&fw_data.exdata.ego_fc_delay);
     d.corr.lambda[i] = 0;
     continue;
    }

@@ -567,9 +567,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_cranktorun_time =         SYS_TIME_S(3.00),     //3 seconds
   .inj_aftstr_strokes =          38,                   //152 strokes
 
-  .inj_lambda_str_per_stp =      8,                    //8 strokes
-  .inj_lambda_step_size_p =      EGO_CORR(2.5),        //2.5%
-  .inj_lambda_corr_limit_p =     EGO_CORR(30.0),       //30% max
+  .inj_lambda_str_per_stp =      30,                   //30 strokes
+  .inj_lambda_step_size_p =      EGO_CORR(1.0),        //1.0%
+  .inj_lambda_corr_limit_p =     EGO_CORR(14.0),       //14% max
   .inj_lambda_swt_point =        VOLTAGE_MAGNITUDE(0.5), //0.5V
   .inj_lambda_temp_thrd =        TEMPERATURE_MAGNITUDE(60.0), //60°C
   .inj_lambda_rpm_thrd =         1200,                 //1200 min-1
@@ -593,8 +593,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_fc_closing =               GD_MAGNITUDE(30),     //close for 30%
 
-  .inj_lambda_step_size_m =      EGO_CORR(2.5),        //2.5%
-  .inj_lambda_corr_limit_m =     EGO_CORR(30.0),       //30% max
+  .inj_lambda_step_size_m =      EGO_CORR(0.8),        //0.8%
+  .inj_lambda_corr_limit_m =     EGO_CORR(12.0),       //12% max
 
   .gd_lambda_corr_limit_p =      EGO_CORR(30.0),       //30% max
   .gd_lambda_corr_limit_m =      EGO_CORR(30.0),       //30% max
@@ -1220,6 +1220,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ltft_max =  126,           //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
 
   .use_injnonlin_corr = 0,    //don't use correction
+
+  .ego_fc_delay = 200,        //200 strokes
 
   /**reserved bytes*/
   {0}

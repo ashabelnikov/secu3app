@@ -883,7 +883,7 @@ void uart_send_packet(uint8_t send_mode)
 #if ((UART_SEND_BUFF_SIZE - 3) < FW_SIGNATURE_INFO_SIZE+8)
  #error "Out of buffer!"
 #endif
-   build_fs(fw_data.fw_signature_info, FW_SIGNATURE_INFO_SIZE);
+   build_fs(fw_data.fw_sign_info, FW_SIGNATURE_INFO_SIZE);
    build_i32h(PGM_GET_DWORD(&fw_data.cddata.config));   //<--compile-time options
    build_i8h(PGM_GET_BYTE(&fw_data.cddata.fw_version)); //<--version of the firmware
    break;

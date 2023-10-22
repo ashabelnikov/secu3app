@@ -393,6 +393,7 @@ void eculogic_system_state_machine(void)
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  calc_ve_afr();
+ inj_corrected_mat();
 #endif
 
 #if defined(FUEL_INJECT) || defined(SM_CONTROL) || defined(GD_CONTROL)

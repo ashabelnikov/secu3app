@@ -778,6 +778,18 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   build_i16h(d.corr.afr);                  // Current value of air to fuel ratio from AFR map
+#else
+   build_i16h(0);
+#endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   build_i16h(d.corr.tchrg);                // Corrected value of MAT
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

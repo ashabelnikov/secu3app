@@ -704,12 +704,7 @@ void calc_ve_afr(void)
  d.corr.afr = fcs.afrcurr >> 1; //update value of AFR
 }
 
-
-/** Calculates corrected MAT based on the coefficient from a lookup table, IAT and CTS sensors
- * \param d Pointer to ECU data structure
- * \return corrected MAT value (temperature units, Celsius)
- */
-static int16_t inj_corrected_mat(void)
+void inj_corrected_mat(void)
 {
  int16_t i, i1; uint16_t x = d.sens.rxlaf;
  //x contains value of air flow * 32
@@ -743,7 +738,7 @@ static int16_t inj_corrected_mat(void)
 
  //Corrected MAT = (CLT - IAT) * coefficient(load*rpm) + IAT,
  //at this point coefficient is multiplied by 16384
- return (int16_t)(((int32_t)(d.sens.temperat - d.sens.air_temp) * coeff) >> (13+1)) + d.sens.air_temp;
+ d.corr.tchrg = (int16_t)(((int32_t)(d.sens.temperat - d.sens.air_temp) * coeff) >> (13+1)) + d.sens.air_temp;
 }
 
 #endif
@@ -755,7 +750,7 @@ uint16_t inj_base_pw(void)
  uint32_t pw32;
  uint8_t  nsht = 0; //no division
  //if air density correction map used, then use normal conditions MAT = 20°Ñ instead if real MAT
- int16_t CorrectedMAT = CHECKBIT(d.param.inj_flags, INJFLG_USEAIRDEN) ? TEMPERATURE_MAGNITUDE(293.15) : (inj_corrected_mat() + TEMPERATURE_MAGNITUDE(273.15));
+ int16_t CorrectedMAT = CHECKBIT(d.param.inj_flags, INJFLG_USEAIRDEN) ? TEMPERATURE_MAGNITUDE(293.15) : (d.corr.tchrg + TEMPERATURE_MAGNITUDE(273.15));
 
  if (d.param.load_src_cfg == 2) //Alpha-N
  {
@@ -1230,7 +1225,7 @@ uint8_t inj_airtemp_corr(uint8_t rawmat)
 {
  int16_t i, i1, t = rawmat ? d.sens.air_temp :
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
- inj_corrected_mat(); //use corrected MAT or raw value
+ d.corr.tchrg; //use corrected MAT or raw value
 #else //SM_CONTROL only (choke)
  d.sens.air_temp; //use raw MAT value (rawmat ignored)
 #endif
@@ -1654,7 +1649,7 @@ uint16_t aftstr_strokes(uint8_t mode)
 #if defined(FUEL_INJECT)
 int8_t inj_iac_mat_corr(void)
 {
- int16_t i, i1, t = inj_corrected_mat(); //use corrected MAT
+ int16_t i, i1, t = d.corr.tchrg; //use corrected MAT
  if (!IOCFG_CHECK(IOP_AIR_TEMP))
   return 0;   //do not use correcton if air temperature sensor is turned off
 

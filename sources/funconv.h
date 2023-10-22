@@ -578,4 +578,12 @@ uint16_t inj_nonlin_lookup(uint16_t pw);
 uint16_t inj_nonlin_binsmax(void);
 #endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+/** Calculates corrected MAT based on the coefficient from a lookup table, IAT and CTS sensors
+ * writes corrected MAT value (temperature units, Celsius) into d.corr_mat variable
+ * \param d Pointer to ECU data structure
+ */
+void inj_corrected_mat(void);
+#endif
+
 #endif //_FUNCONV_H_

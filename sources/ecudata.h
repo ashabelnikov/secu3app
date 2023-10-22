@@ -237,6 +237,9 @@ typedef struct correct_t
 #ifdef PA4_INP_IGNTIM
  int16_t pa4_aac;                        //!< Ignition timing correction from PA4
 #endif
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ int16_t tchrg;                          //!< Corrected value of MAT, temperature units
+#endif
 }correct_t;
 
 /**Describes system's data (main ECU data structure)

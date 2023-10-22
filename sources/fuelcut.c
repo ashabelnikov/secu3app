@@ -74,10 +74,10 @@ static void simple_fuel_cut(uint8_t apply)
 {
  if (s_timer_is_action(&idlecutoff_crnk_delay))
  {
-  //if throttle is opened, then open valve,reload timer and exit from condition
+  //if throttle is opened, then open valve, reload timer and exit from condition
   if (d.sens.carb
 #ifdef SPEED_SENSOR
- || (d.sens.vss_speed < PGM_GET_WORD(&fw_data.exdata.fuelcut_vss_thrd))
+ || (IOCFG_CHECK(IOP_SPDSENS) && (d.sens.vss_speed < PGM_GET_WORD(&fw_data.exdata.fuelcut_vss_thrd)))
 #endif
      )
   {
@@ -136,7 +136,7 @@ void fuelcut_control(void)
    //When RPM > hi threshold, then check TPS, CTS and MAP
    if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd)
 #ifdef SPEED_SENSOR
-    && (d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.fuelcut_vss_thrd))
+    && (!IOCFG_CHECK(IOP_SPDSENS) || (d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.fuelcut_vss_thrd)))
 #endif
       )
    {

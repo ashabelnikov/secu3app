@@ -41,44 +41,84 @@
 #include "wdt.h"
 #include "magnitude.h"
 
-#define ETMT_NAME_STR 0     //!< name of tables's set id
+#define ETMT_NAME_STR    0     //!< name of tables's set id
 //ignition maps
-#define ETMT_STRT_MAP 1     //!< start map id
-#define ETMT_IDLE_MAP 2     //!< idle map id
-#define ETMT_WORK_MAP 3     //!< work map id
-#define ETMT_TEMP_MAP 4     //!< temp.corr. map id
+#define ETMT_STRT_MAP    1     //!< start map id
+#define ETMT_IDLE_MAP    2     //!< idle map id
+#define ETMT_WORK_MAP    3     //!< work map id
+#define ETMT_TEMP_MAP    4     //!< temp.corr. map id
 //fuel injection maps
-#define ETMT_VE_MAP   5     //!< VE
-#define ETMT_AFR_MAP  6     //!< AFR
-#define ETMT_CRNK_MAP 7     //!< Cranking PW
-#define ETMT_WRMP_MAP 8     //!< Warmup enrichment
-#define ETMT_DEAD_MAP 9     //!< Injector's dead time
-#define ETMT_IDLR_MAP 10    //!< IAC/PWM position on run
-#define ETMT_IDLC_MAP 11    //!< IAC_PWM position on cranking
-#define ETMT_AETPS_MAP 12   //!< AE TPS map
-#define ETMT_AERPM_MAP 13   //!< AE RPM map
-#define ETMT_AFTSTR_MAP 14  //!< afterstart enrichment
-#define ETMT_IT_MAP   15    //!< injection timing map
-#define ETMT_ITRPM_MAP 16   //!< idling RPM
-#define ETMT_RIGID_MAP 17   //!< idl. regulator's rigidity map
-#define ETMT_EGOCRV_MAP 18  //!< EGO curve (WBO emulation)
-#define ETMT_IACC_MAP 19    //!< mixture correction vs IAC pos
-#define ETMT_IACCW_MAP 20   //!< weight of misture correction vs TPS
-#define ETMT_IATCLT_MAP 21  //!< IAT/CLT correction vs air flow
-#define ETMT_TPSSWT_MAP 22  //!< MAP/TPS switch point
-#define ETMT_GTSC_MAP 23    //!< PW correction from gas temperature
-#define ETMT_GPSC_MAP 24    //!< PW correction from gas pressure
-#define ETMT_ATSC_MAP 25    //!< PW correction from air temperature
-#define ETMT_PWM1_MAP 26    //!< PWM duty 1
-#define ETMT_PWM2_MAP 27    //!< PWM duty 2
-#define ETMT_TEMPI_MAP 28   //!< temp.corr. map id (idling)
-#define ETMT_IACMAT_MAP 29  //!< IAC position's correction vs MAT
-#define ETMT_VE2_MAP 30     //!< Secondary VE map
-#define ETMT_TPSZON_MAP 31  //!< MAP/TPS load axis allocation
-#define ETMT_CYLMULT_MAP 32 //!< Inj. multiplication
-#define ETMT_CYLADD_MAP 33  //!< Inj. addition
-#define ETMT_AEMAP_MAP 34   //!< AE MAP map
-#define ETMT_THRASS_MAP 35  //!< Throttle assist map
+#define ETMT_VE_MAP      5     //!< VE
+#define ETMT_AFR_MAP     6     //!< AFR
+#define ETMT_CRNK_MAP    7     //!< Cranking PW
+#define ETMT_WRMP_MAP    8     //!< Warmup enrichment
+#define ETMT_DEAD_MAP    9     //!< Injector's dead time
+#define ETMT_IDLR_MAP    10    //!< IAC/PWM position on run
+#define ETMT_IDLC_MAP    11    //!< IAC_PWM position on cranking
+#define ETMT_AETPS_MAP   12    //!< AE TPS map
+#define ETMT_AERPM_MAP   13    //!< AE RPM map
+#define ETMT_AFTSTR_MAP  14    //!< afterstart enrichment
+#define ETMT_IT_MAP      15    //!< injection timing map
+#define ETMT_ITRPM_MAP   16    //!< idling RPM
+#define ETMT_RIGID_MAP   17    //!< idl. regulator's rigidity map
+#define ETMT_EGOCRV_MAP  18    //!< EGO curve (WBO emulation)
+#define ETMT_IACC_MAP    19    //!< mixture correction vs IAC pos
+#define ETMT_IACCW_MAP   20    //!< weight of misture correction vs TPS
+#define ETMT_IATCLT_MAP  21    //!< IAT/CLT correction vs air flow
+#define ETMT_TPSSWT_MAP  22    //!< MAP/TPS switch point
+#define ETMT_GTSC_MAP    23    //!< PW correction from gas temperature
+#define ETMT_GPSC_MAP    24    //!< PW correction from gas pressure
+#define ETMT_ATSC_MAP    25    //!< PW correction from air temperature
+#define ETMT_PWM1_MAP    26    //!< PWM duty 1
+#define ETMT_PWM2_MAP    27    //!< PWM duty 2
+#define ETMT_TEMPI_MAP   28    //!< temp.corr. map id (idling)
+#define ETMT_IACMAT_MAP  29    //!< IAC position's correction vs MAT
+#define ETMT_VE2_MAP     30    //!< Secondary VE map
+#define ETMT_TPSZON_MAP  31    //!< MAP/TPS load axis allocation
+#define ETMT_CYLMULT_MAP 32    //!< Inj. multiplication
+#define ETMT_CYLADD_MAP  33    //!< Inj. addition
+#define ETMT_AEMAP_MAP   34    //!< AE MAP map
+#define ETMT_THRASS_MAP  35    //!< Throttle assist map
+
+#define ETMT_SET_END     35
+
+//separate maps
+#define ETMT_ATTENUATOR    36  //!<
+#define ETMT_DWELLCNTRL    37  //!<
+#define ETMT_CTS_CURVE     38  //!<
+#define ETMT_ATS_CURVE     39  //!<
+#define ETMT_ATS_CORR      40  //!<
+#define ETMT_GASDOSE       41  //!<
+#define ETMT_BAROCORR      42  //!<
+#define ETMT_MANIGNTIM     43  //!<
+#define ETMT_TMP2_CURVE    44  //!<
+#define ETMT_CRKCLT_CORR   45  //!<
+#define ETMT_EH_PAUSE      46  //!<
+#define ETMT_CRANKING_THRD 47  //!<
+#define ETMT_CRANKING_TIME 48  //!<
+#define ETMT_SMAPABAN_THRD 49  //!<
+#define ETMT_KNOCK_ZONE    50  //!<
+#define ETMT_GRTS_CURVE    51  //!<
+#define ETMT_GRHEAT_DUTY   52  //!<
+#define ETMT_PWMIAC_UCOEF  53  //!<
+#define ETMT_AFTSTR_STRK0  54  //!<
+#define ETMT_AFTSTR_STRK1  55  //!<
+#define ETMT_GRVDELAY      56  //!<
+#define ETMT_FTLS_CURVE    57  //!<
+#define ETMT_EGTS_CURVE    58  //!<
+#define ETMT_OPS_CURVE     59  //!<
+#define ETMT_MANINJPWC     60  //!<
+#define ETMT_MAF_CURVE     61  //!<
+#define ETMT_FTLSCOR       62  //!<
+#define ETMT_LAMBDA_ZONE   63  //!<
+#define ETMT_FTS_CURVE     64  //!<
+#define ETMT_FUELDENS_CORR 65  //!<
+#define ETMT_XTAU_XFACC    66  //!<
+#define ETMT_XTAU_XFDEC    67  //!<
+#define ETMT_XTAU_TFACC    68  //!<
+#define ETMT_XTAU_TFDEC    69  //!<
+#define ETMT_INJNONLINP    70  //!<
+#define ETMT_INJNONLING    71  //!<
 
 /**Define internal state variables */
 typedef struct
@@ -1043,6 +1083,16 @@ void uart_send_packet(uint8_t send_mode)
   case EDITAB_PAR:
   {
    static uint8_t state = 0, wrk_index = 0;
+   if (d.chmode_data!=255)
+   {
+    state = d.chmode_data;
+   }
+   else
+   {
+    if (state > ETMT_SET_END)
+     state = 0;
+   }
+
    build_i8h(state);  //map Id
    switch(state)
    {
@@ -1082,7 +1132,6 @@ void uart_send_packet(uint8_t send_mode)
      build_rs(d.tables_ram.name, F_NAME_SIZE);
      state = ETMT_VE_MAP, wrk_index = 0;
      break;
-
     case ETMT_VE_MAP:
      build_i8h(wrk_index*INJ_VE_POINTS_F); //cell address
      build_rb((uint8_t*)&d.tables_ram.inj_ve[wrk_index][0], (INJ_VE_POINTS_F*3)/2); //24 bytes per packet (row), INJ_VE_POINTS_L rows
@@ -1307,6 +1356,270 @@ void uart_send_packet(uint8_t send_mode)
      build_rb((uint8_t*)&d.tables_ram.inj_ae_map_enr,  INJ_AE_MAP_LOOKUP_TABLE_SIZE);
      build_rb((uint8_t*)&d.tables_ram.inj_ae_map_bins, INJ_AE_MAP_LOOKUP_TABLE_SIZE);
      state = ETMT_STRT_MAP;
+     break;
+   }
+   //group of separate maps
+   switch(state)
+   {
+    case ETMT_ATTENUATOR:
+     build_i8h(wrk_index * (KC_ATTENUATOR_LOOKUP_TABLE_SIZE/8));
+     build_rb(&ram_extabs.attenuator_table[wrk_index * (KC_ATTENUATOR_LOOKUP_TABLE_SIZE/8)], (KC_ATTENUATOR_LOOKUP_TABLE_SIZE/8));
+     if (wrk_index < (KC_ATTENUATOR_LOOKUP_TABLE_SIZE/16) - 1)  //8 times by 16 bytes
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_DWELLCNTRL:
+     build_i8h(wrk_index*(COIL_ON_TIME_LOOKUP_TABLE_SIZE/4));
+     build_rw((uint16_t*)&ram_extabs.coil_on_time[wrk_index*(COIL_ON_TIME_LOOKUP_TABLE_SIZE/4)], (COIL_ON_TIME_LOOKUP_TABLE_SIZE/4));
+     if (wrk_index >= 3)
+      wrk_index = 0;
+     else
+      ++wrk_index;
+     break;
+    case ETMT_CTS_CURVE:
+     build_i8h(wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.cts_curve[wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? THERMISTOR_LOOKUP_TABLE_SIZE/2 : 2);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_ATS_CURVE:
+     build_i8h(wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.ats_curve[wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? THERMISTOR_LOOKUP_TABLE_SIZE/2 : 2);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_ATS_CORR:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.ats_corr, ATS_CORR_LOOKUP_TABLE_SIZE);
+     break;
+    case ETMT_GASDOSE:
+     build_i8h(wrk_index*GASDOSE_POS_TPS_SIZE);
+     build_rb((uint8_t*)&ram_extabs.gasdose_pos[wrk_index][0], GASDOSE_POS_RPM_SIZE);
+     if (wrk_index >= GASDOSE_POS_TPS_SIZE-1 )
+      wrk_index = 0;
+     else
+      ++wrk_index;
+     break;
+    case ETMT_BAROCORR:
+     build_i8h(wrk_index*8);
+     build_rw((uint16_t*)&ram_extabs.barocorr[wrk_index*8], (wrk_index < 1) ? 8 : 3);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_MANIGNTIM:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.pa4_igntim_corr, PA4_LOOKUP_TABLE_SIZE);
+     break;
+    case ETMT_TMP2_CURVE:
+     build_i8h(wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.tmp2_curve[wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? THERMISTOR_LOOKUP_TABLE_SIZE/2 : 2);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_CRKCLT_CORR:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.cts_crkcorr, CTS_CRKCORR_SIZE);
+     break;
+    case ETMT_EH_PAUSE:
+     build_i8h(wrk_index * (COIL_ON_TIME_LOOKUP_TABLE_SIZE/2));
+     build_rb(&ram_extabs.eh_pause[wrk_index * COIL_ON_TIME_LOOKUP_TABLE_SIZE/2], COIL_ON_TIME_LOOKUP_TABLE_SIZE/2);
+     if (wrk_index < 1)  //2 times by 16 bytes
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_CRANKING_THRD:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.cranking_thrd, CRANK_THRD_SIZE);
+     break;
+    case ETMT_CRANKING_TIME:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.cranking_time, CRANK_TIME_SIZE);
+     break;
+    case ETMT_SMAPABAN_THRD:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.smapaban_thrd, SMAPABAN_THRD_SIZE);
+     break;
+    case ETMT_KNOCK_ZONE:
+     build_i8h(wrk_index*(KNKZONE_TPS_SIZE/4));
+     build_rw((uint16_t*)&ram_extabs.knock_zones[wrk_index*(KNKZONE_TPS_SIZE/4)], (KNKZONE_TPS_SIZE/4));
+     if (wrk_index < 3)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_GRTS_CURVE:
+     build_i8h(wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.grts_curve[wrk_index*(THERMISTOR_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? THERMISTOR_LOOKUP_TABLE_SIZE/2 : 2);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_GRHEAT_DUTY:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.grheat_duty, F_TMP_POINTS);
+     break;
+    case ETMT_PWMIAC_UCOEF:
+     build_i8h(wrk_index*(PWMIAC_UCOEF_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.pwmiac_ucoef[wrk_index*(PWMIAC_UCOEF_SIZE/2)], PWMIAC_UCOEF_SIZE/2);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_AFTSTR_STRK0:
+     build_i8h(wrk_index*(AFTSTR_STRK_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.inj_aftstr_strk0[wrk_index*(AFTSTR_STRK_SIZE/2)], AFTSTR_STRK_SIZE/2);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_AFTSTR_STRK1:
+     build_i8h(wrk_index*(AFTSTR_STRK_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.inj_aftstr_strk1[wrk_index*(AFTSTR_STRK_SIZE/2)], AFTSTR_STRK_SIZE/2);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_GRVDELAY:
+     build_i8h(wrk_index*(F_TMP_POINTS/2));
+     build_rw((uint16_t*)&ram_extabs.grv_delay[wrk_index*(F_TMP_POINTS/2)], F_TMP_POINTS/2);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_FTLS_CURVE:
+     build_i8h(wrk_index*(FTLS_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.ftls_curve[wrk_index*(FTLS_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? FTLS_LOOKUP_TABLE_SIZE/2 : 3);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_EGTS_CURVE:
+     build_i8h(wrk_index*(EGTS_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.egts_curve[wrk_index*(EGTS_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? EGTS_LOOKUP_TABLE_SIZE/2 : 3);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_OPS_CURVE:
+     build_i8h(wrk_index*(OPS_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.ops_curve[wrk_index*(OPS_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? OPS_LOOKUP_TABLE_SIZE/2 : 3);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_MANINJPWC:
+     build_i8h(wrk_index*(INJPWCOEF_LUT_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.injpw_coef[wrk_index*(INJPWCOEF_LUT_SIZE/2)], (wrk_index < 2) ? INJPWCOEF_LUT_SIZE/2 : 1);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_MAF_CURVE:
+     build_i8h(wrk_index*(MAF_FLOW_CURVE_SIZE/8));
+     build_rw((uint16_t*)&ram_extabs.maf_curve[wrk_index*(MAF_FLOW_CURVE_SIZE/8)], (wrk_index < (MAF_FLOW_CURVE_SIZE/8)) ? MAF_FLOW_CURVE_SIZE/8 : 3);
+     if (wrk_index < (MAF_FLOW_CURVE_SIZE/8))
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_FTLSCOR:
+     build_i8h(wrk_index*(FTLSCOR_UCOEF_SIZE/4));
+     build_rw((uint16_t*)&ram_extabs.ftlscor_ucoef[wrk_index*(FTLSCOR_UCOEF_SIZE/4)], (FTLSCOR_UCOEF_SIZE/4));
+     if (wrk_index < 3)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_LAMBDA_ZONE:
+     build_i8h(wrk_index*(EGOZONE_LOAD_SIZE/4));
+     build_rw((uint16_t*)&ram_extabs.lambda_zones[wrk_index*(EGOZONE_LOAD_SIZE/4)], (EGOZONE_LOAD_SIZE/4));
+     if (wrk_index < 3)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_FTS_CURVE:
+     build_i8h(wrk_index*(FTS_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.fts_curve[wrk_index*(FTS_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? FTS_LOOKUP_TABLE_SIZE/2 : 3);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_FUELDENS_CORR:
+     build_i8h(wrk_index*(FUELDENS_CORR_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.fueldens_corr[wrk_index*(FUELDENS_CORR_SIZE/2)], (FUELDENS_CORR_SIZE/2));
+     if (wrk_index < 3)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_XTAU_XFACC:
+     build_i8h(wrk_index*(XTAU_FACT_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.xtau_xfacc[wrk_index*(XTAU_FACT_SIZE/2)], (XTAU_FACT_SIZE/2));
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_XTAU_XFDEC:
+     build_i8h(wrk_index*(XTAU_FACT_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.xtau_xfdec[wrk_index*(XTAU_FACT_SIZE/2)], (XTAU_FACT_SIZE/2));
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_XTAU_TFACC:
+     build_i8h(wrk_index*(XTAU_FACT_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.xtau_tfacc[wrk_index*(XTAU_FACT_SIZE/2)], (XTAU_FACT_SIZE/2));
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_XTAU_TFDEC:
+     build_i8h(wrk_index*(XTAU_FACT_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.xtau_tfdec[wrk_index*(XTAU_FACT_SIZE/2)], (XTAU_FACT_SIZE/2));
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_INJNONLINP:
+     build_i8h(wrk_index*(INJ_NONLIN_SIZE));
+     build_rw((uint16_t*)&ram_extabs.inj_nonlinp_corr[wrk_index*(INJ_NONLIN_SIZE)], INJ_NONLIN_SIZE);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_INJNONLING:
+     build_i8h(wrk_index*(INJ_NONLIN_SIZE));
+     build_rw((uint16_t*)&ram_extabs.inj_nonling_corr[wrk_index*(INJ_NONLIN_SIZE)], INJ_NONLIN_SIZE);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
      break;
    }
    break;
@@ -1535,6 +1848,7 @@ uint8_t uart_recept_packet(void)
  {
   case CHANGEMODE:
    uart_set_send_mode(recept_i8h());
+   d.chmode_data = recept_i8h(); //save data
    break;
 
   case BOOTLOADER:
@@ -1980,6 +2294,118 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_AEMAP_MAP: //AE MAP, Note! Here we consider inj_ae_map_bins and inj_ae_map_enr as single table
      recept_rb(((uint8_t*)&d.tables_ram.inj_ae_map_enr) + addr, INJ_AE_MAP_LOOKUP_TABLE_SIZE*2); /*INJ_AE_MAP_LOOKUP_TABLE_SIZE*2 max*/
+     break;
+   }
+   //group of separate maps
+   switch(state)
+   {
+    case ETMT_ATTENUATOR:
+     recept_rb(((uint8_t*)&ram_extabs.attenuator_table) + addr, KC_ATTENUATOR_LOOKUP_TABLE_SIZE/8); /*KC_ATTENUATOR_LOOKUP_TABLE_SIZE/8 max*/
+     break;
+    case ETMT_DWELLCNTRL:
+     recept_rw(((uint16_t*)&ram_extabs.coil_on_time) + addr, COIL_ON_TIME_LOOKUP_TABLE_SIZE/4); /*COIL_ON_TIME_LOOKUP_TABLE_SIZE/4 max*/
+     break;
+    case ETMT_CTS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.cts_curve) + addr, THERMISTOR_LOOKUP_TABLE_SIZE/2); /*THERMISTOR_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_ATS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.ats_curve) + addr, THERMISTOR_LOOKUP_TABLE_SIZE/2); /*THERMISTOR_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_ATS_CORR:
+     recept_rb(((uint8_t*)&ram_extabs.ats_corr) + addr, ATS_CORR_LOOKUP_TABLE_SIZE); /*ATS_CORR_LOOKUP_TABLE_SIZE max*/
+     break;
+    case ETMT_GASDOSE:
+     recept_rb(((uint8_t*)&ram_extabs.gasdose_pos[0][0]) + addr, GASDOSE_POS_RPM_SIZE); /*GASDOSE_POS_RPM_SIZE max*/
+     break;
+    case ETMT_BAROCORR:
+     recept_rw(((uint16_t*)&ram_extabs.barocorr) + addr, 8); /*8 max*/
+     break;
+    case ETMT_MANIGNTIM:
+     recept_rb(((uint8_t*)&ram_extabs.pa4_igntim_corr) + addr, PA4_LOOKUP_TABLE_SIZE); /*PA4_LOOKUP_TABLE_SIZE max*/
+     break;
+    case ETMT_TMP2_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.tmp2_curve) + addr, THERMISTOR_LOOKUP_TABLE_SIZE/2); /*THERMISTOR_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_CRKCLT_CORR:
+     recept_rb(((uint8_t*)&ram_extabs.cts_crkcorr) + addr, CTS_CRKCORR_SIZE); /*CTS_CRKCORR_SIZE max*/
+     break;
+    case ETMT_EH_PAUSE:
+     recept_rb(((uint8_t*)&ram_extabs.eh_pause) + addr, COIL_ON_TIME_LOOKUP_TABLE_SIZE/2); /*COIL_ON_TIME_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_CRANKING_THRD:
+     recept_rb(((uint8_t*)&ram_extabs.cranking_thrd) + addr, CRANK_THRD_SIZE); /*CRANK_THRD_SIZE max*/
+     break;
+    case ETMT_CRANKING_TIME:
+     recept_rb(((uint8_t*)&ram_extabs.cranking_time) + addr, CRANK_TIME_SIZE); /*CRANK_TIME_SIZE max*/
+     break;
+    case ETMT_SMAPABAN_THRD:
+     recept_rb(((uint8_t*)&ram_extabs.smapaban_thrd) + addr, SMAPABAN_THRD_SIZE); /*SMAPABAN_THRD_SIZE max*/
+     break;
+    case ETMT_KNOCK_ZONE:
+     recept_rw(((uint16_t*)&ram_extabs.knock_zones) + addr, KNKZONE_TPS_SIZE/4); /*KNKZONE_TPS_SIZE/4 max*/
+     break;
+    case ETMT_GRTS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.grts_curve) + addr, THERMISTOR_LOOKUP_TABLE_SIZE/2); /*THERMISTOR_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_GRHEAT_DUTY:
+     recept_rb(((uint8_t*)&ram_extabs.grheat_duty) + addr, F_TMP_POINTS); /*F_TMP_POINTS max*/
+     break;
+    case ETMT_PWMIAC_UCOEF:
+     recept_rw(((uint16_t*)&ram_extabs.pwmiac_ucoef) + addr, PWMIAC_UCOEF_SIZE/2); /*PWMIAC_UCOEF_SIZE/2 max*/
+     break;
+    case ETMT_AFTSTR_STRK0:
+     recept_rw(((uint16_t*)&ram_extabs.inj_aftstr_strk0) + addr, AFTSTR_STRK_SIZE/2); /*AFTSTR_STRK_SIZE/2 max*/
+     break;
+    case ETMT_AFTSTR_STRK1:
+     recept_rw(((uint16_t*)&ram_extabs.inj_aftstr_strk1) + addr, AFTSTR_STRK_SIZE/2); /*AFTSTR_STRK_SIZE/2 max*/
+     break;
+    case ETMT_GRVDELAY:
+     recept_rw(((uint16_t*)&ram_extabs.grv_delay) + addr, F_TMP_POINTS/2); /*F_TMP_POINTS/2 max*/
+     break;
+    case ETMT_FTLS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.ftls_curve) + addr, EGTS_LOOKUP_TABLE_SIZE/2); /*EGTS_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_EGTS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.egts_curve) + addr, EGTS_LOOKUP_TABLE_SIZE/2); /*EGTS_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_OPS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.ops_curve) + addr, OPS_LOOKUP_TABLE_SIZE/2); /*OPS_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_MANINJPWC:
+     recept_rw(((uint16_t*)&ram_extabs.injpw_coef) + addr, INJPWCOEF_LUT_SIZE/2); /*INJPWCOEF_LUT_SIZE/2 max*/
+     break;
+    case ETMT_MAF_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.maf_curve) + addr, MAF_FLOW_CURVE_SIZE/8); /*MAF_FLOW_CURVE_SIZE/8 max*/
+     break;
+    case ETMT_FTLSCOR:
+     recept_rw(((uint16_t*)&ram_extabs.ftlscor_ucoef) + addr, FTLSCOR_UCOEF_SIZE/4); /*FTLSCOR_UCOEF_SIZ/4 max*/
+     break;
+    case ETMT_LAMBDA_ZONE:
+     recept_rw(((uint16_t*)&ram_extabs.lambda_zones) + addr, EGOZONE_LOAD_SIZE/4); /*EGOZONE_LOAD_SIZE/4 max*/
+     break;
+    case ETMT_FTS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.fts_curve) + addr, FTS_LOOKUP_TABLE_SIZE/2); /*FTS_LOOKUP_TABLE_SIZE/2 max*/
+     break;
+    case ETMT_FUELDENS_CORR:
+     recept_rw(((uint16_t*)&ram_extabs.fueldens_corr) + addr, FUELDENS_CORR_SIZE/2); /*FUELDENS_CORR_SIZE/2 max*/
+     break;
+    case ETMT_XTAU_XFACC:
+     recept_rw(((uint16_t*)&ram_extabs.xtau_xfacc) + addr, XTAU_FACT_SIZE/2); /*XTAU_FACT_SIZE/2 max*/
+     break;
+    case ETMT_XTAU_XFDEC:
+     recept_rw(((uint16_t*)&ram_extabs.xtau_xfdec) + addr, XTAU_FACT_SIZE/2); /*XTAU_FACT_SIZE/2 max*/
+     break;
+    case ETMT_XTAU_TFACC:
+     recept_rw(((uint16_t*)&ram_extabs.xtau_tfacc) + addr, XTAU_FACT_SIZE/2); /*XTAU_FACT_SIZE/2 max*/
+     break;
+    case ETMT_XTAU_TFDEC:
+     recept_rw(((uint16_t*)&ram_extabs.xtau_tfdec) + addr, XTAU_FACT_SIZE/2); /*XTAU_FACT_SIZE/2 max*/
+     break;
+    case ETMT_INJNONLINP: //Note! Here we consider inj_nonlinp_corr and inj_nonlinp_bins as single table
+     recept_rw(((uint16_t*)&ram_extabs.inj_nonlinp_corr) + addr, INJ_NONLIN_SIZE); /*INJ_NONLIN_SIZE max*/
+     break;
+    case ETMT_INJNONLING: //Note! Here we consider inj_nonling_corr and inj_nonling_bins as single table
+     recept_rw(((uint16_t*)&ram_extabs.inj_nonling_corr) + addr, INJ_NONLIN_SIZE); /*INJ_NONLIN_SIZE max*/
      break;
    }
   }

@@ -277,6 +277,7 @@ typedef struct ecudata_t
  uint32_t ecuerrors_for_transfer;        //!< Buffering of error codes being sent via UART in real time
  uint32_t ecuerrors_saved_transfer;      //!< Buffering of error codes for read/write from/to EEPROM which is being sent/received
  uint8_t  use_knock_channel_prev;        //!< Previous state of knock channel's usage flag
+ uint8_t  chmode_data;                   //!< Data of the CHANGEMODE packet
 
  uint8_t engine_mode;                    //!< Current engine mode(start, idle, work)
 

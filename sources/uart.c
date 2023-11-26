@@ -47,31 +47,31 @@
 #define ETMT_IDLE_MAP    2     //!< idle map id
 #define ETMT_WORK_MAP    3     //!< work map id
 #define ETMT_TEMP_MAP    4     //!< temp.corr. map id
+#define ETMT_TEMPI_MAP   5     //!< temp.corr. map id (idling)
 //fuel injection maps
-#define ETMT_VE_MAP      5     //!< VE
-#define ETMT_AFR_MAP     6     //!< AFR
-#define ETMT_CRNK_MAP    7     //!< Cranking PW
-#define ETMT_WRMP_MAP    8     //!< Warmup enrichment
-#define ETMT_DEAD_MAP    9     //!< Injector's dead time
-#define ETMT_IDLR_MAP    10    //!< IAC/PWM position on run
-#define ETMT_IDLC_MAP    11    //!< IAC_PWM position on cranking
-#define ETMT_AETPS_MAP   12    //!< AE TPS map
-#define ETMT_AERPM_MAP   13    //!< AE RPM map
-#define ETMT_AFTSTR_MAP  14    //!< afterstart enrichment
-#define ETMT_IT_MAP      15    //!< injection timing map
-#define ETMT_ITRPM_MAP   16    //!< idling RPM
-#define ETMT_RIGID_MAP   17    //!< idl. regulator's rigidity map
-#define ETMT_EGOCRV_MAP  18    //!< EGO curve (WBO emulation)
-#define ETMT_IACC_MAP    19    //!< mixture correction vs IAC pos
-#define ETMT_IACCW_MAP   20    //!< weight of misture correction vs TPS
-#define ETMT_IATCLT_MAP  21    //!< IAT/CLT correction vs air flow
-#define ETMT_TPSSWT_MAP  22    //!< MAP/TPS switch point
-#define ETMT_GTSC_MAP    23    //!< PW correction from gas temperature
-#define ETMT_GPSC_MAP    24    //!< PW correction from gas pressure
-#define ETMT_ATSC_MAP    25    //!< PW correction from air temperature
-#define ETMT_PWM1_MAP    26    //!< PWM duty 1
-#define ETMT_PWM2_MAP    27    //!< PWM duty 2
-#define ETMT_TEMPI_MAP   28    //!< temp.corr. map id (idling)
+#define ETMT_VE_MAP      6     //!< VE
+#define ETMT_AFR_MAP     7     //!< AFR
+#define ETMT_CRNK_MAP    8     //!< Cranking PW
+#define ETMT_WRMP_MAP    9     //!< Warmup enrichment
+#define ETMT_DEAD_MAP    10     //!< Injector's dead time
+#define ETMT_IDLR_MAP    11    //!< IAC/PWM position on run
+#define ETMT_IDLC_MAP    12    //!< IAC_PWM position on cranking
+#define ETMT_AETPS_MAP   13    //!< AE TPS map
+#define ETMT_AERPM_MAP   14    //!< AE RPM map
+#define ETMT_AFTSTR_MAP  15    //!< afterstart enrichment
+#define ETMT_IT_MAP      16    //!< injection timing map
+#define ETMT_ITRPM_MAP   17    //!< idling RPM
+#define ETMT_RIGID_MAP   18    //!< idl. regulator's rigidity map
+#define ETMT_EGOCRV_MAP  19    //!< EGO curve (WBO emulation)
+#define ETMT_IACC_MAP    20    //!< mixture correction vs IAC pos
+#define ETMT_IACCW_MAP   21    //!< weight of misture correction vs TPS
+#define ETMT_IATCLT_MAP  22    //!< IAT/CLT correction vs air flow
+#define ETMT_TPSSWT_MAP  23    //!< MAP/TPS switch point
+#define ETMT_GTSC_MAP    24    //!< PW correction from gas temperature
+#define ETMT_GPSC_MAP    25    //!< PW correction from gas pressure
+#define ETMT_ATSC_MAP    26    //!< PW correction from air temperature
+#define ETMT_PWM1_MAP    27    //!< PWM duty 1
+#define ETMT_PWM2_MAP    28    //!< PWM duty 2
 #define ETMT_IACMAT_MAP  29    //!< IAC position's correction vs MAT
 #define ETMT_VE2_MAP     30    //!< Secondary VE map
 #define ETMT_TPSZON_MAP  31    //!< MAP/TPS load axis allocation

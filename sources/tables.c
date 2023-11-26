@@ -1222,6 +1222,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .use_injnonlin_corr = 0,    //don't use correction
 
   .ego_fc_delay = 200,        //200 strokes
+  .ego_ac_delay = 65,         //65 strokes (delay used after acceleration enrichment)
 
   /**reserved bytes*/
   {0}

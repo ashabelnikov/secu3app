@@ -271,7 +271,13 @@ void lambda_stroke_event_notification(void)
 #endif
 
    //Turn off EGO correction on overrun or rev. limiting or on idling (if enabled)
-   if (!d.ie_valve || d.fc_revlim || d.acceleration || (!d.sens.carb && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_IDLCORR)))
+   if (d.acceleration)
+   {
+    ego.fc_delay[i] = PGM_GET_BYTE(&fw_data.exdata.ego_ac_delay);
+    d.corr.lambda[i] = 0;
+    continue;
+   }
+   if (!d.ie_valve || d.fc_revlim || (!d.sens.carb && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_IDLCORR)))
    { //overrun or rev.limiting
     ego.fc_delay[i] = PGM_GET_BYTE(&fw_data.exdata.ego_fc_delay);
     d.corr.lambda[i] = 0;

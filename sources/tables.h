@@ -633,13 +633,14 @@ typedef struct fw_ex_data_t
   uint8_t use_injnonlin_corr; //!< 0 - don't use inj. non-linearity correction, 1 - use inj. non-linearity correction
 
   uint8_t ego_fc_delay;
+  uint8_t ego_ac_delay;
 
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1967];
+  uint8_t reserved[1966];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

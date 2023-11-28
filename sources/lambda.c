@@ -270,8 +270,9 @@ void lambda_stroke_event_notification(void)
   if ((d.sens.gas && IOCFG_CHECK(IOP_GD_STP))) {
 #endif
 
-   //Turn off EGO correction on overrun or rev. limiting or on idling (if enabled)
-   if (d.acceleration)
+   //Turn off EGO correction on overrun or rev. limiting or on idling (if enabled).
+   //Use separate value of delay for acceleration case
+   if (d.acceleration && ego.fc_delay[i] <= PGM_GET_BYTE(&fw_data.exdata.ego_ac_delay))
    {
     ego.fc_delay[i] = PGM_GET_BYTE(&fw_data.exdata.ego_ac_delay);
     d.corr.lambda[i] = 0;

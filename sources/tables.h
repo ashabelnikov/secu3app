@@ -141,6 +141,8 @@
 
 #define INJ_NONLIN_SIZE                 8           //!< Size of inj. non-linearity correction table
 
+#define EGO_DELAY_SIZE                  16          //!< Size of the EGO delay table
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -526,8 +528,11 @@ typedef struct fw_ex_tabs_t
   uint16_t inj_nonling_corr[INJ_NONLIN_SIZE];
   uint16_t inj_nonling_bins[INJ_NONLIN_SIZE];
 
+  /**EGO sensor's delay, strokes vs MAP*/
+  uint16_t inj_ego_delay[EGO_DELAY_SIZE];
+
   /**reserved*/
-  uint8_t reserved[1067];
+  uint8_t reserved[1035];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware

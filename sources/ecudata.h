@@ -88,7 +88,7 @@ typedef struct sensors_t
  uint16_t map;                           //!< Intake Manifold Pressure (averaged)
  uint16_t voltage;                       //!< Board voltage (averaged)
 #ifdef SEND_INST_VAL
- uint16_t inst_voltage;                  //!< Instant valtage - not averaged
+ uint16_t inst_voltage;                  //!< Instant voltage - not averaged
  uint16_t inst_map;                      //!< Intake Manifold Pressure - not averaged
  uint16_t inst_add_i1;                   //!< ADD_I1 input voltage - not averaged
  uint8_t  inst_tps;                      //!< TPS - not averaged

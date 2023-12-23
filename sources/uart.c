@@ -119,6 +119,7 @@
 #define ETMT_XTAU_TFDEC    69  //!<
 #define ETMT_INJNONLINP    70  //!<
 #define ETMT_INJNONLING    71  //!<
+#define ETMT_EGO_DELAY     72  //!<
 
 /**Define internal state variables */
 typedef struct
@@ -1621,6 +1622,14 @@ void uart_send_packet(uint8_t send_mode)
      else
       wrk_index = 0;
      break;
+    case ETMT_EGO_DELAY:
+     build_i8h(wrk_index*(EGO_DELAY_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.inj_ego_delay[wrk_index*(EGO_DELAY_SIZE/2)], EGO_DELAY_SIZE/2);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
    }
    break;
   }
@@ -2406,6 +2415,9 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_INJNONLING: //Note! Here we consider inj_nonling_corr and inj_nonling_bins as single table
      recept_rw(((uint16_t*)&ram_extabs.inj_nonling_corr) + addr, INJ_NONLIN_SIZE); /*INJ_NONLIN_SIZE max*/
+     break;
+    case ETMT_EGO_DELAY:
+     recept_rw(((uint16_t*)&ram_extabs.inj_ego_delay) + addr, EGO_DELAY_SIZE/2); /*EGO_DELAY_SIZE/2 max*/
      break;
    }
   }

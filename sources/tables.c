@@ -1108,6 +1108,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   {_INL(0.000), _INL(0.286), _INL(0.571), _INL(0.857), _INL(1.143), _INL(1.428), _INL(1.714), _INL(2.000)}, //corr
   {_INL(0.000), _INL(0.286), _INL(0.571), _INL(0.857), _INL(1.143), _INL(1.428), _INL(1.714), _INL(2.000)}, //bins
 
+  /**Fill EGO delay map */
+  {26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26},
+
   /**reserved*/
   {0}
  },

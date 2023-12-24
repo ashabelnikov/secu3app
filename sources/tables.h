@@ -640,12 +640,14 @@ typedef struct fw_ex_data_t
   uint8_t ego_fc_delay;
   uint8_t ego_ac_delay;
 
+  uint8_t ltft_algo;       //!< 0 - default algorithm, 1 - Kosh algorithm
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1966];
+  uint8_t reserved[1965];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

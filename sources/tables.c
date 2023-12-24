@@ -1227,6 +1227,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ego_fc_delay = 200,        //200 strokes
   .ego_ac_delay = 65,         //65 strokes (delay used after acceleration enrichment)
 
+  .ltft_algo = 0,             //default algorithm
+
   /**reserved bytes*/
   {0}
  },

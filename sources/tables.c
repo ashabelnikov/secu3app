@@ -567,9 +567,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_cranktorun_time =         SYS_TIME_S(3.00),     //3 seconds
   .inj_aftstr_strokes =          38,                   //152 strokes
 
-  .inj_lambda_str_per_stp =      30,                   //30 strokes
-  .inj_lambda_step_size_p =      EGO_CORR(1.0),        //1.0%
-  .inj_lambda_corr_limit_p =     EGO_CORR(14.0),       //14% max
+  .inj_lambda_str_per_stp =      50,                   //30 strokes
+  .inj_lambda_step_size_p =      EGO_CORR(1.0),       //1.0%
+  .inj_lambda_corr_limit_p =     EGO_CORR(10.0),       //10% max
   .inj_lambda_swt_point =        VOLTAGE_MAGNITUDE(0.5), //0.5V
   .inj_lambda_temp_thrd =        TEMPERATURE_MAGNITUDE(60.0), //60°C
   .inj_lambda_rpm_thrd =         1200,                 //1200 min-1
@@ -593,8 +593,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gd_fc_closing =               GD_MAGNITUDE(30),     //close for 30%
 
-  .inj_lambda_step_size_m =      EGO_CORR(0.8),        //0.8%
-  .inj_lambda_corr_limit_m =     EGO_CORR(12.0),       //12% max
+  .inj_lambda_step_size_m =      EGO_CORR(1.0),       //1.0%
+  .inj_lambda_corr_limit_m =     EGO_CORR(8.0),       //8% max
 
   .gd_lambda_corr_limit_p =      EGO_CORR(30.0),       //30% max
   .gd_lambda_corr_limit_m =      EGO_CORR(30.0),       //30% max
@@ -1225,9 +1225,16 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .use_injnonlin_corr = 0,    //don't use correction
 
   .ego_fc_delay = 200,        //200 strokes
-  .ego_ac_delay = 65,         //65 strokes (delay used after acceleration enrichment)
+  .ego_ac_delay = 50,         //50 strokes (delay used after acceleration enrichment)
 
   .ltft_algo = 0,             //default algorithm
+  .ltft_learn_clt_up = TEMPERATURE_MAGNITUDE(96.0), //96.0°C
+  .ltft_learn_iat_up = TEMPERATURE_MAGNITUDE(45.0), //45.0°C
+
+  .ltft_learn_rpm = {500, 6000},
+  .ltft_learn_load = {PRESSURE_MAGNITUDE(10.0), PRESSURE_MAGNITUDE(100.0)},
+
+  .ltft_dead_band = {EGO_CORR(0.6), EGO_CORR(0.6)}, //+-0.6%
 
   /**reserved bytes*/
   {0}

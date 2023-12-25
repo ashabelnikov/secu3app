@@ -62,6 +62,11 @@ ltft_t ltft[2] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
  */
 void aas_ltft_control(uint8_t i)
 {
+ if (d.sens.aver_rpm < PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[0]) || d.sens.aver_rpm > PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[1]))
+  return;
+ if (d.load < PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[0]) || d.load > PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[1]))
+  return;
+
  switch(ltft[i].ltft_state)
  {
   case 0:
@@ -155,8 +160,11 @@ void ltft_control(void)
  if (ee_opcode == OPCODE_RESET_LTFT || ee_opcode == OPCODE_SAVE_LTFT)
   return; //do not write to LTFT map during saving to EEPROM
 
- if (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt)))
-  return; //CLT is too low for learning
+ if (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt)) || d.sens.temperat > ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt_up)))
+  return; //CLT is too low or too high for learning
+
+ if (d.sens.air_temp > ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_iat_up)))
+  return; //Intake air temperature is too high for learning
 
 #ifndef SECU3T
  if (d.sens.map2 < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpa))

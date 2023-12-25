@@ -640,14 +640,21 @@ typedef struct fw_ex_data_t
   uint8_t ego_fc_delay;
   uint8_t ego_ac_delay;
 
-  uint8_t ltft_algo;       //!< 0 - default algorithm, 1 - Kosh algorithm
+  uint8_t ltft_algo;           //!< 0 - default algorithm, 1 - Kosh algorithm
+  int16_t ltft_learn_clt_up;   //!< Upper temperature threshold for learning, value in 0.25°C units
+  int16_t ltft_learn_iat_up;   //!< Upper IAT threshold for learning, value in 0.25°C units
+
+  uint16_t ltft_learn_rpm[2];  //!< lower and upper thresholds of RPM for learning, min-1
+  uint16_t ltft_learn_load[2]; //!< lower and upper thresholds of load for learning, value * 64
+
+  uint8_t ltft_dead_band[2];   //!< EGO correction thresholds (- and +) below which LTFT will not work, value * 512
 
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1965];
+  uint8_t reserved[1951];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

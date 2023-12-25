@@ -118,20 +118,19 @@ Kosh_t Kosh = {
 // Расчет коррекции 
 void kosh_ltft_control(uint8_t Channel) {
 	// Уходим, пока не накопится коррекция
-	if (d.corr.lambda[Channel] > -3 && d.corr.lambda[Channel] < 3) {return;}
-
-	// Верхний порог по температуре на впуске 42 градуса x4
-	if (d.sens.air_temp > 168) {return;}
+	int16_t db_m = PGM_GET_BYTE(&fw_data.exdata.ltft_dead_band[0]);
+	uint8_t db_p = PGM_GET_BYTE(&fw_data.exdata.ltft_dead_band[1]);
+	if (d.corr.lambda[Channel] > -db_m && d.corr.lambda[Channel] < db_p) {return;}
 
 	// Находим целевые обороты и давления с учетом задержки
 	kosh_rpm_map_calc();
 
 	// Пороги по оборотам и давлению (в основном для ХХ)
-	if (Kosh.RPM < 500 || Kosh.RPM > 6000) {return;}
-	if (Kosh.MAP < 10 * 64 || Kosh.MAP > 180 * 64) {return;}
+	if (Kosh.RPM < PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[0]) || Kosh.RPM > PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[1])) {return;}
+	if (Kosh.MAP < PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[0]) || Kosh.MAP > PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[1])) {return;}
 
 	// Коэффициент выравнивания x64
-	Kosh.Kf = 26;
+	Kosh.Kf = PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad) >> 2;
 
 	// Флаг использовать сетку давления
 	Kosh.UseGrid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);

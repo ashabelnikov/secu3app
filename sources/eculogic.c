@@ -44,6 +44,7 @@ typedef struct
 {
 #ifdef FUEL_INJECT
  uint16_t aftstr_enrich_counter; //!< Stroke counter used in afterstart enrichment implementation
+ uint16_t aftstr_enrich_counter0;//!< flat part counter
  uint16_t prime_delay_tmr;       //!< Timer variable used for prime pulse delay
  uint8_t  prime_ready;           //!< Indicates that prime pulse was fired or skipped if cranking was started before
  uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
@@ -59,7 +60,7 @@ typedef struct
 /**Instance of internal state variables structure*/
 static logic_state_t lgs = {
 #ifdef FUEL_INJECT
- 0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,
 #endif
  0,0
 };
@@ -467,6 +468,7 @@ void eculogic_system_state_machine(void)
     idling_regulator_init();
 #ifdef FUEL_INJECT
     lgs.aftstr_enrich_counter = aftstr_strokes(d.sens.gas); //init engine strokes counter
+    lgs.aftstr_enrich_counter0 = PGM_GET_WORD(&fw_data.exdata.aftstr_flat_strokes);
 #endif
    }
    angle = d.corr.strt_aalt = start_function();     //basic ignition timing - cranking map
@@ -696,8 +698,13 @@ void eculogic_stroke_event_notification(void)
 
 #ifdef FUEL_INJECT
  //update afterstart enrichemnt counter
- if (lgs.aftstr_enrich_counter)
-  --lgs.aftstr_enrich_counter;
+ if (0==lgs.aftstr_enrich_counter0)
+ {
+  if (lgs.aftstr_enrich_counter)
+   --lgs.aftstr_enrich_counter;
+ }
+ else
+  --lgs.aftstr_enrich_counter0;
 
  if (!d.sens.gas)
   d.aftstr_enr = (0 != lgs.aftstr_enrich_counter);

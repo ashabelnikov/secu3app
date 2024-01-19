@@ -1236,6 +1236,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ltft_dead_band = {EGO_CORR(0.6), EGO_CORR(0.6)}, //+-0.6%
 
+  .aftstr_flat_strokes = 10,
+
   /**reserved bytes*/
   {0}
  },

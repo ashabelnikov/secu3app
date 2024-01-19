@@ -649,12 +649,14 @@ typedef struct fw_ex_data_t
 
   uint8_t ltft_dead_band[2];   //!< EGO correction thresholds (- and +) below which LTFT will not work, value * 512
 
+  uint16_t aftstr_flat_strokes;
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1951];
+  uint8_t reserved[1949];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

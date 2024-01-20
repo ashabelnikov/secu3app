@@ -68,8 +68,9 @@ void inject_start_inj(uint8_t chan);
 
 /** This function directly opens injectors, used for priming pulse (before cranking)
  * \param time Injection time, one tick = 3.2us
+ * \param times total time = time * times
  */
-void inject_open_inj(uint16_t time);
+void inject_open_inj(uint16_t time, uint8_t times);
 
 /** Set injection configuration
  * \param cfg Selected configuration (See INJCFG_x constants in tables.h)

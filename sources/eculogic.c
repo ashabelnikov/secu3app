@@ -442,7 +442,7 @@ void eculogic_system_state_machine(void)
 #ifdef GD_CONTROL
       if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
 #endif
-      inject_open_inj(inj_prime_pw());               //start prime pulse
+      inject_open_inj(inj_prime_pw(), PGM_GET_BYTE(&fw_data.exdata.inj_prime_times)); //start prime pulse
      lgs.prime_ready = 1;
     }
    }
@@ -454,7 +454,7 @@ void eculogic_system_state_machine(void)
 #ifdef GD_CONTROL
       if (!(d.sens.gas && IOCFG_CHECK(IOP_GD_STP)))
 #endif
-      inject_open_inj(inj_prime_pw());              //start prime pulse
+      inject_open_inj(inj_prime_pw(), PGM_GET_BYTE(&fw_data.exdata.inj_prime_times));//start prime pulse
      lgs.prime_ready = 1;
     }
    }

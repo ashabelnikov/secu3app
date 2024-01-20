@@ -73,7 +73,8 @@ typedef struct
  volatile uint8_t cyl_number;    //!< number of engine cylinders
  uint8_t  num_squirts;           //!< number of squirts per cycle
  volatile uint8_t fuelcut;       //!< fuelcut flag
- volatile uint8_t prime_pulse;   //!< prime pulse flag
+ volatile uint8_t prime_pulse;   //!< prime pulse count (multiplier)
+ volatile uint16_t prime_time;   //!< prime pulse duration
  volatile uint8_t cfg;           //!< injection configuration
  uint8_t  tmr_chan;              //!< number of current timer channel
  uint8_t  squirt_mask;           //!< squirt mask (see calc_squirt_mask() function)
@@ -111,7 +112,7 @@ typedef struct
 }inj_queue_t;
 
 /** Global instance of injector state variable structure*/
-inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+inj_state_t inj = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /** I/O information for each channel */
 inj_chanstate_t inj_chanstate[INJ_CHANNELS_MAX];
@@ -231,6 +232,7 @@ void inject_init_state(void)
   inj_chanstate[i].inj_time = 0xFFFF;
  inj.fuelcut = 1;  //no fuel cut
  inj.prime_pulse = 0; //no prime pulse
+ inj.prime_time = 0;
  inj.tmr_chan = 0;
  inj.active_chan = 0;
  inj.mask_chan = 0xFF;
@@ -418,6 +420,13 @@ void inject_start_inj(uint8_t chan)
  if (!inj.fuelcut)
   return; //fuel is OFF
 
+ if (inj.prime_pulse)                        //discard priming pulse if pending
+ {
+  CLEARBIT(TIMSK2, OCIE2B);                  //disable interrupt
+  inj.prime_pulse = 0;
+  SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
+ }
+
  if (CHECKBIT(inj.squirt_mask, chan))
  {
   if (inj.cfg < INJCFG_2BANK_ALTERN || inj.shrinktime == 2)
@@ -483,19 +492,20 @@ void inject_start_inj(uint8_t chan)
  }
 }
 
-void inject_open_inj(uint16_t time)
+void inject_open_inj(uint16_t time, uint8_t times)
 {
   if (0==time || !inj.fuelcut) return;
   time = (time >> 1) - INJ_COMPB_CALIB;
   if (0==_AB(time, 0))
    (_AB(time, 0))++;
+  inj.prime_time = time;
   _BEGIN_ATOMIC_BLOCK();
   OCR2B = TCNT2 + _AB(time, 0);
   SETBIT(TIFR2, OCF2B);                       //reset possible pending interrupt flag
   inj.tmr2b_h = _AB(time, 1);
   SET_ALL_INJ(INJ_ON);                        //turn on injector 1-8
   SETBIT(TIMSK2, OCIE2B);
-  inj.prime_pulse = 1;
+  inj.prime_pulse = times;
   _END_ATOMIC_BLOCK();
 }
 
@@ -510,9 +520,18 @@ ISR(TIMER2_COMPB_vect)
  {
   if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse || inj.shrinktime == 2)
   {//central/simultaneous
-   SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
-   CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
-   inj.prime_pulse = 0;
+   if (0==inj.prime_pulse)
+   {
+    SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
+    CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
+   }
+   else
+   { //continue prime pulse
+    OCR2B = TCNT2 + _AB(inj.prime_time, 0);
+    SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
+    inj.tmr2b_h = _AB(inj.prime_time, 1);
+    --inj.prime_pulse;
+   }
   }
   else
   { //semi-sequential
@@ -559,7 +578,7 @@ ISR(TIMER0_COMPB_vect)
  }
  else
  {
-  if (inj.cfg < INJCFG_2BANK_ALTERN)
+  if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse)
   { //central/simultaneous
   }
   else

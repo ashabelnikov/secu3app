@@ -713,7 +713,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .shift_igntim =                0,
 
   .stbl_str_cnt =                10,                  //10 strokes
-  .strt_flags =                  _BV(STRTF_FLDCLRSTR),// start of engine in flood clear mode enabled
+  .strt_flags =                  _BV(STRTF_FLDCLRSTR) | _BV(STRTF_LIMCRANPW),// start of engine in flood clear mode enabled, limitting cranking PW enabled
 
   .inj_ae_ballance =             128,                 //50%
   .inj_ae_mapdot_thrd =          50,                  //50kPa per second

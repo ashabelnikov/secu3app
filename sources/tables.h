@@ -240,6 +240,7 @@
 
 //Cranking flags
 #define STRTF_FLDCLRSTR                 0           //!< allow start of engine in flood clear mode (0 - not allowed, 1 - allowed)
+#define STRTF_LIMCRANPW                 1           //!< limit cranking PW
 
 /**Describes one set(family) of chracteristics (maps) */
 typedef struct f_data_t

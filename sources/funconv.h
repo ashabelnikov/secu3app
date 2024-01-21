@@ -586,4 +586,12 @@ uint16_t inj_nonlin_binsmax(void);
 void inj_corrected_mat(void);
 #endif
 
+#if defined(FUEL_INJECT)
+/** Calculates crank to run transition time
+ * Uses d ECU data structure
+ * \return time in 10ms units
+ */
+uint16_t inj_cranktorun_time(void);
+#endif
+
 #endif //_FUNCONV_H_

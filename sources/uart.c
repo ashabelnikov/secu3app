@@ -480,6 +480,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.inj_aftstr_strokes1);  //fuel injection
    build_i8h(d.param.stbl_str_cnt);
    build_i8h(d.param.strt_flags);
+   build_i16h(d.param.inj_cranktorun_time1);//fuel injection
    break;
 
   case FNNAME_DAT:
@@ -1954,6 +1955,7 @@ uint8_t uart_recept_packet(void)
    d.param.inj_aftstr_strokes1 = recept_i8h();  //fuel injection
    d.param.stbl_str_cnt = recept_i8h();
    d.param.strt_flags = recept_i8h();
+   d.param.inj_cranktorun_time1 = recept_i16h(); //fuel injection
    break;
 
   case ADCCOR_PAR:

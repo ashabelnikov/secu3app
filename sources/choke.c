@@ -413,7 +413,7 @@ int16_t calc_sm_position(uint8_t pwm)
    }
    {
     uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
-    if (time_since_crnk >= d.param.inj_cranktorun_time)
+    if (time_since_crnk >= inj_cranktorun_time())
     {
      chks.strt_mode = 2; //transition has finished, we will immediately fall into mode 2, use run value
      chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 4; //run pos x16
@@ -425,7 +425,7 @@ int16_t calc_sm_position(uint8_t pwm)
      crnk_ppos += ((int16_t)inj_iac_mat_corr());
      int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 1;  //run pos
      run_ppos += ((int16_t)inj_iac_mat_corr());
-     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, d.param.inj_cranktorun_time, 64) >> 3; //result will be x32
+     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, inj_cranktorun_time(), 64) >> 3; //result will be x32
 
      if (d.sens.rpm > (calc_cl_rpm() + (d.param.iac_reg_db*2)))
       SETBIT(chks.flags, CF_REACH_TR);

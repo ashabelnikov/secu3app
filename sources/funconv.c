@@ -2016,3 +2016,21 @@ uint16_t inj_nonlin_binsmax(void)
  return d.sens.gas ? ram_extabs.inj_nonling_bins[INJ_NONLIN_SIZE-1] : ram_extabs.inj_nonlinp_bins[INJ_NONLIN_SIZE-1];
 }
 #endif
+
+#ifdef FUEL_INJECT
+uint16_t inj_cranktorun_time(void)
+{
+ int16_t t = d.sens.temperat; //clt
+
+ if (!CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
+  return d.param.inj_cranktorun_time;   //coolant temperature sensor is not enabled (or not installed), use low temp. value
+
+ //-30 CLT corresponding to first value of time
+ // 70 CLT corresponding to second value of time
+ restrict_value_to(&t, TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(70));
+
+ //calculate time using an interpolation
+ return simple_interpolation(t, d.param.inj_cranktorun_time, d.param.inj_cranktorun_time1,
+ TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(100), 2) >> 1;
+}
+#endif

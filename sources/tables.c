@@ -725,6 +725,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .lambda_selch =                0,                  //Use 1st EGO for all cylinders
 
+  .inj_cranktorun_time1 =        SYS_TIME_S(3.00),   //3 seconds at 70°C
+
   .reserved =                    {0},
   .crc =                         0
  },

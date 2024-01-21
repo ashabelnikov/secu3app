@@ -206,7 +206,7 @@ static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2)
 
  if (!CHECKBIT(d.param.strt_flags, STRTF_LIMCRANPW) && d.engine_mode == EM_START)
  { //remove max PW limitation on cranking if limitation was disabled by user
-  uint16_t inj_max_pw = 65535;
+  inj_max_pw = 65535;
  }
 
 #ifdef XTAU_CORR

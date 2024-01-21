@@ -405,7 +405,7 @@ void kosh_rpm_map_calc(void) {
 // Обновление буфера
 void kosh_circular_buffer_update(void) {
 	Kosh.BufferSumRPM += d.sens.rpm;
-	Kosh.BufferSumMAP += d.sens.load;
+	Kosh.BufferSumMAP += d.load;
 	Kosh.BufferAvg++;
 
 	// Достигнут предел усреднения

@@ -44,6 +44,7 @@
 #ifdef TPIC8101
 #include "knock.h"
 #endif
+#include "ringbuff.h"
 
 #ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
  /**Special macro for compensating of voltage division (without voltage divider)*/
@@ -55,9 +56,6 @@
 
 /**Reads state of throttle gate (only the value, without inversion) */
 #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
-
-/**Gets size of corresponding ring buffer*/
-#define AVNUM(idx) (PGM_GET_BYTE(&fw_data.exdata.inpavnum[idx]))
 
 //Index of each ring buffer
 #define FRQ_INPIDX           0                 //!< Index of ring buffer for RPM
@@ -77,45 +75,13 @@
 #define AI8_INPIDX          13                 //!< Index of ring buffer for ADD_I8 (SECU3T option must be excluded AND MCP3204 option must be included)
 #endif
 
-#define CIRCBUFFMAX 8                          //!< Maximum size of ring buffer in items
-
-/**Describes ring buffer for one input*/
-typedef struct
-{
- uint16_t buff[CIRCBUFFMAX];                    //!< Ring buffer
- uint8_t ai;                                    //!< index in buffer
-}meas_input_t;
-
 /**Ring buffers for all inputs */
-meas_input_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
+ringbuff_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
 
 #ifdef SPEED_SENSOR
 /**Stores last value of the VSS pulse counter*/
 static uint16_t vss_pulse_count = 0;
 #endif
-
-static uint16_t update_buffer(uint8_t idx, uint16_t value)
-{
- meas[idx].buff[meas[idx].ai] = value;
- (meas[idx].ai==0) ? (meas[idx].ai = AVNUM(idx) - 1): meas[idx].ai--;
- return value;
-}
-
-static uint16_t average_buffer(uint8_t idx)
-{
- uint8_t i = AVNUM(idx) - 1;  uint32_t sum = 0;
- do
- {
-  sum+=meas[idx].buff[i];
- }while(i--);
-
- //We use shifts instead of division.
- if (AVNUM(idx)==4)
-  return sum >> 2;
- if (AVNUM(idx)==8)
-  return sum >> 3;
- return sum / AVNUM(idx); //default
-}
 
 void meas_init_ports(void)
 {
@@ -137,36 +103,40 @@ void meas_init_ports(void)
 //Update ring buffers
 void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
 {
- update_buffer(FRQ_INPIDX, ckps_calculate_instant_freq()); //calculation of instant RPM and add it to the buffer
+ update_buffer(&meas[FRQ_INPIDX], ckps_calculate_instant_freq()); //calculation of instant RPM and add it to the buffer
 
  if (rpm_only)
   return;
 
- update_buffer(MAP_INPIDX, adc_get_map_value());
+ update_buffer(&meas[MAP_INPIDX], adc_get_map_value());
 
- update_buffer(BAT_INPIDX, adc_get_ubat_value());
+ update_buffer(&meas[BAT_INPIDX], adc_get_ubat_value());
 
- update_buffer(TMP_INPIDX, adc_get_temp_value());
+ update_buffer(&meas[TMP_INPIDX], adc_get_temp_value());
 
- update_buffer(TPS_INPIDX, adc_get_carb_value());
+ update_buffer(&meas[TPS_INPIDX], adc_get_carb_value());
 
- update_buffer(AI1_INPIDX, adc_get_add_i1_value());
+ update_buffer(&meas[AI1_INPIDX], adc_get_add_i1_value());
 
- update_buffer(AI2_INPIDX, adc_get_add_i2_value());
+ update_buffer(&meas[AI2_INPIDX], adc_get_add_i2_value());
 
 #if !defined(SECU3T)
- update_buffer(AI3_INPIDX, adc_get_add_i3_value());
+ update_buffer(&meas[AI3_INPIDX], adc_get_add_i3_value());
 #endif
 
 #if !defined(SECU3T) && defined(TPIC8101)
- update_buffer(AI4_INPIDX, adc_get_knock_value());
+ update_buffer(&meas[AI4_INPIDX], adc_get_knock_value());
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
- update_buffer(AI5_INPIDX, adc_get_add_i5_value());
- update_buffer(AI6_INPIDX, adc_get_add_i6_value());
- update_buffer(AI7_INPIDX, adc_get_add_i7_value());
- update_buffer(AI8_INPIDX, adc_get_add_i8_value());
+ update_buffer(&meas[AI5_INPIDX], adc_get_add_i5_value());
+ update_buffer(&meas[AI6_INPIDX], adc_get_add_i6_value());
+ update_buffer(&meas[AI7_INPIDX], adc_get_add_i7_value());
+ update_buffer(&meas[AI8_INPIDX], adc_get_add_i8_value());
+#endif
+
+#ifdef SPEED_SENSOR
+ update_buffer(&meas[SPD_INPIDX], calc_speed(spdsens_get_period()));
 #endif
 
  if (d.param.knock_use_knock_channel && d.sens.rpm > 200)
@@ -185,9 +155,6 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
  else
   d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off or engine is stopped
 
-#ifdef SPEED_SENSOR
- update_buffer(SPD_INPIDX, calc_speed(spdsens_get_period()));
-#endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
@@ -215,18 +182,18 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
 void meas_average_measured_values(ce_sett_t *cesd)
 {
  int16_t rawval;
- d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(MAP_INPIDX), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(&meas[MAP_INPIDX]), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
  if (IOCFG_CHECK(IOP_MAP_S))
   d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
  else
   d.sens.map = 0;
 
- d.sens.voltage_raw = adc_compensate(average_buffer(BAT_INPIDX) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
+ d.sens.voltage_raw = adc_compensate(average_buffer(&meas[BAT_INPIDX]) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
  d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && cesd->vbat_v_flg ? cesd->vbat_v_em : d.sens.voltage_raw);
 
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
-  d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(TMP_INPIDX), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
+  d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(&meas[TMP_INPIDX]), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
 #ifndef THERMISTOR_CS
   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && cesd->cts_v_flg ? cesd->cts_v_em : d.sens.temperat_raw);
 #else
@@ -239,11 +206,11 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else                                       //CTS is not used
   d.sens.temperat = 0;
 
- d.sens.rpm = average_buffer(FRQ_INPIDX);
+ d.sens.rpm = average_buffer(&meas[FRQ_INPIDX]);
 
 #ifdef SPEED_SENSOR
  //speed
- d.sens.vss_speed=average_buffer(SPD_INPIDX);
+ d.sens.vss_speed=average_buffer(&meas[SPD_INPIDX]);
  //distance
  uint8_t reset_flag = (vss_pulse_count > 63000);
  //check if we reach 100 000 km, then reset our odometer
@@ -259,49 +226,49 @@ void meas_average_measured_values(ce_sett_t *cesd)
   d.sens.vss_int_dist+= dist; //accumulate distance
 #endif
 
- d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(TPS_INPIDX), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(&meas[TPS_INPIDX]), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
  d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
  if (d.sens.tps > TPS_MAGNITUDE(100))
   d.sens.tps = TPS_MAGNITUDE(100);
 
- d.sens.add_i1_raw = rawval = adc_compensate(_RESDIV(average_buffer(AI1_INPIDX), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ d.sens.add_i1_raw = rawval = adc_compensate(_RESDIV(average_buffer(&meas[AI1_INPIDX]), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
 
- d.sens.add_i2_raw = rawval = adc_compensate(_RESDIV(average_buffer(AI2_INPIDX), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
+ d.sens.add_i2_raw = rawval = adc_compensate(_RESDIV(average_buffer(&meas[AI2_INPIDX]), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && cesd->add_i2_v_flg ? cesd->add_i2_v_em : rawval;
 
 #if !defined(SECU3T)
- d.sens.add_i3_raw = rawval = adc_compensate(average_buffer(AI3_INPIDX), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
+ d.sens.add_i3_raw = rawval = adc_compensate(average_buffer(&meas[AI3_INPIDX]), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && cesd->add_i3_v_flg ? cesd->add_i3_v_em : rawval;
 #endif
 
 #if defined(TPIC8101)
- d.sens.add_i4_raw = rawval = adc_compensate(average_buffer(AI4_INPIDX), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
+ d.sens.add_i4_raw = rawval = adc_compensate(average_buffer(&meas[AI4_INPIDX]), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && cesd->add_i4_v_flg ? cesd->add_i4_v_em : rawval;
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
- d.sens.add_i5_raw = rawval = adc_compensate(average_buffer(AI5_INPIDX), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
+ d.sens.add_i5_raw = rawval = adc_compensate(average_buffer(&meas[AI5_INPIDX]), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && cesd->add_i5_v_flg ? cesd->add_i5_v_em : rawval;
- d.sens.add_i6_raw = rawval = adc_compensate(average_buffer(AI6_INPIDX), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
+ d.sens.add_i6_raw = rawval = adc_compensate(average_buffer(&meas[AI6_INPIDX]), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && cesd->add_i6_v_flg ? cesd->add_i6_v_em : rawval;
- d.sens.add_i7_raw = rawval = adc_compensate(average_buffer(AI7_INPIDX), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
+ d.sens.add_i7_raw = rawval = adc_compensate(average_buffer(&meas[AI7_INPIDX]), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && cesd->add_i7_v_flg ? cesd->add_i7_v_em : rawval;
- d.sens.add_i8_raw = rawval =adc_compensate(average_buffer(AI8_INPIDX), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
+ d.sens.add_i8_raw = rawval =adc_compensate(average_buffer(&meas[AI8_INPIDX]), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
  if (rawval < 0)
   rawval = 0;
  d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && cesd->add_i8_v_flg ? cesd->add_i8_v_em : rawval;
@@ -488,11 +455,16 @@ else
 #endif
 }
 
-//Call this function for making preliminary measurements before starting of engine. Call it only after
+//Call this function for making preliminary measurements before starting engine. Call it only after
 //initialization of ADC!
 void meas_init(void)
 {
- uint8_t _t, i = 16;
+ uint8_t _t, i;
+ //set sizes of ring buffers
+ for(i = 0; i < INPUTNUM; ++i)
+  init_buffer(&meas[i], PGM_GET_BYTE(&fw_data.exdata.inpavnum[i])); 
+ //do preliminary measurements
+ i = CIRCBUFFMAX;
  _t = _SAVE_INTERRUPT();
  _ENABLE_INTERRUPT();
  do
@@ -505,7 +477,6 @@ void meas_init(void)
  _RESTORE_INTERRUPT(_t);
  meas_average_measured_values(&ram_extabs.cesd);
 }
-
 
 #ifdef REALTIME_TABLES
 /** Selects set of tables specified by index, sets corresponding flag depending on where tables' set resides: RAM or FLASH

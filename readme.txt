@@ -102,8 +102,6 @@
     PA4_INP_IGNTIM  *    Use analog input for manual correction of ignition
                          timing
 
-    SEND_INST_VAL   *    Send instant values (RPM, voltage) instead of averaged
-
     EVAP_CONTROL    *    Canister purge valve control
 
     AIRCONDIT       *    Air conditioner control

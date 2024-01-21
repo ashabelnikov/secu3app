@@ -87,15 +87,8 @@ typedef struct sensors_t
 {
  uint16_t map;                           //!< Intake Manifold Pressure (averaged)
  uint16_t voltage;                       //!< Board voltage (averaged)
-#ifdef SEND_INST_VAL
- uint16_t inst_voltage;                  //!< Instant voltage - not averaged
- uint16_t inst_map;                      //!< Intake Manifold Pressure - not averaged
- uint16_t inst_add_i1;                   //!< ADD_I1 input voltage - not averaged
- uint8_t  inst_tps;                      //!< TPS - not averaged
-#endif
  int16_t  temperat;                      //!< Coolant temperature (averaged)
- uint16_t aver_rpm;                      //!< Averaged RPM
- uint16_t inst_rpm;                      //!< Instantaneous RPM - not averaged
+ uint16_t rpm;                           //!< Averaged RPM (min-1)
  uint8_t  carb;                          //!< State of carburetor's limit switch (throttle limit switch)
  uint8_t  gas;                           //!< State of gas valve
  uint8_t  gas_raw;                       //!< State of gas valve (raw input value)

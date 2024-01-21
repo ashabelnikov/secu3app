@@ -727,7 +727,7 @@ static void pwm2_set_fl_cons(uint8_t ch)
  */
 static void pwm2_set_vtachom(void)
 {
- uint16_t rpm = d.sens.aver_rpm;
+ uint16_t rpm = d.sens.rpm;
  if (0==rpm)
  { //engine stopped
   _DISABLE_INTERRUPT();

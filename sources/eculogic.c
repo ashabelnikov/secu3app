@@ -467,7 +467,7 @@ void eculogic_system_state_machine(void)
    d.corr.inj_timing = param_inj_timing(0);
 
 #endif
-   if (d.sens.inst_rpm > (d.param.smap_abandon ? d.param.smap_abandon : smapaban_thrd_rpm()))
+   if (d.sens.rpm > (d.param.smap_abandon ? d.param.smap_abandon : smapaban_thrd_rpm()))
    {
     d.engine_mode = EM_IDLE;
     idling_regulator_init();
@@ -688,7 +688,7 @@ void eculogic_stroke_event_notification(void)
  else
  {
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
-  ckps_set_shutter_spark(d.sens.aver_rpm < 200 && 0==start_function());
+  ckps_set_shutter_spark(d.sens.rpm < 200 && 0==start_function());
 #endif
   d.corr.curr_angle = advance_angle_inhibitor(lgs.calc_adv_ang, &lgs.advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
  }

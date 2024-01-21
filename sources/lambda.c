@@ -335,7 +335,7 @@ void lambda_stroke_event_notification(void)
    continue; //exit from this iteration
   }
 
-  if ((d.sens.inst_rpm > d.param.inj_lambda_rpm_thrd) && (d.sens.temperat > d.param.inj_lambda_temp_thrd))    //RPM > threshold && coolant temperature > threshold
+  if ((d.sens.rpm > d.param.inj_lambda_rpm_thrd) && (d.sens.temperat > d.param.inj_lambda_temp_thrd))    //RPM > threshold && coolant temperature > threshold
   {
    if (d.param.inj_lambda_str_per_stp > 0)
    {//using strokes

@@ -96,7 +96,7 @@ void check(ce_sett_t *cesd)
   if (pwrrelay_get_state()) //set error only if power is on
   {
    //ignore error in case of stall of an engine
-   if ((d.sens.inst_rpm < 100) && (d.engine_mode != EM_START))
+   if ((d.sens.rpm < 100) && (d.engine_mode != EM_START))
     ce_set_error(ECUERROR_CKPS_MALFUNCTION);
   }
   ckps_reset_error();
@@ -129,7 +129,7 @@ void check(ce_sett_t *cesd)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
    knock_reset_error();
   }
-  else if ((d.sens.knock_k < cesd->ks_v_min || d.sens.knock_k > cesd->ks_v_max) && d.sens.aver_rpm > 1000)
+  else if ((d.sens.knock_k < cesd->ks_v_min || d.sens.knock_k > cesd->ks_v_max) && d.sens.rpm > 1000)
    ce_set_error(ECUERROR_KSP_CHIP_FAILED);
   else
    ce_clear_error(ECUERROR_KSP_CHIP_FAILED);
@@ -184,7 +184,7 @@ void check(ce_sett_t *cesd)
   else
   { //debouncing counter is expired
    //error if U > 4 and RPM > 2500
-   if (d.sens.voltage_raw > ROUND(4.0 / ADC_DISCRETE) && d.sens.inst_rpm > 2500)
+   if (d.sens.voltage_raw > ROUND(4.0 / ADC_DISCRETE) && d.sens.rpm > 2500)
     ce_set_error(ECUERROR_VOLT_SENSOR_FAIL);
    else
     ce_clear_error(ECUERROR_VOLT_SENSOR_FAIL);

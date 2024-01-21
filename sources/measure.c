@@ -40,6 +40,7 @@
 #include "magnitude.h"
 #include "measure.h"
 #include "tables.h"  //for ce_sett_t type
+#include "ckps.h"
 #ifdef TPIC8101
 #include "knock.h"
 #endif
@@ -136,45 +137,20 @@ void meas_init_ports(void)
 //Update ring buffers
 void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
 {
- int16_t rawval;
-
- update_buffer(FRQ_INPIDX, d.sens.inst_rpm);
+ update_buffer(FRQ_INPIDX, ckps_calculate_instant_freq()); //calculation of instant RPM and add it to the buffer
 
  if (rpm_only)
   return;
 
- rawval = update_buffer(MAP_INPIDX, adc_get_map_value());
+ update_buffer(MAP_INPIDX, adc_get_map_value());
 
-#ifdef SEND_INST_VAL
- rawval = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : adc_compensate(_RESDIV(rawval, 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
- if (IOCFG_CHECK(IOP_MAP_S))
-  d.sens.inst_map = map_adc_to_kpa(rawval, d.param.map_curve_offset, d.param.map_curve_gradient);
- else
-  d.sens.inst_map = 0;
-#endif
-
- rawval = update_buffer(BAT_INPIDX, adc_get_ubat_value());
-#ifdef SEND_INST_VAL
- d.sens.inst_voltage = ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && cesd->vbat_v_flg ? cesd->vbat_v_em : adc_compensate(rawval * 6, d.param.ubat_adc_factor, d.param.ubat_adc_correction);
-#endif
+ update_buffer(BAT_INPIDX, adc_get_ubat_value());
 
  update_buffer(TMP_INPIDX, adc_get_temp_value());
 
- rawval = update_buffer(TPS_INPIDX, adc_get_carb_value());
-#ifdef SEND_INST_VAL
- rawval = adc_compensate(_RESDIV(rawval, 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
- d.sens.inst_tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : rawval, d.param.tps_curve_offset, d.param.tps_curve_gradient);
- if (d.sens.inst_tps > TPS_MAGNITUDE(100))
-  d.sens.inst_tps = TPS_MAGNITUDE(100);
-#endif
+ update_buffer(TPS_INPIDX, adc_get_carb_value());
 
- rawval = update_buffer(AI1_INPIDX, adc_get_add_i1_value());
-#ifdef SEND_INST_VAL
- rawval = adc_compensate(_RESDIV(rawval, 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
- if (rawval < 0)
-  rawval = 0;
- d.sens.inst_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
-#endif
+ update_buffer(AI1_INPIDX, adc_get_add_i1_value());
 
  update_buffer(AI2_INPIDX, adc_get_add_i2_value());
 
@@ -193,7 +169,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
  update_buffer(AI8_INPIDX, adc_get_add_i8_value());
 #endif
 
- if (d.param.knock_use_knock_channel && d.sens.aver_rpm > 200)
+ if (d.param.knock_use_knock_channel && d.sens.rpm > 200)
  {
 #ifdef TPIC8101
   d.sens.knock_raw = adc_compensate(knock_get_adc_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
@@ -263,7 +239,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else                                       //CTS is not used
   d.sens.temperat = 0;
 
- d.sens.aver_rpm=average_buffer(FRQ_INPIDX);
+ d.sens.rpm = average_buffer(FRQ_INPIDX);
 
 #ifdef SPEED_SENSOR
  //speed

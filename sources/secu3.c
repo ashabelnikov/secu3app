@@ -545,8 +545,6 @@ MAIN()
   process_uart_interface();
   //detection of changes in parameters and its saving
   save_param_if_need();
-  //calculation of instant RPM
-  d.sens.inst_rpm = ckps_calculate_instant_freq();
   //averaging of phisical magnitudes stored in the circular buffers
   meas_average_measured_values(&ram_extabs.cesd);
   //read discrete inputs of the system and switching of fuel type (sets of maps)
@@ -578,7 +576,7 @@ MAIN()
    //If enabled, do ignition cut off when RPM or MAP exceed set thresholds. We do cut off from MAP only if FE is not mapped
    //to its I/O and only in the firmware with fuel injection support. Also, if uni.out selected we combine its state with mentioned conditions using "AND" logic function.
    if (d.param.ign_cutoff)
-    ckps_enable_ignition((d.sens.inst_rpm < d.param.ign_cutoff_thrd)
+    ckps_enable_ignition((d.sens.rpm < d.param.ign_cutoff_thrd)
 #ifdef UNI_OUTPUT
     && (d.param.igncut_uni == 0x0F || d.uniout[d.param.igncut_uni])
 #endif

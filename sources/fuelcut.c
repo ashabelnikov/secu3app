@@ -88,7 +88,7 @@ static void simple_fuel_cut(uint8_t apply)
   else
   {
    d.ie_valve = (s_timer_is_action(&epxx_delay_time_counter)&&
-                (((d.sens.inst_rpm > get_fc_lot())&&(!d.ie_valve))||(d.sens.inst_rpm > get_fc_hit())))?0:1;
+                (((d.sens.rpm > get_fc_lot())&&(!d.ie_valve))||(d.sens.rpm > get_fc_hit())))?0:1;
   }
  }
  else
@@ -131,7 +131,7 @@ void fuelcut_control(void)
  if (s_timer_is_action(&idlecutoff_crnk_delay))
  {
   //fuel cut off for fuel injection
-  if (d.sens.inst_rpm > get_fc_hit())
+  if (d.sens.rpm > get_fc_hit())
   {
    //When RPM > hi threshold, then check TPS, CTS and MAP
    if ((!d.sens.carb) && (d.sens.temperat > d.param.fuelcut_cts_thrd) && (d.sens.map < d.param.fuelcut_map_thrd)
@@ -157,7 +157,7 @@ void fuelcut_control(void)
     state = 0;
    }
   }
-  else if (d.sens.inst_rpm < get_fc_lot() || d.sens.carb)
+  else if (d.sens.rpm < get_fc_lot() || d.sens.carb)
   { //always turn on fuel when RPM < low threshold or throttle is opened
    d.ie_valve = 1;
    state = 0;
@@ -178,11 +178,11 @@ void fuelcut_control(void)
 revlim:
 #endif
  //simple Rev. limitter
- if (d.sens.inst_rpm > d.param.revlim_hit)
+ if (d.sens.rpm > d.param.revlim_hit)
  {
   d.fc_revlim = 1; //cut fuel
  }
- else if (d.sens.inst_rpm < d.param.revlim_lot)
+ else if (d.sens.rpm < d.param.revlim_lot)
  {
   d.fc_revlim = 0; //restore fuel
  }
@@ -215,11 +215,11 @@ void fuelcut_control(void)
 
 #ifdef GD_CONTROL
   //simple Rev. limitter used only for gas doser
-  if (d.sens.inst_rpm > d.param.revlim_hit)
+  if (d.sens.rpm > d.param.revlim_hit)
   {
    d.fc_revlim = 1; //cut fuel
   }
-  else if (d.sens.inst_rpm < d.param.revlim_lot)
+  else if (d.sens.rpm < d.param.revlim_lot)
   {
    d.fc_revlim = 0; //restore fuel
   }

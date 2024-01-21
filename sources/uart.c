@@ -514,21 +514,9 @@ void uart_send_packet(uint8_t send_mode)
     break;
 
   case SENSOR_DAT:
-#ifdef SEND_INST_VAL
-   build_i16h(d.sens.inst_rpm);          // instant RPM
-#else
-   build_i16h(d.sens.aver_rpm);          // averaged RPM
-#endif
-#ifdef SEND_INST_VAL
-   build_i16h(d.sens.inst_map);          // instant MAP pressure
-#else
+   build_i16h(d.sens.rpm);               // averaged RPM
    build_i16h(d.sens.map);               // averaged MAP pressure
-#endif
-#ifdef SEND_INST_VAL
-   build_i16h(d.sens.inst_voltage);      // instant voltage value
-#else
    build_i16h(d.sens.voltage);           // voltage (avaraged)
-#endif
    build_i16h(d.sens.temperat);          // coolant temperature
    build_i16h(d.corr.curr_angle);        // advance angle
    build_i16h(d.sens.knock_k);           // knock value
@@ -566,21 +554,13 @@ void uart_send_packet(uint8_t send_mode)
 #endif
              );
 
-#ifdef SEND_INST_VAL
-   build_i8h(d.sens.inst_tps);           // instant TPS (0...100%, x2)
-#else
    build_i8h(d.sens.tps);                // TPS (0...100%, x2)
-#endif
 
    {
    uint8_t ai1sub = PGM_GET_BYTE(&fw_data.exdata.add_i1_sub);
    if (1==ai1sub)
    {
-#ifdef SEND_INST_VAL
-    build_i16h(d.sens.inst_add_i1);       // instant ADD_I1 voltage
-#else
     build_i16h(d.sens.add_i1);            // averaged ADD_I1 voltage
-#endif
    }
    else if (2==ai1sub)
    {

@@ -62,7 +62,7 @@ ltft_t ltft[2] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
  */
 void aas_ltft_control(uint8_t i)
 {
- if (d.sens.aver_rpm < PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[0]) || d.sens.aver_rpm > PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[1]))
+ if (d.sens.rpm < PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[0]) || d.sens.rpm > PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[1]))
   return;
  if (d.load < PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[0]) || d.load > PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[1]))
   return;

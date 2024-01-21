@@ -38,10 +38,7 @@
 
 uint8_t knklogic_detect(retard_state_t* p_rs)
 {
- if (d.sens.aver_rpm > d.param.starter_off && d.sens.temperat > d.param.knkclt_thrd
-#ifdef _PLATFORM_M1284_
-&& knock_zone_val()
-#endif
+ if (d.sens.rpm > d.param.starter_off && d.sens.temperat > d.param.knkclt_thrd && knock_zone_val()
     )
  {
   if (0==p_rs->sd_counter)

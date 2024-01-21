@@ -135,11 +135,11 @@ static int16_t calc_synthetic_load(void)
 /**Calculates synthetic load value basing on MAF and RPM (scaling factor*MAF/RPM)*/
 static uint16_t calc_maf_load(void)
 {
- if (d.sens.inst_rpm > 10)
+ if (d.sens.rpm > 10)
 #if defined(FUEL_INJECT)
-  return (((uint32_t)d.param.mafload_const/inj_airtemp_corr(0)) * d.sens.maf) / d.sens.inst_rpm;
+  return (((uint32_t)d.param.mafload_const/inj_airtemp_corr(0)) * d.sens.maf) / d.sens.rpm;
 #else
-  return (((uint32_t)d.param.mafload_const/128) * d.sens.maf) / d.sens.inst_rpm; ///don't use air density correction
+  return (((uint32_t)d.param.mafload_const/128) * d.sens.maf) / d.sens.rpm; ///don't use air density correction
 #endif
  else
   return 0;
@@ -161,7 +161,7 @@ int16_t get_load_upper(void)
  */
 static uint16_t calc_airflow(void)
 {
- uint32_t x_raw = ((int32_t)d.sens.inst_rpm * d.load) >> (6+5); //value / 32
+ uint32_t x_raw = ((int32_t)d.sens.rpm * d.load) >> (6+5); //value / 32
  x_raw = (x_raw * fcs.vecurr) >> 11; //apply VE
  return (x_raw > 65535) ? 65535 : x_raw;
 }
@@ -174,7 +174,7 @@ static uint16_t calc_airflow(void)
 void calc_lookup_args(void)
 {
  //-----------------------------------------
- fcs.la_rpm = d.sens.inst_rpm;
+ fcs.la_rpm = d.sens.rpm;
 
  //find interpolation points, then restrict RPM if it fall outside set range
  for(fcs.la_f = F_WRK_POINTS_F-2; fcs.la_f >= 0; fcs.la_f--)
@@ -288,7 +288,7 @@ int16_t idling_function(void)
 // Return value of advance angle in the integer format * 32 (2 * 16 = 32)
 int16_t start_function(void)
 {
- int16_t i, i1, rpm = d.sens.inst_rpm;
+ int16_t i, i1, rpm = d.sens.rpm;
 
  if (rpm < 200) rpm = 200; //200 - minimal value on the RPM axis
 
@@ -392,7 +392,7 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
 #endif
 
  //regulator will be turned on with delay
- if (d.sens.aver_rpm < (idling_rpm + PGM_GET_WORD(&fw_data.exdata.idlreg_captrange)))
+ if (d.sens.rpm < (idling_rpm + PGM_GET_WORD(&fw_data.exdata.idlreg_captrange)))
  {
   switch(idl_prstate.enter_state)
   {
@@ -415,7 +415,7 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
 
  //calculate value of error, restrict error value (if necessary), also,
  //if we are in the dead band now, then use early calculated correction
- error = idling_rpm - d.sens.aver_rpm;
+ error = idling_rpm - d.sens.rpm;
  restrict_value_to(&error, -200, 200);
  if (abs(error) <= d.param.MINEFR)
   return idl_prstate.output_state >> IRUSDIV;
@@ -475,7 +475,7 @@ int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_stat
 //(see HIP9011/TPIC8101 datasheet).
 uint8_t knock_attenuator_function()
 {
- int16_t i, i1, rpm = d.sens.inst_rpm;
+ int16_t i, i1, rpm = d.sens.rpm;
 
  if (rpm < 200) rpm = 200; //200 - minimum RPM value at the horizontal axis
 
@@ -573,7 +573,7 @@ int16_t choke_rpm_regulator(int16_t* p_prev_corr)
  //calculate target RPM value for regulator
  rpm = inj_idling_rpm();
 
- error = rpm - d.sens.aver_rpm;
+ error = rpm - d.sens.rpm;
  if (abs(error) <= 50)   //dead band is +/-50 RPM
   return *p_prev_corr;
 
@@ -765,9 +765,9 @@ uint16_t inj_base_pw(void)
  else if (d.param.load_src_cfg == 4) //MAF
  {
   if (d.sens.maf > (300*64))
-   pw32 = ((((uint32_t)(d.sens.maf >> 1)) * d.param.inj_maf_const[d.sens.gas]) / d.sens.inst_rpm) << 1;
+   pw32 = ((((uint32_t)(d.sens.maf >> 1)) * d.param.inj_maf_const[d.sens.gas]) / d.sens.rpm) << 1;
   else
-   pw32 = ((((uint32_t)d.sens.maf) * d.param.inj_maf_const[d.sens.gas]) / d.sens.inst_rpm);
+   pw32 = ((((uint32_t)d.sens.maf) * d.param.inj_maf_const[d.sens.gas]) / d.sens.rpm);
   nsht = 4; //no shift
  }
  else //Speed-density or mixed (Speed-density + Alpha-N)
@@ -915,10 +915,10 @@ int16_t inj_ae_map_lookup(int16_t mapdot)
 uint8_t inj_ae_rpm_lookup(void)
 {
  int8_t i;
- int16_t rpm = d.sens.inst_rpm; //min-1
+ int16_t rpm = d.sens.rpm; //min-1
 
  for(i = INJ_AE_RPM_LOOKUP_TABLE_SIZE-2; i >= 0; i--)
-  if (d.sens.inst_rpm >= _GBU(inj_ae_rpm_bins[i])*100) break;
+  if (d.sens.rpm >= _GBU(inj_ae_rpm_bins[i])*100) break;
 
  if (i < 0)  {i = 0; rpm = _GBU(inj_ae_rpm_bins[0])*100;}
  if (rpm > _GBU(inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE-1])*100) rpm = _GBU(inj_ae_rpm_bins[INJ_AE_RPM_LOOKUP_TABLE_SIZE-1])*100;
@@ -971,7 +971,7 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
  int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)32 * k_load) / (get_load_upper() - d.param.load_lower)) >> 0;
- int16_t drpm = (((int32_t)abs(((int16_t)d.sens.inst_rpm) - targ_rpm) * (int16_t)32 * k_rpm) / (ram_extabs.rpm_grid_points[RPM_GRID_SIZE-1] - ram_extabs.rpm_grid_points[0])) >> 0;
+ int16_t drpm = (((int32_t)abs(((int16_t)d.sens.rpm) - targ_rpm) * (int16_t)32 * k_rpm) / (ram_extabs.rpm_grid_points[RPM_GRID_SIZE-1] - ram_extabs.rpm_grid_points[0])) >> 0;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)
  int16_t i, i1, R = ui32_sqrt(((int32_t)dload * dload) + ((int32_t)drpm * drpm));
@@ -1527,7 +1527,7 @@ uint16_t smapaban_thrd_rpm(void)
  */
 uint8_t knock_zone_val(void)
 {
- uint16_t rpm = d.sens.inst_rpm;
+ uint16_t rpm = d.sens.rpm;
  int16_t tps = d.sens.tps * 16;
  int8_t f, t;
 
@@ -1837,7 +1837,7 @@ uint16_t ftlscor_ucoef(void)
  */
 uint8_t lambda_zone_val(void)
 {
- uint16_t rpm = d.sens.inst_rpm;
+ uint16_t rpm = d.sens.rpm;
  int8_t f;
 
  //find interpolation points, then restrict RPM if it fall outside set range

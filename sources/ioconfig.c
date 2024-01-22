@@ -1138,6 +1138,32 @@ void iocfg_s_ksp_csi(uint8_t value)     //!< set  KSP_CS           (inverted)
  WRITEBIT(PORTB, PB4, !value);
 }
 //-----------------------------------------------------------------------------
+void iocfg_i_gpa6_o(uint8_t value)      //!< init GPA6_O
+{
+ WRITEBIT(spi_PORTA, 6, value);
+ CLEARBIT(spi_IODIRA, 6);
+}
+
+void iocfg_i_gpa6_oi(uint8_t value)     //!< init GPA6_O           (inverted)
+{
+ WRITEBIT(spi_PORTA, 6, !value);
+ CLEARBIT(spi_IODIRA, 6);
+}
+
+void iocfg_s_gpa6_o(uint8_t value)      //!< set  GPA6_O
+{
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
+ WRITEBIT(spi_PORTA, 6, value);
+ _END_ATOMIC_BLOCK();
+}
+
+void iocfg_s_gpa6_oi(uint8_t value)     //!< set  GPA6_O           (inverted)
+{
+ _BEGIN_ATOMIC_BLOCK(); //TODO: In the ATmega1284 we can use I/O register, which is atomic and this line becomes unneeded
+ WRITEBIT(spi_PORTA, 6, !value);
+ _END_ATOMIC_BLOCK();
+}
+//-----------------------------------------------------------------------------
 
 //Inputs
 void iocfg_i_ps(uint8_t value)          //!< init PS input
@@ -1383,47 +1409,47 @@ uint8_t iocfg_g_epas_ii(void)           //!< get EPAS_I input value  (inverted)
 }
 //-----------------------------------------------------------------------------
 
-void iocfg_i_oilp_i(uint8_t value)      //!< init OILP_I input
+void iocfg_i_gpa4_i(uint8_t value)      //!< init GPA4_I input
 {
  WRITEBIT(spi_GPPUA, 4, value);         //controlls pullup resistor
  SETBIT(spi_IODIRA, 4);                 //input
 }
 
-void iocfg_i_oilp_ii(uint8_t value)     //!< init OILP_I input       (inverted)
+void iocfg_i_gpa4_ii(uint8_t value)     //!< init GPA4_I input       (inverted)
 {
  WRITEBIT(spi_GPPUA, 4, value);         //controlls pullup resistor
  SETBIT(spi_IODIRA, 4);                 //input
 }
 
-uint8_t iocfg_g_oilp_i(void)            //!< get OILP_I input value
+uint8_t iocfg_g_gpa4_i(void)            //!< get GPA4_I input value
 {
  return !!CHECKBIT(spi_PORTA, 4);
 }
 
-uint8_t iocfg_g_oilp_ii(void)           //!< get OILP_I input value  (inverted)
+uint8_t iocfg_g_gpa4_ii(void)           //!< get GPA4_I input value  (inverted)
 {
  return !CHECKBIT(spi_PORTA, 4);
 }
 //-----------------------------------------------------------------------------
 
-void iocfg_i_gens_i(uint8_t value)      //!< init GENS_I input
+void iocfg_i_gpa5_i(uint8_t value)      //!< init GPA5_I input
 {
  WRITEBIT(spi_GPPUA, 5, value);         //controlls pullup resistor
  SETBIT(spi_IODIRA, 5);                 //input
 }
 
-void iocfg_i_gens_ii(uint8_t value)     //!< init GENS_I input       (inverted)
+void iocfg_i_gpa5_ii(uint8_t value)     //!< init GPA5_I input       (inverted)
 {
  WRITEBIT(spi_GPPUA, 5, value);         //controlls pullup resistor
  SETBIT(spi_IODIRA, 5);                 //input
 }
 
-uint8_t iocfg_g_gens_i(void)            //!< get GENS_I input value
+uint8_t iocfg_g_gpa5_i(void)            //!< get GPA5_I input value
 {
  return !!CHECKBIT(spi_PORTA, 5);
 }
 
-uint8_t iocfg_g_gens_ii(void)           //!< get GENS_I input value  (inverted)
+uint8_t iocfg_g_gpa5_ii(void)           //!< get GPA5_I input value  (inverted)
 {
  return !CHECKBIT(spi_PORTA, 5);
 }

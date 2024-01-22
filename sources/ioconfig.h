@@ -348,10 +348,10 @@ uint8_t iocfg_g_add_i4i(void);           //!< set  ADD_I4 input       (inverted)
 #define IOP_ADD_I7       36     //!< ADD_I7          (input)    spiadc
 #define IOP_ADD_I8       37     //!< ADD_I8          (input)    spiadc
 #define IOP_MAP_S        38     //!< MAP_S           (input)
-#define IOP_OILP_I       39     //!< OILP_I          (input)    spi
-#define IOP_GENS_I       40     //!< GENS_I          (input)    spi
+#define IOP_GPA4_I       39     //!< GPA4_I          (input)    spi
+#define IOP_GPA5_I       40     //!< GPA5_I          (input)    spi
+#define IOP_GPA6_O       41     //!< GPA6_O          (output)   spi
 //reserved slots
-#define IOP_RESERVED4    41     //!< reserved slot   ()
 #define IOP_RESERVED5    42     //!< reserved slot   ()
 #define IOP_RESERVED6    43     //!< reserved slot   ()
 #define IOP_RESERVED7    44     //!< reserved slot   ()
@@ -531,6 +531,11 @@ void iocfg_i_ksp_csi(uint8_t value);     //!< init KSP_CS           (inverted)
 void iocfg_s_ksp_cs(uint8_t value);      //!< set  KSP_CS
 void iocfg_s_ksp_csi(uint8_t value);     //!< set  KSP_CS           (inverted)
 
+void iocfg_i_gpa6_o(uint8_t value);      //!< init GPA6_O
+void iocfg_i_gpa6_oi(uint8_t value);     //!< init GPA6_O           (inverted)
+void iocfg_s_gpa6_o(uint8_t value);      //!< set  GPA6_O
+void iocfg_s_gpa6_oi(uint8_t value);     //!< set  GPA6_O           (inverted)
+
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input
 void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
@@ -587,16 +592,16 @@ void iocfg_i_epas_ii(uint8_t value);     //!< init EPAS_I input       (inverted)
 uint8_t iocfg_g_epas_i(void);            //!< get EPAS_I input value
 uint8_t iocfg_g_epas_ii(void);           //!< get EPAS_I input value  (inverted)
 
-//OILP_I
-void iocfg_i_oilp_i(uint8_t value);      //!< init OILP_I input
-void iocfg_i_oilp_ii(uint8_t value);     //!< init OILP_I input        (inverted)
-uint8_t iocfg_g_oilp_i(void);            //!< get OILP_I input value
-uint8_t iocfg_g_oilp_ii(void);           //!< get OILP_I input value   (inverted)
-//GENS_I
-void iocfg_i_gens_i(uint8_t value);      //!< init GENS_I input
-void iocfg_i_gens_ii(uint8_t value);     //!< init GENS_I input        (inverted)
-uint8_t iocfg_g_gens_i(void);            //!< get GENS_I input value
-uint8_t iocfg_g_gens_ii(void);           //!< get GENS_I input value   (inverted)
+//GPA4_I
+void iocfg_i_gpa4_i(uint8_t value);      //!< init GPA4_I input
+void iocfg_i_gpa4_ii(uint8_t value);     //!< init GPA4_I input        (inverted)
+uint8_t iocfg_g_gpa4_i(void);            //!< get GPA4_I input value
+uint8_t iocfg_g_gpa4_ii(void);           //!< get GPA4_I input value   (inverted)
+//GPA5_I
+void iocfg_i_gpa5_i(uint8_t value);      //!< init GPA5_I input
+void iocfg_i_gpa5_ii(uint8_t value);     //!< init GPA5_I input        (inverted)
+uint8_t iocfg_g_gpa5_i(void);            //!< get GPA5_I input value
+uint8_t iocfg_g_gpa5_ii(void);           //!< get GPA5_I input value   (inverted)
 //ADD_I5
 void iocfg_i_add_i5(uint8_t value);      //!< init ADD_I5 input
 void iocfg_i_add_i5i(uint8_t value);     //!< init ADD_I5 input       (inverted)

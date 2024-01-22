@@ -251,7 +251,7 @@ void check(ce_sett_t *cesd)
 #endif
 
 #ifndef SECU3T //SECU-3i
- //perform checking only if IOP_I input is mapped to real input and if set number of strokes elapsed since last engine start
+ //perform checking only if OPS_I input is mapped to real input and if set number of strokes elapsed since last engine start
  if (IOCFG_CHECK(IOP_OPS_I) && s_timer_sss() > cesd->oilpress_timer)
  {
   if (d.sens.ops < cesd->oilpress_thrd)
@@ -264,11 +264,22 @@ void check(ce_sett_t *cesd)
 #endif
 
 #ifdef FUEL_INJECT
- //perform checking only if IOP_I input is mapped to real input and if set number of strokes elapsed since last engine start
  if (d.sens.inj_duty > 199)
   ce_set_error(ECUERROR_INJDUTY_LIMIT);
  else
   ce_clear_error(ECUERROR_INJDUTY_LIMIT);
+#endif
+
+#ifndef SECU3T //SECU-3i
+ if (IOCFG_CHECK(IOP_GPA5_I))
+ {
+  if (IOCFG_GET(IOP_GPA5_I))
+   ce_clear_error(ECUERROR_STEPPERIC_FAULT); //ok
+  else
+   ce_set_error(ECUERROR_STEPPERIC_FAULT);
+ }
+ else
+  ce_clear_error(ECUERROR_STEPPERIC_FAULT);
 #endif
 }
 

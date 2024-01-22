@@ -317,7 +317,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), _FNC(iocfg_i_add_i3), _FNC(iocfg_i_gas_v),
     _FNC(iocfg_i_ign), _FNC(iocfg_i_cond_i), _FNC(iocfg_i_epas_i),_FNC(iocfg_i_add_i4),
     _FNC(iocfg_i_tach_o),_FNC(iocfg_i_ksp_cs),_FNC(iocfg_i_add_i5),_FNC(iocfg_i_add_i6),
-    _FNC(iocfg_i_add_i7), _FNC(iocfg_i_add_i8),_FNC(iocfg_i_map_s),_FNC(iocfg_i_oilp_i), _FNC(iocfg_i_gens_i),0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_add_i7), _FNC(iocfg_i_add_i8),_FNC(iocfg_i_map_s),_FNC(iocfg_i_gpa4_i),
+    _FNC(iocfg_i_gpa5_i),_FNC(iocfg_i_gpa6_o),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (initialization)
    {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
     _FNC(iocfg_i_ign_out5i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_inj_out1i), _FNC(iocfg_i_inj_out2i),
@@ -328,7 +329,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i1i), _FNC(iocfg_i_add_i2i), _FNC(iocfg_i_add_i3i), _FNC(iocfg_i_gas_vi),
     _FNC(iocfg_i_igni), _FNC(iocfg_i_cond_ii), _FNC(iocfg_i_epas_ii),_FNC(iocfg_i_add_i4i),
     _FNC(iocfg_i_tach_oi), _FNC(iocfg_i_ksp_csi), _FNC(iocfg_i_add_i5i), _FNC(iocfg_i_add_i6i),
-    _FNC(iocfg_i_add_i7i), _FNC(iocfg_i_add_i8i),_FNC(iocfg_i_map_si),_FNC(iocfg_i_oilp_ii), _FNC(iocfg_i_gens_ii),0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_add_i7i), _FNC(iocfg_i_add_i8i),_FNC(iocfg_i_map_si),_FNC(iocfg_i_gpa4_ii),
+    _FNC(iocfg_i_gpa5_ii),_FNC(iocfg_i_gpa6_oi),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
     _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf), _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
@@ -339,7 +341,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), _FNC(iocfg_g_add_i3), _FNC(iocfg_g_gas_v),
     _FNC(iocfg_g_ign), _FNC(iocfg_g_cond_i), _FNC(iocfg_g_epas_i), _FNC(iocfg_g_add_i4),
     _FNC(iocfg_s_tach_o), _FNC(iocfg_s_ksp_cs),_FNC(iocfg_g_add_i5), _FNC(iocfg_g_add_i6),
-    _FNC(iocfg_g_add_i7), _FNC(iocfg_g_add_i8),_FNC(iocfg_g_map_s),_FNC(iocfg_g_oilp_i), _FNC(iocfg_g_gens_i),0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_add_i7), _FNC(iocfg_g_add_i8),_FNC(iocfg_g_map_s),_FNC(iocfg_g_gpa4_i), _FNC(iocfg_g_gpa5_i),_FNC(iocfg_s_gpa6_o),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
     _FNC(iocfg_s_ign_out5i), _FNC(iocfg_s_ecfi), _FNC(iocfg_i_inj_out1i), _FNC(iocfg_s_inj_out2i),
@@ -350,7 +352,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i1i), _FNC(iocfg_g_add_i2i), _FNC(iocfg_g_add_i3i), _FNC(iocfg_g_gas_vi),
     _FNC(iocfg_g_igni), _FNC(iocfg_g_cond_ii), _FNC(iocfg_g_epas_ii),_FNC(iocfg_g_add_i4i),
     _FNC(iocfg_s_tach_oi), _FNC(iocfg_s_ksp_csi), _FNC(iocfg_g_add_i5i), _FNC(iocfg_g_add_i6i),
-    _FNC(iocfg_g_add_i7i), _FNC(iocfg_g_add_i8i),_FNC(iocfg_g_map_si),_FNC(iocfg_g_oilp_ii), _FNC(iocfg_g_gens_ii),0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_add_i7i), _FNC(iocfg_g_add_i8i),_FNC(iocfg_g_map_si),_FNC(iocfg_g_gpa4_ii), _FNC(iocfg_g_gpa5_ii),_FNC(iocfg_s_gpa6_oi),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },
    //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
@@ -362,7 +364,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), _FNC(iocfg_i_add_i3), _FNC(iocfg_i_gas_v),
     _FNC(iocfg_i_ign), _FNC(iocfg_i_cond_i), _FNC(iocfg_i_epas_i), _FNC(iocfg_i_add_i4),
     _FNC(iocfg_i_tach_o),_FNC(iocfg_i_ksp_cs), _FNC(iocfg_i_add_i5),  _FNC(iocfg_i_add_i6),
-    _FNC(iocfg_i_add_i7), _FNC(iocfg_i_add_i8),_FNC(iocfg_i_map_s),_FNC(iocfg_i_oilp_i), _FNC(iocfg_i_gens_i),0,0,0,0,0,0,0,0, //<-- mapped to slots by default
+    _FNC(iocfg_i_add_i7), _FNC(iocfg_i_add_i8),_FNC(iocfg_i_map_s),_FNC(iocfg_i_gpa4_i), _FNC(iocfg_i_gpa5_i), _FNC(iocfg_i_gpa6_o),0,0,0,0,0,0,0, //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_i_bl),
     _FNC(iocfg_i_de), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -386,7 +388,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), _FNC(iocfg_g_add_i3), _FNC(iocfg_g_gas_v),
     _FNC(iocfg_g_ign), _FNC(iocfg_g_cond_i), _FNC(iocfg_g_epas_i),_FNC(iocfg_g_add_i4),
     _FNC(iocfg_s_tach_o), _FNC(iocfg_s_ksp_cs), _FNC(iocfg_g_add_i5),  _FNC(iocfg_g_add_i6),
-    _FNC(iocfg_g_add_i7),_FNC(iocfg_g_add_i8),_FNC(iocfg_g_map_s), _FNC(iocfg_g_oilp_i), _FNC(iocfg_g_gens_i),0,0,0,0,0,0,0,0, //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_g_add_i7),_FNC(iocfg_g_add_i8),_FNC(iocfg_g_map_s), _FNC(iocfg_g_gpa4_i), _FNC(iocfg_g_gpa5_i), _FNC(iocfg_s_gpa6_o),0,0,0,0,0,0,0, //<-- zero means that these slots are not implemented in this firmware
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_bl),
     _FNC(iocfg_s_de),   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -405,8 +407,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 3.9
-   IOREMVER(3,9),
+   //Version of this structure - 4.0
+   IOREMVER(4,0),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),

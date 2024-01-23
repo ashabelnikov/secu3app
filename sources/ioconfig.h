@@ -349,8 +349,8 @@ uint8_t iocfg_g_add_i4i(void);           //!< set  ADD_I4 input       (inverted)
 #define IOP_ADD_I8       37     //!< ADD_I8          (input)    spiadc
 #define IOP_MAP_S        38     //!< MAP_S           (input)
 #define IOP_GPA4_I       39     //!< GPA4_I          (input)    spi
-#define IOP_GPA5_I       40     //!< GPA5_I          (input)    spi
-#define IOP_GPA6_O       41     //!< GPA6_O          (output)   spi
+#define IOP_GPA6_O       40     //!< GPA6_O          (output)   spi
+#define IOP_GPA5_I       41     //!< GPA5_I          (input)    spi   hidden
 //reserved slots
 #define IOP_RESERVED5    42     //!< reserved slot   ()
 #define IOP_RESERVED6    43     //!< reserved slot   ()

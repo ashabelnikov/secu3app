@@ -417,15 +417,8 @@ void inject_set_config(uint8_t cfg, uint8_t irs)
 
 void inject_start_inj(uint8_t chan)
 {
- if (!inj.fuelcut)
-  return; //fuel is OFF
-
- if (inj.prime_pulse)                        //discard priming pulse if pending
- {
-  CLEARBIT(TIMSK2, OCIE2B);                  //disable interrupt
-  inj.prime_pulse = 0;
-  SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
- }
+ if (!inj.fuelcut || inj.prime_pulse)
+  return; //fuel is OFF or prime pulse is active
 
  if (CHECKBIT(inj.squirt_mask, chan))
  {
@@ -494,7 +487,7 @@ void inject_start_inj(uint8_t chan)
 
 void inject_open_inj(uint16_t time, uint8_t times)
 {
-  if (0==time || !inj.fuelcut) return;
+  if (0==time || 0==times || !inj.fuelcut) return;
   time = (time >> 1) - INJ_COMPB_CALIB;
   if (0==_AB(time, 0))
    (_AB(time, 0))++;
@@ -527,10 +520,17 @@ ISR(TIMER2_COMPB_vect)
    }
    else
    { //continue prime pulse
-    OCR2B = TCNT2 + _AB(inj.prime_time, 0);
-    SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
-    inj.tmr2b_h = _AB(inj.prime_time, 1);
-    --inj.prime_pulse;
+    if (--inj.prime_pulse)
+    {
+     OCR2B = TCNT2 + _AB(inj.prime_time, 0);
+     SETBIT(TIFR2, OCF2B);                      //reset possible pending interrupt flag
+     inj.tmr2b_h = _AB(inj.prime_time, 1);
+    }
+    else
+    {
+     SET_ALL_INJ(INJ_OFF);                      //turn off injector 1-8
+     CLEARBIT(TIMSK2, OCIE2B);                  //disable this interrupt
+    }
    }
   }
   else
@@ -578,7 +578,7 @@ ISR(TIMER0_COMPB_vect)
  }
  else
  {
-  if (inj.cfg < INJCFG_2BANK_ALTERN || inj.prime_pulse)
+  if (inj.cfg < INJCFG_2BANK_ALTERN)
   { //central/simultaneous
   }
   else

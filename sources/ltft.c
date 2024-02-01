@@ -130,8 +130,8 @@ void aas_ltft_control(uint8_t i)
    {
     if (ltft[i].ltft_idx_r != idx_r || ltft[i].ltft_idx_l != idx_l) //skip already corrected (current) cell
     {
-     int8_t dist_l = abs(ltft[i].ltft_idx_l - idx_l);
-     int8_t dist_r = abs(ltft[i].ltft_idx_r - idx_r);
+     int8_t dist_l = abs8((int8_t)ltft[i].ltft_idx_l - idx_l);
+     int8_t dist_r = abs8((int8_t)ltft[i].ltft_idx_r - idx_r);
      int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
      int16_t new_val = ((int16_t)(i ? d.inj_ltft2[idx_l][idx_r] : d.inj_ltft1[idx_l][idx_r])) + (((((int32_t)ltft[i].ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
      restrict_value_to(&new_val, (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_min), (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_max));

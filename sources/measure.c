@@ -87,8 +87,8 @@ void meas_init_ports(void)
 {
  IOCFG_INIT(IOP_GAS_V, 0);    //don't use internal pullup resistor
  IOCFG_INIT(IOP_COND_I, 0);   //don't use internal pullup resistor
-#ifndef SECU3T //SECU-3i
  IOCFG_INIT(IOP_IGN, 0);      //don't use internal pullup resistor
+#ifndef SECU3T //SECU-3i
  IOCFG_INIT(IOP_EPAS_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA4_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA5_I, 1);   //use internal pullup resistor
@@ -124,7 +124,7 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
  update_buffer(&meas[AI3_INPIDX], adc_get_add_i3_value());
 #endif
 
-#if !defined(SECU3T) && defined(TPIC8101)
+#if defined(TPIC8101)
  update_buffer(&meas[AI4_INPIDX], adc_get_knock_value());
 #endif
 
@@ -584,11 +584,10 @@ void meas_take_discrete_inputs(void)
 #ifndef SECU3T //SECU-3i
  d.sens.oilpress_ok = !ce_is_error(ECUERROR_OILPRESSURE); //oil pressure sensor
  d.sens.generator_ok = IOCFG_GET(IOP_GPA4_I); //generator status
-
- d.sens.ign_i = IOCFG_GET(IOP_IGN);
  d.sens.epas_i = IOCFG_GET(IOP_EPAS_I);
 #endif
 
+ d.sens.ign_i = IOCFG_GET(IOP_IGN);
  d.sens.cond_i = IOCFG_GET(IOP_COND_I);
  d.sens.input1 = IOCFG_GET(IOP_INPUT1);
  d.sens.input2 = IOCFG_GET(IOP_INPUT2);

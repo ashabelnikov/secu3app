@@ -540,8 +540,8 @@ void uart_send_packet(uint8_t send_mode)
 #endif
              | _CBV16(d.floodclear, 9)   // flood clear mode flag
              | _CBV16(d.sys_locked, 10)  // system locked flag (immobilizer)
+             | _CBV16(d.sens.ign_i, 11)  // IGN_I flag (available also in the SECU3T)
 #ifndef SECU3T
-             | _CBV16(d.sens.ign_i, 11)  // IGN_I flag
              | _CBV16(d.sens.epas_i, 13) // EPAS_I flag
 #endif
              | _CBV16(d.sens.cond_i, 12) // COND_I flag (available also in the SECU3T)

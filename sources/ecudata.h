@@ -75,7 +75,7 @@ typedef struct diagnost_inp_t
  uint16_t add_i8;                        //!< additional input 8 (analog)
 #endif
  uint16_t carb;                          //!< carburetor switch, throttle position sensor (analog)
- uint16_t bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp (plus IGN_I, COND_I, EPAS_I for SECU-3i)
+ uint16_t bits;                          //!< bits describing states of: gas valve, CKP sensor, VR type cam sensor, Hall-effect cam sensor, BL jmp, DE jmp, IGN_I, COND_I (plus EPAS_I for SECU-3i)
  uint16_t ks_1;                          //!< knock sensor 1
  uint16_t ks_2;                          //!< knock sensor 2
 }diagnost_inp_t;
@@ -129,10 +129,9 @@ typedef struct sensors_t
 #ifndef SECU3T //SECU-3i
  uint8_t oilpress_ok;                    //!< Flag.1 - oil pressure is OK, 0 - failure
  uint8_t generator_ok;                   //!< Flag.1 - dynamo generator is OK, 0 - failure
-
- uint8_t ign_i;
  uint8_t epas_i;
 #endif
+ uint8_t ign_i;
  uint8_t cond_i;
 
  //raw values of sensors (ADC discretes with compensated errors)

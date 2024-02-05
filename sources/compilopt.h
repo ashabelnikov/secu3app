@@ -212,7 +212,7 @@
 #endif
 
 #if defined(REV9_BOARD) && !defined(SECU3T)
- #error "REV9_BOARD option doesn't take any sense for SECU-3i! Remove it if you build for SECU-3i."
+ #error "REV9_BOARD option doesn't make any sense for SECU-3i! Remove it if you build for SECU-3i."
 #endif
 
 /**Build firmware for TPIC8101 */

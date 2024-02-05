@@ -446,7 +446,7 @@ void diagnost_process(void)
     break;
 
    //wait for completion of measurements, and reinitialize state machine
-   //for TPIC8101 we wait for latching of settings
+   //for TPIC8101 we wait for settings latching
    //for HIP9011 we wait for ADC measurement
    case 3:
 #ifdef TPIC8101

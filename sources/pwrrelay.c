@@ -59,9 +59,7 @@ s_timer16_t powerdown_timeout_counter = {0,0,1}; //already fired!
 void pwrrelay_init_ports(void)
 {
  IOCFG_INIT(IOP_PWRRELAY, 1); //power relay is turned on
-#ifdef SECU3T  //see also initialization in measure.c
- IOCFG_INIT(IOP_IGN, 1);      //init IGN input
-#endif
+ IOCFG_INIT(IOP_IGN, 0);      //init IGN input, don't use internal pullup resistor
 }
 
 /** Check for engine temperature is ready (Ok).

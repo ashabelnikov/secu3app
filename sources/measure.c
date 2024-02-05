@@ -87,15 +87,14 @@ void meas_init_ports(void)
 {
  IOCFG_INIT(IOP_GAS_V, 0);    //don't use internal pullup resistor
  IOCFG_INIT(IOP_COND_I, 0);   //don't use internal pullup resistor
- IOCFG_INIT(IOP_IGN, 0);      //don't use internal pullup resistor
+ IOCFG_INIT(IOP_INPUT1, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_INPUT2, 0);   //don't use internal pullup resistor
 #ifndef SECU3T //SECU-3i
  IOCFG_INIT(IOP_EPAS_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA4_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA5_I, 1);   //use internal pullup resistor
  IOCFG_INIT(IOP_AUTO_I, 0);   //don't use internal pullup resistor
 #endif
- IOCFG_INIT(IOP_INPUT1, 0);   //don't use internal pullup resistor
- IOCFG_INIT(IOP_INPUT2, 0);   //don't use internal pullup resistor
  //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB, ADD_I3, ADD_I4) because they are initialised by default
  //and we don't need pullup resistors for them
 }

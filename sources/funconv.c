@@ -368,9 +368,10 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
 
  //If this idling regulator is turned off or RPM significally higher from normal idling RPM or engine is not heat up, then exit with zero value (zero correction)
  if (!CHECKBIT(d.param.idl_flags, IRF_USE_REGULATOR) || (d.sens.temperat < d.param.idlreg_turn_on_temp && CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE)
+/*
 #ifdef FUEL_INJECT
   && d.param.idling_rpm  //Don't use temperature turn on threshold if lookup table used
-#endif
+#endif*/
     ))
   return 0;
 

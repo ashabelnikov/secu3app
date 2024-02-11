@@ -463,7 +463,7 @@ int16_t calc_sm_position(uint8_t pwm)
     { //closed loop mode is active
      uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
 
-     if (abs(rpm - d.sens.rpm) > d.param.iac_reg_db)
+     if (abs(error) > d.param.iac_reg_db)
      {
       d.iac_in_deadband = 0;
       int16_t derror = error - chks.prev_rpm_error;

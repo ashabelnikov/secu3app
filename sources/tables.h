@@ -204,6 +204,7 @@
 #define IRF_PREG_MODE                   3           //!< Use P-regulator instead on I-regulator
 #define IRF_USE_CLONGAS                 4           //!< Use closed loop on gas
 #define IRF_USE_THRASSMAP               5           //!< Use throttle assist map instead of a simple constant
+#define IRF_WITH_IACREG                 6           //!< Don't turn off Ign.tim. regulator when IAC regulator works
 
 //CKPS flags
 #define CKPF_RISING_SPARK               0           //!< Generate rising edge of ignition pulse on spark

@@ -388,7 +388,7 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
 
 #ifdef FUEL_INJECT
  //When closed loop mode enabled for IAC, then ign.tim regulator will work only if IAC regulator is in dead band
- if (d.iac_closed_loop && !d.iac_in_deadband)
+ if (d.iac_closed_loop && !d.iac_in_deadband && !CHECKBIT(d.param.idl_flags, IRF_WITH_IACREG))
   return 0; //no correction from ign. tim regulator
 #endif
 

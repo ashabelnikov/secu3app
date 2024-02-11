@@ -475,22 +475,22 @@ int16_t calc_sm_position(uint8_t pwm)
       { //use special algorithm
        if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.rpm >= rpm))
        { //hot engine or RPM above or equal target idling RPM
-        int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p)));
+        int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i)));
         chks.iac_pos += SHTDIV16(add, 8+7-2);
         SETBIT(chks.flags, CF_HOT_ENG);
        }
        else
-       { //cold engine
+       { //cold engine, use only intergral part of requlator
         if ((error > 0) && (derror > 0)) //works only if errors are positive
         {
-         int32_t add = ((int32_t)rigidity * ((int32_t)derror * idl_reg_i));
+         int32_t add = ((int32_t)rigidity * ((int32_t)error * idl_reg_i));
          chks.iac_pos += SHTDIV16(add, 8+7-2);
         }
        }
       }
       else
       { //use regular alrorithm
-       int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_i) + ((int32_t)error * idl_reg_p)));
+       int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i)));
        chks.iac_pos += SHTDIV16(add, 8+7-2);
       }
      }

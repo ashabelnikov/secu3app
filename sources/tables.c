@@ -1039,7 +1039,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    _MAF(80.55), _MAF(85.74), _MAF(91.19), _MAF(96.87), _MAF(102.71),_MAF(108.69),_MAF(114.79),_MAF(121.01),
    _MAF(127.37),_MAF(133.87),_MAF(140.53),_MAF(147.39),_MAF(154.51),_MAF(161.95),_MAF(169.78),_MAF(177.90),
    _MAF(186.12),_MAF(194.20),_MAF(202.14),_MAF(210.56),_MAF(220.17),_MAF(231.68),_MAF(246.10),_MAF(261.22),
-   650, ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
+   ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE), 650
   },
 
   /**Fill FTLS correction's coefficient look up table*/

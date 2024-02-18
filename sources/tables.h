@@ -496,7 +496,7 @@ typedef struct fw_ex_tabs_t
   int16_t injpw_coef[INJPWCOEF_LUT_SIZE];
 
   /**MAF's flow curve lookup table. Value in g/sec  * 64. Last value - Y axis's range in g/sec */
-  uint16_t maf_curve[MAF_FLOW_CURVE_SIZE+1+2];
+  uint16_t maf_curve[MAF_FLOW_CURVE_SIZE+2+1];
 
   /**FTLS correction coefficient vs board voltage map, value * 4096*/
   uint16_t ftlscor_ucoef[FTLSCOR_UCOEF_SIZE];

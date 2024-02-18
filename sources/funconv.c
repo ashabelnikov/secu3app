@@ -1740,9 +1740,9 @@ uint16_t calc_maf_flow(uint16_t adcvalue)
  adcvalue*=32;
 
  //Voltage value at the start of axis in ADC discretes
- uint16_t v_start = ram_extabs.maf_curve[MAF_FLOW_CURVE_SIZE+1] * 32;
+ uint16_t v_start = ram_extabs.maf_curve[MAF_FLOW_CURVE_SIZE] * 32;
  //Voltage value at the end of axis in ADC discretes
- uint16_t v_end = ram_extabs.maf_curve[MAF_FLOW_CURVE_SIZE+2] * 32;
+ uint16_t v_end = ram_extabs.maf_curve[MAF_FLOW_CURVE_SIZE+1] * 32;
 
  uint16_t v_step = (v_end - v_start) / (MAF_FLOW_CURVE_SIZE - 1);
 

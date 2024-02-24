@@ -968,10 +968,17 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  //if targ_map == 0, then do not use load component
  uint16_t k_load = targ_map ?  PGM_GET_WORD(&fw_data.exdata.irr_k_load) : 0, k_rpm = PGM_GET_WORD(&fw_data.exdata.irr_k_rpm); //value * 32, max 48.0
 
+ //calculate range of the load axis depending on the selected mode
+ int16_t load_range;
+ if (CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID))
+  load_range = ram_extabs.load_grid_points[LOAD_GRID_SIZE-1] - ram_extabs.load_grid_points[0]; //grid
+ else
+  load_range = get_load_upper() - d.param.load_lower; //two values
+
  //normalize values (function argument components)
  //as a result dload and drpm values multiplied by 1024
  //NOTE: We rely that difference (upper_pressure - lower_pressure) is not less than 1/5 of maximum value of MAP (otherwise owerflow may occur)
- int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)32 * k_load) / (get_load_upper() - d.param.load_lower)) >> 0;
+ int16_t dload = (((int32_t)abs(((int16_t)d.load) - targ_map) * (int16_t)32 * k_load) / load_range) >> 0;
  int16_t drpm = (((int32_t)abs(((int16_t)d.sens.rpm) - targ_rpm) * (int16_t)32 * k_rpm) / (ram_extabs.rpm_grid_points[RPM_GRID_SIZE-1] - ram_extabs.rpm_grid_points[0])) >> 0;
 
  //calculate argument R = SQRT(dload^2 + drpm^2)

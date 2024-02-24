@@ -95,24 +95,14 @@ static int16_t manual_igntim(void)
 {
 #ifdef SECU3T
 #ifdef TPIC8101
- if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4i)
-  return pa4_function(d.sens.add_i4);
+ if (IOCFG_CHECK(IOP_IGNTIM))
+  return pa4_function(IOCFG_GETA(IOP_IGNTIM));
  else
-#endif
- {
   return 0; //not mapped to real I/O
- }
+#endif
 #else //SECU3i
- if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i3i)
-  return pa4_function(d.sens.add_i3);
-#ifdef TPIC8101
- else if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i4i)
-  return pa4_function(d.sens.add_i4);
-#endif
-#ifdef MCP3204
- else if (IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_IGNTIM) == (fnptr_t)iocfg_g_add_i5i)
-  return pa4_function(d.sens.add_i5);
-#endif
+ if (IOCFG_CHECK(IOP_IGNTIM))
+  return pa4_function(IOCFG_GETA(IOP_IGNTIM));
  else
   return 0; //not mapped to real I/O
 #endif
@@ -125,22 +115,8 @@ static int16_t manual_igntim(void)
  */
 static int16_t manual_injpw(void)
 {
- if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i3i)
-  return injpwcoef_function(d.sens.add_i3);
-#ifdef TPIC8101
- else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i4i)
-  return injpwcoef_function(d.sens.add_i4);
-#endif
-#ifdef MCP3204
- else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i5i)
-  return injpwcoef_function(d.sens.add_i5);
- else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i6i)
-  return injpwcoef_function(d.sens.add_i6);
- else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i7i)
-  return injpwcoef_function(d.sens.add_i7);
- else if (IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_INJPWC_I) == (fnptr_t)iocfg_g_add_i8i)
-  return injpwcoef_function(d.sens.add_i8);
-#endif
+ if (IOCFG_CHECK(IOP_INJPWC_I))
+  return injpwcoef_function(IOCFG_GETA(IOP_INJPWC_I));
  else
   return 4096; //not mapped to real I/O, return 1.000
 }

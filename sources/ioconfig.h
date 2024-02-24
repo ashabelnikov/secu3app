@@ -31,6 +31,19 @@
 
 /**Wrap macro from port/pgmspace.h. for getting function pointers from program memory */
 #define _IOREM_GPTR(ptr) PGM_GET_WORD(ptr)
+#define _IOREM_GBYT(val) PGM_GET_BYTE(val)
+
+/**Tests result return by IOCFG_GETA() for "digital only support"*/
+#define IOCFG_DTST(r) ((r) & 0x8000)
+
+/**Gets result of digital input from value returned by IOCFG_GETA()*/
+#define IOCFG_DGET(r) ((r) & 0x7FFF)
+
+/**Get ID and inversion flag of connected plug for specified slot ID*/
+#define IOCFG_GET_IOI(ios_id) (_IOREM_GBYT(&fw_data.cddata.iorem.io_info[ios_id]))
+
+/**Gets value of physical input*/
+uint16_t IOCFG_GETAS(uint8_t ios_id);
 
 /**Init specified I/O
  * io_id - ID of I/O to be initialized
@@ -56,11 +69,17 @@ void IOCFG_SETF(uint8_t io_id, uint8_t io_value);
 
 /**Get value of specified I/O. Applicable only for plugs which are inputs.
  * io_id - ID of I/O to be set to specified value
+ * doa - How to get state of the input: 0 - as digital, 1 - as analog, 2 - get error flag
+ * return value of the digital or analog input. If input doesn't support value given via 'doa' parameter, then high of result bit will set to 1
  */
 #ifdef IOCFG_FUNC_INIT
-uint8_t IOCFG_GET(uint8_t io_id);
+uint16_t IOCFG_GET(uint8_t io_id);
+uint16_t IOCFG_GETA(uint8_t io_id);
+uint16_t IOCFG_GETE(uint8_t io_id);
 #else
-#define IOCFG_GET(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))()
+#define IOCFG_GET(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(0)
+#define IOCFG_GETA(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(1)
+#define IOCFG_GETE(io_id) ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(2)
 #endif
 
 /**Checks specified I/O for availability. If specified I/O is not available it means that it is not
@@ -73,21 +92,42 @@ uint8_t IOCFG_CHECK(uint8_t io_id);
 #define IOCFG_CHECK(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.s_stub) != _IOREM_GPTR(&fw_data.cddata.iorem.i_plugs[io_id]))
 #endif
 
-/**Get specified I/O callback address
+/**Get specified I/O callback address (plug)
  * io_id - ID of I/O for which a callback address will be obtained
  * returns - corresponding callback address
  */
 #define IOCFG_CB(io_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))
 
+/**Checks if specified non-inverted physical I/O is mapped to specified virtual I/O
+ * ios_id ID of the physical I/O
+ * iop_id ID of the virtual I/O
+ */
+#define IOCFG_CMPN(ios_id, iop_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_slots[ios_id])) == (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[iop_id]))
+
+/**Checks if specified inverted physical I/O is mapped to specified virtual I/O
+ * ios_id ID of the physical I/O
+ * iop_id ID of the virtual I/O
+ */
+#define IOCFG_CMPI(ios_id, iop_id) (_IOREM_GPTR(&fw_data.cddata.iorem.v_slotsi[ios_id])) == (_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[iop_id]))
+
+/**Checks if specified physical I/O is mapped to specified virtual I/O (inversion doesn't matter)
+ * ios_id ID of the physical I/O
+ * iop_id ID of the virtual I/O
+ */
+#ifdef IOCFG_FUNC_INIT
+uint8_t IOCFG_CMP(uint8_t ios_id, uint8_t iop_id);
+#else
+#define IOCFG_CMP(ios_id, iop_id) (IOCFG_CMPN(ios_id, iop_id) || IOCFG_CMPI(ios_id, iop_id))
+#endif
 
 /**Function pointer type used for initialization of I/O */
 typedef void (*iocfg_pfn_init)(uint8_t state);
 /**Function pointer type used for setting value of I/O  */
 typedef void (*iocfg_pfn_set)(uint8_t value);
 /**Function pointer type used for getting value from I/O*/
-typedef uint8_t (*iocfg_pfn_get)(void);
+typedef uint16_t (*iocfg_pfn_get)(uint8_t doa);
 
-uint8_t iocfg_g_stub(void);              //!< stub function for inputs
+uint16_t iocfg_g_stub(uint8_t);          //!< stub function for inputs
 void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 
 #ifdef SECU3T //---SECU-3T---
@@ -267,43 +307,43 @@ void iocfg_s_dei(uint8_t value);         //!< set  DE                 (inverted)
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input
 void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
-uint8_t iocfg_g_ps(void);                //!< get PS input value
-uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
+uint16_t iocfg_g_ps(uint8_t doa);        //!< get PS input value
+uint16_t iocfg_g_psi(uint8_t doa);       //!< get PS input value      (inverted)
 
 void iocfg_i_add_i1(uint8_t value);      //!< init ADD_I1 input
 void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_I1 input       (inverted)
-uint8_t iocfg_g_add_i1(void);            //!< set  ADD_I1 input
-uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_I1 input       (inverted)
+uint16_t iocfg_g_add_i1(uint8_t doa);    //!< set  ADD_I1 input
+uint16_t iocfg_g_add_i1i(uint8_t doa);   //!< set  ADD_I1 input       (inverted)
 
 void iocfg_i_add_i2(uint8_t value);      //!< init ADD_I2 input
 void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_I2 input       (inverted)
-uint8_t iocfg_g_add_i2(void);            //!< set  ADD_I2 input
-uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_I2 input       (inverted)
+uint16_t iocfg_g_add_i2(uint8_t doa);    //!< set  ADD_I2 input
+uint16_t iocfg_g_add_i2i(uint8_t doa);   //!< set  ADD_I2 input       (inverted)
 
 void iocfg_i_ref_s(uint8_t value);       //!< init REF_S input
 void iocfg_i_ref_si(uint8_t value);      //!< init REF_S input        (inverted)
-uint8_t iocfg_g_ref_s(void);             //!< get REF_S input
-uint8_t iocfg_g_ref_si(void);            //!< get REF_S input         (inverted)
+uint16_t iocfg_g_ref_s(uint8_t doa);     //!< get REF_S input
+uint16_t iocfg_g_ref_si(uint8_t doa);    //!< get REF_S input         (inverted)
 
 void iocfg_i_gas_v(uint8_t value);       //!< init GAS_V input
 void iocfg_i_gas_vi(uint8_t value);      //!< init GAS_V input        (inverted)
-uint8_t iocfg_g_gas_v(void);             //!< get GAS_V input value
-uint8_t iocfg_g_gas_vi(void);            //!< get GAS_V input value   (inverted)
+uint16_t iocfg_g_gas_v(uint8_t doa);     //!< get GAS_V input value
+uint16_t iocfg_g_gas_vi(uint8_t doa);    //!< get GAS_V input value   (inverted)
 
 void iocfg_i_ckps(uint8_t value);        //!< init CKPS input
 void iocfg_i_ckpsi(uint8_t value);       //!< init CKPS input         (inverted)
-uint8_t iocfg_g_ckps(void);              //!< get CKPS input
-uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
+uint16_t iocfg_g_ckps(uint8_t doa);      //!< get CKPS input
+uint16_t iocfg_g_ckpsi(uint8_t doa);     //!< get CKPS input          (inverted)
 
-void iocfg_i_map_s(uint8_t value);      //!< init MAP_S input
-void iocfg_i_map_si(uint8_t value);     //!< init MAP_S input        (inverted)
-uint8_t iocfg_g_map_s(void);            //!< set  MAP_S input
-uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
+void iocfg_i_map_s(uint8_t value);       //!< init MAP_S input
+void iocfg_i_map_si(uint8_t value);      //!< init MAP_S input        (inverted)
+uint16_t iocfg_g_map_s(uint8_t doa);     //!< set  MAP_S input
+uint16_t iocfg_g_map_si(uint8_t doa);    //!< set  MAP_S input        (inverted)
 
 void iocfg_i_add_i4(uint8_t value);      //!< init ADD_I4 input
 void iocfg_i_add_i4i(uint8_t value);     //!< init ADD_I4 input       (inverted)
-uint8_t iocfg_g_add_i4(void);            //!< set  ADD_I4 input
-uint8_t iocfg_g_add_i4i(void);           //!< set  ADD_I4 input       (inverted)
+uint16_t iocfg_g_add_i4(uint8_t doa);    //!< set  ADD_I4 input
+uint16_t iocfg_g_add_i4i(uint8_t doa);   //!< set  ADD_I4 input       (inverted)
 
 #else //---SECU-3i---
 
@@ -539,94 +579,94 @@ void iocfg_s_gpa6_oi(uint8_t value);     //!< set  GPA6_O           (inverted)
 //Inputs
 void iocfg_i_ps(uint8_t value);          //!< init PS input
 void iocfg_i_psi(uint8_t value);         //!< init PS input           (inverted)
-uint8_t iocfg_g_ps(void);                //!< get PS input value
-uint8_t iocfg_g_psi(void);               //!< get PS input value      (inverted)
+uint16_t iocfg_g_ps(uint8_t doa);        //!< get PS input value
+uint16_t iocfg_g_psi(uint8_t doa);       //!< get PS input value      (inverted)
 
 void iocfg_i_ref_s(uint8_t value);       //!< init REF_S input
 void iocfg_i_ref_si(uint8_t value);      //!< init REF_S input        (inverted)
-uint8_t iocfg_g_ref_s(void);             //!< get REF_S input
-uint8_t iocfg_g_ref_si(void);            //!< get REF_S input         (inverted)
+uint16_t iocfg_g_ref_s(uint8_t doa);     //!< get REF_S input
+uint16_t iocfg_g_ref_si(uint8_t doa);    //!< get REF_S input         (inverted)
 
 void iocfg_i_ckps(uint8_t value);        //!< init CKPS input
 void iocfg_i_ckpsi(uint8_t value);       //!< init CKPS input         (inverted)
-uint8_t iocfg_g_ckps(void);              //!< get CKPS input
-uint8_t iocfg_g_ckpsi(void);             //!< get CKPS input          (inverted)
+uint16_t iocfg_g_ckps(uint8_t doa);      //!< get CKPS input
+uint16_t iocfg_g_ckpsi(uint8_t doa);     //!< get CKPS input          (inverted)
 
 void iocfg_i_add_i1(uint8_t value);      //!< init ADD_I1 input
 void iocfg_i_add_i1i(uint8_t value);     //!< init ADD_I1 input       (inverted)
-uint8_t iocfg_g_add_i1(void);            //!< set  ADD_I1 input
-uint8_t iocfg_g_add_i1i(void);           //!< set  ADD_I1 input       (inverted)
+uint16_t iocfg_g_add_i1(uint8_t doa);    //!< set  ADD_I1 input
+uint16_t iocfg_g_add_i1i(uint8_t doa);   //!< set  ADD_I1 input       (inverted)
 
 void iocfg_i_add_i2(uint8_t value);      //!< init ADD_I2 input
 void iocfg_i_add_i2i(uint8_t value);     //!< init ADD_I2 input       (inverted)
-uint8_t iocfg_g_add_i2(void);            //!< set  ADD_I2 input
-uint8_t iocfg_g_add_i2i(void);           //!< set  ADD_I2 input       (inverted)
+uint16_t iocfg_g_add_i2(uint8_t doa);    //!< set  ADD_I2 input
+uint16_t iocfg_g_add_i2i(uint8_t doa);   //!< set  ADD_I2 input       (inverted)
 
 void iocfg_i_add_i3(uint8_t value);      //!< init ADD_I3 input
 void iocfg_i_add_i3i(uint8_t value);     //!< init ADD_I3 input       (inverted)
-uint8_t iocfg_g_add_i3(void);            //!< set  ADD_I3 input
-uint8_t iocfg_g_add_i3i(void);           //!< set  ADD_I3 input       (inverted)
+uint16_t iocfg_g_add_i3(uint8_t doa);    //!< set  ADD_I3 input
+uint16_t iocfg_g_add_i3i(uint8_t doa);   //!< set  ADD_I3 input       (inverted)
 
 void iocfg_i_add_i4(uint8_t value);      //!< init ADD_I4 input
 void iocfg_i_add_i4i(uint8_t value);     //!< init ADD_I4 input       (inverted)
-uint8_t iocfg_g_add_i4(void);            //!< set  ADD_I4 input
-uint8_t iocfg_g_add_i4i(void);           //!< set  ADD_I4 input       (inverted)
+uint16_t iocfg_g_add_i4(uint8_t doa);    //!< set  ADD_I4 input
+uint16_t iocfg_g_add_i4i(uint8_t doa);   //!< set  ADD_I4 input       (inverted)
 
 void iocfg_i_gas_v(uint8_t value);       //!< init GAS_V input
 void iocfg_i_gas_vi(uint8_t value);      //!< init GAS_V input        (inverted)
-uint8_t iocfg_g_gas_v(void);             //!< get GAS_V input value
-uint8_t iocfg_g_gas_vi(void);            //!< get GAS_V input value   (inverted)
+uint16_t iocfg_g_gas_v(uint8_t doa);     //!< get GAS_V input value
+uint16_t iocfg_g_gas_vi(uint8_t doa);    //!< get GAS_V input value   (inverted)
 
 void iocfg_i_ign(uint8_t value);         //!< init IGN_I input
 void iocfg_i_igni(uint8_t value);        //!< init IGN_I input        (inverted)
-uint8_t iocfg_g_ign(void);               //!< get IGN_I input value
-uint8_t iocfg_g_igni(void);              //!< get IGN_I input value   (inverted)
+uint16_t iocfg_g_ign(uint8_t doa);       //!< get IGN_I input value
+uint16_t iocfg_g_igni(uint8_t doa);      //!< get IGN_I input value   (inverted)
 
 void iocfg_i_cond_i(uint8_t value);      //!< init IGN_I input
 void iocfg_i_cond_ii(uint8_t value);     //!< init IGN_I input        (inverted)
-uint8_t iocfg_g_cond_i(void);            //!< get IGN_I input value
-uint8_t iocfg_g_cond_ii(void);           //!< get IGN_I input value   (inverted)
+uint16_t iocfg_g_cond_i(uint8_t doa);    //!< get IGN_I input value
+uint16_t iocfg_g_cond_ii(uint8_t doa);   //!< get IGN_I input value   (inverted)
 
 void iocfg_i_epas_i(uint8_t value);      //!< init EPAS_I input
 void iocfg_i_epas_ii(uint8_t value);     //!< init EPAS_I input       (inverted)
-uint8_t iocfg_g_epas_i(void);            //!< get EPAS_I input value
-uint8_t iocfg_g_epas_ii(void);           //!< get EPAS_I input value  (inverted)
+uint16_t iocfg_g_epas_i(uint8_t doa);    //!< get EPAS_I input value
+uint16_t iocfg_g_epas_ii(uint8_t doa);   //!< get EPAS_I input value  (inverted)
 
 //GPA4_I
 void iocfg_i_gpa4_i(uint8_t value);      //!< init GPA4_I input
 void iocfg_i_gpa4_ii(uint8_t value);     //!< init GPA4_I input        (inverted)
-uint8_t iocfg_g_gpa4_i(void);            //!< get GPA4_I input value
-uint8_t iocfg_g_gpa4_ii(void);           //!< get GPA4_I input value   (inverted)
+uint16_t iocfg_g_gpa4_i(uint8_t doa);    //!< get GPA4_I input value
+uint16_t iocfg_g_gpa4_ii(uint8_t doa);   //!< get GPA4_I input value   (inverted)
 //GPA5_I
 void iocfg_i_gpa5_i(uint8_t value);      //!< init GPA5_I input
 void iocfg_i_gpa5_ii(uint8_t value);     //!< init GPA5_I input        (inverted)
-uint8_t iocfg_g_gpa5_i(void);            //!< get GPA5_I input value
-uint8_t iocfg_g_gpa5_ii(void);           //!< get GPA5_I input value   (inverted)
+uint16_t iocfg_g_gpa5_i(uint8_t doa);    //!< get GPA5_I input value
+uint16_t iocfg_g_gpa5_ii(uint8_t doa);   //!< get GPA5_I input value   (inverted)
 //ADD_I5
 void iocfg_i_add_i5(uint8_t value);      //!< init ADD_I5 input
 void iocfg_i_add_i5i(uint8_t value);     //!< init ADD_I5 input       (inverted)
-uint8_t iocfg_g_add_i5(void);            //!< set  ADD_I5 input
-uint8_t iocfg_g_add_i5i(void);           //!< set  ADD_I5 input       (inverted)
+uint16_t iocfg_g_add_i5(uint8_t doa);    //!< set  ADD_I5 input
+uint16_t iocfg_g_add_i5i(uint8_t doa);   //!< set  ADD_I5 input       (inverted)
 //ADD_I6
 void iocfg_i_add_i6(uint8_t value);      //!< init ADD_I6 input
 void iocfg_i_add_i6i(uint8_t value);     //!< init ADD_I6 input       (inverted)
-uint8_t iocfg_g_add_i6(void);            //!< set  ADD_I6 input
-uint8_t iocfg_g_add_i6i(void);           //!< set  ADD_I6 input       (inverted)
+uint16_t iocfg_g_add_i6(uint8_t doa);    //!< set  ADD_I6 input
+uint16_t iocfg_g_add_i6i(uint8_t doa);   //!< set  ADD_I6 input       (inverted)
 //ADD_I7
 void iocfg_i_add_i7(uint8_t value);      //!< init ADD_I7 input
 void iocfg_i_add_i7i(uint8_t value);     //!< init ADD_I7 input       (inverted)
-uint8_t iocfg_g_add_i7(void);            //!< set  ADD_I7 input
-uint8_t iocfg_g_add_i7i(void);           //!< set  ADD_I7 input       (inverted)
+uint16_t iocfg_g_add_i7(uint8_t doa);    //!< set  ADD_I7 input
+uint16_t iocfg_g_add_i7i(uint8_t doa);   //!< set  ADD_I7 input       (inverted)
 //ADD_I8
 void iocfg_i_add_i8(uint8_t value);      //!< init ADD_I8 input
 void iocfg_i_add_i8i(uint8_t value);     //!< init ADD_I8 input       (inverted)
-uint8_t iocfg_g_add_i8(void);            //!< set  ADD_I8 input
-uint8_t iocfg_g_add_i8i(void);           //!< set  ADD_I8 input       (inverted)
+uint16_t iocfg_g_add_i8(uint8_t doa);    //!< set  ADD_I8 input
+uint16_t iocfg_g_add_i8i(uint8_t doa);   //!< set  ADD_I8 input       (inverted)
 //MAP_I
-void iocfg_i_map_s(uint8_t value);      //!< init MAP_S input
-void iocfg_i_map_si(uint8_t value);     //!< init MAP_S input        (inverted)
-uint8_t iocfg_g_map_s(void);            //!< set  MAP_S input
-uint8_t iocfg_g_map_si(void);           //!< set  MAP_S input        (inverted)
+void iocfg_i_map_s(uint8_t value);       //!< init MAP_S input
+void iocfg_i_map_si(uint8_t value);      //!< init MAP_S input        (inverted)
+uint16_t iocfg_g_map_s(uint8_t doa);     //!< set  MAP_S input
+uint16_t iocfg_g_map_si(uint8_t doa);    //!< set  MAP_S input        (inverted)
 
 #ifdef MCP3204
 #define SPIADC_CHNUM 4

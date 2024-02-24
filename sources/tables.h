@@ -659,7 +659,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1948];
+  uint8_t reserved[1899];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -1010,6 +1010,7 @@ typedef struct iorem_slots_t
  fnptr_t v_slotsi[IOREM_SLOTS];          //!< data slots           (inverted)
  fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
+ uint8_t io_info[IOREM_SLOTS];           //!< 7 bit - inversion flag, 6-0 bits - id of plug
  fnptr_t s_stub;                         //!< special pointer used as stub
  fnptr_t g_stub;                         //!< reserved
  uint8_t version;                        //!< version of this structure (used for compatibility checkings)

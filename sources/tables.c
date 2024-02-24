@@ -207,6 +207,10 @@
 /**Inj PW in ms*/
 #define _INL(v) ROUND((v) * 312.5)
 
+/**For filling array of I/O info*/
+#define _ION(id) (id)
+#define _IOI(id) ((id) | _BV(7))
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -220,55 +224,39 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 #ifdef SECU3T
    //normal slots (initialization)
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC(iocfg_i_add_o1), _FNC(iocfg_i_add_o2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
-    _FNC(iocfg_i_ie), _FNC(iocfg_i_fe),
-    _FNC(iocfg_i_ps),     //PS input initialization
-    _FNC(iocfg_i_add_i1), //ADD_I1 input initialization
-    _FNC(iocfg_i_add_i2), //ADD_I2 input initialization
-    _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de),
-    _FNC(iocfg_i_gas_v), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps),
-    _FNC(iocfg_i_map_s),
+    _FNC(iocfg_i_add_o1),   _FNC(iocfg_i_add_o2),   _FNC(iocfg_i_ecf),      _FNC(iocfg_i_st_block),
+    _FNC(iocfg_i_ie),       _FNC(iocfg_i_fe),       _FNC(iocfg_i_ps),       _FNC(iocfg_i_add_i1),
+    _FNC(iocfg_i_add_i2),   _FNC(iocfg_i_ce),       _FNC(iocfg_i_bl),       _FNC(iocfg_i_de),
+    _FNC(iocfg_i_gas_v),    _FNC(iocfg_i_ref_s),    _FNC(iocfg_i_ckps),     _FNC(iocfg_i_map_s),
     _FNC(iocfg_i_add_i4),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (initialization)
    {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
-    _FNC(iocfg_i_add_o1i), _FNC(iocfg_i_add_o2i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_st_blocki),
-    _FNC(iocfg_i_iei), _FNC(iocfg_i_fei),
-    _FNC(iocfg_i_psi),              //PS input initialization
-    _FNC(iocfg_i_add_i1i), //ADD_I1 input initialization
-    _FNC(iocfg_i_add_i2i), //ADD_I2 input initialization
-    _FNC(iocfg_i_cei), _FNC(iocfg_i_bli), _FNC(iocfg_i_dei),
-    _FNC(iocfg_i_gas_vi), _FNC(iocfg_i_ref_si), _FNC(iocfg_i_ckpsi),
-    _FNC(iocfg_i_map_si),
+    _FNC(iocfg_i_add_o1i),   _FNC(iocfg_i_add_o2i),   _FNC(iocfg_i_ecfi),      _FNC(iocfg_i_st_blocki),
+    _FNC(iocfg_i_iei),       _FNC(iocfg_i_fei),       _FNC(iocfg_i_psi),       _FNC(iocfg_i_add_i1i),
+    _FNC(iocfg_i_add_i2i),   _FNC(iocfg_i_cei),       _FNC(iocfg_i_bli),       _FNC(iocfg_i_dei),
+    _FNC(iocfg_i_gas_vi),    _FNC(iocfg_i_ref_si),    _FNC(iocfg_i_ckpsi),     _FNC(iocfg_i_map_si),
     _FNC(iocfg_i_add_i4i),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC(iocfg_s_add_o1), _FNC(iocfg_s_add_o2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
-    _FNC(iocfg_s_ie), _FNC(iocfg_s_fe),
-    _FNC(iocfg_g_ps),              //PS input get value
-    _FNC(iocfg_g_add_i1), //ADD_I1 input get value
-    _FNC(iocfg_g_add_i2), //ADD_I2 input get value
-    _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de),
-    _FNC(iocfg_g_gas_v), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps),
-    _FNC(iocfg_g_map_s),
+    _FNC(iocfg_s_add_o1),   _FNC(iocfg_s_add_o2),   _FNC(iocfg_s_ecf),      _FNC(iocfg_s_st_block),
+    _FNC(iocfg_s_ie),       _FNC(iocfg_s_fe),       _FNC(iocfg_g_ps),       _FNC(iocfg_g_add_i1),
+    _FNC(iocfg_g_add_i2),   _FNC(iocfg_s_ce),       _FNC(iocfg_s_bl),       _FNC(iocfg_s_de),
+    _FNC(iocfg_g_gas_v),    _FNC(iocfg_g_ref_s),    _FNC(iocfg_g_ckps),     _FNC(iocfg_g_map_s),
     _FNC(iocfg_g_add_i4),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
-    _FNC(iocfg_s_add_o1i), _FNC(iocfg_s_add_o2i), _FNC(iocfg_s_ecfi), _FNC(iocfg_s_st_blocki),
-    _FNC(iocfg_s_iei), _FNC(iocfg_s_fei),
-    _FNC(iocfg_g_psi),              //PS input get value
-    _FNC(iocfg_g_add_i1i), //ADD_I1 input get value
-    _FNC(iocfg_g_add_i2i), //ADD_I2 input get value
-    _FNC(iocfg_s_cei), _FNC(iocfg_s_bli), _FNC(iocfg_s_dei),
-    _FNC(iocfg_g_gas_vi), _FNC(iocfg_g_ref_si), _FNC(iocfg_g_ckpsi),
-    _FNC(iocfg_g_map_si),
+    _FNC(iocfg_s_add_o1i),   _FNC(iocfg_s_add_o2i),   _FNC(iocfg_s_ecfi),      _FNC(iocfg_s_st_blocki),
+    _FNC(iocfg_s_iei),       _FNC(iocfg_s_fei),       _FNC(iocfg_g_psi),       _FNC(iocfg_g_add_i1i),
+    _FNC(iocfg_g_add_i2i),   _FNC(iocfg_s_cei),       _FNC(iocfg_s_bli),       _FNC(iocfg_s_dei),
+    _FNC(iocfg_g_gas_vi),    _FNC(iocfg_g_ref_si),    _FNC(iocfg_g_ckpsi),     _FNC(iocfg_g_map_si),
     _FNC(iocfg_g_add_i4i),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },
    //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC(iocfg_i_add_o1), _FNC(iocfg_i_add_o2), _FNC(iocfg_i_ecf), _FNC(iocfg_i_st_block),
-    _FNC(iocfg_i_ie), _FNC(iocfg_i_fe), _FNC(iocfg_i_ps), _FNC(iocfg_i_add_i1),
-    _FNC(iocfg_i_add_i2), _FNC(iocfg_i_ce), _FNC(iocfg_i_bl), _FNC(iocfg_i_de),
-    _FNC(iocfg_i_gas_v), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps), _FNC(iocfg_i_map_s),
+    _FNC(iocfg_i_add_o1),   _FNC(iocfg_i_add_o2),   _FNC(iocfg_i_ecf),      _FNC(iocfg_i_st_block),
+    _FNC(iocfg_i_ie),       _FNC(iocfg_i_fe),       _FNC(iocfg_i_ps),       _FNC(iocfg_i_add_i1),
+    _FNC(iocfg_i_add_i2),   _FNC(iocfg_i_ce),       _FNC(iocfg_i_bl),       _FNC(iocfg_i_de),
+    _FNC(iocfg_i_gas_v),    _FNC(iocfg_i_ref_s),    _FNC(iocfg_i_ckps),     _FNC(iocfg_i_map_s),
     _FNC(iocfg_i_add_i4), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -285,10 +273,10 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC(iocfg_s_add_o1), _FNC(iocfg_s_add_o2), _FNC(iocfg_s_ecf), _FNC(iocfg_s_st_block),
-    _FNC(iocfg_s_ie), _FNC(iocfg_s_fe), _FNC(iocfg_g_ps), _FNC(iocfg_g_add_i1),
-    _FNC(iocfg_g_add_i2), _FNC(iocfg_s_ce), _FNC(iocfg_s_bl), _FNC(iocfg_s_de),
-    _FNC(iocfg_g_gas_v), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps), _FNC(iocfg_g_map_s),
+    _FNC(iocfg_s_add_o1),   _FNC(iocfg_s_add_o2),   _FNC(iocfg_s_ecf),      _FNC(iocfg_s_st_block),
+    _FNC(iocfg_s_ie),       _FNC(iocfg_s_fe),       _FNC(iocfg_g_ps),       _FNC(iocfg_g_add_i1),
+    _FNC(iocfg_g_add_i2),   _FNC(iocfg_s_ce),       _FNC(iocfg_s_bl),       _FNC(iocfg_s_de),
+    _FNC(iocfg_g_gas_v),    _FNC(iocfg_g_ref_s),    _FNC(iocfg_g_ckps),     _FNC(iocfg_g_map_s),
     _FNC(iocfg_g_add_i4), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
@@ -305,71 +293,79 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
+   //I/O information for each slot (plug IDs and inversion flags)
+   {_ION(IOP_IGN_OU1), _ION(IOP_IGN_OU2), _ION(IOP_IGN_OU3), _ION(IOP_IGN_OU4),
+    _ION(IOP_ADD_O1), _ION(IOP_ADD_O2), _ION(IOP_ECF), _ION(IOP_ST_BLOCK),
+    _ION(IOP_IE), _ION(IOP_FE), _ION(IOP_PS), _ION(IOP_ADD_I1),
+    _ION(IOP_ADD_I2), _ION(IOP_CE), _ION(IOP_BL), _ION(IOP_DE),
+    _ION(IOP_GAS_V), _ION(IOP_REF_S), _ION(IOP_CKPS), _ION(IOP_MAP_S),
+    _ION(IOP_ADD_I4), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   },
 #else //---SECU-3i---
 
    //normal slots (initialization)
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC(iocfg_i_ign_out5), _FNC(iocfg_i_ecf), _FNC(iocfg_i_inj_out1), _FNC(iocfg_i_inj_out2),
-    _FNC(iocfg_i_inj_out3), _FNC(iocfg_i_inj_out4), _FNC(iocfg_i_inj_out5),_FNC(iocfg_i_bl),
-    _FNC(iocfg_i_de),_FNC(iocfg_i_st_block), _FNC(iocfg_i_ce), _FNC(iocfg_i_fpmp_o),
-    _FNC(iocfg_i_pwrr_o), _FNC(iocfg_i_evap_o), _FNC(iocfg_i_o2sh_o), _FNC(iocfg_i_cond_o),
-    _FNC(iocfg_i_add_o2), _FNC(iocfg_i_ps), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps),
-    _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), _FNC(iocfg_i_add_i3), _FNC(iocfg_i_gas_v),
-    _FNC(iocfg_i_ign), _FNC(iocfg_i_cond_i), _FNC(iocfg_i_epas_i),_FNC(iocfg_i_add_i4),
-    _FNC(iocfg_i_tach_o),_FNC(iocfg_i_ksp_cs),_FNC(iocfg_i_add_i5),_FNC(iocfg_i_add_i6),
-    _FNC(iocfg_i_add_i7), _FNC(iocfg_i_add_i8),_FNC(iocfg_i_map_s),_FNC(iocfg_i_gpa4_i),
-    _FNC(iocfg_i_gpa6_o),_FNC(iocfg_i_gpa5_i),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_ign_out5), _FNC(iocfg_i_ecf),      _FNC(iocfg_i_inj_out1), _FNC(iocfg_i_inj_out2),
+    _FNC(iocfg_i_inj_out3), _FNC(iocfg_i_inj_out4), _FNC(iocfg_i_inj_out5), _FNC(iocfg_i_bl),
+    _FNC(iocfg_i_de),       _FNC(iocfg_i_st_block), _FNC(iocfg_i_ce),       _FNC(iocfg_i_fpmp_o),
+    _FNC(iocfg_i_pwrr_o),   _FNC(iocfg_i_evap_o),   _FNC(iocfg_i_o2sh_o),   _FNC(iocfg_i_cond_o),
+    _FNC(iocfg_i_add_o2),   _FNC(iocfg_i_ps),       _FNC(iocfg_i_ref_s),    _FNC(iocfg_i_ckps),
+    _FNC(iocfg_i_add_i1),   _FNC(iocfg_i_add_i2),   _FNC(iocfg_i_add_i3),   _FNC(iocfg_i_gas_v),
+    _FNC(iocfg_i_ign),      _FNC(iocfg_i_cond_i),   _FNC(iocfg_i_epas_i),   _FNC(iocfg_i_add_i4),
+    _FNC(iocfg_i_tach_o),   _FNC(iocfg_i_ksp_cs),   _FNC(iocfg_i_add_i5),   _FNC(iocfg_i_add_i6),
+    _FNC(iocfg_i_add_i7),   _FNC(iocfg_i_add_i8),   _FNC(iocfg_i_map_s),    _FNC(iocfg_i_gpa4_i),
+    _FNC(iocfg_i_gpa6_o),   _FNC(iocfg_i_gpa5_i),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (initialization)
    {_FNC(iocfg_i_ign_out1i), _FNC(iocfg_i_ign_out2i), _FNC(iocfg_i_ign_out3i), _FNC(iocfg_i_ign_out4i),
-    _FNC(iocfg_i_ign_out5i), _FNC(iocfg_i_ecfi), _FNC(iocfg_i_inj_out1i), _FNC(iocfg_i_inj_out2i),
-    _FNC(iocfg_i_inj_out3i), _FNC(iocfg_i_inj_out4i), _FNC(iocfg_i_inj_out5i),_FNC(iocfg_i_bli),
-    _FNC(iocfg_i_dei),_FNC(iocfg_i_st_blocki), _FNC(iocfg_i_cei), _FNC(iocfg_i_fpmp_oi),
-    _FNC(iocfg_i_pwrr_oi), _FNC(iocfg_i_evap_oi), _FNC(iocfg_i_o2sh_oi), _FNC(iocfg_i_cond_oi),
-    _FNC(iocfg_i_add_o2i), _FNC(iocfg_i_psi), _FNC(iocfg_i_ref_si), _FNC(iocfg_i_ckpsi),
-    _FNC(iocfg_i_add_i1i), _FNC(iocfg_i_add_i2i), _FNC(iocfg_i_add_i3i), _FNC(iocfg_i_gas_vi),
-    _FNC(iocfg_i_igni), _FNC(iocfg_i_cond_ii), _FNC(iocfg_i_epas_ii),_FNC(iocfg_i_add_i4i),
-    _FNC(iocfg_i_tach_oi), _FNC(iocfg_i_ksp_csi), _FNC(iocfg_i_add_i5i), _FNC(iocfg_i_add_i6i),
-    _FNC(iocfg_i_add_i7i), _FNC(iocfg_i_add_i8i),_FNC(iocfg_i_map_si),_FNC(iocfg_i_gpa4_ii),
-    _FNC(iocfg_i_gpa6_oi),_FNC(iocfg_i_gpa5_ii),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_i_ign_out5i), _FNC(iocfg_i_ecfi),      _FNC(iocfg_i_inj_out1i), _FNC(iocfg_i_inj_out2i),
+    _FNC(iocfg_i_inj_out3i), _FNC(iocfg_i_inj_out4i), _FNC(iocfg_i_inj_out5i), _FNC(iocfg_i_bli),
+    _FNC(iocfg_i_dei),       _FNC(iocfg_i_st_blocki), _FNC(iocfg_i_cei),       _FNC(iocfg_i_fpmp_oi),
+    _FNC(iocfg_i_pwrr_oi),   _FNC(iocfg_i_evap_oi),   _FNC(iocfg_i_o2sh_oi),   _FNC(iocfg_i_cond_oi),
+    _FNC(iocfg_i_add_o2i),   _FNC(iocfg_i_psi),       _FNC(iocfg_i_ref_si),    _FNC(iocfg_i_ckpsi),
+    _FNC(iocfg_i_add_i1i),   _FNC(iocfg_i_add_i2i),   _FNC(iocfg_i_add_i3i),   _FNC(iocfg_i_gas_vi),
+    _FNC(iocfg_i_igni),      _FNC(iocfg_i_cond_ii),   _FNC(iocfg_i_epas_ii),   _FNC(iocfg_i_add_i4i),
+    _FNC(iocfg_i_tach_oi),   _FNC(iocfg_i_ksp_csi),   _FNC(iocfg_i_add_i5i),   _FNC(iocfg_i_add_i6i),
+    _FNC(iocfg_i_add_i7i),   _FNC(iocfg_i_add_i8i),   _FNC(iocfg_i_map_si),    _FNC(iocfg_i_gpa4_ii),
+    _FNC(iocfg_i_gpa6_oi),   _FNC(iocfg_i_gpa5_ii),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf), _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
-    _FNC(iocfg_s_inj_out3), _FNC(iocfg_s_inj_out4), _FNC(iocfg_s_inj_out5),_FNC(iocfg_s_bl),
-    _FNC(iocfg_s_de),_FNC(iocfg_s_st_block), _FNC(iocfg_s_ce), _FNC(iocfg_s_fpmp_o),
-    _FNC(iocfg_s_pwrr_o), _FNC(iocfg_s_evap_o), _FNC(iocfg_s_o2sh_o), _FNC(iocfg_s_cond_o),
-    _FNC(iocfg_s_add_o2), _FNC(iocfg_g_ps), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps),
-    _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), _FNC(iocfg_g_add_i3), _FNC(iocfg_g_gas_v),
-    _FNC(iocfg_g_ign), _FNC(iocfg_g_cond_i), _FNC(iocfg_g_epas_i), _FNC(iocfg_g_add_i4),
-    _FNC(iocfg_s_tach_o), _FNC(iocfg_s_ksp_cs),_FNC(iocfg_g_add_i5), _FNC(iocfg_g_add_i6),
-    _FNC(iocfg_g_add_i7), _FNC(iocfg_g_add_i8),_FNC(iocfg_g_map_s),_FNC(iocfg_g_gpa4_i),
-    _FNC(iocfg_s_gpa6_o),_FNC(iocfg_g_gpa5_i),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf),      _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
+    _FNC(iocfg_s_inj_out3), _FNC(iocfg_s_inj_out4), _FNC(iocfg_s_inj_out5), _FNC(iocfg_s_bl),
+    _FNC(iocfg_s_de),       _FNC(iocfg_s_st_block), _FNC(iocfg_s_ce),       _FNC(iocfg_s_fpmp_o),
+    _FNC(iocfg_s_pwrr_o),   _FNC(iocfg_s_evap_o),   _FNC(iocfg_s_o2sh_o),   _FNC(iocfg_s_cond_o),
+    _FNC(iocfg_s_add_o2),   _FNC(iocfg_g_ps),       _FNC(iocfg_g_ref_s),    _FNC(iocfg_g_ckps),
+    _FNC(iocfg_g_add_i1),   _FNC(iocfg_g_add_i2),   _FNC(iocfg_g_add_i3),   _FNC(iocfg_g_gas_v),
+    _FNC(iocfg_g_ign),      _FNC(iocfg_g_cond_i),   _FNC(iocfg_g_epas_i),   _FNC(iocfg_g_add_i4),
+    _FNC(iocfg_s_tach_o),   _FNC(iocfg_s_ksp_cs),   _FNC(iocfg_g_add_i5),   _FNC(iocfg_g_add_i6),
+    _FNC(iocfg_g_add_i7),   _FNC(iocfg_g_add_i8),   _FNC(iocfg_g_map_s),    _FNC(iocfg_g_gpa4_i),
+    _FNC(iocfg_s_gpa6_o),   _FNC(iocfg_g_gpa5_i),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
-    _FNC(iocfg_s_ign_out5i), _FNC(iocfg_s_ecfi), _FNC(iocfg_i_inj_out1i), _FNC(iocfg_s_inj_out2i),
-    _FNC(iocfg_s_inj_out3i), _FNC(iocfg_s_inj_out4i), _FNC(iocfg_s_inj_out5i),_FNC(iocfg_s_bli),
-    _FNC(iocfg_s_dei),_FNC(iocfg_s_st_blocki), _FNC(iocfg_s_cei), _FNC(iocfg_s_fpmp_oi),
-    _FNC(iocfg_s_pwrr_oi), _FNC(iocfg_s_evap_oi), _FNC(iocfg_s_o2sh_oi), _FNC(iocfg_s_cond_oi),
-    _FNC(iocfg_s_add_o2i), _FNC(iocfg_g_psi), _FNC(iocfg_g_ref_si), _FNC(iocfg_g_ckpsi),
-    _FNC(iocfg_g_add_i1i), _FNC(iocfg_g_add_i2i), _FNC(iocfg_g_add_i3i), _FNC(iocfg_g_gas_vi),
-    _FNC(iocfg_g_igni), _FNC(iocfg_g_cond_ii), _FNC(iocfg_g_epas_ii),_FNC(iocfg_g_add_i4i),
-    _FNC(iocfg_s_tach_oi), _FNC(iocfg_s_ksp_csi), _FNC(iocfg_g_add_i5i), _FNC(iocfg_g_add_i6i),
-    _FNC(iocfg_g_add_i7i), _FNC(iocfg_g_add_i8i),_FNC(iocfg_g_map_si),_FNC(iocfg_g_gpa4_ii),
-    _FNC(iocfg_s_gpa6_oi),_FNC(iocfg_g_gpa5_ii),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_s_ign_out5i), _FNC(iocfg_s_ecfi),      _FNC(iocfg_i_inj_out1i), _FNC(iocfg_s_inj_out2i),
+    _FNC(iocfg_s_inj_out3i), _FNC(iocfg_s_inj_out4i), _FNC(iocfg_s_inj_out5i), _FNC(iocfg_s_bli),
+    _FNC(iocfg_s_dei),       _FNC(iocfg_s_st_blocki), _FNC(iocfg_s_cei),       _FNC(iocfg_s_fpmp_oi),
+    _FNC(iocfg_s_pwrr_oi),   _FNC(iocfg_s_evap_oi),   _FNC(iocfg_s_o2sh_oi),   _FNC(iocfg_s_cond_oi),
+    _FNC(iocfg_s_add_o2i),   _FNC(iocfg_g_psi),       _FNC(iocfg_g_ref_si),    _FNC(iocfg_g_ckpsi),
+    _FNC(iocfg_g_add_i1i),   _FNC(iocfg_g_add_i2i),   _FNC(iocfg_g_add_i3i),   _FNC(iocfg_g_gas_vi),
+    _FNC(iocfg_g_igni),      _FNC(iocfg_g_cond_ii),   _FNC(iocfg_g_epas_ii),   _FNC(iocfg_g_add_i4i),
+    _FNC(iocfg_s_tach_oi),   _FNC(iocfg_s_ksp_csi),   _FNC(iocfg_g_add_i5i),   _FNC(iocfg_g_add_i6i),
+    _FNC(iocfg_g_add_i7i),   _FNC(iocfg_g_add_i8i),   _FNC(iocfg_g_map_si),    _FNC(iocfg_g_gpa4_ii),
+    _FNC(iocfg_s_gpa6_oi),   _FNC(iocfg_g_gpa5_ii),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },
    //plugs
    {_FNC(iocfg_i_ign_out1), _FNC(iocfg_i_ign_out2), _FNC(iocfg_i_ign_out3), _FNC(iocfg_i_ign_out4),
-    _FNC(iocfg_i_ign_out5), _FNC(iocfg_i_ecf), _FNC(iocfg_i_inj_out1), _FNC(iocfg_i_inj_out2),
+    _FNC(iocfg_i_ign_out5), _FNC(iocfg_i_ecf),      _FNC(iocfg_i_inj_out1), _FNC(iocfg_i_inj_out2),
     _FNC(iocfg_i_inj_out3), _FNC(iocfg_i_inj_out4), _FNC(iocfg_i_inj_out5), _FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_i_st_block), _FNC(iocfg_i_ce), _FNC(iocfg_i_fpmp_o),
-    _FNC(iocfg_i_pwrr_o), _FNC(iocfg_i_evap_o), _FNC(iocfg_i_o2sh_o), _FNC(iocfg_i_cond_o),
-    _FNC(iocfg_i_add_o2), _FNC(iocfg_i_ps), _FNC(iocfg_i_ref_s), _FNC(iocfg_i_ckps),
-    _FNC(iocfg_i_add_i1), _FNC(iocfg_i_add_i2), _FNC(iocfg_i_add_i3), _FNC(iocfg_i_gas_v),
-    _FNC(iocfg_i_ign), _FNC(iocfg_i_cond_i), _FNC(iocfg_i_epas_i), _FNC(iocfg_i_add_i4),
-    _FNC(iocfg_i_tach_o),_FNC(iocfg_i_ksp_cs), _FNC(iocfg_i_add_i5),  _FNC(iocfg_i_add_i6),
-    _FNC(iocfg_i_add_i7), _FNC(iocfg_i_add_i8),_FNC(iocfg_i_map_s),_FNC(iocfg_i_gpa4_i),
-    _FNC(iocfg_i_gpa6_o),_FNC(iocfg_i_gpa5_i) ,0,0,0,0,0,0,0, //<-- mapped to slots by default
+    _FNC(iocfg_s_stub),     _FNC(iocfg_i_st_block), _FNC(iocfg_i_ce),       _FNC(iocfg_i_fpmp_o),
+    _FNC(iocfg_i_pwrr_o),   _FNC(iocfg_i_evap_o),   _FNC(iocfg_i_o2sh_o),   _FNC(iocfg_i_cond_o),
+    _FNC(iocfg_i_add_o2),   _FNC(iocfg_i_ps),       _FNC(iocfg_i_ref_s),    _FNC(iocfg_i_ckps),
+    _FNC(iocfg_i_add_i1),   _FNC(iocfg_i_add_i2),   _FNC(iocfg_i_add_i3),   _FNC(iocfg_i_gas_v),
+    _FNC(iocfg_i_ign),      _FNC(iocfg_i_cond_i),   _FNC(iocfg_i_epas_i),   _FNC(iocfg_i_add_i4),
+    _FNC(iocfg_i_tach_o),   _FNC(iocfg_i_ksp_cs),   _FNC(iocfg_i_add_i5),   _FNC(iocfg_i_add_i6),
+    _FNC(iocfg_i_add_i7),   _FNC(iocfg_i_add_i8),   _FNC(iocfg_i_map_s),    _FNC(iocfg_i_gpa4_i),
+    _FNC(iocfg_i_gpa6_o),   _FNC(iocfg_i_gpa5_i) ,0,0,0,0,0,0,0, //<-- mapped to slots by default
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_i_bl),
-    _FNC(iocfg_i_de), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_i_de),   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -383,16 +379,16 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf), _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
-    _FNC(iocfg_s_inj_out3), _FNC(iocfg_s_inj_out4), _FNC(iocfg_s_inj_out5),_FNC(iocfg_s_stub),
-    _FNC(iocfg_s_stub),_FNC(iocfg_s_st_block), _FNC(iocfg_s_ce), _FNC(iocfg_s_fpmp_o),
-    _FNC(iocfg_s_pwrr_o), _FNC(iocfg_s_evap_o), _FNC(iocfg_s_o2sh_o), _FNC(iocfg_s_cond_o),
-    _FNC(iocfg_s_add_o2), _FNC(iocfg_g_ps), _FNC(iocfg_g_ref_s), _FNC(iocfg_g_ckps),
-    _FNC(iocfg_g_add_i1), _FNC(iocfg_g_add_i2), _FNC(iocfg_g_add_i3), _FNC(iocfg_g_gas_v),
-    _FNC(iocfg_g_ign), _FNC(iocfg_g_cond_i), _FNC(iocfg_g_epas_i),_FNC(iocfg_g_add_i4),
-    _FNC(iocfg_s_tach_o), _FNC(iocfg_s_ksp_cs), _FNC(iocfg_g_add_i5),  _FNC(iocfg_g_add_i6),
-    _FNC(iocfg_g_add_i7),_FNC(iocfg_g_add_i8),_FNC(iocfg_g_map_s), _FNC(iocfg_g_gpa4_i),
-    _FNC(iocfg_s_gpa6_o), _FNC(iocfg_g_gpa5_i),0,0,0,0,0,0,0, //<-- zero means that these slots are not implemented in this firmware
+    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf),      _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
+    _FNC(iocfg_s_inj_out3), _FNC(iocfg_s_inj_out4), _FNC(iocfg_s_inj_out5), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub),     _FNC(iocfg_s_st_block), _FNC(iocfg_s_ce),       _FNC(iocfg_s_fpmp_o),
+    _FNC(iocfg_s_pwrr_o),   _FNC(iocfg_s_evap_o),   _FNC(iocfg_s_o2sh_o),   _FNC(iocfg_s_cond_o),
+    _FNC(iocfg_s_add_o2),   _FNC(iocfg_g_ps),       _FNC(iocfg_g_ref_s),    _FNC(iocfg_g_ckps),
+    _FNC(iocfg_g_add_i1),   _FNC(iocfg_g_add_i2),   _FNC(iocfg_g_add_i3),   _FNC(iocfg_g_gas_v),
+    _FNC(iocfg_g_ign),      _FNC(iocfg_g_cond_i),   _FNC(iocfg_g_epas_i),   _FNC(iocfg_g_add_i4),
+    _FNC(iocfg_s_tach_o),   _FNC(iocfg_s_ksp_cs),   _FNC(iocfg_g_add_i5),   _FNC(iocfg_g_add_i6),
+    _FNC(iocfg_g_add_i7),   _FNC(iocfg_g_add_i8),   _FNC(iocfg_g_map_s),    _FNC(iocfg_g_gpa4_i),
+    _FNC(iocfg_s_gpa6_o),   _FNC(iocfg_g_gpa5_i),0,0,0,0,0,0,0, //<-- zero means that these slots are not implemented in this firmware
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_bl),
     _FNC(iocfg_s_de),   _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
@@ -408,11 +404,25 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub)
    },
 
+   //I/O information for each slot (plug IDs and inversion flags)
+   {
+    _ION(IOP_IGN_OUT1), _ION(IOP_IGN_OUT2), _ION(IOP_IGN_OUT3), _ION(IOP_IGN_OUT4),
+    _ION(IOP_IGN_OUT5), _ION(IOP_ECF),      _ION(IOP_INJ_OUT1), _ION(IOP_INJ_OUT2),
+    _ION(IOP_INJ_OUT3), _ION(IOP_INJ_OUT4), _ION(IOP_INJ_OUT5), _ION(IOP_SM_DIR),
+    _ION(IOP_SM_STP),   _ION(IOP_ST_BLOCK), _ION(IOP_CE),       _ION(IOP_FL_PUMP),
+    _ION(IOP_PWRRELAY), _ION(IOP_EVAP_O),   _ION(IOP_O2SH_O),   _ION(IOP_COND_O),
+    _ION(IOP_ADD_O2),   _ION(IOP_PS),       _ION(IOP_REF_S),    _ION(IOP_CKPS),
+    _ION(IOP_ADD_I1),   _ION(IOP_ADD_I2),   _ION(IOP_ADD_I3),   _ION(IOP_GAS_V),
+    _ION(IOP_IGN),      _ION(IOP_COND_I),   _ION(IOP_EPAS_I),   _ION(IOP_ADD_I4),
+    _ION(IOP_TACH_O),   _ION(IOP_KSP_CS),   _ION(IOP_ADD_I5),   _ION(IOP_ADD_I6),
+    _ION(IOP_ADD_I7),   _ION(IOP_ADD_I8),   _ION(IOP_MAP_S),    _ION(IOP_GPA4_I),
+    _ION(IOP_GPA6_O),   _ION(IOP_GPA5_I), 0,0,0,0,0,0,0
+   },
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 4.0
-   IOREMVER(4,0),
+   //Version of this structure - 4.1
+   IOREMVER(4,1),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),

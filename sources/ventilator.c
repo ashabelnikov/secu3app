@@ -294,9 +294,7 @@ void vent_control(void)
   d.vent_duty = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 200) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
 
 #ifndef SECU3T
-  if (IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2 || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_add_o2i ||
-      IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_o || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_o2sh_oi ||
-      IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_pwrr_o || IOCFG_CB(IOP_ECF) == (fnptr_t)iocfg_s_pwrr_oi)
+  if (IOCFG_CMP(IOP_ADD_O2, IOP_ECF) || IOCFG_CMP(IOP_O2SH_O, IOP_ECF) || IOCFG_CMP(IOP_PWRRELAY, IOP_ECF))
   { //low frequency software PWM
    vent_duty = dd;
    if (vent_duty == 0)

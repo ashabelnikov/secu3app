@@ -48,11 +48,15 @@
  */
 static uint8_t get_refprs_on_cond(void)
 {
- if (IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3i)
-  return (d.param.cond_pvt_on ? (d.sens.add_i3 < d.param.cond_pvt_on) : 1) && !ce_is_error(ECUERROR_ADD_I3_SENSOR); //don't use ADD_I3 if threshold is set to 0
- else if (IOCFG_CHECK(IOP_REFPRS_I))
-  return !IOCFG_GET(IOP_REFPRS_I); //digital
- else //not used
+ if (IOCFG_CHECK(IOP_REFPRS_I))
+ {
+  uint16_t refprs = IOCFG_GETA(IOP_REFPRS_I); //get state of the input
+  if (IOCFG_DTST(refprs))
+   return !IOCFG_DGET(refprs); //mapped to bare digital input
+  else //mapped to an analog input
+   return (d.param.cond_pvt_on ? (refprs < d.param.cond_pvt_on && !IOCFG_GETE(IOP_REFPRS_I)) : 1); //don't use input if threshold is set to 0
+ }
+ else //not used (not mapped to physical input)
   return 1;
 }
 
@@ -61,11 +65,15 @@ static uint8_t get_refprs_on_cond(void)
  */
 static uint8_t get_refprs_off_cond(void)
 {
- if (IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_REFPRS_I) == (fnptr_t)iocfg_g_add_i3i)
-  return (d.param.cond_pvt_off ? (d.sens.add_i3 > d.param.cond_pvt_off) : 0) || ce_is_error(ECUERROR_ADD_I3_SENSOR); //don't use ADD_I3 if threshold is set to 0
- else if (IOCFG_CHECK(IOP_REFPRS_I))
-  return IOCFG_GET(IOP_REFPRS_I); //digital
- else //not used
+ if (IOCFG_CHECK(IOP_REFPRS_I))
+ {
+  uint16_t refprs = IOCFG_GETA(IOP_REFPRS_I); //get state of the input
+  if (IOCFG_DTST(refprs))
+   return IOCFG_DGET(refprs); //mapped to bare digital input
+  else //mapped to an analog input
+   return (d.param.cond_pvt_off ? (refprs > d.param.cond_pvt_off || IOCFG_GETE(IOP_REFPRS_I)) : 0); //don't use input if threshold is set to 0
+ }
+ else //not used (not mapped to physical input)
   return 0;
 }
 #endif

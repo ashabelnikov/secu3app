@@ -29,9 +29,13 @@
 #define _ADC_H_
 
 #include <stdint.h>
+#include "mathemat.h"
 
 /** ADC discrete in Volts */
 #define ADC_DISCRETE            0.0025
+
+/** Number of ADC discretes*/
+#define ADC_DISCRNUM            ROUND(5.0/ADC_DISCRETE)
 
 /**Slope of curve of the coolant temperature sensor volt/degree */
 #define TSENS_SLOPP             0.01

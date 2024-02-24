@@ -46,6 +46,23 @@
 #endif
 #include "ringbuff.h"
 
+//see also ioconfig.c
+int16_t iocfg_map_s = 0;
+int16_t iocfg_add_i1 = 0;
+int16_t iocfg_add_i2 = 0;
+#ifndef SECU3T
+int16_t iocfg_add_i3 = 0;
+#endif
+#ifdef TPIC8101
+int16_t iocfg_add_i4 = 0;
+#endif
+#ifdef MCP3204
+int16_t iocfg_add_i5 = 0;
+int16_t iocfg_add_i6 = 0;
+int16_t iocfg_add_i7 = 0;
+int16_t iocfg_add_i8 = 0;
+#endif
+
 #ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
  /**Special macro for compensating of voltage division (without voltage divider)*/
  #define _RESDIV(v, n, d) (v)
@@ -180,16 +197,20 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
 //Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values
 void meas_average_measured_values(ce_sett_t *cesd)
 {
- int16_t rawval;
- d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(&meas[MAP_INPIDX]), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
- if (IOCFG_CHECK(IOP_MAP_S))
-  d.sens.map = map_adc_to_kpa(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw, d.param.map_curve_offset, d.param.map_curve_gradient);
- else
-  d.sens.map = 0;
+ //RPM
+ d.sens.rpm = average_buffer(&meas[FRQ_INPIDX]);
 
+ //board voltage
  d.sens.voltage_raw = adc_compensate(average_buffer(&meas[BAT_INPIDX]) * 6, d.param.ubat_adc_factor,d.param.ubat_adc_correction);
  d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && cesd->vbat_v_flg ? cesd->vbat_v_em : d.sens.voltage_raw);
 
+ //TPS
+ d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(&meas[TPS_INPIDX]), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
+ if (d.sens.tps > TPS_MAGNITUDE(100))
+  d.sens.tps = TPS_MAGNITUDE(100);
+
+ //CLT
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
   d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(&meas[TMP_INPIDX]), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
@@ -205,8 +226,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else                                       //CTS is not used
   d.sens.temperat = 0;
 
- d.sens.rpm = average_buffer(&meas[FRQ_INPIDX]);
-
+ //VSS
 #ifdef SPEED_SENSOR
  //speed
  d.sens.vss_speed=average_buffer(&meas[SPD_INPIDX]);
@@ -225,148 +245,141 @@ void meas_average_measured_values(ce_sett_t *cesd)
   d.sens.vss_int_dist+= dist; //accumulate distance
 #endif
 
- d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(&meas[TPS_INPIDX]), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
- d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
- if (d.sens.tps > TPS_MAGNITUDE(100))
-  d.sens.tps = TPS_MAGNITUDE(100);
+ //MAP
+ int16_t rawval;
+ d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(&meas[MAP_INPIDX]), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ iocfg_map_s = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw;
 
+ //ADD_I1
  d.sens.add_i1_raw = rawval = adc_compensate(_RESDIV(average_buffer(&meas[AI1_INPIDX]), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
+ iocfg_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
 
+ //ADD_I2
  d.sens.add_i2_raw = rawval = adc_compensate(_RESDIV(average_buffer(&meas[AI2_INPIDX]), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && cesd->add_i2_v_flg ? cesd->add_i2_v_em : rawval;
+ iocfg_add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && cesd->add_i2_v_flg ? cesd->add_i2_v_em : rawval;
 
+ //ADD_I3
 #if !defined(SECU3T)
  d.sens.add_i3_raw = rawval = adc_compensate(average_buffer(&meas[AI3_INPIDX]), d.param.ai3_adc_factor, d.param.ai3_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && cesd->add_i3_v_flg ? cesd->add_i3_v_em : rawval;
+ iocfg_add_i3 = ce_is_error(ECUERROR_ADD_I3_SENSOR) && cesd->add_i3_v_flg ? cesd->add_i3_v_em : rawval;
 #endif
 
+ //ADD_I4
 #if defined(TPIC8101)
  d.sens.add_i4_raw = rawval = adc_compensate(average_buffer(&meas[AI4_INPIDX]), d.param.ai4_adc_factor, d.param.ai4_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && cesd->add_i4_v_flg ? cesd->add_i4_v_em : rawval;
+ iocfg_add_i4 = ce_is_error(ECUERROR_ADD_I4_SENSOR) && cesd->add_i4_v_flg ? cesd->add_i4_v_em : rawval;
 #endif
 
 #if !defined(SECU3T) && defined(MCP3204)
+ //ADD_I5
  d.sens.add_i5_raw = rawval = adc_compensate(average_buffer(&meas[AI5_INPIDX]), d.param.ai5_adc_factor, d.param.ai5_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && cesd->add_i5_v_flg ? cesd->add_i5_v_em : rawval;
+ iocfg_add_i5 = ce_is_error(ECUERROR_ADD_I5_SENSOR) && cesd->add_i5_v_flg ? cesd->add_i5_v_em : rawval;
+
+ //ADD_I6
  d.sens.add_i6_raw = rawval = adc_compensate(average_buffer(&meas[AI6_INPIDX]), d.param.ai6_adc_factor, d.param.ai6_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && cesd->add_i6_v_flg ? cesd->add_i6_v_em : rawval;
+ iocfg_add_i6 = ce_is_error(ECUERROR_ADD_I6_SENSOR) && cesd->add_i6_v_flg ? cesd->add_i6_v_em : rawval;
+
+ //ADD_I7
  d.sens.add_i7_raw = rawval = adc_compensate(average_buffer(&meas[AI7_INPIDX]), d.param.ai7_adc_factor, d.param.ai7_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && cesd->add_i7_v_flg ? cesd->add_i7_v_em : rawval;
+ iocfg_add_i7 = ce_is_error(ECUERROR_ADD_I7_SENSOR) && cesd->add_i7_v_flg ? cesd->add_i7_v_em : rawval;
+
+ //ADD_I8
  d.sens.add_i8_raw = rawval =adc_compensate(average_buffer(&meas[AI8_INPIDX]), d.param.ai8_adc_factor, d.param.ai8_adc_correction);
  if (rawval < 0)
   rawval = 0;
- d.sens.add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && cesd->add_i8_v_flg ? cesd->add_i8_v_em : rawval;
+ iocfg_add_i8 = ce_is_error(ECUERROR_ADD_I8_SENSOR) && cesd->add_i8_v_flg ? cesd->add_i8_v_em : rawval;
 #endif
 
+ //---------------------------------------------------------------
+ //We read and save the values of physical inputs. These values are not used in the firmware, but
+ //are needed to display voltages regardless of how these inputs are reassigned
+ d.sens.add_i1 = IOCFG_GETAS(IOP_ADD_I1);
+ d.sens.add_i2 = IOCFG_GETAS(IOP_ADD_I2);
+
+#if !defined(SECU3T)
+ d.sens.add_i3 = IOCFG_GETAS(IOP_ADD_I3);
+#endif
+
+#if defined(TPIC8101)
+ d.sens.add_i4 = IOCFG_GETAS(IOP_ADD_I4);
+#endif
+
+#if !defined(SECU3T) && defined(MCP3204)
+ d.sens.add_i5 = IOCFG_GETAS(IOP_ADD_I5);
+ d.sens.add_i6 = IOCFG_GETAS(IOP_ADD_I6);
+ d.sens.add_i7 = IOCFG_GETAS(IOP_ADD_I7);
+ d.sens.add_i8 = IOCFG_GETAS(IOP_ADD_I8);
+#endif
+ //---------------------------------------------------------------
+
+ if (IOCFG_CHECK(IOP_MAP_S))
+  d.sens.map = map_adc_to_kpa(IOCFG_GETA(IOP_MAP_S), d.param.map_curve_offset, d.param.map_curve_gradient);
+ else
+  d.sens.map = 0;
+
+ //MAT sensor
 #ifdef AIRTEMP_SENS
  if (IOCFG_CHECK(IOP_AIR_TEMP))
-  d.sens.air_temp = thermistor_lookup(d.sens.add_i2, ram_extabs.ats_curve);   //ADD_I2 input selected as MAT sensor
+  d.sens.air_temp = thermistor_lookup(IOCFG_GETA(IOP_AIR_TEMP), ram_extabs.ats_curve);
  else
-  d.sens.air_temp = 0; //input is not selected
+  d.sens.air_temp = 0;
 #endif
 
-#ifdef TPIC8101
- if (IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.map2 = map_adc_to_kpa(d.sens.add_i4, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I4 input selected as MAP2 sensor
+ //MAP2
+ if (IOP_MAP2)
+  d.sens.map2 = map_adc_to_kpa(IOCFG_GETA(IOP_MAP2), d.param.map2_curve_offset, d.param.map2_curve_gradient);
  else
-#endif
- {
-#ifndef SECU3T //SECU-3i
-#ifdef MCP3204
-  if (IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i5i)
-   d.sens.map2 = map_adc_to_kpa(d.sens.add_i5, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I5 input selected as MAP2 sensor
-  else if (IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_MAP2) == (fnptr_t)iocfg_g_add_i7i)
-   d.sens.map2 = map_adc_to_kpa(d.sens.add_i7, d.param.map2_curve_offset, d.param.map2_curve_gradient); //ADD_I7 input selected as MAP2 sensor
-  else
-#endif
-#endif
   d.sens.map2 = 0; //input is not selected
- }
 
 #ifndef SECU3T //SECU-3i
  if (IOCFG_CHECK(IOP_TMP2))
-  d.sens.tmp2 = thermistor_lookup(d.sens.add_i3, ram_extabs.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
+  d.sens.tmp2 = thermistor_lookup(IOCFG_GETA(IOP_TMP2), ram_extabs.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
  else
   d.sens.tmp2 = 0; //input is not selected
 
 #ifdef MCP3204
  if (IOCFG_CHECK(IOP_GRTEMP))
-  d.sens.grts = thermistor_lookup(d.sens.add_i6, ram_extabs.grts_curve); //ADD_I6 input selected as GRTEMP sensor
+  d.sens.grts = thermistor_lookup(IOCFG_GETA(IOP_GRTEMP), ram_extabs.grts_curve); //ADD_I6 input selected as GRTEMP sensor
  else
   d.sens.grts = 0; //input is not selected
 #endif
 #endif
 
 #ifndef SECU3T
- int16_t add_ix;
- if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i3i)
-  add_ix = d.sens.add_i3; //ADD_I3 input selected as input for fuel tank level sensor
-#ifdef MCP3204
- else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i5i)
-  add_ix = d.sens.add_i5; //ADD_I5 input selected as input for fuel tank level sensor
- else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i6i)
-  add_ix = d.sens.add_i6; //ADD_I6 input selected
- else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i7i)
-  add_ix = d.sens.add_i7; //ADD_I7 input selected
- else if (IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTLS_I) == (fnptr_t)iocfg_g_add_i8i)
-  add_ix = d.sens.add_i8; //ADD_I8 input selected as input for fuel tank level sensor
-#endif
- else
+ if (IOCFG_CHECK(IOP_FTLS_I))
  {
-  d.sens.ftls = 0; //input is not selected
-  goto ftls_notsel;
+  int16_t add_ix = (((uint32_t)IOCFG_GETA(IOP_FTLS_I)) * ftlscor_ucoef()) >> 12; //apply board voltage correction
+  d.sens.ftls = exsens_lookup(add_ix, ram_extabs.ftls_curve);
  }
- add_ix = (((uint32_t)add_ix) * ftlscor_ucoef()) >> 12; //apply board voltage correction
- d.sens.ftls = exsens_lookup(add_ix, ram_extabs.ftls_curve);
-ftls_notsel:
+ else
+  d.sens.ftls = 0; //input is not selected
 #endif
 
 #ifndef SECU3T
- if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i3i)
-  d.sens.egts = exsens_lookup(d.sens.add_i3, ram_extabs.egts_curve); //ADD_I3 input selected as input for EGT sensor
-#ifdef TPIC8101
- else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.egts = exsens_lookup(d.sens.add_i4, ram_extabs.egts_curve); //ADD_I4 input selected as input for EGT sensor
-#endif
-#ifdef MCP3204
- else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.egts = exsens_lookup(d.sens.add_i5, ram_extabs.egts_curve); //ADD_I5 input selected as input for EGT sensor
- else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.egts = exsens_lookup(d.sens.add_i6, ram_extabs.egts_curve); //ADD_I6 input selected
- else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.egts = exsens_lookup(d.sens.add_i7, ram_extabs.egts_curve); //ADD_I7 input selected
- else if (IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_EGTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.egts = exsens_lookup(d.sens.add_i8, ram_extabs.egts_curve); //ADD_I8 input selected as input for EGT sensor
-#endif
+ if (IOCFG_CHECK(IOP_EGTS_I))
+  d.sens.egts = exsens_lookup(IOCFG_GETA(IOP_EGTS_I), ram_extabs.egts_curve);
  else
   d.sens.egts = 0; //input is not selected
 #endif
 
 #ifndef SECU3T
 #ifdef MCP3204
- if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.ops = exsens_lookup(d.sens.add_i5, ram_extabs.ops_curve); //ADD_I5 input selected as input for fuel tank level sensor
- else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.ops = exsens_lookup(d.sens.add_i6, ram_extabs.ops_curve); //ADD_I6 input selected
- else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.ops = exsens_lookup(d.sens.add_i7, ram_extabs.ops_curve); //ADD_I7 input selected
- else if (IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_OPS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.ops = exsens_lookup(d.sens.add_i8, ram_extabs.ops_curve); //ADD_I8 input selected as input for fuel tank level sensor
+ if (IOCFG_CHECK(IOP_OPS_I))
+  d.sens.ops = exsens_lookup(IOCFG_CHECK(IOP_OPS_I), ram_extabs.ops_curve);
  else
   d.sens.ops = 0; //input is not selected
 #endif
@@ -374,23 +387,10 @@ ftls_notsel:
 
 //select input for lambda sensor
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
-#ifndef SECU3T //SECU-3i
- if (IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i1 || IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i1i)
-  d.sens.lambda[0] = d.sens.add_i1; //use ADD_I1 /*d.sens.inst_add_i1*/
- else if (IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_LAMBDA) == (fnptr_t)iocfg_g_add_i3i)
-  d.sens.lambda[0] = d.sens.add_i3; //use ADD_I3
- if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i3 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i3i)
-  d.sens.lambda[1] = d.sens.add_i3; //use ADD_I3
-#else
  if (IOCFG_CHECK(IOP_LAMBDA))
-  d.sens.lambda[0] = d.sens.add_i1; //in SECU-3T only ADD_I1 can be used for lambda sensor
- if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i2i)
-  d.sens.lambda[1] = d.sens.add_i2; //use ADD_I2
-#endif
-#ifdef TPIC8101
- else if (IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_LAMBDA2) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.lambda[1] = d.sens.add_i4; //use ADD_I4
-#endif
+  d.sens.lambda[0] = IOCFG_GETA(IOP_LAMBDA);
+ if (IOCFG_CHECK(IOP_LAMBDA2))
+  d.sens.lambda[1] = IOCFG_GETA(IOP_LAMBDA2);
 
  //calculate mix of two lambda sensors
  if (IOCFG_CHECK(IOP_LAMBDA) && IOCFG_CHECK(IOP_LAMBDA2))
@@ -408,49 +408,27 @@ ftls_notsel:
 #endif
 
  //select an input for MAF sensor
- if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_s || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_map_si)
-  d.sens.maf = calc_maf_flow(ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw); //MAP input selected as input for MAF sensor
-#ifdef TPIC8101
- else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i4i)
-  d.sens.maf = calc_maf_flow(d.sens.add_i4); //ADD_I4 input selected as input for MAF sensor
-#endif
-#ifndef SECU3T
-#ifdef MCP3204
- else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.maf = calc_maf_flow(d.sens.add_i5); //ADD_I5 input selected as input for MAF sensor
- else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.maf = calc_maf_flow(d.sens.add_i6); //ADD_I6 input selected as input for MAF sensor
- else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.maf = calc_maf_flow(d.sens.add_i7); //ADD_I7 input selected as input for MAF sensor
- else if (IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_MAF) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.maf = calc_maf_flow(d.sens.add_i8); //ADD_I8 input selected as input for MAF sensor
-#endif
-#endif
+ if (IOCFG_CHECK(IOP_MAF))
+  d.sens.maf = calc_maf_flow(IOCFG_GETA(IOP_MAF));
  else
   d.sens.maf = 0; //input is not selected
 
 #ifndef SECU3T
-if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
-{ //use sensor
+ if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
+ { //use sensor
 #ifdef MCP3204
- if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i5i)
-  d.sens.fts = exsens_lookup(d.sens.add_i5, ram_extabs.fts_curve); //ADD_I5 input selected as input for fuel temperature sensor
- else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i6i)
-  d.sens.fts = exsens_lookup(d.sens.add_i6, ram_extabs.fts_curve); //ADD_I6 input selected as input for fuel temperature sensor
- else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i7i)
-  d.sens.fts = exsens_lookup(d.sens.add_i7, ram_extabs.fts_curve); //ADD_I7 input selected as input for fuel temperature sensor
- else if (IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8 || IOCFG_CB(IOP_FTS_I) == (fnptr_t)iocfg_g_add_i8i)
-  d.sens.fts = exsens_lookup(d.sens.add_i8, ram_extabs.fts_curve); //ADD_I8 input selected as input for fuel temperature sensor
- else
-  d.sens.fts = 0; //input is not selected
+  if (IOCFG_CHECK(IOP_FTS_I))
+   d.sens.fts = exsens_lookup(IOCFG_GETA(IOP_FTS_I), ram_extabs.fts_curve);
+  else
+   d.sens.fts = 0; //input is not selected
 #endif
-}
-else
-{//use CTS+IAT model
- //FTS = IAT + IAT * (CLT - IAT) * 0.01
- int32_t add = (((int32_t)(d.sens.temperat - d.sens.air_temp) * d.sens.air_temp) * 655);
- d.sens.fts = d.sens.air_temp + (add >> 18); //TODO: use SHTDIV32() macro instead of a simple right shift (this will increase accuracy)
-}
+ }
+ else
+ {//use CTS+IAT model
+  //FTS = IAT + IAT * (CLT - IAT) * 0.01
+  int32_t add = (((int32_t)(d.sens.temperat - d.sens.air_temp) * d.sens.air_temp) * 655);
+  d.sens.fts = d.sens.air_temp + (add >> 18); //TODO: use SHTDIV32() macro instead of a simple right shift (this will increase accuracy)
+ }
 #endif
 }
 

@@ -29,6 +29,19 @@
 
 #include <stdint.h>
 
+/**Used for rounding-up when transforming from floating point value into a signed integer.
+ * Note: it is intended for use with constants
+ */
+#define ROUND(x) ((int16_t)( (x) + 0.5 - ((x) < 0) ))
+
+/**Used for rounding-up when transforming from floating point value into an unsigned integer.
+ * Note: it is intended for use with constants
+ */
+#define ROUNDU16(x) ((uint16_t)( (x) + 0.5 - ((x) < 0) ))
+
+/**32 bit integer version of ROUND() */
+#define ROUND32(x) ((int32_t)( (x) + 0.5 - ((x) < 0) ))
+
 /** f(x) liniar interpolation for function with single argument
  * \param x argument value
  * \param a1 function value at the beginning of interval

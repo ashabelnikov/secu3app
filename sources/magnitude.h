@@ -29,15 +29,6 @@
 
 #include "adc.h"
 
-/**Used for rounding-up when transforming from floating point value into integer.
- * Note: it is intended for use with constants
- */
-#define ROUND(x) ((int16_t)( (x) + 0.5 - ((x) < 0) ))
-#define ROUNDU16(x) ((uint16_t)( (x) + 0.5 - ((x) < 0) ))
-/**32 bit integer version of ROUND() */
-#define ROUND32(x) ((int32_t)( (x) + 0.5 - ((x) < 0) ))
-
-
 /**Number of discretes per 1 kPa for MAP */
 #define MAP_PHYSICAL_MAGNITUDE_MULTIPLIER  64
 

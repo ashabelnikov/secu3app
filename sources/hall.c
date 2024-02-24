@@ -191,7 +191,7 @@ void ckps_init_state(void)
 {
  _BEGIN_ATOMIC_BLOCK();
 
- if ((IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ckps) || (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ckpsi))
+ if (IOCFG_CMP(IOP_CKPS, IOP_CKPS))
  {
   CLEARBIT(flags2, F_SELEDGE); //falling edge
   hall.ckps_inpalt = 1; //not remapped

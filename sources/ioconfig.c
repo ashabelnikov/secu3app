@@ -28,14 +28,16 @@
 #include "port/port.h"
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
+#include "port/pgmspace.h"
 #include "bitmask.h"
 #include <stdint.h>
 #include "ioconfig.h"
+#include "adc.h"
+#include "ce_errors.h"
+#include "tables.h"
 
 #ifdef IOCFG_FUNC_INIT
 // Can save up to 200 bytes of program memory, but loosing a little in speed
-#include "port/pgmspace.h"
-#include "tables.h"
 
 void IOCFG_INIT(uint8_t io_id, uint8_t io_state)
 {
@@ -52,13 +54,57 @@ void IOCFG_SETF(uint8_t io_id, uint8_t io_value)
  ((iocfg_pfn_set)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(io_value);
 }
 
-uint8_t IOCFG_GET(uint8_t io_id)
+uint16_t IOCFG_GET(uint8_t io_id)
 {
- return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))();
+ return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(0); //get digital value from input
+}
+
+uint16_t IOCFG_GETA(uint8_t io_id)
+{
+ return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(1); //get analog value from input
+}
+
+uint16_t IOCFG_GETE(uint8_t io_id)
+{
+ return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_plugs[io_id]))(2); //get flag of the related CE error
+}
+
+uint8_t IOCFG_CMP(uint8_t ios_id, uint8_t iop_id)
+{
+ return (IOCFG_CMPN(ios_id, iop_id) || IOCFG_CMPI(ios_id, iop_id));
 }
 #endif
 
-uint8_t iocfg_g_stub(void)
+uint16_t IOCFG_GETAS(uint8_t ios_id)
+{
+ uint8_t ioi = IOCFG_GET_IOI(ios_id);
+ if (ioi==127)
+  return 0; //not mapped to any input
+
+ if (ioi & 0x80)
+  return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_slotsi[ios_id]))(1);
+ else
+  return ((iocfg_pfn_get)_IOREM_GPTR(&fw_data.cddata.iorem.v_slots[ios_id]))(1);
+}
+
+//from measure.c
+extern int16_t iocfg_map_s;
+extern int16_t iocfg_add_i1;
+extern int16_t iocfg_add_i2;
+#ifndef SECU3T
+extern int16_t iocfg_add_i3;
+#endif
+#ifdef TPIC8101
+extern int16_t iocfg_add_i4;
+#endif
+#ifdef MCP3204
+extern int16_t iocfg_add_i5;
+extern int16_t iocfg_add_i6;
+extern int16_t iocfg_add_i7;
+extern int16_t iocfg_add_i8;
+#endif
+
+uint16_t iocfg_g_stub(uint8_t doa)
 {
  //this is a stub! Always return 0
  return 0;
@@ -418,13 +464,17 @@ void iocfg_i_psi(uint8_t value)
  DDRD &= ~_BV(DDD3);                   //input
 }
 
-uint8_t iocfg_g_ps(void)
+uint16_t iocfg_g_ps(uint8_t doa)
 {
+ if (doa)
+  return 0x8000 | (!!CHECKBIT(PIND, PIND3)); //analog mode is not supported on this input
  return !!CHECKBIT(PIND, PIND3);
 }
 
-uint8_t iocfg_g_psi(void)              //inverted version
+uint16_t iocfg_g_psi(uint8_t doa)      //inverted version
 {
+ if (doa)
+  return 0x8000 | (!CHECKBIT(PIND, PIND3)); //analog mode is not supported on this input
  return !CHECKBIT(PIND, PIND3);
 }
 
@@ -440,14 +490,25 @@ void iocfg_i_add_i1i(uint8_t value)
  CLEARBIT(DDRA, DDA6);                 //input
 }
 
-uint8_t iocfg_g_add_i1(void)
+uint16_t iocfg_g_add_i1(uint8_t doa)
 {
- return !!CHECKBIT(PINA, PINA6);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA6);      //digital
+ else if (1==doa)
+  return iocfg_add_i1;
+ return ce_is_error(ECUERROR_ADD_I1_SENSOR);
 }
 
-uint8_t iocfg_g_add_i1i(void)          //inverted version
+uint16_t iocfg_g_add_i1i(uint8_t doa)  //inverted version
 {
- return !CHECKBIT(PINA, PINA6);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA6);        //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i1;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I1_SENSOR);
 }
 
 void iocfg_i_add_i2(uint8_t value)
@@ -462,14 +523,25 @@ void iocfg_i_add_i2i(uint8_t value)
  CLEARBIT(DDRA, DDA5);                 //input
 }
 
-uint8_t iocfg_g_add_i2(void)
+uint16_t iocfg_g_add_i2(uint8_t doa)
 {
- return !!CHECKBIT(PINA, PINA5);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA5);      //digital
+ else if (1==doa)
+  return iocfg_add_i2;                 //analog
+ return ce_is_error(ECUERROR_ADD_I2_SENSOR);
 }
 
-uint8_t iocfg_g_add_i2i(void)          //inverted version
+uint16_t iocfg_g_add_i2i(uint8_t doa)  //inverted version
 {
- return !CHECKBIT(PINA, PINA5);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA5);       //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i2;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I2_SENSOR);
 }
 
 void iocfg_i_ref_s(uint8_t value)
@@ -484,13 +556,17 @@ void iocfg_i_ref_si(uint8_t value)     //inverted version
  CLEARBIT(DDRD, DDD2);                 //input
 }
 
-uint8_t iocfg_g_ref_s(void)
+uint16_t iocfg_g_ref_s(uint8_t doa)
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(PIND, PIND2); //analog mode is not supported on this input
  return !!CHECKBIT(PIND, PIND2);
 }
 
-uint8_t iocfg_g_ref_si(void)           //inverted version
+uint16_t iocfg_g_ref_si(uint8_t doa)   //inverted version
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(PIND, PIND2); //analog mode is not supported on this input
  return !CHECKBIT(PIND, PIND2);
 }
 
@@ -506,13 +582,17 @@ void iocfg_i_gas_vi(uint8_t value)     //inverted version
  CLEARBIT(DDRC, DDC6);                 //input
 }
 
-uint8_t iocfg_g_gas_v(void)
+uint16_t iocfg_g_gas_v(uint8_t doa)
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(PINC, PINC6); //analog mode is not supported on this input
  return !!CHECKBIT(PINC, PINC6);
 }
 
-uint8_t iocfg_g_gas_vi(void)           //inverted version
+uint16_t iocfg_g_gas_vi(uint8_t doa)   //inverted version
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(PINC, PINC6); //analog mode is not supported on this input
  return !CHECKBIT(PINC, PINC6);
 }
 
@@ -528,13 +608,17 @@ void iocfg_i_ckpsi(uint8_t value)     //inverted version
  CLEARBIT(DDRD, DDD6);                 //input
 }
 
-uint8_t iocfg_g_ckps(void)
+uint16_t iocfg_g_ckps(uint8_t doa)
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(PIND, PIND6); //analog mode is not supported on this input
  return !!CHECKBIT(PIND, PIND6);
 }
 
-uint8_t iocfg_g_ckpsi(void)           //inverted version
+uint16_t iocfg_g_ckpsi(uint8_t doa)    //inverted version
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(PIND, PIND6); //analog mode is not supported on this input
  return !CHECKBIT(PIND, PIND6);
 }
 
@@ -550,36 +634,70 @@ void iocfg_i_map_si(uint8_t value)
  CLEARBIT(DDRA, DDA2);                 //input
 }
 
-uint8_t iocfg_g_map_s(void)
+uint16_t iocfg_g_map_s(uint8_t doa)
 {
- return !!CHECKBIT(PINA, PINA2);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA2);      //digital
+ else if (1==doa)
+  return iocfg_map_s;                   //analog
+ return ce_is_error(ECUERROR_MAP_SENSOR_FAIL);
 }
 
-uint8_t iocfg_g_map_si(void)          //inverted version
+uint16_t iocfg_g_map_si(uint8_t doa)   //inverted version
 {
- return !CHECKBIT(PINA, PINA2);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA2);       //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_map_s;//do inversion
+  return r < 0 ? 0 : r;                //analog
+ }
+ return ce_is_error(ECUERROR_MAP_SENSOR_FAIL);
 }
 
 void iocfg_i_add_i4(uint8_t value)
 {
+#ifdef TPIC8101
  WRITEBIT(PORTA, PA3, value);          //controlls pullup resistor
  CLEARBIT(DDRA, DDA3);                 //input
+#endif
 }
 
 void iocfg_i_add_i4i(uint8_t value)
 {
+#ifdef TPIC8101
  WRITEBIT(PORTA, PA3, value);          //controlls pullup resistor
  CLEARBIT(DDRA, DDA3);                 //input
+#endif
 }
 
-uint8_t iocfg_g_add_i4(void)
+uint16_t iocfg_g_add_i4(uint8_t doa)
 {
- return !!CHECKBIT(PINA, PINA3);
+#ifdef TPIC8101
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA3);      //digital
+ else if (1==doa)
+  return iocfg_add_i4;                  //analog
+ return ce_is_error(ECUERROR_ADD_I4_SENSOR);
+#else
+ return 0;                             //stub!
+#endif
 }
 
-uint8_t iocfg_g_add_i4i(void)          //inverted version
+uint16_t iocfg_g_add_i4i(uint8_t doa)  //inverted version
 {
- return !CHECKBIT(PINA, PINA3);
+#ifdef TPIC8101
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA3);       //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i4;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I4_SENSOR);
+#else
+ return 0;                             //stub!
+#endif
 }
 
 #ifdef MCP3204
@@ -1178,13 +1296,17 @@ void iocfg_i_psi(uint8_t value)         //!< init PS input           (inverted)
  DDRD &= ~_BV(DDD3);                    //input
 }
 
-uint8_t iocfg_g_ps(void)                //!< get PS input value
+uint16_t iocfg_g_ps(uint8_t doa)        //!< get PS input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(PIND, PIND3);; //analog mode is not supported on this input
  return !!CHECKBIT(PIND, PIND3);
 }
 
-uint8_t iocfg_g_psi(void)               //!< get PS input value      (inverted)
+uint16_t iocfg_g_psi(uint8_t doa)       //!< get PS input value      (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(PIND, PIND3); //analog mode is not supported on this input
  return !CHECKBIT(PIND, PIND3);
 }
 //-----------------------------------------------------------------------------
@@ -1200,13 +1322,17 @@ void iocfg_i_ref_si(uint8_t value)      //!< init REF_S input        (inverted)
  CLEARBIT(DDRD, DDD2);                  //input
 }
 
-uint8_t iocfg_g_ref_s(void)             //!< get REF_S input
+uint16_t iocfg_g_ref_s(uint8_t doa)     //!< get REF_S input
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(PIND, PIND2); //analog mode is not supported on this input
  return !!CHECKBIT(PIND, PIND2);
 }
 
-uint8_t iocfg_g_ref_si(void)            //!< get REF_S input         (inverted)
+uint16_t iocfg_g_ref_si(uint8_t doa)    //!< get REF_S input         (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(PIND, PIND2); //analog mode is not supported on this input
  return !CHECKBIT(PIND, PIND2);
 }
 //-----------------------------------------------------------------------------
@@ -1222,13 +1348,17 @@ void iocfg_i_ckpsi(uint8_t value)       //!< init CKPS input         (inverted)
  CLEARBIT(DDRD, DDD6);                  //input
 }
 
-uint8_t iocfg_g_ckps(void)              //!< get CKPS input
+uint16_t iocfg_g_ckps(uint8_t doa)      //!< get CKPS input
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(PIND, PIND6); //analog mode is not supported on this input
  return !!CHECKBIT(PIND, PIND6);
 }
 
-uint8_t iocfg_g_ckpsi(void)             //!< get CKPS input          (inverted)
+uint16_t iocfg_g_ckpsi(uint8_t doa)     //!< get CKPS input          (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(PIND, PIND6); //analog mode is not supported on this input
  return !CHECKBIT(PIND, PIND6);
 }
 //-----------------------------------------------------------------------------
@@ -1244,14 +1374,25 @@ void iocfg_i_add_i1i(uint8_t value)     //!< init ADD_I1 input       (inverted)
  CLEARBIT(DDRA, DDA6);                  //input
 }
 
-uint8_t iocfg_g_add_i1(void)            //!< set  ADD_I1 input
+uint16_t iocfg_g_add_i1(uint8_t doa)    //!< set  ADD_I1 input
 {
- return !!CHECKBIT(PINA, PINA6);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA6);       //digital
+ else if (1==doa)
+  return iocfg_add_i1;                  //analog
+ return ce_is_error(ECUERROR_ADD_I1_SENSOR);
 }
 
-uint8_t iocfg_g_add_i1i(void)           //!< set  ADD_I1 input       (inverted)
+uint16_t iocfg_g_add_i1i(uint8_t doa)   //!< set  ADD_I1 input       (inverted)
 {
- return !CHECKBIT(PINA, PINA6);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA6);        //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i1;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I1_SENSOR);
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_add_i2(uint8_t value)      //!< init ADD_I2 input
@@ -1266,14 +1407,25 @@ void iocfg_i_add_i2i(uint8_t value)     //!< init ADD_I2 input       (inverted)
  CLEARBIT(DDRA, DDA5);                  //input
 }
 
-uint8_t iocfg_g_add_i2(void)            //!< set  ADD_I2 input
+uint16_t iocfg_g_add_i2(uint8_t doa)    //!< set  ADD_I2 input
 {
- return !!CHECKBIT(PINA, PINA5);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA5);       //digital
+ else if (1==doa)
+  return iocfg_add_i2;                  //analog
+ return ce_is_error(ECUERROR_ADD_I2_SENSOR);
 }
 
-uint8_t iocfg_g_add_i2i(void)           //!< set  ADD_I2 input       (inverted)
+uint16_t iocfg_g_add_i2i(uint8_t doa)   //!< set  ADD_I2 input       (inverted)
 {
- return !CHECKBIT(PINA, PINA5);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA5);        //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i2;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I2_SENSOR);
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_add_i3(uint8_t value)      //!< init ADD_I3 input
@@ -1288,36 +1440,70 @@ void iocfg_i_add_i3i(uint8_t value)     //!< init ADD_I3 input       (inverted)
  CLEARBIT(DDRA, DDA4);                  //input
 }
 
-uint8_t iocfg_g_add_i3(void)            //!< set  ADD_I3 input
+uint16_t iocfg_g_add_i3(uint8_t doa)    //!< set  ADD_I3 input
 {
- return !!CHECKBIT(PINA, PINA4);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA4);       //digital
+ else if (1==doa)
+  return iocfg_add_i3;                  //analog
+ return ce_is_error(ECUERROR_ADD_I3_SENSOR);
 }
 
-uint8_t iocfg_g_add_i3i(void)           //!< set  ADD_I3 input       (inverted)
+uint16_t iocfg_g_add_i3i(uint8_t doa)   //!< set  ADD_I3 input       (inverted)
 {
- return !CHECKBIT(PINA, PINA4);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA4);        //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i3;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I3_SENSOR);
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_add_i4(uint8_t value)      //!< init ADD_I4 input
 {
+#ifdef TPIC8101
  WRITEBIT(PORTA, PA3, value);           //controlls pullup resistor
  CLEARBIT(DDRA, DDA3);                  //input
+#endif
 }
 
 void iocfg_i_add_i4i(uint8_t value)     //!< init ADD_I4 input       (inverted)
 {
+#ifdef TPIC8101
  WRITEBIT(PORTA, PA3, value);           //controlls pullup resistor
  CLEARBIT(DDRA, DDA3);                  //input
+#endif
 }
 
-uint8_t iocfg_g_add_i4(void)            //!< set  ADD_I4 input
+uint16_t iocfg_g_add_i4(uint8_t doa)    //!< set  ADD_I4 input
 {
- return !!CHECKBIT(PINA, PINA3);
+#ifdef TPIC8101
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA3);       //digital
+ else if (1==doa)
+  return iocfg_add_i4;                  //analog
+ return ce_is_error(ECUERROR_ADD_I4_SENSOR);
+#else
+ return 0;                              //stub!
+#endif
 }
 
-uint8_t iocfg_g_add_i4i(void)           //!< set  ADD_I4 input       (inverted)
+uint16_t iocfg_g_add_i4i(uint8_t doa)   //!< set  ADD_I4 input       (inverted)
 {
- return !CHECKBIT(PINA, PINA3);
+#ifdef TPIC8101
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA3);        //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i4;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I4_SENSOR);
+#else
+ return 0;                              //stub!
+#endif
 }
 //-----------------------------------------------------------------------------
 void iocfg_i_gas_v(uint8_t value)       //!< init GAS_V input
@@ -1332,13 +1518,17 @@ void iocfg_i_gas_vi(uint8_t value)      //!< init GAS_V input        (inverted)
  SETBIT(spi_IODIRA, 0);                 //input
 }
 
-uint8_t iocfg_g_gas_v(void)             //!< get GAS_V input value
+uint16_t iocfg_g_gas_v(uint8_t doa)     //!< get GAS_V input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(spi_PORTA, 0); //analog mode is not supported on this input
  return !!CHECKBIT(spi_PORTA, 0);
 }
 
-uint8_t iocfg_g_gas_vi(void)            //!< get GAS_V input value   (inverted)
+uint16_t iocfg_g_gas_vi(uint8_t doa)    //!< get GAS_V input value   (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(spi_PORTA, 0); //analog mode is not supported on this input
  return !CHECKBIT(spi_PORTA, 0);
 }
 //-----------------------------------------------------------------------------
@@ -1354,13 +1544,17 @@ void iocfg_i_igni(uint8_t value)        //!< init IGN_I input        (inverted)
  SETBIT(spi_IODIRA, 3);                 //input
 }
 
-uint8_t iocfg_g_ign(void)               //!< get IGN_I input value
+uint16_t iocfg_g_ign(uint8_t doa)       //!< get IGN_I input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(spi_PORTA, 3); //analog mode is not supported on this input
  return !!CHECKBIT(spi_PORTA, 3);
 }
 
-uint8_t iocfg_g_igni(void)              //!< get IGN_I input value   (inverted)
+uint16_t iocfg_g_igni(uint8_t doa)      //!< get IGN_I input value   (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(spi_PORTA, 3); //analog mode is not supported on this input
  return !CHECKBIT(spi_PORTA, 3);
 }
 //-----------------------------------------------------------------------------
@@ -1376,13 +1570,17 @@ void iocfg_i_cond_ii(uint8_t value)     //!< init COND_I input        (inverted)
  SETBIT(spi_IODIRA, 2);                 //input
 }
 
-uint8_t iocfg_g_cond_i(void)            //!< get COND_I input value
+uint16_t iocfg_g_cond_i(uint8_t doa)    //!< get COND_I input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(spi_PORTA, 2); //analog mode is not supported on this input
  return !!CHECKBIT(spi_PORTA, 2);
 }
 
-uint8_t iocfg_g_cond_ii(void)           //!< get COND_I input value   (inverted)
+uint16_t iocfg_g_cond_ii(uint8_t doa)   //!< get COND_I input value   (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(spi_PORTA, 2); //analog mode is not supported on this input
  return !CHECKBIT(spi_PORTA, 2);
 }
 //-----------------------------------------------------------------------------
@@ -1398,13 +1596,17 @@ void iocfg_i_epas_ii(uint8_t value)     //!< init EPAS_I input       (inverted)
  SETBIT(spi_IODIRA, 1);                 //input
 }
 
-uint8_t iocfg_g_epas_i(void)            //!< get EPAS_I input value
+uint16_t iocfg_g_epas_i(uint8_t doa)    //!< get EPAS_I input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(spi_PORTA, 1); //analog mode is not supported on this input
  return !!CHECKBIT(spi_PORTA, 1);
 }
 
-uint8_t iocfg_g_epas_ii(void)           //!< get EPAS_I input value  (inverted)
+uint16_t iocfg_g_epas_ii(uint8_t doa)   //!< get EPAS_I input value  (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(spi_PORTA, 1); //analog mode is not supported on this input
  return !CHECKBIT(spi_PORTA, 1);
 }
 //-----------------------------------------------------------------------------
@@ -1421,13 +1623,17 @@ void iocfg_i_gpa4_ii(uint8_t value)     //!< init GPA4_I input       (inverted)
  SETBIT(spi_IODIRA, 4);                 //input
 }
 
-uint8_t iocfg_g_gpa4_i(void)            //!< get GPA4_I input value
+uint16_t iocfg_g_gpa4_i(uint8_t doa)    //!< get GPA4_I input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(spi_PORTA, 4); //analog mode is not supported on this input
  return !!CHECKBIT(spi_PORTA, 4);
 }
 
-uint8_t iocfg_g_gpa4_ii(void)           //!< get GPA4_I input value  (inverted)
+uint16_t iocfg_g_gpa4_ii(uint8_t doa)   //!< get GPA4_I input value  (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(spi_PORTA, 4); //analog mode is not supported on this input
  return !CHECKBIT(spi_PORTA, 4);
 }
 //-----------------------------------------------------------------------------
@@ -1444,13 +1650,17 @@ void iocfg_i_gpa5_ii(uint8_t value)     //!< init GPA5_I input       (inverted)
  SETBIT(spi_IODIRA, 5);                 //input
 }
 
-uint8_t iocfg_g_gpa5_i(void)            //!< get GPA5_I input value
+uint16_t iocfg_g_gpa5_i(uint8_t doa)    //!< get GPA5_I input value
 {
+ if (doa)
+  return 0x8000 | !!CHECKBIT(spi_PORTA, 5); //analog mode is not supported on this input
  return !!CHECKBIT(spi_PORTA, 5);
 }
 
-uint8_t iocfg_g_gpa5_ii(void)           //!< get GPA5_I input value  (inverted)
+uint16_t iocfg_g_gpa5_ii(uint8_t doa)   //!< get GPA5_I input value  (inverted)
 {
+ if (doa)
+  return 0x8000 | !CHECKBIT(spi_PORTA, 5); //analog mode is not supported on this input
  return !CHECKBIT(spi_PORTA, 5);
 }
 //-----------------------------------------------------------------------------
@@ -1465,27 +1675,42 @@ void iocfg_i_add_i5i(uint8_t value)     //inverted version
  //stub
 }
 
-uint8_t iocfg_g_add_i5(void)
+uint16_t iocfg_g_add_i5(uint8_t doa)
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[0];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) > 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[0];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) > 2048);
+ }
+ else if (1==doa)
+  return iocfg_add_i5;                    //analog
+ return ce_is_error(ECUERROR_ADD_I5_SENSOR);
 #else
  return 0; //stub
 #endif
 }
 
-uint8_t iocfg_g_add_i5i(void)          //inverted version
+uint16_t iocfg_g_add_i5i(uint8_t doa)    //inverted version
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[0];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) < 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[0];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) < 2048);
+ }
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i5;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I5_SENSOR);
 #else
  return 0; //stub
 #endif
@@ -1502,27 +1727,42 @@ void iocfg_i_add_i6i(uint8_t value)     //inverted version
  //stub
 }
 
-uint8_t iocfg_g_add_i6(void)
+uint16_t iocfg_g_add_i6(uint8_t doa)
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[1];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) > 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[1];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) > 2048);
+ }
+ else if (1==doa)
+  return iocfg_add_i6;                  //analog
+ return ce_is_error(ECUERROR_ADD_I6_SENSOR);
 #else
  return 0; //stub
 #endif
 }
 
-uint8_t iocfg_g_add_i6i(void)          //inverted version
+uint16_t iocfg_g_add_i6i(uint8_t doa)   //inverted version
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[1];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) < 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[1];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) < 2048);
+ }
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i6;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I6_SENSOR);
 #else
  return 0; //stub
 #endif
@@ -1539,27 +1779,42 @@ void iocfg_i_add_i7i(uint8_t value)     //inverted version
  //stub
 }
 
-uint8_t iocfg_g_add_i7(void)
+uint16_t iocfg_g_add_i7(uint8_t doa)
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[2];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) > 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[2];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) > 2048);
+ }
+ else if (1==doa)
+  return iocfg_add_i7;                  //analog
+ return ce_is_error(ECUERROR_ADD_I7_SENSOR);
 #else
  return 0; //stub
 #endif
 }
 
-uint8_t iocfg_g_add_i7i(void)          //inverted version
+uint16_t iocfg_g_add_i7i(uint8_t doa)   //inverted version
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[2];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) < 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[2];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) < 2048);
+ }
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i7;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I7_SENSOR);
 #else
  return 0; //stub
 #endif
@@ -1576,27 +1831,42 @@ void iocfg_i_add_i8i(uint8_t value)     //inverted version
  //stub
 }
 
-uint8_t iocfg_g_add_i8(void)
+uint16_t iocfg_g_add_i8(uint8_t doa)
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[3];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) > 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[3];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) > 2048);
+ }
+ else if (1==doa)
+  return iocfg_add_i8;
+ return ce_is_error(ECUERROR_ADD_I8_SENSOR);
 #else
  return 0; //stub
 #endif
 }
 
-uint8_t iocfg_g_add_i8i(void)          //inverted version
+uint16_t iocfg_g_add_i8i(uint8_t doa)    //inverted version
 {
 #ifdef MCP3204
- uint16_t value;
- _BEGIN_ATOMIC_BLOCK();
- value = spiadc_chan[3];
- _END_ATOMIC_BLOCK();
- return ((value & 0xFFF) < 2048);
+ if (0==doa)
+ { //digital
+  uint16_t value;
+  _BEGIN_ATOMIC_BLOCK();
+  value = spiadc_chan[3];
+  _END_ATOMIC_BLOCK();
+  return ((value & 0xFFF) < 2048);
+ }
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_add_i8;//do inversion
+  return r < 0 ? 0 : r;                 //analog
+ }
+ return ce_is_error(ECUERROR_ADD_I8_SENSOR);
 #else
  return 0; //stub
 #endif
@@ -1615,14 +1885,25 @@ void iocfg_i_map_si(uint8_t value)
  CLEARBIT(DDRA, DDA2);                 //input
 }
 
-uint8_t iocfg_g_map_s(void)
+uint16_t iocfg_g_map_s(uint8_t doa)
 {
- return !!CHECKBIT(PINA, PINA2);
+ if (0==doa)
+  return !!CHECKBIT(PINA, PINA2);      //digital
+ else if (1==doa)
+  return iocfg_map_s;                  //analog
+ return ce_is_error(ECUERROR_MAP_SENSOR_FAIL);
 }
 
-uint8_t iocfg_g_map_si(void)          //inverted version
+uint16_t iocfg_g_map_si(uint8_t doa)          //inverted version
 {
- return !CHECKBIT(PINA, PINA2);
+ if (0==doa)
+  return !CHECKBIT(PINA, PINA2);       //digital
+ else if (1==doa)
+ {
+  int16_t r = ADC_DISCRNUM - iocfg_map_s;//do inversion
+  return r < 0 ? 0 : r;                //analog
+ }
+ return ce_is_error(ECUERROR_MAP_SENSOR_FAIL);
 }
 
 //-----------------------------------------------------------------------------

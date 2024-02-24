@@ -120,35 +120,35 @@ void cams_init_state(void)
 
  //Collect information about remapping of REF_S input.
  //Interrupt edge for VR input depends on REF_S inversion, but will be overriden by cams_vr_set_edge_type() if REF_S is not remapped.
- if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_s)
+ if (IOCFG_CMPN(IOP_REF_S, IOP_REF_S))
  {
   camstate.ref_s_inpalt = 1;                //REF_S not remapped, normal operation - reference sensor
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
- else if (IOCFG_CB(IOP_REF_S) == (fnptr_t)iocfg_g_ref_si)
+ else if (IOCFG_CMPI(IOP_REF_S, IOP_REF_S))
  {
   camstate.ref_s_inpalt = 1;                //REF_S not remapped, normal operation - reference sensor
   EICRA|= _BV(ISC01) | 0;                   //inversion
  }
 #ifdef SPEED_SENSOR
- else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_s)
+ else if (IOCFG_CMPN(IOP_REF_S, IOP_SPDSENS))
  {
   camstate.ref_s_inpalt = 2;                //REF_S remapped to VSS
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
- else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ref_si)
+ else if (IOCFG_CMPI(IOP_REF_S, IOP_SPDSENS))
  {
   camstate.ref_s_inpalt = 2;                //REF_S remapped to VSS
   EICRA|= _BV(ISC01) | 0;                   //inversion
  }
 #endif
 #ifdef PHASE_SENSOR
- else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_s)
+ else if (IOCFG_CMPN(IOP_REF_S, IOP_PS))
  {
   camstate.ref_s_inpalt = 3;                //REF_S remapped to PS
   EICRA|= _BV(ISC01) | _BV(ISC00);
  }
- else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ref_si)
+ else if (IOCFG_CMPI(IOP_REF_S, IOP_PS))
  {
   camstate.ref_s_inpalt = 3;                //REF_S remapped to PS
   EICRA|= _BV(ISC01) | 0;                   //inversion
@@ -156,13 +156,13 @@ void cams_init_state(void)
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  //remapping of REF_S to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
- else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ref_s)
+ else if (IOCFG_CMPN(IOP_REF_S, IOP_CKPS))
  {
   camstate.ref_s_inpalt = 4;                //REF_S remapped to CKP sensor
   EICRA|= _BV(ISC01) | _BV(ISC00);
   WRITEBIT(flags2, F_SELEDGE, 1);           //save selected edge type
  }
- else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ref_si)
+ else if (IOCFG_CMPI(IOP_REF_S, IOP_CKPS))
  {
   camstate.ref_s_inpalt = 4;                //REF_S remapped to CKP sensor
   EICRA|= _BV(ISC01) | 0;                   //inversion
@@ -174,23 +174,23 @@ void cams_init_state(void)
 
  //Collect information about remapping of PS input
  //Interrupt edge for Hall input depends only on PS inversion
- if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_ps)
+ if (IOCFG_CMPN(IOP_PS, IOP_PS))
  {
   camstate.ps_inpalt = 1;                   //PS not remapped, normal operation - phase sensor
   EICRA|= _BV(ISC11) | _BV(ISC10);
  }
- else if (IOCFG_CB(IOP_PS) == (fnptr_t)iocfg_g_psi)
+ else if (IOCFG_CMPI(IOP_PS, IOP_PS))
  {
   camstate.ps_inpalt = 1;                   //PS not remapped, normal operation - phase sensor
   EICRA|= _BV(ISC11) | 0;                   //inverted
  }
 #ifdef SPEED_SENSOR
- else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_ps)
+ else if (IOCFG_CMPN(IOP_PS, IOP_SPDSENS))
  {
   camstate.ps_inpalt = 2;                   //PS remapped to VSS
   EICRA|= _BV(ISC11) | _BV(ISC10);
  }
- else if (IOCFG_CB(IOP_SPDSENS) == (fnptr_t)iocfg_g_psi)
+ else if (IOCFG_CMPI(IOP_PS, IOP_SPDSENS))
  {
   camstate.ps_inpalt = 2;                   //PS remapped to VSS
   EICRA|= _BV(ISC11) | 0;                   //inverted
@@ -198,13 +198,13 @@ void cams_init_state(void)
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  //remapping of PS to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
- else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_ps)
+ else if (IOCFG_CMPN(IOP_PS, IOP_CKPS))
  {
   camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor
   EICRA|= _BV(ISC11) | _BV(ISC10);
   WRITEBIT(flags2, F_SELEDGE, 1);           //save selected edge type
  }
- else if (IOCFG_CB(IOP_CKPS) == (fnptr_t)iocfg_g_psi)
+ else if (IOCFG_CMPI(IOP_PS, IOP_CKPS))
  {
   camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor
   EICRA|= _BV(ISC11) | 0;                   //inverted

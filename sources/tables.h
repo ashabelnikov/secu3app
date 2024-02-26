@@ -966,11 +966,14 @@ typedef struct params_t
 
   uint16_t inj_cranktorun_time1;         //!< Time in seconds for going from the crank position to the run position (1 tick = 10ms) at 70°C
 
+  int16_t  gps_curve_offset;             //!< offset of curve in volts, can be negative
+  int16_t  gps_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[130];
+  uint8_t  reserved[126];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

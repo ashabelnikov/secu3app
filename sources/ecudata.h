@@ -163,6 +163,7 @@ typedef struct sensors_t
 
 #ifndef SECU3T //SECU-3i
  int16_t tmp2;                           //!< Secondary temperature sensor (gas temperature)
+ int16_t gps;                            //!< Gas pressure sensor (LPG eq.)
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)

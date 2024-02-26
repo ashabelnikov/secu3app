@@ -425,9 +425,9 @@ void pwm2_init_state(void)
 #ifndef SPLIT_ANGLE
  //PWM1:
 #ifdef SECU3T
- if (IOCFG_CMP(IOP_ADD_O1, IOP_PWM1))
+ if (IOCFG_CMP(IOP_IGN_OUT5, IOP_PWM1))
   pwm2.iomode[0] = 0; //ADD_O1
- else if (IOCFG_CMP(IOP_ADD_O2, IOP_PWM1))
+ else if (IOCFG_CMP(IOP_IGN_OUT6, IOP_PWM1))
   pwm2.iomode[0] = 1; //ADD_O2
 #else //SECU-3i
  if (IOCFG_CMP(IOP_IGN_OUT5, IOP_PWM1))
@@ -448,9 +448,9 @@ void pwm2_init_state(void)
 #ifdef FUEL_INJECT
  //FL_CONS:
 #ifdef SECU3T
- else if (IOCFG_CMP(IOP_ADD_O1, IOP_FL_CONS))
+ else if (IOCFG_CMP(IOP_IGN_OUT5, IOP_FL_CONS))
   {pwm2.iomode[0] = 0; pwm2.compa_mode = 1;} //ADD_O1
- else if (IOCFG_CMP(IOP_ADD_O2, IOP_FL_CONS))
+ else if (IOCFG_CMP(IOP_IGN_OUT6, IOP_FL_CONS))
   {pwm2.iomode[0] = 1; pwm2.compa_mode = 1;} //ADD_O2
 #else //SECU-3i
  if (IOCFG_CMP(IOP_IGN_OUT5, IOP_FL_CONS))
@@ -477,9 +477,9 @@ void pwm2_init_state(void)
 
  //PWM2:
 #ifdef SECU3T
- if (IOCFG_CMP(IOP_ADD_O1, IOP_PWM2))
+ if (IOCFG_CMP(IOP_IGN_OUT5, IOP_PWM2))
   pwm2.iomode[1] = 0; //ADD_O1
- else if (IOCFG_CMP(IOP_ADD_O2, IOP_PWM2))
+ else if (IOCFG_CMP(IOP_IGN_OUT6, IOP_PWM2))
   pwm2.iomode[1] = 1; //ADD_O2
 #else //SECU-3i
  if (IOCFG_CMP(IOP_IGN_OUT5, IOP_PWM2))
@@ -500,9 +500,9 @@ void pwm2_init_state(void)
 #if defined(FUEL_INJECT) && defined(SPLIT_ANGLE)
  //FL_CONS:
 #ifdef SECU3T
- else if (IOCFG_CMP(IOP_ADD_O1, IOP_FL_CONS))
+ else if (IOCFG_CMP(IOP_IGN_OUT5, IOP_FL_CONS))
   {pwm2.iomode[1] = 0; pwm2.compb_mode = 1;} //ADD_O1
- else if (IOCFG_CMP(IOP_ADD_O2, IOP_FL_CONS))
+ else if (IOCFG_CMP(IOP_IGN_OUT6, IOP_FL_CONS))
   {pwm2.iomode[1] = 1; pwm2.compb_mode = 1;} //ADD_O2
 #else //SECU-3i
  if (IOCFG_CMP(IOP_IGN_OUT5, IOP_FL_CONS))
@@ -523,9 +523,9 @@ void pwm2_init_state(void)
 #endif
  //VTACHOM:
 #ifdef SECU3T
- else if (IOCFG_CMP(IOP_ADD_O1, IOP_VTACHOM))
+ else if (IOCFG_CMP(IOP_IGN_OUT5, IOP_VTACHOM))
   {pwm2.iomode[1] = 0; pwm2.compb_mode = 2;} //ADD_O1
- else if (IOCFG_CMP(IOP_ADD_O2, IOP_VTACHOM))
+ else if (IOCFG_CMP(IOP_IGN_OUT6, IOP_VTACHOM))
   {pwm2.iomode[1] = 1; pwm2.compb_mode = 2;} //ADD_O2
 #else //SECU-3i
  if (IOCFG_CMP(IOP_IGN_OUT5, IOP_VTACHOM))

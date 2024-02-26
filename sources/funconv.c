@@ -1281,9 +1281,9 @@ uint8_t inj_gts_pwcorr(void)
 
 uint8_t inj_gps_pwcorr(void)
 {
- int16_t i, i1, p = CHECKBIT(d.param.inj_flags, INJFLG_USEDIFFPRESS) ? (d.sens.map2 - d.sens.map) : d.sens.map2;
+ int16_t i, i1, p = CHECKBIT(d.param.inj_flags, INJFLG_USEDIFFPRESS) ? (d.sens.gps - d.sens.map) : d.sens.gps;
 
- if (!IOCFG_CHECK(IOP_MAP2))
+ if (!IOCFG_CHECK(IOP_GPS))
   return 128;   //do not use correcton if gas pressure sensor is turned off
 
  //Pressure value at the start of axis

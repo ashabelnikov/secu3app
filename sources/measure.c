@@ -347,13 +347,19 @@ void meas_average_measured_values(ce_sett_t *cesd)
 
 #ifndef SECU3T //SECU-3i
  if (IOCFG_CHECK(IOP_TMP2))
-  d.sens.tmp2 = thermistor_lookup(IOCFG_GETA(IOP_TMP2), ram_extabs.tmp2_curve); //ADD_I3 input selected as TMP2 sensor
+  d.sens.tmp2 = thermistor_lookup(IOCFG_GETA(IOP_TMP2), ram_extabs.tmp2_curve);
  else
   d.sens.tmp2 = 0; //input is not selected
 
+ //GPS
+ if (IOP_GPS)
+  d.sens.gps = map_adc_to_kpa(IOCFG_GETA(IOP_GPS), d.param.gps_curve_offset, d.param.gps_curve_gradient);
+ else
+  d.sens.gps = 0; //input is not selected
+
 #ifdef MCP3204
  if (IOCFG_CHECK(IOP_GRTEMP))
-  d.sens.grts = thermistor_lookup(IOCFG_GETA(IOP_GRTEMP), ram_extabs.grts_curve); //ADD_I6 input selected as GRTEMP sensor
+  d.sens.grts = thermistor_lookup(IOCFG_GETA(IOP_GRTEMP), ram_extabs.grts_curve);
  else
   d.sens.grts = 0; //input is not selected
 #endif

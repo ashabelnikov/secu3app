@@ -568,6 +568,16 @@ static uint8_t cond_map2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thr
  return p_ctx->state;
 }
 
+/**Condition function for GPS sensor*/
+static uint8_t cond_gps(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+ if (d->sens.gps >= on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->sens.gps <= off_thrd)
+  p_ctx->state = 0; //OFF
+ return p_ctx->state;
+}
+
 static uint8_t cond_tmp2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
 #ifndef SECU3T
@@ -638,14 +648,14 @@ static uint8_t cond_tpsdot(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_t
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 35
+#define COND_FPTR_TABLE_SIZE 36
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
  {&cond_cts, &cond_rpm, &cond_map, &cond_volt, &cond_carb, &cond_vspd, &cond_airfl, &cond_tmr, &cond_ittmr,
   &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
   &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4, &cond_lptmr, &cond_ai5, &cond_ai6, &cond_ai7, &cond_ai8,
-  &cond_grts, &cond_map2, &cond_tmp2, &cond_input1, &cond_input2, &cond_maf, &cond_tpsdot};
+  &cond_grts, &cond_map2, &cond_tmp2, &cond_input1, &cond_input2, &cond_maf, &cond_tpsdot, &cond_gps};
 
 void uniout_init_ports(void)
 {

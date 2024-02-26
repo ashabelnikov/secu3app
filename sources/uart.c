@@ -466,6 +466,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.inj_cyl_disp);        //used for calculations on SECU-3 Manager side
    build_i32h(d.param.mafload_const);
    build_i16h(d.sens.tps_raw);              //for TPS learning
+   build_i16h(d.param.gps_curve_offset);   //GPS
+   build_i16h(d.param.gps_curve_gradient); //GPS
    break;
 
   case STARTR_PAR:
@@ -809,6 +811,12 @@ void uart_send_packet(uint8_t send_mode)
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
    build_i16h(d.corr.tchrg);                // Corrected value of MAT
+#else
+   build_i16h(0);
+#endif
+
+#ifndef SECU3T //SECU-3i
+   build_i16h(d.sens.gps);                  //Gas Pressure Sensor
 #else
    build_i16h(0);
 #endif
@@ -1941,6 +1949,9 @@ uint8_t uart_recept_packet(void)
    recept_i8h();  //stub
    recept_i16h(); //stub
    d.param.mafload_const = recept_i32h();      //calculated in the SECU-3 Manager
+
+   d.param.gps_curve_offset = recept_i16h();   //GPS
+   d.param.gps_curve_gradient = recept_i16h(); //GPS
    break;
 
   case STARTR_PAR:

@@ -137,8 +137,8 @@ void iocfg_s_stub(uint8_t);              //!< stub function for outputs
 #define IOP_IGN_OUT2      1     //!< IGN_OUT2        (output)
 #define IOP_IGN_OUT3      2     //!< IGN_OUT3        (output)
 #define IOP_IGN_OUT4      3     //!< IGN_OUT4        (output)
-#define IOP_IGN_OUT5      4     //!< ADD_IO1         (output)
-#define IOP_IGN_OUT6      5     //!< ADD_IO2         (output)
+#define IOP_IGN_OUT5      4     //!< ADD_O1          (output)
+#define IOP_IGN_OUT6      5     //!< ADD_O2          (output)
 #define IOP_ECF           6     //!< ECF             (output)
 #define IOP_ST_BLOCK      7     //!< ST_BLOCK        (output)
 #define IOP_IE            8     //!< IE              (output)
@@ -450,7 +450,7 @@ uint16_t iocfg_g_add_i4i(uint8_t doa);   //!< set  ADD_I4 input       (inverted)
 #define IOP_MAF          96     //!< MAF             (input)
 #define IOP_FTS_I        97     //!< FTS             (input)
 #define IOP_LAMBDA2      98     //!< LAMBDA2         (input)
-#define IOP_RESERVED27   99     //!< reserved plug   ()
+#define IOP_GPS          99     //!< GPS             (input)
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c
 #define IOP_INJPLG_OFF   (IOP_INJ_OUT6-(IOP_INJ_OUT5+1)) //!< needed by injector.c

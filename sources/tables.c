@@ -294,8 +294,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    },
 
    //I/O information for each slot (plug IDs and inversion flags)
-   {_ION(IOP_IGN_OU1), _ION(IOP_IGN_OU2), _ION(IOP_IGN_OU3), _ION(IOP_IGN_OU4),
-    _ION(IOP_ADD_O1), _ION(IOP_ADD_O2), _ION(IOP_ECF), _ION(IOP_ST_BLOCK),
+   {_ION(IOP_IGN_OUT1), _ION(IOP_IGN_OUT2), _ION(IOP_IGN_OUT3), _ION(IOP_IGN_OUT4),
+    _ION(IOP_IGN_OUT5), _ION(IOP_IGN_OUT6), _ION(IOP_ECF), _ION(IOP_ST_BLOCK),
     _ION(IOP_IE), _ION(IOP_FE), _ION(IOP_PS), _ION(IOP_ADD_I1),
     _ION(IOP_ADD_I2), _ION(IOP_CE), _ION(IOP_BL), _ION(IOP_DE),
     _ION(IOP_GAS_V), _ION(IOP_REF_S), _ION(IOP_CKPS), _ION(IOP_MAP_S),
@@ -401,7 +401,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub)
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub)
    },
 
    //I/O information for each slot (plug IDs and inversion flags)
@@ -742,6 +742,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .lambda_selch =                0,                  //Use 1st EGO for all cylinders
 
   .inj_cranktorun_time1 =        SYS_TIME_S(3.00),   //3 seconds at 70°C
+
+  .gps_curve_offset =            54,
+  .gps_curve_gradient =          1089,
 
   .reserved =                    {0},
   .crc =                         0

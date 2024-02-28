@@ -562,7 +562,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .bt_flags =                    _BV(BTF_SET_BBR) | _BV(BTF_CHK_FWCRC)
 #ifndef SECU3T
-| _BV(BTF_BT_TYPE0) | _BV(BTF_USE_BT)
+  | _BV(BTF_USE_BT)
 #endif
 ,
   .ibtn_keys =                   {{0,0,0,0,0,0},{0,0,0,0,0,0}},/**<--iButton keys database. Write out your own 48-bit keys here */
@@ -745,6 +745,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .gps_curve_offset =            54,
   .gps_curve_gradient =          1089,
+
+#ifndef SECU3T
+   .bt_type =                    1,                  //BK3231
+#else
+   .bt_type =                    0,                  //BC417
+#endif
 
   .reserved =                    {0},
   .crc =                         0

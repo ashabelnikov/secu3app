@@ -153,15 +153,12 @@
  #define TABLES_NUMBER           TABLES_NUMBER_PGM
 #endif
 
-
 //Bluetooth and security flags (bit numbers)
 #define BTF_USE_BT                      0           //!< Bluetooth and security flags: specifies to use or not to use bluetooth
 #define BTF_SET_BBR                     1           //!< Bluetooth and security flags: indicates that bluetooth baud rate has to be set during start up
 #define BTF_USE_IMM                     2           //!< Bluetooth and security flags: specifies to use or not to use immobilizer
 #define BTF_USE_RESPAR                  3           //!< Use reserve parameters instead of parameters stored in the EEPROM
 #define BTF_CHK_FWCRC                   4           //!< Check firmware CRC (time consuming operation)
-#define BTF_BT_TYPE0                    5           //!< Bluetooth chip type (2 bits): 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31), 3 - BC352(HC-05)
-#define BTF_BT_TYPE1                    6           //!< See BTF_BT_TYPE0
 
 //Injection configuration constants
 #define INJCFG_THROTTLEBODY             0           //!< Throttle-body or central injection
@@ -973,7 +970,9 @@ typedef struct params_t
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[126];
+  uint8_t bt_type;                       //!< Bluetooth chip type: 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31), 3 - BC352(HC-05), 4 - BK3432, 5 - BK3431S
+
+  uint8_t  reserved[125];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

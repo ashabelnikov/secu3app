@@ -43,7 +43,7 @@ void bt_init(uint8_t en_set_baud);
  */
 uint8_t bt_set_baud(uint16_t baud);
 
-/** Starts setting of name  and password to bluetooth */
+/** Starts setting name and password to bluetooth */
 void bt_start_set_namepass(void);
 
 /** Sets bluetooth name and password. Must be called subsequently until it return non-zero

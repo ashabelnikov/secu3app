@@ -571,10 +571,14 @@ static uint8_t cond_map2(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thr
 /**Condition function for GPS sensor*/
 static uint8_t cond_gps(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
+#ifndef SECU3T
  if (d->sens.gps >= on_thrd)
   p_ctx->state = 1; //ON
  if (d->sens.gps <= off_thrd)
   p_ctx->state = 0; //OFF
+#else
+ p_ctx->state = 0; //OFF
+#endif
  return p_ctx->state;
 }
 

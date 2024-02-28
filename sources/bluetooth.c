@@ -50,11 +50,13 @@
 #define AT_COMMAND_STRT_TIME 50
 
 /**Get BT type*/
-#define GETBTTYPE() ((d.param.bt_flags >> BTF_BT_TYPE0) & 0x3)
+#define GETBTTYPE() (d.param.bt_type)
 #define BTT_BC417   0   //!< BC417(HC-06)
 #define BTT_BK3231  1   //!< BK3231
-#define BTT_BK3231S 2   //!< BK3231S (JDY-31)
+#define BTT_BK3231S 2   //!< BK3231S (JDY-31) (requires AT+RESET to actuate changes in baud rate, name and PIN)
 #define BTT_BC352   3   //!< BC352(HC-05)
+#define BTT_BK3432  4   //!< BK3432           (requires AT+RESET to actuate changes in name and PIN)
+#define BTT_BK3431S 5   //!< BK3431S          (requires AT+RESET to actuate changes in baud rate, name and PIN)
 
 //External functions (from uart.c)
 void uart_reset_send_buff(void);
@@ -120,7 +122,7 @@ void bt_init(uint8_t en_set_baud)
 static void build_crlf_b(void)
 {
  //Use CRLF before each AT-command only for BK3231 bluetooth
- if (GETBTTYPE()==BTT_BK3231)
+ if (GETBTTYPE()==BTT_BK3231 || GETBTTYPE()==BTT_BK3432)
  {
   uart_append_send_buff('\r');
   uart_append_send_buff('\n');
@@ -132,7 +134,7 @@ static void build_crlf_b(void)
  */
 static void build_crlf_e(void)
 {
- //use CRLF at the end for BK3231 and BK3231S bluetoothes
+ //use CRLF at the end for BK3231, BK3231S, BK3432 and BK3431S bluetoothes
  if (GETBTTYPE()!=BTT_BC417)
  {
   uart_append_send_buff('\r');
@@ -252,7 +254,7 @@ uint8_t bt_set_baud(uint16_t baud)
     }
     else
     {
-     if (GETBTTYPE()==BTT_BK3231S)
+     if (GETBTTYPE()==BTT_BK3231S || GETBTTYPE()==BTT_BK3431S)
      {
       bts.btbr_mode = 5; //we need to perform additional operations to reset bluetooth
       bts.cur_baud = 0;
@@ -371,7 +373,20 @@ uint8_t bt_set_namepass(void)
    break;                          //send!
   case 5:                          //wait some time
    next_state_if_tmr_expired_np();
-   if (bts.btnp_mode > 5)
+   if (bts.btnp_mode > 5 && !(GETBTTYPE()==BTT_BK3231S || GETBTTYPE()==BTT_BK3431S || GETBTTYPE()==BTT_BK3432))
+   {
+    d.bt_name[0] = 0, d.bt_pass[0] = 0;
+    return 1; //finished!
+   }
+   return 0;
+  case 6: //reset bluetooth to actuate changes
+   append_tx_buff_with_at_reset_cmd();
+   ++bts.btnp_mode;
+   bts.strt_t1 = s_timer_gtc();    //set timer
+   break;                          //send!
+  case 7:
+   next_state_if_tmr_expired_np();
+   if (bts.btnp_mode > 7)
    {
     d.bt_name[0] = 0, d.bt_pass[0] = 0;
     return 1; //finished!

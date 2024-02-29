@@ -752,6 +752,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .bt_type =                    0,                  //BC417
 #endif
 
+  .idl_reg_d =                   0,                  //not used by default
+
   .reserved =                    {0},
   .crc =                         0
  },

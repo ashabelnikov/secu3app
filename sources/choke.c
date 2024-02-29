@@ -104,7 +104,7 @@ typedef struct
 #endif
 
 #ifdef FUEL_INJECT
- int16_t   prev_rpm_error; //!< previous value of closed-loop RPM error
+ int16_t   prev_rpm_error[2];//!< previous value of closed-loop RPM error
  int16_t   iac_pos;        //!< IAC pos between calls of the closed loop regulator
  int16_t   iac_add;        //!< Smoothly increased value
  uint8_t   epas_offadded;  //!<
@@ -118,7 +118,7 @@ choke_st_t chks = {0,0,0,0,0,0,0,0,{0,0,0}
                    ,0,0,0
 #endif
 #ifdef FUEL_INJECT
-                   ,0,0,0,0
+                   ,{0,0},0,0,0
 #endif
                   };
 
@@ -454,7 +454,8 @@ int16_t calc_sm_position(uint8_t pwm)
     if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.rpm < rpm_thrd1))
     {
      SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
-     chks.prev_rpm_error = error;      //reset previous error
+     chks.prev_rpm_error[0] = error;   //reset previous error
+     chks.prev_rpm_error[1] = error;   //reset previous error
     }
     if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.rpm > rpm_thrd2))
      CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
@@ -466,7 +467,8 @@ int16_t calc_sm_position(uint8_t pwm)
      if (abs(error) > d.param.iac_reg_db)
      {
       d.iac_in_deadband = 0;
-      int16_t derror = error - chks.prev_rpm_error;
+      int16_t derror = error - chks.prev_rpm_error[0];
+      int16_t dderror = error - (2 * derror) + chks.prev_rpm_error[1];
 
       uint16_t idl_reg_i = (derror < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
       uint16_t idl_reg_p = (error < 0) ? d.param.idl_reg_p[0] : d.param.idl_reg_p[1];
@@ -475,7 +477,7 @@ int16_t calc_sm_position(uint8_t pwm)
       { //use special algorithm
        if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.rpm >= rpm))
        { //hot engine or RPM above or equal target idling RPM
-        int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i)));
+        int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i) + ((int32_t)dderror * d.param.idl_reg_d)));
         chks.iac_pos += SHTDIV16(add, 8+7-2);
         SETBIT(chks.flags, CF_HOT_ENG);
        }
@@ -490,14 +492,15 @@ int16_t calc_sm_position(uint8_t pwm)
       }
       else
       { //use regular alrorithm
-       int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i)));
+       int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i) + ((int32_t)dderror * d.param.idl_reg_d)));
        chks.iac_pos += SHTDIV16(add, 8+7-2);
       }
      }
      else
       d.iac_in_deadband = 1;
 
-     chks.prev_rpm_error = error; //save for further calculation of derror
+     chks.prev_rpm_error[1] = chks.prev_rpm_error[0];
+     chks.prev_rpm_error[0] = error; //save for further calculation of derror
     }
     else
     { //closed loop is not active

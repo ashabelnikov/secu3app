@@ -972,7 +972,9 @@ typedef struct params_t
 
   uint8_t bt_type;                       //!< Bluetooth chip type: 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31), 3 - BC352(HC-05), 4 - BK3432, 5 - BK3431S
 
-  uint8_t  reserved[125];
+  int16_t idl_reg_d;                     //!< differencial factor for IAC PID (value * 256, max 5.0)
+
+  uint8_t  reserved[123];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

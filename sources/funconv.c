@@ -422,10 +422,10 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
   return idl_prstate.output_state >> IRUSDIV;
 
  //select corresponding coefficient depending on the sign of error
- if (error > 0)
-  factor = d.param.ifac1;
+ if (error < 0)
+  factor = d.param.ifac2; //-
  else
-  factor = d.param.ifac2;
+  factor = d.param.ifac1; //+
 
  //update regulator's value only by timer events
  if (s_timer_is_action(io_timer))

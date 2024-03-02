@@ -410,8 +410,8 @@ void uart_send_packet(uint8_t send_mode)
 
   case IDLREG_PAR:
    build_i8h(d.param.idl_flags);   //idling flags
-   build_i16h(d.param.ifac1);
-   build_i16h(d.param.ifac2);
+   build_i16h(d.param.ifac1);      //+
+   build_i16h(d.param.ifac2);      //-
    build_i16h(d.param.MINEFR);
    build_i16h(d.param.idling_rpm);
    build_i16h(d.param.idlreg_min_angle);
@@ -420,10 +420,10 @@ void uart_send_packet(uint8_t send_mode)
    //closed loop parameters:
    build_i8h(d.param.idl_to_run_add);
    build_i8h(d.param.rpm_on_run_add);
-   build_i16h(d.param.idl_reg_p[0]);
-   build_i16h(d.param.idl_reg_p[1]);
-   build_i16h(d.param.idl_reg_i[0]);
-   build_i16h(d.param.idl_reg_i[1]);
+   build_i16h(d.param.idl_reg_p[0]);  //-
+   build_i16h(d.param.idl_reg_p[1]);  //+
+   build_i16h(d.param.idl_reg_i[0]);  //-
+   build_i16h(d.param.idl_reg_i[1]);  //+
    build_i8h(d.param.idl_coef_thrd1);
    build_i8h(d.param.idl_coef_thrd2);
    build_i8h(d.param.idl_intrpm_lim);
@@ -1886,8 +1886,8 @@ uint8_t uart_recept_packet(void)
 
   case IDLREG_PAR:
    d.param.idl_flags = recept_i8h();   //idling flags
-   d.param.ifac1     = recept_i16h();
-   d.param.ifac2     = recept_i16h();
+   d.param.ifac1     = recept_i16h();  //+
+   d.param.ifac2     = recept_i16h();  //-
    d.param.MINEFR    = recept_i16h();
    d.param.idling_rpm = recept_i16h();
    d.param.idlreg_min_angle = recept_i16h();
@@ -1896,10 +1896,10 @@ uint8_t uart_recept_packet(void)
    //closed loop parameters:
    d.param.idl_to_run_add = recept_i8h();
    d.param.rpm_on_run_add = recept_i8h();
-   d.param.idl_reg_p[0] = recept_i16h();
-   d.param.idl_reg_p[1] = recept_i16h();
-   d.param.idl_reg_i[0] = recept_i16h();
-   d.param.idl_reg_i[1] = recept_i16h();
+   d.param.idl_reg_p[0] = recept_i16h();  //-
+   d.param.idl_reg_p[1] = recept_i16h();  //+
+   d.param.idl_reg_i[0] = recept_i16h();  //-
+   d.param.idl_reg_i[1] = recept_i16h();  //+
    d.param.idl_coef_thrd1 = recept_i8h();
    d.param.idl_coef_thrd2 = recept_i8h();
    d.param.idl_intrpm_lim = recept_i8h();

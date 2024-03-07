@@ -385,7 +385,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
 #ifndef SECU3T
 #ifdef MCP3204
  if (IOCFG_CHECK(IOP_OPS_I))
-  d.sens.ops = exsens_lookup(IOCFG_CHECK(IOP_OPS_I), ram_extabs.ops_curve);
+  d.sens.ops = exsens_lookup(IOCFG_GETA(IOP_OPS_I), ram_extabs.ops_curve);
  else
   d.sens.ops = 0; //input is not selected
 #endif

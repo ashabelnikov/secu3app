@@ -98,8 +98,8 @@ static int16_t manual_igntim(void)
  if (IOCFG_CHECK(IOP_IGNTIM))
   return pa4_function(IOCFG_GETA(IOP_IGNTIM));
  else
-  return 0; //not mapped to real I/O
 #endif
+  return 0; //not mapped to real I/O
 #else //SECU3i
  if (IOCFG_CHECK(IOP_IGNTIM))
   return pa4_function(IOCFG_GETA(IOP_IGNTIM));

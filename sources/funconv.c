@@ -1317,16 +1317,7 @@ uint8_t inj_gps_pwcorr(void)
  */
 uint8_t engine_blowing_cond(void)
 {
- if (CHECKBIT(d.param.strt_flags, STRTF_FLDCLRSTR))
-  d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
- else
- { //start of engine in flood clear mode is not allowed
-  if (d.engine_mode == EM_START)
-   d.floodclear = (d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps);
-  else
-   d.floodclear = 0;
- }
-
+ d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
  return d.floodclear;
 }
 #endif

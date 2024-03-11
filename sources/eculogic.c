@@ -443,7 +443,11 @@ void eculogic_system_state_machine(void)
    d.corr.inj_timing = param_inj_timing(0);
 
 #endif
-   if (d.sens.rpm > (d.param.smap_abandon ? d.param.smap_abandon : smapaban_thrd_rpm()))
+
+   //Change engine mode to idling if:
+   //RPM is above threshold and engine start is allowed in the flood clear mode. If engine start in the flood clear mode is not allowed
+   //but driver has released gas pedal, then allow start of engine.
+   if (d.sens.rpm > (d.param.smap_abandon ? d.param.smap_abandon : smapaban_thrd_rpm()) && (CHECKBIT(d.param.strt_flags, STRTF_FLDCLRSTR) || 0==d.floodclear))
    {
     d.engine_mode = EM_IDLE;
     idling_regulator_init();

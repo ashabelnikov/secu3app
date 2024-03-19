@@ -79,6 +79,9 @@
 #define   CLTGRD_PAR   '('   //!< used for transferring of CLT grid
 #define   LODGRD_PAR   ')'   //!< used for transferring of load grid
 
-#define    LTFT_DAT    'K'   //!< LTFT map(s)
+#define   LTFT_DAT     'K'   //!< LTFT map(s)
+
+#define   IRPMGRD_PAR  'L'   //!< used for transferring idling RPM grid
+#define   ILODGRD_PAR  'M'   //!< used for transferring idling load grid
 
 #endif //_UFCODES_H_

@@ -48,13 +48,15 @@
  #define _GW(x) ((int16_t)d.mm_ptr16(secu3_offsetof(struct f_data_t, x)))
  #define _GBU(x) (d.mm_ptr8(secu3_offsetof(struct f_data_t, x)))
  #define _GWU(x) (d.mm_ptr16(secu3_offsetof(struct f_data_t, x)))
- #define _GWU12(x,i,j) (d.mm_ptr12(secu3_offsetof(struct f_data_t, x), (i*16+j) )) //note: hard coded size of array
+ #define _GWU12(x,i,j) (d.mm_ptr12(secu3_offsetof(struct f_data_t, x), ((i)*16+(j)))) //note: hard coded size of array
+ #define _GWU12x8(x,i,j) (d.mm_ptr12(secu3_offsetof(struct f_data_t, x), ((i)*8+(j)))) //note: hard coded size of array
 #else
  #define _GB(x) ((int8_t)(PGM_GET_BYTE(&d.fn_dat->x)))    //!< Macro for abstraction under getting bytes from RAM or FLASH (FLASH version)
  #define _GW(x) ((int16_t)(PGM_GET_WORD(&d.fn_dat->x)))   //!< Macro for abstraction under getting words from RAM or FLASH (FLASH version)
  #define _GBU(x) (PGM_GET_BYTE(&d.fn_dat->x))             //!< Unsigned version of _GB
  #define _GWU(x) (PGM_GET_WORD(&d.fn_dat->x))             //!< Unsigned version of _GW
- #define _GWU12(x,i,j) (mm_get_w12_pgm(secu3_offsetof(struct f_data_t, x), (i*16+j))) //note: hard coded size of array
+ #define _GWU12(x,i,j) (mm_get_w12_pgm(secu3_offsetof(struct f_data_t, x), ((i)*16+(j)))) //note: hard coded size of array
+ #define _GWU12x8(x,i,j) (mm_get_w12_pgm(secu3_offsetof(struct f_data_t, x), ((i)*8+(j)))) //note: hard coded size of array
 #endif
 
 //not redundant sanity check...
@@ -83,6 +85,13 @@ typedef struct
  int8_t  la_lp1;       //!< la_l + 1
  int8_t  la_f;         //!< index on the rpm axis
  int8_t  la_fp1;       //!< la_f + 1
+ //idling VE args:
+ int16_t la_irpm;      //!< RPM axis argument
+ int8_t  la_if;        //!< index on the rpm axis
+ int8_t  la_ifp1;      //!< la_if + 1
+ int16_t la_iload;     //!< Load axis argument
+ int16_t la_il;        //!< index on the load axis
+ int8_t  la_ilp1;      //!< la_il + 1
  //CLT args:
  int8_t  ta_i;         //!< index
  int8_t  ta_i1;        //!< index + 1
@@ -269,7 +278,37 @@ void calc_lookup_args(void)
  fcs.ga_i1 = fcs.ga_i + 1;
 #endif
 
-//-------------------------------------------
+ //-------------------------------------------
+ //precalculate arguments for idling VE map
+ if (2==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]))
+ {
+  //RPM:
+  fcs.la_irpm = d.sens.rpm;
+
+  //find interpolation points, then restrict RPM if it fall outside set range
+  for(fcs.la_if = INJ_IVE_POINTS_F-2; fcs.la_if >= 0; fcs.la_if--)
+   if (fcs.la_irpm >= ram_extabs.irpm_grid_points[fcs.la_if]) break;
+
+  //lookup table works from irpm_grid_points[0] and upper
+  if (fcs.la_if < 0)  {fcs.la_if = 0; fcs.la_irpm = ram_extabs.irpm_grid_points[0];}
+  if (fcs.la_irpm > ram_extabs.irpm_grid_points[INJ_IVE_POINTS_F-1]) fcs.la_irpm = ram_extabs.irpm_grid_points[INJ_IVE_POINTS_F-1];
+  fcs.la_ifp1 = fcs.la_if + 1;
+
+  //load:
+  fcs.la_iload = d.load;
+
+  //limit value, so it can not be out of frid range
+  if (fcs.la_iload < ram_extabs.iload_grid_points[0])
+   fcs.la_iload = ram_extabs.iload_grid_points[0];
+  if (fcs.la_iload > ram_extabs.iload_grid_points[INJ_IVE_POINTS_L-1])
+   fcs.la_iload = ram_extabs.iload_grid_points[INJ_IVE_POINTS_L-1];
+
+  for(fcs.la_il = INJ_IVE_POINTS_L-2; fcs.la_il >= 0; fcs.la_il--)
+   if (fcs.la_iload >= ram_extabs.iload_grid_points[fcs.la_il]) break;
+  fcs.la_ilp1 = fcs.la_il + 1;
+ }
+
+ //-------------------------------------------
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  d.sens.rxlaf = calc_airflow();
 #endif
@@ -649,7 +688,10 @@ uint16_t inj_cranking_pw(void)
 void calc_ve_afr(void)
 {
  uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
- if (d.sens.carb || (!d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve)) || (d.sens.gas && !PGM_GET_WORD(&fw_data.exdata.idl_ve_g)))
+ 
+ //use main VE map if:
+ //[gas pedal is pressed] OR [always use main VE map] OR [use separate VE map for idling but current RPM is out of its grid]
+ if (d.sens.carb || 0==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]) || (2==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]) && d.sens.rpm > ram_extabs.irpm_grid_points[INJ_IVE_POINTS_F-1]))
  {//look into VE table
   fcs.vecurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
@@ -687,8 +729,22 @@ void calc_ve_afr(void)
     fcs.vecurr = fcs.vecurr + ve2;
   }
  }
+ else if (1==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]))
+ { //use simple constant
+  fcs.vecurr = PGM_GET_WORD(&fw_data.exdata.idl_ve[d.sens.gas]);
+ }
  else
-  fcs.vecurr = d.sens.gas ? PGM_GET_WORD(&fw_data.exdata.idl_ve_g) : PGM_GET_WORD(&fw_data.exdata.idl_ve);
+ { //separate VE map for idling
+  fcs.vecurr = bilinear_interpolation(fcs.la_irpm, fcs.la_iload,
+        _GWU12x8(inj_ive,fcs.la_il,fcs.la_if),   //values in table are unsigned (12-bit!)
+        _GWU12x8(inj_ive,fcs.la_ilp1,fcs.la_if),
+        _GWU12x8(inj_ive,fcs.la_ilp1,fcs.la_ifp1),
+        _GWU12x8(inj_ive,fcs.la_il,fcs.la_ifp1),
+        ram_extabs.irpm_grid_points[fcs.la_if],
+        ram_extabs.iload_grid_points[fcs.la_il],
+        ram_extabs.irpm_grid_sizes[fcs.la_if],
+        ram_extabs.iload_grid_sizes[fcs.la_il], 8) >> 3;
+ }
 
  //look into AFR table
  fcs.afrcurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,

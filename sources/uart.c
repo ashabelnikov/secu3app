@@ -79,47 +79,48 @@
 #define ETMT_CYLADD_MAP  33    //!< Inj. addition
 #define ETMT_AEMAP_MAP   34    //!< AE MAP map
 #define ETMT_THRASS_MAP  35    //!< Throttle assist map
+#define ETMT_IVE_MAP     36    //!< Idling VE
 
-#define ETMT_SET_END     35
+#define ETMT_SET_END     36
 
 //separate maps
-#define ETMT_ATTENUATOR    36  //!<
-#define ETMT_DWELLCNTRL    37  //!<
-#define ETMT_CTS_CURVE     38  //!<
-#define ETMT_ATS_CURVE     39  //!<
-#define ETMT_ATS_CORR      40  //!<
-#define ETMT_GASDOSE       41  //!<
-#define ETMT_BAROCORR      42  //!<
-#define ETMT_MANIGNTIM     43  //!<
-#define ETMT_TMP2_CURVE    44  //!<
-#define ETMT_CRKCLT_CORR   45  //!<
-#define ETMT_EH_PAUSE      46  //!<
-#define ETMT_CRANKING_THRD 47  //!<
-#define ETMT_CRANKING_TIME 48  //!<
-#define ETMT_SMAPABAN_THRD 49  //!<
-#define ETMT_KNOCK_ZONE    50  //!<
-#define ETMT_GRTS_CURVE    51  //!<
-#define ETMT_GRHEAT_DUTY   52  //!<
-#define ETMT_PWMIAC_UCOEF  53  //!<
-#define ETMT_AFTSTR_STRK0  54  //!<
-#define ETMT_AFTSTR_STRK1  55  //!<
-#define ETMT_GRVDELAY      56  //!<
-#define ETMT_FTLS_CURVE    57  //!<
-#define ETMT_EGTS_CURVE    58  //!<
-#define ETMT_OPS_CURVE     59  //!<
-#define ETMT_MANINJPWC     60  //!<
-#define ETMT_MAF_CURVE     61  //!<
-#define ETMT_FTLSCOR       62  //!<
-#define ETMT_LAMBDA_ZONE   63  //!<
-#define ETMT_FTS_CURVE     64  //!<
-#define ETMT_FUELDENS_CORR 65  //!<
-#define ETMT_XTAU_XFACC    66  //!<
-#define ETMT_XTAU_XFDEC    67  //!<
-#define ETMT_XTAU_TFACC    68  //!<
-#define ETMT_XTAU_TFDEC    69  //!<
-#define ETMT_INJNONLINP    70  //!<
-#define ETMT_INJNONLING    71  //!<
-#define ETMT_EGO_DELAY     72  //!<
+#define ETMT_ATTENUATOR    37  //!<
+#define ETMT_DWELLCNTRL    38  //!<
+#define ETMT_CTS_CURVE     39  //!<
+#define ETMT_ATS_CURVE     40  //!<
+#define ETMT_ATS_CORR      41  //!<
+#define ETMT_GASDOSE       42  //!<
+#define ETMT_BAROCORR      43  //!<
+#define ETMT_MANIGNTIM     44  //!<
+#define ETMT_TMP2_CURVE    45  //!<
+#define ETMT_CRKCLT_CORR   46  //!<
+#define ETMT_EH_PAUSE      47  //!<
+#define ETMT_CRANKING_THRD 48  //!<
+#define ETMT_CRANKING_TIME 49  //!<
+#define ETMT_SMAPABAN_THRD 50  //!<
+#define ETMT_KNOCK_ZONE    51  //!<
+#define ETMT_GRTS_CURVE    52  //!<
+#define ETMT_GRHEAT_DUTY   53  //!<
+#define ETMT_PWMIAC_UCOEF  54  //!<
+#define ETMT_AFTSTR_STRK0  55  //!<
+#define ETMT_AFTSTR_STRK1  56  //!<
+#define ETMT_GRVDELAY      57  //!<
+#define ETMT_FTLS_CURVE    58  //!<
+#define ETMT_EGTS_CURVE    59  //!<
+#define ETMT_OPS_CURVE     60  //!<
+#define ETMT_MANINJPWC     61  //!<
+#define ETMT_MAF_CURVE     62  //!<
+#define ETMT_FTLSCOR       63  //!<
+#define ETMT_LAMBDA_ZONE   64  //!<
+#define ETMT_FTS_CURVE     65  //!<
+#define ETMT_FUELDENS_CORR 66  //!<
+#define ETMT_XTAU_XFACC    67  //!<
+#define ETMT_XTAU_XFDEC    68  //!<
+#define ETMT_XTAU_TFACC    69  //!<
+#define ETMT_XTAU_TFDEC    70  //!<
+#define ETMT_INJNONLINP    71  //!<
+#define ETMT_INJNONLING    72  //!<
+#define ETMT_EGO_DELAY     73  //!<
 
 /**Define internal state variables */
 typedef struct
@@ -1141,6 +1142,17 @@ void uart_send_packet(uint8_t send_mode)
      if (wrk_index >= INJ_VE_POINTS_L-1 )
      {
       wrk_index = 0;
+      state = ETMT_IVE_MAP;
+     }
+     else
+      ++wrk_index;
+     break;
+    case ETMT_IVE_MAP:
+     build_i8h(wrk_index*INJ_IVE_POINTS_F); //cell address
+     build_rb((uint8_t*)&d.tables_ram.inj_ive[wrk_index][0], (INJ_IVE_POINTS_F*3)/2); //24 bytes per packet (row), INJ_VE_POINTS_L rows
+     if (wrk_index >= INJ_IVE_POINTS_L-1 )
+     {
+      wrk_index = 0;
       state = ETMT_AFR_MAP;
      }
      else
@@ -1639,6 +1651,16 @@ void uart_send_packet(uint8_t send_mode)
   case LODGRD_PAR:
    build_i8h(0); //<--reserved
    build_rb((uint8_t*)ram_extabs.load_grid_points, LOAD_GRID_SIZE * sizeof(int16_t));
+   break;
+  //Transferring idling RPM grid
+  case IRPMGRD_PAR:
+   build_i8h(0); //<--reserved
+   build_rb((uint8_t*)ram_extabs.irpm_grid_points, IRPM_GRID_SIZE * sizeof(int16_t));
+   break;
+  //Transferring idling load grid
+  case ILODGRD_PAR:
+   build_i8h(0); //<--reserved
+   build_rb((uint8_t*)ram_extabs.iload_grid_points, ILOAD_GRID_SIZE * sizeof(int16_t));
    break;
 #endif
 
@@ -2217,6 +2239,9 @@ uint8_t uart_recept_packet(void)
     case ETMT_VE2_MAP:   //Secondary VE, 12-bit per cell
      recept_rb(((uint8_t*)&d.tables_ram.inj_ve2[0][0]) + (((uint16_t)addr)+(((uint16_t)addr)>>1)), (INJ_VE_POINTS_F*3)/2); /*INJ_VE_POINTS_F*1.5 max*/
      break;
+    case ETMT_IVE_MAP:   //Idling VE, 12-bit per cell
+     recept_rb(((uint8_t*)&d.tables_ram.inj_ive[0][0]) + (((uint16_t)addr)+(((uint16_t)addr)>>1)), (INJ_IVE_POINTS_F*3)/2); /*INJ_IVE_POINTS_F*1.5 max*/
+     break;
     case ETMT_AFR_MAP:  //AFR
      recept_rb(((uint8_t*)&d.tables_ram.inj_afr[0][0]) + addr, INJ_VE_POINTS_F); /*INJ_VE_POINTS_F max*/
      break;
@@ -2493,6 +2518,8 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case RPMGRD_PAR:
   case CLTGRD_PAR:
   case LODGRD_PAR:
+  case IRPMGRD_PAR: //idling
+  case ILODGRD_PAR: //idling
 #endif
   case ATTTAB_PAR:
 #ifdef DEBUG_VARIABLES

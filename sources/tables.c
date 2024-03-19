@@ -123,16 +123,23 @@
 #define _IC(v) ROUND((v) * 8192.0)
 #define _ICX(v) ROUND((v) / 32.0)
 
-//For packing values into 12-bit cells
+//For packing values into 12-bit cells for arrays with width of 16 cells
 #define _PACK2(v1,v2) ((uint8_t)v1), ((uint8_t)(((v1)>>8) | ((v2)<<4))), ((uint8_t)((v2)>>4))
 #define _PACK16(v01,v02,v03,v04,v05,v06,v07,v08,v09,v10,v11,v12,v13,v14,v15,v16) \
  _PACK2(v01,v02),_PACK2(v03,v04),_PACK2(v05,v06),_PACK2(v07,v08),_PACK2(v09,v10),_PACK2(v11,v12),_PACK2(v13,v14),_PACK2(v15,v16)
 
+//For packing values into 12-bit cells for arrays with width of 8 cells
+#define _PACK8(v01,v02,v03,v04,v05,v06,v07,v08) \
+ _PACK2(v01,v02),_PACK2(v03,v04),_PACK2(v05,v06),_PACK2(v07,v08)
+
 /**wrapper macro for filling arrays*/
 #define _AL16(v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15) v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15
 
-/**Reverse order of items (for filling arrays)*/
+/**Reverse order of items (for filling arrays with width of 16 cells)*/
 #define _REVARR16(l0,l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15) l15,l14,l13,l12,l11,l10,l9,l8,l7,l6,l5,l4,l3,l2,l1,l0
+
+/**Reverse order of items (for filling arrays with width of 8 cells)*/
+#define _REVARR8(l0,l1,l2,l3,l4,l5,l6,l7) l7,l6,l5,l4,l3,l2,l1,l0
 
 //Barometric correction
 #define _BC(v) ROUND((v) * 4096.0)
@@ -1140,6 +1147,17 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill EGO delay map */
   {26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26},
 
+  /**Fill idling RPM grid points lookup table*/
+  {600,700,800,900,1000,1100,1200,1300},
+  /**Fill idling PRM grid cell sizes lookup table*/
+  {100,100,100,100,100,100,100},
+
+  /**Fill idling load grid points lookup table*/
+  {_LM(24.0),_LM(26.0),_LM(28.0),_LM(30.0),_LM(32.0),_LM(34.0),_LM(36.0),_LM(38.0)},
+
+  /**Fill idling load grid cell sizes lookup table*/
+  {_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0)},
+
   /**reserved*/
   {0}
  },
@@ -1154,9 +1172,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .iac_cond_add = 15*2,    //+15%
   .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .aircond_tps = TPS_MAGNITUDE(68.0), //68%
-  .idl_ve = ROUND(0*2048), //turned off
+  .idl_ve = {ROUND(1.0*2048),ROUND(1.0*2048)}, //1.0
   .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
-  .idl_ve_g = ROUND(0*2048), //turned off
   .reserv_0 = 0, //reserved
   .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
   .heating_time = 100, //10 min
@@ -1267,6 +1284,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .aftstr_flat_strokes = 10,
   .inj_prime_times = 1,      //repeat pulse duration 1 time
+
+  .use_idl_ve = {0,0},       //don't use separate VE for idling
 
   /**reserved bytes*/
   {0}
@@ -1588,6 +1607,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //Fill throttle assist map
    {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
 
+   /**Fill idling VE lookup table, value can be in range 0...1.99 */
+   {//            600       700       800       900      1000      1100      1200      1300  (min-1)
+   _REVARR8(
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //38
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //36
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //34
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //32 (kPa or %)
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //30
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //28
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //26
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
+   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -1906,6 +1938,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //Fill throttle assist map
    {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
 
+   /**Fill idling VE lookup table, value can be in range 0...1.99 */
+   {//           600       700       800       900      1000      1100      1200      1300  (min-1)
+   _REVARR8(
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //38
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //36
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //34
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //32 (kPa or %)
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //30
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //28
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //26
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
+   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2223,6 +2268,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    //Fill throttle assist map
    {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
 
+   /**Fill idling VE lookup table, value can be in range 0...1.99 */
+   {//           600       700       800       900      1000      1100      1200      1300  (min-1)
+   _REVARR8(
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //38
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //36
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //34
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //32 (kPa or %)
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //30
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //28
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //26
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
+   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2539,6 +2597,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    //Fill throttle assist map
    {_CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0), _CLV(0)},
+
+   /**Fill idling VE lookup table, value can be in range 0...1.99 */
+   {//           600       700       800       900      1000      1100      1200      1300  (min-1)
+   _REVARR8(
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //38
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //36
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //34
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //32 (kPa or %)
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //30
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //28
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //26
+    {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
+   },
 
    /**reserved bytes */
    {0},

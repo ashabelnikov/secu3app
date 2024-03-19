@@ -76,6 +76,8 @@
 #define RPM_GRID_SIZE                   16          //!< Number of points on the RPM axis in advance angle lookup tables
 #define CLT_GRID_SIZE                   16          //!< Number of points on the CLT axis in the lookup tables
 #define LOAD_GRID_SIZE                  16          //!< Number of points on the load axis in 3D lookup tables
+#define IRPM_GRID_SIZE                  8           //!< Number of points on the RPM axis in advance angle lookup tables
+#define ILOAD_GRID_SIZE                 8           //!< Number of points on the load axis in 3D lookup tables
 #define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
 #define IBTN_KEY_SIZE                   6           //!< Size of iButton key (except CRC8 and family code)
 
@@ -142,6 +144,9 @@
 #define INJ_NONLIN_SIZE                 8           //!< Size of inj. non-linearity correction table
 
 #define EGO_DELAY_SIZE                  16          //!< Size of the EGO delay table
+
+#define INJ_IVE_POINTS_L                8           //!< number of points on load axis in idling VE lookup table
+#define INJ_IVE_POINTS_F                8           //!< number of points on rpm axis in idling VE lookup table
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -312,6 +317,8 @@ typedef struct f_data_t
   int8_t  inj_ae_map_bins[INJ_AE_MAP_LOOKUP_TABLE_SIZE]; //!< bins of the AE's MAP lookup table (dP/dt, (signed value in kPa) / 100ms)
 
   uint8_t inj_thrass[INJ_THRASS_SIZE];                //!< Thorottle assist map, value in % * 2
+
+  uint8_t inj_ive[INJ_IVE_POINTS_L][(INJ_IVE_POINTS_F*3)/2]; //!< Volumetric efficiency lookup table for idling, value * 2048 (12-bit)
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
@@ -530,8 +537,19 @@ typedef struct fw_ex_tabs_t
   /**EGO sensor's delay, strokes vs MAP*/
   uint16_t inj_ego_delay[EGO_DELAY_SIZE];
 
+  /**Points of the idling RPM grid*/
+  int16_t irpm_grid_points[IRPM_GRID_SIZE];
+  /**Sizes of cells in idling RPM grid (so, we don't need to calculate them at the runtime)*/
+  int16_t irpm_grid_sizes[IRPM_GRID_SIZE-1];
+
+  /**Points of the idling load grid*/
+  int16_t iload_grid_points[ILOAD_GRID_SIZE];
+
+  /**Sizes of cells in idling load grid (so, we don't need to calculate them at the runtime)*/
+  int16_t iload_grid_sizes[ILOAD_GRID_SIZE-1];
+
   /**reserved*/
-  uint8_t reserved[1035];
+  uint8_t reserved[975];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -547,9 +565,8 @@ typedef struct fw_ex_data_t
   uint8_t iac_cond_add;
   int16_t  aircond_clt;
   uint8_t  aircond_tps;
-  int16_t  idl_ve;
+  int16_t  idl_ve[2];
   uint16_t frap;
-  int16_t  idl_ve_g;
   uint16_t  reserv_0;     //reserved
   int16_t  heating_t_off; //Heating off temperature
   uint8_t  heating_time;  //Input manifold heating time
@@ -651,12 +668,14 @@ typedef struct fw_ex_data_t
   uint16_t aftstr_flat_strokes;
   uint8_t inj_prime_times;
 
+  uint8_t use_idl_ve[2];       //!< Idling VE for petrol and gas: 0 - don't use, 1 - simple constant, 2 - separate map
+ 
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1899];
+  uint8_t reserved[1513];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -996,7 +1015,7 @@ typedef struct eeprom_data_t
  uint16_t ltft1_crc;   //!< Checksum of the LTFT 1 table
  uint8_t  ltft2[INJ_VE_POINTS_L*INJ_VE_POINTS_F];
  uint16_t ltft2_crc;   //!< Checksum of the LTFT 2 table
- uint8_t  reserv[252]; //!< free bytes
+ uint8_t  reserv[156]; //!< free bytes
  uint8_t  magic[4];    //!< magic number in EEPROM (last 4 bytes)
 }eeprom_data_t;
 

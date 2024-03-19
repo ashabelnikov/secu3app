@@ -300,7 +300,7 @@ void ce_check_engine(void)
  }
 
  //If at least one error is present  - turn on CE and start timer
- if (ce_state.ecuerrors!=0)
+ if (ce_state.ecuerrors & ~_BV32(ECUERROR_SYS_START))
  {
   s_timer_set(&ce_control_time_counter, CE_CONTROL_STATE_TIME_VALUE);
   ce_set_state(CE_STATE_ON);

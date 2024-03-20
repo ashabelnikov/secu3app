@@ -693,6 +693,7 @@ void calc_ve_afr(void)
  //[gas pedal is pressed] OR [always use main VE map] OR [use separate VE map for idling but current RPM is out of its grid]
  if (d.sens.carb || 0==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]) || (2==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]) && d.sens.rpm > ram_extabs.irpm_grid_points[INJ_IVE_POINTS_F-1]))
  {//look into VE table
+  d.corr.idlve = 0;
   fcs.vecurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
         _GWU12(inj_ve,fcs.la_l,fcs.la_f),   //values in table are unsigned (12-bit!)
         _GWU12(inj_ve,fcs.la_lp1,fcs.la_f),
@@ -731,10 +732,12 @@ void calc_ve_afr(void)
  }
  else if (1==PGM_GET_BYTE(&fw_data.exdata.use_idl_ve[d.sens.gas]))
  { //use simple constant
+  d.corr.idlve = 0;
   fcs.vecurr = PGM_GET_WORD(&fw_data.exdata.idl_ve[d.sens.gas]);
  }
  else
  { //separate VE map for idling
+  d.corr.idlve = 1;
   fcs.vecurr = bilinear_interpolation(fcs.la_irpm, fcs.la_iload,
         _GWU12x8(inj_ive,fcs.la_il,fcs.la_if),   //values in table are unsigned (12-bit!)
         _GWU12x8(inj_ive,fcs.la_ilp1,fcs.la_if),

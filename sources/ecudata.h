@@ -233,6 +233,10 @@ typedef struct correct_t
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  int16_t tchrg;                          //!< Corrected value of MAT, temperature units
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ uint8_t idlve;                          //!< flag which indicates using of idling VE
+#endif
 }correct_t;
 
 /**Describes system's data (main ECU data structure)

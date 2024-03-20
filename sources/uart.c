@@ -822,6 +822,12 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+   build_i8h(_CBV8(d.corr.idlve, 0));       //additional flags          
+#else
+   build_i8h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

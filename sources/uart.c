@@ -1668,6 +1668,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(0); //<--reserved
    build_rb((uint8_t*)ram_extabs.iload_grid_points, ILOAD_GRID_SIZE * sizeof(int16_t));
    break;
+  //Transferring of VE2 load grid
+  case TLODGRD_PAR:
+   build_i8h(0); //<--reserved
+   build_rb((uint8_t*)ram_extabs.tload_grid_points, TLOAD_GRID_SIZE * sizeof(int16_t));
+   break;
 #endif
 
   case ATTTAB_PAR:
@@ -2526,6 +2531,7 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
   case LODGRD_PAR:
   case IRPMGRD_PAR: //idling
   case ILODGRD_PAR: //idling
+  case TLODGRD_PAR:
 #endif
   case ATTTAB_PAR:
 #ifdef DEBUG_VARIABLES

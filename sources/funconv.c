@@ -92,6 +92,10 @@ typedef struct
  int16_t la_iload;     //!< Load axis argument
  int16_t la_il;        //!< index on the load axis
  int8_t  la_ilp1;      //!< la_il + 1
+ //VE2 args:
+ int16_t la_tload;     //!< VE2 Load axis argument
+ int16_t la_tl;        //!< index on the load axis
+ int8_t  la_tlp1;      //!< la_tl + 1
  //CLT args:
  int8_t  ta_i;         //!< index
  int8_t  ta_i1;        //!< index + 1
@@ -208,7 +212,7 @@ void calc_lookup_args(void)
  { //use grid table
   fcs.la_load = d.load;
 
-  //limit value, so it can not be out of frid range
+  //limit value, so it can not be out of grid range
   if (fcs.la_load < ram_extabs.load_grid_points[0])
    fcs.la_load = ram_extabs.load_grid_points[0];
   if (fcs.la_load > ram_extabs.load_grid_points[F_WRK_POINTS_L-1])
@@ -297,7 +301,7 @@ void calc_lookup_args(void)
   //load:
   fcs.la_iload = d.load;
 
-  //limit value, so it can not be out of frid range
+  //limit value, so it can not be out of grid range
   if (fcs.la_iload < ram_extabs.iload_grid_points[0])
    fcs.la_iload = ram_extabs.iload_grid_points[0];
   if (fcs.la_iload > ram_extabs.iload_grid_points[INJ_IVE_POINTS_L-1])
@@ -306,6 +310,23 @@ void calc_lookup_args(void)
   for(fcs.la_il = INJ_IVE_POINTS_L-2; fcs.la_il >= 0; fcs.la_il--)
    if (fcs.la_iload >= ram_extabs.iload_grid_points[fcs.la_il]) break;
   fcs.la_ilp1 = fcs.la_il + 1;
+ }
+
+ //-------------------------------------------
+ //precalculate load arguments for VE2 map
+ if (d.param.ve2_map_func != VE2MF_1ST)
+ {
+  fcs.la_tload = d.sens.tps * 32;
+
+  //limit value, so it can not be out of grid range
+  if (fcs.la_tload < ram_extabs.tload_grid_points[0])
+   fcs.la_tload = ram_extabs.tload_grid_points[0];
+  if (fcs.la_tload > ram_extabs.tload_grid_points[INJ_TPS_POINTS_L-1])
+   fcs.la_tload = ram_extabs.tload_grid_points[INJ_TPS_POINTS_L-1];
+
+  for(fcs.la_tl = INJ_TPS_POINTS_L-2; fcs.la_tl >= 0; fcs.la_tl--)
+   if (fcs.la_tload >= ram_extabs.tload_grid_points[fcs.la_tl]) break;
+  fcs.la_tlp1 = fcs.la_tl + 1;
  }
 
  //-------------------------------------------
@@ -706,23 +727,15 @@ void calc_ve_afr(void)
 
   if (d.param.ve2_map_func != VE2MF_1ST)
   {
-   int16_t tps = d.sens.tps * 16;
-   int8_t t = (tps / TPS_AXIS_STEP), tp1;
-
-   if (t >= (GASDOSE_POS_TPS_SIZE - 1))
-    tp1 = t = GASDOSE_POS_TPS_SIZE - 1;
-   else
-    tp1 = t + 1;
-
-   int16_t ve2 = bilinear_interpolation(fcs.la_rpm, tps,  //note that tps is additionally multiplied by 16
-        _GWU12(inj_ve2, t, fcs.la_f),
-        _GWU12(inj_ve2, tp1, fcs.la_f),
-        _GWU12(inj_ve2, tp1, fcs.la_fp1),
-        _GWU12(inj_ve2, t, fcs.la_fp1),
+   int16_t ve2 = bilinear_interpolation(fcs.la_rpm, fcs.la_tload,
+        _GWU12(inj_ve2, fcs.la_tl, fcs.la_f),
+        _GWU12(inj_ve2, fcs.la_tlp1, fcs.la_f),
+        _GWU12(inj_ve2, fcs.la_tlp1, fcs.la_fp1),
+        _GWU12(inj_ve2, fcs.la_tl, fcs.la_fp1),
         ram_extabs.rpm_grid_points[fcs.la_f],
-        (TPS_AXIS_STEP*t),
+        ram_extabs.tload_grid_points[fcs.la_tl],
         ram_extabs.rpm_grid_sizes[fcs.la_f],
-        TPS_AXIS_STEP, 8) >> 3;
+        ram_extabs.tload_grid_sizes[fcs.la_tl], 8) >> 3;
 
    if (d.param.ve2_map_func == VE2MF_MUL)
     fcs.vecurr = (((int32_t)fcs.vecurr) * ve2) >> 11;

@@ -1158,6 +1158,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill idling load grid cell sizes lookup table*/
   {_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0),_LM(2.0)},
 
+  /**Fill TPS load grid points lookup table*/
+  {_LM(0.0),_LM(7.0),_LM(13.00),_LM(20.0),_LM(27.0),_LM(33.0),_LM(40.0),_LM(47.0),_LM(53.0),_LM(60.000),_LM(67.0),_LM(73.0),_LM(80.0),_LM(87.0),_LM(93.0),_LM(100.0)},
+
+  /**Fill TPS load grid cell sizes lookup table*/
+  {_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0)},
+
   /**reserved*/
   {0}
  },

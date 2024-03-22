@@ -78,6 +78,7 @@
 #define LOAD_GRID_SIZE                  16          //!< Number of points on the load axis in 3D lookup tables
 #define IRPM_GRID_SIZE                  8           //!< Number of points on the RPM axis in advance angle lookup tables
 #define ILOAD_GRID_SIZE                 8           //!< Number of points on the load axis in 3D lookup tables
+#define TLOAD_GRID_SIZE                 16          //!< Number of points on the TPS load axis in 3D lookup tables (VE2)
 #define IBTN_KEYS_NUM                   2           //!< Number of iButton keys
 #define IBTN_KEY_SIZE                   6           //!< Size of iButton key (except CRC8 and family code)
 
@@ -147,6 +148,7 @@
 
 #define INJ_IVE_POINTS_L                8           //!< number of points on load axis in idling VE lookup table
 #define INJ_IVE_POINTS_F                8           //!< number of points on rpm axis in idling VE lookup table
+#define INJ_TPS_POINTS_L                16          //!< number of points on TPS load axis in VE2 lookup table
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -548,8 +550,14 @@ typedef struct fw_ex_tabs_t
   /**Sizes of cells in idling load grid (so, we don't need to calculate them at the runtime)*/
   int16_t iload_grid_sizes[ILOAD_GRID_SIZE-1];
 
+  /**Points of the TPS load grid*/
+  int16_t tload_grid_points[TLOAD_GRID_SIZE];
+
+  /**Sizes of cells in TPS load grid (so, we don't need to calculate them at the runtime)*/
+  int16_t tload_grid_sizes[TLOAD_GRID_SIZE-1];
+
   /**reserved*/
-  uint8_t reserved[975];
+  uint8_t reserved[913];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware

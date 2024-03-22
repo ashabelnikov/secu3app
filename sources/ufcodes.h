@@ -83,5 +83,6 @@
 
 #define   IRPMGRD_PAR  'L'   //!< used for transferring idling RPM grid
 #define   ILODGRD_PAR  'M'   //!< used for transferring idling load grid
+#define   TLODGRD_PAR  'N'   //!< used for transferring TPS (VE2) load grid
 
 #endif //_UFCODES_H_

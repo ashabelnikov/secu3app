@@ -1164,6 +1164,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   /**Fill TPS load grid cell sizes lookup table*/
   {_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0),_LM(7.0),_LM(6.0),_LM(7.0)},
 
+  /**Fill AFR vs CLT look up table (petrol)*/
+  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)},
+
+  /**Fill AFR vs CLT look up table (gas)*/
+  {_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7),_FR(14.7)},
+
   /**reserved*/
   {0}
  },
@@ -1292,6 +1298,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .inj_prime_times = 1,      //repeat pulse duration 1 time
 
   .use_idl_ve = {0,0},       //don't use separate VE for idling
+
+  .wuafr_clt_thrd = TEMPERATURE_MAGNITUDE(-60.0), //-60.0°C - is off by default
 
   /**reserved bytes*/
   {0}

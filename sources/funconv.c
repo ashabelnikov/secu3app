@@ -762,16 +762,29 @@ void calc_ve_afr(void)
         ram_extabs.iload_grid_sizes[fcs.la_il], 8) >> 3;
  }
 
- //look into AFR table
- fcs.afrcurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
-        _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
-        _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
-        _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
-        _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
-        ram_extabs.rpm_grid_points[fcs.la_f],
-        use_grid ? ram_extabs.load_grid_points[fcs.la_l] : (fcs.la_grad * fcs.la_l),
-        ram_extabs.rpm_grid_sizes[fcs.la_f],
-        use_grid ? ram_extabs.load_grid_sizes[fcs.la_l] : fcs.la_grad, 16);
+ if (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.wuafr_clt_thrd)))
+ { //use WU AFR
+  if (0==d.sens.gas) //petrol
+   fcs.afrcurr = simple_interpolation(fcs.ta_clt, ram_extabs.inj_wu_afr0[fcs.ta_i], ram_extabs.inj_wu_afr0[fcs.ta_i1],  //<--values in table are unsigned
+                (int16_t)ram_extabs.clt_grid_points[fcs.ta_i], (int16_t)ram_extabs.clt_grid_sizes[fcs.ta_i], 16);
+  else                 //gas
+   fcs.afrcurr = simple_interpolation(fcs.ta_clt, ram_extabs.inj_wu_afr1[fcs.ta_i], ram_extabs.inj_wu_afr1[fcs.ta_i1],  //<--values in table are unsigned
+                (int16_t)ram_extabs.clt_grid_points[fcs.ta_i], (int16_t)ram_extabs.clt_grid_sizes[fcs.ta_i], 16);
+ }
+ else
+ {
+  //look into the main AFR table
+  fcs.afrcurr = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+         _GBU(inj_afr[fcs.la_l][fcs.la_f]),  //values in table are unsigned
+         _GBU(inj_afr[fcs.la_lp1][fcs.la_f]),
+         _GBU(inj_afr[fcs.la_lp1][fcs.la_fp1]),
+         _GBU(inj_afr[fcs.la_l][fcs.la_fp1]),
+         ram_extabs.rpm_grid_points[fcs.la_f],
+         use_grid ? ram_extabs.load_grid_points[fcs.la_l] : (fcs.la_grad * fcs.la_l),
+         ram_extabs.rpm_grid_sizes[fcs.la_f],
+         use_grid ? ram_extabs.load_grid_sizes[fcs.la_l] : fcs.la_grad, 16);
+ }
+
  fcs.afrcurr+=(8*256);
 
  d.corr.afr = fcs.afrcurr >> 1; //update value of AFR

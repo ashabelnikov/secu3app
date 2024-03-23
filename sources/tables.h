@@ -150,6 +150,8 @@
 #define INJ_IVE_POINTS_F                8           //!< number of points on rpm axis in idling VE lookup table
 #define INJ_TPS_POINTS_L                16          //!< number of points on TPS load axis in VE2 lookup table
 
+#define WU_AFR_SIZE                     16          //!< Size of the WU AFR map
+
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
 
@@ -556,8 +558,11 @@ typedef struct fw_ex_tabs_t
   /**Sizes of cells in TPS load grid (so, we don't need to calculate them at the runtime)*/
   int16_t tload_grid_sizes[TLOAD_GRID_SIZE-1];
 
+  uint8_t inj_wu_afr0[WU_AFR_SIZE]; //!< Air-Fuel ratio vs coolant temperature lookup table for petrol, (value - 8) * 16
+  uint8_t inj_wu_afr1[WU_AFR_SIZE]; //!< Air-Fuel ratio vs coolant temperature lookup table for gas, (value - 8) * 16
+
   /**reserved*/
-  uint8_t reserved[913];
+  uint8_t reserved[881];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -677,13 +682,15 @@ typedef struct fw_ex_data_t
   uint8_t inj_prime_times;
 
   uint8_t use_idl_ve[2];       //!< Idling VE for petrol and gas: 0 - don't use, 1 - simple constant, 2 - separate map
+
+  int16_t wuafr_clt_thrd;      //!< Temperature threshold for switching from WU AFR map to main AFR map, value in 0.25°C units
  
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1513];
+  uint8_t reserved[1511];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

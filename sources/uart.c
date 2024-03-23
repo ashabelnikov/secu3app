@@ -121,6 +121,8 @@
 #define ETMT_INJNONLINP    71  //!<
 #define ETMT_INJNONLING    72  //!<
 #define ETMT_EGO_DELAY     73  //!<
+#define ETMT_WU_AFR0       74  //!<
+#define ETMT_WU_AFR1       75  //!<
 
 /**Define internal state variables */
 typedef struct
@@ -1639,6 +1641,14 @@ void uart_send_packet(uint8_t send_mode)
      else
       wrk_index = 0;
      break;
+    case ETMT_WU_AFR0:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.inj_wu_afr0, WU_AFR_SIZE);
+     break;
+    case ETMT_WU_AFR1:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.inj_wu_afr1, WU_AFR_SIZE);
+     break;
    }
    break;
   }
@@ -2451,6 +2461,12 @@ uint8_t uart_recept_packet(void)
      break;
     case ETMT_EGO_DELAY:
      recept_rw(((uint16_t*)&ram_extabs.inj_ego_delay) + addr, EGO_DELAY_SIZE/2); /*EGO_DELAY_SIZE/2 max*/
+     break;
+    case ETMT_WU_AFR0:
+     recept_rb(((uint8_t*)&ram_extabs.inj_wu_afr0) + addr, WU_AFR_SIZE); /*WU_AFR_SIZE max*/
+     break;
+    case ETMT_WU_AFR1:
+     recept_rb(((uint8_t*)&ram_extabs.inj_wu_afr1) + addr, WU_AFR_SIZE); /*WU_AFR_SIZE max*/
      break;
    }
   }

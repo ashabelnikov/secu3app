@@ -1157,7 +1157,7 @@ void uart_send_packet(uint8_t send_mode)
      break;
     case ETMT_IVE_MAP:
      build_i8h(wrk_index*INJ_IVE_POINTS_F); //cell address
-     build_rb((uint8_t*)&d.tables_ram.inj_ive[wrk_index][0], (INJ_IVE_POINTS_F*3)/2); //24 bytes per packet (row), INJ_VE_POINTS_L rows
+     build_rb((uint8_t*)&d.tables_ram.inj_ive[wrk_index][0], (INJ_IVE_POINTS_F*3)/2); //12 bytes per packet (row), INJ_IVE_POINTS_L rows
      if (wrk_index >= INJ_IVE_POINTS_L-1 )
      {
       wrk_index = 0;

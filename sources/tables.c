@@ -1185,7 +1185,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .aircond_clt = TEMPERATURE_MAGNITUDE(75.0), //75°C
   .aircond_tps = TPS_MAGNITUDE(68.0), //68%
   .idl_ve = {ROUND(1.0*2048),ROUND(1.0*2048)}, //1.0
-  .frap = PRESSURE_MAGNITUDE(0.0), //absolute pressure in the fuel rail
+  .frgp = PRESSURE_MAGNITUDE(0.0), //gauge pressure in the fuel rail
   .reserv_0 = 0, //reserved
   .heating_t_off = TEMPERATURE_MAGNITUDE(65.0), //65°C
   .heating_time = 100, //10 min
@@ -1300,6 +1300,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .use_idl_ve = {0,0},       //don't use separate VE for idling
 
   .wuafr_clt_thrd = TEMPERATURE_MAGNITUDE(-60.0), //-60.0°C - is off by default
+
+  .ifr_gp = PRESSURE_MAGNITUDE(300.0), //note: this is gauge pressure (not absolute pressure)
 
   /**reserved bytes*/
   {0}

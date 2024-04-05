@@ -124,13 +124,15 @@ static int16_t manual_injpw(void)
 
 #if defined(IFR_VS_MAP_CORR) && defined(FUEL_INJECT)
 /** Injector's flow rate correction vs manifold absolute pressure
- *  coefficient = 1.0 / sqrt(frap - map / 300.0)
+ *  coefficient = 1.0 / sqrt(((frgp + pbaro) - map) / ifr_gp) = sqrt(ifr_gp / ((frgp + pbaro) - map))
  * \return correction factor * 256
  */
 static uint16_t ifr_vs_map_corr(void)
 {
- //uint16_t frap = ROUNDU16(500.0 * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER); //absolute pressure in the fuel rail
- return ui32_sqrt((3UL * 100UL * MAP_PHYSICAL_MAGNITUDE_MULTIPLIER * 65535UL) / (PGM_GET_WORD(&fw_data.exdata.frap) - d.sens.map)); //65535 = 256 ^ 2
+ uint16_t frap = PGM_GET_WORD(&fw_data.exdata.frgp) + d.sens.baro_press;
+ if (frap <= d.sens.map)
+  frap = d.sens.map + 1; //prevent div. by zero
+ return ui32_sqrt((((uint32_t)PGM_GET_WORD(&fw_data.exdata.ifr_gp)) * 65536UL) / (frap - d.sens.map)); //65536 = 256^2, sqrt(256^2) = 256
 }
 #endif
 
@@ -269,7 +271,7 @@ static void fuel_calc(void)
  int32_t pw = inj_base_pw();
 
 #ifdef IFR_VS_MAP_CORR
- if (PGM_GET_WORD(&fw_data.exdata.frap))
+ if (PGM_GET_WORD(&fw_data.exdata.frgp))
   pw = (pw * ifr_vs_map_corr()) >> 8;            //apply injector's flow rate vs manifold pressure correction
 #endif
 

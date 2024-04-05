@@ -579,7 +579,7 @@ typedef struct fw_ex_data_t
   int16_t  aircond_clt;
   uint8_t  aircond_tps;
   int16_t  idl_ve[2];
-  uint16_t frap;
+  uint16_t frgp;          //gauge pressure in the fuel rail (kPa)
   uint16_t  reserv_0;     //reserved
   int16_t  heating_t_off; //Heating off temperature
   uint8_t  heating_time;  //Input manifold heating time
@@ -684,13 +684,14 @@ typedef struct fw_ex_data_t
   uint8_t use_idl_ve[2];       //!< Idling VE for petrol and gas: 0 - don't use, 1 - simple constant, 2 - separate map
 
   int16_t wuafr_clt_thrd;      //!< Temperature threshold for switching from WU AFR map to main AFR map, value in 0.25°C units
- 
+
+  uint16_t ifr_gp;             //!< Gauge pressure for rated inj. flow rate (kPa * 64)
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1511];
+  uint8_t reserved[1509];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

@@ -271,7 +271,8 @@ void check(ce_sett_t *cesd)
 #endif
 
 #ifndef SECU3T //SECU-3i
- if (IOCFG_CHECK(IOP_GPA5_I))
+ //ignore error if SM or GD control was not enabled
+ if (IOCFG_CHECK(IOP_GPA5_I) && (IOCFG_CMP(IOP_DE, IOP_SM_STP) || IOCFG_CMP(IOP_DE, IOP_GD_STP)))
  {
   if (IOCFG_GET(IOP_GPA5_I))
    ce_clear_error(ECUERROR_STEPPERIC_FAULT); //ok

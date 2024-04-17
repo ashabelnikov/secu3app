@@ -403,6 +403,10 @@ typedef struct ce_sett_t
 
  uint16_t oilpress_thrd;
  uint16_t oilpress_timer;
+
+ uint8_t stepperic_flg;   //process stepper IC fault (0 - ignore, 1 - process)
+
+ uint8_t reserved[31];
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware
@@ -562,7 +566,7 @@ typedef struct fw_ex_tabs_t
   uint8_t inj_wu_afr1[WU_AFR_SIZE]; //!< Air-Fuel ratio vs coolant temperature lookup table for gas, (value - 8) * 16
 
   /**reserved*/
-  uint8_t reserved[881];
+  uint8_t reserved[849];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware

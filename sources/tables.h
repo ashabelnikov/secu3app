@@ -566,7 +566,7 @@ typedef struct fw_ex_tabs_t
   uint8_t inj_wu_afr1[WU_AFR_SIZE]; //!< Air-Fuel ratio vs coolant temperature lookup table for gas, (value - 8) * 16
 
   /**reserved*/
-  uint8_t reserved[849];
+  uint8_t reserved[817];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -1044,7 +1044,7 @@ typedef struct eeprom_data_t
 //Define data structures are related to code area data and IO remapping data
 typedef uint16_t fnptr_t;                //!< Special type for function pointers
 #define IOREM_SLOTS  49                  //!< Number of slots used for I/O remapping
-#define IOREM_PLUGS  100                 //!< Number of plugs used in I/O remapping
+#define IOREM_PLUGS  108                 //!< Number of plugs used in I/O remapping
 
 /**Describes all data related to I/O remapping */
 typedef struct iorem_slots_t

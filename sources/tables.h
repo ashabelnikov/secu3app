@@ -690,12 +690,14 @@ typedef struct fw_ex_data_t
   int16_t wuafr_clt_thrd;      //!< Temperature threshold for switching from WU AFR map to main AFR map, value in 0.25°C units
 
   uint16_t ifr_gp;             //!< Gauge pressure for rated inj. flow rate (kPa * 64)
+
+  uint8_t can_dashboard;       //!< Model of CAN dashboard. 0 - Lada Priora, 1 - Nissan Almera Classic
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1509];
+  uint8_t reserved[1508];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

@@ -114,7 +114,7 @@ typedef struct
  volatile uint8_t pending_request;      //!< pending requests flag
 #endif
 #ifdef OBD_SUPPORT
- volatile uint8_t can_pending_msg;      //!< pending message exists and waint for transmition
+ volatile uint8_t can_pending_msg;      //!< pending message exists and wait for transmition
  can_t can_msg;                         //!< CAN message
  uint8_t can_data_idx;
  uint8_t can_buff_addr;
@@ -377,7 +377,7 @@ void knock_start_expander_latching(void)
 // _BEGIN_ATOMIC_BLOCK(); we rely that at the moment of calling of this function interrupts are disabled, so don't disable it twice
 #ifdef SECU3T
   if (!ksp.can_pending_msg)
-   return; //not CAN messages waiting on sending
+   return; //no CAN messages waiting on sending
 #endif
  if (0==ksp.ksp_interrupt_state)
  {
@@ -767,10 +767,10 @@ void knock_init_ports(void)
 #ifdef OBD_SUPPORT
 void knock_push_can_message(struct can_t* msg)
 {
-  if (ksp.can_pending_msg)
-   return; //transmition of previous message is not finished yet
- ksp.can_pending_msg = 1;  //will be cleared in the interrupt
+ if (ksp.can_pending_msg)
+  return; //transmition of previous message is not finished yet
  memcpy(&ksp.can_msg, msg, sizeof(can_t)); //copy message
+ ksp.can_pending_msg = 1;  //will be cleared in the interrupt
 }
 #endif
 

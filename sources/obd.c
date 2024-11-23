@@ -57,78 +57,128 @@ void obd_init(void)
 
 void obd_process(void)
 {
- switch(obd.state)
+ if (0==PGM_GET_BYTE(&fw_data.exdata.can_dashboard)) //Lada "Priora"
  {
-  case 0:
-   if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD)
-   { //each 100ms
-    obd.send_tmr = s_timer_gtc();
-    obd.msg.id = 0x180;   //Engine RPM
-    obd.msg.flags.rtr = 0;
-    obd.msg.length = 8;
-    obd.msg.data[0] = ((d.sens.rpm > 8100) ? 8100 : d.sens.rpm) >> 5; // limit to 8100, rpm / 32
-    obd.msg.data[1] = 0x00;
-    obd.msg.data[2] = 0x00;
-    obd.msg.data[3] = 0x00;
-    obd.msg.data[4] = 0x00;
-    obd.msg.data[5] = 0x00;
-    obd.msg.data[6] = 0x00;
-    obd.msg.data[7] = 0x00;
-    knock_push_can_message(&obd.msg);
-    ++obd.state;
-   }
-   break;
+  switch(obd.state)
+  {
+   case 0:
+    if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD)
+    { //each 100ms
+     obd.send_tmr = s_timer_gtc();
+     obd.msg.id = 0x180;   //Engine RPM
+     obd.msg.flags.rtr = 0;
+     obd.msg.length = 8;
+     obd.msg.data[0] = ((d.sens.rpm > 8100) ? 8100 : d.sens.rpm) >> 5; // limit to 8100, rpm / 32
+     obd.msg.data[1] = 0x00;
+     obd.msg.data[2] = 0x00;
+     obd.msg.data[3] = 0x00;
+     obd.msg.data[4] = 0x00;
+     obd.msg.data[5] = 0x00;
+     obd.msg.data[6] = 0x00;
+     obd.msg.data[7] = 0x00;
+     knock_push_can_message(&obd.msg);
+     ++obd.state;
+    }
+    break;
 
-  case 1:
-   if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD_MSG)
-   {
-    obd.msg.id = 0x1F9;   //Vehicle speed
-    obd.msg.flags.rtr = 0;
-    obd.msg.length = 8;
-    obd.msg.data[0] = 0x00;
-    obd.msg.data[1] = 0x00;
+   case 1:
+    if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD_MSG)
+    {
+     obd.msg.id = 0x1F9;   //Vehicle speed
+     obd.msg.flags.rtr = 0;
+     obd.msg.length = 8;
+     obd.msg.data[0] = 0x00;
+     obd.msg.data[1] = 0x00;
 #ifdef SPEED_SENSOR
-    obd.msg.data[2] = (((uint32_t)((d.sens.vss_speed > VSSSPEED_MAG(240.0)) ? VSSSPEED_MAG(240.0) : d.sens.vss_speed)) * 410) >> 15; // divide by 2.5, so 1 discrete = 2.5kmH, 0.4 * 1024 = 410
+     obd.msg.data[2] = (((uint32_t)((d.sens.vss_speed > VSSSPEED_MAG(240.0)) ? VSSSPEED_MAG(240.0) : d.sens.vss_speed)) * 410) >> 15; // divide by 2.5, so 1 discrete = 2.5kmH, 0.4 * 1024 = 410
 #else
-    obd.msg.data[2] = 0;  //no speed sensor
+     obd.msg.data[2] = 0;  //no speed sensor
 #endif
-    obd.msg.data[3] = 0x00;
-    obd.msg.data[4] = 0x00;
-    obd.msg.data[5] = 0x00;
-    obd.msg.data[6] = 0x00;
-    obd.msg.data[7] = 0x00;
-    knock_push_can_message(&obd.msg);
-    ++obd.state;
-   }
-   break;
+     obd.msg.data[3] = 0x00;
+     obd.msg.data[4] = 0x00;
+     obd.msg.data[5] = 0x00;
+     obd.msg.data[6] = 0x00;
+     obd.msg.data[7] = 0x00;
+     knock_push_can_message(&obd.msg);
+     ++obd.state;
+    }
+    break;
 
-  case 2:
-   if ((s_timer_gtc() - obd.send_tmr) >= (OBD_SEND_PERIOD_MSG*2))
-   {
-    uint8_t FAILS = 0, BATT = _BV(0);
-    WRITEBIT(FAILS, 0, d.ce_state); //CE lamp control
-    WRITEBIT(FAILS, 3, d.sens.temperat > TEMPERATURE_MAGNITUDE(110.0)); //engine overheat lamp control
+   case 2:
+    if ((s_timer_gtc() - obd.send_tmr) >= (OBD_SEND_PERIOD_MSG*2))
+    {
+     uint8_t FAILS = 0, BATT = _BV(0);
+     WRITEBIT(FAILS, 0, d.ce_state); //CE lamp control
+     WRITEBIT(FAILS, 3, d.sens.temperat > TEMPERATURE_MAGNITUDE(110.0)); //engine overheat lamp control
 
 #ifndef SECU3T //SECU-3i
-    WRITEBIT(FAILS, 2, !d.sens.oilpress_ok); //oil pressure failure
-    WRITEBIT(BATT, 0, d.sens.generator_ok); //dynamo generator failure
+     WRITEBIT(FAILS, 2, !d.sens.oilpress_ok); //oil pressure failure
+     WRITEBIT(BATT, 0, d.sens.generator_ok); //dynamo generator failure
 #endif
 
-    obd.msg.id = 0x551;
-    obd.msg.flags.rtr = 0;
-    obd.msg.length = 8;
-    obd.msg.data[0] = 0x00;
-    obd.msg.data[1] = 0x00;
-    obd.msg.data[2] = 0x00;
-    obd.msg.data[3] = BATT;
-    obd.msg.data[4] = FAILS;
-    obd.msg.data[5] = 0x00; // ÑOUNTER
-    obd.msg.data[6] = 0x00;
-    obd.msg.data[7] = 0x00;
-    knock_push_can_message(&obd.msg);
-    obd.state = 0;
-   }
-   break;
+     obd.msg.id = 0x551;
+     obd.msg.flags.rtr = 0;
+     obd.msg.length = 8;
+     obd.msg.data[0] = 0x00;
+     obd.msg.data[1] = 0x00;
+     obd.msg.data[2] = 0x00;
+     obd.msg.data[3] = BATT;
+     obd.msg.data[4] = FAILS;
+     obd.msg.data[5] = 0x00; // ÑOUNTER
+     obd.msg.data[6] = 0x00;
+     obd.msg.data[7] = 0x00;
+     knock_push_can_message(&obd.msg);
+     obd.state = 0;
+    }
+    break;
+  }
+ }
+ else if (1==PGM_GET_BYTE(&fw_data.exdata.can_dashboard)) //Nissan Almera Classic
+ {
+  switch(obd.state)
+  {
+   case 0:
+    if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD)
+    { //each 100ms
+     obd.send_tmr = s_timer_gtc();
+     obd.msg.id = 505;   //Engine RPM
+     obd.msg.flags.rtr = 0;
+     obd.msg.length = 8;
+     obd.msg.data[0] = 0x00;  //TODO
+     obd.msg.data[1] = 0x00;
+     obd.msg.data[2] = 0x00;
+     obd.msg.data[3] = 0x00;
+     obd.msg.data[4] = 0x00;
+     obd.msg.data[5] = 0x00;
+     obd.msg.data[6] = 0x00;
+     obd.msg.data[7] = 0x00;
+     knock_push_can_message(&obd.msg);
+     ++obd.state;
+    }
+    break;
+
+   case 1:
+    if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD_MSG)
+    {
+     //map temperature range -40...120 to the range 90...170
+     int16_t tg = simple_interpolation(d.sens.temperat, 90, 170, TEMPERATURE_MAGNITUDE(-40.0), TEMPERATURE_MAGNITUDE(160.0), 128) >> 7;
+     restrict_value_to(&tg, 90, 170);
+     obd.msg.id = 1361;   //Coolant temperature
+     obd.msg.flags.rtr = 0;
+     obd.msg.length = 8;
+     obd.msg.data[0] = tg;    //temperature for gauge
+     obd.msg.data[1] = 0x00;
+     obd.msg.data[2] = 0x00;
+     obd.msg.data[3] = tg;    //temperature for "Check Engine" lamp
+     obd.msg.data[4] = 0x00;
+     obd.msg.data[5] = 0x00;
+     obd.msg.data[6] = 0x00;
+     obd.msg.data[7] = 0x00;
+     knock_push_can_message(&obd.msg);
+     obd.state = 0;
+    }
+    break;
+  }
  }
 }
 

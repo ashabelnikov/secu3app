@@ -111,6 +111,7 @@ void meas_init_ports(void)
  IOCFG_INIT(IOP_GPA4_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA5_I, 1);   //use internal pullup resistor
  IOCFG_INIT(IOP_AUTO_I, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_ALTRN_I, 0);  //don't use internal pullup resistor
 #endif
  //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB, ADD_I3, ADD_I4) because they are initialised by default
  //and we don't need pullup resistors for them
@@ -566,7 +567,22 @@ void meas_take_discrete_inputs(void)
 
 #ifndef SECU3T //SECU-3i
  d.sens.oilpress_ok = !ce_is_error(ECUERROR_OILPRESSURE); //oil pressure sensor
- d.sens.generator_ok = IOCFG_GET(IOP_GPA4_I); //generator status
+
+ if (IOCFG_CHECK(IOP_ALTRN_I))
+ {
+  uint16_t altvolt = IOCFG_GETA(IOP_ALTRN_I); //get state of the input
+  if (IOCFG_DTST(altvolt))
+  {
+   d.sens.generator_ok = IOCFG_DGET(altvolt); //mapped to bare digital input
+  }
+  else //mapped to an analog input
+  {
+   d.sens.generator_ok = (altvolt > VOLTAGE_MAGNITUDE(2.5)) && !IOCFG_GETE(IOP_ALTRN_I);
+  }
+ }
+ else //not used (not mapped to physical input)
+  d.sens.generator_ok = 1;
+
  d.sens.epas_i = IOCFG_GET(IOP_EPAS_I);
 #endif
 

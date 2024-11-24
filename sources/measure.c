@@ -106,11 +106,11 @@ void meas_init_ports(void)
  IOCFG_INIT(IOP_COND_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_INPUT1, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_INPUT2, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_AUTO_I, 0);   //don't use internal pullup resistor
 #ifndef SECU3T //SECU-3i
  IOCFG_INIT(IOP_EPAS_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA4_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA5_I, 1);   //use internal pullup resistor
- IOCFG_INIT(IOP_AUTO_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_ALTRN_I, 0);  //don't use internal pullup resistor
 #endif
  //We don't initialize analog inputs (ADD_I1, ADD_I2, CARB, ADD_I3, ADD_I4) because they are initialised by default
@@ -584,8 +584,10 @@ void meas_take_discrete_inputs(void)
   d.sens.generator_ok = 1;
 
  d.sens.epas_i = IOCFG_GET(IOP_EPAS_I);
+ d.sens.gpa4_i = IOCFG_GET(IOP_GPA4_I);
 #endif
 
+ d.sens.auto_i = IOCFG_GET(IOP_AUTO_I);
  d.sens.ign_i = IOCFG_GET(IOP_IGN);
  d.sens.cond_i = IOCFG_GET(IOP_COND_I);
  d.sens.input1 = IOCFG_GET(IOP_INPUT1);

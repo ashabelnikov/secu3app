@@ -825,11 +825,17 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
+   build_i8h(
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-   build_i8h(_CBV8(d.corr.idlve, 0));       //additional flags          
-#else
-   build_i8h(0);
+     _CBV8(d.corr.idlve, 0)
 #endif
+#ifndef SECU3T
+   | _CBV8(d.sens.gpa4_i, 1)               // GPA4_I input (digital)
+#endif
+   | _CBV8(d.sens.input1, 2)               // INPUT1
+   | _CBV8(d.sens.input2, 3)               // INPUT2
+   | _CBV8(d.sens.auto_i, 4)               // AUTO_I
+   );       //additional flags          
    break;
 
   case ADCCOR_PAR:

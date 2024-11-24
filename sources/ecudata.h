@@ -130,7 +130,9 @@ typedef struct sensors_t
  uint8_t oilpress_ok;                    //!< Flag.1 - oil pressure is OK, 0 - failure
  uint8_t generator_ok;                   //!< Flag.1 - dynamo generator is OK, 0 - failure
  uint8_t epas_i;
+ uint8_t gpa4_i;
 #endif
+ uint8_t auto_i;
  uint8_t ign_i;
  uint8_t cond_i;
 

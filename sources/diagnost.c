@@ -336,9 +336,9 @@ void init_digital_inputs(void)
  DDRC &= ~(_BV(DDC3)|_BV(DDC2)); //inputs
  PORTC|= _BV(PC3)|_BV(PC2);
 
- //GAS_V, IGN_I, COND_I, EPAS_I without pull-up resistors
- spi_IODIRA|= (_BV(3)|_BV(2)|_BV(1)|_BV(0));
- spi_GPPUA &= ~(_BV(3)|_BV(2)|_BV(1)|_BV(0));
+ //GAS_V, IGN_I, COND_I, EPAS_I, GPA4_I without pull-up resistors
+ spi_IODIRA|= (_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0));
+ spi_GPPUA &= ~(_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0));
 
 #endif
 }
@@ -359,7 +359,8 @@ uint16_t get_inputs(void)
  uint16_t i = _IBV((!!CHECKBIT(spi_PORTA, 0)), 0) | _IBV((!!CHECKBIT(PIND, PIND6)), 1) | _IBV((!!CHECKBIT(PIND, PIND2)), 2) |
               _IBV((!!CHECKBIT(PIND, PIND3)), 3) | //GAS_V, CKPS, REF_S, PS
               _IBV((!!CHECKBIT(PINC, PINC3)), 4) | _IBV((!!CHECKBIT(PINC, PINC2)), 5) |  //BL jmp, DE jmp
-              _IBV((!!CHECKBIT(spi_PORTA, 3)), 6) | _IBV((!!CHECKBIT(spi_PORTA, 2)), 7) | _IBV((!!CHECKBIT(spi_PORTA, 1)), 8); //IGN_I, COND_I, EPAS_I
+              _IBV((!!CHECKBIT(spi_PORTA, 3)), 6) | _IBV((!!CHECKBIT(spi_PORTA, 2)), 7) | _IBV((!!CHECKBIT(spi_PORTA, 1)), 8) | //IGN_I, COND_I, EPAS_I
+              _IBV((!!CHECKBIT(spi_PORTA, 4)), 9);   // GPA4_I
 
 #endif
  return i;

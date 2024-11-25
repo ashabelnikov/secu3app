@@ -706,11 +706,11 @@ uint16_t iocfg_g_add_i4i(uint8_t doa)  //inverted version
 
 #else //---SECU-3i---
 
-uint8_t  spi_PORTA = 0x80; //!< Bits of inputs read by SPI. 7 bit is reserved as output, by default = 1
+uint8_t  spi_PORTA = 0x80; //!< Bits of inputs read by SPI. 7,6 bits are reserved as outputs, 7 bit by default = 1
 uint8_t  spi_PORTB = 0;   //!< Bits of outputs controlled by SPI
 uint8_t  spi_IODIRA = 0;  //!< Direction control bits for SPI PORTA (inputs). 7 bit is reserved and configured as output
 uint8_t  spi_IODIRB = 0;  //!< Direction control bits for SPI PORTB (outputs)
-uint8_t  spi_GPPUA = 0x80; //!< Pull-up resistors control register A. 7 bit is reserved as output
+uint8_t  spi_GPPUA = 0x80;//!< Pull-up resistors control register A. 7,6 bits are reserved as outputs
 uint8_t  spi_GPPUB = 0;   //!< Pull-up resistors control register B
 
 #ifdef MCP3204

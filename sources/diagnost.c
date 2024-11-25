@@ -168,6 +168,10 @@ void init_digital_outputs(void)
  spi_PORTB&= (uint8_t)(~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0)));
  spi_IODIRB&= (uint8_t)(~(_BV(7)|_BV(6)|_BV(5)|_BV(4)|_BV(3)|_BV(2)|_BV(1)|_BV(0)));
 
+ //GPA6_O
+ spi_PORTA&= (uint8_t)(~(_BV(6)));
+ spi_IODIRA&= (uint8_t)(~(_BV(6)));
+
 #endif
 }
 
@@ -313,6 +317,10 @@ void set_outputs(uint32_t o)
    WRITEBIT(PORTC, PC4, (o & _OBV(23)));
   }
  }
+
+ if (diagch != 22)
+  WRITEBIT_ATOM(spi_PORTA, 6, (o & _OBV(25))); //GPA6_O
+
 #endif
 
 }

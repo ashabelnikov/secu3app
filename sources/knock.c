@@ -555,7 +555,7 @@ ISR(SPI_STC_vect)
    ++ksp.ksp_interrupt_state;
    break;
   case 8: //GPIOB wrote
-   SPDR = 0x00; //set MCP3204 CS!
+   SPDR = spi_PORTA & 0x7F; //set MCP3204 CS!
    ++ksp.ksp_interrupt_state;
    break;
   case 9: //GPIOA wrote!
@@ -586,7 +586,7 @@ ISR(SPI_STC_vect)
    ++ksp.ksp_interrupt_state;
    break;
   case 14: //GPIOA address loaded
-   SPDR = 0x80; //clear MCP3204 CS!
+   SPDR = spi_PORTA; //clear MCP3204 CS!
    ++ksp.ksp_interrupt_state;
    break;
 #else

@@ -1314,7 +1314,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ifr_gp = PRESSURE_MAGNITUDE(300.0), //note: this is gauge pressure (not absolute pressure)
 
-  .can_dashboard = 0,        //Lada Priora
+  .can_dashboard = 0,        //data sending is off
   
   /**reserved bytes*/
   {0}

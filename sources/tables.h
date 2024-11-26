@@ -691,7 +691,7 @@ typedef struct fw_ex_data_t
 
   uint16_t ifr_gp;             //!< Gauge pressure for rated inj. flow rate (kPa * 64)
 
-  uint8_t can_dashboard;       //!< Model of CAN dashboard. 0 - Lada Priora, 1 - Nissan Almera Classic
+  uint8_t can_dashboard;       //!< Model of CAN dashboard. 0 - data sending is off, 1 - Lada Priora, 2 - Nissan Almera Classic
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between

@@ -57,7 +57,10 @@ void obd_init(void)
 
 void obd_process(void)
 {
- if (0==PGM_GET_BYTE(&fw_data.exdata.can_dashboard)) //Lada "Priora"
+ if (0==PGM_GET_BYTE(&fw_data.exdata.can_dashboard))
+  return; //off
+
+ if (1==PGM_GET_BYTE(&fw_data.exdata.can_dashboard)) //Lada "Priora"
  {
   switch(obd.state)
   {
@@ -133,7 +136,7 @@ void obd_process(void)
     break;
   }
  }
- else if (1==PGM_GET_BYTE(&fw_data.exdata.can_dashboard)) //Nissan Almera Classic
+ else if (2==PGM_GET_BYTE(&fw_data.exdata.can_dashboard)) //Nissan Almera Classic
  {
   switch(obd.state)
   {
@@ -144,14 +147,15 @@ void obd_process(void)
      obd.msg.id = 505;   //Engine RPM
      obd.msg.flags.rtr = 0;
      obd.msg.length = 8;
-     obd.msg.data[0] = 0x00;  //TODO
-     obd.msg.data[1] = 0x00;
-     obd.msg.data[2] = 0x00;
-     obd.msg.data[3] = 0x00;
-     obd.msg.data[4] = 0x00;
-     obd.msg.data[5] = 0x00;
-     obd.msg.data[6] = 0x00;
-     obd.msg.data[7] = 0x00;
+     uint16_t rpm = d.sens.rpm + 500;     
+     obd.msg.data[0] = 0;
+     obd.msg.data[1] = 0;
+     obd.msg.data[2] = ((rpm > 8100) ? 8100 : rpm) >> 5; // limit to 8100, rpm / 32
+     obd.msg.data[3] = 0;
+     obd.msg.data[4] = 0;
+     obd.msg.data[5] = 0;
+     obd.msg.data[6] = 0;
+     obd.msg.data[7] = 0;
      knock_push_can_message(&obd.msg);
      ++obd.state;
     }

@@ -135,6 +135,7 @@ typedef struct sensors_t
  uint8_t auto_i;
  uint8_t ign_i;
  uint8_t cond_i;
+ uint8_t mapsel0;
 
  //raw values of sensors (ADC discretes with compensated errors)
  int16_t  map_raw;                       //!< raw ADC value from MAP sensor

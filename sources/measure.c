@@ -107,6 +107,7 @@ void meas_init_ports(void)
  IOCFG_INIT(IOP_INPUT1, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_INPUT2, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_AUTO_I, 0);   //don't use internal pullup resistor
+ IOCFG_INIT(IOP_MAPSEL0, 0);  //don't use internal pullup resistor
 #ifndef SECU3T //SECU-3i
  IOCFG_INIT(IOP_EPAS_I, 0);   //don't use internal pullup resistor
  IOCFG_INIT(IOP_GPA4_I, 0);   //don't use internal pullup resistor
@@ -592,4 +593,5 @@ void meas_take_discrete_inputs(void)
  d.sens.cond_i = IOCFG_GET(IOP_COND_I);
  d.sens.input1 = IOCFG_GET(IOP_INPUT1);
  d.sens.input2 = IOCFG_GET(IOP_INPUT2);
+ d.sens.mapsel0 = mapsel0;
 }

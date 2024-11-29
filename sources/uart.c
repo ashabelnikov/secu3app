@@ -835,6 +835,7 @@ void uart_send_packet(uint8_t send_mode)
    | _CBV8(d.sens.input1, 2)               // INPUT1
    | _CBV8(d.sens.input2, 3)               // INPUT2
    | _CBV8(d.sens.auto_i, 4)               // AUTO_I
+   | _CBV8(d.sens.mapsel0,5)               // MAPSEL0
    );       //additional flags          
    break;
 

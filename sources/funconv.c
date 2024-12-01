@@ -441,7 +441,7 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
 
 #ifdef FUEL_INJECT
  //if param.idling_rpm == 0 then use target RPM from lookup table
- idling_rpm = d.param.idling_rpm ? d.param.idling_rpm : inj_idling_rpm();
+ idling_rpm = d.param.idling_rpm ? d.param.idling_rpm : calc_cl_rpm();
 #else
  idling_rpm = d.param.idling_rpm;
 #endif
@@ -2117,4 +2117,28 @@ uint16_t inj_cranktorun_time(void)
  return simple_interpolation(t, d.param.inj_cranktorun_time, d.param.inj_cranktorun_time1,
  TEMPERATURE_MAGNITUDE(-30), TEMPERATURE_MAGNITUDE(100), 2) >> 1;
 }
+
+/**Calculates value of target RPM for closed loop regulator*/
+int16_t calc_cl_rpm(void)
+{
+ int16_t rpm = inj_idling_rpm(); //target RPM depending on the coolant temperature
+
+#ifdef AIRCONDIT
+ if (rpm < d.cond_req_rpm)
+  rpm = d.cond_req_rpm;         //increase RPM to the minimum required value
+#endif
+
+ //use addition value when vehicle starts to run
+#ifdef SPEED_SENSOR
+ if (IOCFG_CHECK(IOP_SPDSENS) && d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.iac_onrunadd_vss_thrd))
+ {
+  rpm += (d.param.rpm_on_run_add * 10);
+
+  if (rpm < PGM_GET_WORD(&fw_data.exdata.iac_min_rpm_on_run))
+   rpm = PGM_GET_WORD(&fw_data.exdata.iac_min_rpm_on_run);
+ }
+#endif
+ return rpm;
+}
+
 #endif

@@ -592,6 +592,13 @@ void inj_corrected_mat(void);
  * \return time in 10ms units
  */
 uint16_t inj_cranktorun_time(void);
+
+/**Calculates value of target RPM for closed loop regulator
+ * Uses d ECU data structure
+ * \return RPM
+ */
+int16_t calc_cl_rpm(void);
+
 #endif
 
 #endif //_FUNCONV_H_

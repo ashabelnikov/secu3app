@@ -141,7 +141,7 @@ void aircond_control(void)
 #ifndef SECU3T
      IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
      d.cond_state = 1;
-     d.cond_req_rpm = d.param.cond_min_rpm; //specify minimum RPM, see calc_cl_rpm() in choke.c for more information
+     d.cond_req_rpm = d.param.cond_min_rpm; //specify minimum RPM, see calc_cl_rpm() in funconv.c for more information
 #endif
      ac.t1 = s_timer_gtc();
     }

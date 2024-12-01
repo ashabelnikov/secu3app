@@ -141,7 +141,7 @@ void pwrrelay_control(void)
  }
  else
  { //ignition is OFF
-  if ((s_timer_gtc() - pwrs.timer1) >= PGM_GET_WORD(&fw_data.exdata.pwron_time1))
+  if (0==PGM_GET_WORD(&fw_data.exdata.pwron_time1) || (s_timer_gtc() - pwrs.timer1) >= PGM_GET_WORD(&fw_data.exdata.pwron_time1))
   {
 #ifdef FUEL_INJECT
    if (0==pwrs.pwrdown)

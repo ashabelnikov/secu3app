@@ -335,7 +335,11 @@ void lambda_stroke_event_notification(void)
    continue; //exit from this iteration
   }
 
-  if ((d.sens.rpm > d.param.inj_lambda_rpm_thrd) && (d.sens.temperat > d.param.inj_lambda_temp_thrd))    //RPM > threshold && coolant temperature > threshold
+  if ((d.sens.rpm > d.param.inj_lambda_rpm_thrd) && (d.sens.temperat > d.param.inj_lambda_temp_thrd)    //RPM > threshold && coolant temperature > threshold
+#ifndef SECU3T
+      && (!PGM_GET_BYTE(&fw_data.exdata.lambda_use_egts) || (d.sens.egts > (int16_t)PGM_GET_WORD(&fw_data.exdata.lambda_egts_thrd)))
+#endif
+     )
   {
    if (d.param.inj_lambda_str_per_stp > 0)
    {//using strokes

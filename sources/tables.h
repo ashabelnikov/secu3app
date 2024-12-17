@@ -1019,7 +1019,9 @@ typedef struct params_t
 
   int16_t idl_reg_d;                     //!< differencial factor for IAC PID (value * 256, max 5.0)
 
-  uint8_t  reserved[123];
+  uint16_t ckps_mttf;                    //!< missing tooth threshold factor, value * 256
+
+  uint8_t  reserved[121];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

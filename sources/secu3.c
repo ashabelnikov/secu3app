@@ -328,6 +328,7 @@ void init_modules(void)
  //Initialize CKPS unit
  ckps_init_state();
  ckps_set_cyl_number(d.param.ckps_engine_cyl);
+ ckps_set_mttf(d.param.ckps_mttf);
  ckps_set_cogs_num(d.param.ckps_cogs_num, d.param.ckps_miss_num);
  ckps_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_CKPS_EDGE));     //CKPS edge
  cams_vr_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_REFS_EDGE));  //REF_S edge

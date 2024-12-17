@@ -245,8 +245,9 @@ void process_uart_interface(void)
 
    case CKPS_PAR:
     //if CKPS parameters have been changed, then immidiately apply them on the working engine and reset counter of time
-    ckps_set_cyl_number(d.param.ckps_engine_cyl);  //<-- obligatory frirst of all!
+    ckps_set_cyl_number(d.param.ckps_engine_cyl);  //<-- obligatory first of all!
     ckps_set_cogs_num(d.param.ckps_cogs_num, d.param.ckps_miss_num);
+    ckps_set_mttf(d.param.ckps_mttf);
     ckps_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_CKPS_EDGE));     //CKPS (CKP sensor)
     cams_vr_set_edge_type(CHECKBIT(d.param.hall_flags, CKPF_REFS_EDGE));  //REF_S (Reference sensor)
     ckps_set_cogs_btdc(d.param.ckps_cogs_btdc);

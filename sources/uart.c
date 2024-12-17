@@ -911,6 +911,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.hall_flags);
    build_i16h(d.param.hall_wnd_width);
    build_i16h(d.param.hall_degrees_btdc);
+   build_i16h(d.param.ckps_mttf);
    break;
 
   case OP_COMP_NC:
@@ -2063,6 +2064,7 @@ uint8_t uart_recept_packet(void)
    d.param.hall_flags = recept_i8h();
    d.param.hall_wnd_width = recept_i16h();
    d.param.hall_degrees_btdc = recept_i16h();
+   d.param.ckps_mttf = recept_i16h();
    break;
 
   case OP_COMP_NC:

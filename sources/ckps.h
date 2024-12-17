@@ -191,4 +191,9 @@ uint16_t ckps_get_stroke_period(void);
  */
 void ckps_set_knock_chanmap(uint8_t chanmap);
 
+/* Sets missing teeth threshold factor, e.g. 2.5 for 60-2
+ * \param mttf Factor value * 256
+ */
+void ckps_set_mttf(uint16_t mttf);
+
 #endif //_CKPS_H_

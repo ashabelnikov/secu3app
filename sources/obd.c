@@ -147,7 +147,7 @@ void obd_process(void)
      obd.msg.id = 505;   //Engine RPM
      obd.msg.flags.rtr = 0;
      obd.msg.length = 8;
-     uint16_t rpm = d.sens.rpm + 500;     
+     uint16_t rpm = d.sens.rpm /*+ 500*/;
      obd.msg.data[0] = 0;
      obd.msg.data[1] = 0;
      obd.msg.data[2] = ((rpm > 8100) ? 8100 : rpm) >> 5; // limit to 8100, rpm / 32

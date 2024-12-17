@@ -769,6 +769,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .idl_reg_d =                   0,                  //not used by default
 
+  .ckps_mttf =                   ROUND(2.5*256),     //2.5 by default (for 60-2 wheel)
+
   .reserved =                    {0},
   .crc =                         0
  },

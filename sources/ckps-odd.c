@@ -77,7 +77,7 @@
  *      for 36-1 crank wheel, p * 1.5
  *      for 12-3 crank wheel, p * 3.0
  */
-#define CKPS_GAP_BARRIER(p) (((p)*ckps.miss_cogs_num) + ((ckps.miss_cogs_num==3) ? 0 : ((p) >> 1)))
+#define CKPS_GAP_BARRIER(p)  (((p) * ckps.mttf) >> 8)
 
 //Define values for controlling of outputs
 #define IGN_OUTPUTS_INIT_VAL 1        //!< value used for initialization
@@ -166,8 +166,9 @@ typedef struct
  uint8_t  starting_mode;              //!< state of state machine processing of teeth at the startup
 
 #ifdef FUEL_INJECT
- uint8_t  inj_chidx;                  //!< index of channel to fire
+ uint8_t  inj_chidx;                  //!< index of the channel to fire of the injection
 #endif
+ volatile uint16_t mttf;              //!< factor for calculating gap barrier (missing teeth detection)
 }ckpsstate_t;
 
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -1629,6 +1630,13 @@ void ckps_set_knock_chanmap(uint8_t chanmap)
 {
  for(uint8_t i = 0; i < ckps.chan_number; ++i)
   chanstate[i].knock_chan = !!CHECKBIT(chanmap, i);
+}
+
+void ckps_set_mttf(uint16_t mttf)
+{
+ _BEGIN_ATOMIC_BLOCK();
+ ckps.mttf = mttf;
+ _END_ATOMIC_BLOCK();
 }
 
 #endif //ODDFIRE_ALGO

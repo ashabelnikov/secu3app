@@ -439,6 +439,13 @@ void meas_average_measured_values(ce_sett_t *cesd)
   d.sens.fts = d.sens.air_temp + (add >> 18); //TODO: use SHTDIV32() macro instead of a simple right shift (this will increase accuracy)
  }
 #endif
+
+#ifndef SECU3T
+ if (IOCFG_CHECK(IOP_FPS))
+  d.sens.fps = map_adc_to_kpa(IOCFG_GETA(IOP_FPS), d.param.fps_curve_offset, d.param.fps_curve_gradient);
+ else
+  d.sens.fps = 0; //input is not selected
+#endif
 }
 
 //Call this function for making preliminary measurements before starting engine. Call it only after

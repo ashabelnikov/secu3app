@@ -202,7 +202,8 @@ typedef struct sensors_t
 
  uint16_t maf;                           //! Value of air flow (g/sec) * 64
 #ifndef SECU3T //SECU-3i
- int16_t fts;                            //!< Secondary temperature sensor (gas temperature)
+ int16_t fts;                            //!< Fuel temperature sensor
+ int16_t fps;                            //!< Fuel pressure sensor
 #endif
 }sensors_t;
 

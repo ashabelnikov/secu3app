@@ -415,7 +415,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
@@ -436,8 +436,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 4.2
-   IOREMVER(4,2),
+   //Version of this structure - 4.3
+   IOREMVER(4,3),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -770,6 +770,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .idl_reg_d =                   0,                  //not used by default
 
   .ckps_mttf =                   ROUND(2.5*256),     //2.5 by default (for 60-2 wheel)
+
+  .fps_curve_offset =            VOLTAGE_MAGNITUDE(-0.5), //-0.5V
+  .fps_curve_gradient =          3528,               //172.25kPa/V
 
   .reserved =                    {0},
   .crc =                         0
@@ -1320,6 +1323,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .lambda_egts_thrd = TEMPERATURE_MAGNITUDE(300.0),
   .lambda_use_egts = 0,      //don't use EGTS
+
+  .ifrvmc_use_fps = 0,       //don't use FPS for correction
   
   /**reserved bytes*/
   {0}

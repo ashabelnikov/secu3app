@@ -696,12 +696,14 @@ typedef struct fw_ex_data_t
   int16_t lambda_egts_thrd;
   uint8_t lambda_use_egts;
 
+  uint8_t ifrvmc_use_fps;      //!< use fuel pressure sensor in "injector flow rate vs MAP" correction
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1505];
+  uint8_t reserved[1504];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -1021,7 +1023,10 @@ typedef struct params_t
 
   uint16_t ckps_mttf;                    //!< missing tooth threshold factor, value * 256
 
-  uint8_t  reserved[121];
+  int16_t  fps_curve_offset;             //!< offset of curve in volts, can be negative
+  int16_t  fps_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
+
+  uint8_t  reserved[117];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

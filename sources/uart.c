@@ -472,6 +472,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.sens.tps_raw);              //for TPS learning
    build_i16h(d.param.gps_curve_offset);   //GPS
    build_i16h(d.param.gps_curve_gradient); //GPS
+   build_i16h(d.param.fps_curve_offset);   //FPS
+   build_i16h(d.param.fps_curve_gradient); //FPS
    break;
 
   case STARTR_PAR:
@@ -841,6 +843,12 @@ void uart_send_packet(uint8_t send_mode)
    | _CBV8(d.sens.altrn_i,7)               // ALTRN_I
 #endif
    );       //additional flags
+
+#ifndef SECU3T
+   build_i16h(d.sens.fps);                 //Fuel Pressure Sensor
+#else
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:
@@ -2010,6 +2018,8 @@ uint8_t uart_recept_packet(void)
 
    d.param.gps_curve_offset = recept_i16h();   //GPS
    d.param.gps_curve_gradient = recept_i16h(); //GPS
+   d.param.fps_curve_offset = recept_i16h();   //FPS
+   d.param.fps_curve_gradient = recept_i16h(); //FPS
    break;
 
   case STARTR_PAR:

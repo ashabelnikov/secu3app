@@ -129,7 +129,14 @@ static int16_t manual_injpw(void)
  */
 static uint16_t ifr_vs_map_corr(void)
 {
- uint16_t frap = PGM_GET_WORD(&fw_data.exdata.frgp) + d.sens.baro_press;
+ uint16_t frap = d.sens.baro_press;
+#ifndef SECU3T
+ if (PGM_GET_BYTE(&fw_data.exdata.ifrvmc_use_fps) && !IOCFG_GETE(IOP_FPS))
+  frap+= d.sens.fps; //use fuel pressure sensor
+ else
+#endif
+  frap+= PGM_GET_WORD(&fw_data.exdata.frgp); //use simple constant
+
  if (frap <= d.sens.map)
   frap = d.sens.map + 1; //prevent div. by zero
  return ui32_sqrt((((uint32_t)PGM_GET_WORD(&fw_data.exdata.ifr_gp)) * 65536UL) / (frap - d.sens.map)); //65536 = 256^2, sqrt(256^2) = 256

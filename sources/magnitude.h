@@ -39,7 +39,7 @@
 #define TEMP_PHYSICAL_MAGNITUDE_MULTIPLIER (TSENS_SLOPP / ADC_DISCRETE) //=4
 
 /**Number of discretes per 1% for TPS*/
-#define TPS_PHYSICAL_MAGNITUDE_MULTIPLIER 2
+#define TPS_PHYSICAL_MAGNITUDE_MULTIPLIER 64
 
 /**Gas dose stepper motor discretes per 1 step */
 #define GD_PHYSICAL_MAGNITUDE_MULTIPLIER 2
@@ -85,6 +85,9 @@
 
 /** For representation of system timer's values */
 #define SYSTIM_MAGS(v) ROUND((v) * SYSTIM_MULTIPLIER)
+
+/** Load magnitude*/
+#define LOAD_MAG(v) ROUND((v)*64.0)
 
 /**Reserved value used to indicate that value is not used in corresponding mode
  * This constant is used for values of advance angle

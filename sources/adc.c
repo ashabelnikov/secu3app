@@ -428,7 +428,7 @@ int16_t temp_adc_to_c(int16_t adcvalue)
  return (adcvalue - ((int16_t)((TSENS_ZERO_POINT / ADC_DISCRETE)+0.5)) );
 }
 
-uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
+uint16_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
 {
  int16_t t;
  //Our ADC doesn't measure negative values, but negative value may appear after compensation
@@ -446,7 +446,7 @@ uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
    t = 0;
  }
 
- t = (((int32_t)t) * gradient) >> (7+6);
+ t = (((int32_t)t) * gradient) >> (7+1);
 
  restrict_value_to(&t, TPS_MAGNITUDE(0), TPS_MAGNITUDE(100)); //restrict to 100%
 

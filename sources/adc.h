@@ -180,10 +180,10 @@ int16_t temp_adc_to_c(int16_t adcvalue);
 /**Converts ADC value of the Throttle Position Sensor to the percentage of throttle opening
  * \param adcvalue Value in ADC discretes
  * \param offset offset of the TPS curve (can be negative)
- * \param gradient fradient of the TPS curve (if this value < 0, then it means characteristic curve is inverted)
- * \return percentage * 2 (e.g. value of 200 is 100%)
+ * \param gradient gradient of the TPS curve (if this value < 0, then it means characteristic curve is inverted)
+ * \return percentage * 64 (e.g. value of 6400 is 100%)
  */
-uint8_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
+uint16_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Converts ADC value discretes/sec of the TPSdot to the %/sec value

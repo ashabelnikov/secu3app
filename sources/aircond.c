@@ -127,7 +127,7 @@ void aircond_control(void)
 #else
    IOCFG_SETF(IOP_COND_O, 0); //turned off
    d.cond_state = 0;
-   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && get_refprs_on_cond() && (d.sens.temperat > (int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_BYTE(&fw_data.exdata.aircond_tps))))
+   if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && get_refprs_on_cond() && (d.sens.temperat > (int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.tps < PGM_GET_WORD(&fw_data.exdata.aircond_tps))))
 #endif
    {
     if (d.sens.rpm < d.param.cond_min_rpm)
@@ -165,7 +165,7 @@ void aircond_control(void)
 #ifdef SECU3T
    if (!IOCFG_GET(IOP_COND_I))
 #else
-   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || get_refprs_off_cond() || (d.sens.tps > (PGM_GET_BYTE(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0))))))
+   if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || get_refprs_off_cond() || (d.sens.tps > (PGM_GET_WORD(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0))))))
 #endif
     ac.state = 1;
    if ((s_timer_gtc() - ac.t1) > SYSTIM_MAGS(1.5) && ac.state == 3)

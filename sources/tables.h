@@ -575,13 +575,13 @@ typedef struct fw_ex_data_t
 {
   //Firmware constants - rare used parameters, fine tune parameters for experienced users...
   int16_t evap_clt;
-  uint8_t evap_tps_lo;
-  uint8_t evap_tps_hi;
+  uint16_t evap_tps_lo;
+  uint16_t evap_tps_hi;
   uint8_t fi_enter_strokes;
   uint8_t fi_leave_strokes;
   uint8_t iac_cond_add;
   int16_t  aircond_clt;
-  uint8_t  aircond_tps;
+  uint16_t aircond_tps;
   int16_t  idl_ve[2];
   uint16_t frgp;          //gauge pressure in the fuel rail (kPa)
   uint16_t  reserv_0;     //reserved
@@ -607,7 +607,7 @@ typedef struct fw_ex_data_t
   uint16_t tdc_angle[8];  //Angle of TDC for each cylinder, value * ANGLE_MULTIPLIER, relatively to 0 tooth.
   uint16_t smp_angle;     //Angle for sampling of sensors, value * ANGLE_MULTIPLIER, relatively to TDC (BTDC)
   uint16_t dwl_dead_time; //Dwell dead time, 1 discrete = 3.2us
-  uint8_t  sfc_tps_thrd;  //TPS threshold used for immediate leaving fuel cut mode
+  uint16_t sfc_tps_thrd;  //TPS threshold used for immediate leaving fuel cut mode
   uint16_t evap_map_thrd;
   uint16_t ckps_skip_trig; //Number of teeth to skip before searching for missing tooth
   uint8_t  maninjpw_idl;  //0 - don't apply manual inj.PW correction on idling, 1 - apply manual inj.PW correction on idling
@@ -703,7 +703,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1504];
+  uint8_t reserved[1500];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -739,7 +739,7 @@ typedef struct params_t
   uint8_t  carb_invers;                  //!< flag of inversion of carburetor's limit switch
   int16_t  tps_curve_offset;             //!< offset of curve in volts
   int16_t  tps_curve_gradient;           //!< gradient of curve in Percentage/V
-  uint8_t  tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
+  uint16_t tps_threshold;                //!< TPS threshold used to switch work and idle modes (if 0 then input is treated as digital and simple switch is used)
 
   // Idle cut-off valve and power valve
   uint16_t ie_lot;                       //!< lower threshold for idle cut off valve(min-1) for gasoline
@@ -941,7 +941,7 @@ typedef struct params_t
 
   uint8_t barocorr_type;                 //!< Values: 0 - not barocorrection, 1 - static corr. using primary MAP, 2 - dynamic corr. using primary MAP, 3 - dynamic corr. using additional MAP (SECU-3i only)
 
-  uint8_t inj_floodclear_tps;            //!< TPS Threshold for entering fllod clear mode before cranking, 0 - means that flood clear is disabled
+  uint16_t inj_floodclear_tps;           //!< TPS Threshold for entering fllod clear mode before cranking, 0 - means that flood clear is disabled
 
   uint16_t vent_tmr;                     //!< How long cooling fan will work on stopped engine, 1 discrete = 10ms
 
@@ -1026,7 +1026,7 @@ typedef struct params_t
   int16_t  fps_curve_offset;             //!< offset of curve in volts, can be negative
   int16_t  fps_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
 
-  uint8_t  reserved[117];
+  uint8_t  reserved[115];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

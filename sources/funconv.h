@@ -270,7 +270,7 @@ uint16_t inj_idling_rpm(void);
 
 /** Calculates TPS switch point depending on RPM using a look up table
  * Uses d ECU data structure
- * \return TPS value in % * 2
+ * \return TPS value in % * 64
  */
 uint16_t tpsswt_function(void);
 

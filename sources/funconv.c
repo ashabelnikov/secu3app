@@ -73,7 +73,7 @@
 #endif
 
 /**TPS % between two interpolation points, additionally multiplied by 16 */
-#define TPS_AXIS_STEP TPS_MAGNITUDE((100.0*16)/(F_WRK_POINTS_L-1))
+#define TPS_AXIS_STEP TPS_MAGNITUDE(100.0/(F_WRK_POINTS_L-1))
 
 /**State variables, local use*/
 typedef struct
@@ -136,12 +136,12 @@ static int16_t calc_synthetic_load(void)
  }
  else
  {
-  uint16_t swtpt = tpsswt_function(); //% * 2
+  uint16_t swtpt = tpsswt_function(); //% * 64
   if (d.sens.tps >= swtpt) //find value on the load axis corresponding to current TPS
-   load = simple_interpolation(d.sens.tps, load, ROUND(100.0*64), swtpt, (TPS_MAGNITUDE(100.0) - swtpt), 4) >> 2;
+   load = simple_interpolation(d.sens.tps, load, LOAD_MAG(100.0), swtpt, (TPS_MAGNITUDE(100.0) - swtpt), 4) >> 2;
  }
 
- restrict_value_to(&load, ROUND(0.0*64), ROUND(100.0*64));
+ restrict_value_to(&load, LOAD_MAG(0.0), LOAD_MAG(100.0));
  return load;
 }
 
@@ -202,7 +202,7 @@ void calc_lookup_args(void)
  if (d.param.load_src_cfg < 2)       //Speed-density or Speed-density (baro)
   d.load = d.sens.map;
  else if (d.param.load_src_cfg == 2) //Alpha-N
-  d.load = d.sens.tps << 5;
+  d.load = d.sens.tps;
  else if (d.param.load_src_cfg == 3) //mixed (MAP+TPS)
   d.load = calc_synthetic_load();
  else
@@ -316,7 +316,7 @@ void calc_lookup_args(void)
  //precalculate load arguments for VE2 map
  if (d.param.ve2_map_func != VE2MF_1ST)
  {
-  fcs.la_tload = d.sens.tps * 32;
+  fcs.la_tload = d.sens.tps;
 
   //limit value, so it can not be out of grid range
   if (fcs.la_tload < ram_extabs.tload_grid_points[0])
@@ -841,7 +841,7 @@ uint16_t inj_base_pw(void)
  if (d.param.load_src_cfg == 2) //Alpha-N
  {
   if (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul)==1)
-   pw32 = (((uint32_t)(d.sens.tps << 5)) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
+   pw32 = (((uint32_t)d.sens.tps) * d.param.inj_sd_igl_const[d.sens.gas]) / CorrectedMAT;
   else
   { //0 or 2
    uint16_t map = (PGM_GET_BYTE(&fw_data.exdata.an_tps_mul)==2) ? PRESSURE_MAGNITUDE(101.5) : d.sens.map;
@@ -1115,7 +1115,7 @@ uint16_t inj_iacmixtcorr_lookup(void)
 
  //Calculate weight coefficient:
 
- x = d.sens.tps << 6; //value * 128
+ x = d.sens.tps << 1; //value * 128
 
  //IAC pos. value at the start of axis
  x_start = (_GBU(inj_iac_corr_w[INJ_IAC_CORR_W_SIZE])) << 6;
@@ -1159,7 +1159,7 @@ uint16_t inj_idling_rpm(void)
 uint16_t tpsswt_function(void)
 {
  return simple_interpolation(fcs.la_rpm, _GBU(inj_tpsswt[fcs.la_f]), _GBU(inj_tpsswt[fcs.la_fp1]),
-        ram_extabs.rpm_grid_points[fcs.la_f], ram_extabs.rpm_grid_sizes[fcs.la_f], 16) >> 4;
+        ram_extabs.rpm_grid_points[fcs.la_f], ram_extabs.rpm_grid_sizes[fcs.la_f], 32);
 }
 
 uint16_t tpszon_function(void)
@@ -1215,7 +1215,7 @@ uint16_t gd_ve_afr(void)
  */
 int16_t gdp_function(void)
 {
- int16_t tps = d.sens.tps * 16;
+ int16_t tps = d.sens.tps;
  int8_t t = (tps / TPS_AXIS_STEP), tp1;
 
  if (t >= (GASDOSE_POS_TPS_SIZE - 1))
@@ -1223,7 +1223,7 @@ int16_t gdp_function(void)
  else
   tp1 = t + 1;
 
- return bilinear_interpolation(fcs.la_rpm, tps,  //note that tps is additionally multiplied by 16
+ return bilinear_interpolation(fcs.la_rpm, tps,
         ram_extabs.gasdose_pos[t][fcs.la_f],
         ram_extabs.gasdose_pos[tp1][fcs.la_f],
         ram_extabs.gasdose_pos[tp1][fcs.la_fp1],
@@ -1612,7 +1612,7 @@ uint16_t smapaban_thrd_rpm(void)
 uint8_t knock_zone_val(void)
 {
  uint16_t rpm = d.sens.rpm;
- int16_t tps = d.sens.tps * 16;
+ int16_t tps = d.sens.tps;
  int8_t f, t;
 
  //find interpolation points, then restrict RPM if it fall outside set range

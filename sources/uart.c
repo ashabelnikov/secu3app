@@ -402,7 +402,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.ie_lot_g);
    build_i16h(d.param.ie_hit_g);
    build_i8h(d.param.shutoff_delay);
-   build_i8h(d.param.tps_threshold);
+   build_i16h(d.param.tps_threshold);
    build_i16h(d.param.fuelcut_map_thrd);
    build_i16h(d.param.fuelcut_cts_thrd);
    build_i16h(d.param.revlim_lot);
@@ -484,7 +484,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.inj_prime_cold);      //fuel injection
    build_i16h(d.param.inj_prime_hot);       //fuel injection
    build_i8h(d.param.inj_prime_delay);      //fuel injection
-   build_i8h(d.param.inj_floodclear_tps);   //fuel injection
+   build_i16h(d.param.inj_floodclear_tps);  //fuel injection
    build_i8h(d.param.inj_aftstr_strokes1);  //fuel injection
    build_i8h(d.param.stbl_str_cnt);
    build_i8h(d.param.strt_flags);
@@ -563,7 +563,7 @@ void uart_send_packet(uint8_t send_mode)
 #endif
              );
 
-   build_i8h(d.sens.tps);                // TPS (0...100%, x2)
+   build_i16h(d.sens.tps);                // TPS (0...100%, x64)
 
    {
    uint8_t ai1sub = PGM_GET_BYTE(&fw_data.exdata.add_i1_sub);
@@ -1938,7 +1938,7 @@ uint8_t uart_recept_packet(void)
    d.param.ie_lot_g = recept_i16h();
    d.param.ie_hit_g = recept_i16h();
    d.param.shutoff_delay = recept_i8h();
-   d.param.tps_threshold = recept_i8h();
+   d.param.tps_threshold = recept_i16h();
    d.param.fuelcut_map_thrd = recept_i16h();
    d.param.fuelcut_cts_thrd = recept_i16h();
    d.param.revlim_lot = recept_i16h();
@@ -2030,7 +2030,7 @@ uint8_t uart_recept_packet(void)
    d.param.inj_prime_cold = recept_i16h();      //fuel injection
    d.param.inj_prime_hot = recept_i16h();       //fuel injection
    d.param.inj_prime_delay = recept_i8h();      //fuel injection
-   d.param.inj_floodclear_tps = recept_i8h();   //fuel injection
+   d.param.inj_floodclear_tps = recept_i16h();   //fuel injection
    d.param.inj_aftstr_strokes1 = recept_i8h();  //fuel injection
    d.param.stbl_str_cnt = recept_i8h();
    d.param.strt_flags = recept_i8h();

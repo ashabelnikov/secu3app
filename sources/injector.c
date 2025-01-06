@@ -56,6 +56,12 @@
  #define INJ_OFF 0   //!< Injector is turned off
 #endif
 
+#if defined(XTAU_CORR)
+volatile uint8_t xtau_str_cnt = 0;
+volatile uint32_t xtau_str_int = 0;
+static volatile uint16_t xtau_tcnt = 0;
+#endif
+
 //from ckps.c
 uint16_t ckps_get_stroke_period(void);
 
@@ -419,6 +425,13 @@ void inject_start_inj(uint8_t chan)
 {
  if (!inj.fuelcut || inj.prime_pulse)
   return; //fuel is OFF or prime pulse is active
+
+ //calculate "dltau" for X-tau algorithm. See calc_xtau() function for more information
+#if defined(XTAU_CORR)
+ xtau_str_int+=(TCNT1 - xtau_tcnt);       //measure time between events and add it to the sum
+ xtau_tcnt = TCNT1;
+ ++xtau_str_cnt;                          //update counter of events
+#endif
 
  if (CHECKBIT(inj.squirt_mask, chan))
  {

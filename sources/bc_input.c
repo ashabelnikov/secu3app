@@ -137,7 +137,7 @@ void measure_voltage(void)
  do
  {
   adc_measure_voltage();
-  meas_update_values_buffers(0, &ram_extabs.cesd); //<-- all
+  meas_update_values_buffers(&ram_extabs.cesd);
   _DELAY_US(100);
   wdt_reset_timer();
  }while(--i);

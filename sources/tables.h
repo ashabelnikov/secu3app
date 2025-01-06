@@ -698,12 +698,14 @@ typedef struct fw_ex_data_t
 
   uint8_t ifrvmc_use_fps;      //!< use fuel pressure sensor in "injector flow rate vs MAP" correction
 
+  uint8_t map_samp_mode;       //!< MAP sampling mode: 0 - regular sampling with other sensors (each 3.28ms); 1 - CKP-synchronous sampling
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1500];
+  uint8_t reserved[1499];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

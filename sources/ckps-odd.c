@@ -1103,7 +1103,7 @@ expired:
   }
 
   case QID_MEASURE:
-   adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values
+   adc_begin_measure_map(); //start the process of MAP sampling
    break;
 
   case QID_KNKBEG:
@@ -1119,7 +1119,7 @@ expired:
    knock_set_integration_mode(KNOCK_INTMODE_HOLD);
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (and getting ADC result for TPIC8101)
 #ifndef TPIC8101
-   adc_begin_measure_knock(_AB(ckps.stroke_period, 1) < 4);
+   adc_begin_measure_knock();
 #endif
    break;
 
@@ -1355,7 +1355,7 @@ static void process_ckps_cogs(void)
    QUEUE_ADDF(1, ICR1, (uint16_t)delay, QID_RPMSAMP);
   }
 
-  //program queue for sensors' sample event
+  //program queue for MAP's sample event
   if (chanstate[ch].msr_tooth == ckps.cog)
   {
    uint16_t delay = FRAC_TO_TIME(chanstate[ch].msr_frac);

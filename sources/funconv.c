@@ -1986,7 +1986,7 @@ uint32_t calc_dist(uint16_t pulse_count)
 #endif
 
 #if defined(FUEL_INJECT) && defined(XTAU_CORR)
-//from adc.c
+//from injector.c
 extern volatile uint8_t xtau_str_cnt;
 extern volatile uint32_t xtau_str_int;
 
@@ -1995,7 +1995,7 @@ void calc_xtau(int32_t* pw1, int32_t* pw2)
  int16_t s_thrd = -((int16_t)d.param.inj_xtau_s_thrd); //kPa/sec
  int16_t f_thrd = -((int16_t)d.param.inj_xtau_f_thrd); //kPa/sec
  static uint32_t mpw[2] = {0};
- static uint32_t M[2] = {0};  //amuunt of fuel in the film
+ static uint32_t M[2] = {0};  //amount of fuel in the film
  static uint16_t xf = 0;      //coefficient of fuel falling into the film, value * 1024
  uint16_t tf = 0;             //fuel evaporation time constant, value in 0.1024ms units
  uint8_t chnum = (0x00!=d.param.lambda_selch) && !CHECKBIT(d.param.inj_lambda_flags, LAMFLG_MIXSEN) ? 2 : 1;
@@ -2049,7 +2049,7 @@ void calc_xtau(int32_t* pw1, int32_t* pw2)
   tf = simple_interpolation_u(d.sens.mapdot, tfd, tfa, f_thrd, dthrd, 1) >> 0;
  }
 
- //obtain value of passed time from interrupt. See adc.c for more information
+ //obtain value of passed time from interrupt. See injector.c for more information
  uint32_t dt;
  _DISABLE_INTERRUPT();
   dt = xtau_str_int;

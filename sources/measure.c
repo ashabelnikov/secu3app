@@ -120,20 +120,41 @@ void meas_init_ports(void)
 }
 
 //Update ring buffers
-void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
+void meas_update_values_buffers_map(ce_sett_t *cesd)
 {
- update_buffer(&meas[FRQ_INPIDX], ckps_calculate_instant_freq()); //calculation of instant RPM and add it to the buffer
-
- if (rpm_only)
-  return;
-
  update_buffer(&meas[MAP_INPIDX], adc_get_map_value());
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_MAP_SENSOR_FAIL))
+ {
+  d.sens.mapdot = adc_compensate(_RESDIV(adc_get_mapdot_value(), 2, 1), d.param.map_adc_factor, 0);
+  d.sens.mapdot = mapdot_adc_to_kpa(d.sens.mapdot, d.param.map_curve_gradient);
+ }
+ else
+  d.sens.mapdot = 0; //disable accel.enrichment during cranking or in case of MAP error
+#endif
+}
+
+//Update ring buffers
+void meas_update_values_buffers(ce_sett_t *cesd)
+{
+ update_buffer(&meas[FRQ_INPIDX], ckps_calculate_instant_freq()); //calculate instant RPM and add it to the buffer
 
  update_buffer(&meas[BAT_INPIDX], adc_get_ubat_value());
 
  update_buffer(&meas[TMP_INPIDX], adc_get_temp_value());
 
- update_buffer(&meas[TPS_INPIDX], adc_get_carb_value());
+ update_buffer(&meas[TPS_INPIDX], adc_get_tps_value());
+
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
+ {
+  d.sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d.param.tps_adc_factor, 0);
+  d.sens.tpsdot = tpsdot_adc_to_pc(d.sens.tpsdot, d.param.tps_curve_gradient);
+ }
+ else
+  d.sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
+#endif
 
  update_buffer(&meas[AI1_INPIDX], adc_get_add_i1_value());
 
@@ -173,28 +194,6 @@ void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd)
  }
  else
   d.sens.knock_k = 0; //knock signal value must be zero if knock detection turned off or engine is stopped
-
-
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
- if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
- {
-  d.sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d.param.tps_adc_factor, 0);
-  d.sens.tpsdot = tpsdot_adc_to_pc(d.sens.tpsdot, d.param.tps_curve_gradient);
- }
- else
-  d.sens.tpsdot = 0; //disable accel.enrichment during cranking or in case of TPS error
-#endif
-
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
- if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_MAP_SENSOR_FAIL))
- {
-  d.sens.mapdot = adc_compensate(_RESDIV(adc_get_mapdot_value(), 2, 1), d.param.map_adc_factor, 0);
-  d.sens.mapdot = mapdot_adc_to_kpa(d.sens.mapdot, d.param.map_curve_gradient);
- }
- else
-  d.sens.mapdot = 0; //disable accel.enrichment during cranking or in case of MAP error
-#endif
-
 }
 
 //Average values in ring buffers, compensate ADC errors and convert raw voltage into physical values
@@ -453,6 +452,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
 void meas_init(void)
 {
  uint8_t _t, i;
+ adc_set_map_to_ckp(0); //regular mode
  //set sizes of ring buffers
  for(i = 0; i < INPUTNUM; ++i)
   init_buffer(&meas[i], PGM_GET_BYTE(&fw_data.exdata.inpavnum[i])); 
@@ -462,13 +462,17 @@ void meas_init(void)
  _ENABLE_INTERRUPT();
  do
  {
-  adc_begin_measure(0); //<--normal speed
-  while(!adc_is_measure_ready());
+  _DISABLE_INTERRUPT();
+  adc_begin_measure();
+  _ENABLE_INTERRUPT();
+  while(!adc_is_measure_ready(ADCRDY_SENS));
 
-  meas_update_values_buffers(0, &ram_extabs.cesd); //<-- all
+  meas_update_values_buffers_map(&ram_extabs.cesd);
+  meas_update_values_buffers(&ram_extabs.cesd);
  }while(--i);
  _RESTORE_INTERRUPT(_t);
  meas_average_measured_values(&ram_extabs.cesd);
+ adc_set_map_to_ckp(PGM_GET_BYTE(&fw_data.exdata.map_samp_mode));
 }
 
 #ifdef REALTIME_TABLES

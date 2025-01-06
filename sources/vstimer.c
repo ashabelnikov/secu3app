@@ -29,6 +29,7 @@
 #include "port/intrinsic.h"
 #include "port/pgmspace.h"
 #include "port/port.h"
+#include "adc.h"
 #include "bitmask.h"
 #include "ce_errors.h"
 #include "ioconfig.h" //for SM_CONTROL
@@ -90,6 +91,7 @@ extern volatile uint8_t vent_duty;
 extern uint8_t vent_soft_cnt;
 #endif
 
+uint8_t divider_sens = 0;
 
 /**Interrupt routine which called when T/C 2 overflovs - used for counting time intervals in system
  *(for generic usage). Called each 1.6384ms. System tick is 10ms, and so we divide frequency by 6
@@ -219,6 +221,10 @@ if (!diagnostics) {
 #if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
  knock_start_expander_latching();
 #endif
+
+ divider_sens ^= 1; //increment modulo 2
+ if (divider_sens == 0)
+  adc_begin_measure();   //each 3.28ms
 }
 
 void s_timer_init(void)

@@ -89,7 +89,7 @@ uint16_t adc_get_add_i3_value(void);
 /** Get latest measured value from throttle gate position sensor
  * \return value in ADC discretes
  */
-uint16_t adc_get_carb_value(void);
+uint16_t adc_get_tps_value(void);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Get TPSdot value (dv/dt)
@@ -108,24 +108,40 @@ int16_t adc_get_mapdot_value(void);
  */
 uint16_t adc_get_knock_value(void);
 
-/**Starts measuring values from sensors, but only in the case when previous measurement has been completed
- * \param speed2x Double ADC clock, 0 - normal speed, 1 - double speed
+/** Start measuring MAP (standalone). Call this function only if MAP sampling mode is synchronous with CKP (see adc_set_map_to_ckp()
+ * function for more information). If previous standalone MAP sampling is not finished yet, then this function does nothing.
  */
-void adc_begin_measure(uint8_t speed2x);
+void adc_begin_measure_map(void);
+
+/**Start of sampling of sensors. If ADC is busy by other sensors, this function sets request flag.
+ * If MAP measurement mode is regular (not synchronized with CKP), then this function measures MAP too.
+ */
+void adc_begin_measure(void);
 
 #ifndef TPIC8101
 /**Starts measuring value from the knock channel's integrator. As after setting INT/HOLD signal to 0
- * INTOUT output go into a fully correct state only after a 20us (approx.), then do first measurement
- * dummy, thus our subsequent actual measurement will be correct.
- * \param speed2x Double ADC clock, 0 - normal speed, 1 - double speed
+ * INTOUT output go into a fully correct state only after a 20us (approx.), then do first dummy measurement,
+ * thus our subsequent actual measurement will be correct.
  */
-void adc_begin_measure_knock(uint8_t speed2x);
+void adc_begin_measure_knock(void);
 #endif
 
+#define ADCRDY_MAP   0   //!< MAP
+#ifndef TPIC8101
+#define ADCRDY_KNOCK 1   //!< Knock
+#endif
+#define ADCRDY_SENS  2   //!< rest of the sensors
+
 /**Check if ADC is ready
+ * \param what See definitions of ADCRDY_* constants
  *\return return non-zero value if measuremtnt is ready (ADC is not busy)
  */
-uint8_t adc_is_measure_ready(void);
+uint8_t adc_is_measure_ready(uint8_t what);
+
+/** Sets sampling mode for MAP sensor
+ * \param mtckp 0 - measure MAP with other sensors regularly, 1 - measure MAP synchronously with CKP in each stroke
+ */
+void adc_set_map_to_ckp(uint8_t mtckp);
 
 /**Initialization of ADC and its state variables */
 void adc_init(void);

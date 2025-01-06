@@ -661,7 +661,7 @@ sync_enter:
   hall.knkwnd_mode = 0;
  }
 
- adc_begin_measure(_AB(hall.stroke_period, 1) < 4);//start the process of measuring analog input values
+ adc_begin_measure_map(); //start the process of MAP sampling
 
 sync_skip:
  ++hall.cog;
@@ -732,7 +732,7 @@ ISR(TIMER0_COMPA_vect)
    knock_set_integration_mode(KNOCK_INTMODE_HOLD);
    knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (and getting of ADC result for TPIC8101)
 #ifndef TPIC8101
-   adc_begin_measure_knock(_AB(hall.stroke_period, 1) < 4);
+   adc_begin_measure_knock();
 #endif
    hall.knkwnd_mode = 0;
   }

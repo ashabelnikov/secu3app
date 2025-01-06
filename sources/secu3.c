@@ -301,6 +301,7 @@ void init_modules(void)
 
  //Initialization of ADC
  adc_init();
+ adc_set_map_to_ckp(PGM_GET_BYTE(&fw_data.exdata.map_samp_mode));
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  adc_set_tpsdot_mindt(PGM_GET_WORD(&fw_data.exdata.tpsdot_mindt));
  adc_set_mapdot_mindt(PGM_GET_WORD(&fw_data.exdata.mapdot_mindt));
@@ -521,19 +522,18 @@ MAIN()
    fuelcut_eng_stopped_notification();
 #endif
 
-   meas_update_values_buffers(1, &ram_extabs.cesd);  //<-- update RPM only
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 
-  //Start ADC measurements at regular intervals of time. This timer reinitialize each time of detecting of new stroke.
+  //Start MAP sampling at regular intervals of time. This timer reinitialize each time of detecting of new stroke.
   //Thus, when RPM exceed specified value, this condition will cease to be carried out.
-  if (s_timer_is_action(&force_measure_timeout_counter))
+  if (PGM_GET_BYTE(&fw_data.exdata.map_samp_mode) && s_timer_is_action(&force_measure_timeout_counter))
   {
    _DISABLE_INTERRUPT();
-   adc_begin_measure(0);  //normal speed
+   adc_begin_measure_map();
    _ENABLE_INTERRUPT();
    s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
-   meas_update_values_buffers(0, &ram_extabs.cesd);
+   meas_update_values_buffers_map(&ram_extabs.cesd);
   }
 
   //----------continious execution-----------------------------------------
@@ -590,6 +590,9 @@ MAIN()
   }
 
   //------------------------------------------------------------------------
+  if (0==PGM_GET_BYTE(&fw_data.exdata.map_samp_mode))
+   meas_update_values_buffers_map(&ram_extabs.cesd);
+  meas_update_values_buffers(&ram_extabs.cesd);
 
   //execute some operations, which require execution one time per engine stroke
   if (ckps_is_stroke_event_r())
@@ -597,7 +600,8 @@ MAIN()
    if (d.engine_mode != EM_START)
     s_timer_stroke_event_notification();
 
-   meas_update_values_buffers(0, &ram_extabs.cesd);
+   if (PGM_GET_BYTE(&fw_data.exdata.map_samp_mode))
+    meas_update_values_buffers_map(&ram_extabs.cesd);
    s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
    eculogic_stroke_event_notification();

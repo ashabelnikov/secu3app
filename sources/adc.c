@@ -52,13 +52,16 @@
 #define ADCI_ADD_I3             4
 #endif
 
-/*ADC channel number for CARB */
-#define ADCI_CARB               7
+/*ADC channel number for TPS */
+#define ADCI_TPS                7
 /**number of ADC channel used for knock */
 #define ADCI_KNOCK              3
 
 /**Tics of TCNT1 timer per 1 second */
 #define TMR_TICKS_PER_SEC 312500L
+
+/**ADC input connected to GND*/
+#define ADCI_GND                0x1F
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 
@@ -82,17 +85,21 @@ typedef struct
 #if !defined(SECU3T)
  volatile uint16_t add_i3_value; //!< last measured value of ADD_I3
 #endif
- volatile uint16_t carb_value;   //!< last measured value of TPS
+ volatile uint16_t tps_value;    //!< last measured value of TPS
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  volatile dotval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
  volatile dotval_t mapdot[2];    //!< two value pairs used for MAPdot calculations
  volatile uint16_t tpsdot_mindt; //!< minimum time diffrencial used in calculation of d%/dt
  volatile uint16_t mapdot_mindt; //!< minimum time diffrencial used in calculation of dP/dt
 #endif
- volatile uint8_t sensors_ready; //!< all sensors have been processed and their values are ready for reading
 #ifndef TPIC8101
- uint8_t  waste_meas;            //!< if 1, then waste measurement will be performed for knock
+ uint8_t waste_meas;             //!< if 1, then waste measurement will be performed for knock
+ uint8_t knock_msm;              //!< State for INTOUT (HIP9011) sampling. Not necessary for TPIC8101
 #endif
+ uint8_t map_msm;                //!< State for MAP sampling
+ uint8_t sens_msm;               //!< State for other sensors sampling
+ uint8_t map_to_ckp;             //!< MAP sampling mode
+ uint8_t mux_start;              //!< Start value for ADMUX depending on the MAP sampling mode
 }adcstate_t;
 
 /** ADC state variables */
@@ -154,11 +161,11 @@ uint16_t adc_get_add_i3_value(void)
 }
 #endif
 
-uint16_t adc_get_carb_value(void)
+uint16_t adc_get_tps_value(void)
 {
  uint16_t value;
  _BEGIN_ATOMIC_BLOCK();
- value = adc.carb_value;
+ value = adc.tps_value;
  _END_ATOMIC_BLOCK();
  return value;
 }
@@ -208,67 +215,165 @@ uint16_t adc_get_knock_value(void)
  return value;
 }
 
-void adc_begin_measure(uint8_t speed2x)
+void adc_begin_measure(void)
 {
- if (!adc.sensors_ready)
+ if (adc.sens_msm != ADCI_GND)
   return; //We can't start new measurement while previous one is not finished yet
 
- adc.sensors_ready = 0;
- ADMUX = ADCI_MAP|ADC_VREF_TYPE;
- if (speed2x)
-  CLEARBIT(ADCSRA, ADPS0); //250kHz
+ if (adc.map_msm == ADCI_GND
+#ifndef TPIC8101
+ && adc.knock_msm == ADCI_GND
+#endif
+ )
+ {
+  adc.sens_msm = ADMUX = adc.mux_start;
+  SETBIT(ADCSRA, ADSC);     //start ADC
+ }
  else
-  SETBIT(ADCSRA, ADPS0);   //125kHz
- SETBIT(ADCSRA, ADSC);
+ { //just set request and do nothing with ADC
+  adc.sens_msm = adc.mux_start;
+ }
 }
 
 #ifndef TPIC8101
 //This function is used for HIP9011 only, it is not used for TPIC8101
-void adc_begin_measure_knock(uint8_t speed2x)
+void adc_begin_measure_knock(void)
 {
- if (!adc.sensors_ready)
+ if (adc.knock_msm != ADCI_GND)
   return; //We can't start new measurement while previous one is not finished yet
 
- adc.sensors_ready = 0;
- adc.waste_meas = 1;   //<--one measurement delay will be used
- ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
- if (speed2x)
-  CLEARBIT(ADCSRA, ADPS0); //250kHz
+ if (adc.map_msm == ADCI_GND && adc.sens_msm == ADCI_GND)
+ {
+  adc.knock_msm = ADMUX = ADC_VREF_TYPE | ADCI_KNOCK;
+  adc.waste_meas = 1;     //<--one measurement delay will be used
+  SETBIT(ADCSRA, ADSC);   //start ADC
+ }
  else
-  SETBIT(ADCSRA, ADPS0);   //125kHz
- SETBIT(ADCSRA, ADSC);
+ { //ADC is busy by other task, just set request and do nothing with ADC here
+  adc.knock_msm = ADC_VREF_TYPE | ADCI_KNOCK;
+  adc.waste_meas = 1;    //<--one measurement delay will be used
+ }
 }
 #endif
 
-uint8_t adc_is_measure_ready(void)
+void adc_begin_measure_map(void)
 {
- return adc.sensors_ready;
+ if (0==adc.map_to_ckp || adc.map_msm != ADCI_GND)
+  return; //We can't start new measurement while previous one is not finished yet
+
+ if (adc.sens_msm == ADCI_GND
+#ifndef TPIC8101
+ && adc.knock_msm == ADCI_GND
+#endif
+ )
+ {
+  adc.map_msm = ADMUX = ADC_VREF_TYPE | ADCI_MAP;
+  SETBIT(ADCSRA, ADSC);     //start ADC
+ }
+ else
+ { //ADC is busy by other task, just set request and do nothing with ADC here
+  adc.map_msm = ADC_VREF_TYPE | ADCI_MAP;
+ }
+}
+
+uint8_t adc_is_measure_ready(uint8_t what)
+{
+ if (what == ADCRDY_MAP)
+  return (adc.map_msm == ADCI_GND);
+#ifndef TPIC8101
+ if (what == ADCRDY_KNOCK)
+  return (adc.knock_msm == ADCI_GND);
+#endif
+ if (what == ADCRDY_SENS)
+  return (adc.sens_msm == ADCI_GND);
+ return 0;
+}
+
+void adc_set_map_to_ckp(uint8_t mtckp)
+{
+ //skip MAP, start from board voltage OR start from MAP
+ uint8_t mux_start = (mtckp) ? (ADC_VREF_TYPE | ADCI_UBAT) : (ADC_VREF_TYPE | ADCI_MAP);
+ _BEGIN_ATOMIC_BLOCK();
+ adc.mux_start = mux_start;
+ adc.map_to_ckp = mtckp;
+ _END_ATOMIC_BLOCK();
 }
 
 void adc_init(void)
 {
- adc.knock_value = 0;
+ //ADC is ready for new measurement:
+ adc.map_msm = ADCI_GND;  //no standalone MAP sampling at the moment
 #ifndef TPIC8101
+ adc.knock_msm = ADCI_GND;  //no INTOUT sampling at the moment
  adc.waste_meas = 0;
 #endif
+ adc.sens_msm = ADCI_GND;  //no other sensors sampling at the moment
+ adc.map_to_ckp = 0;
+ adc.mux_start = ADC_VREF_TYPE | ADCI_MAP;
 
- //initialization of ADC, f = 125.000 kHz,
+ adc.knock_value = 0;
+
+ //initialization of ADC, f = 156.25 kHz,
  //internal or external reference voltage source will be used depends on VREF_5V option, interrupt enabled
  ADMUX=ADC_VREF_TYPE;
  ADCSRA=_BV(ADEN)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
-
- //ADC is ready for new measurement
- adc.sensors_ready = 1;
 
  //disable comparator - it is not needed
  ACSR=_BV(ACD);
 }
 
-#if defined(FUEL_INJECT) && defined(XTAU_CORR)
-volatile uint8_t xtau_str_cnt = 0;
-volatile uint32_t xtau_str_int = 0;
-static volatile uint16_t xtau_tcnt = 0;
+#ifndef TPIC8101
+
+/**For HIP9011 we need to measure INTOUT*/
+#define RELAY_INPUT(muxid) \
+  if (adc.knock_msm!=ADCI_GND) \
+  { \
+   ADMUX = adc.knock_msm; \
+   adc.sens_msm = ADC_VREF_TYPE | (muxid); \
+  } \
+  else if (adc.map_msm!=ADCI_GND) \
+  { \
+   ADMUX = adc.map_msm; \
+   adc.sens_msm = ADC_VREF_TYPE | (muxid); \
+  } \
+  else \
+  { \
+   ADMUX = ADC_VREF_TYPE | (muxid); \
+  }
+#else
+
+/**For TPIC8101 we don't need to measure INTOUT*/
+#define RELAY_INPUT(muxid) \
+  if (adc.map_msm!=ADCI_GND) \
+  { \
+   ADMUX = adc.map_msm; \
+   adc.sens_msm = ADC_VREF_TYPE | (muxid); \
+  } \
+  else \
+  { \
+   ADMUX = ADC_VREF_TYPE | (muxid); \
+  }
 #endif
+
+/** Samples MAPdot */
+#define SAMPLE_MAPDOT() \
+    if ((TCNT1 - adc.mapdot[0].tmr) >= adc.mapdot_mindt) \
+    { \
+     /*save values for MAPdot calculations */ \
+     adc.mapdot[1] = adc.mapdot[0];          /*previous = current */ \
+     adc.mapdot[0].volt = adc.map_value;     /*save voltage */ \
+     adc.mapdot[0].tmr = TCNT1;              /*save timer's value */\
+    }
+
+/**Samples TPSdot */
+#define SAMPLE_TPSDOT() \
+   if ((TCNT1 - adc.tpsdot[0].tmr) >= adc.tpsdot_mindt) \
+   { \
+    /*save values for TPSdot calculations */ \
+    adc.tpsdot[1] = adc.tpsdot[0];       /*previous = current */ \
+    adc.tpsdot[0].volt = adc.tps_value;  /*save voltage */ \
+    adc.tpsdot[0].tmr = TCNT1;           /*save timer value */ \
+   }
 
 /**Interrupt for completion of ADC conversion. Measurement of values of all analog sensors.
  * After starting measurements this interrupt routine will be called for each input untill all inputs will be processed.
@@ -277,116 +382,188 @@ ISR(ADC_vect)
 {
  _ENABLE_INTERRUPT();
 
- switch(ADMUX&0x07)
+ switch(ADMUX & 0x07)
  {
   case ADCI_MAP: //Measurement of MAP completed
    adc.map_value = ADC;
-   ADMUX = ADCI_UBAT|ADC_VREF_TYPE;
-   _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts
-   SETBIT(ADCSRA,ADSC);
+
+   if (adc.map_to_ckp)
+   {
+    _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts and other effects
+    //MAP is standalone sensor, measured synchronously with CKP
+#ifndef TPIC8101
+    if (adc.knock_msm!=ADCI_GND)
+    {
+     ADMUX = adc.knock_msm;
+    }
+    else
+#endif
+    if (adc.sens_msm!=ADCI_GND)
+    {  
+     ADMUX = adc.sens_msm;
+    }
+    else
+    {
+     adc.map_msm = ADCI_GND; //MAP sampling has been finished
+    }
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-   if ((TCNT1 - adc.mapdot[0].tmr) >= adc.mapdot_mindt)
-   {
-    //save values for MAPdot calculations
-    adc.mapdot[1] = adc.mapdot[0];          //previous = current
-    adc.mapdot[0].volt = adc.map_value;     //save voltage
-    adc.mapdot[0].tmr = TCNT1;              //save timer's value
+    _ENABLE_INTERRUPT();
+    SAMPLE_MAPDOT();
+#endif
+
+    if (adc.map_msm == ADCI_GND)
+     return;                                 //just exit, don't start ADC
+    adc.map_msm = ADCI_GND;
    }
+   else
+   {
+    //MAP is a part of block of other sensors
+     _DISABLE_INTERRUPT();
+#ifndef TPIC8101
+    if (adc.knock_msm!=ADCI_GND)
+    {
+     ADMUX = adc.knock_msm;
+     adc.sens_msm = ADC_VREF_TYPE | ADCI_UBAT;
+    }
+    else
 #endif
-
-#if defined(FUEL_INJECT) && defined(XTAU_CORR)
-   //TODO: calling this code here does not guarantee that it will be called for every engine stroke. So, rewrite it in the future
-   xtau_str_int+=(TCNT1 - xtau_tcnt);       //measure time between events and add it to the sum
-   xtau_tcnt = TCNT1;
-   ++xtau_str_cnt;                          //update counter of events
+    {
+     //continue processing other sensors
+     ADMUX = ADC_VREF_TYPE | ADCI_UBAT;
+    }
+    
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+    _ENABLE_INTERRUPT();
+    SAMPLE_MAPDOT();
 #endif
-
+   }
    break;
-
+   
   case ADCI_UBAT: //Measurement of board voltage completed
    adc.ubat_value = ADC;
-   ADMUX = ADCI_TEMP|ADC_VREF_TYPE;
    _DISABLE_INTERRUPT();
-   SETBIT(ADCSRA,ADSC);
+   RELAY_INPUT(ADCI_TEMP);
    break;
 
   case ADCI_TEMP: //Measurement of CLT completed
    adc.temp_value = ADC;
-   ADMUX = ADCI_CARB|ADC_VREF_TYPE;
    _DISABLE_INTERRUPT();
-   SETBIT(ADCSRA,ADSC);
+   RELAY_INPUT(ADCI_TPS);
    break;
 
-  case ADCI_CARB: //Measurement of TPS completed
-   adc.carb_value = ADC;
-   ADMUX = ADCI_ADD_I1|ADC_VREF_TYPE;
-   _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts
-   SETBIT(ADCSRA,ADSC);
-
+  case ADCI_TPS: //Measurement of TPS completed
+   adc.tps_value = ADC;
+   _DISABLE_INTERRUPT();
+   RELAY_INPUT(ADCI_ADD_I1);
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-   if ((TCNT1 - adc.tpsdot[0].tmr) >= adc.tpsdot_mindt)
-   {
-    //save values for TPSdot calculations
-    adc.tpsdot[1] = adc.tpsdot[0];          //previous = current
-    adc.tpsdot[0].volt = adc.carb_value;//save voltage
-    adc.tpsdot[0].tmr = TCNT1;          //save timer value
-   }
+   _ENABLE_INTERRUPT();
+   SAMPLE_TPSDOT();
 #endif
    break;
 
   case ADCI_ADD_I1: //Measurement of ADD_I1 completed
    adc.add_i1_value = ADC;
-   ADMUX = ADCI_ADD_I2|ADC_VREF_TYPE;
    _DISABLE_INTERRUPT();
-   SETBIT(ADCSRA,ADSC);
+   RELAY_INPUT(ADCI_ADD_I2);
    break;
 
   case ADCI_ADD_I2: //Measurement of ADD_I2 completed
    adc.add_i2_value = ADC;
-
-#if !defined(SECU3T)
-   ADMUX = ADCI_ADD_I3|ADC_VREF_TYPE;
    _DISABLE_INTERRUPT();
-   SETBIT(ADCSRA,ADSC);
+#if !defined(SECU3T)
+   RELAY_INPUT(ADCI_ADD_I3);
    break;
 
   case ADCI_ADD_I3: //Measurement of ADD_I3 completed
    adc.add_i3_value = ADC;
+   _DISABLE_INTERRUPT();        //prevent nested ADC interrupts and other effects
 #endif
 
 #ifndef TPIC8101
-   ADMUX = ADCI_MAP|ADC_VREF_TYPE;
-   adc.sensors_ready = 1; //finished
-#else
-   //continue (as additional analog input)
-   ADMUX = ADCI_KNOCK|ADC_VREF_TYPE;
-   _DISABLE_INTERRUPT();
-   SETBIT(ADCSRA, ADSC);
-#endif
+   if (adc.knock_msm!=ADCI_GND)
+   {
+    ADMUX = adc.knock_msm;
+   }
+   else if (adc.map_msm!=ADCI_GND)
+   {
+    ADMUX = adc.map_msm;
+   }
+   else
+   {
+    adc.sens_msm = ADCI_GND; //finished
+    return;
+   }
+   adc.sens_msm = ADCI_GND; //finished
    break;
+#else
+  _DISABLE_INTERRUPT();
+  if (adc.map_msm!=ADCI_GND)
+  {
+   ADMUX = adc.map_msm;
+   adc.sens_msm = ADC_VREF_TYPE | ADCI_KNOCK;
+  }
+  else
+  {
+   ADMUX = ADC_VREF_TYPE | ADCI_KNOCK;
+  }
+  break;
+#endif
 
   //note: we can fall here either from adc_beign_measure_knock() or previous state
-  //if defined TPIC8101, then ADCI_KNOCK used for ADD_I4
-  case ADCI_KNOCK:  //measurement of the int. output voltage finished
+  //if defined TPIC8101, when ADCI_KNOCK used for ADD_I4
+  case ADCI_KNOCK:         //measurement of the int. output voltage finished
 #ifndef TPIC8101
    if (adc.waste_meas)
    {                       //waste measurement is required (for delay)
     adc.waste_meas = 0;
+    _DISABLE_INTERRUPT();
+    break;                 //change nothing and start ADC again
+   }
+
+   //INTOUT measured by ADC
+   adc.knock_value = ADC;  //save INTOUT value
+
+   _DISABLE_INTERRUPT();  //disable interrupts to prevent nested ADC interrupts and other effects
+
+   if (adc.map_msm!=ADCI_GND)
+   {
+    ADMUX = adc.map_msm;
+   }
+   else if (adc.sens_msm!=ADCI_GND)
+   {  
+    ADMUX = adc.sens_msm;
+   }
+   else
+   {
+    adc.knock_msm = ADCI_GND; //finished (no other tasks)
+    return;
+   }
+   adc.knock_msm = ADCI_GND; //knock finished
+#else
+   //INTOUT read via SPI, so here we measure ADD_I4
+   adc.knock_value = ADC;
    _DISABLE_INTERRUPT();
-    SETBIT(ADCSRA, ADSC);  //change nothing and start ADC again
-    break;
+   if (adc.map_msm!=ADCI_GND)
+   {
+    ADMUX = adc.map_msm;
+    adc.sens_msm = ADCI_GND; //sensors finished
+   }
+   else
+   {
+    adc.sens_msm = ADCI_GND; //sensors finished (no other tasks)
+    return;
    }
 #endif
-   adc.knock_value = ADC;
-   adc.sensors_ready = 1;
    break;
  }
+ //start ADC
+ SETBIT(ADCSRA, ADSC);
 }
 
 int16_t adc_compensate(int16_t adcvalue, uint16_t factor, int32_t correction)
 {
-  return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
+ return (((((int32_t)adcvalue*factor)+correction)<<2)>>16);
 }
 
 uint16_t map_adc_to_kpa(int16_t adcvalue, int16_t offset, int16_t gradient)
@@ -467,9 +644,9 @@ int16_t mapdot_adc_to_kpa(int16_t adcvalue, int16_t gradient)
 
 void adc_measure_voltage(void)
 {
- ADMUX = ADCI_UBAT|ADC_VREF_TYPE; //select volage input
- SETBIT(ADCSRA, ADSC);            //start measurement
- while(CHECKBIT(ADCSRA, ADSC));   //wait for completion of measurement
+ ADMUX = ADC_VREF_TYPE | ADCI_UBAT; //select voltage input
+ SETBIT(ADCSRA, ADSC);              //start measurement
+ while(CHECKBIT(ADCSRA, ADSC));     //wait for completion of measurement
  adc.ubat_value = ADC;
 }
 

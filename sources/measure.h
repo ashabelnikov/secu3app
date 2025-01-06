@@ -36,9 +36,10 @@ void meas_init_ports(void);
 
 /**Update ring buffers with new data given from sensors and ADC
  * Uses d ECU data structure
- * \param rpm_only if != 0, then only RPM related buffers will be updated
+ * \param cesd Pointer to the data structure describing CE settings
  */
-void meas_update_values_buffers(uint8_t rpm_only, ce_sett_t *cesd);
+void meas_update_values_buffers(ce_sett_t *cesd);
+void meas_update_values_buffers_map(ce_sett_t *cesd);
 
 /**Perform avaraging using data from ring buffers
  * Uses d ECU data structure

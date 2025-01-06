@@ -1326,6 +1326,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ifrvmc_use_fps = 0,       //don't use FPS for correction
   
+  .map_samp_mode = 1,        //MAP sampled on the certain angles of crankshaft
+
   /**reserved bytes*/
   {0}
  },

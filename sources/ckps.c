@@ -1344,10 +1344,12 @@ static void process_ckps_cogs(void)
    {
     knock_set_integration_mode(KNOCK_INTMODE_HOLD);
     if (CHECKBIT(flags, F_USEKNK))
+    {
      knock_start_settings_latching();//start the process of downloading the settings into the HIP9011 (and getting ADC result for TPIC8101)
 #ifndef TPIC8101
-    adc_begin_measure_knock(_AB(ckps.stroke_period, 1) < 4);
+     adc_begin_measure_knock();
 #endif
+    }
    }
   }
 
@@ -1367,7 +1369,7 @@ static void process_ckps_cogs(void)
 #ifdef SPLIT_ANGLE
    ckps.advance_angle1 = ckps.advance_angle_buffered1; //advance angle with all the adjustments (say, 15°)
 #endif
-   adc_begin_measure(_AB(ckps.stroke_period, 1) < 4);//start the process of measuring analog input values
+   adc_begin_measure_map();               //start the process of MAP sampling
 #ifdef STROBOSCOPE
    if (0==i)
     ckps.strobe = 1; //strobe!

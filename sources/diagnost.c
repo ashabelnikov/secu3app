@@ -394,6 +394,9 @@ void diagnost_process(void)
  //perform initialization of digital inputs
  init_digital_inputs();
 
+ //regular mode (sample MAP together with other sensors)
+ adc_set_map_to_ckp(0);
+
 #ifndef SECU3T
  knock_expander_initialize();
 #endif
@@ -423,19 +426,15 @@ void diagnost_process(void)
     knock_set_channel(diag.ksp_channel);
     if (++diag.ksp_channel > KSP_CHANNEL_1)
      diag.ksp_channel = KSP_CHANNEL_0;
-    adc_begin_measure(0); //<--normal speed
     ++diag.fsm_state;
     break;
 
-   //wait for completion of measurements, start integration of current knock channel's signal
+   //start integration of current knock channel's signal
    case 1:
-    if (adc_is_measure_ready())
-    {
      if (!(d.diag_out & _OBV(24)))
       knock_set_integration_mode(KNOCK_INTMODE_INT);
-     _DELAY_US(1000);   //1ms
+     _DELAY_US(2000);   //2ms
      ++diag.fsm_state;
-    }
     break;
 
    //start measurements (knock signal)
@@ -449,7 +448,9 @@ void diagnost_process(void)
 #endif
      knock_start_settings_latching();
 #ifndef TPIC8101
-    adc_begin_measure_knock(0); //HIP9011 only
+    _DISABLE_INTERRUPT();
+    adc_begin_measure_knock(); //HIP9011 only
+    _ENABLE_INTERRUPT();
 #endif
     ++diag.fsm_state;
     break;
@@ -463,7 +464,7 @@ void diagnost_process(void)
     {
      diag.knock_value[diag.ksp_channel] = knock_get_adc_value(); //get ADC value read from TPIC8101
 #else //HIP9011
-    if (adc_is_measure_ready())
+    if (adc_is_measure_ready(ADCRDY_KNOCK))
     {
      diag.knock_value[diag.ksp_channel] = adc_get_knock_value();
 #endif
@@ -494,7 +495,7 @@ void diagnost_process(void)
 #ifdef TPIC8101
    d.diag_inp.add_i4 = _ADC_COMPENSATE(adc_get_knock_value(), ADC_VREF_FACTOR, 0.0);
 #endif
-   d.diag_inp.carb = _ADC_COMPENSATE(adc_get_carb_value(), ADC_VREF_FACTOR, 0.0);
+   d.diag_inp.carb = _ADC_COMPENSATE(adc_get_tps_value(), ADC_VREF_FACTOR, 0.0);
 
 #if !defined(SECU3T) && defined(MCP3204)
    d.diag_inp.add_i5 = _ADC_COMPENSATE(adc_get_add_i5_value(), 0.488, 0.0);

@@ -1813,6 +1813,7 @@ void uart_send_packet(uint8_t send_mode)
  uint8_t i = 0;
  for(; i < uart.send_size_c; ++i)
   UPD_CHKSUM(uart.send_buf_c[i]);
+ UPD_CHKSUM(uart.send_size_c); //update check sum with size of packet (excluding 2 bytes of check sum)
 
  build_i16h(GET_CHKSUM()); //append packet with 2 bytes of checksum
 
@@ -1899,6 +1900,7 @@ uint8_t uart_recept_packet(void)
   uint8_t chkidx = 0;
   for(; chkidx < uart.recv_size_c; ++chkidx)
    UPD_CHKSUM(uart.recv_buf_c[chkidx]);
+  UPD_CHKSUM(uart.recv_size_c);
 
   if (checksum!=GET_CHKSUM())
    return 0; //error, packet corrupted, don't accept it

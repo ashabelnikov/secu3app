@@ -62,9 +62,9 @@ ltft_t ltft[2] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
  */
 void aas_ltft_control(uint8_t i)
 {
- if (d.sens.rpm < PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[0]) || d.sens.rpm > PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[1]))
+ if (d.sens.rpm < d.param.ltft_learn_rpm[0] || d.sens.rpm > d.param.ltft_learn_rpm[1])
   return;
- if (d.load < PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[0]) || d.load > PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[1]))
+ if (d.load < d.param.ltft_learn_load[0] || d.load > d.param.ltft_learn_load[1])
   return;
 
  switch(ltft[i].ltft_state)
@@ -105,7 +105,7 @@ void aas_ltft_control(uint8_t i)
    {
     int16_t ltft_curr = i ? d.inj_ltft2[l][r] : d.inj_ltft1[l][r];
     int16_t new_val = ltft_curr + d.corr.lambda[i];
-    restrict_value_to(&new_val, (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_min), (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_max));
+    restrict_value_to(&new_val, d.param.ltft_min, d.param.ltft_max);
     if (i)
      d.inj_ltft2[l][r] = new_val;     //apply correction to current cell of LTFT 2
     else
@@ -133,8 +133,8 @@ void aas_ltft_control(uint8_t i)
      int8_t dist_l = abs8((int8_t)ltft[i].ltft_idx_l - idx_l);
      int8_t dist_r = abs8((int8_t)ltft[i].ltft_idx_r - idx_r);
      int8_t dist = (dist_l > dist_r) ? dist_l : dist_r; //find maximum distance
-     int16_t new_val = ((int16_t)(i ? d.inj_ltft2[idx_l][idx_r] : d.inj_ltft1[idx_l][idx_r])) + (((((int32_t)ltft[i].ltft_corr) * PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad)) >> 8) / dist);
-     restrict_value_to(&new_val, (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_min), (int16_t)PGM_GET_BYTE(&fw_data.exdata.ltft_max));
+     int16_t new_val = ((int16_t)(i ? d.inj_ltft2[idx_l][idx_r] : d.inj_ltft1[idx_l][idx_r])) + (((((int32_t)ltft[i].ltft_corr) * d.param.ltft_learn_grad) >> 8) / dist);
+     restrict_value_to(&new_val, d.param.ltft_min, d.param.ltft_max);
      if (i)
       d.inj_ltft2[idx_l][idx_r] = new_val;
      else
@@ -160,17 +160,17 @@ void ltft_control(void)
  if (ee_opcode == OPCODE_RESET_LTFT || ee_opcode == OPCODE_SAVE_LTFT)
   return; //do not write to LTFT map during saving to EEPROM
 
- if (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt)) || d.sens.temperat > ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_clt_up)))
+ if (d.sens.temperat < d.param.ltft_learn_clt || d.sens.temperat > d.param.ltft_learn_clt_up)
   return; //CLT is too low or too high for learning
 
- if (d.sens.air_temp > ((int16_t)PGM_GET_WORD(&fw_data.exdata.ltft_learn_iat_up)))
+ if (d.sens.air_temp > d.param.ltft_learn_iat_up)
   return; //Intake air temperature is too high for learning
 
 #ifndef SECU3T
- if (d.sens.gps < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpa))
+ if (d.sens.gps < d.param.ltft_learn_gpa)
   return; //gas pressure is below threshold
 
- if (PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpd) && ((d.sens.gps - d.sens.map) < PGM_GET_WORD(&fw_data.exdata.ltft_learn_gpd)))
+ if (d.param.ltft_learn_gpd && ((d.sens.gps - d.sens.map) < d.param.ltft_learn_gpd))
   return; //differential gas pressure is below threshold
 #endif
 
@@ -197,16 +197,16 @@ void ltft_control(void)
 
 uint8_t ltft_is_active(void)
 {
- if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==0)
+ if (d.param.ltft_mode==0)
  {
   return 0; //LTFT functionality turned off
  }
- else if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==1)
+ else if (d.param.ltft_mode==1)
  {
   if (1==d.sens.gas)
    return 0; // LTFT enabled only for petrol
  }
- else if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode)==2)
+ else if (d.param.ltft_mode==2)
  {
   if (0==d.sens.gas)
    return 0; // LTFT enabled only for gas

@@ -118,19 +118,19 @@ Kosh_t Kosh = {
 // Расчет коррекции 
 void kosh_ltft_control(uint8_t Channel) {
 	// Уходим, пока не накопится коррекция
-	int16_t db_m = PGM_GET_BYTE(&fw_data.exdata.ltft_dead_band[0]);
-	uint8_t db_p = PGM_GET_BYTE(&fw_data.exdata.ltft_dead_band[1]);
+	int16_t db_m = d.param.ltft_dead_band[0];
+	uint8_t db_p = d.param.ltft_dead_band[1];
 	if (d.corr.lambda[Channel] > -db_m && d.corr.lambda[Channel] < db_p) {return;}
 
 	// Находим целевые обороты и давления с учетом задержки
 	kosh_rpm_map_calc();
 
 	// Пороги по оборотам и давлению (в основном для ХХ)
-	if (Kosh.RPM < PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[0]) || Kosh.RPM > PGM_GET_WORD(&fw_data.exdata.ltft_learn_rpm[1])) {return;}
-	if (Kosh.MAP < PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[0]) || Kosh.MAP > PGM_GET_WORD(&fw_data.exdata.ltft_learn_load[1])) {return;}
+	if (Kosh.RPM < d.param.ltft_learn_rpm[0] || Kosh.RPM > d.param.ltft_learn_rpm[1]) {return;}
+	if (Kosh.MAP < d.param.ltft_learn_load[0] || Kosh.MAP > d.param.ltft_learn_load[1]) {return;}
 
 	// Коэффициент выравнивания x64
-	Kosh.Kf = PGM_GET_BYTE(&fw_data.exdata.ltft_learn_grad) >> 2;
+	Kosh.Kf = d.param.ltft_learn_grad >> 2;
 
 	// Флаг использовать сетку давления
 	Kosh.UseGrid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
@@ -243,8 +243,8 @@ void kosh_ltft_control(uint8_t Channel) {
 void kosh_write_value(uint8_t y, uint8_t x, uint8_t n, uint8_t Channel) {
 	// // Ограничение значения коррекции
 	int8_t Value = Channel ? d.inj_ltft2[y][x] : d.inj_ltft1[y][x];
-	int8_t Min = PGM_GET_BYTE(&fw_data.exdata.ltft_min);
-	int8_t Max = PGM_GET_BYTE(&fw_data.exdata.ltft_max);
+	int8_t Min = d.param.ltft_min;
+	int8_t Max = d.param.ltft_max;
 
 	if (Value + Kosh.LTFTAdd[n] > Max) {Kosh.LTFTAdd[n] = Max - Value;}
 	else if (Value + Kosh.LTFTAdd[n] < Min) {Kosh.LTFTAdd[n] = Min - Value;}

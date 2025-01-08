@@ -1099,6 +1099,26 @@ void uart_send_packet(uint8_t send_mode)
   break;
 #endif
 
+#if defined(FUEL_INJECT)
+ case LTFT_PAR:
+  build_i8h(d.param.ltft_mode);
+  build_i16h(d.param.ltft_learn_clt);
+  build_i16h(d.param.ltft_learn_clt_up);
+  build_i16h(d.param.ltft_learn_iat_up);
+  build_i8h(d.param.ltft_learn_grad);
+  build_i16h(d.param.ltft_learn_gpa);
+  build_i16h(d.param.ltft_learn_gpd);
+  build_i8h(d.param.ltft_min);
+  build_i8h(d.param.ltft_max);
+  build_i16h(d.param.ltft_learn_rpm[0]);
+  build_i16h(d.param.ltft_learn_rpm[1]);
+  build_i16h(d.param.ltft_learn_load[0]);
+  build_i16h(d.param.ltft_learn_load[1]);
+  build_i8h(d.param.ltft_dead_band[0]);
+  build_i8h(d.param.ltft_dead_band[1]);
+  break;
+#endif
+
 #ifdef REALTIME_TABLES
 //Following finite state machine will transfer all table's data
   case EDITAB_PAR:
@@ -2254,6 +2274,26 @@ uint8_t uart_recept_packet(void)
   break;
 #endif
 
+#if defined(FUEL_INJECT)
+ case LTFT_PAR:
+  d.param.ltft_mode = recept_i8h();
+  d.param.ltft_learn_clt = recept_i16h();
+  d.param.ltft_learn_clt_up = recept_i16h();
+  d.param.ltft_learn_iat_up = recept_i16h();
+  d.param.ltft_learn_grad = recept_i8h();
+  d.param.ltft_learn_gpa = recept_i16h();
+  d.param.ltft_learn_gpd = recept_i16h();
+  d.param.ltft_min = recept_i8h();
+  d.param.ltft_max = recept_i8h();
+  d.param.ltft_learn_rpm[0] = recept_i16h();
+  d.param.ltft_learn_rpm[1] = recept_i16h();
+  d.param.ltft_learn_load[0] = recept_i16h();
+  d.param.ltft_learn_load[1] = recept_i16h();
+  d.param.ltft_dead_band[0] = recept_i8h();
+  d.param.ltft_dead_band[1] = recept_i8h();
+  break;
+#endif
+
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
   {
@@ -2583,6 +2623,9 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
 #endif
 #ifdef FUEL_INJECT
   case LTFT_DAT:
+#endif
+#if defined(FUEL_INJECT)
+  case LTFT_PAR:
 #endif
   case SILENT:
   case LZBLHS:

@@ -622,16 +622,11 @@ typedef struct fw_ex_data_t
   uint16_t pwron_time;    //!< Keep power on during this time after switching ignition off. Value in 0.01 sec units
   uint16_t pwron_time1;   //!< Keep power on (including ignition and fuel injection) during this time after switching ignition off. Value in 0.01 sec units
 
-  uint8_t  ltft_mode;      //!< 0 - LTFT is turned off, 1 - use only for petrol, 2 - use only for gas, 3 - use for both petrol and gas
-  int16_t  ltft_learn_clt; //!< Temperature threshold for learning, value in 0.25°C units
   uint8_t  ltft_cell_band; //!< cell band in %, Value 256 corresponds to 100%, e.g. 1 discrete correspons to 0,390625%
   uint8_t  ltft_stab_time; //!< Learn stability time, value in 0.01 second units
-  uint8_t  ltft_learn_grad; //!< Learning gradient, 256 corresponds to 1.0, range 0...0.99
 
   uint8_t pwrrelay_uni;    //!< Selection of universal output used as condition for power managment, allowed values: 0,1,2,3,4,5,0x0F, 0x0F means disabled
 
-  uint16_t ltft_learn_gpa; //!< Absolute gas pressure threshold for learning, value in kPa * 64
-  uint16_t ltft_learn_gpd; //!< Differential (gps - map) gas pressure threshold for learning, value in kPa * 64
   uint8_t  ltft_neigh_rad; //!< Radius for learning neighbours, value in cells (0...15)
   uint8_t  ltft_sigswt_num;//!< Number of successive switches of signal
 
@@ -665,22 +660,12 @@ typedef struct fw_ex_data_t
 
   uint8_t ltft_on_idling;  //!< Control LTFT working on idling (0 - disabled, 1 - enabled)
 
-  int8_t ltft_min;         //!< limits for LTFT correction
-  int8_t ltft_max;
-
   uint8_t use_injnonlin_corr; //!< 0 - don't use inj. non-linearity correction, 1 - use inj. non-linearity correction
 
   uint8_t ego_fc_delay;
   uint8_t ego_ac_delay;
 
   uint8_t ltft_algo;           //!< 0 - default algorithm, 1 - Kosh algorithm
-  int16_t ltft_learn_clt_up;   //!< Upper temperature threshold for learning, value in 0.25°C units
-  int16_t ltft_learn_iat_up;   //!< Upper IAT threshold for learning, value in 0.25°C units
-
-  uint16_t ltft_learn_rpm[2];  //!< lower and upper thresholds of RPM for learning, min-1
-  uint16_t ltft_learn_load[2]; //!< lower and upper thresholds of load for learning, value * 64
-
-  uint8_t ltft_dead_band[2];   //!< EGO correction thresholds (- and +) below which LTFT will not work, value * 512
 
   uint16_t aftstr_flat_strokes;
   uint8_t inj_prime_times;
@@ -705,7 +690,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1499];
+  uint8_t reserved[1523];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -1028,7 +1013,20 @@ typedef struct params_t
   int16_t  fps_curve_offset;             //!< offset of curve in volts, can be negative
   int16_t  fps_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
 
-  uint8_t  reserved[115];
+  uint8_t  ltft_mode;                    //!< 0 - LTFT is turned off, 1 - use only for petrol, 2 - use only for gas, 3 - use for both petrol and gas
+  int16_t ltft_learn_clt;      //!< Temperature threshold for learning, value in 0.25°C units
+  int16_t ltft_learn_clt_up;   //!< Upper temperature threshold for learning, value in 0.25°C units
+  int16_t ltft_learn_iat_up;   //!< Upper IAT threshold for learning, value in 0.25°C units
+  uint8_t  ltft_learn_grad;    //!< Learning gradient, 256 corresponds to 1.0, range 0...0.99
+  uint16_t ltft_learn_gpa;     //!< Absolute gas pressure threshold for learning, value in kPa * 64
+  uint16_t ltft_learn_gpd;     //!< Differential (gps - map) gas pressure threshold for learning, value in kPa * 64
+  int8_t ltft_min;             //!< limits for LTFT correction
+  int8_t ltft_max;             //!< 
+  uint16_t ltft_learn_rpm[2];  //!< lower and upper thresholds of RPM for learning, min-1
+  uint16_t ltft_learn_load[2]; //!< lower and upper thresholds of load for learning, value * 64
+  uint8_t ltft_dead_band[2];   //!< EGO correction thresholds (- and +) below which LTFT will not work, value * 512
+
+  uint8_t  reserved[91];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

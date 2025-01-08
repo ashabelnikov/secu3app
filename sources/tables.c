@@ -774,6 +774,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .fps_curve_offset =            VOLTAGE_MAGNITUDE(-0.5), //-0.5V
   .fps_curve_gradient =          3528,               //172.25kPa/V
 
+  .ltft_mode =                   0,                  //LTFT is off
+  .ltft_learn_clt =              TEMPERATURE_MAGNITUDE(90.0), //90°C
+  .ltft_learn_clt_up =           TEMPERATURE_MAGNITUDE(96.0), //96.0°C
+  .ltft_learn_iat_up =           TEMPERATURE_MAGNITUDE(45.0), //45.0°C
+  .ltft_learn_grad =             13, //~0.05
+  .ltft_learn_gpa =              PRESSURE_MAGNITUDE(0.0),  //0 kPa
+  .ltft_learn_gpd =              PRESSURE_MAGNITUDE(0.0),  //0 kPa
+  .ltft_min =                    -126,           //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
+  .ltft_max =                    126,           //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
+  .ltft_learn_rpm =              {500, 6000},
+  .ltft_learn_load =             {PRESSURE_MAGNITUDE(10.0), PRESSURE_MAGNITUDE(100.0)},
+  .ltft_dead_band =              {EGO_CORR(0.6), EGO_CORR(0.6)}, //+-0.6%
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -1250,16 +1263,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .pwron_time = SYSTIM_MAGS(0.1),   //0.1 sec
   .pwron_time1 = SYSTIM_MAGS(0.1),   //0.1 sec
 
-  .ltft_mode = 0,      //LTFT is off
-  .ltft_learn_clt = TEMPERATURE_MAGNITUDE(90.0), //90°C
   .ltft_cell_band = 51, //~20%
   .ltft_stab_time = 10, //!< 100ms
-  .ltft_learn_grad = 13, //~0.05
 
   .pwrrelay_uni = 0x0F, //not used
 
-  .ltft_learn_gpa = PRESSURE_MAGNITUDE(0.0),  //0 kPa
-  .ltft_learn_gpd = PRESSURE_MAGNITUDE(0.0),  //0 kPa
   .ltft_neigh_rad = 15, //all cells
   .ltft_sigswt_num = 4, //4 successive switches
 
@@ -1293,22 +1301,12 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .ltft_on_idling = 1,
 
-  .ltft_min = -126,           //!< Min. value in LTFT map; -126 / 512 = -0.246 (-24.6%)
-  .ltft_max =  126,           //!< Max. value in LTFT map;  126 / 512 =  0.246 ( 24.6%)
-
   .use_injnonlin_corr = 0,    //don't use correction
 
   .ego_fc_delay = 200,        //200 strokes
   .ego_ac_delay = 50,         //50 strokes (delay used after acceleration enrichment)
 
   .ltft_algo = 0,             //default algorithm
-  .ltft_learn_clt_up = TEMPERATURE_MAGNITUDE(96.0), //96.0°C
-  .ltft_learn_iat_up = TEMPERATURE_MAGNITUDE(45.0), //45.0°C
-
-  .ltft_learn_rpm = {500, 6000},
-  .ltft_learn_load = {PRESSURE_MAGNITUDE(10.0), PRESSURE_MAGNITUDE(100.0)},
-
-  .ltft_dead_band = {EGO_CORR(0.6), EGO_CORR(0.6)}, //+-0.6%
 
   .aftstr_flat_strokes = 10,
   .inj_prime_times = 1,      //repeat pulse duration 1 time

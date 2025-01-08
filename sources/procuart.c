@@ -93,7 +93,7 @@ void process_uart_interface(void)
      sop_start_saving_consfuel();   //save value of consumed fuel to EEPROM
 #endif
 #ifdef FUEL_INJECT
-    if (PGM_GET_BYTE(&fw_data.exdata.ltft_mode) > 0) //is LTFT used?
+    if (d.param.ltft_mode > 0) //is LTFT used?
     {
      while(!eeprom_is_idle()) { wdt_reset_timer(); }
      sop_start_saving_ltft();       //save values of LTFT tables (1 and 2)

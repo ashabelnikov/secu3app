@@ -752,4 +752,9 @@ void ckps_set_knock_chanmap(uint8_t chanmap)
  //not implemented
 }
 
+void ckps_set_mttf(uint16_t mttf)
+{
+ //not applicable in this implementation
+}
+
 #endif //CKPS_NPLUS1

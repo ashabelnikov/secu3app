@@ -71,7 +71,7 @@
  *      for 36-1 crank wheel, p * 1.5
  *      for 12-3 crank wheel, p * 3.0
  */
-#define CKPS_GAP_BARRIER(p)  (((p) * ckps.mttf) >> 8)
+#define CKPS_GAP_BARRIER(p)  (((uint32_t)(p) * ckps.mttf) >> 8)
 
 /** Access Input Capture Register */
 #define GetICR() (ICR1)

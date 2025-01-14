@@ -222,9 +222,9 @@ if (!diagnostics) {
  knock_start_expander_latching();
 #endif
 
- divider_sens ^= 1; //increment modulo 2
  if (divider_sens == 0)
-  adc_begin_measure();   //each 3.28ms
+  adc_begin_measure();   //each 6.56ms
+ divider_sens = (divider_sens + 1) & 0x03; //increment modulo 4
 }
 
 void s_timer_init(void)

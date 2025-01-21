@@ -1326,6 +1326,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   
   .map_samp_mode = 1,        //MAP sampled on the certain angles of crankshaft
 
+  .use_vss_thrd_for_igntim_reg = 0, //don't turn off ign.tim. idling regulator when vehicle spped is above threshold
+
   /**reserved bytes*/
   {0}
  },

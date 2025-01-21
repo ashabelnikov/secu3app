@@ -685,12 +685,13 @@ typedef struct fw_ex_data_t
 
   uint8_t map_samp_mode;       //!< MAP sampling mode: 0 - regular sampling with other sensors (each 3.28ms); 1 - CKP-synchronous sampling
 
+  uint8_t use_vss_thrd_for_igntim_reg;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1523];
+  uint8_t reserved[1522];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -1000,10 +1001,6 @@ typedef struct params_t
   int16_t  gps_curve_offset;             //!< offset of curve in volts, can be negative
   int16_t  gps_curve_gradient;           //!< gradient of curve in kPa/V, can be negative (inverse characteristic curve)
 
-  /**Following reserved bytes required for keeping binary compatibility between
-   * different versions of firmware. Useful when you add/remove members to/from
-   * this structure. */
-
   uint8_t bt_type;                       //!< Bluetooth chip type: 0 - BC417, 1 - BK3231, 2 - BK3231S (JDY-31), 3 - BC352(HC-05), 4 - BK3432, 5 - BK3431S
 
   int16_t idl_reg_d;                     //!< differencial factor for IAC PID (value * 256, max 5.0)
@@ -1025,6 +1022,10 @@ typedef struct params_t
   uint16_t ltft_learn_rpm[2];  //!< lower and upper thresholds of RPM for learning, min-1
   uint16_t ltft_learn_load[2]; //!< lower and upper thresholds of load for learning, value * 64
   uint8_t ltft_dead_band[2];   //!< EGO correction thresholds (- and +) below which LTFT will not work, value * 512
+
+  /**Following reserved bytes required for keeping binary compatibility between
+   * different versions of firmware. Useful when you add/remove members to/from
+   * this structure. */
 
   uint8_t  reserved[91];
 

@@ -426,6 +426,11 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
  int16_t error,factor,idling_rpm;
  #define IRUSDIV 1
 
+#ifdef SPEED_SENSOR
+ if ((PGM_GET_BYTE(&fw_data.exdata.use_vss_thrd_for_igntim_reg)) && IOCFG_CHECK(IOP_SPDSENS) && d.sens.vss_speed > PGM_GET_WORD(&fw_data.exdata.iac_onrunadd_vss_thrd))
+  return 0;
+#endif
+
  //If this idling regulator is turned off or RPM significally higher from normal idling RPM or engine is not heat up, then exit with zero value (zero correction)
  if (!CHECKBIT(d.param.idl_flags, IRF_USE_REGULATOR) || (d.sens.temperat < d.param.idlreg_turn_on_temp && CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE)
 /*

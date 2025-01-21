@@ -83,6 +83,7 @@ typedef struct
 {
  uint8_t state;
  uint16_t t1;      //!< timer
+ uint16_t t2;
 }aircond_t;
 
 /**Instance of state variables */
@@ -162,6 +163,7 @@ void aircond_control(void)
 
   case 3: //conditioner is turned on, check for turn off conditions
   {
+   ac.t2 = s_timer_gtc();
 #ifdef SECU3T
    if (!IOCFG_GET(IOP_COND_I))
 #else
@@ -180,7 +182,7 @@ void aircond_stroke_event_notification(void)
 {
  if (ac.state == 2)                        //smoothly increase RPM
   d.cond_req_rpm+=RPMREQSTEP;
- else if (ac.state == 1 && d.cond_req_rpm >= RPMREQSTEP) //smoothly decrease RPM
+ else if ((s_timer_gtc() - ac.t2) > PGM_GET_WORD(&fw_data.exdata.aircond_idlrpm_delay) && ac.state == 1 && d.cond_req_rpm >= RPMREQSTEP) //smoothly decrease RPM
   d.cond_req_rpm-=RPMREQSTEP;
 }
 

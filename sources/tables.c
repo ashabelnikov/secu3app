@@ -1328,6 +1328,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .use_vss_thrd_for_igntim_reg = 0, //don't turn off ign.tim. idling regulator when vehicle spped is above threshold
 
+  .aircond_idlrpm_delay = SYSTIM_MAGS(30.0), //30 seconds delay
+
   /**reserved bytes*/
   {0}
  },

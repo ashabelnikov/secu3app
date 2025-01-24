@@ -209,8 +209,19 @@ void meas_average_measured_values(ce_sett_t *cesd)
  //TPS
  d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(&meas[TPS_INPIDX]), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
  d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
- if (d.sens.tps > TPS_MAGNITUDE(100))
-  d.sens.tps = TPS_MAGNITUDE(100);
+#if !defined(SECU3T)
+ d.sens.tps_dbw = d.sens.tps; //save value that can be above 100% first, this value is used by servo PID.
+ if (IOCFG_CHECK(IOP_TPS2))
+ {//DBW mode
+  if (d.sens.tps > TPS_MAGNITUDE(100))
+   d.sens.tps = TPS_MAGNITUDE(100) - (d.sens.tps - TPS_MAGNITUDE(100)); //values > 100% mean that throttle is closing
+ }
+ else
+#endif
+ { //direct TPS mode
+  if (d.sens.tps > TPS_MAGNITUDE(100))
+   d.sens.tps = TPS_MAGNITUDE(100); 
+ }
 
  //CLT
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))

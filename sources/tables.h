@@ -406,7 +406,9 @@ typedef struct ce_sett_t
 
  uint8_t stepperic_flg;   //process stepper IC fault (0 - ignore, 1 - process)
 
- uint8_t reserved[31];
+ uint16_t tpsdiff_thrd;
+
+ uint8_t reserved[29];
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware

@@ -94,6 +94,9 @@ typedef struct sensors_t
  uint8_t  gas_raw;                       //!< State of gas valve (raw input value)
  uint16_t knock_k;                       //!< Knock signal level
  uint16_t tps;                           //!< Throttle position sensor (0...100%, x64)
+#if !defined(SECU3T)
+ uint16_t tps_dbw;                       //!< Throttle position sensor (0...100+%, x64)
+#endif
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage
 

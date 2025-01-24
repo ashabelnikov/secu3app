@@ -392,7 +392,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub)
    },
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf),      _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
+    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf),      _FNC(iocfg_s_inj_out1), _FNC(iocfg_s_inj_out2),
     _FNC(iocfg_s_inj_out3), _FNC(iocfg_s_inj_out4), _FNC(iocfg_s_inj_out5), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub),     _FNC(iocfg_s_st_block), _FNC(iocfg_s_ce),       _FNC(iocfg_s_fpmp_o),
     _FNC(iocfg_s_pwrr_o),   _FNC(iocfg_s_evap_o),   _FNC(iocfg_s_o2sh_o),   _FNC(iocfg_s_cond_o),
@@ -415,7 +415,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
@@ -436,8 +436,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 4.3
-   IOREMVER(4,3),
+   //Version of this structure - 4.4
+   IOREMVER(4,4),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -931,6 +931,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .oilpress_timer = 1000, //1000 strokes
 
    .stepperic_flg = 1,  //process stepper IC fault
+
+   .tpsdiff_thrd = VOLTAGE_MAGNITUDE(0.1),
    .reserved = {0}
   },
 

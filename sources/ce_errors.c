@@ -28,6 +28,7 @@
 #include "port/port.h"
 #include <string.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include "adc.h"
 #include "bitmask.h"
 #include "camsens.h"
@@ -195,9 +196,23 @@ void check(ce_sett_t *cesd)
 
  //checking TPS sensor
  if ((d.sens.tps_raw < cesd->tps_v_min) || (d.sens.tps_raw > cesd->tps_v_max))
-  ce_set_error(ECUERROR_TPS_SENSOR_FAIL);
+  { ce_set_error(ECUERROR_TPS_SENSOR_FAIL); }
+#if !defined(SECU3T)
+ else if (IOCFG_CHECK(IOP_TPS2))
+ {
+  uint16_t tps2 = IOCFG_GETA(IOP_TPS2);
+  int16_t tps2_norm = VOLTAGE_MAGNITUDE(5.0) - tps2;
+  if (tps2_norm < 0)
+   tps2_norm = 0;
+  uint16_t tpsdiff = abs((int16_t)d.sens.tps_raw - (int16_t)tps2_norm);
+  if (tpsdiff > cesd->tpsdiff_thrd)
+   ce_set_error(ECUERROR_TPS_SENSOR_FAIL);
+  else
+   ce_clear_error(ECUERROR_TPS_SENSOR_FAIL);
+ }
+#endif
  else
-  ce_clear_error(ECUERROR_TPS_SENSOR_FAIL);
+  { ce_clear_error(ECUERROR_TPS_SENSOR_FAIL); }
 
  //checking ADD_I1 sensor
  if ((d.sens.add_i1_raw < cesd->add_i1_v_min) || (d.sens.add_i1_raw > cesd->add_i1_v_max))

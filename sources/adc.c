@@ -625,7 +625,7 @@ uint16_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
 
  t = (((int32_t)t) * gradient) >> (7+1);
 
- restrict_value_to(&t, TPS_MAGNITUDE(0), TPS_MAGNITUDE(100)); //restrict to 100%
+ restrict_value_to(&t, TPS_MAGNITUDE(0), TPS_MAGNITUDE(110)); //restrict to 110%
 
  return t;
 }

@@ -50,6 +50,9 @@
 /**One discrete of the system timer is 10ms*/
 #define SYSTIM_MULTIPLIER 100
 
+/**APPS multiplier*/
+#define APPS_MULT 64
+
 /* Following macros are necessary when transforming floating point constant-values into integers.
  * Values of phisical magnitudes stored in integers
  */
@@ -99,5 +102,8 @@
 
 /**VSS distance, value in km*/
 #define VSSDIST_MAG(dst) ROUND32((dst)*125)
+
+/**Transforms floating point value of APPS in % to integer value*/
+#define APPS_MAG(p) ROUND ((p) * APPS_MULT)
 
 #endif //_MAGNITUDE_H_

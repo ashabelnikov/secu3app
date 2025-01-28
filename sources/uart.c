@@ -470,10 +470,14 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.inj_cyl_disp);        //used for calculations on SECU-3 Manager side
    build_i32h(d.param.mafload_const);
    build_i16h(d.sens.tps_raw);              //for TPS learning
+   //
    build_i16h(d.param.gps_curve_offset);   //GPS
    build_i16h(d.param.gps_curve_gradient); //GPS
    build_i16h(d.param.fps_curve_offset);   //FPS
    build_i16h(d.param.fps_curve_gradient); //FPS
+   build_i16h(d.param.apps1_curve_offset);   //APPS1
+   build_i16h(d.param.apps1_curve_gradient); //APPS1
+   build_i16h(d.sens.apps1_raw);            //Redundant: for APPS1 learning
    break;
 
   case STARTR_PAR:
@@ -846,6 +850,11 @@ void uart_send_packet(uint8_t send_mode)
 
 #ifndef SECU3T
    build_i16h(d.sens.fps);                 //Fuel Pressure Sensor
+#else
+   build_i16h(0);
+#endif
+#ifndef SECU3T
+   build_i16h(d.sens.apps1);               //APPS1
 #else
    build_i16h(0);
 #endif
@@ -2042,6 +2051,8 @@ uint8_t uart_recept_packet(void)
    d.param.gps_curve_gradient = recept_i16h(); //GPS
    d.param.fps_curve_offset = recept_i16h();   //FPS
    d.param.fps_curve_gradient = recept_i16h(); //FPS
+   d.param.apps1_curve_offset = recept_i16h();   //APPS1
+   d.param.apps1_curve_gradient = recept_i16h(); //APPS1
    break;
 
   case STARTR_PAR:

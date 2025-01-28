@@ -29,7 +29,7 @@
 
 #include <stdint.h>
 
-#define CIRCBUFFMAX    24                       //!< Maximum size of ring buffer in items
+#define CIRCBUFFMAX    32                       //!< Maximum size of ring buffer in items
 
 /**Describes ring buffer for one input*/
 typedef struct ringbuff_t

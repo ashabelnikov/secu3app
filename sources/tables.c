@@ -415,7 +415,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
    },
 
@@ -787,6 +787,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .ltft_learn_load =             {PRESSURE_MAGNITUDE(10.0), PRESSURE_MAGNITUDE(100.0)},
   .ltft_dead_band =              {EGO_CORR(0.6), EGO_CORR(0.6)}, //+-0.6%
 
+  .apps1_curve_offset =          VOLTAGE_MAGNITUDE(0.720),
+  .apps1_curve_gradient =        542, //26.45%/V
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -932,7 +935,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
    .stepperic_flg = 1,  //process stepper IC fault
 
-   .tpsdiff_thrd = VOLTAGE_MAGNITUDE(0.1),
+   .tpsdiff_thrd = VOLTAGE_MAGNITUDE(0.20),
+   .appsdiff_thrd = VOLTAGE_MAGNITUDE(0.30),
+
    .reserved = {0}
   },
 

@@ -36,7 +36,7 @@
 #define   CARBUR_PAR   'k'   //!< carburetor's parameters
 #define   IDLREG_PAR   'l'   //!< idling regulator parameters
 #define   ANGLES_PAR   'm'   //!< advance angle (ign. timing) parameters
-#define   FUNSET_PAR   'n'   //!< parametersrelated to set of functions (lookup tables)
+#define   FUNSET_PAR   'n'   //!< parameters related to set of functions (lookup tables)
 #define   STARTR_PAR   'o'   //!< engine start parameters
 
 #define   FNNAME_DAT   'p'   //!< used for transfering of names of set of functions (lookup tables)

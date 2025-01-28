@@ -214,6 +214,30 @@ void check(ce_sett_t *cesd)
  else
   { ce_clear_error(ECUERROR_TPS_SENSOR_FAIL); }
 
+ //checking APPS1 & APPS2 sensors (DBW)
+#if !defined(SECU3T)
+ if (IOCFG_CHECK(IOP_APPS1))
+ {
+  if (IOCFG_CHECK(IOP_APPS2))
+  { //both APPS are present - OK
+   uint16_t apps1_raw = IOCFG_GETA(IOP_APPS1);
+   uint16_t apps2_raw = IOCFG_GETA(IOP_APPS2);   
+   uint16_t appsdiff = abs((int16_t)apps1_raw - ((int16_t)apps2_raw * 2));
+   if (appsdiff > cesd->appsdiff_thrd)
+    ce_set_error(ECUERROR_APPS);
+   else
+    ce_clear_error(ECUERROR_APPS);
+  }
+  else
+  { ce_set_error(ECUERROR_APPS); } //only 1st APPS
+ }
+ else if (IOCFG_CHECK(IOP_APPS2))
+ {  ce_set_error(ECUERROR_APPS); } //only 2nd APPS
+ else
+ { ce_clear_error(ECUERROR_APPS); } //no APPS at all - no errors
+#endif
+
+
  //checking ADD_I1 sensor
  if ((d.sens.add_i1_raw < cesd->add_i1_v_min) || (d.sens.add_i1_raw > cesd->add_i1_v_max))
   ce_set_error(ECUERROR_ADD_I1_SENSOR);

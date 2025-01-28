@@ -31,6 +31,9 @@ void init_buffer(struct ringbuff_t* p_rb, uint8_t avnum)
 {
  p_rb->avnum = avnum;
  p_rb->size = 0;
+ p_rb->idx = 0;
+ p_rb->sum = 0;
+ p_rb->buff[0] = 0;
 }
 
 void update_buffer(struct ringbuff_t* p_rb, uint16_t value)

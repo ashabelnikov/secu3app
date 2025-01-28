@@ -456,6 +456,19 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else
   d.sens.fps = 0; //input is not selected
 #endif
+
+#ifndef SECU3T
+ if (IOCFG_CHECK(IOP_APPS1))
+ {//APPS1
+  d.sens.apps1_raw = IOCFG_GETA(IOP_APPS1);
+  d.sens.apps1 = tps_adc_to_pc(d.sens.apps1_raw, d.param.apps1_curve_offset, d.param.apps1_curve_gradient);
+  if (d.sens.apps1 > APPS_MAG(100))
+   d.sens.apps1 = APPS_MAG(100);
+ }
+ else
+  d.sens.apps1 = 0; //input is not selected
+#endif
+
 }
 
 //Call this function for making preliminary measurements before starting engine. Call it only after

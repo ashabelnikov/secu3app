@@ -96,6 +96,8 @@ typedef struct sensors_t
  uint16_t tps;                           //!< Throttle position sensor (0...100%, x64)
 #if !defined(SECU3T)
  uint16_t tps_dbw;                       //!< Throttle position sensor (0...100+%, x64)
+ int16_t  apps1_raw;                     //!< Voltage on the APPS1
+ uint16_t apps1;                         //!< Accelerator pedal position sensor (0...100%, x64)
 #endif
  uint16_t add_i1;                        //!< ADD_I1 input voltage
  uint16_t add_i2;                        //!< ADD_I2 input voltage

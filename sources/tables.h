@@ -407,8 +407,9 @@ typedef struct ce_sett_t
  uint8_t stepperic_flg;   //process stepper IC fault (0 - ignore, 1 - process)
 
  uint16_t tpsdiff_thrd;
+ uint16_t appsdiff_thrd;
 
- uint8_t reserved[29];
+ uint8_t reserved[27];
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware
@@ -1027,11 +1028,14 @@ typedef struct params_t
   uint16_t ltft_learn_load[2]; //!< lower and upper thresholds of load for learning, value * 64
   uint8_t ltft_dead_band[2];   //!< EGO correction thresholds (- and +) below which LTFT will not work, value * 512
 
+  int16_t  apps1_curve_offset;          //!< offset of curve in volts
+  int16_t  apps1_curve_gradient;        //!< gradient of curve in Percentage/V
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
 
-  uint8_t  reserved[91];
+  uint8_t  reserved[87];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

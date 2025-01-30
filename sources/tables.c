@@ -1337,6 +1337,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .aircond_idlrpm_delay = SYSTIM_MAGS(30.0), //30 seconds delay
 
+  .iac_clen_coeff = ROUND(1.3*256.0),
+  .iac_clon_coeff = ROUND(1.1*256.0),
+
   /**reserved bytes*/
   {0}
  },

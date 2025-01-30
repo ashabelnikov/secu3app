@@ -691,12 +691,15 @@ typedef struct fw_ex_data_t
   uint8_t use_vss_thrd_for_igntim_reg;
 
   uint16_t aircond_idlrpm_delay;
+
+  uint16_t iac_clen_coeff;     //!< Enter threshold coefficient, value * 256
+  uint16_t iac_clon_coeff;     //!< On threshold coefficient, value * 256
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1520];
+  uint8_t reserved[1516];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

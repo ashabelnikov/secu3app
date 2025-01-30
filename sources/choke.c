@@ -359,6 +359,14 @@ static uint16_t calc_rpm_thrd2(uint16_t rpm)
  return (((uint32_t)rpm) * (((uint16_t)d.param.idl_coef_thrd2) + 128)) >> 7;
 }
 
+/** Checks is closed loop activated
+ * \return 1 - CL is activated, 0 - CL is not activated
+ */
+static uint8_t is_cl_activated(void)
+{
+ return CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS));
+}
+
 /** Calculate stepper motor position for normal mode (fuel injection)
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
@@ -405,17 +413,17 @@ int16_t calc_sm_position(uint8_t pwm)
      run_ppos += ((int16_t)inj_iac_mat_corr());
      chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, inj_cranktorun_time(), 64) >> 3; //result will be x32
 
-     if (d.sens.rpm > (calc_cl_rpm() + (d.param.iac_reg_db*2)))
+     if (d.sens.rpm > (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clen_coeff)) >> 8))
       SETBIT(chks.flags, CF_REACH_TR);
-     if ((d.sens.rpm <= calc_cl_rpm()) && CHECKBIT(chks.flags, CF_REACH_TR))
-      chks.strt_mode = 2; //allow closed loop before finishing crank to run transition (abort transition and start closed loop)
+     if (CHECKBIT(chks.flags, CF_REACH_TR) && (d.sens.rpm <= (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clon_coeff)) >> 8)) && is_cl_activated())
+      chks.strt_mode = 2; //allow closed loop before finishing crank to run transition (abort transition and start closed loop immediately)
      else
       break;              //use interpolated value (still in mode 1)
     }
    }
 
   case 2: //run mode
-   if (CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS))) //use closed loop on gas fuel only if it is enabled by corresponding flag
+   if (is_cl_activated()) //use closed loop on gas fuel only if it is enabled by corresponding flag
    { //closed loop mode
     uint16_t tmr = s_timer_gtc();
     if ((tmr - chks.rpmreg_t1) < PGM_GET_BYTE(&fw_data.exdata.iacreg_period))
@@ -571,6 +579,9 @@ int16_t calc_sm_position(uint8_t pwm)
     chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
    break;
  }
+
+ //Restrict IAC position
+ restrict_value_to(&chks.iac_pos, 0, 3200);
 
  d.iac_closed_loop = !!CHECKBIT(chks.flags, CF_CL_LOOP);
 

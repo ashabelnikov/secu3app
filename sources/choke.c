@@ -367,6 +367,30 @@ static uint8_t is_cl_activated(void)
  return CHECKBIT(d.param.idl_flags, IRF_USE_INJREG) && (!d.sens.gas || CHECKBIT(d.param.idl_flags, IRF_USE_CLONGAS));
 }
 
+/**Calculates base position of IAC valve
+ * \param run_pos 1 - use run position look up table, 0 - use cranking position look up table
+ * \param use_mul 1 - multiply position by factor, 0 - don't multiply
+ * \return position in % * 32
+ */
+int16_t get_base_position(uint8_t run_pos, uint8_t use_mul)
+{
+ int16_t pos = inj_iac_pos_lookup(&chks.prev_temp, run_pos) << 4; //x16
+ if (use_mul)
+  pos = (((int32_t)pos) * PGM_GET_WORD(&fw_data.exdata.iac_wrkadd_coeff)) >> 8;
+ pos += (((int16_t)inj_iac_mat_corr()) << 3); //x4x8=x32
+ return pos;
+}
+
+/** Checks if set thresholds are passed, so the system is ready to start CL
+ * \return 1 - ready to start CL mode (set thresholds are passed), 0 - not ready
+ */
+static uint8_t is_ready_for_cl(void)
+{
+ if (d.sens.rpm > (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clen_coeff)) >> 8))
+  SETBIT(chks.flags, CF_REACH_TR);
+ return (CHECKBIT(chks.flags, CF_REACH_TR) && (d.sens.rpm <= (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clon_coeff)) >> 8)) && is_cl_activated());
+}
+
 /** Calculate stepper motor position for normal mode (fuel injection)
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
@@ -377,8 +401,8 @@ int16_t calc_sm_position(uint8_t pwm)
  switch(chks.strt_mode)
  {
   case 0:  //cranking mode
-   chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 0)) << 4; //use crank pos, x16
-   chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3); //x4x8=x32
+   chks.iac_pos = get_base_position(0, 0); //use ckank pos, don't multiply
+
    CLEARBIT(chks.flags, CF_CL_LOOP); //closed loop is not active
    if (d.engine_mode!=EM_START)
    {
@@ -402,27 +426,39 @@ int16_t calc_sm_position(uint8_t pwm)
     if (time_since_crnk >= inj_cranktorun_time())
     {
      chks.strt_mode = 2; //transition has finished, we will immediately fall into mode 2, use run value
-     chks.iac_pos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 4; //run pos x16
-     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
+     chks.iac_pos = get_base_position(1, 1); //use run pos, multiply
+     chks.strt_t1 = s_timer_gtc();     
     }
     else
     {
-     int16_t crnk_ppos = inj_iac_pos_lookup(&chks.prev_temp, 0) << 1; //crank pos
-     crnk_ppos += ((int16_t)inj_iac_mat_corr());
-     int16_t run_ppos = inj_iac_pos_lookup(&chks.prev_temp, 1) << 1;  //run pos
-     run_ppos += ((int16_t)inj_iac_mat_corr());
-     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, inj_cranktorun_time(), 64) >> 3; //result will be x32
+     int16_t crnk_ppos = get_base_position(0, 0); //use ckank pos, don't multiply
+     int16_t run_ppos = get_base_position(1, 1); //use run pos, multiply
+     chks.iac_pos = simple_interpolation(time_since_crnk, crnk_ppos, run_ppos, 0, inj_cranktorun_time(), 4) >> 2; //result will be x32
 
-     if (d.sens.rpm > (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clen_coeff)) >> 8))
-      SETBIT(chks.flags, CF_REACH_TR);
-     if (CHECKBIT(chks.flags, CF_REACH_TR) && (d.sens.rpm <= (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clon_coeff)) >> 8)) && is_cl_activated())
-      chks.strt_mode = 2; //allow closed loop before finishing crank to run transition (abort transition and start closed loop immediately)
+     if (is_ready_for_cl())
+     {
+      chks.strt_mode = 3; //allow closed loop before finishing crank to run transition (abort transition and start closed loop immediately)
+      goto clic_imm;
+     }
      else
       break;              //use interpolated value (still in mode 1)
     }
    }
 
-  case 2: //run mode
+  case 2: //run mode with addiditon to position
+    if ((s_timer_gtc() - chks.strt_t1) >= PGM_GET_WORD(&fw_data.exdata.iac_wrkadd_time) || is_ready_for_cl())
+    {
+     chks.strt_mode = 3;  //we immediately fall into mode 3
+     chks.iac_pos = get_base_position(1, 0); //use run pos, don't multiply
+    }
+    else
+    {
+     chks.iac_pos = get_base_position(1, 1); //use run pos, multiply
+     break;
+    }
+
+  case 3: //run mode
+clic_imm:
    if (is_cl_activated()) //use closed loop on gas fuel only if it is enabled by corresponding flag
    { //closed loop mode
     uint16_t tmr = s_timer_gtc();
@@ -490,8 +526,7 @@ int16_t calc_sm_position(uint8_t pwm)
     }
     else
     { //closed loop is not active
-     chks.iac_pos = (((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4); //x16, work position as base
-     chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
+     chks.iac_pos = get_base_position(1, 0); //use run pos as base, don't multiply
      if (d.engine_mode == EM_IDLE)
      {
       //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
@@ -563,8 +598,8 @@ int16_t calc_sm_position(uint8_t pwm)
    else
    { //open loop mode
     CLEARBIT(chks.flags, CF_CL_LOOP);
-    chks.iac_pos = ((uint16_t)inj_iac_pos_lookup(&chks.prev_temp, 1)) << 4; //run pos, x16
-    chks.iac_pos += (((int16_t)inj_iac_mat_corr()) << 3);
+    chks.iac_pos = get_base_position(1, 0); //use run pos, don't multiply
+
     //Displace IAC position when cooling fan turns on
     if (d.vent_req_on)
      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;

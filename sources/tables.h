@@ -694,12 +694,16 @@ typedef struct fw_ex_data_t
 
   uint16_t iac_clen_coeff;     //!< Enter threshold coefficient, value * 256
   uint16_t iac_clon_coeff;     //!< On threshold coefficient, value * 256
+
+  uint16_t iac_wrkadd_coeff;   //!< value * 256
+  uint16_t iac_wrkadd_time;    //!< 0.01sec units
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1516];
+  uint8_t reserved[1512];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

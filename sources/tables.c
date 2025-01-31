@@ -1340,6 +1340,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .iac_clen_coeff = ROUND(1.3*256.0),
   .iac_clon_coeff = ROUND(1.1*256.0),
 
+  .iac_wrkadd_coeff = ROUND(1.1*256),     //10%
+  .iac_wrkadd_time =  SYSTIM_MAGS(3.0),   //3 sec
+
   /**reserved bytes*/
   {0}
  },

@@ -103,11 +103,10 @@ void vent_init_state(void)
 /**Sets duty value
  * \param duty value to be set
  */
-void vent_set_duty(uint8_t duty)
+void vent_set_duty(uint16_t duty, uint8_t bits)
 {
  //TODO: Maybe we need double buffering?
- uint16_t duty_1 = ((uint32_t)duty * pwm_steps * 16) >> 12;
-
+ uint16_t duty_1 = ((uint32_t)duty * pwm_steps) >> bits;
  //We don't need interrupts if duty is 0 or 100%
  if (duty == 0)
  {
@@ -116,7 +115,7 @@ void vent_set_duty(uint8_t duty)
   _ENABLE_INTERRUPT();
   COOLINGFAN_TURNOFF();
  }
- else if (duty == 255)
+ else if (duty >= _BV16(bits)-1)
  {
   _DISABLE_INTERRUPT();
   TIMSK2&=~_BV(OCIE2A);
@@ -305,12 +304,12 @@ void vent_control(void)
    vent_duty = 0; //disable software PWM
    d_val = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 256) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
    if (d_val > 255) d_val = 255;
-   vent_set_duty(d_val);
+   vent_set_duty(d_val, 8);
   }
 #else //SECU-3T
   d_val = ((uint16_t)(PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps) - dd) * 256) / PGM_GET_BYTE(&fw_data.exdata.vent_pwmsteps);
   if (d_val > 255) d_val = 255;
-  vent_set_duty(d_val);
+  vent_set_duty(d_val, 8);
 #endif
 
  }
@@ -337,10 +336,10 @@ void vent_set_pwmfrq(uint16_t period)
 }
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-void vent_set_duty8(uint8_t duty)
+void vent_set_duty12(uint16_t duty)
 {
 #ifdef COOLINGFAN_PWM
- vent_set_duty(duty);
+ vent_set_duty(duty, 12);
 #endif
 }
 #endif

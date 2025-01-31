@@ -625,7 +625,7 @@ clic_imm:
  else
  {
   if (pwm)
-   return ((((int32_t)256) * chks.iac_pos) / 3200); //convert percentage position to PWM duty
+   return ((((int32_t)4095) * chks.iac_pos) / 3200); //convert percentage position to PWM duty
   else
    return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 3200); //convert percentage position to SM steps
  }
@@ -640,11 +640,11 @@ void choke_control(void)
  if (IOCFG_CHECK(IOP_IAC_PWM))
  { //use PWM IAC
   uint16_t  pos = calc_sm_position(1);                       //calculate PWM duty
-  if (pos > 255) pos = 255;
-  d.choke_pos = calc_percent_pos(pos, 256);                  //update position value
+  if (pos > 4095) pos = 4095;
+  d.choke_pos = calc_percent_pos(pos, 4095);                  //update position value
   pos = (((uint32_t)pos) * pwmiac_ucoef()) >> 12;
-  if (pos > 255) pos = 255;
-  vent_set_duty8(pos);
+  if (pos > 4095) pos = 4095;
+  vent_set_duty12(pos);
   chks.state = 5; //set for proper operation of choke_is_ready()
   return;
  }

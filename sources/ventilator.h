@@ -51,9 +51,9 @@ void vent_set_pwmfrq(uint16_t period);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Use by IAC when ECF is remapped to IAC_PWM
- * \param duty 8-bit PWM duty value (0...255)
+ * \param duty 12-bit PWM duty value (0...4095)
  */
-void vent_set_duty8(uint8_t duty);
+void vent_set_duty12(uint16_t duty);
 #endif
 
 /**Called from main loop when system detects changing of cog number*/

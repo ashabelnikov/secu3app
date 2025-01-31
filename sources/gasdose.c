@@ -212,7 +212,7 @@ cranking_pos:
  if (!d.floodclear)
  {
   if (pwm)
-   return ((((int32_t)256) * pos) / 200); //convert percentage position to PWM duty
+   return ((((int32_t)4095) * pos) / 200); //convert percentage position to PWM duty
   else
    return ((((int32_t)d.param.gd_steps) * pos) / GD_MAGNITUDE(100.0)); //finally, convert from % to SM steps
  }
@@ -225,11 +225,11 @@ void gasdose_control(void)
  if (IOCFG_CHECK(IOP_GD_PWM))
  { //use PWM valve
   uint16_t  pos = calc_sm_position(1);                       //calculate PWM duty
-  if (pos > 255) pos = 255;
-  d.gasdose_pos = calc_percent_pos(pos, 256);                //update position value
+  if (pos > 4095) pos = 4095;
+  d.gasdose_pos = calc_percent_pos(pos, 4095);               //update position value
   pos = (((uint32_t)pos) * pwmiac_ucoef()) >> 12;
-  if (pos > 255) pos = 255;
-  vent_set_duty8(pos);
+  if (pos > 4095) pos = 4095;
+  vent_set_duty12(pos);
   gds.state = 5; //set for proper operation of gasdose_is_ready()
   return;
  }

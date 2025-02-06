@@ -128,7 +128,7 @@ void choke_init_ports(void)
  stpmot_init_ports();
 #endif
 #ifdef FUEL_INJECT
- IOCFG_INIT(IOP_IAC_PWM, 0);
+ IOCFG_INIT(IOP_IAC_PWM, 1); //1 - because of hardware invertor
 #endif
 }
 
@@ -391,6 +391,110 @@ static uint8_t is_ready_for_cl(void)
  return (CHECKBIT(chks.flags, CF_REACH_TR) && (d.sens.rpm <= (((uint32_t)calc_cl_rpm() * PGM_GET_WORD(&fw_data.exdata.iac_clon_coeff)) >> 8)) && is_cl_activated());
 }
 
+/** PID core
+ * \param rigidity Rigidity function
+ * \param error Error for I-component
+ * \param derror Error for P-component
+ * \param dderror Error for D-component
+ */
+void do_pid(uint16_t rigidity, int16_t error, int16_t derror, int16_t dderror)
+{
+ uint16_t idl_reg_i = (error < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
+ uint16_t idl_reg_p = (derror < 0) ? d.param.idl_reg_p[0] : d.param.idl_reg_p[1];
+ int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i) + ((int32_t)dderror * d.param.idl_reg_d)));
+ int16_t cl_add = SHTDIV16(add, 8+7-2);
+ restrict_value_to(&cl_add, -16383, 16383); //prevent orerflow
+ chks.iac_pos += cl_add;
+ restrict_value_to(&chks.iac_pos, -16383, 16383); //prevent overflow
+}
+
+/** Closed loop mode - call PID, enter and exit */
+void do_closed_loop(void)
+{
+ //calculate target RPM and transition RPM thresholds
+ int16_t rpm = calc_cl_rpm();
+ int16_t rpmt = PGM_GET_BYTE(&fw_data.exdata.tmrpmtc_mode) ? inj_idling_rpm() : rpm;
+ uint16_t rpm_thrd1 = calc_rpm_thrd1(rpmt), rpm_thrd2 = calc_rpm_thrd2(rpmt);
+ int16_t error = rpm - d.sens.rpm, intlim = d.param.idl_intrpm_lim * 10;
+ restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
+
+ if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.rpm < rpm_thrd1))
+ {
+  SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
+  chks.prev_rpm_error[0] = error;   //reset previous error
+  chks.prev_rpm_error[1] = error;   //reset previous error
+ }
+ if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.rpm > rpm_thrd2))
+  CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
+
+ if (CHECKBIT(chks.flags, CF_CL_LOOP))
+ { //closed loop mode is active
+  uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
+
+  if (abs(error) > d.param.iac_reg_db)
+  {
+   d.iac_in_deadband = 0;
+   int16_t derror = error - chks.prev_rpm_error[0];
+   int16_t dderror = error - (2 * derror) + chks.prev_rpm_error[1];
+
+   if (PGM_GET_BYTE(&fw_data.exdata.cold_eng_int))
+   { //use special algorithm
+    if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.rpm >= rpm))
+    { //hot engine or RPM above or equal target idling RPM
+     do_pid(rigidity, error, derror, dderror); 
+     SETBIT(chks.flags, CF_HOT_ENG);
+    }
+    else
+    { //cold engine, use only intergral part of requlator
+     if ((error > 0) && (derror > 0)) //works only if errors are positive
+      do_pid(rigidity, error, 0, 0); 
+    }
+   }
+   else
+   { //use regular alrorithm
+    do_pid(rigidity, error, derror, dderror); 
+   }
+  }
+  else
+   d.iac_in_deadband = 1;
+
+  chks.prev_rpm_error[1] = chks.prev_rpm_error[0];
+  chks.prev_rpm_error[0] = error; //save for further calculation of derror
+ }
+ else
+ { //closed loop is not active
+  chks.iac_pos = get_base_position(1, 0); //use run pos as base, don't multiply
+  if (d.engine_mode == EM_IDLE)
+  {
+   //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
+   if  (d.sens.rpm > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
+   {
+    //use throttle assist map or just a simple constant
+    chks.iac_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
+   }
+   else
+   { //RPM between thrd1 and thrd2
+    chks.iac_add-=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_en); //enter
+    if (chks.iac_add < 0)
+     chks.iac_add = 0;
+   }
+   chks.iac_pos+=chks.iac_add; //x16, work position + addition
+  }
+  else
+  {
+   if  (d.sens.rpm > rpm_thrd2)
+   {
+    chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
+    //use throttle assist map or just a simple constant
+    uint16_t max_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
+    if (chks.iac_add > max_add)
+     chks.iac_add = max_add;
+    chks.iac_pos+=chks.iac_add; //x16, work position + addition
+   }
+  }
+ }
+}
+
 /** Calculate stepper motor position for normal mode (fuel injection)
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
@@ -398,6 +502,7 @@ static uint8_t is_ready_for_cl(void)
  */
 int16_t calc_sm_position(uint8_t pwm)
 {
+ int16_t iac_pos_o = 0;
  switch(chks.strt_mode)
  {
   case 0:  //cranking mode
@@ -466,96 +571,7 @@ clic_imm:
      break; //not time to call regulator, exit
     chks.rpmreg_t1 = tmr;  //reset timer
 
-    //calculate target RPM and transition RPM thresholds
-    int16_t rpm = calc_cl_rpm();
-    int16_t rpmt = PGM_GET_BYTE(&fw_data.exdata.tmrpmtc_mode) ? inj_idling_rpm() : rpm;
-    uint16_t rpm_thrd1 = calc_rpm_thrd1(rpmt), rpm_thrd2 = calc_rpm_thrd2(rpmt);
-    int16_t error = rpm - d.sens.rpm, intlim = d.param.idl_intrpm_lim * 10;
-    restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
-
-    if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.rpm < rpm_thrd1))
-    {
-     SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
-     chks.prev_rpm_error[0] = error;   //reset previous error
-     chks.prev_rpm_error[1] = error;   //reset previous error
-    }
-    if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.rpm > rpm_thrd2))
-     CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
-
-    if (CHECKBIT(chks.flags, CF_CL_LOOP))
-    { //closed loop mode is active
-     uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
-
-     if (abs(error) > d.param.iac_reg_db)
-     {
-      d.iac_in_deadband = 0;
-      int16_t derror = error - chks.prev_rpm_error[0];
-      int16_t dderror = error - (2 * derror) + chks.prev_rpm_error[1];
-
-      uint16_t idl_reg_i = (derror < 0) ? d.param.idl_reg_i[0] : d.param.idl_reg_i[1];
-      uint16_t idl_reg_p = (error < 0) ? d.param.idl_reg_p[0] : d.param.idl_reg_p[1];
-
-      if (PGM_GET_BYTE(&fw_data.exdata.cold_eng_int))
-      { //use special algorithm
-       if (CHECKBIT(chks.flags, CF_HOT_ENG) || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.iacreg_turn_on_temp)) || (d.sens.rpm >= rpm))
-       { //hot engine or RPM above or equal target idling RPM
-        int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i) + ((int32_t)dderror * d.param.idl_reg_d)));
-        chks.iac_pos += SHTDIV16(add, 8+7-2);
-        SETBIT(chks.flags, CF_HOT_ENG);
-       }
-       else
-       { //cold engine, use only intergral part of requlator
-        if ((error > 0) && (derror > 0)) //works only if errors are positive
-        {
-         int32_t add = ((int32_t)rigidity * ((int32_t)error * idl_reg_i));
-         chks.iac_pos += SHTDIV16(add, 8+7-2);
-        }
-       }
-      }
-      else
-      { //use regular alrorithm
-       int32_t add = ((int32_t)rigidity * (((int32_t)derror * idl_reg_p) + ((int32_t)error * idl_reg_i) + ((int32_t)dderror * d.param.idl_reg_d)));
-       chks.iac_pos += SHTDIV16(add, 8+7-2);
-      }
-     }
-     else
-      d.iac_in_deadband = 1;
-
-     chks.prev_rpm_error[1] = chks.prev_rpm_error[0];
-     chks.prev_rpm_error[0] = error; //save for further calculation of derror
-    }
-    else
-    { //closed loop is not active
-     chks.iac_pos = get_base_position(1, 0); //use run pos as base, don't multiply
-     if (d.engine_mode == EM_IDLE)
-     {
-      //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
-      if  (d.sens.rpm > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
-      {
-       //use throttle assist map or just a simple constant
-       chks.iac_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
-      }
-      else
-      { //RPM between thrd1 and thrd2
-       chks.iac_add-=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_en); //enter
-       if (chks.iac_add < 0)
-        chks.iac_add = 0;
-      }
-      chks.iac_pos+=chks.iac_add; //x16, work position + addition
-     }
-     else
-     {
-      if  (d.sens.rpm > rpm_thrd2)
-      {
-       chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
-       //use throttle assist map or just a simple constant
-       uint16_t max_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
-       if (chks.iac_add > max_add)
-        chks.iac_add = max_add;
-       chks.iac_pos+=chks.iac_add; //x16, work position + addition
-      }
-     }
-    }
+    do_closed_loop();
 
     uint16_t idl_iacminpos = d.param.idl_iacminpos;
     #ifdef AIRCONDIT
@@ -593,7 +609,9 @@ clic_imm:
     #endif
 
     //Restrict IAC position using specified limits
-    restrict_value_to(&chks.iac_pos, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
+    iac_pos_o = chks.iac_pos;
+    restrict_value_to(&iac_pos_o, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
+    goto already_restricted;
    }
    else
    { //open loop mode
@@ -616,8 +634,10 @@ clic_imm:
  }
 
  //Restrict IAC position
- restrict_value_to(&chks.iac_pos, 0, 3200);
+ iac_pos_o = chks.iac_pos;
+ restrict_value_to(&iac_pos_o, 0, 3200);
 
+already_restricted:
  d.iac_closed_loop = !!CHECKBIT(chks.flags, CF_CL_LOOP);
 
  if (d.floodclear)
@@ -625,9 +645,9 @@ clic_imm:
  else
  {
   if (pwm)
-   return ((((int32_t)4095) * chks.iac_pos) / 3200); //convert percentage position to PWM duty
+   return ((((int32_t)4095) * iac_pos_o) / 3200); //convert percentage position to PWM duty
   else
-   return ((((int32_t)d.param.sm_steps) * chks.iac_pos) / 3200); //convert percentage position to SM steps
+   return ((((int32_t)d.param.sm_steps) * iac_pos_o) / 3200); //convert percentage position to SM steps
  }
 }
 #endif

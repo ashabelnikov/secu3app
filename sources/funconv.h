@@ -601,4 +601,24 @@ int16_t calc_cl_rpm(void);
 
 #endif
 
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+/**Calculates value of duty used to compensate spring preload
+ * \param tpsrh Throttle position relative to home position, so this value may be below zero, value * 64
+ * \return value of duty in % * 64
+ */
+int16_t etc_spring_preload(int16_t tpsrh);
+
+/**Calculates value of acceptable position error (error vs throttle position)
+ * \param tps Throttle position, value * 64
+ * \return value of error in % * 64
+ */
+int16_t etc_acceptable_error(int16_t tps);
+
+/**Calculates position of throttle vs pedal position and RPM
+ * Uses d ECU data structure
+ * \return throttle position * 64
+ */
+int16_t etc_pedal_to_throttle(void);
+#endif
+
 #endif //_FUNCONV_H_

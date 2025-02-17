@@ -151,6 +151,10 @@
 #define INJ_TPS_POINTS_L                16          //!< number of points on TPS load axis in VE2 lookup table
 
 #define WU_AFR_SIZE                     16          //!< Size of the WU AFR map
+#define ETC_SPRPREL_SIZE                8           //!< Size of the ETC spring preload duty table
+#define ETC_ACCEPTERR_SIZE              6           //Size of the ETC acceptable position error table
+#define ETC_POS_APPS_SIZE               16          //ETC position map: APPS axis size
+#define ETC_POS_RPM_SIZE                16          //ETC position map: RPM axis size
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -568,8 +572,19 @@ typedef struct fw_ex_tabs_t
   uint8_t inj_wu_afr0[WU_AFR_SIZE]; //!< Air-Fuel ratio vs coolant temperature lookup table for petrol, (value - 8) * 16
   uint8_t inj_wu_afr1[WU_AFR_SIZE]; //!< Air-Fuel ratio vs coolant temperature lookup table for gas, (value - 8) * 16
 
+  /**ETC spring preload duty (duty vs throttle position)*/
+  int16_t etc_sprprel_duty[ETC_SPRPREL_SIZE]; //!< signed value in % * 64
+  int16_t etc_sprprel_bins[ETC_SPRPREL_SIZE]; //!< signed value in % * 64
+
+  /**ETC acceptable position error (error vs throttle position)*/
+  int16_t etc_accept_error[ETC_ACCEPTERR_SIZE]; //!< value in % * 64
+  int16_t etc_accept_bins[ETC_ACCEPTERR_SIZE];  //!< value in % * 64
+
+  /** ETC throttle position vs (APPS,RPM)*/
+  uint8_t etc_throttle_pos[ETC_POS_APPS_SIZE][ETC_POS_RPM_SIZE];
+
   /**reserved*/
-  uint8_t reserved[817];
+  uint8_t reserved[505];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -698,12 +713,13 @@ typedef struct fw_ex_data_t
   uint16_t iac_wrkadd_coeff;   //!< value * 256
   uint16_t iac_wrkadd_time;    //!< 0.01sec units
 
+  uint8_t use_dbgvar;
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1512];
+  uint8_t reserved[1511];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -1038,11 +1054,21 @@ typedef struct params_t
   int16_t  apps1_curve_offset;          //!< offset of curve in volts
   int16_t  apps1_curve_gradient;        //!< gradient of curve in Percentage/V
 
+  uint16_t etc_p;               //!< P coefficient
+  uint16_t etc_i;               //!< I coefficient
+  uint16_t etc_d;               //!< D coefficient
+  uint8_t etc_nmax_duty;        //!< Max. negative output duty  % * 2
+  uint8_t etc_pmax_duty;        //!< Max. positive output duty, % * 2
+  uint8_t etc_pid_period;       //!< PID calling period, 10ms units
+  uint8_t etc_frictorq_op;      //!< value for frictional torque compensation, used when TPS > home position, value * 16
+  uint8_t etc_frictorq_cl;      //!< value for frictional torque compensation, used when TPS < home position  value * 16
+  uint8_t etc_frictorq_thrd;    //!< TPSdot threshold for frictional torque compensation, value in %/s
+  int16_t etc_idleadd_max;      //!< Max. addition to the target position of throttle from idling regulator subsystem
+  
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-
-  uint8_t  reserved[87];
+  uint8_t  reserved[73];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

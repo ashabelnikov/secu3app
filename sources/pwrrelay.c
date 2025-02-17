@@ -173,7 +173,11 @@ void pwrrelay_init_steppers(void)
   return; //do nothing if power management is not used
 
 #ifdef SM_CONTROL
- if (IOCFG_CHECK(IOP_SM_STP) && !IOCFG_CHECK(IOP_IAC_PWM))
+ if (IOCFG_CHECK(IOP_SM_STP) && !IOCFG_CHECK(IOP_IAC_PWM)
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+     && !(IOCFG_CHECK(IOP_ETC_PWM1) || IOCFG_CHECK(IOP_ETC_PWM2))
+#endif
+    )
   choke_init_motor();   //send initialization command to choke/IAC motor
 #endif
 #ifdef GD_CONTROL

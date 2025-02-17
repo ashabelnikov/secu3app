@@ -91,12 +91,14 @@ uint16_t adc_get_add_i3_value(void);
  */
 uint16_t adc_get_tps_value(void);
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 /** Get TPSdot value (dv/dt)
  * \return 1-st derivative value of TPS position (V/s), can be negative, voltage in ADC discretes
  */
 int16_t adc_get_tpsdot_value(void);
+#endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Get MAPdot value (dv/dt)
  * \return 1-st derivative value of the MAP (V/s), can be negative, voltage in ADC discretes
  */
@@ -146,12 +148,14 @@ void adc_set_map_to_ckp(uint8_t mtckp);
 /**Initialization of ADC and its state variables */
 void adc_init(void);
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 /** Set value of minimum dt (time diffrencial) used by calculation of TPS dot
  * mindt Value of minimum time differencial in 3.2 us units
  */
 void adc_set_tpsdot_mindt(uint16_t mindt);
+#endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /** Set value of minimum dt (time diffrencial) used by calculation of MAP dot
  * mindt Value of minimum time differencial in 3.2 us units
  */
@@ -201,14 +205,16 @@ int16_t temp_adc_to_c(int16_t adcvalue);
  */
 uint16_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient);
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 /**Converts ADC value discretes/sec of the TPSdot to the %/sec value
  * \param adcvalue Value in ADC discretes
  * \param gradient Curve gradient of TPS
  * \return percentage/sec
  */
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient);
+#endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Converts ADC value discretes/sec of the MAPdot to the kPa/sec value
  * \param adcvalue Value in ADC discretes
  * \param gradient Curve gradient of MAP

@@ -117,6 +117,8 @@
     XTAU_CORR       *    Use X-tau wall wetting model. This option will take
                          effect only together with FUEL_INJECT option
 
+    ELEC_THROTTLE   *    Use electronic throttle control (SECU-3i only)
+
 * means that option is internal and not displayed in the list of options in the
   SECU-3 Manager
 

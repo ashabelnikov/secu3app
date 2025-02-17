@@ -197,7 +197,7 @@ void check(ce_sett_t *cesd)
  //checking TPS sensor
  if ((d.sens.tps_raw < cesd->tps_v_min) || (d.sens.tps_raw > cesd->tps_v_max))
   { ce_set_error(ECUERROR_TPS_SENSOR_FAIL); }
-#if !defined(SECU3T)
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
  else if (IOCFG_CHECK(IOP_TPS2))
  {
   uint16_t tps2 = IOCFG_GETA(IOP_TPS2);
@@ -205,7 +205,7 @@ void check(ce_sett_t *cesd)
   if (tps2_norm < 0)
    tps2_norm = 0;
   uint16_t tpsdiff = abs((int16_t)d.sens.tps_raw - (int16_t)tps2_norm);
-  if (tpsdiff > cesd->tpsdiff_thrd)
+  if (tpsdiff > cesd->tpsdiff_thrd && d.sens.tpsdot < 100)
    ce_set_error(ECUERROR_TPS_SENSOR_FAIL);
   else
    ce_clear_error(ECUERROR_TPS_SENSOR_FAIL);
@@ -215,7 +215,7 @@ void check(ce_sett_t *cesd)
   { ce_clear_error(ECUERROR_TPS_SENSOR_FAIL); }
 
  //checking APPS1 & APPS2 sensors (DBW)
-#if !defined(SECU3T)
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
  if (IOCFG_CHECK(IOP_APPS1))
  {
   if (IOCFG_CHECK(IOP_APPS2))

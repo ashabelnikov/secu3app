@@ -40,6 +40,7 @@
 #include "smcontrol.h"
 #include "pwrrelay.h"
 #include "ventilator.h"
+#include "etc.h"
 
 #if defined(FUEL_INJECT) && !defined(AIRTEMP_SENS)
  #error "You can not use FUEL_INJECT option without AIRTEMP_SENS"
@@ -456,7 +457,9 @@ void do_closed_loop(void)
    }
   }
   else
+  {
    d.iac_in_deadband = 1;
+  }
 
   chks.prev_rpm_error[1] = chks.prev_rpm_error[0];
   chks.prev_rpm_error[0] = error; //save for further calculation of derror
@@ -644,8 +647,12 @@ already_restricted:
   return 0; //0% (use d.param.sm_steps for 100%)
  else
  {
-  if (pwm)
+  if (1==pwm) //PWM IAC
    return ((((int32_t)4095) * iac_pos_o) / 3200); //convert percentage position to PWM duty
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+  else if (2==pwm) //ETC
+   return ((((int32_t)d.param.etc_idleadd_max) * iac_pos_o) / 3200); //convert percentage position to PWM duty
+#endif
   else
    return ((((int32_t)d.param.sm_steps) * iac_pos_o) / 3200); //convert percentage position to SM steps
  }
@@ -661,13 +668,23 @@ void choke_control(void)
  { //use PWM IAC
   uint16_t  pos = calc_sm_position(1);                       //calculate PWM duty
   if (pos > 4095) pos = 4095;
-  d.choke_pos = calc_percent_pos(pos, 4095);                  //update position value
+  d.choke_pos = calc_percent_pos(pos, 4095);                 //update position value
   pos = (((uint32_t)pos) * pwmiac_ucoef()) >> 12;
   if (pos > 4095) pos = 4095;
   vent_set_duty12(pos);
   chks.state = 5; //set for proper operation of choke_is_ready()
   return;
  }
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ else if (etc_is_enabled())
+ {
+  uint16_t pos = calc_sm_position(2);                        //calculate position addition for ETC
+  d.choke_pos = calc_percent_pos(pos, d.param.etc_idleadd_max);//update position value
+  d.etc_idleadd = pos;
+  chks.state = 5; //set for proper operation of choke_is_ready()
+  return;
+ }
+#endif
 #endif
 
  if (!IOCFG_CHECK(IOP_SM_STP))

@@ -639,7 +639,7 @@ static uint8_t cond_maf(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
 /**Condition function for TPS dot*/
 static uint8_t cond_tpsdot(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
  if (d->sens.tpsdot >= (int16_t)on_thrd)
   p_ctx->state = 1; //ON
  if (d->sens.tpsdot <= (int16_t)off_thrd)

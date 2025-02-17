@@ -78,6 +78,7 @@
 #include "wdt.h"
 #include "grvalve.h"
 #include "ltft.h"
+#include "etc.h"
 
 #define FORCE_MEASURE_TIMEOUT_VALUE   20    //!< timeout value used to perform measurements when engine is stopped
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
@@ -169,6 +170,10 @@ void control_engine_units(void)
 
 #if defined(AIRCONDIT)
  aircond_control(); //air conditioner control
+#endif
+
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ etc_control();
 #endif
 }
 
@@ -270,6 +275,9 @@ void init_ports(void)
  aircond_init_ports();
 #endif
  bc_init_ports();
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ etc_init_ports();
+#endif
 }
 
 /**Initialization of system modules
@@ -302,8 +310,10 @@ void init_modules(void)
  //Initialization of ADC
  adc_init();
  adc_set_map_to_ckp(PGM_GET_BYTE(&fw_data.exdata.map_samp_mode));
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
  adc_set_tpsdot_mindt(PGM_GET_WORD(&fw_data.exdata.tpsdot_mindt));
+#endif
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  adc_set_mapdot_mindt(PGM_GET_WORD(&fw_data.exdata.mapdot_mindt));
 #endif
 

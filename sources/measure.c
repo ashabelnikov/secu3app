@@ -45,6 +45,7 @@
 #include "knock.h"
 #endif
 #include "ringbuff.h"
+#include "etc.h"
 
 //see also ioconfig.c
 int16_t iocfg_map_s = 0;
@@ -146,7 +147,7 @@ void meas_update_values_buffers(ce_sett_t *cesd)
 
  update_buffer(&meas[TPS_INPIDX], adc_get_tps_value());
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
  if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
  {
   d.sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d.param.tps_adc_factor, 0);
@@ -209,7 +210,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
  //TPS
  d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(&meas[TPS_INPIDX]), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
  d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
-#if !defined(SECU3T)
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
  d.sens.tps_dbw = d.sens.tps; //save value that can be above 100% first, this value is used by servo PID.
  if (IOCFG_CHECK(IOP_TPS2))
  {//DBW mode
@@ -457,7 +458,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
   d.sens.fps = 0; //input is not selected
 #endif
 
-#ifndef SECU3T
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
  if (IOCFG_CHECK(IOP_APPS1))
  {//APPS1
   d.sens.apps1_raw = IOCFG_GETA(IOP_APPS1);
@@ -468,7 +469,6 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else
   d.sens.apps1 = 0; //input is not selected
 #endif
-
 }
 
 //Call this function for making preliminary measurements before starting engine. Call it only after
@@ -529,7 +529,12 @@ void meas_take_discrete_inputs(void)
   d.sens.carb=d.param.carb_invers^GET_THROTTLE_GATE_STATE(); //result: 0 - throttle is closed, 1 - opened
  else
  {//using a TPS (emulate limit switch)
-  d.sens.carb=d.param.carb_invers^(d.sens.tps > d.param.tps_threshold);
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+  if (etc_is_enabled())
+   d.sens.carb=d.param.carb_invers^(d.sens.apps1 > d.param.tps_threshold);
+  else
+#endif
+   d.sens.carb=d.param.carb_invers^(d.sens.tps > d.param.tps_threshold);
  }
 
  //read state of gas valve input

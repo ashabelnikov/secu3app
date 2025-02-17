@@ -33,6 +33,7 @@
 #include <stddef.h>
 #include "bitmask.h"
 #include "dbgvar.h"
+#include "etc.h"
 #include "ecudata.h"
 #include "eeprom.h"
 #include "ioconfig.h"
@@ -123,6 +124,11 @@
 #define ETMT_EGO_DELAY     73  //!<
 #define ETMT_WU_AFR0       74  //!<
 #define ETMT_WU_AFR1       75  //!<
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+#define ETMT_ETC_SPRPREL   76  //!<
+#define ETMT_ETC_ACCEERR   77  //!<
+#define ETMT_ETC_THROPOS   78  //!<
+#endif
 
 /**Define internal state variables */
 typedef struct
@@ -698,7 +704,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
    build_i16h(d.sens.tpsdot);            // TPS opening/closing speed
 #else
    build_i16h(0);
@@ -833,12 +839,12 @@ void uart_send_packet(uint8_t send_mode)
 
    build_i8h(
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-     _CBV8(d.corr.idlve, 0)
+     _CBV8(d.corr.idlve, 0) |
 #endif
 #ifndef SECU3T
-   | _CBV8(d.sens.gpa4_i, 1)               // GPA4_I input (digital)
+     _CBV8(d.sens.gpa4_i, 1) |             // GPA4_I input (digital)
 #endif
-   | _CBV8(d.sens.input1, 2)               // INPUT1
+     _CBV8(d.sens.input1, 2)               // INPUT1
    | _CBV8(d.sens.input2, 3)               // INPUT2
    | _CBV8(d.sens.auto_i, 4)               // AUTO_I
    | _CBV8(d.sens.mapsel0,5)               // MAPSEL0
@@ -853,7 +859,7 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
-#ifndef SECU3T
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
    build_i16h(d.sens.apps1);               //APPS1
 #else
    build_i16h(0);
@@ -1125,6 +1131,22 @@ void uart_send_packet(uint8_t send_mode)
   build_i16h(d.param.ltft_learn_load[1]);
   build_i8h(d.param.ltft_dead_band[0]);
   build_i8h(d.param.ltft_dead_band[1]);
+  break;
+#endif
+
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ case DBW_PAR:
+  build_i16h(d.param.etc_p);
+  build_i16h(d.param.etc_i);
+  build_i16h(d.param.etc_d);
+  build_i8h(d.param.etc_nmax_duty);
+  build_i8h(d.param.etc_pmax_duty);
+  build_i8h(d.param.etc_pid_period);
+  build_i8h(d.param.etc_frictorq_op);
+  build_i8h(d.param.etc_frictorq_cl);
+  build_i8h(d.param.etc_frictorq_thrd);
+  build_i16h(d.param.etc_idleadd_max);
+  build_i16h(etc_get_homepos());
   break;
 #endif
 
@@ -1698,6 +1720,32 @@ void uart_send_packet(uint8_t send_mode)
      build_i8h(0); //<--not used
      build_rb((uint8_t*)&ram_extabs.inj_wu_afr1, WU_AFR_SIZE);
      break;
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+    case ETMT_ETC_SPRPREL:
+     build_i8h(wrk_index*(ETC_SPRPREL_SIZE)); //note: we consider that this map is followed by bins!
+     build_rw((uint16_t*)&ram_extabs.etc_sprprel_duty[wrk_index*(ETC_SPRPREL_SIZE)], ETC_SPRPREL_SIZE);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_ETC_ACCEERR:
+     build_i8h(wrk_index*(ETC_ACCEPTERR_SIZE)); //note: we consider that this map is folliwed by bins!
+     build_rw((uint16_t*)&ram_extabs.etc_accept_error[wrk_index*(ETC_ACCEPTERR_SIZE)], ETC_ACCEPTERR_SIZE);
+     if (wrk_index < 1)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
+    case ETMT_ETC_THROPOS:
+     build_i8h(wrk_index*ETC_POS_APPS_SIZE);
+     build_rb((uint8_t*)&ram_extabs.etc_throttle_pos[wrk_index][0], ETC_POS_RPM_SIZE);
+     if (wrk_index >= ETC_POS_APPS_SIZE-1 )
+      wrk_index = 0;
+     else
+      ++wrk_index;
+     break;
+#endif
    }
    break;
   }
@@ -2305,6 +2353,21 @@ uint8_t uart_recept_packet(void)
   break;
 #endif
 
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ case DBW_PAR:
+  d.param.etc_p = recept_i16h();
+  d.param.etc_i = recept_i16h();
+  d.param.etc_d = recept_i16h();
+  d.param.etc_nmax_duty = recept_i8h();
+  d.param.etc_pmax_duty = recept_i8h();
+  d.param.etc_pid_period = recept_i8h();
+  d.param.etc_frictorq_op = recept_i8h();
+  d.param.etc_frictorq_cl = recept_i8h();
+  d.param.etc_frictorq_thrd = recept_i8h();
+  d.param.etc_idleadd_max = recept_i16h();
+  break;
+#endif
+
 #ifdef REALTIME_TABLES
   case EDITAB_PAR:
   {
@@ -2544,6 +2607,17 @@ uint8_t uart_recept_packet(void)
     case ETMT_WU_AFR1:
      recept_rb(((uint8_t*)&ram_extabs.inj_wu_afr1) + addr, WU_AFR_SIZE); /*WU_AFR_SIZE max*/
      break;
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+    case ETMT_ETC_SPRPREL: //Note! Here we consider etc_sprprel_duty and etc_sprprel_bins as single table
+     recept_rw(((uint16_t*)&ram_extabs.etc_sprprel_duty) + addr, ETC_SPRPREL_SIZE); /*ETC_SPRPREL_SIZE max*/
+     break;
+    case ETMT_ETC_ACCEERR: //Note! Here we consider etc_accept_error and etc_accept_bins as single table
+     recept_rw(((uint16_t*)&ram_extabs.etc_accept_error) + addr, ETC_ACCEPTERR_SIZE); /*ETC_ACCEPTERR_SIZE max*/
+     break;
+    case ETMT_ETC_THROPOS:
+     recept_rb(((uint8_t*)&ram_extabs.etc_throttle_pos[0][0]) + addr, ETC_POS_RPM_SIZE); /*ETC_POS_RPM_SIZE max*/
+     break;
+#endif
    }
   }
   break;
@@ -2637,6 +2711,9 @@ uint8_t uart_set_send_mode(uint8_t descriptor)
 #endif
 #if defined(FUEL_INJECT)
   case LTFT_PAR:
+#endif
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+  case DBW_PAR:
 #endif
   case SILENT:
   case LZBLHS:

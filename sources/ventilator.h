@@ -49,11 +49,11 @@ void vent_turnoff(void);
  */
 void vent_set_pwmfrq(uint16_t period);
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 /** Use by IAC when ECF is remapped to IAC_PWM
- * \param duty 12-bit PWM duty value (0...4095)
+ * \param duty 12-bit PWM duty value (0...4095), signed for ETC
  */
-void vent_set_duty12(uint16_t duty);
+void vent_set_duty12(int16_t duty);
 #endif
 
 /**Called from main loop when system detects changing of cog number*/

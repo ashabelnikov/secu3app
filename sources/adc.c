@@ -63,7 +63,7 @@
 /**ADC input connected to GND*/
 #define ADCI_GND                0x1F
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 
 /**Used for TPSdot and MAPdot calculations*/
 typedef struct
@@ -86,10 +86,12 @@ typedef struct
  volatile uint16_t add_i3_value; //!< last measured value of ADD_I3
 #endif
  volatile uint16_t tps_value;    //!< last measured value of TPS
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
  volatile dotval_t tpsdot[2];    //!< two value pairs used for TPSdot calculations
- volatile dotval_t mapdot[2];    //!< two value pairs used for MAPdot calculations
  volatile uint16_t tpsdot_mindt; //!< minimum time diffrencial used in calculation of d%/dt
+#endif
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+ volatile dotval_t mapdot[2];    //!< two value pairs used for MAPdot calculations
  volatile uint16_t mapdot_mindt; //!< minimum time diffrencial used in calculation of dP/dt
 #endif
 #ifndef TPIC8101
@@ -169,7 +171,7 @@ uint16_t adc_get_tps_value(void)
  _END_ATOMIC_BLOCK();
  return value;
 }
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 int16_t adc_get_tpsdot_value(void)
 {
  int16_t dv; uint16_t dt;
@@ -186,7 +188,9 @@ int16_t adc_get_tpsdot_value(void)
 
  return (((int32_t)dv) * TMR_TICKS_PER_SEC) / dt; //calculate 1-st derivative, num of ADC discr / sec
 }
+#endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 int16_t adc_get_mapdot_value(void)
 {
  int16_t dv; uint16_t dt;
@@ -456,7 +460,7 @@ ISR(ADC_vect)
    adc.tps_value = ADC;
    _DISABLE_INTERRUPT();
    RELAY_INPUT(ADCI_ADD_I1);
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
    _ENABLE_INTERRUPT();
    SAMPLE_TPSDOT();
 #endif
@@ -630,12 +634,14 @@ uint16_t tps_adc_to_pc(int16_t adcvalue, int16_t offset, int16_t gradient)
  return t;
 }
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 int16_t tpsdot_adc_to_pc(int16_t adcvalue, int16_t gradient)
 {
  return (((int32_t)adcvalue) * gradient) >> (7+6+1);
 }
+#endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 int16_t mapdot_adc_to_kpa(int16_t adcvalue, int16_t gradient)
 {
  return (((int32_t)adcvalue) * gradient) >> (7+6);
@@ -689,12 +695,14 @@ uint16_t adc_get_add_i8_value(void)
 
 #endif
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
 void adc_set_tpsdot_mindt(uint16_t mindt)
 {
  adc.tpsdot_mindt = mindt;
 }
+#endif
 
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
 void adc_set_mapdot_mindt(uint16_t mindt)
 {
  adc.mapdot_mindt = mindt;

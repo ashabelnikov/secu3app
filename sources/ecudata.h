@@ -94,7 +94,7 @@ typedef struct sensors_t
  uint8_t  gas_raw;                       //!< State of gas valve (raw input value)
  uint16_t knock_k;                       //!< Knock signal level
  uint16_t tps;                           //!< Throttle position sensor (0...100%, x64)
-#if !defined(SECU3T)
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
  uint16_t tps_dbw;                       //!< Throttle position sensor (0...100+%, x64)
  int16_t  apps1_raw;                     //!< Voltage on the APPS1
  uint16_t apps1;                         //!< Accelerator pedal position sensor (0...100%, x64)
@@ -126,8 +126,10 @@ typedef struct sensors_t
  int16_t air_temp;                       //!< Intake air temperature
 #endif
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
  int16_t tpsdot;                         //!< Speed of TPS movement (d%/dt = %/s), positive when acceleration, negative when deceleration
+#endif
+#if defined(FUEL_INJECT) || defined(GD_CONTROL)
  int16_t mapdot;                         //!< Speed of MAP changing (dP/dt = kPa/s), positive when acceleration, negative when deceleration
 #endif
 
@@ -271,6 +273,10 @@ typedef struct ecudata_t
  uint8_t  airflow;                       //!< Air flow (number of curve on the load axis in 3D tables)
  uint8_t  choke_pos;                     //!< Choke position in % * 2
  uint8_t  gasdose_pos;       /*GD*/      //!< Gas dosator position in % * 2
+
+#if !defined(SECU3T) && defined(ELEC_THROTTLE) && defined(FUEL_INJECT)
+ int16_t  etc_idleadd;                   //!< Value of addition to ETC from idling regulator
+#endif
 
 #ifdef REALTIME_TABLES
  f_data_t tables_ram;                    //!< set of tables in RAM

@@ -30,6 +30,7 @@
 #include "bitmask.h"
 #include "ckps.h"
 #include "ecudata.h"
+#include "etc.h"
 #include "funconv.h"
 #include "ioconfig.h"
 #include "magnitude.h"
@@ -72,7 +73,7 @@
  #error "Check related code!"
 #endif
 
-/**TPS % between two interpolation points, additionally multiplied by 16 */
+/**TPS % between two interpolation points, additionally multiplied by 64 */
 #define TPS_AXIS_STEP TPS_MAGNITUDE(100.0/(F_WRK_POINTS_L-1))
 
 /**State variables, local use*/
@@ -1218,6 +1219,7 @@ uint16_t gd_ve_afr(void)
  * Uses d ECU data structure
  * \return Gas dosator position in % (value * 2)
  */
+//NOTE: this function is redundant to similar function: etc_pedal_to_throttle(), so we can spare program space
 int16_t gdp_function(void)
 {
  int16_t tps = d.sens.tps;
@@ -1407,7 +1409,14 @@ uint8_t inj_gps_pwcorr(void)
  */
 uint8_t engine_blowing_cond(void)
 {
- d.floodclear = ((d.sens.tps > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
+ uint16_t pos;
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ if (etc_is_enabled())
+  pos = d.sens.apps1;
+ else
+#endif
+  pos = d.sens.tps;
+ d.floodclear = ((pos > d.param.inj_floodclear_tps) && (0 != d.param.inj_floodclear_tps)) && (d.engine_mode == EM_START);
  return d.floodclear;
 }
 #endif
@@ -2144,6 +2153,63 @@ int16_t calc_cl_rpm(void)
  }
 #endif
  return rpm;
+}
+
+#endif
+
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+int16_t etc_spring_preload(int16_t tpsrh)
+{
+ int8_t i;
+ for(i = ETC_SPRPREL_SIZE-2; i >= 0; i--)
+  if (tpsrh >= ram_extabs.etc_sprprel_bins[i]) break;
+
+ if (i < 0)  {i = 0; tpsrh = ram_extabs.etc_sprprel_bins[0];}
+ if (tpsrh > ram_extabs.etc_sprprel_bins[ETC_SPRPREL_SIZE-1]) tpsrh = ram_extabs.etc_sprprel_bins[ETC_SPRPREL_SIZE-1];
+
+ return simple_interpolation(tpsrh, ram_extabs.etc_sprprel_duty[i], ram_extabs.etc_sprprel_duty[i+1],
+        ram_extabs.etc_sprprel_bins[i], ram_extabs.etc_sprprel_bins[i+1] - ram_extabs.etc_sprprel_bins[i], 4) >> 2;
+}
+
+int16_t etc_acceptable_error(int16_t tps)
+{
+ int8_t i;
+ for(i = ETC_ACCEPTERR_SIZE-2; i >= 0; i--)
+  if (tps >= ram_extabs.etc_accept_bins[i]) break;
+
+ if (i < 0)  {i = 0; tps = ram_extabs.etc_accept_bins[0];}
+ if (tps > ram_extabs.etc_accept_bins[ETC_ACCEPTERR_SIZE-1]) tps = ram_extabs.etc_accept_bins[ETC_ACCEPTERR_SIZE-1];
+
+ return simple_interpolation(tps, ram_extabs.etc_accept_error[i], ram_extabs.etc_accept_error[i+1],
+        ram_extabs.etc_accept_bins[i], ram_extabs.etc_accept_bins[i+1] - ram_extabs.etc_accept_bins[i], 4) >> 2;
+}
+
+#define _XL(i) ROUND(((100.0*i)/15)*64)   //!< for look up table
+/**APPS axis grid*/
+PGM_DECLARE(int16_t etc_x_lookup[16]) = {_XL(0),_XL(1),_XL(2),_XL(3),_XL(4),_XL(5),_XL(6),_XL(7),_XL(8),_XL(9),_XL(10),_XL(11),_XL(12),_XL(13),_XL(14),_XL(15)};
+/**ETC. Calculation of throttle position, based on (APPS,RPM)
+ * Uses d ECU data structure
+ * \return Throttle position in % (value * 64)
+ */
+//NOTE: this function is redundant to similar function: gdp_function(), so we can spare program space
+int16_t etc_pedal_to_throttle(void)
+{
+ int16_t apps = d.sens.apps1;
+ int8_t t, tp1;
+
+ for(t = ETC_POS_APPS_SIZE-2; t >= 0; t--)
+  if (apps >= PGM_GET_WORD(&etc_x_lookup[t])) break;
+ tp1 = t + 1;
+
+ return bilinear_interpolation(fcs.la_rpm, apps,
+        ram_extabs.etc_throttle_pos[t][fcs.la_f],
+        ram_extabs.etc_throttle_pos[tp1][fcs.la_f],
+        ram_extabs.etc_throttle_pos[tp1][fcs.la_fp1],
+        ram_extabs.etc_throttle_pos[t][fcs.la_fp1],
+        ram_extabs.rpm_grid_points[fcs.la_f],
+        PGM_GET_WORD(&etc_x_lookup[t]),
+        ram_extabs.rpm_grid_sizes[fcs.la_f],
+        (TPS_AXIS_STEP), 32);
 }
 
 #endif

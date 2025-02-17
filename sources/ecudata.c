@@ -56,6 +56,10 @@ struct ecudata_t d =
  .choke_pos = 0,
  .gasdose_pos = 0,  //GD
 
+#if !defined(SECU3T) && defined(ELEC_THROTTLE) && defined(FUEL_INJECT)
+ .etc_idleadd = 0,
+#endif
+
 #ifdef REALTIME_TABLES
  .tables_ram = {{0},{0},{0},
                 {{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}}, //work

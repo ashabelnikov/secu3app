@@ -86,5 +86,6 @@
 #define   TLODGRD_PAR  'N'   //!< used for transferring TPS (VE2) load grid
 
 #define   LTFT_PAR     'O'   //!< LTFT parameters
+#define   DBW_PAR      'P'   //!< DBW parameters
 
 #endif //_UFCODES_H_

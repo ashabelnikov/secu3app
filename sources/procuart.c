@@ -354,8 +354,11 @@ void process_uart_interface(void)
    uart_send_packet(0);                  //the transmitter become busy now
 
 #ifdef DEBUG_VARIABLES
-   if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc || DIAGINP_DAT==desc)
-    sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information
+   if (PGM_GET_BYTE(&fw_data.exdata.use_dbgvar))
+   {
+    if (SENSOR_DAT==desc || ADCRAW_DAT==desc || CE_ERR_CODES==desc || DIAGINP_DAT==desc)
+     sop_set_operation(SOP_DBGVAR_SENDING); //additionally we will send packet with debug information
+   }
 #endif
 
    s_timer_set(&send_packet_interval_counter, d.param.uart_period_t_ms);

@@ -24,6 +24,7 @@
  * Implementation of cooling fan's control related functions.
  */
 
+#include <stdlib.h>
 #include "port/avrio.h"
 #include "port/interrupt.h"
 #include "port/intrinsic.h"
@@ -48,9 +49,17 @@
  #define COOLINGFAN_TURNON()  SETBIT(PORTD, PD7)
  #define COOLINGFAN_TURNOFF() CLEARBIT(PORTD, PD7)
 #endif
+//ETC (SECU-3i only)
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ #define ETC_PWM2_TURNON() CLEARBIT(PORTC, PC5)
+ #define ETC_PWM2_TURNOFF() SETBIT(PORTC, PC5)
+#endif
 #endif //COOLINGFAN_PWM
 
 volatile uint8_t pwm_state;     //!< For state machine. 0 - passive, 1 - active
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+volatile uint8_t pwm_mode = 0;
+#endif
 volatile uint16_t pwm_steps;    //!< number of timer ticks per PWM period
 volatile uint16_t pwm_duty_1;   //!< current duty value (+)
 volatile uint16_t pwm_duty_2;   //!< current duty value (-)
@@ -97,42 +106,101 @@ void vent_init_state(void)
  acss_tmr = s_timer_gtc();
  acss_duty = 0;
 #endif
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ pwm_mode = 0;
+#endif
 }
 
 #ifdef COOLINGFAN_PWM
 /**Sets duty value
  * \param duty value to be set
  */
-void vent_set_duty(uint16_t duty, uint8_t bits)
+void vent_set_duty(int16_t duty, uint8_t bits)
 {
  //TODO: Maybe we need double buffering?
- uint16_t duty_1 = ((uint32_t)duty * pwm_steps) >> bits;
- //We don't need interrupts if duty is 0 or 100%
- if (duty == 0)
- {
-  _DISABLE_INTERRUPT();
-  TIMSK2&=~_BV(OCIE2A);
-  _ENABLE_INTERRUPT();
-  COOLINGFAN_TURNOFF();
- }
- else if (duty >= _BV16(bits)-1)
- {
-  _DISABLE_INTERRUPT();
-  TIMSK2&=~_BV(OCIE2A);
-  _ENABLE_INTERRUPT();
-  COOLINGFAN_TURNON();
+ uint16_t duty_1 = ((uint32_t)abs(duty) * pwm_steps) >> bits;
+
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ if (IOCFG_CHECK(IOP_ETC_PWM2))
+ {//signed
+  //We don't need interrupts if duty is 0, 100% or -100%
+  if (duty == 0)
+  {
+   _DISABLE_INTERRUPT();
+   TIMSK2&=~_BV(OCIE2A);
+   _ENABLE_INTERRUPT();
+   COOLINGFAN_TURNOFF();
+   ETC_PWM2_TURNOFF();
+  }
+  else if (duty >= ((int16_t)_BV16(bits)-1)) //100%
+  {
+   _DISABLE_INTERRUPT();
+   TIMSK2&=~_BV(OCIE2A);
+   _ENABLE_INTERRUPT();
+   COOLINGFAN_TURNON();
+   ETC_PWM2_TURNOFF();
+  }
+  else if (duty <= -((int16_t)_BV16(bits)-1)) //-100%
+  {
+   _DISABLE_INTERRUPT();
+   TIMSK2&=~_BV(OCIE2A);
+   _ENABLE_INTERRUPT();
+   COOLINGFAN_TURNOFF();
+   ETC_PWM2_TURNON();
+  }
+  else
+  {
+   if (duty < 0)
+   {
+    pwm_mode = 1;
+    COOLINGFAN_TURNOFF();
+   }
+   else
+   {
+    ETC_PWM2_TURNOFF();
+    pwm_mode = 0;
+   }
+   _DISABLE_INTERRUPT();
+   TIMSK2|=_BV(OCIE2A);
+   pwm_duty_1 = duty_1;
+   if (0==_AB(pwm_duty_1, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
+    (_AB(pwm_duty_1, 0))++;
+   pwm_duty_2 = pwm_steps - pwm_duty_1;
+   if (0==_AB(pwm_duty_2, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
+    (_AB(pwm_duty_2, 0))++;
+   _ENABLE_INTERRUPT();
+  }
  }
  else
+#endif
  {
-  _DISABLE_INTERRUPT();
-  TIMSK2|=_BV(OCIE2A);
-  pwm_duty_1 = duty_1;
-  if (0==_AB(pwm_duty_1, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
-   (_AB(pwm_duty_1, 0))++;
-  pwm_duty_2 = pwm_steps - pwm_duty_1;
-  if (0==_AB(pwm_duty_2, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
-   (_AB(pwm_duty_2, 0))++;
-  _ENABLE_INTERRUPT();
+  //We don't need interrupts if duty is 0 or 100%
+  if (duty == 0)
+  {
+   _DISABLE_INTERRUPT();
+   TIMSK2&=~_BV(OCIE2A);
+   _ENABLE_INTERRUPT();
+   COOLINGFAN_TURNOFF();
+  }
+  else if (duty >= _BV16(bits)-1)
+  {
+   _DISABLE_INTERRUPT();
+   TIMSK2&=~_BV(OCIE2A);
+   _ENABLE_INTERRUPT();
+   COOLINGFAN_TURNON();
+  }
+  else
+  {
+   _DISABLE_INTERRUPT();
+   TIMSK2|=_BV(OCIE2A);
+   pwm_duty_1 = duty_1;
+   if (0==_AB(pwm_duty_1, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
+    (_AB(pwm_duty_1, 0))++;
+   pwm_duty_2 = pwm_steps - pwm_duty_1;
+   if (0==_AB(pwm_duty_2, 0))                        //avoid strange bug which appears when OCR2A is set to the same value as TCNT2
+    (_AB(pwm_duty_2, 0))++;
+   _ENABLE_INTERRUPT();
+  }
  }
 }
 
@@ -145,19 +213,41 @@ ISR(TIMER2_COMPA_vect)
  }
  else
  {
-  if (0 == pwm_state)
-  { //start active part
-   COOLINGFAN_TURNON();
-   OCR2A = TCNT2 + _AB(pwm_duty_1, 0);
-   tmr2a_h = _AB(pwm_duty_1, 1);
-   ++pwm_state;
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+  if (pwm_mode == 1)
+  {
+   if (0 == pwm_state)
+   { //start active part
+    ETC_PWM2_TURNON();
+    OCR2A = TCNT2 + _AB(pwm_duty_1, 0);
+    tmr2a_h = _AB(pwm_duty_1, 1);
+    ++pwm_state;
+   }
+   else
+   { //start passive part
+    ETC_PWM2_TURNOFF();
+    OCR2A = TCNT2 + _AB(pwm_duty_2, 0);
+    tmr2a_h = _AB(pwm_duty_2, 1);
+    --pwm_state;
+   }
   }
   else
-  { //start passive part
-   COOLINGFAN_TURNOFF();
-   OCR2A = TCNT2 + _AB(pwm_duty_2, 0);
-   tmr2a_h = _AB(pwm_duty_2, 1);
-   --pwm_state;
+#endif
+  {
+   if (0 == pwm_state)
+   { //start active part
+    COOLINGFAN_TURNON();
+    OCR2A = TCNT2 + _AB(pwm_duty_1, 0);
+    tmr2a_h = _AB(pwm_duty_1, 1);
+    ++pwm_state;
+   }
+   else
+   { //start passive part
+    COOLINGFAN_TURNOFF();
+    OCR2A = TCNT2 + _AB(pwm_duty_2, 0);
+    tmr2a_h = _AB(pwm_duty_2, 1);
+    --pwm_state;
+   }
   }
  }
 }
@@ -323,8 +413,18 @@ void vent_turnoff(void)
 #else
  if (!CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM))
   IOCFG_SETF(IOP_ECF, 0);
- if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM) || (IOCFG_CHECK(IOP_IAC_PWM) || IOCFG_CHECK(IOP_GD_PWM)))
-  COOLINGFAN_TURNOFF();
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
+ if (IOCFG_CHECK(IOP_ETC_PWM1) && IOCFG_CHECK(IOP_ETC_PWM2))
+ { //ETC mode
+  COOLINGFAN_TURNOFF(); //ETC_PWM1
+  ETC_PWM2_TURNOFF();   //ETC_PWM2
+ }
+ else
+#endif
+ { //others
+  if (CHECKBIT(d.param.tmp_flags, TMPF_VENT_PWM) || (IOCFG_CHECK(IOP_IAC_PWM) || IOCFG_CHECK(IOP_GD_PWM)))
+   COOLINGFAN_TURNOFF();
+ }
 #endif
 }
 
@@ -335,8 +435,8 @@ void vent_set_pwmfrq(uint16_t period)
  pwm_steps = ((uint32_t)(39062 * period)) >> 17;
 }
 
-#if defined(FUEL_INJECT) || defined(GD_CONTROL)
-void vent_set_duty12(uint16_t duty)
+#if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
+void vent_set_duty12(int16_t duty)
 {
 #ifdef COOLINGFAN_PWM
  vent_set_duty(duty, 12);

@@ -441,6 +441,8 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(d.param.idl_iacmaxpos);
    build_i16h(d.param.iac_reg_db);
    build_i16h(d.param.idl_reg_d);
+   build_i16h(d.param.irr_k_load);
+   build_i16h(d.param.irr_k_rpm);
    break;
 
   case ANGLES_PAR:
@@ -2050,6 +2052,8 @@ uint8_t uart_recept_packet(void)
    d.param.idl_iacmaxpos = recept_i8h();
    d.param.iac_reg_db = recept_i16h();
    d.param.idl_reg_d = recept_i16h();
+   d.param.irr_k_load = recept_i16h();
+   d.param.irr_k_rpm = recept_i16h();
    break;
 
   case ANGLES_PAR:

@@ -805,6 +805,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .etc_frictorq_thrd =           1, //1%/s
   .etc_idleadd_max =             ROUND(5.0*64), //5%
 
+  .irr_k_load =                  ROUND(2.0*32),
+  .irr_k_rpm =                   ROUND(2.0*32),
+
   .reserved =                    {0},
   .crc =                         0
  },
@@ -1303,8 +1306,6 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .oilpress_cut = 0, //do not cut ignition and fuel
 
   .tpsdot_mindt = 10000, //32ms
-  .irr_k_load = ROUND(2.0*32),
-  .irr_k_rpm = ROUND(2.0*32),
 
   .cold_eng_int = 0,
   .iacreg_period = 10, //100ms

@@ -631,8 +631,6 @@ typedef struct fw_ex_data_t
   uint8_t  maninjpw_idl;  //0 - don't apply manual inj.PW correction on idling, 1 - apply manual inj.PW correction on idling
   uint8_t  oilpress_cut;  //cut off ignition and injection of fuel if oil pressire falls to crytical value
   uint16_t tpsdot_mindt;  //minimum time delta used for calculation of d%/dt, 1 discrete = 3.2 us
-  uint16_t  irr_k_load;   //coefficient of load used to calcultate argument in rigidity map, value * 32.0, max 48.0
-  uint16_t  irr_k_rpm;    //coefficient of rpm used to calcultate argument in rigidity map, value * 32.0, max 48.0
   uint8_t  cold_eng_int;  //!Use only integral component on cold engine (1), use regular algorithm (0)
   uint8_t  iacreg_period; //!Period between calls of IAC's closed loop regulator, value in 0.01s units
   int16_t  iacreg_turn_on_temp;//!< IAC closed loop regulator turn on temperature
@@ -719,7 +717,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1511];
+  uint8_t reserved[1515];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -1064,11 +1062,14 @@ typedef struct params_t
   uint8_t etc_frictorq_cl;      //!< value for frictional torque compensation, used when TPS < home position  value * 16
   uint8_t etc_frictorq_thrd;    //!< TPSdot threshold for frictional torque compensation, value in %/s
   int16_t etc_idleadd_max;      //!< Max. addition to the target position of throttle from idling regulator subsystem
-  
+
+  uint16_t  irr_k_load;         //!< coefficient of load used to calcultate argument in rigidity map, value * 32.0, max 48.0
+  uint16_t  irr_k_rpm;          //!< coefficient of rpm used to calcultate argument in rigidity map, value * 32.0, max 48.0
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[73];
+  uint8_t  reserved[69];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

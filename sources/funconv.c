@@ -1057,7 +1057,7 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
 {
  #define RAD_MAG(v) ROUND((v) * 1024)
  //if targ_map == 0, then do not use load component
- uint16_t k_load = targ_map ?  PGM_GET_WORD(&fw_data.exdata.irr_k_load) : 0, k_rpm = PGM_GET_WORD(&fw_data.exdata.irr_k_rpm); //value * 32, max 48.0
+ uint16_t k_load = targ_map ?  d.param.irr_k_load : 0, k_rpm = d.param.irr_k_rpm; //value * 32, max 48.0
 
  //calculate range of the load axis depending on the selected mode
  int16_t load_range;

@@ -164,9 +164,8 @@ void obd_process(void)
    case 1:
     if ((s_timer_gtc() - obd.send_tmr) >= OBD_SEND_PERIOD_MSG)
     {
-     //map temperature range -40...120 to the range 90...170
-//   int16_t tg = simple_interpolation(d.sens.temperat, 90, 170, TEMPERATURE_MAGNITUDE(-40.0), TEMPERATURE_MAGNITUDE(160.0), 128) >> 7;
-     int16_t tg = simple_interpolation(d.sens.temperat, 90, 170, TEMPERATURE_MAGNITUDE(-40.0), TEMPERATURE_MAGNITUDE(180.0), 128) >> 7;
+     //map temperature range 10...115 to the range of 90...170
+     int16_t tg = simple_interpolation(d.sens.temperat, 90, 170, TEMPERATURE_MAGNITUDE(10.0), TEMPERATURE_MAGNITUDE(105.0), 128) >> 7;
      restrict_value_to(&tg, 90, 170);
      obd.msg.id = 1361;   //Coolant temperature
      obd.msg.flags.rtr = 0;
@@ -174,7 +173,7 @@ void obd_process(void)
      obd.msg.data[0] = tg;    //temperature for gauge
      obd.msg.data[1] = 0x00;
      obd.msg.data[2] = 0x00;
-     obd.msg.data[3] = tg;    //temperature for "Check Engine" lamp
+     obd.msg.data[3] = d.sens.temperat < TEMPERATURE_MAGNITUDE(90.0) ? 0 : tg; //temperature for "Check Engine" lamp
      obd.msg.data[4] = 0x00;
      obd.msg.data[5] = 0x00;
      obd.msg.data[6] = 0x00;

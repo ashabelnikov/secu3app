@@ -485,7 +485,11 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(d.param.fps_curve_gradient); //FPS
    build_i16h(d.param.apps1_curve_offset);   //APPS1
    build_i16h(d.param.apps1_curve_gradient); //APPS1
+#if !defined(SECU3T) && defined(ELEC_THROTTLE)
    build_i16h(d.sens.apps1_raw);            //Redundant: for APPS1 learning
+#else
+   build_i16h(0);
+#endif
    break;
 
   case STARTR_PAR:

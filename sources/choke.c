@@ -682,7 +682,10 @@ void choke_control(void)
  else if (etc_is_enabled())
  {
   uint16_t pos = calc_sm_position(2);                        //calculate position addition for ETC
-  d.choke_pos = calc_percent_pos(pos, d.param.etc_idleadd_max);//update position value
+  if (d.param.etc_idleadd_max > 0)                           //prevent division by zero
+   d.choke_pos = calc_percent_pos(pos, d.param.etc_idleadd_max);//update position value
+  else
+   d.choke_pos = 0;
   d.etc_idleadd = pos;
   chks.state = 5; //set for proper operation of choke_is_ready()
   return;

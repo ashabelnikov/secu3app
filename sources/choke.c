@@ -571,22 +571,12 @@ clic_imm:
    { //closed loop mode
     uint16_t tmr = s_timer_gtc();
     if ((tmr - chks.rpmreg_t1) < PGM_GET_BYTE(&fw_data.exdata.iacreg_period))
-     break; //not time to call regulator, exit
+     goto skip_pid; //not time to call regulator, exit
     chks.rpmreg_t1 = tmr;  //reset timer
 
     do_closed_loop();
 
-    uint16_t idl_iacminpos = d.param.idl_iacminpos;
-    #ifdef AIRCONDIT
-    #ifdef SECU3T
-    if (IOCFG_GET(IOP_COND_I))
-    #else
-    if (d.cond_state)
-    #endif
-     idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add);
-    #endif
-
-    //Displace IAC position when cooling fan turns on
+    //Displace IAC position when cooling fan turns on (one time only)
     if (d.vent_req_on)
     {
      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
@@ -611,9 +601,22 @@ clic_imm:
     }
     #endif
 
+skip_pid:
+    {
+    uint16_t idl_iacminpos = d.param.idl_iacminpos;
+    #ifdef AIRCONDIT
+    #ifdef SECU3T
+    if (IOCFG_GET(IOP_COND_I))
+    #else
+    if (d.cond_state)
+    #endif
+     idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add);
+    #endif
+
     //Restrict IAC position using specified limits
     iac_pos_o = chks.iac_pos;
     restrict_value_to(&iac_pos_o, (idl_iacminpos) << 4, ((uint16_t)d.param.idl_iacmaxpos) << 4);
+    }
     goto already_restricted;
    }
    else

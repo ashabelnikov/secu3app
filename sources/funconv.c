@@ -1089,8 +1089,12 @@ uint16_t inj_idlreg_rigidity(uint16_t targ_map, uint16_t targ_rpm)
  if (i >= INJ_IDL_RIGIDITY_SIZE-1) i = i1 = INJ_IDL_RIGIDITY_SIZE-1;
   else i1 = i + 1;
 
- return simple_interpolation(R, _GWU(inj_idl_rigidity[i]), _GWU(inj_idl_rigidity[i1]),  //<--values in table are unsigned
-        (i * RAD_MAG(0.1428)), RAD_MAG(0.1428), 8) >> 3;
+//if (d.sens.rpm < targ_rpm)
+  return simple_interpolation(R, _GWU(inj_idl_rigidity[i]), _GWU(inj_idl_rigidity[i1]),  //<--values in table are unsigned
+         (i * RAD_MAG(0.1428)), RAD_MAG(0.1428), 8) >> 3;
+//else
+// return simple_interpolation(R, _GWU(inj_idl_rigidity1[i]), _GWU(inj_idl_rigidity1[i1]),  //<--values in table are unsigned
+//        (i * RAD_MAG(0.1428)), RAD_MAG(0.1428), 8) >> 3;
 }
 
 uint16_t inj_iacmixtcorr_lookup(void)

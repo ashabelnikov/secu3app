@@ -1723,6 +1723,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
    },
 
+   /**Fill idle regulator's rigidity function 1*/
+//   {
+//     _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+//    },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2054,6 +2059,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
    },
 
+   /**Fill idle regulator's rigidity function 1*/
+//   {
+//    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+//   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2383,6 +2393,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}, //26
     {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
    },
+
+   /**Fill idle regulator's rigidity function 1*/
+//   {
+//    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+//   },
 
    /**reserved bytes */
    {0},
@@ -2714,6 +2729,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     {_PACK8(_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00),_VE(1.00))}) //24
    },
 
+   /**Fill idle regulator's rigidity function 1*/
+//   {
+//    _IRR(0.25), _IRR(0.35), _IRR(0.5), _IRR(1.5), _IRR(3.0), _IRR(4.0), _IRR(4.5), _IRR(4.75)
+//   },
+
    /**reserved bytes */
    {0},
    .checksum = 0
@@ -2724,7 +2744,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   * Date in format Mmm dd yyyy.
   * Do not forget to write out same value of version into to the fw_version field of cd_data_t!
   */
- {"SECU-3 firmware v5.0. Build ["__DATE__"]       "},
+ {"SECU-3 firmware v5.0. Build ["__DATE__" "__TIME__"] "},
 
  /**Version of this structure - 0.0*/
  0x00,

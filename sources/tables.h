@@ -69,7 +69,7 @@
 #define F_NAME_SIZE                     16          //!< number of symbols in names of tables' sets
 
 #define KC_ATTENUATOR_LOOKUP_TABLE_SIZE 128         //!< number of points in attenuator's lookup table
-#define FW_SIGNATURE_INFO_SIZE          48          //!< number of bytes reserved for firmware's signature information
+#define FW_SIGNATURE_INFO_SIZE          52          //!< number of bytes reserved for firmware's signature information
 #define COIL_ON_TIME_LOOKUP_TABLE_SIZE  32          //!< number of points in lookup table used for dwell control
 #define THERMISTOR_LOOKUP_TABLE_SIZE    16          //!< Size of lookup table for coolant temperature sensor
 #define ATS_CORR_LOOKUP_TABLE_SIZE      16          //!< Air temperature sensor advance angle correction lookup table
@@ -327,6 +327,8 @@ typedef struct f_data_t
   uint8_t inj_thrass[INJ_THRASS_SIZE];                //!< Thorottle assist map, value in % * 2
 
   uint8_t inj_ive[INJ_IVE_POINTS_L][(INJ_IVE_POINTS_F*3)/2]; //!< Volumetric efficiency lookup table for idling, value * 2048 (12-bit)
+
+//uint16_t inj_idl_rigidity1[INJ_IDL_RIGIDITY_SIZE];   //!< table containing idling regulator's rigidity function (value * 128), used when RPM is above target
 
   /* Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
@@ -717,7 +719,7 @@ typedef struct fw_ex_data_t
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1515];
+  uint8_t reserved[1511];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

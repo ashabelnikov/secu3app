@@ -83,6 +83,9 @@
 
     SPLIT_ANGLE          Split angle for ignition on rotary engines
 
+    ODDFIRE_ALGO         Use more versatile CKPS processing algorithm with
+                         support of odd-fire engines
+
     BL_BAUD_RATE    *    Baud rate for boot loader. Can be set to 9600, 14400,
                          19200, 28800, 38400, 57600, 115200. Note! Will not take
                          effect without reprogramming using ISP programmator.

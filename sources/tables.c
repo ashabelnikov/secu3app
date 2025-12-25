@@ -1390,6 +1390,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .use_dbgvar = 1,
 
+  .aircond_clt_ovh = TEMPERATURE_MAGNITUDE(120.0),
+
   /**reserved bytes*/
   {0}
  },

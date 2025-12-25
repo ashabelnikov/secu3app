@@ -58,7 +58,7 @@ fi
 FUSEOPT="-U lfuse:w:$LFUSE:m -U hfuse:w:$HFUSE:m -U efuse:w:$EFUSE:m"
 
 #Run programmer
-$PROGRAMMER -p $MCU -c usbasp -P /dev/ttyACM0 -F $FUSEOPT -U lock:w:$LOCK:m
+$PROGRAMMER -p $MCU -c usbasp -B3 -P /dev/ttyACM0 -F $FUSEOPT -U lock:w:$LOCK:m
 if [ $? -ne 0 ]
 then
  PrintError

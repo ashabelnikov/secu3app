@@ -38,12 +38,14 @@ void cams_init_state_variables(void);
 /** Initialization of cam module (Hardware & variables) */
 void cams_init_state(void);
 
-/** Must be called from main loop to perform some operations */
+/** Must be called from the main loop to perform some operations */
 void cams_control(void);
 
+#if !defined(HALL_SYNC) && !defined(CKPS_NPLUS1)
 /**Checks for event(VR input) and automatically resets the flag
  * \return 1 - event was pending, otherwise - 0 */
 uint8_t cams_vr_is_event_r(void);
+#endif
 
 /** Set edge type for VR input
  * \param edge_type 0 - falling, 1 - rising

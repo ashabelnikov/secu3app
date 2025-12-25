@@ -111,7 +111,9 @@ void cams_init_state_variables(void)
  camstate.cam_err_counter = 0;
  camstate.cam_event = 0;
 #endif
+#if !defined(HALL_SYNC) && !defined(CKPS_NPLUS1)
  camstate.vr_event = 0;
+#endif
 }
 
 void cams_init_state(void)
@@ -172,7 +174,7 @@ void cams_init_state(void)
  else
   camstate.ref_s_inpalt = 0;                //REF_S remapped to other input, no ISR
 
- //Collect information about remapping of PS input
+ //Collect information about remapping of the PS input
  //Interrupt edge for Hall input depends only on PS inversion
  if (IOCFG_CMPN(IOP_PS, IOP_PS))
  {
@@ -276,6 +278,7 @@ void cams_control(void)
 #endif
 }
 
+#if !defined(HALL_SYNC) && !defined(CKPS_NPLUS1)
 uint8_t cams_vr_is_event_r(void)
 {
  uint8_t result;
@@ -285,6 +288,7 @@ uint8_t cams_vr_is_event_r(void)
  _END_ATOMIC_BLOCK();
  return result;
 }
+#endif
 
 #ifdef PHASE_SENSOR
 /**Must be called from ISR to process cam sensor*/
@@ -305,14 +309,18 @@ uint8_t cams_vr_is_event_r(void)
 }
 #endif
 
-/**Interrupt from VR sensor. Marked as REF_S on the schematics */
+/**Interrupt from the VR sensor. Marked as REF_S on the schematics */
 ISR(INT0_vect)
 {
 #if defined(SPEED_SENSOR) || defined(PHASE_SENSOR) || defined(HALL_SYNC) || defined(CKPS_NPLUS1)
  //In this case this ISR can be used either for: vehicle speed sensor, cam/Hall sensor or reference sensor
  //
  if (1==camstate.ref_s_inpalt)      //reference sensor (normal INT0 operation)
+ {
+#if !defined(HALL_SYNC) && !defined(CKPS_NPLUS1) //not used by Hall and N+1
   camstate.vr_event = 1;            //set event flag
+#endif
+ }
 
 //note: PHASE_SENSOR and HALL_SYNC are options which can't be used together (for now)
 #ifdef PHASE_SENSOR

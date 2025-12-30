@@ -1774,7 +1774,8 @@ int8_t inj_iac_mat_corr(void)
 int16_t exsens_lookup(uint16_t adcvalue, int16_t *lutab)
 {
  int16_t i, i1;
-#if ((FTLS_LOOKUP_TABLE_SIZE!=EGTS_LOOKUP_TABLE_SIZE) || (FTLS_LOOKUP_TABLE_SIZE!=OPS_LOOKUP_TABLE_SIZE))
+#if ((FTLS_LOOKUP_TABLE_SIZE!=EGTS_LOOKUP_TABLE_SIZE) || (FTLS_LOOKUP_TABLE_SIZE!=OPS_LOOKUP_TABLE_SIZE) || \
+     (FTLS_LOOKUP_TABLE_SIZE!=FTS_LOOKUP_TABLE_SIZE) || (FTLS_LOOKUP_TABLE_SIZE!=OTS_LOOKUP_TABLE_SIZE))
  #error "Sizes of maps differ!"
 #endif
  //Voltage value at the start of axis in ADC discretes

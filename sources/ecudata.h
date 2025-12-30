@@ -211,6 +211,7 @@ typedef struct sensors_t
 #ifndef SECU3T //SECU-3i
  int16_t fts;                            //!< Fuel temperature sensor
  int16_t fps;                            //!< Fuel pressure sensor
+ int16_t ots;                            //!< Oil temperature sensor
 #endif
 }sensors_t;
 

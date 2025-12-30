@@ -419,7 +419,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
     _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub), _FNC(iocfg_g_stub),
-    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_s_stub),
+    _FNC(iocfg_s_stub), _FNC(iocfg_s_stub), _FNC(iocfg_g_stub),
    },
 
    //I/O information for each slot (plug IDs and inversion flags)
@@ -434,13 +434,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _ION(IOP_IGN),      _ION(IOP_COND_I),   _ION(IOP_EPAS_I),   _ION(IOP_ADD_I4),
     _ION(IOP_TACH_O),   _ION(IOP_KSP_CS),   _ION(IOP_ADD_I5),   _ION(IOP_ADD_I6),
     _ION(IOP_ADD_I7),   _ION(IOP_ADD_I8),   _ION(IOP_MAP_S),    _ION(IOP_GPA4_I),
-    _ION(IOP_GPA6_O),   _ION(IOP_GPA5_I), 0,0,0,0,0,0,0
+    _ION(IOP_GPA6_O),   _ION(IOP_GPA5_I), 0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F
    },
 #endif
    _FNC(iocfg_s_stub), _FNC(iocfg_g_stub), //<-- stub, stub
 
-   //Version of this structure - 4.4
-   IOREMVER(4,4),
+   //Version of this structure - 4.5
+   IOREMVER(4,5),
 
    //2 bytes - size of this structure
    sizeof(iorem_slots_t),
@@ -1251,6 +1251,13 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    {_AL16(_TP(5.5), _TP(6.0), _TP(6.5), _TP(7.0), _TP(7.0), _TP(7.5), _TP(8.0), _TP(8.5), _TP(9.0), _TP(9.5), _TP(10.0),_TP(10.5),_TP(10.5),_TP(11.0),_TP(11.5),_TP(12.0))}, //      3
    {_AL16(_TP(2.5), _TP(3.0), _TP(3.0), _TP(3.5), _TP(3.5), _TP(4.0), _TP(4.0), _TP(4.5), _TP(4.5), _TP(4.5), _TP(5.0), _TP(5.0), _TP(5.5), _TP(5.5), _TP(6.0), _TP(6.0))},  //      2
    {_AL16(_TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0), _TP(0.0))})  //0%    1
+  },
+
+  /**Fill "oil temperature vs voltage" map*/
+  {
+   _EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),
+   _EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),_EGT(0.0),
+   ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
   },
 
   /**reserved*/

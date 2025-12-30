@@ -466,7 +466,7 @@ uint16_t iocfg_g_add_i4i(uint8_t doa);   //!< set  ADD_I4 input       (inverted)
 #define IOP_APPS2       104     //!< APPS2           (input)
 #define IOP_ETC_PWM1    105     //!< ETC_PWM1        (output)
 #define IOP_ETC_PWM2    106     //!< ETC_PWM2        (output)
-#define IOP_RESERVED60  107     //!< reserved plug   ()
+#define IOP_OTS_I       107     //!< OTS_I           (input)
 
 #define IOP_IGNPLG_OFF   (IOP_IGN_OUT6-(IOP_IGN_OUT5+1)) //!< needed by ckps.c
 #define IOP_INJPLG_OFF   (IOP_INJ_OUT6-(IOP_INJ_OUT5+1)) //!< needed by injector.c

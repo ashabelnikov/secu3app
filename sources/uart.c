@@ -129,6 +129,7 @@
 #define ETMT_ETC_ACCEERR   77  //!<
 #define ETMT_ETC_THROPOS   78  //!<
 #endif
+#define ETMT_OTS_CURVE     79  //!<
 
 /**Define internal state variables */
 typedef struct
@@ -867,6 +868,11 @@ void uart_send_packet(uint8_t send_mode)
 #endif
 #if !defined(SECU3T) && defined(ELEC_THROTTLE)
    build_i16h(d.sens.apps1);               //APPS1
+#else
+   build_i16h(0);
+#endif
+#ifndef SECU3T
+   build_i16h(d.sens.ots);                 //Oil Pressure Sensor
 #else
    build_i16h(0);
 #endif
@@ -1752,6 +1758,14 @@ void uart_send_packet(uint8_t send_mode)
       ++wrk_index;
      break;
 #endif
+    case ETMT_OTS_CURVE:
+     build_i8h(wrk_index*(OTS_LOOKUP_TABLE_SIZE/2));
+     build_rw((uint16_t*)&ram_extabs.ots_curve[wrk_index*(OTS_LOOKUP_TABLE_SIZE/2)], (wrk_index < 2) ? OTS_LOOKUP_TABLE_SIZE/2 : 3);
+     if (wrk_index < 2)
+      ++wrk_index;
+     else
+      wrk_index = 0;
+     break;
    }
    break;
   }
@@ -2626,6 +2640,9 @@ uint8_t uart_recept_packet(void)
      recept_rb(((uint8_t*)&ram_extabs.etc_throttle_pos[0][0]) + addr, ETC_POS_RPM_SIZE); /*ETC_POS_RPM_SIZE max*/
      break;
 #endif
+    case ETMT_OTS_CURVE:
+     recept_rw(((uint16_t*)&ram_extabs.ots_curve) + addr, OTS_LOOKUP_TABLE_SIZE/2); /*OTS_LOOKUP_TABLE_SIZE/2 max*/
+     break;
    }
   }
   break;

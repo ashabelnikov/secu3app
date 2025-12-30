@@ -152,9 +152,11 @@
 
 #define WU_AFR_SIZE                     16          //!< Size of the WU AFR map
 #define ETC_SPRPREL_SIZE                8           //!< Size of the ETC spring preload duty table
-#define ETC_ACCEPTERR_SIZE              6           //Size of the ETC acceptable position error table
-#define ETC_POS_APPS_SIZE               16          //ETC position map: APPS axis size
-#define ETC_POS_RPM_SIZE                16          //ETC position map: RPM axis size
+#define ETC_ACCEPTERR_SIZE              6           //!< Size of the ETC acceptable position error table
+#define ETC_POS_APPS_SIZE               16          //!< ETC position map: APPS axis size
+#define ETC_POS_RPM_SIZE                16          //!< ETC position map: RPM axis size
+
+#define OTS_LOOKUP_TABLE_SIZE           17          //!< Size of the "oil temperature vs voltage" map
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -585,8 +587,11 @@ typedef struct fw_ex_tabs_t
   /** ETC throttle position vs (APPS,RPM)*/
   uint8_t etc_throttle_pos[ETC_POS_APPS_SIZE][ETC_POS_RPM_SIZE];
 
+  /**Oil temperature vs voltage. 17 points of function, plus two values for setting of x-axis range*/
+  int16_t ots_curve[OTS_LOOKUP_TABLE_SIZE+2];
+
   /**reserved*/
-  uint8_t reserved[505];
+  uint8_t reserved[467];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -1113,7 +1118,7 @@ typedef struct iorem_slots_t
  fnptr_t v_slotsi[IOREM_SLOTS];          //!< data slots           (inverted)
  fnptr_t i_plugs[IOREM_PLUGS];           //!< initialization plugs
  fnptr_t v_plugs[IOREM_PLUGS];           //!< data plugs
- uint8_t io_info[IOREM_SLOTS];           //!< 7 bit - inversion flag, 6-0 bits - id of plug
+ uint8_t io_info[IOREM_SLOTS];           //!< 7 bit - inversion flag, 6-0 bits - id of connected plug
  fnptr_t s_stub;                         //!< special pointer used as stub
  fnptr_t g_stub;                         //!< reserved
  uint8_t version;                        //!< version of this structure (used for compatibility checkings)

@@ -452,6 +452,15 @@ void meas_average_measured_values(ce_sett_t *cesd)
 #endif
 
 #ifndef SECU3T
+#ifdef MCP3204
+  if (IOCFG_CHECK(IOP_OTS_I))
+   d.sens.ots = exsens_lookup(IOCFG_GETA(IOP_OTS_I), ram_extabs.ots_curve);
+  else
+   d.sens.ots = 0; //input is not selected
+#endif
+#endif
+
+#ifndef SECU3T
  if (IOCFG_CHECK(IOP_FPS))
   d.sens.fps = map_adc_to_kpa(IOCFG_GETA(IOP_FPS), d.param.fps_curve_offset, d.param.fps_curve_gradient);
  else

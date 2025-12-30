@@ -110,7 +110,7 @@ static uint8_t cond_volt(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thr
  return p_ctx->state;
 }
 
-/**Condition function for carburetor's throttle limit switch*/
+/**Condition function for carburetor's throttle limit switch (logic)*/
 static uint8_t cond_carb(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
  if (d->sens.carb == on_thrd)
@@ -447,7 +447,7 @@ static uint8_t cond_ai8(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  return p_ctx->state;
 }
 
-/**Condition function for gas valve input*/
+/**Condition function for gas valve input (logic)*/
 static uint8_t cond_gasv(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
  if (d->sens.gas_raw == on_thrd)
@@ -469,12 +469,12 @@ static uint8_t cond_ipw(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  return p_ctx->state;
 }
 
-/**Condition function for CE state */
+/**Condition function for CE state (logic)*/
 static uint8_t cond_ce(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
- if (d->ce_state >= on_thrd)
+ if (d->ce_state == on_thrd)
   p_ctx->state = 1; //ON
- if (d->ce_state <= off_thrd)
+ if (d->ce_state == off_thrd)
   p_ctx->state = 0; //OFF
  return p_ctx->state;
 }
@@ -690,11 +690,39 @@ static uint8_t cond_ops(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd
  return p_ctx->state;
 }
 
+/**Condition function for fuel temperature sensor (FTS)*/
+static uint8_t cond_fts(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#ifndef SECU3T //SECU-3i
+ if (d->sens.fts >= (int16_t)on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->sens.fts <= (int16_t)off_thrd)
+  p_ctx->state = 0; //OFF
+#else
+ p_ctx->state = 0; //OFF
+#endif
+ return p_ctx->state;
+}
+
+/**Condition function for oil temperature sensor (OTS)*/
+static uint8_t cond_ots(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
+{
+#ifndef SECU3T //SECU-3i
+ if (d->sens.ots >= (int16_t)on_thrd)
+  p_ctx->state = 1; //ON
+ if (d->sens.ots <= (int16_t)off_thrd)
+  p_ctx->state = 0; //OFF
+#else
+ p_ctx->state = 0; //OFF
+#endif
+ return p_ctx->state;
+}
+
 /**Function pointer type used in function pointers tables (conditions)*/
 typedef uint8_t (*cond_fptr_t)(struct ecudata_t*, uint16_t, uint16_t, out_state_t*);
 
 /**Number of function pointers in table*/
-#define COND_FPTR_TABLE_SIZE 39
+#define COND_FPTR_TABLE_SIZE 41
 
 /**Table containing pointers to condition functions */
 PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
@@ -702,7 +730,7 @@ PGM_DECLARE(static cond_fptr_t cond_fptr[COND_FPTR_TABLE_SIZE]) =
   &cond_estmr, &cond_cpos, &cond_aang, &cond_klev, &cond_tps, &cond_ats, &cond_ai1, &cond_ai2, &cond_gasv,
   &cond_ipw, &cond_ce, &cond_oftmr, &cond_ai3, &cond_ai4, &cond_lptmr, &cond_ai5, &cond_ai6, &cond_ai7, &cond_ai8,
   &cond_grts, &cond_map2, &cond_tmp2, &cond_input1, &cond_input2, &cond_maf, &cond_tpsdot, &cond_gps,
-  &cond_fps, &cond_ops, &cond_egts};
+  &cond_fps, &cond_ops, &cond_egts, &cond_fts, &cond_ots};
 
 void uniout_init_ports(void)
 {

@@ -134,13 +134,6 @@
  #define COPT_SM_CONTROL 0
 #endif
 
-/** Use 5V ADC reference voltage instead of internal 2.56V source*/
-#ifdef VREF_5V
- #define COPT_VREF_5V 1
-#else
- #define COPT_VREF_5V 0
-#endif
-
 /** Use synchronization from Hall sensor instead of CKP sensor*/
 #ifdef HALL_SYNC
  #define COPT_HALL_SYNC 1

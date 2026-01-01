@@ -318,7 +318,7 @@ void adc_init(void)
  adc.knock_value = 0;
 
  //initialization of ADC, f = 156.25 kHz,
- //internal or external reference voltage source will be used depends on VREF_5V option, interrupt enabled
+ //external reference voltage source will be used, interrupt enabled
  ADMUX=ADC_VREF_TYPE;
  ADCSRA=_BV(ADEN)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
 

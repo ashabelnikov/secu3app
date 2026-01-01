@@ -43,14 +43,8 @@
 /**Voltage on the output of coolant temperature sensor at 0 degrees */
 #define TSENS_ZERO_POINT        2.73
 
-//Constant for selection of reference voltage source and ref. voltage compensation factor
-#ifdef VREF_5V //5V
- #define ADC_VREF_TYPE          0x40    //!< Vref selection constant for 5V
- #define ADC_VREF_FACTOR        1.9531  //!< Vref compensation factor (5.0V/2.56V)
-#else         //internal 2.56V
- #define ADC_VREF_TYPE          0xC0    //!< Vref selection constant for 2.56V
- #define ADC_VREF_FACTOR        1.0000  //!< Vref compensation factor (2.56V/2.56V)
-#endif
+#define ADC_VREF_TYPE          0x40    //!< Vref selection constant for 5V
+#define ADC_VREF_FACTOR        1.9531  //!< Vref compensation factor (5.0V/2.56V)
 
 #define ADC_MCP3204_FACTOR      0.488281 //!<2000/4096
 

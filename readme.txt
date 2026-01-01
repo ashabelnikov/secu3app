@@ -55,10 +55,6 @@
 
     SM_CONTROL           Enable stepper motor and choke control functionality
 
-    VREF_5V              Use 5V ADC reference voltage. In this case divider
-                         bottom resistors are not necessary. So, input impedance
-                         will be high.
-
     HALL_SYNC            Use synchronization from Hall sensor (connected to PS
                          input) instead of CKP sensor
 

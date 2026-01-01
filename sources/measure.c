@@ -64,14 +64,6 @@ int16_t iocfg_add_i7 = 0;
 int16_t iocfg_add_i8 = 0;
 #endif
 
-#ifdef VREF_5V //voltage divider is not necessary when ref. voltage is 5V
- /**Special macro for compensating of voltage division (without voltage divider)*/
- #define _RESDIV(v, n, d) (v)
-#else //voltage divider is used
- /**Special macro for compensating of voltage division (with voltage divider)*/
- #define _RESDIV(v, n, d) (((n) * (v)) / (d))
-#endif
-
 /**Reads state of throttle gate (only the value, without inversion) */
 #define GET_THROTTLE_GATE_STATE() (CHECKBIT(PINA, PINA7) > 0)
 
@@ -128,7 +120,7 @@ void meas_update_values_buffers_map(ce_sett_t *cesd)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_MAP_SENSOR_FAIL))
  {
-  d.sens.mapdot = adc_compensate(_RESDIV(adc_get_mapdot_value(), 2, 1), d.param.map_adc_factor, 0);
+  d.sens.mapdot = adc_compensate(adc_get_mapdot_value(), d.param.map_adc_factor, 0);
   d.sens.mapdot = mapdot_adc_to_kpa(d.sens.mapdot, d.param.map_curve_gradient);
  }
  else
@@ -150,7 +142,7 @@ void meas_update_values_buffers(ce_sett_t *cesd)
 #if defined(FUEL_INJECT) || defined(GD_CONTROL) || (!defined(SECU3T) && defined(ELEC_THROTTLE))
  if (d.engine_mode != EM_START && !ce_is_error(ECUERROR_TPS_SENSOR_FAIL))
  {
-  d.sens.tpsdot = adc_compensate(_RESDIV(adc_get_tpsdot_value(), 2, 1), d.param.tps_adc_factor, 0);
+  d.sens.tpsdot = adc_compensate(adc_get_tpsdot_value(), d.param.tps_adc_factor, 0);
   d.sens.tpsdot = tpsdot_adc_to_pc(d.sens.tpsdot, d.param.tps_curve_gradient);
  }
  else
@@ -185,11 +177,7 @@ void meas_update_values_buffers(ce_sett_t *cesd)
 #ifdef TPIC8101
   d.sens.knock_raw = adc_compensate(knock_get_adc_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
 #else
-#ifdef VREF_5V
   d.sens.knock_raw = adc_compensate(adc_get_knock_value(), ADC_COMP_FACTOR(ADC_VREF_FACTOR), ADC_COMP_CORR(ADC_VREF_FACTOR, 0.0));
-#else //internal 2.56V
-  d.sens.knock_raw = adc_get_knock_value() * 2;
-#endif
 #endif
   d.sens.knock_k = ce_is_error(ECUERROR_KSP_CHIP_FAILED) && cesd->ks_v_flg ? cesd->ks_v_em : d.sens.knock_raw;
  }
@@ -208,7 +196,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
  d.sens.voltage = ubat_adc_to_v(ce_is_error(ECUERROR_VOLT_SENSOR_FAIL) && cesd->vbat_v_flg ? cesd->vbat_v_em : d.sens.voltage_raw);
 
  //TPS
- d.sens.tps_raw = adc_compensate(_RESDIV(average_buffer(&meas[TPS_INPIDX]), 2, 1), d.param.tps_adc_factor, d.param.tps_adc_correction);
+ d.sens.tps_raw = adc_compensate(average_buffer(&meas[TPS_INPIDX]), d.param.tps_adc_factor, d.param.tps_adc_correction);
  d.sens.tps = tps_adc_to_pc(ce_is_error(ECUERROR_TPS_SENSOR_FAIL) && cesd->tps_v_flg ? cesd->tps_v_em : d.sens.tps_raw, d.param.tps_curve_offset, d.param.tps_curve_gradient);
 #if !defined(SECU3T) && defined(ELEC_THROTTLE)
  d.sens.tps_dbw = d.sens.tps; //save value that can be above 100% first, this value is used by servo PID.
@@ -227,7 +215,7 @@ void meas_average_measured_values(ce_sett_t *cesd)
  //CLT
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE))
  {
-  d.sens.temperat_raw = adc_compensate(_RESDIV(average_buffer(&meas[TMP_INPIDX]), 5, 3),d.param.temp_adc_factor,d.param.temp_adc_correction);
+  d.sens.temperat_raw = adc_compensate(average_buffer(&meas[TMP_INPIDX]),d.param.temp_adc_factor,d.param.temp_adc_correction);
 #ifndef THERMISTOR_CS
   d.sens.temperat = temp_adc_to_c(ce_is_error(ECUERROR_TEMP_SENSOR_FAIL) && cesd->cts_v_flg ? cesd->cts_v_em : d.sens.temperat_raw);
 #else
@@ -261,17 +249,17 @@ void meas_average_measured_values(ce_sett_t *cesd)
 
  //MAP
  int16_t rawval;
- d.sens.map_raw = adc_compensate(_RESDIV(average_buffer(&meas[MAP_INPIDX]), 2, 1), d.param.map_adc_factor, d.param.map_adc_correction);
+ d.sens.map_raw = adc_compensate(average_buffer(&meas[MAP_INPIDX]), d.param.map_adc_factor, d.param.map_adc_correction);
  iocfg_map_s = ce_is_error(ECUERROR_MAP_SENSOR_FAIL) && cesd->map_v_flg ? cesd->map_v_em : d.sens.map_raw;
 
  //ADD_I1
- d.sens.add_i1_raw = rawval = adc_compensate(_RESDIV(average_buffer(&meas[AI1_INPIDX]), 2, 1), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
+ d.sens.add_i1_raw = rawval = adc_compensate(average_buffer(&meas[AI1_INPIDX]), d.param.ai1_adc_factor, d.param.ai1_adc_correction);
  if (rawval < 0)
   rawval = 0;
  iocfg_add_i1 = ce_is_error(ECUERROR_ADD_I1_SENSOR) && cesd->add_i1_v_flg ? cesd->add_i1_v_em : rawval;
 
  //ADD_I2
- d.sens.add_i2_raw = rawval = adc_compensate(_RESDIV(average_buffer(&meas[AI2_INPIDX]), 2, 1), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
+ d.sens.add_i2_raw = rawval = adc_compensate(average_buffer(&meas[AI2_INPIDX]), d.param.ai2_adc_factor, d.param.ai2_adc_correction);
  if (rawval < 0)
   rawval = 0;
  iocfg_add_i2 = ce_is_error(ECUERROR_ADD_I2_SENSOR) && cesd->add_i2_v_flg ? cesd->add_i2_v_em : rawval;

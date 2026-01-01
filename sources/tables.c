@@ -343,7 +343,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_i_gpa6_oi),   _FNC(iocfg_i_gpa5_ii),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//normal slots (get/set value)
    {_FNC(iocfg_s_ign_out1), _FNC(iocfg_s_ign_out2), _FNC(iocfg_s_ign_out3), _FNC(iocfg_s_ign_out4),
-    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf),      _FNC(iocfg_i_inj_out1), _FNC(iocfg_s_inj_out2),
+    _FNC(iocfg_s_ign_out5), _FNC(iocfg_s_ecf),      _FNC(iocfg_s_inj_out1), _FNC(iocfg_s_inj_out2),
     _FNC(iocfg_s_inj_out3), _FNC(iocfg_s_inj_out4), _FNC(iocfg_s_inj_out5), _FNC(iocfg_s_bl),
     _FNC(iocfg_s_de),       _FNC(iocfg_s_st_block), _FNC(iocfg_s_ce),       _FNC(iocfg_s_fpmp_o),
     _FNC(iocfg_s_pwrr_o),   _FNC(iocfg_s_evap_o),   _FNC(iocfg_s_o2sh_o),   _FNC(iocfg_s_cond_o),
@@ -355,7 +355,7 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
     _FNC(iocfg_s_gpa6_o),   _FNC(iocfg_g_gpa5_i),0,0,0,0,0,0,0 //<-- zero means that these slots are not implemented in this firmware
    },//inverted slots (get/set value)
    {_FNC(iocfg_s_ign_out1i), _FNC(iocfg_s_ign_out2i), _FNC(iocfg_s_ign_out3i), _FNC(iocfg_s_ign_out4i),
-    _FNC(iocfg_s_ign_out5i), _FNC(iocfg_s_ecfi),      _FNC(iocfg_i_inj_out1i), _FNC(iocfg_s_inj_out2i),
+    _FNC(iocfg_s_ign_out5i), _FNC(iocfg_s_ecfi),      _FNC(iocfg_s_inj_out1i), _FNC(iocfg_s_inj_out2i),
     _FNC(iocfg_s_inj_out3i), _FNC(iocfg_s_inj_out4i), _FNC(iocfg_s_inj_out5i), _FNC(iocfg_s_bli),
     _FNC(iocfg_s_dei),       _FNC(iocfg_s_st_blocki), _FNC(iocfg_s_cei),       _FNC(iocfg_s_fpmp_oi),
     _FNC(iocfg_s_pwrr_oi),   _FNC(iocfg_s_evap_oi),   _FNC(iocfg_s_o2sh_oi),   _FNC(iocfg_s_cond_oi),

@@ -68,11 +68,11 @@ void process_uart_interface(void)
  if (d.param.bt_flags & _BV(BTF_USE_BT))
  {
   if (!bt_set_baud(d.param.uart_divisor))
-   return;
+   return; //still setting baud rate...
 
   if (d.bt_name[0] && d.bt_pass[0])
    if (!bt_set_namepass())
-    return;
+    return; //still setting name and password
  }
 #endif
 

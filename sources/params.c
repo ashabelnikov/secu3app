@@ -139,7 +139,7 @@ void load_eeprom_params(void)
   else
   {
    //User selected to use paramaters from EEPROM
-   //Load parameters from EEPROM, and after, check integrity of them
+   //Load parameters from EEPROM, and after, check integrity of them.
    //Don't take into account bytes of CRC when calculating check sum
    //If check sums don't match, then load default (reserve) parameters from flash
    eeprom_read(&d.param, offsetof(eeprom_data_t, param), sizeof(params_t));

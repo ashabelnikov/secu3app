@@ -97,8 +97,8 @@ struct ecudata_t d =
  .gasdose_testing = 0,  //GD
  .gasdose_manpos_d = 0, //GD
 
- .bt_name = {0,0,0,0,0,0,0,0,0},
- .bt_pass = {0,0,0,0,0,0,0},
+ .bt_name = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+ .bt_pass = {0,0,0,0,0,0,0,0,0},
  .sys_locked = 0      //unlocked
 
 #ifdef FUEL_INJECT

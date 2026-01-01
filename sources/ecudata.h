@@ -312,8 +312,8 @@ typedef struct ecudata_t
  uint8_t gasdose_testing;    /*GD*/      //!< Used to indcate that gas dosator testing is on/off (so it is applicable only if GD_CONTROL compilation option is used)
  int8_t gasdose_manpos_d;    /*GD*/      //!< Muanual position setting delta value used for gasdose control
 
- uint8_t bt_name[9];                     //!< received name for Bluetooth (8 chars max), zero element is size
- uint8_t bt_pass[7];                     //!< received password for Bluetooth (6 chars max), zero element is size
+ uint8_t bt_name[1+16];                  //!< received name for Bluetooth (16 chars max), zero element is size
+ uint8_t bt_pass[1+8];                   //!< received password for Bluetooth (8 chars max), zero element is size
  uint8_t sys_locked;                     //!< used by immobilizer to indicate that system is locked
 
 #ifdef FUEL_INJECT

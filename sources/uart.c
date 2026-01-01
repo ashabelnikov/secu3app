@@ -2255,11 +2255,11 @@ uint8_t uart_recept_packet(void)
   {
    uint8_t old_bt_flags = d.param.bt_flags;
    d.bt_name[0] = recept_i8h();
-   if (d.bt_name[0] > 8)
-    d.bt_name[0] = 8;
+   if (d.bt_name[0] > 16)
+    d.bt_name[0] = 16;
    d.bt_pass[0] = recept_i8h();
-   if (d.bt_pass[0] > 6)
-    d.bt_pass[0] = 6;
+   if (d.bt_pass[0] > 8)
+    d.bt_pass[0] = 8;
    recept_rs(&d.bt_name[1], d.bt_name[0]);
    recept_rs(&d.bt_pass[1], d.bt_pass[0]);
    d.param.bt_flags = recept_i8h();

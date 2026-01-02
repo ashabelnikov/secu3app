@@ -748,7 +748,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i8h(0);
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
    build_i16h(d.sens.grts);              //gas reducer's temperature
 #else
    build_i16h(0);
@@ -760,7 +760,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
    build_i16h(d.sens.ftls);             //fuel tank level
    build_i16h(d.sens.egts);             //exhaust gas temperature
    build_i16h(d.sens.ops);              //oil pressure
@@ -796,7 +796,7 @@ void uart_send_packet(uint8_t send_mode)
    build_i16h(0);
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
    build_i16h(d.sens.fts);              //fuel temperature
 #else
    build_i16h(0);

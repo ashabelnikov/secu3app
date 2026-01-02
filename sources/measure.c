@@ -359,12 +359,10 @@ void meas_average_measured_values(ce_sett_t *cesd)
  else
   d.sens.gps = 0; //input is not selected
 
-#ifdef MCP3204
  if (IOCFG_CHECK(IOP_GRTEMP))
   d.sens.grts = thermistor_lookup(IOCFG_GETA(IOP_GRTEMP), ram_extabs.grts_curve);
  else
   d.sens.grts = 0; //input is not selected
-#endif
 #endif
 
 #ifndef SECU3T
@@ -385,12 +383,10 @@ void meas_average_measured_values(ce_sett_t *cesd)
 #endif
 
 #ifndef SECU3T
-#ifdef MCP3204
  if (IOCFG_CHECK(IOP_OPS_I))
   d.sens.ops = exsens_lookup(IOCFG_GETA(IOP_OPS_I), ram_extabs.ops_curve);
  else
   d.sens.ops = 0; //input is not selected
-#endif
 #endif
 
 //select input for lambda sensor
@@ -424,12 +420,10 @@ void meas_average_measured_values(ce_sett_t *cesd)
 #ifndef SECU3T
  if (1==PGM_GET_BYTE(&fw_data.exdata.fts_source))
  { //use sensor
-#ifdef MCP3204
   if (IOCFG_CHECK(IOP_FTS_I))
    d.sens.fts = exsens_lookup(IOCFG_GETA(IOP_FTS_I), ram_extabs.fts_curve);
   else
    d.sens.fts = 0; //input is not selected
-#endif
  }
  else
  {//use CTS+IAT model
@@ -440,12 +434,10 @@ void meas_average_measured_values(ce_sett_t *cesd)
 #endif
 
 #ifndef SECU3T
-#ifdef MCP3204
   if (IOCFG_CHECK(IOP_OTS_I))
    d.sens.ots = exsens_lookup(IOCFG_GETA(IOP_OTS_I), ram_extabs.ots_curve);
   else
    d.sens.ots = 0; //input is not selected
-#endif
 #endif
 
 #ifndef SECU3T

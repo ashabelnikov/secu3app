@@ -268,7 +268,7 @@ void calc_lookup_args(void)
  if (fcs.ta_clt > ((int16_t)ram_extabs.clt_grid_points[F_TMP_POINTS-1])) fcs.ta_clt = (int16_t)ram_extabs.clt_grid_points[F_TMP_POINTS-1];
  fcs.ta_i1 = fcs.ta_i + 1;
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
  //-----------------------------------------
  //GRTS arguments:
  fcs.ga_grt = d.sens.grts;

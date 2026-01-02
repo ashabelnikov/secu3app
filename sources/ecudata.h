@@ -184,7 +184,7 @@ typedef struct sensors_t
  uint16_t lambda_mx;                     //!< mixed value from available sensors
 #endif
 
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
  int16_t grts;                           //!< Gas reducer temperature sensor
 #endif
 

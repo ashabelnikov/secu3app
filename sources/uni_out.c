@@ -537,7 +537,7 @@ static uint8_t cond_oftmr(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_th
  */
 static uint8_t cond_grts(struct ecudata_t *d, uint16_t on_thrd, uint16_t off_thrd, out_state_t* p_ctx)
 {
-#if !defined(SECU3T) && defined(MCP3204)
+#if !defined(SECU3T)
  if ((int16_t)on_thrd > (int16_t)off_thrd)
  {
   if (d->sens.grts >= (int16_t)on_thrd)

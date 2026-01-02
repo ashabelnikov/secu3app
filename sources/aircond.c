@@ -82,12 +82,19 @@ static uint8_t get_refprs_off_cond(void)
 typedef struct
 {
  uint8_t state;
- uint16_t t1;      //!< timer
- uint16_t t2;
+ uint16_t t1;            //!< timer
+ uint16_t t2; 
+#ifndef SECU3T
+ s_timer16_t turnon_tmr; //!< used for turn on delay
+#endif
 }aircond_t;
 
 /**Instance of state variables */
-aircond_t ac = {0,0};
+aircond_t ac = {0,0,0
+#ifndef SECU3T
+,{0,0,1} /*already fired!*/
+#endif
+};
 
 void aircond_init_ports(void)
 {
@@ -131,7 +138,7 @@ void aircond_control(void)
 
    if ((!IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && IOCFG_GET(IOP_COND_I) && get_refprs_on_cond()
      && (d.sens.temperat > (int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt)) && (d.sens.temperat < ((int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt_ovh) - TEMPERATURE_MAGNITUDE(1.0)))
-     && (d.sens.tps < PGM_GET_WORD(&fw_data.exdata.aircond_tps))))
+     && (d.sens.tps <= PGM_GET_WORD(&fw_data.exdata.aircond_tps)) && s_timer_is_action(&ac.turnon_tmr)))
 #endif
    {
     if (d.sens.rpm < d.param.cond_min_rpm)
@@ -170,14 +177,18 @@ void aircond_control(void)
 #ifdef SECU3T
    if (!IOCFG_GET(IOP_COND_I))
 #else
+   uint8_t tps_cond = d.sens.tps > (PGM_GET_WORD(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0));
    if ((!IOCFG_CHECK(IOP_COND_O) && !IOCFG_GET(IOP_COND_I)) || (IOCFG_CHECK(IOP_COND_O) && (!IOCFG_GET(IOP_COND_I) || get_refprs_off_cond()
     || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt_ovh))
-    || (d.sens.tps > (PGM_GET_WORD(&fw_data.exdata.aircond_tps) + TPS_MAGNITUDE(2.0)))))
-)
+    || tps_cond)))
 #endif
     ac.state = 1;
    if ((s_timer_gtc() - ac.t1) > SYSTIM_MAGS(1.5) && ac.state == 3)
     d.cond_req_fan = 1; //turn on cooling fan after 1.5 seconds
+#ifndef SECU3T
+   if (tps_cond)
+    s_timer_set(&ac.turnon_tmr, 200); //2 seconds
+#endif
   }
    break;
  }

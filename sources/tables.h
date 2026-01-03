@@ -418,7 +418,9 @@ typedef struct ce_sett_t
  uint16_t tpsdiff_thrd;
  uint16_t appsdiff_thrd;
 
- uint8_t reserved[27];
+ uint8_t addi5678_flg;   //process MCP3204 inputs' fault (0 - ignore, 1 - process)
+
+ uint8_t reserved[26];
 }ce_sett_t;
 
 /**Describes separate tables stored in the firmware

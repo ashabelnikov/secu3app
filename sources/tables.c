@@ -956,6 +956,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    .tpsdiff_thrd = VOLTAGE_MAGNITUDE(0.20),
    .appsdiff_thrd = VOLTAGE_MAGNITUDE(0.30),
 
+   .addi5678_flg = 1, //process ADDI5/6/7/8 errors
+
    .reserved = {0}
   },
 

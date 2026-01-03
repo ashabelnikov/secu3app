@@ -266,26 +266,29 @@ void check(ce_sett_t *cesd)
   ce_clear_error(ECUERROR_ADD_I3_SENSOR);
 
 #ifdef MCP3204
- //checking ADD_I5 sensor
- if ((d.sens.add_i5_raw < cesd->add_i5_v_min) || (d.sens.add_i5_raw > cesd->add_i5_v_max))
-  ce_set_error(ECUERROR_ADD_I5_SENSOR);
- else
-  ce_clear_error(ECUERROR_ADD_I5_SENSOR);
- //checking ADD_I6 sensor
- if ((d.sens.add_i6_raw < cesd->add_i6_v_min) || (d.sens.add_i6_raw > cesd->add_i6_v_max))
-  ce_set_error(ECUERROR_ADD_I6_SENSOR);
- else
-  ce_clear_error(ECUERROR_ADD_I6_SENSOR);
- //checking ADD_I7 sensor
- if ((d.sens.add_i7_raw < cesd->add_i7_v_min) || (d.sens.add_i7_raw > cesd->add_i7_v_max))
-  ce_set_error(ECUERROR_ADD_I7_SENSOR);
- else
-  ce_clear_error(ECUERROR_ADD_I7_SENSOR);
- //checking ADD_I8 sensor
- if ((d.sens.add_i8_raw < cesd->add_i8_v_min) || (d.sens.add_i8_raw > cesd->add_i8_v_max))
-  ce_set_error(ECUERROR_ADD_I8_SENSOR);
- else
-  ce_clear_error(ECUERROR_ADD_I8_SENSOR);
+ if (cesd->addi5678_flg)
+ {
+  //checking ADD_I5 sensor
+  if ((d.sens.add_i5_raw < cesd->add_i5_v_min) || (d.sens.add_i5_raw > cesd->add_i5_v_max))
+   ce_set_error(ECUERROR_ADD_I5_SENSOR);
+  else
+   ce_clear_error(ECUERROR_ADD_I5_SENSOR);
+  //checking ADD_I6 sensor
+  if ((d.sens.add_i6_raw < cesd->add_i6_v_min) || (d.sens.add_i6_raw > cesd->add_i6_v_max))
+   ce_set_error(ECUERROR_ADD_I6_SENSOR);
+  else
+   ce_clear_error(ECUERROR_ADD_I6_SENSOR);
+  //checking ADD_I7 sensor
+  if ((d.sens.add_i7_raw < cesd->add_i7_v_min) || (d.sens.add_i7_raw > cesd->add_i7_v_max))
+   ce_set_error(ECUERROR_ADD_I7_SENSOR);
+  else
+   ce_clear_error(ECUERROR_ADD_I7_SENSOR);
+  //checking ADD_I8 sensor
+  if ((d.sens.add_i8_raw < cesd->add_i8_v_min) || (d.sens.add_i8_raw > cesd->add_i8_v_max))
+   ce_set_error(ECUERROR_ADD_I8_SENSOR);
+  else
+   ce_clear_error(ECUERROR_ADD_I8_SENSOR);
+ }
 #endif
 #endif
 

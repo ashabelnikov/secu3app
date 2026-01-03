@@ -293,3 +293,13 @@ void s_timer_eng_stopped_notification(void)
 {
  strokes_since_start = 0; //reset strokes counter
 }
+
+#ifdef SPLIT_ANGLE
+void sync_timers13(void)
+{
+ GTCCR = _BV(TSM) | _BV(PSRSYNC); // halt timer1 and timer3
+ TCNT1 = 0; // set 1 and 3 timers to the same value
+ TCNT3 = 0;
+ GTCCR = 0; // release all timers
+}
+#endif

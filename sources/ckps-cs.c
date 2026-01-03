@@ -197,6 +197,9 @@ typedef struct
  volatile uint8_t eq_head2;           //!< event queue head (index), queue is empty if head = tail
 #endif
  volatile uint16_t mttf;              //!< factor for calculating gap barrier (missing teeth detection)
+#ifdef FUEL_INJECT
+ volatile uint8_t enfs;               //!< enable switching into a full sequential inj. mode
+#endif
 }ckpsstate_t;
 
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -390,6 +393,7 @@ void ckps_init_state_variables(void)
  for(i = 0; i < IGN_CHANNELS_MAX; ++i)
   chanstate[i].inj_skipth = 0;
  }
+ ckps.enfs = 0;
 #endif
 
  TIMSK1|=_BV(TOIE1);                  //enable Timer 1 overflow interrupt. Used for correct calculation of very low RPM
@@ -401,6 +405,9 @@ void ckps_init_state_variables(void)
  ckps.t1oc = 0;                       //reset overflow counter
  ckps.t1oc_s = 255;                   //RPM is very low
  _END_ATOMIC_BLOCK();
+#ifdef FUEL_INJECT
+ inject_set_fullsequential(0);
+#endif
 }
 
 void ckps_init_state(void)
@@ -1228,6 +1235,7 @@ static uint8_t sync_at_startup(void)
     SETBIT(flags2, F_CAMISS);
 #endif
 #ifdef FUEL_INJECT
+   if (ckps.enfs)
     inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
 #endif
     SETBIT(flags, F_ISSYNC);
@@ -1248,6 +1256,7 @@ static uint8_t sync_at_startup(void)
      set_channels_fs(1);
 #endif
 #ifdef FUEL_INJECT
+   if (ckps.enfs)
     inject_set_fullsequential(1);
 #endif
     SETBIT(flags, F_ISSYNC);
@@ -1489,6 +1498,16 @@ static void process_ckps_cogs(void)
  if (CHECKBIT(flags2, F_CAMREF))
   cams_detect_edge();
 #endif
+
+#if defined(FUEL_INJECT)
+ //Turn on full sequential mode
+ if (!CHECKBIT(flags2, F_CAMISS))
+ {
+  if (ckps.enfs)
+   inject_set_fullsequential(1);
+  SETBIT(flags2, F_CAMISS);
+ }
+#endif
 }
 
 /**Input capture interrupt of timer 1 (called at passage of each tooth)
@@ -1607,5 +1626,18 @@ void ckps_set_mttf(uint16_t mttf)
  ckps.mttf = mttf;
  _END_ATOMIC_BLOCK();
 }
+
+#ifdef FUEL_INJECT
+void ckps_enable_fullsequential(void)
+{
+ if (!ckps.enfs)
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  ckps.enfs = 1;
+   CLEARBIT(flags2, F_CAMISS);
+  _END_ATOMIC_BLOCK();
+ }
+}
+#endif
 
 #endif //CAM_SYNC

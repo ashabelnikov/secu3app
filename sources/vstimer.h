@@ -73,4 +73,9 @@ void s_timer_stroke_event_notification(void);
 /**Called from the main loop when engine is stopped*/
 void s_timer_eng_stopped_notification(void);
 
+#ifdef SPLIT_ANGLE
+/**Synchronization of timers 1 and 3*/
+void sync_timers13(void);
+#endif
+
 #endif //_VSTIMER_H_

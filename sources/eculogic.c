@@ -463,6 +463,8 @@ void eculogic_system_state_machine(void)
 #ifdef FUEL_INJECT
     lgs.aftstr_enrich_counter = aftstr_strokes(d.sens.gas); //init engine strokes counter
     lgs.aftstr_enrich_counter0 = PGM_GET_WORD(&fw_data.exdata.aftstr_flat_strokes);
+    if (CHECKBIT(d.param.inj_flags, INJFLG_FSAFTERSTART))
+     ckps_enable_fullsequential(); //enable switching into a full sequential mode
 #endif
    }
    angle = d.corr.strt_aalt = start_function();     //basic ignition timing - cranking map
@@ -728,6 +730,8 @@ void eculogic_eng_stopped_notification(void)
  d.corr.curr_angle = lgs.calc_adv_ang;
 #ifdef FUEL_INJECT
  d.eng_running = 0; //stopped
+ if (!CHECKBIT(d.param.inj_flags, INJFLG_FSAFTERSTART))
+  ckps_enable_fullsequential(); //system will switch into a full sequential mode on cranking
 #endif
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)

@@ -169,6 +169,9 @@ typedef struct
  uint8_t  inj_chidx;                  //!< index of the channel to fire of the injection
 #endif
  volatile uint16_t mttf;              //!< factor for calculating gap barrier (missing teeth detection)
+#ifdef FUEL_INJECT
+ volatile uint8_t enfs;               //!< enable switching into a full sequential inj. mode
+#endif
 }ckpsstate_t;
 
 /**Precalculated data (reference points) and state data for a single channel plug
@@ -379,7 +382,13 @@ void ckps_init_state_variables(void)
 #ifdef SPLIT_ANGLE
  QUEUE_RESET(3);
 #endif
+#ifdef FUEL_INJECT
+ ckps.enfs = 0;
+#endif
  _END_ATOMIC_BLOCK();
+#ifdef FUEL_INJECT
+ inject_set_fullsequential(0);
+#endif
 }
 
 void ckps_init_state(void)
@@ -1270,7 +1279,8 @@ static uint8_t sync_at_startup(void)
     SETBIT(flags2, F_CAMISS);
 #endif
 #ifdef FUEL_INJECT
-    inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
+    if (ckps.enfs)
+     inject_set_fullsequential(1); //set full sequential mode (if selected) here, because we already obtained sync.pulse from a cam sensor
 #endif
 #ifdef CAM_SYNC
     SETBIT(flags, F_ISSYNC);
@@ -1302,7 +1312,8 @@ static uint8_t sync_at_startup(void)
      set_channels_fs(1);
 #endif
 #ifdef FUEL_INJECT
-    inject_set_fullsequential(1);
+    if (ckps.enfs)
+     inject_set_fullsequential(1);
 #endif
 #endif
     SETBIT(flags, F_ISSYNC);
@@ -1465,7 +1476,8 @@ static void process_ckps_cogs(void)
      set_channels_fs(1);
 #endif
 #ifdef FUEL_INJECT
-    inject_set_fullsequential(1);
+    if (ckps.enfs)
+     inject_set_fullsequential(1);
 #endif
     SETBIT(flags2, F_CAMISS);
    }
@@ -1482,7 +1494,8 @@ static void process_ckps_cogs(void)
      set_channels_fs(0); //<--valid only for engines with even number of cylinders
 #endif
 #ifdef FUEL_INJECT
-    inject_set_fullsequential(0);
+    if (ckps.enfs)
+     inject_set_fullsequential(0);
 #endif
     CLEARBIT(flags2, F_CAMISS);
    }
@@ -1638,5 +1651,18 @@ void ckps_set_mttf(uint16_t mttf)
  ckps.mttf = mttf;
  _END_ATOMIC_BLOCK();
 }
+
+#ifdef FUEL_INJECT
+void ckps_enable_fullsequential(void)
+{
+ if (!ckps.enfs)
+ {
+  _BEGIN_ATOMIC_BLOCK();
+  ckps.enfs = 1;
+   CLEARBIT(flags2, F_CAMISS);
+  _END_ATOMIC_BLOCK();
+ }
+}
+#endif
 
 #endif //ODDFIRE_ALGO

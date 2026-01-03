@@ -195,6 +195,7 @@
 #define INJFLG_USEAIRDEN                3           //!< Use iar density correction map
 #define INJFLG_USEDIFFPRESS             4           //!< Use differential pressure for correction from GPS
 #define INJFLG_SECINJROWSWT             5           //!< Switch to second inj. row when switching to second fuel type
+#define INJFLG_FSAFTERSTART             6           //!< Switch into a full sequential mode after start
 
 //Fuel pump flags
 #define FPF_OFFONGAS                    0           //!< Turn off fuel pump when fuel type is gas

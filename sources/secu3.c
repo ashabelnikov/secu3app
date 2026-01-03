@@ -370,6 +370,8 @@ void init_modules(void)
  ckps_set_knock_chanmap(d.param.knock_selch);
 
 #ifdef FUEL_INJECT
+ if (!CHECKBIT(d.param.inj_flags, INJFLG_FSAFTERSTART))
+  ckps_enable_fullsequential(); //system will switch into a full sequential mode on cranking
  //We set some settings using first fuel's parameters, d.sens.gas_v = 0 now
  //TODO: redundant code fragment
  ckps_set_inj_timing(param_inj_timing(0), d.inj_pw, d.param.inj_anglespec & 0xF); //use inj.timing on cranking, petrol
@@ -414,12 +416,9 @@ void init_modules(void)
  inject_set_fuelcut(!d.sys_locked && !engine_blowing_cond());
 #endif
 
- //perform synchronization of timers 1 and 3
 #ifdef SPLIT_ANGLE
- GTCCR = _BV(TSM) | _BV(PSRSYNC); // halt timer1 and timer3
- TCNT1 = 0; // set 1 and 3 timers to the same value
- TCNT3 = 0;
- GTCCR = 0; // release all timers
+ //perform synchronization of timers 1 and 3
+ sync_timers13();
 #endif
 
 #ifndef SECU3T

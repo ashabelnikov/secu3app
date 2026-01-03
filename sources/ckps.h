@@ -196,4 +196,9 @@ void ckps_set_knock_chanmap(uint8_t chanmap);
  */
 void ckps_set_mttf(uint16_t mttf);
 
+#ifdef FUEL_INJECT
+/**Enables switching into a full sequential mode*/
+void ckps_enable_fullsequential(void);
+#endif
+
 #endif //_CKPS_H_

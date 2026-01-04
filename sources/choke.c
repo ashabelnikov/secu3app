@@ -163,9 +163,6 @@ static uint8_t is_rpmreg_allowed(void)
  */
 static int16_t choke_pos_final(int16_t regval, uint8_t mode, uint16_t time_since_crnk)
 {
- if (d.engine_mode==EM_START)
-  chks.strt_mode = 0; //engine is stopped, so use cranking position again
-
  if (CHECKBIT(d.param.tmp_flags, TMPF_CLT_USE) && !d.floodclear)
  {
   uint16_t pos;
@@ -498,6 +495,28 @@ void do_closed_loop(void)
  }
 }
 
+#ifndef SECU3T
+/**Displace IAC position when EPAS turns on (one time displacement)*/
+void epas_displace_cl(void)
+{
+ if (IOCFG_CHECK(IOP_EPAS_I))
+ {
+  if (!IOCFG_GET(IOP_EPAS_I))
+  {
+   if (!chks.epas_offadded)
+   {
+    chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
+    chks.epas_offadded = 1;
+   }
+  }
+  else
+  {
+   chks.epas_offadded = 0; //allow displacement again
+  }
+ }
+}
+#endif
+
 /** Calculate stepper motor position for normal mode (fuel injection)
  * Uses d ECU data structure
  * \param pwm 1 - PWM IAC, 0 - SM IAC
@@ -517,25 +536,20 @@ int16_t calc_sm_position(uint8_t pwm)
     chks.iac_add = 0;
     CLEARBIT(chks.flags, CF_HOT_ENG);
     chks.strt_t1 = s_timer_gtc();
-    ++chks.strt_mode; //next state - 1
+    ++chks.strt_mode; //next state = 1
     chks.rpmreg_t1 = s_timer_gtc();
     CLEARBIT(chks.flags, CF_REACH_TR);
    }
    break;
 
   case 1: //wait specified crank-to-run time and interpolate between crank and run positions
-   if (d.engine_mode==EM_START)
-   {
-    chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
-    break;
-   }
    {
     uint16_t time_since_crnk = (s_timer_gtc() - chks.strt_t1);
     if (time_since_crnk >= inj_cranktorun_time())
     {
      chks.strt_mode = 2; //transition has finished, we will immediately fall into mode 2, use run value
      chks.iac_pos = get_base_position(1, 1); //use run pos, multiply
-     chks.strt_t1 = s_timer_gtc();     
+     chks.strt_t1 = s_timer_gtc();
     }
     else
     {
@@ -586,19 +600,7 @@ clic_imm:
     //Displace IAC position when EPAS turns on (one time displacement).
     //Displacement will take place only if EPAS_I is not reassigned to other function and EPAS_I = 0
     #ifndef SECU3T
-    if (IOCFG_CHECK(IOP_EPAS_I))
-    {
-     if (!IOCFG_GET(IOP_EPAS_I))
-     {
-      if (!chks.epas_offadded)
-      {
-       chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
-       chks.epas_offadded = 1;
-      }
-     }
-     else
-      chks.epas_offadded = 0; //alllow displacement again
-    }
+    epas_displace_cl();
     #endif
 
 skip_pid:
@@ -633,9 +635,6 @@ skip_pid:
      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.epas_iacoff)) << 4;
     #endif
    }
-
-   if (d.engine_mode==EM_START)
-    chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
    break;
  }
 
@@ -798,6 +797,11 @@ void choke_control(void)
    break;
  }
 #endif //SM_CONTROL
+}
+
+void choke_eng_stopped_notification(void)
+{
+ chks.strt_mode = 0; //engine is stopped, so, go into the cranking mode again
 }
 
 #ifdef SM_CONTROL

@@ -531,6 +531,10 @@ MAIN()
    fuelcut_eng_stopped_notification();
 #endif
 
+#if defined(SM_CONTROL) || defined(FUEL_INJECT)
+   choke_eng_stopped_notification();
+#endif
+
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
 

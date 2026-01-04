@@ -39,6 +39,9 @@ void choke_init_ports(void);
  */
 void choke_control(void);
 
+/**called from main loop when system detects engine stop*/
+void choke_eng_stopped_notification(void);
+
 #ifdef SM_CONTROL
 /** Used in power management
  * \return 1 - choke is ready, 0 - choke is not ready

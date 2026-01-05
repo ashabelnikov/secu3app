@@ -1499,7 +1499,7 @@ static void process_ckps_cogs(void)
   cams_detect_edge();
 #endif
 
-#if defined(FUEL_INJECT)
+#if defined(PHASE_SENSOR) && defined(FUEL_INJECT)
  //Turn on full sequential mode
  if (!CHECKBIT(flags2, F_CAMISS))
  {
@@ -1627,7 +1627,7 @@ void ckps_set_mttf(uint16_t mttf)
  _END_ATOMIC_BLOCK();
 }
 
-#ifdef FUEL_INJECT
+#if defined(PHASE_SENSOR) && defined(FUEL_INJECT)
 void ckps_enable_fullsequential(void)
 {
  if (!ckps.enfs)

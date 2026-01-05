@@ -370,8 +370,10 @@ void init_modules(void)
  ckps_set_knock_chanmap(d.param.knock_selch);
 
 #ifdef FUEL_INJECT
+#ifdef PHASE_SENSOR
  if (!CHECKBIT(d.param.inj_flags, INJFLG_FSAFTERSTART))
   ckps_enable_fullsequential(); //system will switch into a full sequential mode on cranking
+#endif
  //We set some settings using first fuel's parameters, d.sens.gas_v = 0 now
  //TODO: redundant code fragment
  ckps_set_inj_timing(param_inj_timing(0), d.inj_pw, d.param.inj_anglespec & 0xF); //use inj.timing on cranking, petrol

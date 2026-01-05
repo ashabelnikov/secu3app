@@ -1229,7 +1229,7 @@ void ckps_set_mttf(uint16_t mttf)
  _END_ATOMIC_BLOCK();
 }
 
-#ifdef FUEL_INJECT
+#if defined(PHASE_SENSOR) && defined(FUEL_INJECT)
 void ckps_enable_fullsequential(void)
 {
  if (!ckps.enfs)

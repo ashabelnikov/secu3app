@@ -757,4 +757,11 @@ void ckps_set_mttf(uint16_t mttf)
  //not applicable in this implementation
 }
 
+#if defined(PHASE_SENSOR) && defined(FUEL_INJECT)
+void ckps_enable_fullsequential(void)
+{
+ //not applicable in this implementation
+}
+#endif
+
 #endif //CKPS_NPLUS1

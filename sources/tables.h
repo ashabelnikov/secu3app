@@ -1078,10 +1078,12 @@ typedef struct params_t
   uint16_t  irr_k_load;         //!< coefficient of load used to calcultate argument in rigidity map, value * 32.0, max 48.0
   uint16_t  irr_k_rpm;          //!< coefficient of rpm used to calcultate argument in rigidity map, value * 32.0, max 48.0
 
+  uint16_t  load_idl_thrd;      //!< load threshold for entering IAC idling CL
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[69];
+  uint8_t  reserved[67];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

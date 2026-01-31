@@ -157,7 +157,7 @@ void cams_init_state(void)
  }
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
- //remapping of REF_S to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
+ //remapping REF_S to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
  else if (IOCFG_CMPN(IOP_REF_S, IOP_CKPS))
  {
   camstate.ref_s_inpalt = 4;                //REF_S remapped to CKP sensor
@@ -199,7 +199,7 @@ void cams_init_state(void)
  }
 #endif
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
- //remapping of PS to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
+ //remapping PS to CKPS takes sense only with HALL_SYNC or CKPS_NPLUS1
  else if (IOCFG_CMPN(IOP_PS, IOP_CKPS))
  {
   camstate.ps_inpalt = 3;                   //PS remapped to CKP sensor

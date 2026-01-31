@@ -416,7 +416,7 @@ void do_closed_loop(void)
  int16_t error = rpm - d.sens.rpm, intlim = d.param.idl_intrpm_lim * 10;
  restrict_value_to(&error, -intlim, intlim); //limit maximum error (for P and I)
 
- if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.rpm < rpm_thrd1))
+ if (!CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode == EM_IDLE && d.sens.rpm < rpm_thrd1 && d.load > d.param.load_idl_thrd))
  {
   SETBIT(chks.flags, CF_CL_LOOP);   //enter closed loop, position of valve will be determined only by regulator
   chks.prev_rpm_error[0] = error;   //reset previous error

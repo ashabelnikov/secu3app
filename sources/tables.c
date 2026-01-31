@@ -808,6 +808,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .irr_k_load =                  ROUND(2.0*32),
   .irr_k_rpm =                   ROUND(2.0*32),
 
+  .load_idl_thrd =               LOAD_MAG(0.0),
+
   .reserved =                    {0},
   .crc =                         0
  },

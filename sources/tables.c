@@ -772,7 +772,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .idl_reg_d =                   0,                  //not used by default
 
+#ifdef CKPS_NPLUS1
+  .ckps_mttf =                   ROUND(2.66*256),    //2.66 by default (for N+1 wheel)
+#else
   .ckps_mttf =                   ROUND(2.5*256),     //2.5 by default (for 60-2 wheel)
+#endif
 
   .fps_curve_offset =            VOLTAGE_MAGNITUDE(-0.5), //-0.5V
   .fps_curve_gradient =          3528,               //172.25kPa/V
@@ -1310,7 +1314,11 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .sfc_tps_thrd = TPS_MAGNITUDE(3.0), //3%
   .evap_map_thrd = PRESSURE_MAGNITUDE(250.0),
+#ifdef CKPS_NPLUS1
+  .ckps_skip_trig = 2, //skip 2 teeth, minimum possible (value must be >= 2)
+#else
   .ckps_skip_trig = 5, //skip 5 teeth
+#endif
 
   .maninjpw_idl = 1, //use manual inj.PW correction on idling
 

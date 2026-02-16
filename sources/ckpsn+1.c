@@ -48,6 +48,7 @@
 #include "port/port.h"
 #include "bitmask.h"
 #include "ckps.h"
+#include "injector.h"   //inject_start_inj()
 #include "ioconfig.h"
 #include "magnitude.h"
 #include "tables.h"     //fnptr_t
@@ -59,8 +60,8 @@
  #error "You can not use phase sensor and phased ignition when N+1 method is used for synchronization!"
 #endif
 
-/**Maximum number of ignition channels (cylinders) */
-#define IGN_CHANNELS_MAX      8
+/**Maximum number of cylinders */
+#define CYLNUM_MAX           8
 
 //Define values for controlling of outputs
 #define IGN_OUTPUTS_INIT_VAL 1        //!< value used for initialization
@@ -75,21 +76,20 @@
 #define IGNOUTCB_OFF_VAL IGN_OUTPUTS_OFF_VAL
 #endif
 
+/**dwell dead time, e.g. 156 * 3.2 = 500uS */
+#define DWL_DEAD_TIME PGM_GET_WORD(&fw_data.exdata.dwl_dead_time)
+
 /**Calibration constant used to compensate delay in interrupts (ticks of timer 1) */
 #define CALIBRATION_DELAY    2
 
-/**How many cogs must be skipped during start up*/
-#define HALL_ON_START_SKIP_COGS 2
+/**Synchronization condition */
+#define HALL_SYNCCOND(p) (((uint32_t)(p) * hall.mttf) >> 8)
 
-/**Synchronization contition. Polinomial is equal to v / 2.66 */
-#define HALL_SYNCCOND(v) (((v) >> 2) + ((v) >> 3))
-
-/**Number of cogs including small one, so 2+1 */
-#define HALL_COGS_NUM 3
+/**Maximum number of cogs excluding small one, e.g. possible configurations: 1, 2, 3, 4*/
+#define MAX_NP1_COGS_NUM     4
 
 //Flags (see flags variable)
 #define F_ERROR     0                 //!< Hall sensor error flag, set in the Hall sensor interrupt, reset after processing
-#define F_VHTPER    2                 //!< used to indicate that measured period is valid (actually measured)
 #define F_STROKE    3                 //!< flag for synchronization with rotation
 #define F_USEKNK    4                 //!< flag which indicates using of knock channel
 #define F_HALLEV    5                 //!< flag indicates presence of Hall sensor event
@@ -104,18 +104,20 @@
 /** State variables */
 typedef struct
 {
- uint16_t measure_start_value;        //!< previous value if timer 1 used for calculation of stroke period
- uint16_t tmr_prev;                   //!< same as measure_start_value but used for determining cog period
+// uint16_t measure_start_value;      //!< previous value if timer 1 used for calculation of stroke period
+ uint16_t tmr_prev_prev;              //!< previous value of previous value of timer   
+ uint16_t tmr_prev;                   //!< previous value of timer used for determining cog period
  volatile uint16_t stroke_period;     //!< stores the last measurement of 1 stoke
  uint8_t cog;                         //!< current cog
  uint16_t cog_period;                 //!< same as stroke period, but may also contain period value of small tooth
  uint16_t cog_period_prev;            //!< previous value of cog_period
  volatile uint8_t chan_number;        //!< number of ignition channels
+ volatile uint8_t cyl_number;         //!< number of cylinders
  uint32_t frq_calc_dividend;          //!< divident for calculating of RPM
  volatile int16_t  advance_angle;     //!< required adv.angle * ANGLE_MULTIPLIER
  volatile uint8_t t1oc;               //!< Timer 1 overflow counter
  volatile uint8_t t1oc_s;             //!< Contains value of t1oc synchronized with stroke_period value
- volatile fnptr_t io_callback[HALL_COGS_NUM-1]; //!< Callbacks used to set state of corresponding ignition channel
+ volatile fnptr_t io_callback[MAX_NP1_COGS_NUM]; //!< Callbacks used to set state of the corresponding ignition channel
  uint8_t channel_mode_b;              //!< channel index for use in COMPB interrupt
  uint8_t channel_mode_a;              //!< channel index for use in COMPA interrupt
  volatile uint16_t degrees_per_stroke;//!< Number of degrees which corresponds to the 1 stroke
@@ -136,6 +138,10 @@ typedef struct
  uint8_t ckps_inpalt;                 //!< indicates that CKPS is not remapped
 
  volatile uint8_t TCNT0_H;            //!< For supplementing timer/counter 0 up to 16 bits
+ volatile uint16_t mttf;              //!< factor for detecting 1st tooth (little one)
+#ifdef FUEL_INJECT
+ volatile uint8_t cur_chan;           //!< current number of channel for fuel injection
+#endif
 }hallstate_t;
 
 hallstate_t hall;                     //!< instance of state variables
@@ -143,12 +149,12 @@ hallstate_t hall;                     //!< instance of state variables
 /** Arrange flags in the free I/O register
  *  note: may be not effective on other MCUs or even cause bugs! Be aware.
  */
-#define flags  GPIOR0                 //ATmega644 has one general purpose I/O register
+#define flags  GPIOR0                 //ATmega1284 has one general purpose I/O register
 #define flags2 TWBR
 
 /**Table srtores dividends for calculating of RPM */
 #define FRQ_CALC_DIVIDEND(channum) PGM_GET_DWORD(&frq_calc_dividend[channum])
-PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
+PGM_DECLARE(uint32_t frq_calc_dividend[1+CYLNUM_MAX]) =
  //     1          2          3          4         5         6         7         8
  {0, 37500000L, 18750000L, 12500000L, 9375000L, 7500000L, 6250000L, 5357143L, 4687500L};
 
@@ -158,10 +164,9 @@ void ckps_init_state_variables(void)
 
  hall.stroke_period = 0xFFFF;
  hall.advance_angle = hall.shutter_wnd_width; //=0
- hall.cog = 1;
+ hall.cog = 0;
 
  CLEARBIT(flags, F_STROKE);
- CLEARBIT(flags, F_VHTPER);
  CLEARBIT(flags, F_HALLEV);
  CLEARBIT(flags, F_SPSIGN);
  CLEARBIT(flags2, F_STRMOD);
@@ -180,6 +185,9 @@ void ckps_init_state_variables(void)
  hall.knkwnd_mode = 0;
 #ifdef DWELL_CONTROL
  hall.cr_acc_time = 0;
+#endif
+#ifdef FUEL_INJECT
+ hall.cur_chan = 0;
 #endif
  _END_ATOMIC_BLOCK();
 }
@@ -227,10 +235,10 @@ void ckps_init_ports(void)
  IOCFG_INIT(IOP_IGN_OUT2, IGN_OUTPUTS_INIT_VAL);        //init 2-nd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT3, IGN_OUTPUTS_INIT_VAL);        //init 3-rd (can be remapped)
  IOCFG_INIT(IOP_IGN_OUT4, IGN_OUTPUTS_INIT_VAL);        //init 4-th (can be remapped)
- IOCFG_INIT(IOP_IGN_OUT5, IGN_OUTPUTS_INIT_VAL);        //init 5-th (can be remapped)
- IOCFG_INIT(IOP_IGN_OUT6, IGN_OUTPUTS_INIT_VAL);        //init 6-th (can be remapped)
- IOCFG_INIT(IOP_IGN_OUT7, IGN_OUTPUTS_INIT_VAL);        //init 7-th (for maniacs)
- IOCFG_INIT(IOP_IGN_OUT8, IGN_OUTPUTS_INIT_VAL);        //init 8-th (for maniacs)
+ IOCFG_INIT(IOP_IGN_OUT5, IGN_OUTPUTS_INIT_VAL);        //init 5-th (not applicable in this impl.)
+ IOCFG_INIT(IOP_IGN_OUT6, IGN_OUTPUTS_INIT_VAL);        //init 6-th (not applicable in this impl.)
+ IOCFG_INIT(IOP_IGN_OUT7, IGN_OUTPUTS_INIT_VAL);        //init 7-th (not applicable in this impl.)
+ IOCFG_INIT(IOP_IGN_OUT8, IGN_OUTPUTS_INIT_VAL);        //init 8-th (not applicable in this impl.)
 
  //init I/O for Hall output if it is enabled
 #ifdef HALL_OUTPUT
@@ -361,8 +369,8 @@ uint8_t ckps_is_cog_changed(void)
 /**Tune channels' I/O for semi-sequential ignition mode (wasted spark) */
 static void set_channels_ss(void)
 {
- uint8_t _t, i = 0, chan = hall.chan_number / 2;
- for(; i < chan; ++i)
+ uint8_t _t, i = 0;
+ for(; i < hall.chan_number; ++i)
  {
   fnptr_t value = IOCFG_CB(i);
   _t=_SAVE_INTERRUPT();
@@ -383,7 +391,8 @@ void ckps_set_cyl_number(uint8_t i_cyl_number)
 
  _t = _SAVE_INTERRUPT();
  _DISABLE_INTERRUPT();
- hall.chan_number = i_cyl_number; //set new value
+ hall.chan_number = i_cyl_number >> 1; //set new value
+ hall.cyl_number = i_cyl_number;
  hall.degrees_per_stroke = degrees_per_stroke;
  _RESTORE_INTERRUPT(_t);
 
@@ -449,18 +458,6 @@ void ckps_set_degrees_btdc(int16_t degrees_btdc)
  //not supported
 }
 
-/** Turn OFF specified ignition channel
- * \param i_channel number of ignition channel to turn off
- */
-static inline void turn_off_ignition_channel(uint8_t i_channel)
-{
- if (!CHECKBIT(flags, F_IGNIEN))
-  return; //ignition disabled
- //Completion of igniter's ignition drive pulse, transfer line of port into a low level - makes
- //the igniter go to the regime of energy accumulation
- ((iocfg_pfn_set)hall.io_callback[i_channel])(IGNOUTCB_OFF_VAL);
-}
-
 /**Interrupt handler for Compare/Match channel A of timer T1
  */
 ISR(TIMER1_COMPA_vect)
@@ -481,25 +478,25 @@ ISR(TIMER1_COMPA_vect)
  hall.channel_mode_b = hall.channel_mode_a;
  //set timer for pulse completion, use fast division by 3
  if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
-//OCR1B = tmr + (((uint32_t)hall.stroke_period * 0xAAAB) >> 17); //pulse width = 1/3
-  OCR1B = tmr + hall.stroke_period / 3;
+  OCR1B = tmr + (((uint32_t)hall.stroke_period * 21845) >> 16); //pulse width = 1/3, 21845 = 1/3 * 65536
+//OCR1B = tmr + hall.stroke_period / 3;
  else
   OCR1B = tmr + 21845;  //pulse width is limited to 87.38ms
 #else
  if (hall.rising_edge_spark)
  {
   hall.channel_mode_b = hall.channel_mode_a;
-  if (hall.cr_acc_time > hall.stroke_period-120)
-   hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+  if (hall.cr_acc_time > hall.stroke_period-DWL_DEAD_TIME)
+   hall.cr_acc_time = hall.stroke_period-DWL_DEAD_TIME;  //restrict accumulation time. Dead band = DWL_DEAD_TIME
   OCR1B = tmr + hall.cr_acc_time;
  }
  else
  {
-  hall.channel_mode_b = (hall.channel_mode_a < (hall.chan_number>>1)-1) ? hall.channel_mode_a + 1 : 0;
+  hall.channel_mode_b = (hall.channel_mode_a < (hall.chan_number-1)) ? hall.channel_mode_a + 1 : 0;
   if ((CHECKBIT(flags, F_SPSIGN) && hall.t1oc_s < 2) || (!CHECKBIT(flags, F_SPSIGN) && !hall.t1oc_s))
   {
-   if (hall.cr_acc_time > hall.stroke_period-120)
-    hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+   if (hall.cr_acc_time > hall.stroke_period-DWL_DEAD_TIME)
+    hall.cr_acc_time = hall.stroke_period-DWL_DEAD_TIME;  //restrict accumulation time. Dead band = DWL_DEAD_TIME 
    OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
   }
   else
@@ -539,7 +536,14 @@ ISR(TIMER1_COMPA_vect)
  */
 ISR(TIMER1_COMPB_vect)
 {
- turn_off_ignition_channel(hall.channel_mode_b);//finish ignition pulse
+ //finish ignition pulse
+ if (CHECKBIT(flags, F_IGNIEN))
+ {//ignition enabled
+  //Completion of igniter's ignition drive pulse, setting line of port into a low level - makes
+  //the coil go to the regime of energy accumulation
+  ((iocfg_pfn_set)hall.io_callback[hall.channel_mode_b])(IGNOUTCB_OFF_VAL);
+ }
+
  TIMSK1&= ~_BV(OCIE1B);     //disable interrupt
 
 #ifdef HALL_OUTPUT
@@ -574,17 +578,18 @@ static inline void ProcessCogEdge(uint16_t tmr)
  if (!CHECKBIT(flags2, F_ISSYNC))
  {
   if (!CHECKBIT(flags2, F_STRMOD))
-  {
-   if (hall.cog >= HALL_ON_START_SKIP_COGS)
+  { //state 0: skip several teeth
+   if (hall.cog >= PGM_GET_WORD(&fw_data.exdata.ckps_skip_trig))
     SETBIT(flags2, F_STRMOD);
-   goto sync_skip;
+   else
+    goto sync_skip;
   }
-  else
-  {
-   if (HALL_SYNCCOND(hall.cog_period_prev) > hall.cog_period)
+  if (CHECKBIT(flags2, F_STRMOD))
+  { //state 1: find 1st tooth
+   if (HALL_SYNCCOND(hall.cog_period) < hall.cog_period_prev)
    {
     SETBIT(flags2, F_ISSYNC);                //synchronized!
-    hall.cog = 1;
+    hall.cog = 0;
     goto sync_enter;
    }
    goto sync_skip; //skip all if we can't synchronize
@@ -592,37 +597,31 @@ static inline void ProcessCogEdge(uint16_t tmr)
  }
 
  //Check synchronization
- if (HALL_SYNCCOND(hall.cog_period_prev) > hall.cog_period)
+ if (HALL_SYNCCOND(hall.cog_period) < hall.cog_period_prev)
  {
-  if (hall.cog != HALL_COGS_NUM+1) //check for error
+  if (hall.cog != hall.chan_number+1) //check for error
    SETBIT(flags, F_ERROR);
-  hall.cog = 1;
+  hall.cog = 0;
  }
- else if (hall.cog >= HALL_COGS_NUM+1)  //cog must not exceed HALL_COGS_NUM
+ else if (hall.cog >= hall.chan_number+1)  //cog must not exceed number of channels
  {
   SETBIT(flags, F_ERROR);
-  hall.cog = 1;                         //This this a good idea to set here cog=1, because if misssync occurs, system can continue to work properly (only indicating error by CE)
+  hall.cog = 0;                         //This this a good idea to set here cog=0, because if sync occurs, system can continue to work properly (only indicating error by CE)
  }
 
  //skip small tooth
- if (hall.cog == HALL_COGS_NUM)
+ if (hall.cog == hall.chan_number)
   goto sync_skip;
 
+ uint16_t delay, tmr_prev;
 sync_enter:
 
- //save period value if it is correct. We need to do it first of all to have fresh stroke_period value
- if (CHECKBIT(flags, F_VHTPER))
- {
-  //calculate stroke period
-  hall.stroke_period = tmr - hall.measure_start_value;
-  WRITEBIT(flags, F_SPSIGN, tmr < hall.measure_start_value); //save sign
-  hall.t1oc_s = hall.t1oc, hall.t1oc = 0; //save value and reset counter
- }
- SETBIT(flags, F_VHTPER);
- SETBIT(flags, F_STROKE); //set the stroke-synchronization event
- hall.measure_start_value = tmr;
-
- uint16_t delay;
+ tmr_prev = (0==hall.cog) ? hall.tmr_prev_prev : hall.tmr_prev; //use correct previous value (skip tmr value caused by small tooth)
+ hall.stroke_period = tmr - tmr_prev;       //calculate stroke period 
+ WRITEBIT(flags, F_SPSIGN, tmr < tmr_prev); //save sign
+ hall.t1oc_s = hall.t1oc, hall.t1oc = 0;    //save value and reset counter
+ SETBIT(flags, F_STROKE);                   //set the stroke-synchronization event
+ 
 #ifdef STROBOSCOPE
  hall.strobe = 1; //strobe!
 #endif
@@ -641,7 +640,7 @@ sync_enter:
  _DISABLE_INTERRUPT();
 #endif
 
- hall.channel_mode_a = hall.cog-1;
+ hall.channel_mode_a = hall.cog;
 
  OCR1A = tmr + ((delay < 15) ? 15 : delay) - CALIBRATION_DELAY; //set compare channel, additionally prevent spark missing when advance angle is near to 60°
  TIFR1 = _BV(OCF1A);
@@ -663,20 +662,28 @@ sync_enter:
 
  adc_begin_measure_map(); //start the process of MAP sampling
 
+#ifdef FUEL_INJECT
+ //TODO: call it at TDC or use injection timing
+ inject_start_inj(hall.cur_chan);     //start fuel injection
+ if (++hall.cur_chan >= hall.cyl_number)
+  hall.cur_chan = 0;
+#endif
+
 sync_skip:
  ++hall.cog;
+ hall.tmr_prev_prev = hall.tmr_prev;
  hall.tmr_prev = tmr;
  hall.cog_period_prev = hall.cog_period;
 }
 
-/**Input capture interrupt of timer 1 */
+/**(CKPS) Input capture interrupt of timer 1 */
 ISR(TIMER1_CAPT_vect)
 {
  ProcessCogEdge(ICR1);
  SETBIT(flags, F_HALLEV); //set event flag
 }
 
-/**INT1 handler function (Interrupt from a Hall sensor (external)).
+/**INT1 (PS) handler function (Interrupt from a Hall sensor (external)).
  * See also prototype of this function in camsens.c
  */
 void ProcessInterrupt1(void)
@@ -685,7 +692,7 @@ void ProcessInterrupt1(void)
  SETBIT(flags, F_HALLEV); //set event flag
 }
 
-/**INT0 handler function (Interrupt from a Hall sensor (external)).
+/**INT0 (REF_S) handler function (Interrupt from a Hall sensor (external)).
  * See also prototype of this function in camsens.c
  */
 void ProcessInterrupt0(void)
@@ -754,7 +761,9 @@ void ckps_set_knock_chanmap(uint8_t chanmap)
 
 void ckps_set_mttf(uint16_t mttf)
 {
- //not applicable in this implementation
+ _BEGIN_ATOMIC_BLOCK();
+ hall.mttf = mttf;
+ _END_ATOMIC_BLOCK();
 }
 
 #if defined(PHASE_SENSOR) && defined(FUEL_INJECT)

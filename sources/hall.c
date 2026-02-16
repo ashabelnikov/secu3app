@@ -76,6 +76,9 @@
 #define IGNOUTCB_OFF_VAL IGN_OUTPUTS_OFF_VAL
 #endif
 
+/**dwell dead time, e.g. 156 * 3.2 = 500uS */
+#define DWL_DEAD_TIME PGM_GET_WORD(&fw_data.exdata.dwl_dead_time)
+
 /**Calibration constant used to compensate delay in interrupts (ticks of timer 1) */
 #define CALIBRATION_DELAY    2
 
@@ -493,8 +496,8 @@ ISR(TIMER1_COMPA_vect)
 #endif
   int32_t period32 = GET_OVF_AWARE_PERIOD(CHECKBIT(flags, F_SPSIGN), hall.t1oc_s, hall.stroke_period);
   if (period32 < 32768) { //prevent error caused by overflow
-   if (hall.cr_acc_time > hall.stroke_period-120)
-    hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+   if (hall.cr_acc_time > hall.stroke_period-DWL_DEAD_TIME)
+    hall.cr_acc_time = hall.stroke_period-DWL_DEAD_TIME;  //restrict accumulation time. Dead band = DWL_DEAD_TIME 
   }
   OCR1B = tmr + hall.cr_acc_time;
 #ifdef COOLINGFAN_PWM
@@ -507,8 +510,8 @@ ISR(TIMER1_COMPA_vect)
   {
    if (CHECK_TIM1_OVF())
    {
-    if (hall.cr_acc_time > hall.stroke_period-120)
-     hall.cr_acc_time = hall.stroke_period-120;  //restrict accumulation time. Dead band = 500us 
+    if (hall.cr_acc_time > hall.stroke_period-DWL_DEAD_TIME)
+     hall.cr_acc_time = hall.stroke_period-DWL_DEAD_TIME;  //restrict accumulation time. Dead band = DWL_DEAD_TIME 
     OCR1B  = tmr + hall.stroke_period - hall.cr_acc_time;
    }
    else
@@ -685,8 +688,8 @@ static inline void ProcessFallingEdge(uint16_t tmr)
 #endif
   if (delay < 65536)
   {
-   if (hall.cr_acc_time > delay-120)
-    hall.cr_acc_time = delay-120;  //restrict accumulation time. Dead band = 500us 
+   if (hall.cr_acc_time > delay-DWL_DEAD_TIME)
+    hall.cr_acc_time = delay-DWL_DEAD_TIME;  //restrict accumulation time. Dead band = DWL_DEAD_TIME 
    OCR1B  = tmr + delay - hall.cr_acc_time;
   }
   else

@@ -262,7 +262,8 @@ PGM_DECLARE(uint32_t frq_calc_dividend[1+IGN_CHANNELS_MAX]) =
 
 #ifdef DWELL_CONTROL
 
-#define DWL_DEAD_TIME 156        //!< 500uS dead time
+/**dwell dead time, e.g. 156 * 3.2 = 500uS */
+#define DWL_DEAD_TIME PGM_GET_WORD(&fw_data.exdata.dwl_dead_time)
 
 /**Maximum queue size for ignition events, MUST BE power of two (2,4,8 etc) */
 #define IGN_QUEUE_SIZE 4

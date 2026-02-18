@@ -109,6 +109,7 @@ typedef struct
  int16_t   iac_pos;        //!< IAC pos between calls of the closed loop regulator
  int16_t   iac_add;        //!< Smoothly increased value
  uint8_t   epas_offadded;  //!<
+ int16_t   iac_pos_cl;     //!<
 #endif
 
 }choke_st_t;
@@ -119,7 +120,7 @@ choke_st_t chks = {0,0,0,0,0,0,0,0,{0,0,0}
                    ,0,0,0
 #endif
 #ifdef FUEL_INJECT
-                   ,{0,0},0,0,0
+                   ,{0,0},0,0,0,0
 #endif
                   };
 
@@ -425,6 +426,8 @@ void do_closed_loop(void)
  if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.rpm > rpm_thrd2))
   CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
 
+ chks.iac_pos_cl = chks.iac_pos;    //initialize integrator's state with default value
+
  if (CHECKBIT(chks.flags, CF_CL_LOOP))
  { //closed loop mode is active
   uint16_t rigidity = inj_idlreg_rigidity(d.param.idl_map_value, rpm);  //regulator's rigidity
@@ -460,20 +463,22 @@ void do_closed_loop(void)
 
   chks.prev_rpm_error[1] = chks.prev_rpm_error[0];
   chks.prev_rpm_error[0] = error; //save for further calculation of derror
+  chks.iac_pos_cl = chks.iac_pos; //update integrator's state  with actual value for use after exiting of CL 
  }
  else
  { //closed loop is not active
-  chks.iac_pos = get_base_position(1, 0); //use run pos as base, don't multiply
+  //use integrator to transit smoothly between last CL position and position from LUT
+  chks.iac_pos = value_integrator(get_base_position(1, 0), &chks.iac_pos_cl, PGM_GET_BYTE(&fw_data.exdata.iac_cltolut_int_stp), PGM_GET_BYTE(&fw_data.exdata.iac_cltolut_int_stp)); //use run pos as base, don't multiply
   if (d.engine_mode == EM_IDLE)
   {
    //if thrass_algo=0, then use old algorithm, if thrass_algo=1, then use new algorithm
    if  (d.sens.rpm > rpm_thrd2 && 0==PGM_GET_BYTE(&fw_data.exdata.thrass_algo))
    {
-    //use throttle assist map or just a simple constant
+    //just initialize iac_add, use throttle assist map or just a simple constant
     chks.iac_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
    }
    else
-   { //RPM between thrd1 and thrd2
+   { //RPM between thrd1 and thrd2 or new algorithm
     chks.iac_add-=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_en); //enter
     if (chks.iac_add < 0)
      chks.iac_add = 0;
@@ -481,8 +486,8 @@ void do_closed_loop(void)
    chks.iac_pos+=chks.iac_add; //x16, work position + addition
   }
   else
-  {
-   if  (d.sens.rpm > rpm_thrd2)
+  { //working
+   if (d.sens.rpm > rpm_thrd2)
    {
     chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
     //use throttle assist map or just a simple constant

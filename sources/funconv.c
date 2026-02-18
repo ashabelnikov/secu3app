@@ -510,31 +510,31 @@ int16_t idling_pregulator(s_timer16_t* io_timer)
  return idl_prstate.output_state >> IRUSDIV;
 }
 
-//Non-linear filter, which  limits spped of ign. timing changing on engine's transient modes
-//new_advance_angle - new value of advance angle (ignition timing)
-//ip_prev_state - value of advance angle in the previous stroke
+//Non-linear filter, which limits rate of change of an input value using a simple integrator
+//new_value - value to be integrated
+//ip_int_state - value in the previous step of integration
 //intstep_p,intstep_m - values of positive and negative steps of integration, positive values only
-//Return corrected advance angle
-int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m)
+//Return integrated value
+int16_t value_integrator(int16_t new_value, int16_t* ip_int_state, int16_t intstep_p, int16_t intstep_m)
 {
- int16_t difference;
- difference = new_advance_angle - *ip_prev_state;
+ int16_t diff;
+ diff = new_value - *ip_int_state;
 
- if (difference > intstep_p)
+ if (diff > intstep_p)
  {
-  (*ip_prev_state)+= intstep_p;
-  return *ip_prev_state;
+  (*ip_int_state)+= intstep_p;
+  return *ip_int_state;
  }
 
- if (difference < -intstep_m)
+ if (diff < -intstep_m)
  {
-  (*ip_prev_state)-= intstep_m;
-  return *ip_prev_state;
+  (*ip_int_state)-= intstep_m;
+  return *ip_int_state;
  }
 
- //current value of ignition timing will be previous next time
- *ip_prev_state = new_advance_angle;
- return *ip_prev_state;
+ //current value will be previous next time
+ *ip_int_state = new_value;
+ return *ip_int_state;
 }
 
 // Implements function of the attenuator's gain/attenuation vs RPM

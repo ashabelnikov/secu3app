@@ -683,7 +683,7 @@ void eculogic_stroke_event_notification(void)
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   ckps_set_shutter_spark(d.sens.rpm < 200 && 0==start_function());
 #endif
-  d.corr.curr_angle = advance_angle_inhibitor(lgs.calc_adv_ang, &lgs.advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
+  d.corr.curr_angle = value_integrator(lgs.calc_adv_ang, &lgs.advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
  }
 
 #ifdef SPLIT_ANGLE

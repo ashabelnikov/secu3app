@@ -1411,6 +1411,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .aircond_clt_ovh = TEMPERATURE_MAGNITUDE(120.0),
 
+  .iac_cltolut_int_stp = 16, //0.5%
+
   /**reserved bytes*/
   {0}
  },

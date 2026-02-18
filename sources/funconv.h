@@ -79,14 +79,14 @@ void idling_regulator_init(void);
  */
 int16_t idling_pregulator(s_timer16_t* io_timer);
 
-/** function for restricting of advance angle alternation speed
- * \param new_advance_angle New value of advance angle (input)
- * \param ip_prev_state state variable for storing value between calls of function
- * \param intstep_p Speed limit for increasing
- * \param intstep_m Speed limit for decreasing
- * \return value of advance angle * 32
+/** function for restricting value's rate of change. Uses integrator
+ * \param new_value value to be integrated (input)
+ * \param ip_int_state state variable for storing value between calls of function (state of the integrator)
+ * \param intstep_p Speed limit for increasing, must be positive value
+ * \param intstep_m Speed limit for decreasing, must be positive value
+ * \return integrated value
  */
-int16_t advance_angle_inhibitor(int16_t new_advance_angle, int16_t* ip_prev_state, int16_t intstep_p, int16_t intstep_m);
+int16_t value_integrator(int16_t new_value, int16_t* ip_int_state, int16_t intstep_p, int16_t intstep_m);
 
 #if defined(DWELL_CONTROL) || defined(FUEL_INJECT)
 /** Calculates current accumulation time (dwell control) / injector dead time using current board voltage

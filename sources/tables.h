@@ -724,12 +724,14 @@ typedef struct fw_ex_data_t
   uint8_t use_dbgvar;
   int16_t  aircond_clt_ovh;    //!< Air conditioner will be off if engine temperature is above this threshold
 
+  uint8_t iac_cltolut_int_stp; //!< CL to table position transition step (% per 100ms)
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1509];
+  uint8_t reserved[1508];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

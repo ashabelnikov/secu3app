@@ -780,8 +780,8 @@ typedef struct params_t
   int16_t fuelcut_cts_thrd;              //!< fuel cut off CTS threshold
 
   // Advance angle control
-  int16_t  angle_dec_speed;              //!< limitation of alternation speed of advance angle (when decreasing)
-  int16_t  angle_inc_speed;              //!< limitation of alternation speed of advance angle (when increasing)
+  int16_t  angle_dec_speed;              //!< limitation of rate of change of advance angle (when decreasing)
+  int16_t  angle_inc_speed;              //!< limitation of rate of change of advance angle (when increasing)
   int16_t  max_angle;                    //!< system's maximum advance angle limit
   int16_t  min_angle;                    //!< system's minimum advance angle limit
   int16_t  angle_corr;                   //!< octane correction of advance angle
@@ -1082,10 +1082,13 @@ typedef struct params_t
 
   uint16_t  load_idl_thrd;      //!< load threshold for entering IAC idling CL
 
+  int16_t  injpw_dec_speed;     //!< limitation of rate of change of Inj. PW (when decreasing)
+  int16_t  injpw_inc_speed;     //!< limitation of rate of change of Inj. PW (when increasing)
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t  reserved[67];
+  uint8_t  reserved[63];
 
   /**CRC of this structure (for checking correctness of data after loading from EEPROM) */
   uint16_t crc;

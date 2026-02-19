@@ -50,17 +50,20 @@ typedef struct
  uint8_t  cog_changed;           //!< Flag which indicates there was crankshaft revolution after last power on
  uint8_t  sfc_transient_e;       //!< Counter for soft transient from normal injection to the fuel cut mode
  uint8_t  sfc_transient_l;       //!< Counter for soft transient from the fuel cut mode to normal injection
- uint16_t sfc_pw_e;              //!<
- uint16_t sfc_pw_l;              //!<
+ uint16_t sfc_pw_e;              //!< See apply_smooth_fuelcut()
+ uint16_t sfc_pw_l;              //!< See apply_smooth_fuelcut()
+ int32_t  ipw_int1;              //!< integrator state for PW1
+ int32_t  ipw_int2;              //!< integrator state for PW2
+ uint8_t  ipwint_stroke;         //!< stroke flag
 #endif
  int16_t  calc_adv_ang;          //!< calculated advance angle
- int16_t  advance_angle_inhibitor_state; //!<
+ int16_t  igntim_int_state;      //!< itergrator's state for limitting rate of change of ign. timing
 }logic_state_t;
 
 /**Instance of internal state variables structure*/
 static logic_state_t lgs = {
 #ifdef FUEL_INJECT
- 0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,1,
 #endif
  0,0
 };
@@ -180,9 +183,10 @@ static uint16_t apply_smooth_fuelcut(uint16_t pw)
 /** Finalizes specified inj. PW value (adds injector lag and precalculates normal and shrinked values)
  * \param pw1 Pointer to the variable which contains value of PW for bank1
  * \param pw2 Pointer to the variable which contains value of PW for bank2
+ * \param integrate 0 - bypass inj. PW integration, 1 - pass inj. PW through integrator (limit rate of change)
  * \return PW value ready to be used. Note that values of PW used to drive injectors are stored to inj_pwns array
  */
-static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2)
+static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2, uint8_t integrate)
 {
  uint16_t pwns[2];
  d.inj_dt = (int16_t)accumulation_time(1);      //calculate dead time (injector lag), value is signed
@@ -206,6 +210,27 @@ static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2)
    *pw1 = inj_nonlin_lookup(*pw1);
   if (*pw2 < inj_nonlin_binsmax())
    *pw2 = inj_nonlin_lookup(*pw2);
+ }
+
+ if (integrate)
+ {
+  //limit rate of change of inj. PWs
+  if (lgs.ipwint_stroke)
+  { //integrate
+   *pw1 = value_integrator32(pw1, &lgs.ipw_int1, d.param.injpw_inc_speed, d.param.injpw_dec_speed);
+   *pw2 = value_integrator32(pw2, &lgs.ipw_int2, d.param.injpw_inc_speed, d.param.injpw_dec_speed);
+   lgs.ipwint_stroke = 0;
+  }
+  else
+  { //use previous values
+   *pw1 = lgs.ipw_int1;
+   *pw2 = lgs.ipw_int2;
+  }
+ }
+ else
+ { //initialize integrators' states
+  lgs.ipw_int1 = *pw1;
+  lgs.ipw_int2 = *pw2;
  }
 
  uint8_t i;
@@ -340,7 +365,7 @@ static void fuel_calc(void)
   pw2+= ae_add;
  }
 
- d.inj_pw = finalize_inj_time(&pw, &pw2);
+ d.inj_pw = finalize_inj_time(&pw, &pw2, 1); //use inj. PW integrator
  if (!(d.inj_pw > INJPW_MAG(0.1) && !d.fc_revlim && d.eng_running))
   d.inj_pw = 0;
 #ifdef GD_CONTROL
@@ -494,7 +519,7 @@ void eculogic_system_state_machine(void)
 
    int32_t pw2 = pw;
 
-   d.inj_pw = finalize_inj_time(&pw, &pw2);
+   d.inj_pw = finalize_inj_time(&pw, &pw2, 0);       //don't use inj. PW integrators during cranking
    if (!(d.eng_running))
     d.inj_pw = 0;
 
@@ -673,9 +698,9 @@ void eculogic_stroke_event_notification(void)
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   int16_t strt_map_angle = start_function();
   ckps_set_shutter_spark(0==strt_map_angle);
-  d.corr.curr_angle = lgs.advance_angle_inhibitor_state = (0==strt_map_angle ? 0 : lgs.calc_adv_ang);
+  d.corr.curr_angle = lgs.igntim_int_state = (0==strt_map_angle ? 0 : lgs.calc_adv_ang);
 #else
-  d.corr.curr_angle = lgs.advance_angle_inhibitor_state = lgs.calc_adv_ang;
+  d.corr.curr_angle = lgs.igntim_int_state = lgs.calc_adv_ang;
 #endif
  }
  else
@@ -683,7 +708,7 @@ void eculogic_stroke_event_notification(void)
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   ckps_set_shutter_spark(d.sens.rpm < 200 && 0==start_function());
 #endif
-  d.corr.curr_angle = value_integrator(lgs.calc_adv_ang, &lgs.advance_angle_inhibitor_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
+  d.corr.curr_angle = value_integrator(lgs.calc_adv_ang, &lgs.igntim_int_state, d.param.angle_inc_speed, d.param.angle_dec_speed);
  }
 
 #ifdef SPLIT_ANGLE
@@ -715,6 +740,9 @@ void eculogic_stroke_event_notification(void)
   lgs.sfc_transient_e++;
  if (lgs.sfc_transient_l < PGM_GET_BYTE(&fw_data.exdata.fi_leave_strokes))
   lgs.sfc_transient_l++;
+
+ //update stroke flag for inj. PW integrators
+ lgs.ipwint_stroke = 1;
 #endif
 }
 

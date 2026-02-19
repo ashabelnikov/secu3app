@@ -88,6 +88,9 @@ int16_t idling_pregulator(s_timer16_t* io_timer);
  */
 int16_t value_integrator(int16_t new_value, int16_t* ip_int_state, int16_t intstep_p, int16_t intstep_m);
 
+/** Same as value_integrator, but 32-bit version*/
+int32_t value_integrator32(int32_t* ip_new_value, int32_t* ip_int_state, int16_t intstep_p, int16_t intstep_m);
+
 #if defined(DWELL_CONTROL) || defined(FUEL_INJECT)
 /** Calculates current accumulation time (dwell control) / injector dead time using current board voltage
  * Uses d ECU data structure

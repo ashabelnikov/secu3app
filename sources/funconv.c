@@ -537,6 +537,28 @@ int16_t value_integrator(int16_t new_value, int16_t* ip_int_state, int16_t intst
  return *ip_int_state;
 }
 
+int32_t value_integrator32(int32_t* ip_new_value, int32_t* ip_int_state, int16_t intstep_p, int16_t intstep_m)
+{
+ int32_t diff;
+ diff = *ip_new_value - *ip_int_state;
+
+ if (diff > intstep_p)
+ {
+  (*ip_int_state)+= intstep_p;
+  return *ip_int_state;
+ }
+
+ if (diff < -intstep_m)
+ {
+  (*ip_int_state)-= intstep_m;
+  return *ip_int_state;
+ }
+
+ //current value will be previous next time
+ *ip_int_state = *ip_new_value;
+ return *ip_int_state;
+}
+
 // Implements function of the attenuator's gain/attenuation vs RPM
 // Return 0...63 code corresponding to the certain gain coefficient
 //(see HIP9011/TPIC8101 datasheet).

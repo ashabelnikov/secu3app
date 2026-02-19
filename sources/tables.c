@@ -814,6 +814,9 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .load_idl_thrd =               LOAD_MAG(0.0),
 
+  .injpw_dec_speed =             125, //0.4ms/stroke
+  .injpw_inc_speed =             125, //0.4ms/stroke
+
   .reserved =                    {0},
   .crc =                         0
  },

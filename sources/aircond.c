@@ -113,7 +113,7 @@ void aircond_control(void)
  { //reset timer if engine is not running
   ac.t1 = s_timer_gtc();
   ac.state = 0;
-  d.cond_req_fan = 0, d.cond_req_rpm = 0; //reset cooling fan and RPM requests
+  d.cond_req_fan = d.cond_req_rpm = d.cond_req_on = 0; //reset cooling fan, RPM and air cond. requests
 #ifndef SECU3T
   IOCFG_SETF(IOP_COND_O, 0);
   d.cond_state = 0;
@@ -129,7 +129,8 @@ void aircond_control(void)
 
   case 1: //wait for turn on request
   {
-   d.cond_req_fan = 0; //reset cooling fan request
+   d.cond_req_on = 0;         //reset air conditioner request
+   d.cond_req_fan = 0;        //reset cooling fan request
 #ifdef SECU3T
    if (IOCFG_GET(IOP_COND_I))
 #else
@@ -148,7 +149,8 @@ void aircond_control(void)
     }
     else
     {
-     ac.state = 3; //RPM already ok, skip 2 state
+     d.cond_req_on = 1;         //set air cond. request
+     ac.state = 3;              //RPM already ok, skip 2 state
 #ifndef SECU3T
      IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
      d.cond_state = 1;
@@ -163,14 +165,15 @@ void aircond_control(void)
   case 2: //smoothly increase RPM if it is less than required
    if (d.cond_req_rpm >= d.param.cond_min_rpm)
    {
+    d.cond_req_on = 1;         //set air cond. request
     ++ac.state;
 #ifndef SECU3T
     IOCFG_SETF(IOP_COND_O, 1); //turn on clutch
     d.cond_state = 1;
 #endif
-    ac.t1 = s_timer_gtc();
+    ac.t1 = s_timer_gtc();     //set cooling fan timer
    }
-
+   //and fall into code of the next state:
   case 3: //conditioner is turned on, check for turn off conditions
   {
    ac.t2 = s_timer_gtc();
@@ -182,7 +185,7 @@ void aircond_control(void)
     || (d.sens.temperat >= (int16_t)PGM_GET_WORD(&fw_data.exdata.aircond_clt_ovh))
     || tps_cond)))
 #endif
-    ac.state = 1;
+    ac.state = 1;   
    if ((s_timer_gtc() - ac.t1) > SYSTIM_MAGS(1.5) && ac.state == 3)
     d.cond_req_fan = 1; //turn on cooling fan after 1.5 seconds
 #ifndef SECU3T
@@ -192,7 +195,6 @@ void aircond_control(void)
   }
    break;
  }
-
 }
 
 void aircond_stroke_event_notification(void)

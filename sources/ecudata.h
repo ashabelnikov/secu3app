@@ -332,8 +332,9 @@ typedef struct ecudata_t
 #endif
 
 #ifdef AIRCONDIT
- uint16_t cond_req_rpm;                  //!< Minimum required RPM for turning on of air conditioner clutch (air cond. control algorithm will increase it smoothly)
- uint8_t  cond_req_fan;                  //!< Flag, indicates request from air conditioner to turn on cooling fan
+ uint16_t cond_req_rpm;                 //!< Minimum required RPM for turning on of air conditioner clutch (air cond. control algorithm will increase it smoothly)
+ uint8_t  cond_req_fan;                 //!< Flag, indicates request from the air conditioner to turn on cooling fan
+ uint8_t  cond_req_on;                  //!< Flag, indicates request from the air conditioner to displace IAC (air conditioner is going to turn on)
 #endif
 
  uint8_t floodclear;                    //!< Flood clear mode flag

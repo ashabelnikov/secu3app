@@ -602,6 +602,15 @@ clic_imm:
      d.vent_req_on = 0;
     }
 
+    #ifdef AIRCONDIT
+    //Displace IAC position when air conditioner turns on (one time only)
+    if (d.cond_req_on)
+    {
+     chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.aircond_iacoff)) << 4;
+     d.cond_req_on = 0; //reset request
+    }
+    #endif
+
     //Displace IAC position when EPAS turns on (one time displacement).
     //Displacement will take place only if EPAS_I is not reassigned to other function and EPAS_I = 0
     #ifndef SECU3T
@@ -617,7 +626,7 @@ skip_pid:
     #else
     if (d.cond_state)
     #endif
-     idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add);
+     idl_iacminpos+=PGM_GET_BYTE(&fw_data.exdata.iac_cond_add); //increase min. limit by specified value
     #endif
 
     //Restrict IAC position using specified limits
@@ -634,6 +643,13 @@ skip_pid:
     //Displace IAC position when cooling fan turns on
     if (d.vent_req_on)
      chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.vent_iacoff)) << 4;
+
+    #ifdef AIRCONDIT
+    //Displace IAC position when air conditioner turns on
+    if (d.cond_req_on)
+     chks.iac_pos+=((uint16_t)PGM_GET_BYTE(&fw_data.exdata.aircond_iacoff)) << 4;
+    #endif
+
     //Displace IAC position when EPAS turns on
     #ifndef SECU3T
     if (IOCFG_CHECK(IOP_EPAS_I) && !IOCFG_GET(IOP_EPAS_I))

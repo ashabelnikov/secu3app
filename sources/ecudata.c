@@ -118,7 +118,8 @@ struct ecudata_t d =
 
 #ifdef AIRCONDIT
 ,.cond_req_rpm = 0,
- .cond_req_fan = 0
+ .cond_req_fan = 0,
+ .cond_req_on = 0
 #endif
 
  ,.floodclear = 0

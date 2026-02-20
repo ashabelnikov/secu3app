@@ -1416,6 +1416,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .iac_cltolut_int_stp = 16, //0.5%
 
+  .aircond_iacoff = 0,
+
   /**reserved bytes*/
   {0}
  },

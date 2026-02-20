@@ -726,12 +726,14 @@ typedef struct fw_ex_data_t
 
   uint8_t iac_cltolut_int_stp; //!< CL to table position transition step (% per 100ms)
 
+  uint8_t  aircond_iacoff;     //Value to be added to IAC position when ventilator is being turned on
+
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1508];
+  uint8_t reserved[1507];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

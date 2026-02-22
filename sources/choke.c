@@ -424,9 +424,7 @@ void do_closed_loop(void)
   chks.prev_rpm_error[1] = error;   //reset previous error
  }
  if (CHECKBIT(chks.flags, CF_CL_LOOP) && (d.engine_mode != EM_IDLE || d.sens.rpm > rpm_thrd2))
-  CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by maps
-
- chks.iac_pos_cl = chks.iac_pos;    //initialize integrator's state with default value
+  CLEARBIT(chks.flags, CF_CL_LOOP); //exit closed loop, position of valve will be determined by LUTs
 
  if (CHECKBIT(chks.flags, CF_CL_LOOP))
  { //closed loop mode is active
@@ -488,14 +486,20 @@ void do_closed_loop(void)
   else
   { //working
    if (d.sens.rpm > rpm_thrd2)
-   {
+   { //RPM above rpm_thrd2 - smoothly increase iac_add
     chks.iac_add+=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_le); //leave
     //use throttle assist map or just a simple constant
     uint16_t max_add = ((uint16_t)(CHECKBIT(d.param.idl_flags, IRF_USE_THRASSMAP) ? inj_iac_thrass() : d.param.idl_to_run_add)) << 4; //x16
     if (chks.iac_add > max_add)
      chks.iac_add = max_add;
-    chks.iac_pos+=chks.iac_add; //x16, work position + addition
    }
+   else
+   { //RPM below or equal rpm_thrd2 - smoothly decrease iac_add
+    chks.iac_add-=PGM_GET_BYTE(&fw_data.exdata.idltorun_stp_en); //enter
+    if (chks.iac_add < 0)
+     chks.iac_add = 0;
+   }
+   chks.iac_pos+=chks.iac_add; //x16, work position + addition
   }
  }
 }
@@ -565,6 +569,7 @@ int16_t calc_sm_position(uint8_t pwm)
      if (is_ready_for_cl())
      {
       chks.strt_mode = 3; //allow closed loop before finishing crank to run transition (abort transition and start closed loop immediately)
+      chks.iac_pos_cl = chks.iac_pos; //initialize integrator's state with default value
       goto clic_imm;
      }
      else
@@ -577,6 +582,7 @@ int16_t calc_sm_position(uint8_t pwm)
     {
      chks.strt_mode = 3;  //we immediately fall into mode 3
      chks.iac_pos = get_base_position(1, 0); //use run pos, don't multiply
+     chks.iac_pos_cl = chks.iac_pos; //initialize integrator's state with default value
     }
     else
     {

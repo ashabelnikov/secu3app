@@ -55,6 +55,7 @@ typedef struct
  int32_t  ipw_int1;              //!< integrator state for PW1
  int32_t  ipw_int2;              //!< integrator state for PW2
  uint8_t  ipwint_stroke;         //!< stroke flag
+ uint8_t  ipwint_started[2];     //!< flag
 #endif
  int16_t  calc_adv_ang;          //!< calculated advance angle
  int16_t  igntim_int_state;      //!< itergrator's state for limitting rate of change of ign. timing
@@ -63,7 +64,7 @@ typedef struct
 /**Instance of internal state variables structure*/
 static logic_state_t lgs = {
 #ifdef FUEL_INJECT
- 0,0,0,0,0,0,0,0,0,0,0,1,
+ 0,0,0,0,0,0,0,0,0,0,0,1,{0,0},
 #endif
  0,0
 };
@@ -212,13 +213,30 @@ static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2, uint8_t integrate)
    *pw2 = inj_nonlin_lookup(*pw2);
  }
 
+ //Apply PW ROC limitters
  if (integrate)
  {
+  int16_t inc_speed, dec_speed;
+  if (lgs.ipwint_started[0] && lgs.ipwint_started[1])
+  {//use limitters for working modes
+   inc_speed = d.param.injpw_inc_speed;
+   dec_speed = d.param.injpw_dec_speed;
+  }
+  else
+  { //use limitters for after cranking
+   inc_speed = PGM_GET_WORD(&fw_data.exdata.injpw_crk_speed);
+   dec_speed = PGM_GET_WORD(&fw_data.exdata.injpw_crk_speed);
+  }
+
   //limit rate of change of inj. PWs
   if (lgs.ipwint_stroke)
   { //integrate
-   *pw1 = value_integrator32(pw1, &lgs.ipw_int1, d.param.injpw_inc_speed, d.param.injpw_dec_speed);
-   *pw2 = value_integrator32(pw2, &lgs.ipw_int2, d.param.injpw_inc_speed, d.param.injpw_dec_speed);
+   *pw1 = value_integrator32(pw1, &lgs.ipw_int1, inc_speed, dec_speed);
+   *pw2 = value_integrator32(pw2, &lgs.ipw_int2, inc_speed, dec_speed);
+   if (*pw1 == lgs.ipw_int1) //check if 1st integrator matched
+    lgs.ipwint_started[0] = 1;
+   if (*pw2 == lgs.ipw_int2) //check if 2nd integrator matched
+    lgs.ipwint_started[1] = 1;
    lgs.ipwint_stroke = 0;
   }
   else
@@ -233,6 +251,7 @@ static uint16_t finalize_inj_time(int32_t* pw1, int32_t* pw2, uint8_t integrate)
   lgs.ipw_int2 = *pw2;
  }
 
+ //Apply per cylinder corrections
  uint8_t i;
  for (i = 0; i < INJ_CHANNELS_MAX; ++i)
  {
@@ -444,6 +463,7 @@ void eculogic_system_state_machine(void)
 #ifdef FUEL_INJECT
    reset_smooth_fuelcut();   //reset fuel cut state variables
    acc_enrich_calc_tb(1, 0); //reset state variables of the AE algo
+   lgs.ipwint_started[0] = lgs.ipwint_started[1] = 0;
 #ifndef SECU3T
    if (d.gasval_res)
     lgs.prime_delay_tmr = s_timer_gtc();

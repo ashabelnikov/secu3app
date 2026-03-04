@@ -101,6 +101,17 @@ struct can_t;
  * \param msg message to be sent
  */
 void knock_push_can_message(struct can_t* msg);
+
+/**Initiates a check to see if there is a received message to get. See also knock_get_can_message()
+ */
+void knock_check_can_message(void);
+
+/** Obtains received message (if exists), which getting was initiated by knock_check_can_message()
+ * \param msg pointer to the buffer which will receive message's data (if pending message exist)
+ * \return 1 - received message copied to msg buffer, 0 - no messages have been received
+ */
+uint8_t knock_get_can_message(struct can_t* msg);
+
 #endif
 
 #define KNOCK_INTMODE_INT  1 //!< code for integration mode (used with knock_set_integration_mode())

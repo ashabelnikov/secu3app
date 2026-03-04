@@ -38,16 +38,24 @@
 
 //----------------------------------------------------------------------------
 #ifdef OBD_SUPPORT
-#define SPI_RESET        0xC0
-#define SPI_WRITE        0x02
-#define SPI_READ_STATUS  0xA0
-#define SPI_WRITE_TX     0x40
-#define SPI_RTS          0x80
-#define CNF3             0x28
-#define CNF2             0x29
-#define CNF1             0x2A
-#define RTR              6
-#define CANCTRL          0x0F
+#define SPI_RESET        0xC0 //!< Resets internal registers to the default state, sets Configuration mode.
+#define SPI_WRITE        0x02 //!< Writes data to the register beginning at the selected address.
+#define SPI_READ_STATUS  0xA0 //!< Quick polling command that reads several status bits for transmit and receive functions.
+#define SPI_RX_STATUS    0xB0 //!< Quick polling command that indicates filter match and message type (standard, extended and/or remote) of received message.
+#define SPI_READ_RX      0x90 //!< Read RX buffer, 1001 0NM0, NM  - address pointer.
+#define SPI_WRITE_TX     0x40 //!< Load TX buffer, 0100 0ABC, ABC - address of buffer.
+#define SPI_RTS          0x80 //!< Instructs controller to begin message transmission sequence for any of the transmit buffers, 1000 0NNN, NNN - select buffer TXB2...TXB0.
+//#define SPI_BIT_MODIFY 0x05 //!< Allows to set or clear individual bits in a particular register. Not all registers can be bit modified with this command.
+#define CNF3             0x28 //!< Address of the bit timing configuration register 3. Control of the bit timing for the CAN bus interface.
+#define CNF2             0x29 //!< Address of the bit timing configuration register 2. Control of the bit timing for the CAN bus interface.
+#define CNF1             0x2A //!< Address of the bit timing configuration register 1. Control of the bit timing for the CAN bus interface.
+#define RTR              6    //!< Bit number of the RTR (Remote Transmission Request). See TXBnDLC and RXBnDLC registers 
+#define IDE              3    //!< Bit number of the IDE (Extended Identifier Flag). See RXBnSIDL register
+#define CANCTRL          0x0F //!< Address of the CANCTRL register. CAN control. 
+//#define CANINTF        0x2C //!< Address of the CANINTF register, which contains the corresponding interrupt flag bit for each interrupt source
+//#define RX1IF          1    //!< Bit number of the RX interrupt flag 1 of the CANINTF register
+//#define RX0IF          0    //!< Bit number of the RX interrupt flag 0 of the CANINTF register
+
 //Chip select signal pin. In SECU-3T we use PB3. In SECU-3i we use any pin remapped to CAN_CS
 #ifdef SECU3T
  #define INIT_CAN_CS() SET_CAN_CS(1);
@@ -114,10 +122,13 @@ typedef struct
  volatile uint8_t pending_request;      //!< pending requests flag
 #endif
 #ifdef OBD_SUPPORT
- volatile uint8_t can_pending_msg;      //!< pending message exists and wait for transmition
- can_t can_msg;                         //!< CAN message
- uint8_t can_data_idx;
- uint8_t can_buff_addr;
+ volatile uint8_t can_pending_tx;       //!< pending message exists and wait for transmition
+ volatile uint8_t can_pending_rx;       //!< pending process of checking for or getting a message
+ volatile uint8_t can_received;         //!< indicates existing message to obtain
+ can_t can_msg_tx;                      //!< CAN message (TX)
+ can_t can_msg_rx;                      //!< CAN message (RX)
+ uint8_t can_data_idx;                  //!< used by TX and RX sequences of the state machine
+ uint8_t can_buff_addr;                 //!< used by TX sequence to store address of buffer
 #endif
 #ifdef TPIC8101
  volatile uint16_t adc_value;           //!< Complete 10-bit ADC value read via SPI
@@ -278,7 +289,9 @@ uint8_t knock_expander_initialize()
 
 //initialize MCP2515 if supported
 #ifdef OBD_SUPPORT
- ksp.can_pending_msg = 0;
+ ksp.can_pending_tx = 0;  //no pending messages to transmit
+ ksp.can_pending_rx = 0;  //no pending received messages 
+ ksp.can_received = 0;    //no received messages
  //put mcp2515 into the configuration mode and wait some time
  SET_CAN_CS(0);
  spi_master_transmit(SPI_RESET);
@@ -376,8 +389,8 @@ void knock_start_expander_latching(void)
 {
 // _BEGIN_ATOMIC_BLOCK(); we rely that at the moment of calling of this function interrupts are disabled, so don't disable it twice
 #ifdef SECU3T
-  if (!ksp.can_pending_msg)
-   return; //no CAN messages waiting on sending
+  if (!ksp.can_pending_tx && !ksp.can_pending_rx)
+   return; //no CAN messages waiting on sending or receiving, so, nothing to do in the SECU-3T
 #endif
  if (0==ksp.ksp_interrupt_state)
  {
@@ -516,15 +529,22 @@ ISR(SPI_STC_vect)
     SETBIT(SPCR, CPOL);
     SET_CAN_CS(0);
     ksp.pending_request = 0;
-    ksp.ksp_interrupt_state = 19; // busy (state = 19)
-    SPDR = SPI_READ_STATUS;
+    if (ksp.can_pending_tx)
+    {//pending TX
+     ksp.ksp_interrupt_state = 19; // busy (state = 19)
+     SPDR = SPI_READ_STATUS;
+    }
+    else
+    {//pending RX
+     ksp.ksp_interrupt_state = 30; // busy (state = 30)
+     SPDR = SPI_RX_STATUS;
+    }
    }
    else
 #endif
    {
-    ksp.ksp_interrupt_state = 0; //idle
-    //disable interrupt and switch state machine into initial state - ready to new load
-    SPCR&= ~_BV(SPIE);
+    ksp.ksp_interrupt_state = 0;   //idle    
+    SPCR&= ~_BV(SPIE);             //disable interrupt and switch state machine into initial state - ready to new load
    }
    break;
 #else //---SECU-3i---
@@ -534,17 +554,17 @@ ISR(SPI_STC_vect)
     SETBIT(SPCR, CPOL);
     SET_KSP_TEST(0);
     ksp.pending_request = 0;
-    ++ksp.ksp_interrupt_state; // busy (state = 6)
+    ++ksp.ksp_interrupt_state;     // busy (state = 6)
     SPDR = 0x40; //write opcode
    }
    else
    {
-    ksp.ksp_interrupt_state = 0; //idle
-    //disable interrupt and switch state machine into initial state - ready to new load
-    SPCR&= ~_BV(SPIE);
+    ksp.ksp_interrupt_state = 0;  //idle    
+    SPCR&= ~_BV(SPIE);            //disable interrupt and switch state machine into initial state - ready to new load
    }
    break;
 
+//-----IO expander sequece-----
   case 6: //expander, opcode loaded
    SPDR = 0x13; //address of the GPIOB
    ++ksp.ksp_interrupt_state;
@@ -619,35 +639,31 @@ ISR(SPI_STC_vect)
    spi_PORTA = SPDR;
    SET_KSP_TEST(1);
 #ifdef OBD_SUPPORT
-   if (ksp.can_pending_msg)
-   {
+   if (ksp.can_pending_tx)
+   { //start TX sequence
     SET_CAN_CS(0);
     _NO_OPERATION();
     _NO_OPERATION();
     ksp.ksp_interrupt_state = 19; // busy (state = 19)
     SPDR = SPI_READ_STATUS;
    }
+   else if (ksp.can_pending_rx)
+   { //start RX sequence
+    SET_CAN_CS(0);
+    _NO_OPERATION();
+    _NO_OPERATION();
+    ksp.ksp_interrupt_state = 30; // busy (state = 30)
+    SPDR = SPI_RX_STATUS;
+   }
    else
 #endif
    {
-    if (ksp.pending_request)
-    {//start loading data into the knock chip
-     CLEARBIT(SPCR, CPOL);
-     SET_KSP_CS(0);
-     ksp.pending_request = 0;
-     ksp.ksp_interrupt_state = 1; //busy (state = 1)
-     SPDR = ksp.ksp_bpf;
-    }
-    else
-    {
-     ksp.ksp_interrupt_state = 0; //idle
-     //disable interrupt and switch state machine into initial state - ready for new loading
-     SPCR&= ~_BV(SPIE);
-    }
+    goto check_pending_kspbpf;
    }
    break;
 #endif
 
+//-----CAN transmitter sequence-----
 #ifdef OBD_SUPPORT
    case 19:
     SPDR = 0xFF; //shift read register
@@ -655,8 +671,14 @@ ISR(SPI_STC_vect)
     break;
    case 20: //read status!
     SET_CAN_CS(1);
-   _NO_OPERATION();
-   _NO_OPERATION();
+    if (!CHECKBIT(SPDR, 2))
+     ksp.can_buff_addr = 0x00;
+    else if (!CHECKBIT(SPDR, 4))
+     ksp.can_buff_addr = 0x02;
+    else if (!CHECKBIT(SPDR, 6))
+     ksp.can_buff_addr = 0x04;
+    else
+     goto can_tx_finish; // All buffers are busy, message can't be sent. We will get a try next time    
    _NO_OPERATION();
    _NO_OPERATION();
     SET_CAN_CS(0);
@@ -664,28 +686,15 @@ ISR(SPI_STC_vect)
    _NO_OPERATION();
    _NO_OPERATION();
    _NO_OPERATION();
-
-    if (!CHECKBIT(SPDR, 2))
-     ksp.can_buff_addr = 0x00;
-    else if (!CHECKBIT(SPDR, 4))
-     ksp.can_buff_addr = 0x02;
-    else if (!CHECKBIT(SPDR, 6))
-     ksp.can_buff_addr = 0x04;
-    else { // All buffers are busy, message can't be sent
-     SET_CAN_CS(1);
-     ksp.ksp_interrupt_state = 0; //idle
-     SPCR&= ~_BV(SPIE); //disable interrupt and switch state machine into initial state - ready for new loading
-     break;
-    }
     SPDR = SPI_WRITE_TX | ksp.can_buff_addr;
     ++ksp.ksp_interrupt_state;
     break;
    case 21:
-    SPDR = (ksp.can_msg.id >> 3);
+    SPDR = (ksp.can_msg_tx.id >> 3);
     ++ksp.ksp_interrupt_state;
     break;
    case 22:
-    SPDR = (ksp.can_msg.id << 5);
+    SPDR = (ksp.can_msg_tx.id << 5);
     ++ksp.ksp_interrupt_state;
     break;
    case 23:
@@ -697,21 +706,21 @@ ISR(SPI_STC_vect)
     ++ksp.ksp_interrupt_state;
     break;
    case 25:
-    if (ksp.can_msg.flags.rtr)
+    if (ksp.can_msg_tx.flags.rtr)
     {
-     SPDR = _BV(RTR) | ksp.can_msg.length;
+     SPDR = _BV(RTR) | ksp.can_msg_tx.length;
      ksp.ksp_interrupt_state = 27;
     }
     else
     {
-     SPDR = ksp.can_msg.length; //length must be  > 0!
+     SPDR = ksp.can_msg_tx.length; //length must be  > 0!
      ksp.can_data_idx = 0;
      ++ksp.ksp_interrupt_state;
     }
     break;
    case 26: //length set!
-    SPDR = ksp.can_msg.data[ksp.can_data_idx++];
-    if (ksp.can_data_idx >= ksp.can_msg.length)
+    SPDR = ksp.can_msg_tx.data[ksp.can_data_idx++];
+    if (ksp.can_data_idx >= ksp.can_msg_tx.length)
      ++ksp.ksp_interrupt_state;
     break;
    case 27:
@@ -725,8 +734,107 @@ ISR(SPI_STC_vect)
     ++ksp.ksp_interrupt_state;
     break;
    case 28:
-    ksp.can_pending_msg = 0;
     SET_CAN_CS(1);
+    ksp.can_pending_tx = 0;
+can_tx_finish:
+    if (ksp.can_pending_rx)
+    {
+    _NO_OPERATION();
+    _NO_OPERATION();
+     SET_CAN_CS(0);
+    _NO_OPERATION();
+    _NO_OPERATION();
+     ksp.ksp_interrupt_state = 30; // busy (state = 30)
+     SPDR = SPI_RX_STATUS;
+    }
+    else
+    {
+     goto check_pending_kspbpf;
+    }
+    break;
+
+//-----CAN receiver sequence-----
+   case 30:                        //RX_STATUS instruction sent
+    SPDR = 0xFF;                   //shift read register
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 31:                        //RX STATUS read
+    SET_CAN_CS(1);
+    ksp.can_msg_rx.flags.rtr = CHECKBIT(SPDR, 3) ? 1 : 0;  //save RTR bit, see RX STATUS INSTRUCTION for more information   
+    if (CHECKBIT(SPDR, 6))
+    { //message in buffer 0
+     _NO_OPERATION();
+     _NO_OPERATION();
+      SET_CAN_CS(0);
+     _NO_OPERATION();
+     _NO_OPERATION();
+     _NO_OPERATION();
+     _NO_OPERATION();
+     SPDR = SPI_READ_RX;           //READ RX BUFFER SPI instruction (from buffer 0)
+    }
+    else if (CHECKBIT(SPDR, 7))
+    { //message in buffer 1
+     _NO_OPERATION();
+      SET_CAN_CS(0);
+     _NO_OPERATION();
+     _NO_OPERATION();
+     _NO_OPERATION();
+     _NO_OPERATION();
+     SPDR = SPI_READ_RX | 0x04;    //READ RX BUFFER SPI instruction (from buffer 1)
+    }
+    else 
+    {
+     goto can_rx_finish;           //RX buffers are empty
+    }
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 32:                        //READ_RX instruction sent
+    SPDR = 0xFF;                   //shift read register
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 33:                        //got RXBnSIDH
+    ksp.can_msg_rx.id = ((uint16_t)SPDR) << 3; //store bits [10-3] of ID
+    SPDR = 0xFF;                   //shift read register
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 34:                        //got RXBnSIDL
+    ksp.can_msg_rx.id |= SPDR >> 5;            //store bits [2-0] of ID
+    if (CHECKBIT(SPDR, IDE))
+     goto can_rx_finish;           //ignore exteded frames, abort
+    SPDR = 0xFF;                   //shift read register to skip RXBnEID8
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 35:                        //got RXBnEID8
+    SPDR = 0xFF;                   //shift read register to skip RXBnEID0
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 36:                        //got RXBnEID0
+    SPDR = 0xFF;                   //shift read register to read RXBnDLC
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 37:                        //got RXBnDLC
+    ksp.can_msg_rx.length = SPDR & 0x0F;         //store length    
+    ksp.can_data_idx = 0;
+    SPDR = 0xFF;                   //shift read register to read the 1st byte of data
+    ++ksp.ksp_interrupt_state;
+    break;
+   case 38:                        //got data byte
+    ksp.can_msg_rx.data[ksp.can_data_idx++] = SPDR;
+    if (ksp.can_data_idx < ksp.can_msg_rx.length)
+    {
+     SPDR = 0xFF;                  //shift read register to read the next byte
+     break;                        //continue to read data
+    }
+    ksp.can_received = 1;          //success!
+    //and fall into rx finish
+can_rx_finish:
+    SET_CAN_CS(1);                 //automatically clearing the associated receive flag, RXnIF (CANINTF), when CS is raised at the end of the command.
+    ksp.can_pending_rx = 0;
+#endif //OBD_SUPPORT
+
+//-----Load KSP BPF sequence-----
+#if defined(OBD_SUPPORT) || !defined(SECU3T)
+check_pending_kspbpf:
     if (ksp.pending_request)
     {//start loading data into the knock chip
      CLEARBIT(SPCR, CPOL);
@@ -741,7 +849,7 @@ ISR(SPI_STC_vect)
      SPCR&= ~_BV(SPIE);           //disable interrupt and switch state machine into initial state - ready for new loading
     }
     break;
-#endif //OBD_SUPPORT
+#endif //OBD_SUPPORT or SECU3i
  }
  _ENABLE_INTERRUPT();
 }
@@ -767,11 +875,30 @@ void knock_init_ports(void)
 #ifdef OBD_SUPPORT
 void knock_push_can_message(struct can_t* msg)
 {
- if (ksp.can_pending_msg)
+ if (ksp.can_pending_tx)
   return; //transmition of previous message is not finished yet
- memcpy(&ksp.can_msg, msg, sizeof(can_t)); //copy message
- ksp.can_pending_msg = 1;  //will be cleared in the interrupt
+ memcpy(&ksp.can_msg_tx, msg, sizeof(can_t)); //copy message
+ ksp.can_pending_tx = 1;  //will be cleared in the interrupt
 }
+
+void knock_check_can_message(void)
+{
+ if (ksp.can_pending_rx || ksp.can_received)
+  return; //previous checking/getting is not finished yet
+ ksp.can_pending_rx = 1;  //will be cleared in the interrupt
+}
+
+uint8_t knock_get_can_message(struct can_t* msg)
+{
+ if (ksp.can_received) //set in the interrupt after receiving message
+ {
+  memcpy(msg, &ksp.can_msg_rx, sizeof(can_t)); //copy message
+  ksp.can_received = 0;
+  return 1; //message exist and copied
+ }
+ return 0; //no received and pending messages
+}
+
 #endif
 
 #ifdef TPIC8101

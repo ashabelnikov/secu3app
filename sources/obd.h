@@ -56,8 +56,16 @@ typedef struct can_t
 #endif
 } can_t;
 
-/***/
+/** Initialization
+ */
 void obd_init(void);
+
+/**
+ * Set CAN filters at the moment of initialization.
+ * This function must be called when CAN controller IC is in configuration mode
+ */
+void obd_init_filters(void);
+
 /**
  * Uses d ECU data structure
  */

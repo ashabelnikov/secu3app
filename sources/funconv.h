@@ -95,7 +95,7 @@ int32_t value_integrator32(int32_t* ip_new_value, int32_t* ip_int_state, int16_t
 /** Calculates current accumulation time (dwell control) / injector dead time using current board voltage
  * Uses d ECU data structure
  * \param mode Specifies what to calculate - dwell (mode=0) or dead time (mode=1)
- * \return accumulation time in timer's ticks (1 tick = 4uS, when clock is 16mHz and 1 tick = 3.2uS, when clock is 20mHz) /
+ * \return accumulation time in timer's ticks (1 tick = 3.2uS, when clock is 20MHz) /
  *         Injector dead time in tics of timer
  */
 uint16_t accumulation_time(uint8_t mode);

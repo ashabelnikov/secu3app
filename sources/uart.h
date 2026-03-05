@@ -29,7 +29,7 @@
 
 #include <stdint.h>
 
-//Here are some values for UBRR for 20.000 mHz crystal
+//Here are some values for UBRR for 20.000 MHz crystal
 //
 //       Speed    Value(U2X=0)     Value(U2X=1)
 //       2400        0x208            0x411

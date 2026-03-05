@@ -100,13 +100,13 @@ extern uint8_t  spi_GPPUB;   //!< Pull-up resistors control register B
 #define KSP_SO_TERMINAL_HIZ    0x01   //!< code for deactivation of SO terminal
 
 //prescaler
-#define KSP_PRESCALER_16MHZ    0x0C   //!< code for setup prescaler (16mHz crystal)
-#define KSP_PRESCALER_20MHZ    0x0E   //!< code for setup prescaler (20mHz crystal)
+#define KSP_PRESCALER_16MHZ    0x0C   //!< code for setup prescaler (16MHz crystal)
+#define KSP_PRESCALER_20MHZ    0x0E   //!< code for setup prescaler (20MHz crystal)
 
 #define SET_KSP_CS(v) WRITEBIT(PORTB, PB4, v) //!< SS controls chip selection
 #define SET_KSP_INTHOLD(v) WRITEBIT(PORTC, PC4, v) //!< Switches between integration/hold modes (SECU-3T)
 #define SET_KSP_TEST(v) WRITEBIT(PORTB, PB3, v)     //!< Switches chip into diagnostic mode (SECU-3T) or controls EX_CS (SECU-3i)
-#define KSP_PRESCALER_VALUE KSP_PRESCALER_20MHZ  //!< set prescaler for 20mHz crystal
+#define KSP_PRESCALER_VALUE KSP_PRESCALER_20MHZ  //!< set prescaler for 20MHz crystal
 
 /**This data structure intended for duplication of data of current state
  * of signal processor */
@@ -178,6 +178,46 @@ static void mcp2515_write_register(uint8_t adress, uint8_t data)
  spi_master_transmit(data);
  SET_CAN_CS(1);
 }
+
+void knock_set_can_filter(uint8_t idx, uint16_t id)
+{
+ uint8_t addr;
+ switch(idx)
+ {
+  case 0: addr = 0x00; break;
+  case 1: addr = 0x04; break;
+  case 2: addr = 0x08; break;
+  case 3: addr = 0x10; break;
+  case 4: addr = 0x14; break;
+  case 5: addr = 0x18; break;
+  default: return; //wrong number of filter
+ }
+
+ SET_CAN_CS(0);
+ spi_master_transmit(SPI_WRITE);
+ spi_master_transmit(addr);
+ spi_master_transmit(id >> 3); //[10-3] bits
+ spi_master_transmit(id << 5); //[2-0]  bits
+ SET_CAN_CS(1);
+}
+
+void knock_set_can_mask(uint8_t idx, uint16_t id)
+{
+ uint8_t addr;
+ switch(idx)
+ {
+  case 0: addr = 0x20; break;
+  case 1: addr = 0x24; break;
+  default: return; //wrong number of mask
+ }
+ SET_CAN_CS(0);
+ spi_master_transmit(SPI_WRITE);
+ spi_master_transmit(addr);
+ spi_master_transmit(id >> 3); //[10-3] bits
+ spi_master_transmit(id << 5); //[2-0]  bits
+ SET_CAN_CS(1); 
+}
+
 #endif
 
 void knock_set_integration_mode(uint8_t mode)
@@ -305,6 +345,8 @@ uint8_t knock_expander_initialize()
  spi_master_transmit(0x91);      // CNF2
  spi_master_transmit(0x40);      // CNF1
  SET_CAN_CS(1);
+ //set CAN filters and masks
+ obd_init_filters();
  //reset MCP2515 to normal mode
  mcp2515_write_register(CANCTRL, 0);
 #endif
@@ -873,12 +915,13 @@ void knock_init_ports(void)
 }
 
 #ifdef OBD_SUPPORT
-void knock_push_can_message(struct can_t* msg)
+uint8_t knock_push_can_message(struct can_t* msg)
 {
  if (ksp.can_pending_tx)
-  return; //transmition of previous message is not finished yet
+  return 0; //transmition of previous message is not finished yet
  memcpy(&ksp.can_msg_tx, msg, sizeof(can_t)); //copy message
  ksp.can_pending_tx = 1;  //will be cleared in the interrupt
+ return 1; //success!
 }
 
 void knock_check_can_message(void)

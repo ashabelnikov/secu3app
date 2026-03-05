@@ -397,7 +397,7 @@ void diagnost_process(void)
  //regular mode (sample MAP together with other sensors)
  adc_set_map_to_ckp(0);
 
-#ifndef SECU3T
+#if !defined(SECU3T) || defined(OBD_SUPPORT) //---SECU-3i---
  knock_expander_initialize();
 #endif
 

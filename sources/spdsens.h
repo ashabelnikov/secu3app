@@ -33,7 +33,7 @@
 #include <stdint.h>
 
 /** Get current period between VSS speed pulses
- * \return Value in us multiplied by 4 (when clock=16mHz), by 3.2 (when clock=20mHz)
+ * \return Value in us multiplied by 3.2 (when clock=20MHz)
  */
 uint16_t spdsens_get_period(void);
 

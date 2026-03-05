@@ -99,8 +99,9 @@ uint8_t knock_expander_initialize(void);
 struct can_t;
 /** Push CAN message for sending
  * \param msg message to be sent
+ * \return 0 - sender is busy (try later), 1 - success, message pushed
  */
-void knock_push_can_message(struct can_t* msg);
+uint8_t knock_push_can_message(struct can_t* msg);
 
 /**Initiates a check to see if there is a received message to get. See also knock_get_can_message()
  */
@@ -111,6 +112,18 @@ void knock_check_can_message(void);
  * \return 1 - received message copied to msg buffer, 0 - no messages have been received
  */
 uint8_t knock_get_can_message(struct can_t* msg);
+
+/** Set CAN filter
+ * \param idx number of filter (0-5). 0,1 - filters of buffer 0 and 2,3,4,5 - filters of buffer 1
+ * \param id filter value (ID)
+ */
+void knock_set_can_filter(uint8_t idx, uint16_t id);
+
+/** Set CAN mask
+ * \param idx number of mask (0-1). 0 - mask of buffer 0 and 1 - mask of buffer 1
+ * \param id mask value (ID)
+ */
+void knock_set_can_mask(uint8_t idx, uint16_t id);
 
 #endif
 

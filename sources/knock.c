@@ -45,16 +45,13 @@
 #define SPI_READ_RX      0x90 //!< Read RX buffer, 1001 0NM0, NM  - address pointer.
 #define SPI_WRITE_TX     0x40 //!< Load TX buffer, 0100 0ABC, ABC - address of buffer.
 #define SPI_RTS          0x80 //!< Instructs controller to begin message transmission sequence for any of the transmit buffers, 1000 0NNN, NNN - select buffer TXB2...TXB0.
-//#define SPI_BIT_MODIFY 0x05 //!< Allows to set or clear individual bits in a particular register. Not all registers can be bit modified with this command.
 #define CNF3             0x28 //!< Address of the bit timing configuration register 3. Control of the bit timing for the CAN bus interface.
 #define CNF2             0x29 //!< Address of the bit timing configuration register 2. Control of the bit timing for the CAN bus interface.
 #define CNF1             0x2A //!< Address of the bit timing configuration register 1. Control of the bit timing for the CAN bus interface.
 #define RTR              6    //!< Bit number of the RTR (Remote Transmission Request). See TXBnDLC and RXBnDLC registers 
 #define IDE              3    //!< Bit number of the IDE (Extended Identifier Flag). See RXBnSIDL register
+#define SRR              4    //!< Bit number of the Standard Frame Remote Transmit Request (valid only if IDE bit = 0). See RXBnSIDL register
 #define CANCTRL          0x0F //!< Address of the CANCTRL register. CAN control. 
-//#define CANINTF        0x2C //!< Address of the CANINTF register, which contains the corresponding interrupt flag bit for each interrupt source
-//#define RX1IF          1    //!< Bit number of the RX interrupt flag 1 of the CANINTF register
-//#define RX0IF          0    //!< Bit number of the RX interrupt flag 0 of the CANINTF register
 
 //Chip select signal pin. In SECU-3T we use PB3. In SECU-3i we use any pin remapped to CAN_CS
 #ifdef SECU3T
@@ -129,6 +126,7 @@ typedef struct
  can_t can_msg_rx;                      //!< CAN message (RX)
  uint8_t can_data_idx;                  //!< used by TX and RX sequences of the state machine
  uint8_t can_buff_addr;                 //!< used by TX sequence to store address of buffer
+ uint8_t can_rxb_priority;              //!< used to change order of reading RXB0 and RXB1
 #endif
 #ifdef TPIC8101
  volatile uint16_t adc_value;           //!< Complete 10-bit ADC value read via SPI
@@ -332,6 +330,7 @@ uint8_t knock_expander_initialize()
  ksp.can_pending_tx = 0;  //no pending messages to transmit
  ksp.can_pending_rx = 0;  //no pending received messages 
  ksp.can_received = 0;    //no received messages
+ ksp.can_rxb_priority = 0;//start reading from RXB0
  //put mcp2515 into the configuration mode and wait some time
  SET_CAN_CS(0);
  spi_master_transmit(SPI_RESET);
@@ -802,32 +801,65 @@ can_tx_finish:
     break;
    case 31:                        //RX STATUS read
     SET_CAN_CS(1);
-    ksp.can_msg_rx.flags.rtr = CHECKBIT(SPDR, 3) ? 1 : 0;  //save RTR bit, see RX STATUS INSTRUCTION for more information   
-    if (CHECKBIT(SPDR, 6))
-    { //message in buffer 0
-     _NO_OPERATION();
-     _NO_OPERATION();
-      SET_CAN_CS(0);
-     _NO_OPERATION();
-     _NO_OPERATION();
-     _NO_OPERATION();
-     _NO_OPERATION();
-     SPDR = SPI_READ_RX;           //READ RX BUFFER SPI instruction (from buffer 0)
+    if (!(ksp.can_rxb_priority & 1))
+    { //buffer 0 has priority
+     if (CHECKBIT(SPDR, 6))
+     { //message in buffer 0
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+       SET_CAN_CS(0);
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      SPDR = SPI_READ_RX;           //READ RX BUFFER SPI instruction (from buffer 0)
+     }
+     else if (CHECKBIT(SPDR, 7))
+     { //message in buffer 1
+      _NO_OPERATION();
+       SET_CAN_CS(0);
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      SPDR = SPI_READ_RX | 0x04;    //READ RX BUFFER SPI instruction (from buffer 1)
+     }
+     else 
+     {
+      goto can_rx_finish;           //RX buffers are empty
+     }
     }
-    else if (CHECKBIT(SPDR, 7))
-    { //message in buffer 1
-     _NO_OPERATION();
-      SET_CAN_CS(0);
-     _NO_OPERATION();
-     _NO_OPERATION();
-     _NO_OPERATION();
-     _NO_OPERATION();
-     SPDR = SPI_READ_RX | 0x04;    //READ RX BUFFER SPI instruction (from buffer 1)
+    else
+    { //buffer 1 has priority
+     if (CHECKBIT(SPDR, 7))
+     { //message in buffer 1
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+       SET_CAN_CS(0);
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      SPDR = SPI_READ_RX | 0x04;    //READ RX BUFFER SPI instruction (from buffer 1)
+     }
+     else if (CHECKBIT(SPDR, 6))
+     { //message in buffer 0
+      _NO_OPERATION();
+       SET_CAN_CS(0);
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      _NO_OPERATION();
+      SPDR = SPI_READ_RX;           //READ RX BUFFER SPI instruction (from buffer 0)
+     }
+     else 
+     {
+      goto can_rx_finish;           //RX buffers are empty
+     }
     }
-    else 
-    {
-     goto can_rx_finish;           //RX buffers are empty
-    }
+    ++ksp.can_rxb_priority;        //change priority to other buffer for the next time
     ++ksp.ksp_interrupt_state;
     break;
    case 32:                        //READ_RX instruction sent
@@ -841,6 +873,7 @@ can_tx_finish:
     break;
    case 34:                        //got RXBnSIDL
     ksp.can_msg_rx.id |= SPDR >> 5;            //store bits [2-0] of ID
+    ksp.can_msg_rx.flags.rtr = CHECKBIT(SPDR, SRR) ? 1 : 0;  //store RTR bit, see RXBnSIDL register description for more info
     if (CHECKBIT(SPDR, IDE))
      goto can_rx_finish;           //ignore exteded frames, abort
     SPDR = 0xFF;                   //shift read register to skip RXBnEID8

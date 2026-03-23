@@ -278,7 +278,7 @@ void obd_at_lada_vesta(void)
     obd.msg_tx.data[1] = itrpm/8;  //target idling RPM
     obd.msg_tx.data[2] = 0;
     obd.msg_tx.data[3] = 0;
-    int16_t fc_lot = get_fc_lot() / 32;
+    int16_t fc_lot = d.param.revlim_lot / 32;
     restrict_value_to(&fc_lot, 0, 255);
     obd.msg_tx.data[4] = fc_lot;   //cut off RPM (forced idle)
     obd.msg_tx.data[5] = 0;

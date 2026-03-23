@@ -33,6 +33,7 @@
 #include "ioconfig.h"
 #include "vstimer.h"
 #endif //!CARB_AFR || GD_CONTROL
+#include "funconv.h"
 
 /**Idle cut off delay after cranking, 5 seconds*/
 #define ICOCD 500
@@ -48,22 +49,6 @@ s_timer16_t idlecutoff_crnk_delay = {0,ICOCD,0};
 #if defined(CARB_AFR) && defined(FUEL_INJECT)
  #error "You can not use FUEL_INJECT option together with CARB_AFR"
 #endif
-
-/** Get fuel cut low threshold depending on gas_v input
- * \return low threshold
- */
-static uint16_t get_fc_lot(void)
-{
- return d.sens.gas ? d.param.ie_lot_g : d.param.ie_lot;
-}
-
-/** Get fuel cut high threshold depending on gas_v input
- * \return high threshold
- */
-static uint16_t get_fc_hit(void)
-{
- return d.sens.gas ? d.param.ie_hit_g : d.param.ie_hit;
-}
 
 #if (defined(FUEL_INJECT) && defined(GD_CONTROL)) || (!defined(FUEL_INJECT) && (!defined(CARB_AFR) || defined(GD_CONTROL)))
 /** Fuel cut control logic for carburetor or gas doser
@@ -172,6 +157,10 @@ void fuelcut_control(void)
 #ifdef UNI_OUTPUT
   if (d.param.fuelcut_uni != 0x0F)
    d.ie_valve = d.ie_valve && d.uniout[d.param.fuelcut_uni]; //use condition result from selected univ.out (use AND function)
+#endif
+
+#ifdef OBD_SUPPORT
+  d.ie_valve = d.ie_valve && d.amt_fuelcut; //apply AMT fuel cut off flag
 #endif
 
 #ifdef GD_CONTROL

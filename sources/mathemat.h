@@ -52,7 +52,7 @@
  * \return interpolated value of function * m
  */
 int16_t simple_interpolation(int16_t x,int16_t a1,int16_t a2,int16_t x_s,int16_t x_l, uint8_t m);
-
+/**Unsigned version of the simple_interpolation()*/
 uint16_t simple_interpolation_u(uint16_t x,uint16_t a1,uint16_t a2,uint16_t x_s,uint16_t x_l, uint8_t m);
 
 /** f(x,y) liniar interpolation for function with two arguments
@@ -77,6 +77,8 @@ int16_t bilinear_interpolation(int16_t x,int16_t y,int16_t a1,int16_t a2,int16_t
  * \param i_top_limit upper limit
  */
 void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_limit);
+/**Unsigned version of the restrict_value_to()*/
+void restrict_value_to_u(uint16_t *io_value, uint16_t i_bottom_limit, uint16_t i_top_limit);
 
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 /**Calculate 1/x function using Newton-Raphson method, 2 iterations

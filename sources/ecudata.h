@@ -251,6 +251,10 @@ typedef struct correct_t
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
  uint8_t idlve;                          //!< flag which indicates using of idling VE
 #endif
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+ int16_t  amt_igntim;                    //!< Ignition timing correction from AMT
+#endif
+
 }correct_t;
 
 /**Describes system's data (main ECU data structure)
@@ -367,6 +371,12 @@ typedef struct ecudata_t
  uint16_t inj_ltft1_crc;                //!< used when saving to EEPROM, must follow inj_ltft1 array!
  int8_t inj_ltft2[INJ_VE_POINTS_L][INJ_VE_POINTS_F]; //!< Long Term Fuel Trim map 2, value * 512 (range -0.247...+0.247)
  uint16_t inj_ltft2_crc;                //!< used when saving to EEPROM, must follow inj_ltft2 array!
+#endif
+
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+ uint16_t amt_req_rpm;                  //!< Minimum required RPM from the automated manual transmission (AMT contol algorithm will increase it smoothly)
+ uint8_t  amt_fuelcut;                  //!< Flag. Fuel cut off request from AMT
+ uint8_t  amt_locked;                   //!< Flag. Engine start disabled by AMT
 #endif
 }ecudata_t;
 

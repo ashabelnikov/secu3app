@@ -103,6 +103,11 @@ struct can_t;
  */
 uint8_t knock_push_can_message(struct can_t* msg);
 
+/** Check is CAN transmitter idle or busy
+ * \return 1 - idle (ready to push new message), 0 - busy (still processing previos pushed message)
+ */
+uint8_t knock_is_idle_can_tx(void);
+
 /**Initiates a check to see if there is a received message to get. See also knock_get_can_message()
  */
 void knock_check_can_message(void);

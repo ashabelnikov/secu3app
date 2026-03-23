@@ -957,6 +957,11 @@ uint8_t knock_push_can_message(struct can_t* msg)
  return 1; //success!
 }
 
+uint8_t knock_is_idle_can_tx(void)
+{
+ return !ksp.can_pending_tx;
+}
+
 void knock_check_can_message(void)
 {
  if (ksp.can_pending_rx || ksp.can_received)

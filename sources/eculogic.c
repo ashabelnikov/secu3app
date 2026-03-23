@@ -598,6 +598,10 @@ void eculogic_system_state_machine(void)
 #endif
 
 #ifdef FUEL_INJECT
+#ifdef OBD_SUPPORT
+   angle+=d.corr.amt_igntim;                     //apply correction from AMT
+#endif
+
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
     fuel_calc();
    }
@@ -653,6 +657,9 @@ void eculogic_system_state_machine(void)
 #endif
 
 #ifdef FUEL_INJECT
+#ifdef OBD_SUPPORT
+   angle+=d.corr.amt_igntim;                     //apply correction from AMT
+#endif
    {//PW = (BASE * WARMUP * AFTSTR_ENRICH) + LAMBDA_CORR + ACCEL_ENRICH + DEADTIME
     fuel_calc();
    }

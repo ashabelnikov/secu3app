@@ -126,25 +126,30 @@ struct ecudata_t d =
  ,.cond_state = 0,
  .vent_req_on = 0
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
-,.aftstr_enr = 0
+ ,.aftstr_enr = 0
 #endif
 #ifndef SECU3T
-,.gasval_on = 0
-,.gasval_res = 0
+ ,.gasval_on = 0
+ ,.gasval_res = 0
 #endif
 #ifdef FUEL_INJECT
-,.iac_closed_loop = 0
-,.iac_in_deadband = 0
+ ,.iac_closed_loop = 0
+ ,.iac_in_deadband = 0
 #endif
-,.vent_duty = 0
+ ,.vent_duty = 0
 #ifdef UNI_OUTPUT
-,.uniout = {0}
+ ,.uniout = {0}
 #endif
 #ifdef FUEL_INJECT
-,.inj_ltft1 = {0}
-,.inj_ltft1_crc = 0
-,.inj_ltft2 = {0}
-,.inj_ltft2_crc = 0
+ ,.inj_ltft1 = {0}
+ ,.inj_ltft1_crc = 0
+ ,.inj_ltft2 = {0}
+ ,.inj_ltft2_crc = 0
+#endif
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+ ,.amt_req_rpm = 0 //no min. RPM request from AMT
+ ,.amt_fuelcut = 0 //no fuel cut off from AMT
+ ,.amt_locked = 0  //start of engine enabled
 #endif
 };
 

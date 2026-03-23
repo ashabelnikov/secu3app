@@ -52,7 +52,11 @@ void starter_init_ports(void)
 
 void starter_control(void)
 {
- if (d.sys_locked || !pwrrelay_get_state())
+ if (d.sys_locked || !pwrrelay_get_state()
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+     || d.amt_locked
+#endif
+    )
  { //system locked by immobilizer or by power management (starter must be blocked if system is in power down mode)
   starter_set_blocking_state(1); //block starter
   return;
@@ -62,6 +66,7 @@ void starter_control(void)
  switch(str_state)
  {
   case 0:
+   starter_set_blocking_state(0); //unblock starter
    if (d.sens.rpm > (d.param.starter_off ? d.param.starter_off : cranking_thrd_rpm()))
     str_state++;
    break;
@@ -84,6 +89,10 @@ void starter_eng_stopped_notification(void)
 {
  str_counter = 0;
  str_state = 0;
- if (!d.sys_locked && pwrrelay_get_state())
+ if (!d.sys_locked && pwrrelay_get_state()
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+     && !d.amt_locked
+#endif
+    )
   starter_set_blocking_state(0); //unblock starter
 }

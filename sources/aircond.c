@@ -40,7 +40,8 @@
  #error "Air conditioner is not supported without fuel injection, define FUEL_INJECT"
 #endif
 
-#define RPMREQSTEP 2
+/**RPM increasing/decreasing step*/
+#define RPMREQSTEP PGM_GET_BYTE(&fw_data.exdata.aircond_rpmalt_step)
 
 #ifndef SECU3T
 /** Calculates value of condition used to turn on clutch

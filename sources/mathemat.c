@@ -60,6 +60,14 @@ void restrict_value_to(int16_t *io_value, int16_t i_bottom_limit, int16_t i_top_
   *io_value = i_bottom_limit;
 }
 
+void restrict_value_to_u(uint16_t *io_value, uint16_t i_bottom_limit, uint16_t i_top_limit)
+{
+ if (*io_value > i_top_limit)
+  *io_value = i_top_limit;
+ if (*io_value < i_bottom_limit)
+  *io_value = i_bottom_limit;
+}
+
 #if defined(FUEL_INJECT) || defined(GD_CONTROL)
 uint16_t nr_1x_afr(uint16_t x)
 {

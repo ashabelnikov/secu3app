@@ -221,6 +221,12 @@
 /**ETC spring preload duty */
 #define _SPD(v) ROUND((v)*64.0)
 
+/**Torque*/
+#define _TR(v) ((v)+50)
+#define _TR1(v) (v)
+/**ignition timing*/
+#define _AA(v) ROUND((v)*2.0)
+
 /**Fill whole firmware data */
 PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 {
@@ -1271,6 +1277,35 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
    ROUND(0.0 / ADC_DISCRETE), ROUND(5.00 / ADC_DISCRETE)
   },
 
+  /**Estimated torque vs (LOAD,RPM), range: -50...200Nm */
+  {//         600     720       840      990       1170      1380      1650      1950      2310      2730     3210      3840      4530      5370       6360      7500 (min-1)
+   _REVARR16(
+   {_AL16(_TR(130),_TR(130),_TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130), _TR(130))}, //100% 16
+   {_AL16(_TR(120),_TR(120),_TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120), _TR(120))}, //     15
+   {_AL16(_TR(110),_TR(110),_TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110), _TR(110))}, //     14
+   {_AL16(_TR(100),_TR(100),_TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100), _TR(100))}, //80%  13
+   {_AL16(_TR(90), _TR(90), _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90),  _TR(90))},  //     12
+   {_AL16(_TR(80), _TR(80), _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80),  _TR(80))},  //     11
+   {_AL16(_TR(70), _TR(70), _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70),  _TR(70))},  //60%  10
+   {_AL16(_TR(60), _TR(60), _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60),  _TR(60))},  //      9
+   {_AL16(_TR(50), _TR(50), _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50),  _TR(50))},  //      8
+   {_AL16(_TR(40), _TR(40), _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40),  _TR(40))},  //40%   7
+   {_AL16(_TR(30), _TR(30), _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30),  _TR(30))},  //      6
+   {_AL16(_TR(20), _TR(20), _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20),  _TR(20))},  //      5
+   {_AL16(_TR(10), _TR(10), _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10),  _TR(10))},  //20%   4
+   {_AL16(_TR(0),  _TR(0),  _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0),   _TR(0))},   //      3
+   {_AL16(_TR(-10),_TR(-10),_TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10), _TR(-10))}, //      2
+   {_AL16(_TR(-20),_TR(-20),_TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20), _TR(-20))}) //0%    1
+  },
+  
+  /**Torque vs TPS used as fuel cut threshold, range: 0...250Nm */
+  {_TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60), _TR1(60)},
+
+  /**Ignition timing correction vs torque difference, range: -60...60 degr.
+   *Nm -250     -219     -187     -156     -125      -94      -62     -31       0      31      62      94      125    156     187     219     250 */
+  { _AA(-20),_AA(-20),_AA(-20),_AA(-20),_AA(-20),_AA(-20),_AA(-13),_AA(-7), _AA(0), _AA(0), _AA(0), _AA(0), _AA(0), _AA(0), _AA(0), _AA(0), _AA(0) },
+  {0,0}, //reserved
+
   /**reserved*/
   {0}
  },
@@ -1416,9 +1451,19 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .iac_cltolut_int_stp = 16, //0.5%
 
-  .aircond_iacoff = 0,
+  .aircond_iacoff = 0, 
 
   .injpw_crk_speed = 125, //0.4 ms/stroke
+
+  //AT/AMT related
+  .can_autrm = 1,                             //LADA Vesta
+  .amt_baro_press = PRESSURE_MAGNITUDE(98.0), //98kPa
+  .amt_creeping_minrpm = 1100,                //1100 min-1
+  .amt_creeping_delay = SYSTIM_MAGS(5.0),     //5 sec
+  .amt_aircond_torque = 5*2,                  //5Nm
+
+  .aircond_rpmalt_step = 2,     //2 min-1 per stroke
+  .amt_rpmalt_step = 2,         //2 min-1 per stroke
 
   /**reserved bytes*/
   {0}

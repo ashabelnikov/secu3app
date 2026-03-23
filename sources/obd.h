@@ -21,7 +21,7 @@
 
 /** \file obd.h
  * \author Alexey A. Shabelnikov
- * OBD support
+ * Communication with different devices via CAN bus
  */
 
 #ifdef OBD_SUPPORT
@@ -70,6 +70,11 @@ void obd_init_filters(void);
  * Uses d ECU data structure
  */
 void obd_process(void);
+
+/** Must be called from the main loop to notify about stroke events
+ * Uses d ECU data structure
+ */
+void obd_stroke_event_notification(void);
 
 #endif //_OBD_H_
 

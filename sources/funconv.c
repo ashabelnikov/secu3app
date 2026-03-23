@@ -75,6 +75,8 @@
 
 /**TPS % between two interpolation points, additionally multiplied by 64 */
 #define TPS_AXIS_STEP TPS_MAGNITUDE(100.0/(F_WRK_POINTS_L-1))
+/**TPS % between two interpolation points, additionally multiplied by 64 */
+#define FCT_TPS_AXIS_STEP TPS_MAGNITUDE(100.0/(FUELCUT_TORQUE_SIZE-1))
 
 /**State variables, local use*/
 typedef struct
@@ -2166,7 +2168,12 @@ int16_t calc_cl_rpm(void)
 
 #ifdef AIRCONDIT
  if (rpm < d.cond_req_rpm)
-  rpm = d.cond_req_rpm;         //increase RPM to the minimum required value
+  rpm = d.cond_req_rpm;         //increase RPM to the minimum required value for air conditioner
+#endif
+
+#ifdef OBD_SUPPORT
+ if (rpm < d.amt_req_rpm)
+  rpm = d.amt_req_rpm;         //increase RPM to the minimum required value for AMT
 #endif
 
  //use addition value when vehicle starts to run
@@ -2240,3 +2247,83 @@ int16_t etc_pedal_to_throttle(void)
 }
 
 #endif
+
+uint16_t get_fc_lot(void)
+{
+ return d.sens.gas ? d.param.ie_lot_g : d.param.ie_lot;
+}
+
+uint16_t get_fc_hit(void)
+{
+ return d.sens.gas ? d.param.ie_hit_g : d.param.ie_hit;
+}
+
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+int16_t calc_torque(void)
+{
+ uint8_t use_grid = CHECKBIT(d.param.func_flags, FUNC_LDAX_GRID);
+ int16_t t = bilinear_interpolation(fcs.la_rpm, fcs.la_load,
+        ram_extabs.estim_torque[fcs.la_l][fcs.la_f],
+        ram_extabs.estim_torque[fcs.la_lp1][fcs.la_f],
+        ram_extabs.estim_torque[fcs.la_lp1][fcs.la_fp1],
+        ram_extabs.estim_torque[fcs.la_l][fcs.la_fp1],
+        ram_extabs.rpm_grid_points[fcs.la_f],
+        use_grid ? ram_extabs.load_grid_points[fcs.la_l] : (fcs.la_grad * fcs.la_l),
+        ram_extabs.rpm_grid_sizes[fcs.la_f],
+        use_grid ? ram_extabs.load_grid_sizes[fcs.la_l] : fcs.la_grad, 2) - (50*2); //Nm*2
+
+ if (d.cond_state)
+  t-=PGM_GET_WORD(&fw_data.exdata.amt_aircond_torque); //substract form the calculated torque when air conditioner is on
+
+ return t;
+}
+
+int16_t calc_minmax_torque(uint8_t what)
+{
+ if (what)
+  what = F_WRK_POINTS_L-1;     //last row
+ int16_t t = simple_interpolation(fcs.la_rpm, ram_extabs.estim_torque[what][fcs.la_f], ram_extabs.estim_torque[what][fcs.la_fp1],
+        ram_extabs.rpm_grid_points[fcs.la_f], ram_extabs.rpm_grid_sizes[fcs.la_f], 2) - (50*2); //Nm*2 
+
+ if (d.cond_state && what) //substract from the maximum torque when air conditioner is on
+  t-=PGM_GET_WORD(&fw_data.exdata.amt_aircond_torque);
+
+ return t;
+}
+
+int16_t felcut_torque(void)
+{
+ int16_t tps = d.sens.tps;
+ int8_t t = (tps / FCT_TPS_AXIS_STEP), tp1;
+ if (t >= (FUELCUT_TORQUE_SIZE - 1))
+  tp1 = t = FUELCUT_TORQUE_SIZE - 1;
+ else
+  tp1 = t + 1;
+
+ return simple_interpolation(tps, ram_extabs.felcut_torque[t], ram_extabs.felcut_torque[tp1],
+        (FCT_TPS_AXIS_STEP*t), FCT_TPS_AXIS_STEP, 32) >> 4; //Nm*2
+}
+
+int16_t dtorq_igntim_corr(int16_t dtorq)
+{
+ int8_t i, i1;
+
+ int16_t p_start = -250*2; //start of the axis (-250Nm)
+ int16_t p_end = 250*2;    //end of the axis   (+250Nm)
+
+ int8_t p_step = (p_end - p_start) / (DTORQ_IGNTIM_CORR_SIZE - 1);
+
+ if (dtorq < p_start)
+  dtorq = p_start;
+
+ i = (dtorq - p_start) / p_step;
+
+ if (i >= DTORQ_IGNTIM_CORR_SIZE-1) i = i1 = DTORQ_IGNTIM_CORR_SIZE-1;
+ else i1 = i + 1;
+
+ return simple_interpolation(dtorq, (int16_t)ram_extabs.dtorq_igntim_corr[i], (int16_t)ram_extabs.dtorq_igntim_corr[i1], //<--values in table are signed
+        (i * p_step) + p_start, p_step, 16); //degrees * 2
+
+}
+#endif
+

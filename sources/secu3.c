@@ -576,6 +576,12 @@ MAIN()
   ltft_control();
 #endif
 
+#ifdef OBD_SUPPORT
+  obd_process();
+#endif
+
+  wdt_reset_timer();
+
 #ifdef DWELL_CONTROL
 #if defined(HALL_SYNC) || defined(CKPS_NPLUS1)
   //Double dwell time if RPM is low and non-stable
@@ -626,12 +632,14 @@ MAIN()
    starter_stroke_event_notification();
 
 #ifdef FUEL_INJECT
-#ifdef GD_CONTROL
    //enable/disable fuel supply depending on fuel cut, rev.lim, sys.lock flags. Also fuel supply will be disabled if fuel type is gas and gas doser is activated
-   inject_set_fuelcut(!(ce_is_error(ECUERROR_OILPRESSURE) && PGM_GET_BYTE(&fw_data.exdata.oilpress_cut)) && !d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
+   inject_set_fuelcut(!(ce_is_error(ECUERROR_OILPRESSURE) && PGM_GET_BYTE(&fw_data.exdata.oilpress_cut)) && !d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() &&
+#ifdef GD_CONTROL
+    !(d.sens.gas && (IOCFG_CHECK(IOP_GD_STP) || CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS))) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET))
 #else
-   inject_set_fuelcut(!(ce_is_error(ECUERROR_OILPRESSURE) && PGM_GET_BYTE(&fw_data.exdata.oilpress_cut)) && !d.floodclear && (d.inj_pw > 0) && !d.sys_locked && !d.fc_revlim && pwrrelay_get_state() && !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET)));
+    !(d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONGAS)) && !(!d.sens.gas && CHECKBIT(d.param.flpmp_flags, FPF_INJONPET))
 #endif
+                     );
 #endif
 
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
@@ -649,6 +657,10 @@ MAIN()
 
 #if defined(FUEL_INJECT)
    ltft_stroke_event_notification();
+#endif
+
+#if defined(OBD_SUPPORT)
+   obd_stroke_event_notification();
 #endif
 
    //----------------------------------------------

@@ -157,6 +157,8 @@
 #define ETC_POS_RPM_SIZE                16          //!< ETC position map: RPM axis size
 
 #define OTS_LOOKUP_TABLE_SIZE           17          //!< Size of the "oil temperature vs voltage" map
+#define FUELCUT_TORQUE_SIZE             17          //!<
+#define DTORQ_IGNTIM_CORR_SIZE          17          //!<
 
 /**Number of sets of tables stored in the firmware */
 #define TABLES_NUMBER_PGM               4
@@ -593,8 +595,20 @@ typedef struct fw_ex_tabs_t
   /**Oil temperature vs voltage. 17 points of function, plus two values for setting of x-axis range*/
   int16_t ots_curve[OTS_LOOKUP_TABLE_SIZE+2];
 
+  /**Estimated torque vs (LOAD,RPM), step 1Nm, value+50, range: -50...200Nm */
+  uint8_t estim_torque[F_WRK_POINTS_L][F_WRK_POINTS_F];
+
+  /**Torque vs TPS used as fuel cut threshold, step 1Nm, range: 0...250 */
+  uint8_t felcut_torque[FUELCUT_TORQUE_SIZE];
+
+  /**Ignition timing correction vs torque difference, step 0.5degr, range: -60...60 degr.
+   * torque difference = requested torque - estimated torque, range: -250...250Nm
+   */
+  int8_t dtorq_igntim_corr[DTORQ_IGNTIM_CORR_SIZE];
+  int16_t dtorq_reserved[2];
+
   /**reserved*/
-  uint8_t reserved[467];
+  uint8_t reserved[173];
 }fw_ex_tabs_t;
 
 /**Describes offline parameters stored in the firmware
@@ -730,12 +744,21 @@ typedef struct fw_ex_data_t
 
   int16_t  injpw_crk_speed;    //!< limitation of rate of change of Inj. PW (when decreasing and increasing), used immediately after cranking for a small period of time.
 
+  uint8_t  can_autrm;          //!< Supported CAN AT/AMT. 0 - disabled, 1 - Lada Vesta
+  uint16_t amt_baro_press;     //!< barometric pressure 
+  uint16_t amt_creeping_minrpm;//!< minimal target RPM
+  uint16_t amt_creeping_delay; //!< minimal target RPM delay
+  int16_t amt_aircond_torque;  //!< torque for air conditioner
+
+  uint8_t aircond_rpmalt_step; //!< RPM alternation step for air conditioner
+  uint8_t amt_rpmalt_step;     //!< RPM alternation step for AMT
+  
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1505];
+  uint8_t reserved[1494];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/
@@ -971,7 +994,7 @@ typedef struct params_t
 
   uint8_t mapsel_uni;                    //!< Selection of universal outputs used as conditions for selection set map sets (7-4 bits: for gas, 3-0 bits: for petrol). Allowed values: 0,1,2,3,4,5,0xFF, 0xFF means disabled
 
-  uint8_t barocorr_type;                 //!< Values: 0 - not barocorrection, 1 - static corr. using primary MAP, 2 - dynamic corr. using primary MAP, 3 - dynamic corr. using additional MAP (SECU-3i only)
+  uint8_t barocorr_type;                 //!< Values: 0 - no barocorrection, 1 - static corr. using primary MAP, 2 - dynamic corr. using primary MAP, 3 - dynamic corr. using additional MAP (SECU-3i only)
 
   uint16_t inj_floodclear_tps;           //!< TPS Threshold for entering fllod clear mode before cranking, 0 - means that flood clear is disabled
 

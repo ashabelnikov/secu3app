@@ -624,4 +624,39 @@ int16_t etc_acceptable_error(int16_t tps);
 int16_t etc_pedal_to_throttle(void);
 #endif
 
+/** Get fuel cut low threshold (forced idle) depending on gas_v input
+ * \return low threshold
+ */
+uint16_t get_fc_lot(void);
+
+/** Get fuel cut high threshold (forced idle) depending on gas_v input
+ * \return high threshold
+ */
+uint16_t get_fc_hit(void);
+
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+/** Calculates torque from LUT(LOAD, RPM)
+ * \return Torque value (Nm*2)
+ */
+int16_t calc_torque(void);
+
+/** Calculates min or max torque from LUT(LOAD, RPM)
+ * \param what 0 - min torque, 1 - max torque
+ * \return Torque value (Nm*2)
+ */
+int16_t calc_minmax_torque(uint8_t what);
+
+/**Calculates threshold for fuel cut
+ * \return Torque value Nm*2
+ */
+int16_t felcut_torque(void);
+
+/** Calculates ignition timing correction
+ * \param dtorq Torque difference (Nm*2)
+ * \return advance angle value * 32
+ */
+int16_t dtorq_igntim_corr(int16_t dtorq);
+
+#endif
+
 #endif //_FUNCONV_H_

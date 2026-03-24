@@ -130,6 +130,11 @@
 #define ETMT_ETC_THROPOS   78  //!<
 #endif
 #define ETMT_OTS_CURVE     79  //!<
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT) //AMT
+#define ETMT_ESTIM_TORQUE  80  //!<
+#define ETMT_FLCUT_TORQUE  81  //!<
+#define ETMT_DTORQ_IT_CORR 82  //!<
+#endif
 
 /**Define internal state variables */
 typedef struct
@@ -1769,6 +1774,24 @@ void uart_send_packet(uint8_t send_mode)
      else
       wrk_index = 0;
      break;
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT) //AMT
+    case ETMT_ESTIM_TORQUE:
+     build_i8h(wrk_index*F_WRK_POINTS_L);
+     build_rb((uint8_t*)&ram_extabs.estim_torque[wrk_index][0], F_WRK_POINTS_F);
+     if (wrk_index >= F_WRK_POINTS_L-1 )
+      wrk_index = 0;
+     else
+      ++wrk_index;
+     break;
+    case ETMT_FLCUT_TORQUE:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.felcut_torque, FUELCUT_TORQUE_SIZE);
+     break;
+    case ETMT_DTORQ_IT_CORR:
+     build_i8h(0); //<--not used
+     build_rb((uint8_t*)&ram_extabs.dtorq_igntim_corr, DTORQ_IGNTIM_CORR_SIZE);
+     break;
+#endif
    }
    break;
   }
@@ -2649,6 +2672,17 @@ uint8_t uart_recept_packet(void)
     case ETMT_OTS_CURVE:
      recept_rw(((uint16_t*)&ram_extabs.ots_curve) + addr, OTS_LOOKUP_TABLE_SIZE/2); /*OTS_LOOKUP_TABLE_SIZE/2 max*/
      break;
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)  //AMT
+    case ETMT_ESTIM_TORQUE:
+     recept_rb(((uint8_t*)&ram_extabs.estim_torque[0][0]) + addr, F_WRK_POINTS_F); /*F_WRK_POINTS_F max*/
+     break;
+    case ETMT_FLCUT_TORQUE:
+     recept_rb(((uint8_t*)&ram_extabs.felcut_torque) + addr, FUELCUT_TORQUE_SIZE); /*FUELCUT_TORQUE_SIZE max*/
+     break;
+    case ETMT_DTORQ_IT_CORR:
+     recept_rb(((uint8_t*)&ram_extabs.dtorq_igntim_corr) + addr, DTORQ_IGNTIM_CORR_SIZE); /*DTORQ_IGNTIM_CORR_SIZE max*/
+     break;
+#endif
    }
   }
   break;

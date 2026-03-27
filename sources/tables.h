@@ -744,15 +744,14 @@ typedef struct fw_ex_data_t
 
   int16_t  injpw_crk_speed;    //!< limitation of rate of change of Inj. PW (when decreasing and increasing), used immediately after cranking for a small period of time.
 
+  uint8_t aircond_rpmalt_step; //!< RPM alternation step for air conditioner
+
   uint8_t  can_autrm;          //!< Supported CAN AT/AMT. 0 - disabled, 1 - Lada Vesta
   uint16_t amt_baro_press;     //!< barometric pressure 
   uint16_t amt_creeping_minrpm;//!< minimal target RPM
   uint16_t amt_creeping_delay; //!< minimal target RPM delay
   int16_t amt_aircond_torque;  //!< torque for air conditioner
-
-  uint8_t aircond_rpmalt_step; //!< RPM alternation step for air conditioner
-  uint8_t amt_rpmalt_step;     //!< RPM alternation step for AMT
-  
+  uint8_t amt_rpmalt_step;     //!< RPM alternation step for AMT  
   //---------------------------------------------------------------
 
   /**Following reserved bytes required for keeping binary compatibility between

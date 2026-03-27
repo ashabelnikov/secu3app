@@ -63,7 +63,8 @@ typedef struct
 #ifdef FUEL_INJECT
  uint8_t amt_state[2]; //!< state for AMTs
  uint16_t amt_send_tmr[2];//!< send timer (AMT)
- int16_t torq_val;     //!< received requested torque
+ int16_t req_torq;     //!< received requested torque
+ int16_t cal_torq;     //!< Calculated torque
  uint8_t rpm_state;    //!< state for RPM increasing
  uint16_t rpm_tmr;     //!< timer for RPM increasing
  uint8_t initialized;  //!< initialization flag
@@ -74,7 +75,7 @@ typedef struct
 obd_state_t obd = {{0},{0},0/*,0*/,0
 //AMT
 #ifdef FUEL_INJECT
-,{0},{0},0,0,0,0
+,{0},{0},0,0,0,0,0
 #endif
 };
 
@@ -146,20 +147,20 @@ void obd_at_lada_vesta(void)
  {
   if (obd.msg_rx.id == 0x17A)
   { //save received requested torque value
-   obd.torq_val = (((uint16_t)obd.msg_rx.data[0]) << 4) | (obd.msg_rx.data[1] >> 4);
-   obd.torq_val-= (400*2);
+   obd.req_torq = (((uint16_t)obd.msg_rx.data[0]) << 4) | (obd.msg_rx.data[1] >> 4);
+   obd.req_torq-= (400*2);
    //control fuel cut off:
-   int16_t c_torque = calc_torque();
-   int16_t torque = c_torque - felcut_torque();
+   obd.cal_torq = (d.sens.rpm > 0) ? calc_torque() : 0;   
+   int16_t torque = obd.cal_torq - felcut_torque();
    int16_t min_torque = calc_minmax_torque(0)+(1*2); //+1Nm
    if (torque < min_torque)
     torque = min_torque;
-   if (obd.torq_val < torque && d.sens.rpm > calc_cl_rpm() && d.sens.carb)
+   if (obd.req_torq < torque && d.sens.rpm > calc_cl_rpm() && d.sens.carb)
     d.amt_fuelcut = 0; //turn of fuel
    else
     d.amt_fuelcut = 1; //turn on fuel
    //update ignition timing correction:
-   d.corr.amt_igntim = dtorq_igntim_corr(obd.torq_val - c_torque); //correction depends on the diff. between requested torque and calculated torque
+   d.corr.amt_igntim = dtorq_igntim_corr(obd.req_torq - obd.cal_torq); //correction depends on the diff. between requested torque and calculated torque
    obd.initialized = 1;
   }
   else if (obd.msg_rx.id == 0x17E)
@@ -215,7 +216,7 @@ void obd_at_lada_vesta(void)
     rpm*=8;   //x8
     obd.msg_tx.data[0] = rpm >> 8;     //hi
     obd.msg_tx.data[1] = rpm & 0xFF;   //lo
-    int16_t eft = obd.torq_val;  
+    int16_t eft = obd.req_torq;  
     restrict_value_to(&eft, calc_minmax_torque(0), calc_minmax_torque(1)); //restrict received torque_val
     eft+=(400*2);
     obd.msg_tx.data[2] = eft >> 4;
@@ -235,7 +236,8 @@ void obd_at_lada_vesta(void)
     obd.msg_tx.id = 0x189;
     obd.msg_tx.flags.rtr = 0;
     obd.msg_tx.length = 8;
-    int16_t torque = calc_torque();
+    obd.cal_torq = (d.sens.rpm > 0) ? calc_torque() : 0;
+    int16_t torque = obd.cal_torq;
     torque+=(400*2);
     obd.msg_tx.data[0] = torque >> 4;
     obd.msg_tx.data[1] = (torque << 4) & 0xF0;
@@ -313,6 +315,8 @@ void obd_at_lada_vesta(void)
    }
    break;
  }
+ d.amt_est_torq = obd.cal_torq; //update global values
+ d.amt_req_torq = obd.req_torq;  //
 }
 #endif
 

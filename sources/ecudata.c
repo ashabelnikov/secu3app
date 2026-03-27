@@ -150,6 +150,8 @@ struct ecudata_t d =
  ,.amt_req_rpm = 0 //no min. RPM request from AMT
  ,.amt_fuelcut = 0 //no fuel cut off from AMT
  ,.amt_locked = 0  //start of engine enabled
+ ,.amt_req_torq = 0
+ ,.amt_est_torq = 0
 #endif
 };
 

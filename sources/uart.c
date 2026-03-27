@@ -882,6 +882,13 @@ void uart_send_packet(uint8_t send_mode)
 #else
    build_i16h(0);
 #endif
+#if defined(OBD_SUPPORT) && defined(FUEL_INJECT)
+   build_i16h(d.amt_est_torq);             // Calculated torque
+   build_i16h(d.amt_req_torq);             // Required torque from AMT
+#else
+   build_i16h(0);
+   build_i16h(0);
+#endif
    break;
 
   case ADCCOR_PAR:

@@ -377,6 +377,8 @@ typedef struct ecudata_t
  uint16_t amt_req_rpm;                  //!< Minimum required RPM from the automated manual transmission (AMT contol algorithm will increase it smoothly)
  uint8_t  amt_fuelcut;                  //!< Flag. Fuel cut off request from AMT
  uint8_t  amt_locked;                   //!< Flag. Engine start disabled by AMT
+ int16_t  amt_req_torq;                 //!< Required torque from AMT
+ int16_t  amt_est_torq;                 //!< Calculated torque
 #endif
 }ecudata_t;
 

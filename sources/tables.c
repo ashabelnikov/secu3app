@@ -1455,14 +1455,14 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
 
   .injpw_crk_speed = 125, //0.4 ms/stroke
 
+  .aircond_rpmalt_step = 2,   //2 min-1 per stroke
+
   //AT/AMT related
-  .can_autrm = 1,                             //LADA Vesta
+  .can_autrm = 0,                             //OFF
   .amt_baro_press = PRESSURE_MAGNITUDE(98.0), //98kPa
   .amt_creeping_minrpm = 1100,                //1100 min-1
   .amt_creeping_delay = SYSTIM_MAGS(5.0),     //5 sec
   .amt_aircond_torque = 5*2,                  //5Nm
-
-  .aircond_rpmalt_step = 2,     //2 min-1 per stroke
   .amt_rpmalt_step = 2,         //2 min-1 per stroke
 
   /**reserved bytes*/

@@ -451,6 +451,7 @@ MAIN()
 
  //Read all system parameters
  load_eeprom_params();
+ wdt_reset_timer();
 
 #ifdef IMMOBILIZER
  //If enabled, reads and checks security keys, performs system lock/unlock
@@ -459,14 +460,17 @@ MAIN()
 
  //load separate tables from flash to RAM
  load_separate_tables_into_ram();
+ wdt_reset_timer();
 
 #ifdef REALTIME_TABLES
  //load tables' set from EEPROM into RAM
  load_specified_tables_into_ram(TABLES_NUMBER - 1);
+ wdt_reset_timer();
 #endif
 
 #ifdef FUEL_INJECT
  load_ltft_tables_into_ram();
+ wdt_reset_timer();
 #endif
 
 #ifdef SPEED_SENSOR
@@ -480,6 +484,8 @@ MAIN()
  if (IOCFG_CHECK(IOP_PWRRELAY))
   load_consfuel_data_into_ram();
 #endif
+
+ wdt_reset_timer();
 
  //perform initialization of all system modules
  init_modules();
@@ -496,6 +502,7 @@ MAIN()
  {
   if (ckps_is_cog_changed())
   {
+   wdt_reset_timer();
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
    eculogic_cog_changed_notification();
    #ifdef INTK_HEATING
@@ -510,6 +517,7 @@ MAIN()
 
   if (s_timer_is_action(&engine_rotation_timeout_counter))
   { //engine is stopped (RPM is below critical threshold)
+   wdt_reset_timer();
    s_timer_eng_stopped_notification();
 #ifdef DWELL_CONTROL
    ckps_init_ports();           //prevent permanent current through coils
@@ -520,6 +528,7 @@ MAIN()
 #if defined(FUEL_INJECT) || defined(CARB_AFR) || defined(GD_CONTROL)
    lambda_eng_stopped_notification();
 #endif
+   wdt_reset_timer();
    starter_eng_stopped_notification();
 #ifndef SECU3T
    grvalve_eng_stopped_notification();
@@ -539,6 +548,7 @@ MAIN()
 
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
+  wdt_reset_timer();
 
   //Start MAP sampling at regular intervals of time. This timer reinitialize each time of detecting of new stroke.
   //Thus, when RPM exceed specified value, this condition will cease to be carried out.
@@ -555,25 +565,30 @@ MAIN()
   //note: order of calls matters! Pay special attention if you are going to change it!
   //process and execute suspended operations
   sop_execute_operations();
+  wdt_reset_timer();
   //Detection and recording of errors (checking engine)
   ce_check_engine();
   //processing of ingoing and outgoing data via UART
   process_uart_interface();
+  wdt_reset_timer();
   //detection of changes in parameters and its saving
   save_param_if_need();
   //averaging of phisical magnitudes stored in the circular buffers
   meas_average_measured_values(&ram_extabs.cesd);
   //read discrete inputs of the system and switching of fuel type (sets of maps)
   meas_take_discrete_inputs();
+  wdt_reset_timer();
   //calculate arguments for lookup tables
   calc_lookup_args();
   //System's state machine core (dispatcher of modes)
   eculogic_system_state_machine();
+  wdt_reset_timer();
   //control peripheral devices (actuators)
   control_engine_units();
 #ifdef FUEL_INJECT
   //call LTFT algorithm
   ltft_control();
+  wdt_reset_timer();
 #endif
 
 #ifdef OBD_SUPPORT
@@ -615,6 +630,8 @@ MAIN()
    meas_update_values_buffers_map(&ram_extabs.cesd);
   meas_update_values_buffers(&ram_extabs.cesd);
 
+  wdt_reset_timer();
+
   //execute some operations, which require execution one time per engine stroke
   if (ckps_is_stroke_event_r())
   {
@@ -625,6 +642,7 @@ MAIN()
     meas_update_values_buffers_map(&ram_extabs.cesd);
    s_timer_set(&force_measure_timeout_counter, FORCE_MEASURE_TIMEOUT_VALUE);
 
+   wdt_reset_timer();
    eculogic_stroke_event_notification();
 
    ce_stroke_event_notification();
@@ -646,6 +664,7 @@ MAIN()
    lambda_stroke_event_notification();
 #endif
 
+  wdt_reset_timer();
 
 #ifdef GD_CONTROL
    gasdose_stroke_event_notification();
@@ -688,6 +707,8 @@ MAIN()
   ckps_set_inj_timing(d.corr.inj_timing, d.inj_pw, (d.sens.gas ? (d.param.inj_anglespec >> 4) : (d.param.inj_anglespec & 0xF)));
 #endif
 
+  wdt_reset_timer();
+
 #ifdef FUEL_INJECT
   inject_calc_fuel_flow();
   inject_calc_fuel_cons();
@@ -696,6 +717,8 @@ MAIN()
 #ifdef DIAGNOSTICS
   diagnost_process();
 #endif
+
+  wdt_reset_timer();
 
 #ifdef OBD_SUPPORT
   obd_process();

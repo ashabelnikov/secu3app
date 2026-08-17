@@ -754,10 +754,12 @@ typedef struct fw_ex_data_t
   uint8_t amt_rpmalt_step;     //!< RPM alternation step for AMT  
   //---------------------------------------------------------------
 
+  uint8_t vssmf_size;          //!< Size of the VSS median filter 0..32
+
   /**Following reserved bytes required for keeping binary compatibility between
    * different versions of firmware. Useful when you add/remove members to/from
    * this structure. */
-  uint8_t reserved[1494];
+  uint8_t reserved[1493];
 }fw_ex_data_t;
 
 /**Describes a universal programmable output*/

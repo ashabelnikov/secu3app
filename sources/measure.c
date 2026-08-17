@@ -89,6 +89,8 @@ int16_t iocfg_add_i8 = 0;
 ringbuff_t meas[INPUTNUM] = {{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0},{{0},0}};
 
 #ifdef SPEED_SENSOR
+/**Median filter for VSS*/
+medifilt_t vssmf = {0};
 /**Stores last value of the VSS pulse counter*/
 static uint16_t vss_pulse_count = 0;
 #endif
@@ -169,7 +171,8 @@ void meas_update_values_buffers(ce_sett_t *cesd)
 #endif
 
 #ifdef SPEED_SENSOR
- update_buffer(&meas[SPD_INPIDX], calc_speed(spdsens_get_period()));
+ update_median(&vssmf, spdsens_get_period()); //apply median filter first to reject possible "needles".
+ update_buffer(&meas[SPD_INPIDX], calc_speed(calc_median(&vssmf)));
 #endif
 
  if (d.param.knock_use_knock_channel && d.sens.rpm > 200)
@@ -469,6 +472,9 @@ void meas_init(void)
  //set sizes of ring buffers
  for(i = 0; i < INPUTNUM; ++i)
   init_buffer(&meas[i], PGM_GET_BYTE(&fw_data.exdata.inpavnum[i])); 
+#ifdef SPEED_SENSOR
+ init_median(&vssmf, PGM_GET_BYTE(&fw_data.exdata.vssmf_size));
+#endif
  //do preliminary measurements
  i = CIRCBUFFMAX;
  _t = _SAVE_INTERRUPT();

@@ -1465,6 +1465,8 @@ PGM_FIXED_ADDR_OBJ(fw_data_t fw_data, ".firmware_data") =
   .amt_aircond_torque = 5*2,                  //5Nm
   .amt_rpmalt_step = 5,                       //5 min-1 per stroke
 
+  .vssmf_size = 5,  //size of the filter's kernel is 5
+
   /**reserved bytes*/
   {0}
  },

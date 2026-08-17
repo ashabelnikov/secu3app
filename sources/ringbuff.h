@@ -31,6 +31,8 @@
 
 #define CIRCBUFFMAX    32                       //!< Maximum size of ring buffer in items
 
+//Average filter
+
 /**Describes ring buffer for one input*/
 typedef struct ringbuff_t
 {
@@ -58,5 +60,35 @@ void update_buffer(struct ringbuff_t* p_rb, uint16_t value);
  * \return Averaged value
  */
 uint16_t average_buffer(struct ringbuff_t* p_rb);
+
+//Median filter
+
+/**Describes median filter for one input*/
+typedef struct medifilt_t
+{
+ uint16_t buff[CIRCBUFFMAX];                    //!< Ring buffer
+ uint8_t avnum;                                 //!< size of the circular buffer
+ uint8_t size;                                  //!< actual size, may be less or equal to size
+ uint8_t idx;                                   //!< index in buffer
+}medifilt_t;
+
+/** Initializes median filter
+ * \param p_mf Pointer to the median filter's structure
+ * \param avnum Size of the ring buffer, this value must not be greater than CIRCBUFFMAX
+ */
+void init_median(struct medifilt_t* p_mf, uint8_t avnum);
+
+/** Updates the median filter's buffer with specified value
+ * \param p_mf Pointer to the median filter's structure
+ * \param value Value, buffer to be updated with
+ */
+void update_median(struct medifilt_t* p_mf, uint16_t value);
+
+/** Gets median value from the median filter
+ * \param p_mf Pointer to the median filter's structure
+ * \return Median value
+ */
+uint16_t calc_median(struct medifilt_t* p_mf);
+
 
 #endif //_RINGBUFF_H_

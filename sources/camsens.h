@@ -41,6 +41,9 @@ void cams_init_state(void);
 /** Must be called from the main loop to perform some operations */
 void cams_control(void);
 
+/**called from main loop when system detects engine stop*/
+void cams_eng_stopped_notification(void);
+
 #if !defined(HALL_SYNC) && !defined(CKPS_NPLUS1)
 /**Checks for event(VR input) and automatically resets the flag
  * \return 1 - event was pending, otherwise - 0 */

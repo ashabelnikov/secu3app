@@ -466,3 +466,10 @@ uint16_t spdsens_get_pulse_count(uint8_t reset)
  return CHECKBIT(flags, F_USEVSS) ? value : 0;
 }
 #endif
+
+void cams_eng_stopped_notification(void)
+{
+#ifdef SPEED_SENSOR
+ camstate.spdsens_state = 0;
+#endif
+}

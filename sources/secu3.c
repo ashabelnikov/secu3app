@@ -546,6 +546,8 @@ MAIN()
    choke_eng_stopped_notification();
 #endif
 
+   cams_eng_stopped_notification();
+
    s_timer_set(&engine_rotation_timeout_counter, ENGINE_ROTATION_TIMEOUT_VALUE);
   }
   wdt_reset_timer();

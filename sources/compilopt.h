@@ -190,13 +190,6 @@
  #define COPT_OBD_SUPPORT 0
 #endif
 
-/**ATmega644 target */
-#ifdef _PLATFORM_M644_
- #define COPT_ATMEGA644 1
-#else
- #define COPT_ATMEGA644 0
-#endif
-
 /**ATmega1284 target */
 #ifdef _PLATFORM_M1284_
  #define COPT_ATMEGA1284 1

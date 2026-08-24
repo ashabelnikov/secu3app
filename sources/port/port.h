@@ -31,10 +31,7 @@
  #define MAIN() __C_task void main(void)
 
  //convert compiler-specific symbols to common symbols
- #if defined (__ATmega644__)
-  #define _PLATFORM_M644_
-  #define F_CPU 20000000UL
- #elif defined (__ATmega1284__)
+ #if defined (__ATmega1284__)
   #define _PLATFORM_M1284_
   #define F_CPU 20000000UL
  #else
@@ -46,10 +43,7 @@
  #define MAIN() __attribute__ ((OS_main)) void main(void)
 
  //convert compiler-specific symbols to common symbols
- #if defined (__AVR_ATmega644__)
-  #define _PLATFORM_M644_
-  #define F_CPU 20000000UL
- #elif defined (__AVR_ATmega1284__) || defined (__AVR_ATmega1284P__)
+ #if defined (__AVR_ATmega1284__) || defined (__AVR_ATmega1284P__)
   #define _PLATFORM_M1284_
   #define F_CPU 20000000UL
  #else
